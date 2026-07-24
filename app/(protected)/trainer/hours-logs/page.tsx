@@ -18,6 +18,7 @@ import { Clock, CheckCircle, XCircle, Plus, Calendar, Filter, Hourglass } from '
 import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface HoursLog {
   id: string;
@@ -184,14 +185,10 @@ export default function TrainerHoursLogsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-primary dark:text-white">
-            Meine Stundennachweise
-          </h1>
-          <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-            Erfasse und verwalte deine geleisteten Stunden
-          </p>
-        </div>
+        <PageHeader
+          title="Meine Stundennachweise"
+          description="Erfasse und verwalte deine geleisteten Stunden"
+        />
         <Button onClick={() => setShowForm(!showForm)} className="shrink-0">
           <Plus className="h-4 w-4 mr-2" />
           {showForm ? 'Schließen' : 'Neue Stunden'}
@@ -323,9 +320,9 @@ export default function TrainerHoursLogsPage() {
                 <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                   Ausstehend
                 </p>
-                <p className="text-xl font-bold mt-0.5 text-amber-600">{stats.pending}</p>
+                <p className="text-xl font-bold mt-0.5 text-warning-600">{stats.pending}</p>
               </div>
-              <Hourglass className="h-5 w-5 text-amber-300" />
+              <Hourglass className="h-5 w-5 text-warning-300" />
             </div>
           </CardContent>
         </Card>
@@ -336,9 +333,9 @@ export default function TrainerHoursLogsPage() {
                 <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                   Genehmigt
                 </p>
-                <p className="text-xl font-bold mt-0.5 text-green-600">{stats.approved}</p>
+                <p className="text-xl font-bold mt-0.5 text-success-600">{stats.approved}</p>
               </div>
-              <CheckCircle className="h-5 w-5 text-green-300" />
+              <CheckCircle className="h-5 w-5 text-success-300" />
             </div>
           </CardContent>
         </Card>
@@ -361,19 +358,19 @@ export default function TrainerHoursLogsPage() {
 
       {/* Approved Hours Summary */}
       {stats.approvedHours > 0 && (
-        <div className="rounded-xl bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900/20 p-4 flex items-center justify-between">
+        <div className="rounded-xl bg-success-50 dark:bg-success-900/10 border border-success-200 dark:border-success-900/20 p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <CheckCircle className="h-5 w-5 text-green-600" />
+            <CheckCircle className="h-5 w-5 text-success-600" />
             <div>
-              <p className="text-sm font-medium text-green-800 dark:text-green-200">
+              <p className="text-sm font-medium text-success-800 dark:text-success-200">
                 Bestätigte Stunden
               </p>
-              <p className="text-xs text-green-600 dark:text-green-400">
+              <p className="text-xs text-success-600 dark:text-success-400">
                 Bereits von deinem Verein genehmigt
               </p>
             </div>
           </div>
-          <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+          <p className="text-2xl font-bold text-success-700 dark:text-success-300">
             {stats.approvedHours.toFixed(1)}h
           </p>
         </div>
@@ -436,7 +433,7 @@ export default function TrainerHoursLogsPage() {
         <CardContent className="pt-0">
           {logs.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
-              <div className="h-16 w-16 rounded-2xl bg-muted dark:bg-card/5 flex items-center justify-center mx-auto mb-4">
+              <div className="h-16 w-16 rounded-xl bg-muted dark:bg-card/5 flex items-center justify-center mx-auto mb-4">
                 <Clock className="h-8 w-8" />
               </div>
               <p className="font-medium text-muted-foreground">Keine Stundennachweise</p>
@@ -472,10 +469,10 @@ export default function TrainerHoursLogsPage() {
                       </p>
                     )}
                     {log.status === 'rejected' && log.rejection_reason && (
-                      <p className="text-xs text-red-500 mt-1">Grund: {log.rejection_reason}</p>
+                      <p className="text-xs text-error-500 mt-1">Grund: {log.rejection_reason}</p>
                     )}
                     {log.status === 'approved' && log.approved_at && (
-                      <p className="text-xs text-green-500">
+                      <p className="text-xs text-success-500">
                         Genehmigt am{' '}
                         {format(parseISO(log.approved_at), 'dd.MM.yyyy', { locale: de })}
                       </p>

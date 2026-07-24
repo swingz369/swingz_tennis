@@ -29,29 +29,29 @@ const COLOR_MAP: Record<StatColor, { text: string; bg: string; border: string }>
     border: 'hover:border-brand-light/30',
   },
   blue: {
-    text: 'text-blue-600 dark:text-blue-400',
-    bg: 'bg-blue-50 dark:bg-blue-900/30',
-    border: 'hover:border-blue-200 dark:hover:border-blue-700/50',
+    text: 'text-info-600 dark:text-info-400',
+    bg: 'bg-info-50 dark:bg-info-900/30',
+    border: 'hover:border-info-200 dark:hover:border-info-700/50',
   },
   green: {
-    text: 'text-emerald-600 dark:text-emerald-400',
-    bg: 'bg-emerald-50 dark:bg-emerald-900/30',
-    border: 'hover:border-emerald-200 dark:hover:border-emerald-700/50',
+    text: 'text-success-600 dark:text-success-400',
+    bg: 'bg-success-50 dark:bg-success-900/30',
+    border: 'hover:border-success-200 dark:hover:border-success-700/50',
   },
   purple: {
-    text: 'text-purple-600 dark:text-purple-400',
-    bg: 'bg-purple-50 dark:bg-purple-900/30',
-    border: 'hover:border-purple-200 dark:hover:border-purple-700/50',
+    text: 'text-info-600 dark:text-info-400',
+    bg: 'bg-info-50 dark:bg-info-900/30',
+    border: 'hover:border-info-200 dark:hover:border-info-700/50',
   },
   orange: {
-    text: 'text-orange-600 dark:text-orange-400',
-    bg: 'bg-orange-50 dark:bg-orange-900/20',
-    border: 'hover:border-orange-200 dark:hover:border-orange-700/50',
+    text: 'text-brand-accent-600 dark:text-brand-accent-400',
+    bg: 'bg-brand-accent-50 dark:bg-brand-accent-900/20',
+    border: 'hover:border-brand-accent-200 dark:hover:border-brand-accent-700/50',
   },
   red: {
-    text: 'text-red-600 dark:text-red-400',
-    bg: 'bg-red-50 dark:bg-red-900/20',
-    border: 'hover:border-red-200 dark:hover:border-red-700/50',
+    text: 'text-error-600 dark:text-error-400',
+    bg: 'bg-error-50 dark:bg-error-900/20',
+    border: 'hover:border-error-200 dark:hover:border-error-700/50',
   },
   gray: {
     text: 'text-muted-foreground dark:text-muted-foreground',
@@ -59,6 +59,41 @@ const COLOR_MAP: Record<StatColor, { text: string; bg: string; border: string }>
     border: 'hover:border-border dark:hover:border-white/10',
   },
 };
+
+/** Minimal inline sparkline — no charting library, just a normalized polyline. */
+function Sparkline({ points, className }: { points: number[]; className?: string }) {
+  // A flat series (all-zero, or no real growth data) renders as a
+  // meaningless dash — worse than showing nothing.
+  if (points.length < 2 || new Set(points).size < 2) return null;
+  const width = 64;
+  const height = 24;
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const range = max - min || 1;
+  const step = width / (points.length - 1);
+  const coords = points
+    .map((p, i) => `${i * step},${height - ((p - min) / range) * (height - 2) - 1}`)
+    .join(' ');
+
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className={cn('opacity-80', className)}
+      aria-hidden="true"
+    >
+      <polyline
+        points={coords}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 interface StatCardProps {
   icon: LucideIcon;
@@ -80,6 +115,11 @@ interface StatCardProps {
   /** Extra class for the value text */
   valueClassName?: string;
   className?: string;
+  /** Optional trend series rendered as a small inline sparkline */
+  trend?: number[];
+  /** Highlights this card as the dashboard's primary KPI — accent top
+   * border + subtle tinted background. Use on at most one card per row. */
+  featured?: boolean;
 }
 
 export function StatCard({
@@ -96,6 +136,8 @@ export function StatCard({
   iconClassName,
   valueClassName,
   className,
+  trend,
+  featured = false,
 }: StatCardProps) {
   const colors = COLOR_MAP[color];
 
@@ -105,8 +147,10 @@ export function StatCard({
   const content = (
     <div
       className={cn(
-        'border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group rounded-2xl',
+        'bg-card dark:bg-card border border-border dark:border-white/10 rounded-xl shadow-sm cursor-pointer group transition-colors',
         colors.border,
+        featured &&
+          'border-t-[3px] border-t-[hsl(var(--brand-accent-dashboard))] bg-gradient-to-b from-[hsl(var(--brand-accent-dashboard)/0.06)] to-transparent',
         className
       )}
     >
@@ -119,7 +163,7 @@ export function StatCard({
             <div className="flex items-baseline gap-2 mt-1.5">
               <p
                 className={cn(
-                  'text-2xl font-bold text-foreground dark:text-white tabular-nums',
+                  'text-2xl font-bold font-mono text-foreground dark:text-white tabular-nums',
                   valueClassName
                 )}
               >
@@ -132,7 +176,7 @@ export function StatCard({
               {badge != null && badge > 0 && (
                 <span
                   className={cn(
-                    'text-[11px] font-bold px-2 py-0.5 rounded-full',
+                    'text-2xs font-bold px-2 py-0.5 rounded-full',
                     colors.bg,
                     colors.text
                   )}
@@ -146,12 +190,14 @@ export function StatCard({
                 {sub || sublabel}
               </p>
             )}
+            {trend && trend.length > 1 && (
+              <Sparkline points={trend} className={cn('mt-2', colors.text)} />
+            )}
           </div>
           <div
             className={cn(
               'flex h-10 w-10 items-center justify-center rounded-xl shrink-0',
               colors.bg,
-              'group-hover:scale-105 transition-transform',
               iconClassName
             )}
           >

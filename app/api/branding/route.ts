@@ -4,35 +4,41 @@ import { z } from 'zod';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
+import type { Database } from '@/types/supabase';
+
+type ClubsBrandingKey = keyof Database['public']['Tables']['clubs']['Update'];
 
 const log = createLogger('api:branding');
 
-const BrandingUpdateSchema = z.object({
-  brand: z
-    .object({
-      primaryColor: z
-        .string()
-        .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
-        .optional(),
-      secondaryColor: z
-        .string()
-        .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
-        .optional(),
-      accentColor: z
-        .string()
-        .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
-        .optional(),
-    })
-    .optional(),
-  logos: z
-    .object({
-      light: z.string().url().optional().nullable(),
-      dark: z.string().url().optional().nullable(),
-      favicon: z.string().url().optional().nullable(),
-    })
-    .optional(),
-  customDomain: z.string().url().optional().nullable(),
-});
+const BrandingUpdateSchema = z
+  .object({
+    brand: z
+      .object({
+        primaryColor: z
+          .string()
+          .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
+          .optional(),
+        secondaryColor: z
+          .string()
+          .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
+          .optional(),
+        accentColor: z
+          .string()
+          .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
+          .optional(),
+      })
+      .optional(),
+    logos: z
+      .object({
+        light: z.string().url().optional().nullable(),
+        dark: z.string().url().optional().nullable(),
+        favicon: z.string().url().optional().nullable(),
+        dashboardBg: z.string().url().optional().nullable(),
+      })
+      .optional(),
+    customDomain: z.string().url().optional().nullable(),
+  })
+  .strict();
 
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
@@ -51,7 +57,7 @@ export async function GET(request: NextRequest) {
       const { data, error } = await auth.supabase
         .from('clubs')
         .select(
-          'primary_color, secondary_color, accent_color, logo_light_url, logo_dark_url, favicon_url, custom_domain'
+          'primary_color, secondary_color, accent_color, logo_light_url, logo_dark_url, favicon_url, dashboard_bg_url, custom_domain'
         )
         .eq('id', clubId)
         .single();
@@ -71,6 +77,7 @@ export async function GET(request: NextRequest) {
           light: data.logo_light_url || null,
           dark: data.logo_dark_url || null,
           favicon: data.favicon_url || null,
+          dashboardBg: data.dashboard_bg_url || null,
         },
         customDomain: data.custom_domain || null,
       });
@@ -109,6 +116,8 @@ export async function PUT(request: NextRequest) {
       if (validated.logos?.light !== undefined) updates.logo_light_url = validated.logos.light;
       if (validated.logos?.dark !== undefined) updates.logo_dark_url = validated.logos.dark;
       if (validated.logos?.favicon !== undefined) updates.favicon_url = validated.logos.favicon;
+      if (validated.logos?.dashboardBg !== undefined)
+        updates.dashboard_bg_url = validated.logos.dashboardBg;
       if (validated.customDomain !== undefined) updates.custom_domain = validated.customDomain;
 
       if (Object.keys(updates).length === 0) {
@@ -137,18 +146,19 @@ export async function PUT(request: NextRequest) {
       // `customDomain` (vs `custom_domain`) fails-fast with 400 instead of
       // silently inserting a phantom column. When adding a NEW branding field,
       // update BOTH the build-up above AND this set in the same commit.
-      const ALLOWED_BRANDING_KEYS: Set<string> = new Set([
+      const ALLOWED_BRANDING_KEYS = new Set<ClubsBrandingKey>([
         'primary_color',
         'secondary_color',
         'accent_color',
         'logo_light_url',
         'logo_dark_url',
         'favicon_url',
+        'dashboard_bg_url',
         'custom_domain',
         'updated_at',
       ]);
       for (const k of Object.keys(updates)) {
-        if (!ALLOWED_BRANDING_KEYS.has(k)) {
+        if (!ALLOWED_BRANDING_KEYS.has(k as ClubsBrandingKey)) {
           return NextResponse.json({ error: `Unknown branding field: ${k}` }, { status: 400 });
         }
       }

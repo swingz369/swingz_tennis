@@ -25,6 +25,7 @@
 import { test, expect, type APIRequestContext } from '@playwright/test';
 import { writeFileSync, mkdirSync } from 'fs';
 import { dirname, resolve } from 'path';
+import type { BenchEntry, BenchReport } from '../bench/bench-types';
 
 const BASE_URL = process.env.APP_BASE_URL || 'http://localhost:3000';
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL!;
@@ -62,20 +63,12 @@ interface ClusterResponse {
   };
 }
 
-interface BenchEntry {
-  label: string;
-  status: 'ok' | 'error';
-  endToEndMs?: number;
-  apiRuntimeMs?: number;
-  totalGroups?: number;
-  totalMembers?: number;
-  avgNiveauMatch?: number;
-  unassignedCount?: number;
-  wishPartnerRate?: number;
-  error?: string;
-  timestamp: string;
-}
-
+// `BenchEntry` and `BenchReport` are shared with the vitest bench writer
+// (tests/bench/clustering.bench.ts) and the report script
+// (scripts/generate-perf-report.ts) — see tests/bench/bench-types.ts.
+// The shared types catch dead-code fields (e.g. `runtimeMs_internal`) and
+// field-name drift at compile time via the excess-property check on the
+// index assignment below and the `BenchReport satisfies` in the writer.
 const BENCH_RESULTS: Record<string, BenchEntry> = {};
 
 // ═══ Helpers ═════════════════════════════════════════════════════════════
@@ -200,7 +193,7 @@ test.afterAll(() => {
           config: { NUM_MEMBERS: 200, NUM_TRAINERS: 8, NUM_COURTS: 5 },
           runs: BENCH_RESULTS,
           speedups,
-        },
+        } satisfies BenchReport,
         null,
         2
       )

@@ -12,7 +12,11 @@ export function generateAriaId(prefix: string): string {
 }
 
 /**
- * Announce message to screen readers
+ * Announce message to screen readers via the persistent AriaLiveProvider.
+ *
+ * Prefer `useAriaLive()` in React components. This function is a convenience
+ * for imperative code (e.g. event handlers outside React tree, service workers).
+ * Falls back to creating a temporary DOM element if the provider isn't mounted.
  */
 export function announceToScreenReader(
   message: string,
@@ -20,8 +24,24 @@ export function announceToScreenReader(
 ): void {
   if (typeof window === 'undefined') return;
 
+  // Try to use the persistent region first (set by AriaLiveProvider).
+  // Clear-then-set pattern forces re-announcement of identical messages.
+  const region = document.querySelector(
+    priority === 'assertive'
+      ? '[role="alert"][aria-live="assertive"]'
+      : '[role="status"][aria-live="polite"]'
+  );
+  if (region instanceof HTMLElement) {
+    region.textContent = '';
+    requestAnimationFrame(() => {
+      region.textContent = message;
+    });
+    return;
+  }
+
+  // Fallback: temporary DOM element (works without AriaLiveProvider)
   const announcement = document.createElement('div');
-  announcement.setAttribute('role', 'status');
+  announcement.setAttribute('role', priority === 'assertive' ? 'alert' : 'status');
   announcement.setAttribute('aria-live', priority);
   announcement.setAttribute('aria-atomic', 'true');
   announcement.className = 'sr-only';
@@ -29,7 +49,6 @@ export function announceToScreenReader(
 
   document.body.appendChild(announcement);
 
-  // Remove after announcement
   setTimeout(() => {
     document.body.removeChild(announcement);
   }, 1000);
@@ -125,7 +144,7 @@ export function SkipToContent() {
   return (
     <a
       href="#main-content"
-      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-foreground focus:rounded-lg focus:shadow-lg"
+      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-foreground focus:rounded-xl focus:shadow-lg"
     >
       Skip to main content
     </a>

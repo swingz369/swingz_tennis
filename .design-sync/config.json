@@ -1,0 +1,22 @@
+{
+  "projectId": "25c2d6a4-080a-4679-8ef0-c6ed758e9603",
+  "shape": "package",
+  "pkg": "swingz",
+  "globalName": "Swingz",
+  "srcDir": "components/ui",
+  "tsconfig": "tsconfig.json",
+  "cssEntry": "app/globals.css",
+  "componentSrcMap": {
+    "DataTable": null,
+    "StatCard": null,
+    "EntityCard": null,
+    "MemberEntityCard": null,
+    "PageError": null,
+    "QuickActions": null,
+    "Breadcrumb": null,
+    "DashboardCard": null,
+    "PageHeader": null,
+    "PaginationNav": null,
+    "ThemeToggle": null
+  }
+}

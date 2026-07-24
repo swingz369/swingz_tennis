@@ -12,9 +12,11 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     try {
       await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
 
-      const hasPermission = await verifyRole(auth, 'superadmin');
+      // Angeglichen an die Schwester-Routen ([id], [id]/overdue): Admin verwaltet
+      // die Trainer-Abrechnung seines Vereins — superadmin war hier ein Ausreißer.
+      const hasPermission = await verifyRole(auth, 'admin');
       if (!hasPermission) {
-        return forbiddenResponse('Superadmin access required');
+        return forbiddenResponse('Admin access required');
       }
 
       const { id } = await params;

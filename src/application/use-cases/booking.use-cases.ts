@@ -73,6 +73,7 @@ export class CreateBookingUseCase {
       action: 'create',
       entityType: 'booking',
       entityId: booking.getId().getValue(),
+      clubId: sessionDetails.clubId.getValue(),
       details: {
         memberId: memberId.getValue(),
         sessionId: sessionId.getValue(),
@@ -162,6 +163,7 @@ export class CancelBookingUseCase {
       action: 'cancel',
       entityType: 'booking',
       entityId: input.bookingId,
+      clubId: sessionDetails.clubId.getValue(),
       details: {
         reason: input.reason,
         notes,

@@ -77,8 +77,10 @@ CREATE INDEX IF NOT EXISTS idx_school_holidays_bundesland ON school_holidays(bun
 CREATE INDEX IF NOT EXISTS idx_school_holidays_dates ON school_holidays(start_date, end_date);
 
 ALTER TABLE school_holidays ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS school_holidays_select_all ON school_holidays;
 CREATE POLICY school_holidays_select_all ON school_holidays FOR SELECT USING (true);
 -- school_holidays are global reference data — only platform superadmins can write
+DROP POLICY IF EXISTS school_holidays_admin_manage ON school_holidays;
 CREATE POLICY school_holidays_admin_manage ON school_holidays
   FOR ALL USING (is_superadmin());
 
@@ -106,6 +108,7 @@ CREATE INDEX IF NOT EXISTS idx_tgm_created_by ON training_group_memberships(crea
 ALTER TABLE training_group_memberships ENABLE ROW LEVEL SECURITY;
 
 -- Use existing user_club_memberships pattern for RLS
+DROP POLICY IF EXISTS tgm_admin_manage ON training_group_memberships;
 CREATE POLICY tgm_admin_manage ON training_group_memberships
   FOR ALL USING (
     EXISTS (
@@ -117,6 +120,7 @@ CREATE POLICY tgm_admin_manage ON training_group_memberships
     )
   );
 
+DROP POLICY IF EXISTS tgm_member_view_own ON training_group_memberships;
 CREATE POLICY tgm_member_view_own ON training_group_memberships
   FOR SELECT USING (member_id = auth.uid());
 
@@ -152,6 +156,7 @@ CREATE INDEX IF NOT EXISTS idx_mb_member ON member_balances(member_id);
 ALTER TABLE member_balances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE member_balance_entries ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS mb_admin_all ON member_balances;
 CREATE POLICY mb_admin_all ON member_balances
   FOR ALL USING (
     EXISTS (
@@ -163,9 +168,11 @@ CREATE POLICY mb_admin_all ON member_balances
     )
   );
 
+DROP POLICY IF EXISTS mb_member_view_own ON member_balances;
 CREATE POLICY mb_member_view_own ON member_balances
   FOR SELECT USING (member_id = auth.uid());
 
+DROP POLICY IF EXISTS mbe_admin_all ON member_balance_entries;
 CREATE POLICY mbe_admin_all ON member_balance_entries
   FOR ALL USING (
     EXISTS (
@@ -178,6 +185,7 @@ CREATE POLICY mbe_admin_all ON member_balance_entries
     )
   );
 
+DROP POLICY IF EXISTS mbe_member_view_own ON member_balance_entries;
 CREATE POLICY mbe_member_view_own ON member_balance_entries
   FOR SELECT USING (
     EXISTS (
@@ -209,6 +217,7 @@ CREATE INDEX IF NOT EXISTS idx_installments_status ON invoice_installments(statu
 
 ALTER TABLE invoice_installments ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS installments_member_view_own ON invoice_installments;
 CREATE POLICY installments_member_view_own ON invoice_installments
   FOR SELECT USING (
     EXISTS (
@@ -218,6 +227,7 @@ CREATE POLICY installments_member_view_own ON invoice_installments
     )
   );
 
+DROP POLICY IF EXISTS installments_admin_all ON invoice_installments;
 CREATE POLICY installments_admin_all ON invoice_installments
   FOR ALL USING (
     EXISTS (

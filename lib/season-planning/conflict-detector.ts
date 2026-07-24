@@ -34,9 +34,9 @@ import type {
 import type { GroupAssignment } from '@/lib/season-planning/types';
 import { DAY_LABELS } from '@/lib/season-planning/schedule-constants';
 
-/** Convert 1-indexed dayOfWeek (1=Mo..7=So) to German weekday name */
+/** Convert app-wide dayOfWeek (0=Mo..6=So, see lib/types/season-planning.ts) to German weekday name */
 function dayName(dow: number): string {
-  return DAY_LABELS[dow - 1] ?? `Tag ${dow}`;
+  return DAY_LABELS[dow] ?? `Tag ${dow}`;
 }
 
 // ============================================
@@ -70,6 +70,9 @@ interface ConflictCheckParams {
     trainerUtilizationMaxPct: number;
     slotFailureThreshold: number;
     maxNiveauLevelSteps: number;
+    /** Slot-Dauer in Minuten (DB: season_planning_configs.slot_duration_minutes,
+     *  Default 90). Pflicht für die exakte Trainer-Überlastungs-Berechnung. */
+    slotDurationMinutes: number;
   };
 }
 
@@ -356,9 +359,12 @@ const CONFLICT_RULES: ConflictRule[] = [
         trainerSessions.set(assignment.trainerId, count + 1);
       }
 
+      const slotMinutes = Math.max(1, params.config.slotDurationMinutes ?? 90);
+      const hoursPerSession = slotMinutes / 60;
+
       for (const trainer of params.trainers) {
         const sessions = trainerSessions.get(trainer.id) || 0;
-        const hoursAssigned = sessions * 1.5; // 90-minute sessions
+        const hoursAssigned = sessions * hoursPerSession;
         const maxHours =
           trainer.max_hours_per_week * (params.config.trainerUtilizationMaxPct / 100);
 
@@ -367,7 +373,7 @@ const CONFLICT_RULES: ConflictRule[] = [
             id: `conflict_tol_${trainer.id}`,
             type: 'trainer_over_limit',
             severity: 'warning',
-            description: `Trainer ${trainer.name}: ${sessions} Sessions (${hoursAssigned}h) überschreiten das Limit von ${maxHours}h (${params.config.trainerUtilizationMaxPct}% von ${trainer.max_hours_per_week}h)`,
+            description: `Trainer ${trainer.name}: ${sessions} Sessions (${hoursAssigned.toFixed(2)}h à ${slotMinutes}min) überschreiten das Limit von ${maxHours.toFixed(2)}h (${params.config.trainerUtilizationMaxPct}% von ${trainer.max_hours_per_week}h)`,
             suggestedResolution:
               'Reduzieren Sie die Sessions für diesen Trainer oder erhöhen Sie das Limit.',
             affectedEntities: {
@@ -541,11 +547,23 @@ export class ConflictDetector {
   async detectAll(assignments: GroupAssignment[]): Promise<ConflictDetectionResult[]> {
     const params = await this.buildCheckParams(assignments);
     const allConflicts: ConflictDetectionResult[] = [];
+    // Tier-5 (Audit): Defensiv-Dedup. IDs sind per Rule type-prefixed, aber
+    // dieselbe logische Stelle kann durch zwei Regeln erfasst werden (Court-
+    // und Trainer-Doppelbelegung bei derselben Gruppe). Wir dedupen am Ende
+    // nach `id` und behalten die erste Erwähnung, da Regeln mit höherer
+    // Priorität (critical) im CONFLICT_RULES-Array zuerst stehen.
+    const seenIds = new Set<string>();
 
     for (const rule of CONFLICT_RULES) {
       try {
         const ruleConflicts = await rule.check(params);
-        allConflicts.push(...ruleConflicts);
+        for (const conflict of ruleConflicts) {
+          if (seenIds.has(conflict.id)) {
+            continue;
+          }
+          seenIds.add(conflict.id);
+          allConflicts.push(conflict);
+        }
       } catch (error) {
         console.error(`[ConflictDetector] Rule ${rule.type} failed:`, error);
       }
@@ -718,7 +736,71 @@ export class ConflictDetector {
           (dbConfig as Record<string, unknown>)?.max_niveau_level_steps != null
             ? Number((dbConfig as Record<string, unknown>).max_niveau_level_steps)
             : 1,
+        // Tier-2 (Audit): Slot-Dauer MUSS aus der DB-Config kommen, sonst
+        // rechnet die Trainer-Überlastungs-Prüfung mit dem falschen Multiplikator.
+        // Default 90min spiegelt das Schema-Default in seasonPlanningConfigs.
+        slotDurationMinutes: dbConfig?.slot_duration_minutes ?? 90,
       },
     };
   }
+}
+
+/**
+ * Live conflict detection for a single season — read-only (never calls
+ * persistConflicts/writes). Used as the single source of truth for
+ * "offene Konflikte" counts/badges, replacing reads against the
+ * `planning_conflicts` table, which is only ever populated once at
+ * Publish-time and drifts out of sync as the plan changes afterwards.
+ */
+export async function detectConflictsForSeason(seasonId: string, clubId: string) {
+  // ponytail: hard timeout so a stuck Drizzle/Supavisor connection (max:1 pool,
+  // seen intermittently on the self-hosted pooler) rejects instead of hanging
+  // every page/route that awaits this forever. Callers already catch errors.
+  return Promise.race([
+    detectConflictsForSeasonInner(seasonId, clubId),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Konfliktprüfung: Datenbank-Timeout')), 8000)
+    ),
+  ]);
+}
+
+async function detectConflictsForSeasonInner(seasonId: string, clubId: string) {
+  const detector = new ConflictDetector(seasonId, clubId);
+  const entries = await db
+    .select()
+    .from(seasonPlanEntries)
+    .where(eq(seasonPlanEntries.season_id, seasonId));
+
+  const assignments: GroupAssignment[] = [];
+  const groupMap = new Map<string, GroupAssignment>();
+  for (const entry of entries) {
+    const gid = entry.group_id || entry.id;
+    if (groupMap.has(gid)) {
+      groupMap.get(gid)!.memberIds.push(...((entry.expected_participants as string[]) || []));
+    } else {
+      groupMap.set(gid, {
+        groupId: gid,
+        groupName: gid,
+        trainerId: entry.trainer_id,
+        trainerName: entry.trainer_id,
+        dayOfWeek: entry.day_of_week as any,
+        startTime: entry.start_time?.substring(0, 5) || '00:00',
+        endTime: entry.end_time?.substring(0, 5) || '00:00',
+        courtId: entry.court_id,
+        courtName: entry.court_id,
+        maxSize: entry.max_participants ?? 6,
+        memberIds: (entry.expected_participants as string[]) || [],
+        memberDetails: [],
+        waitlistIds: [],
+        waitlistDetails: [],
+        warnings: [],
+        conflictIds: [],
+      });
+    }
+  }
+  assignments.push(...groupMap.values());
+
+  const conflicts = await detector.detectAll(assignments);
+  const summary = detector.summarize(conflicts);
+  return { conflicts, summary };
 }

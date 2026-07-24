@@ -1,0 +1,161 @@
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { checkRateLimitOrFail } from '@/lib/rate-limit';
+import { db } from '@/src/infrastructure/persistence/db';
+import { seasons, seasonPlanEntries, trainers } from '@/src/infrastructure/persistence/schema';
+import { eq, and, isNotNull } from 'drizzle-orm';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:planning:substitutes');
+
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
+
+async function requireAdminAccess(
+  auth: Parameters<Parameters<typeof withApiAuth>[1]>[0],
+  seasonId: string
+) {
+  const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
+  if (!season) return { error: NextResponse.json({ error: 'Season not found' }, { status: 404 }) };
+
+  const isAdmin = await verifyRole(auth, 'admin');
+  const isSuperadmin = await verifyRole(auth, 'superadmin');
+  if (!isAdmin && !isSuperadmin) return { error: forbiddenResponse('Nur Admins') };
+  if (!isSuperadmin) {
+    const hasClubAccess = auth.memberships.some(
+      (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
+    );
+    if (!hasClubAccess) return { error: forbiddenResponse('Kein Zugriff auf diesen Club') };
+  }
+  return { season };
+}
+
+export async function GET(request: NextRequest, context: RouteContext) {
+  const rateLimitError = await checkRateLimitOrFail(request, { max: 30, windowMs: 60000 });
+  if (rateLimitError) return rateLimitError;
+
+  return withApiAuth(request, async (auth) => {
+    try {
+      const { id: seasonId } = await context.params;
+      const access = await requireAdminAccess(auth, seasonId);
+      if (access.error) return access.error;
+
+      const entries = await db
+        .select({
+          groupId: seasonPlanEntries.group_id,
+          substituteTrainerId: seasonPlanEntries.substitute_trainer_id,
+          fromWeek: seasonPlanEntries.substitute_from_week,
+          toWeek: seasonPlanEntries.substitute_to_week,
+          trainerName: trainers.name,
+        })
+        .from(seasonPlanEntries)
+        .leftJoin(trainers, eq(seasonPlanEntries.substitute_trainer_id, trainers.id))
+        .where(
+          and(
+            eq(seasonPlanEntries.season_id, seasonId),
+            isNotNull(seasonPlanEntries.substitute_trainer_id)
+          )
+        );
+
+      const substitutes = entries
+        .filter((e) => e.groupId)
+        .map((e) => ({
+          groupId: e.groupId,
+          groupName: e.groupId,
+          fromWeek: e.fromWeek ?? 1,
+          toWeek: e.toWeek ?? 26,
+          substituteTrainerId: e.substituteTrainerId,
+          substituteTrainerName: e.trainerName ?? 'Unbekannt',
+        }));
+
+      return NextResponse.json({ substitutes });
+    } catch (error) {
+      log.error('GET substitutes error', error instanceof Error ? error : undefined);
+      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    }
+  });
+}
+
+export async function POST(request: NextRequest, context: RouteContext) {
+  const rateLimitError = await checkRateLimitOrFail(request, { max: 10, windowMs: 60000 });
+  if (rateLimitError) return rateLimitError;
+
+  return withApiAuth(request, async (auth) => {
+    try {
+      const { id: seasonId } = await context.params;
+      const access = await requireAdminAccess(auth, seasonId);
+      if (access.error) return access.error;
+
+      const body = await request.json();
+      const { groupId, fromWeek, toWeek, substituteTrainerId } = body;
+      if (!groupId || !substituteTrainerId) {
+        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      }
+
+      await db
+        .update(seasonPlanEntries)
+        .set({
+          substitute_trainer_id: substituteTrainerId,
+          substitute_from_week: fromWeek ?? 1,
+          substitute_to_week: toWeek ?? 26,
+        })
+        .where(
+          and(eq(seasonPlanEntries.season_id, seasonId), eq(seasonPlanEntries.group_id, groupId))
+        );
+
+      const [trainer] = await db
+        .select({ name: trainers.name })
+        .from(trainers)
+        .where(eq(trainers.id, substituteTrainerId))
+        .limit(1);
+
+      log.info('Substitute trainer assigned', { seasonId, groupId, substituteTrainerId });
+      return NextResponse.json({
+        success: true,
+        substitute: {
+          groupId,
+          groupName: groupId,
+          fromWeek: fromWeek ?? 1,
+          toWeek: toWeek ?? 26,
+          substituteTrainerId,
+          substituteTrainerName: trainer?.name ?? 'Unbekannt',
+        },
+      });
+    } catch (error) {
+      log.error('POST substitutes error', error instanceof Error ? error : undefined);
+      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    }
+  });
+}
+
+export async function DELETE(request: NextRequest, context: RouteContext) {
+  const rateLimitError = await checkRateLimitOrFail(request, { max: 10, windowMs: 60000 });
+  if (rateLimitError) return rateLimitError;
+
+  return withApiAuth(request, async (auth) => {
+    try {
+      const { id: seasonId } = await context.params;
+      const access = await requireAdminAccess(auth, seasonId);
+      if (access.error) return access.error;
+
+      const body = await request.json();
+      const { groupId } = body;
+      if (!groupId) return NextResponse.json({ error: 'Missing groupId' }, { status: 400 });
+
+      await db
+        .update(seasonPlanEntries)
+        .set({ substitute_trainer_id: null, substitute_from_week: null, substitute_to_week: null })
+        .where(
+          and(eq(seasonPlanEntries.season_id, seasonId), eq(seasonPlanEntries.group_id, groupId))
+        );
+
+      log.info('Substitute trainer removed', { seasonId, groupId });
+      return NextResponse.json({ success: true });
+    } catch (error) {
+      log.error('DELETE substitutes error', error instanceof Error ? error : undefined);
+      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    }
+  });
+}

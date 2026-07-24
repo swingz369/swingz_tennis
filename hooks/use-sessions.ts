@@ -27,6 +27,7 @@ export interface Session {
   bookerNames?: string[]; // Names of members who booked this session
   cancelledAt?: string | null; // ISO date string if session was cancelled
   cancellationReason?: string | null;
+  planEntryId?: string | null; // gesetzt, wenn die Session aus der Saisonplanung stammt (editierbar für Admin)
 }
 
 export function useSessions(

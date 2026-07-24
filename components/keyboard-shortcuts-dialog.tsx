@@ -146,7 +146,7 @@ export function KeyboardShortcutsDialog() {
                 {categoryShortcuts.map((shortcut, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors"
+                    className="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-muted/50 transition-colors"
                   >
                     <span className="text-sm">{shortcut.description}</span>
                     {renderKey(shortcut.key, {

@@ -12,10 +12,13 @@ import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { SkipToContent } from '@/lib/accessibility';
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog';
 import { CommandPalette } from '@/components/command-palette';
+import { CommandPaletteProvider } from '@/components/command-palette-context';
 import { PageTransition } from '@/components/animations';
 import { RouteProgressBar } from '@/components/route-progress-bar';
 import { useGlobalKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { TenantProvider } from '@/lib/tenant-context';
+import type { ClubBranding } from '@/lib/branding';
 
 interface AppUser {
   id?: string;
@@ -32,6 +35,8 @@ interface AppUser {
 interface ProtectedClientLayoutProps {
   children: React.ReactNode;
   user: AppUser;
+  /** Resolved server-side in app/(protected)/layout.tsx — drives logo + favicon. */
+  branding?: ClubBranding;
 }
 
 /**
@@ -39,7 +44,7 @@ interface ProtectedClientLayoutProps {
  *   Admin / Superadmin → Left Sidebar (desktop + mobile overlay)
  *   Trainer / Member   → No sidebar, persistent Bottom Tab Bar (all screen sizes)
  */
-export function ProtectedClientLayout({ children, user }: ProtectedClientLayoutProps) {
+export function ProtectedClientLayout({ children, user, branding }: ProtectedClientLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useGlobalKeyboardShortcuts();
@@ -54,72 +59,84 @@ export function ProtectedClientLayout({ children, user }: ProtectedClientLayoutP
   if (showSidebar) {
     // ─── Admin / Superadmin layout: Left sidebar + header ───
     return (
-      <div className="flex min-h-screen flex-col">
-        <RouteProgressBar />
-        <SkipToContent />
-        <Header user={user} onMenuClick={() => setSidebarOpen((prev) => !prev)} />
-        <div className="flex flex-1 relative">
-          <Sidebar
-            roles={user.roles ?? []}
-            selectedClubId={user.selectedClubId ?? null}
-            clubs={user.clubs ?? (user.club ? [user.club] : [])}
-            open={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-          />
-          {sidebarOpen && (
-            <div
-              className="fixed inset-0 z-40 bg-black/50 md:hidden"
-              onClick={() => setSidebarOpen(false)}
-              aria-label="Menü schließen"
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') setSidebarOpen(false);
-              }}
-            />
-          )}
-          <main
-            id="main-content"
-            className="flex-1 bg-background p-4 md:p-6 lg:p-8 pb-20 md:pb-6"
-            role="main"
-          >
-            <div className="mx-auto max-w-7xl">
-              <ErrorBoundary>
-                <PageTransition>{children}</PageTransition>
-              </ErrorBoundary>
+      <TenantProvider clubId={user.selectedClubId ?? user.club?.id ?? null} branding={branding}>
+        <CommandPaletteProvider>
+          <div className="flex min-h-screen flex-col">
+            <RouteProgressBar />
+            <SkipToContent />
+            <Header user={user} onMenuClick={() => setSidebarOpen((prev) => !prev)} />
+            <div className="flex flex-1 relative">
+              <Sidebar
+                roles={user.roles ?? []}
+                selectedClubId={user.selectedClubId ?? null}
+                clubs={user.clubs ?? (user.club ? [user.club] : [])}
+                open={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+              />
+              {sidebarOpen && (
+                <div
+                  className="fixed inset-0 z-40 bg-black/50 md:hidden"
+                  onClick={() => setSidebarOpen(false)}
+                  aria-label="Menü schließen"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') setSidebarOpen(false);
+                  }}
+                />
+              )}
+              <main
+                id="main-content"
+                className="flex-1 bg-background p-4 md:p-6 lg:p-8 pb-20 md:pb-6"
+                role="main"
+              >
+                <div className="mx-auto max-w-7xl">
+                  <ErrorBoundary>
+                    <PageTransition>{children}</PageTransition>
+                  </ErrorBoundary>
+                </div>
+              </main>
             </div>
-          </main>
-        </div>
-        {/* Mobile-only bottom nav for admin */}
-        <MobileBottomNav
-          roles={user.roles ?? []}
-          onMenuClick={() => setSidebarOpen((prev) => !prev)}
-          className="md:hidden"
-        />
-        <CommandPalette />
-        <KeyboardShortcutsDialog />
-      </div>
+            {/* Mobile-only bottom nav for admin */}
+            <MobileBottomNav
+              roles={user.roles ?? []}
+              onMenuClick={() => setSidebarOpen((prev) => !prev)}
+              className="md:hidden"
+            />
+            <CommandPalette
+              roles={user.roles ?? []}
+              selectedClubId={user.selectedClubId ?? null}
+              clubs={user.clubs ?? (user.club ? [user.club] : [])}
+            />
+            <KeyboardShortcutsDialog />
+          </div>
+        </CommandPaletteProvider>
+      </TenantProvider>
     );
   }
 
   // ─── Trainer / Member layout: No sidebar, persistent bottom tab bar ───
   return (
-    <div className="flex min-h-screen flex-col">
-      <RouteProgressBar />
-      <SkipToContent />
-      <Header user={user} />
-      <main id="main-content" className="flex-1 bg-background p-4 md:p-6 pb-20" role="main">
-        {' '}
-        <div className="mx-auto max-w-3xl">
-          <ErrorBoundary>
-            <PageTransition>{children}</PageTransition>
-          </ErrorBoundary>
+    <TenantProvider clubId={user.selectedClubId ?? user.club?.id ?? null} branding={branding}>
+      <CommandPaletteProvider>
+        <div className="flex min-h-screen flex-col">
+          <RouteProgressBar />
+          <SkipToContent />
+          <Header user={user} />
+          <main id="main-content" className="flex-1 bg-background p-4 md:p-6 pb-20" role="main">
+            {' '}
+            <div className="mx-auto max-w-3xl">
+              <ErrorBoundary>
+                <PageTransition>{children}</PageTransition>
+              </ErrorBoundary>
+            </div>
+          </main>
+          {/* Always-visible bottom tab bar for trainer/member */}
+          <MobileBottomNav roles={user.roles ?? []} persistent />
+          <CommandPalette />
+          <KeyboardShortcutsDialog />
         </div>
-      </main>
-      {/* Always-visible bottom tab bar for trainer/member */}
-      <MobileBottomNav roles={user.roles ?? []} persistent />
-      <CommandPalette />
-      <KeyboardShortcutsDialog />
-    </div>
+      </CommandPaletteProvider>
+    </TenantProvider>
   );
 }

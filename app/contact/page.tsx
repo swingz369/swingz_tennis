@@ -6,7 +6,7 @@ import { Trophy, ArrowRight, Mail, MapPin, Sparkles, Zap } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'Kontakt — SWINGZ',
   description:
-    'Early Access anfragen und SWINGZ als Early Adopter testen. 6 Monate kostenlos, kein Risiko.',
+    'Fragen zu SWINGZ? Kontaktiere unser Team — wir antworten persönlich innerhalb von 24 Stunden.',
   alternates: {
     canonical: '/contact',
   },
@@ -18,14 +18,23 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-brand-secondary">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      <header className="relative overflow-hidden bg-brand-secondary">
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-auth-hero" />
+          <div className="absolute inset-0 opacity-25 overflow-hidden">
+            <div className="absolute -top-10 left-10 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
+            <div className="absolute -bottom-16 right-20 w-56 h-56 bg-brand-accent/8 rounded-full blur-3xl animate-aurora [animation-delay:5s]" />
+          </div>
+          <div className="absolute inset-0 noise opacity-[0.04]" />
+        </div>
+        <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
           <nav className="flex h-20 items-center justify-between">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center">
-                <Trophy className="h-6 w-6 text-white" />
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                <IconBox icon={Trophy} variant="gradient-primary" iconClassName="h-6 w-6" />
               </div>
-              <span className="text-2xl font-bold text-white">SWINGZ</span>
+              <span className="text-2xl font-bold text-white font-display">SWINGZ</span>
             </Link>
             <div className="flex items-center gap-3">
               <Link href="/login">
@@ -52,11 +61,11 @@ export default function ContactPage() {
             Kostenlos testen
           </span>
           <h1 className="text-4xl sm:text-5xl font-bold text-foreground tracking-tight">
-            Demo anfragen
+            Kontakt aufnehmen
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Erlebe SWINGZ in einer persönlichen Demo. Wir zeigen dir, wie die KI-gestützte
-            Trainingsplanung deinen Verein unterstützt.
+            Fragen zu SWINGZ oder deinem Verein? Schreib uns — wir melden uns persönlich. Oder
+            starte direkt mit 14 Tagen kostenlos testen.
           </p>
         </div>
       </section>
@@ -70,7 +79,7 @@ export default function ContactPage() {
 
             {/* Contact Info — Static */}
             <div className="space-y-8">
-              <div className="bg-muted rounded-3xl p-8">
+              <div className="bg-muted rounded-xl p-8">
                 <h3 className="text-xl font-bold text-foreground mb-6">So erreichst du uns</h3>
                 <div className="space-y-6">
                   <div className="flex items-start gap-4">
@@ -101,7 +110,7 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-brand-primary to-brand-light rounded-3xl p-8 text-white">
+              <div className="bg-gradient-to-br from-brand-primary to-brand-light rounded-xl p-8 text-white">
                 <Sparkles className="h-8 w-8 mb-4" />
                 <h3 className="text-xl font-bold mb-2">Warum SWINGZ?</h3>
                 <ul className="space-y-2 text-white/80 text-sm mb-6">
@@ -118,13 +127,13 @@ export default function ContactPage() {
                     <span>Keine Kreditkarte erforderlich</span>
                   </li>
                 </ul>
-                <Link href="#contact-form">
+                <Link href="/register">
                   <Button
                     variant="secondary"
                     size="lg"
                     className="w-full bg-background text-brand-primary hover:bg-background/90"
                   >
-                    Demo anfragen
+                    Kostenlos registrieren
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>

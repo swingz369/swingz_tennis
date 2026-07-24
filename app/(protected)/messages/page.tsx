@@ -35,16 +35,24 @@ import {
   CheckCircle2,
   Newspaper,
 } from 'lucide-react';
-import { AnimatedCounter, ScrollReveal } from '@/components/animations';
-import { Card, CardContent } from '@/components/ui/card';
+import dynamic from 'next/dynamic';
+import { ScrollReveal } from '@/components/animations';
+import { PageHeader } from '@/components/ui/page-header';
+import { StatCard } from '@/components/ui/stat-card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RichTextEditor } from '@/components/messages/RichTextEditor';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 import { apiFetch } from '@/lib/api-fetch';
 import { useUserRole } from '@/hooks/use-user-role';
-import { useUserClub } from '@/hooks/use-user-data';
+import { useUserClub, useUserRoles } from '@/hooks/use-user-data';
 import { useMessagesRealtime } from '@/hooks/use-messages-realtime';
 import NewsAnnouncements from '@/components/news-announcements';
+
+const EmailCampaignsClient = dynamic(
+  () => import('@/app/(protected)/admin/(gated)/email-campaigns/email-campaigns-client'),
+  { ssr: false }
+);
 
 /* ─────────────────── Types ─────────────────── */
 
@@ -121,30 +129,36 @@ function MessagesContent() {
   }, [searchParams]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { isAdmin } = useUserRole();
+  const { data: userRoles } = useUserRoles();
+  const { isAdmin } = useUserRole(userRoles);
   const { data: clubData } = useUserClub();
   const clubId = clubData?.clubId ?? null;
 
   // ── Fetch messages ──
-  const fetchMessages = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await apiFetch(`/api/messages?folder=${folder}`);
-      if (!res.ok) throw new Error('Fehler beim Laden');
-      const data = await res.json();
-      setMessages(data.messages ?? []);
-      if (folder === 'inbox') setUnreadCount(data.unreadCount ?? 0);
-    } catch {
-      toast.error('Nachrichten konnten nicht geladen werden');
-    } finally {
-      setLoading(false);
-    }
-  }, [folder]);
+  const fetchMessages = useCallback(
+    async (signal?: AbortSignal) => {
+      setLoading(true);
+      try {
+        const res = await apiFetch(`/api/messages?folder=${folder}`, { signal });
+        if (!res.ok) throw new Error('Fehler beim Laden');
+        const data = await res.json();
+        setMessages(data.messages ?? []);
+        if (folder === 'inbox') setUnreadCount(data.unreadCount ?? 0);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        toast.error('Nachrichten konnten nicht geladen werden');
+      } finally {
+        if (!signal?.aborted) setLoading(false);
+      }
+    },
+    [folder]
+  );
 
   useEffect(() => {
-    if (folder !== 'news') {
-      fetchMessages();
-    }
+    if (folder === 'news') return;
+    const controller = new AbortController();
+    fetchMessages(controller.signal);
+    return () => controller.abort();
   }, [fetchMessages, folder]);
 
   // Supabase Realtime — live message updates
@@ -198,126 +212,64 @@ function MessagesContent() {
   const totalMessages = messages.length;
   const readMessages = messages.filter((m) => m.is_read).length;
 
-  return (
+  const messagesView = (
     <div className="space-y-6">
-      {/* ── Hero Header ── */}
+      {/* ── Header ── */}
       <ScrollReveal>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-          <div className="absolute inset-0 bg-noise opacity-5" />
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
-          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
-          <div className="relative">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-white/70 mb-1">Kommunikation</p>
-                <h1 className="text-2xl md:text-3xl font-bold">Nachrichten</h1>
-                <p className="text-white/70 mt-2">Verwalte deine Nachrichten und Kommunikation</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={() => setComposeOpen(true)}
-                  className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25 gap-2"
-                >
-                  <PenSquare className="h-4 w-4" />
-                  Neue Nachricht
-                </Button>
-                {unreadCount > 0 && (
-                  <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">
-                    <Mail className="h-5 w-5 text-brand-accent" />
-                    <span className="text-sm font-medium">
-                      <AnimatedCounter value={unreadCount} /> ungelesen
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="Nachrichten"
+          description="Verwalte deine Nachrichten und Kommunikation"
+          actions={[
+            { label: 'Neue Nachricht', icon: PenSquare, onClick: () => setComposeOpen(true) },
+          ]}
+        />
       </ScrollReveal>
 
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <ScrollReveal delay={0}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Ungelesen</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={unreadCount} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">im Posteingang</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-red-500 to-rose-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <Mail className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            icon={Mail}
+            label="Ungelesen"
+            value={unreadCount}
+            sub="im Posteingang"
+            color="red"
+            animate
+          />
         </ScrollReveal>
 
         <ScrollReveal delay={80}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {folder === 'inbox' ? 'Posteingang' : 'Gesendet'}
-                  </p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={totalMessages} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">Nachrichten</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <MessageSquare className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            icon={MessageSquare}
+            label={folder === 'inbox' ? 'Posteingang' : 'Gesendet'}
+            value={totalMessages}
+            sub="Nachrichten"
+            color="blue"
+            animate
+          />
         </ScrollReveal>
 
         <ScrollReveal delay={160}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Gelesen</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={readMessages} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">Nachrichten</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <CheckCircle2 className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            icon={CheckCircle2}
+            label="Gelesen"
+            value={readMessages}
+            sub="Nachrichten"
+            color="green"
+            animate
+          />
         </ScrollReveal>
 
         <ScrollReveal delay={240}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Leserate</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter
-                      value={
-                        totalMessages > 0 ? Math.round((readMessages / totalMessages) * 100) : 0
-                      }
-                      suffix="%"
-                    />
-                  </p>
-                  <p className="text-xs text-muted-foreground">gelesen</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-accent to-orange-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <MailOpen className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            icon={MailOpen}
+            label="Leserate"
+            value={totalMessages > 0 ? Math.round((readMessages / totalMessages) * 100) : 0}
+            sub="gelesen"
+            color="orange"
+            suffix="%"
+            animate
+          />
         </ScrollReveal>
       </div>
 
@@ -333,7 +285,7 @@ function MessagesContent() {
                   setFolder('inbox');
                   setSelectedMessage(null);
                 }}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 lg:flex-none ${
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors flex-1 lg:flex-none ${
                   folder === 'inbox'
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-muted'
@@ -342,7 +294,7 @@ function MessagesContent() {
                 <Inbox className="h-4 w-4" />
                 Posteingang
                 {unreadCount > 0 && (
-                  <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                  <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-2xs font-bold">
                     {unreadCount}
                   </span>
                 )}
@@ -352,7 +304,7 @@ function MessagesContent() {
                   setFolder('sent');
                   setSelectedMessage(null);
                 }}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 lg:flex-none ${
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors flex-1 lg:flex-none ${
                   folder === 'sent'
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-muted'
@@ -366,7 +318,7 @@ function MessagesContent() {
                   setFolder('news');
                   setSelectedMessage(null);
                 }}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 lg:flex-none ${
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors flex-1 lg:flex-none ${
                   folder === 'news'
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-muted'
@@ -435,6 +387,31 @@ function MessagesContent() {
       )}
     </div>
   );
+
+  if (!isAdmin) return messagesView;
+
+  return (
+    <Tabs defaultValue="messages" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="messages" className="gap-1.5">
+          <MessageSquare className="h-4 w-4" /> Nachrichten
+        </TabsTrigger>
+        <TabsTrigger value="campaigns" className="gap-1.5">
+          <Mail className="h-4 w-4" /> E-Mail-Kampagnen
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="messages">{messagesView}</TabsContent>
+      <TabsContent value="campaigns">
+        {clubId ? (
+          <EmailCampaignsClient clubId={clubId} />
+        ) : (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        )}
+      </TabsContent>
+    </Tabs>
+  );
 }
 
 /* ─────────────────── Message List ─────────────────── */
@@ -497,12 +474,12 @@ function MessageList({
                   {person.full_name}
                 </span>
                 {isBroadcast && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-blue-50 text-[9px] font-semibold text-blue-700 border border-blue-100">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-info-50 dark:bg-info-900/20 text-[9px] font-semibold text-info-700 dark:text-info-300 border border-info-100 dark:border-info-700/30">
                     <Users className="h-2.5 w-2.5" />
                     Rundnachricht
                   </span>
                 )}
-                <span className="ml-auto text-[11px] text-muted-foreground shrink-0">
+                <span className="ml-auto text-2xs text-muted-foreground shrink-0">
                   {format(new Date(msg.created_at), 'dd.MM.yy HH:mm', { locale: de })}
                 </span>
               </div>
@@ -594,7 +571,7 @@ function ComposeDialog({
   onSent: () => void;
 }) {
   const [subject, setSubject] = useState(
-    replyTo?.subject.startsWith('Re:') ? replyTo.subject : `Re: ${replyTo?.subject ?? ''}`
+    replyTo ? (replyTo.subject.startsWith('Re:') ? replyTo.subject : `Re: ${replyTo.subject}`) : ''
   );
   const [content, setContent] = useState('');
   const [recipientMode, setRecipientMode] = useState<'individual' | 'all' | 'trainers' | 'multi'>(
@@ -633,7 +610,7 @@ function ComposeDialog({
       .then((data) => {
         const items = (data.members ?? []).map((m: any) => ({
           id: m.userId ?? m.id,
-          full_name: m.fullName ?? m.full_name ?? m.email,
+          full_name: [m.firstName, m.lastName].filter(Boolean).join(' ') || m.email,
           email: m.email,
           role: m.role ?? 'member',
         }));
@@ -713,6 +690,10 @@ function ComposeDialog({
 
       const data = await res.json();
       const count = data.count ?? 1;
+      if (count === 0) {
+        toast.error(data.note ?? 'Keine Empfänger gefunden — Nachricht wurde nicht gesendet');
+        return;
+      }
       toast.success(count > 1 ? `Nachricht an ${count} Empfänger gesendet` : 'Nachricht gesendet');
       onSent();
     } catch (err) {
@@ -833,7 +814,7 @@ function ComposeDialog({
                           <button
                             type="button"
                             onClick={() => toggleReceiver(id)}
-                            className="hover:bg-primary/20 rounded-sm p-0.5"
+                            className="hover:bg-primary/20 rounded-md p-0.5"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -866,7 +847,7 @@ function ComposeDialog({
                   </button>
 
                   {memberDropdownOpen && (
-                    <div className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-background shadow-lg">
+                    <div className="absolute z-50 mt-1 w-full rounded-xl border border-border bg-background shadow-lg">
                       <div className="p-2 border-b border-border">
                         <div className="relative">
                           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -954,7 +935,7 @@ function ComposeDialog({
 
         {/* Broadcast info */}
         {isAdmin && recipientMode !== 'individual' && recipientMode !== 'multi' && (
-          <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/30 px-3 py-2 text-sm text-blue-800 dark:text-blue-300">
+          <div className="rounded-xl bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-700/30 px-3 py-2 text-sm text-info-800 dark:text-info-300">
             {recipientMode === 'all' &&
               '📣 Nachricht wird an alle aktiven Vereinsmitglieder gesendet.'}
             {recipientMode === 'trainers' &&

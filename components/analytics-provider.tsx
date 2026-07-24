@@ -1,8 +1,9 @@
 'use client';
 
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { trackPageView } from '@/lib/analytics';
+import { getCookieConsent } from '@/components/cookie-consent-banner';
 import Script from 'next/script';
 
 function TrackPageView() {
@@ -20,13 +21,18 @@ function TrackPageView() {
 
 export function AnalyticsProvider() {
   const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID;
+  const [hasConsent, setHasConsent] = useState(false);
+
+  useEffect(() => {
+    setHasConsent(getCookieConsent() === 'accepted');
+  }, []);
 
   return (
     <>
       <Suspense fallback={null}>
         <TrackPageView />
       </Suspense>
-      {GA_MEASUREMENT_ID && (
+      {GA_MEASUREMENT_ID && hasConsent && (
         <>
           {/* Google Analytics 4 */}
           <Script

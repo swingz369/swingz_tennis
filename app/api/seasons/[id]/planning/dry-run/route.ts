@@ -2,6 +2,9 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { runSeasonDryRun } from '@/lib/season-planning/dry-run.service';
+import { db } from '@/src/infrastructure/persistence/db';
+import { seasons } from '@/src/infrastructure/persistence/schema';
+import { eq } from 'drizzle-orm';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:dry-run');
@@ -13,8 +16,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   if (rateLimit) return rateLimit;
 
   return withApiAuth(request, async (auth) => {
-    const isAdmin = verifyRole(auth, 'admin');
-    const isSuperadmin = verifyRole(auth, 'superadmin');
+    const isAdmin = await verifyRole(auth, 'admin');
+    const isSuperadmin = await verifyRole(auth, 'superadmin');
     if (!isAdmin && !isSuperadmin) {
       return forbiddenResponse('Nur Admins dürfen den Dry-Run starten');
     }
@@ -22,6 +25,17 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const { id: seasonId } = await context.params;
     if (!seasonId) {
       return NextResponse.json({ ok: false, error: 'season_id erforderlich' }, { status: 400 });
+    }
+
+    const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
+    if (!season) {
+      return NextResponse.json({ ok: false, error: 'Season not found' }, { status: 404 });
+    }
+    if (!isSuperadmin) {
+      const hasClubAccess = auth.memberships.some(
+        (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
+      );
+      if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
     }
 
     try {

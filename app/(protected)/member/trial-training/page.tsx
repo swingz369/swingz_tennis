@@ -39,21 +39,21 @@ const statusConfig: Record<
     label: 'Angefragt',
     icon: AlertCircle,
     color:
-      'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800',
+      'bg-warning-50 text-warning-700 border-warning-200 dark:bg-warning-900/20 dark:text-warning-300 dark:border-warning-800',
     description: 'Deine Anfrage ist eingegangen. Wir melden uns in Kürze mit einem Termin.',
   },
   scheduled: {
     label: 'Terminiert',
     icon: Calendar,
     color:
-      'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800',
+      'bg-info-50 text-info-700 border-info-200 dark:bg-info-900/20 dark:text-info-300 dark:border-info-800',
     description: 'Dein Probetraining ist terminiert. Wir freuen uns auf dich!',
   },
   completed: {
     label: 'Abgeschlossen',
     icon: CheckCircle2,
     color:
-      'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800',
+      'bg-success-50 text-success-700 border-success-200 dark:bg-success-900/20 dark:text-success-300 dark:border-success-800',
     description: 'Dein Probetraining ist abgeschlossen. Willkommen im Verein!',
   },
   cancelled: {
@@ -67,14 +67,14 @@ const statusConfig: Record<
     label: 'Nicht erschienen',
     icon: XCircle,
     color:
-      'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
+      'bg-error-50 text-error-700 border-error-200 dark:bg-error-900/20 dark:text-error-300 dark:border-error-800',
     description: 'Leider bist du nicht zum Probetraining erschienen.',
   },
   converted: {
     label: 'Mitglied geworden',
     icon: Sparkles,
     color:
-      'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800',
+      'bg-success-50 text-success-700 border-success-200 dark:bg-success-900/20 dark:text-success-300 dark:border-success-800',
     description: 'Super! Du bist jetzt offizielles Mitglied. Willkommen!',
   },
 };
@@ -128,14 +128,22 @@ export default async function MemberTrialTrainingPage() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground dark:text-white flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-brand-primary" />
-          Probetrainings
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Deine Probetraining-Anfragen und Termine
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-white flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-brand-primary" />
+            Probetrainings
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Lade Freunde und Familie zu einem kostenlosen Schnuppertermin ein
+          </p>
+        </div>
+        <Link href="/trial-training">
+          <Button className="gap-2">
+            <Sparkles className="h-4 w-4" />
+            Freunde einladen
+          </Button>
+        </Link>
       </div>
 
       {/* Empty State */}
@@ -145,10 +153,10 @@ export default async function MemberTrialTrainingPage() {
             <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
             <h3 className="font-semibold text-foreground mb-2">Noch kein Probetraining</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
-              Du hast noch kein Probetraining angefragt. Vereinbare jetzt einen kostenlosen
-              Schnuppertermin!
+              Noch keine Probetraining-Anfrage vorhanden. Lade Freunde oder Familie zu einem
+              kostenlosen Schnuppertermin ein!
             </p>
-            <Link href="/bookings">
+            <Link href="/trial-training">
               <Button className="gap-2">
                 <Calendar className="h-4 w-4" />
                 Probetraining anfragen
@@ -186,7 +194,7 @@ export default async function MemberTrialTrainingPage() {
 
                 {/* Details Grid */}
                 {t.scheduled_date && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-lg bg-muted/50">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-muted/50">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-brand-primary shrink-0" />
                       <div>
@@ -235,10 +243,10 @@ export default async function MemberTrialTrainingPage() {
 
                 {/* Converted State */}
                 {t.status === 'converted' && (
-                  <div className="mt-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                  <div className="mt-4 p-3 rounded-xl bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800">
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                      <CheckCircle2 className="h-4 w-4 text-success-600" />
+                      <p className="text-sm font-medium text-success-700 dark:text-success-300">
                         Willkommen im Verein! Du kannst jetzt alle Mitgliederfunktionen nutzen.
                       </p>
                     </div>
@@ -246,7 +254,7 @@ export default async function MemberTrialTrainingPage() {
                       <Button
                         variant="link"
                         size="sm"
-                        className="mt-1 h-auto p-0 text-emerald-700 dark:text-emerald-300"
+                        className="mt-1 h-auto p-0 text-success-700 dark:text-success-300"
                       >
                         Zum Mitglieder-Dashboard →
                       </Button>

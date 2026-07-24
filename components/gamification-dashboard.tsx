@@ -62,22 +62,22 @@ export default function GamificationDashboard() {
             label: 'Punkte',
             value: points,
             icon: Star,
-            color: 'text-amber-500',
-            bg: 'bg-amber-50 dark:bg-amber-900/20',
+            color: 'text-warning-500',
+            bg: 'bg-warning-50 dark:bg-warning-900/20',
           },
           {
             label: 'Badges',
             value: badges.length,
             icon: Medal,
-            color: 'text-purple-500',
-            bg: 'bg-purple-50 dark:bg-purple-900/20',
+            color: 'text-info-500',
+            bg: 'bg-info-50 dark:bg-info-900/20',
           },
           {
             label: 'Streak',
             value: `${streak} Tage`,
             icon: Flame,
-            color: 'text-orange-500',
-            bg: 'bg-orange-50 dark:bg-orange-900/20',
+            color: 'text-brand-accent-500',
+            bg: 'bg-brand-accent-50 dark:bg-brand-accent-900/20',
           },
           {
             label: 'Rang',
@@ -106,7 +106,7 @@ export default function GamificationDashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
-              <Medal className="h-4 w-4 text-purple-500" />
+              <Medal className="h-4 w-4 text-info-500" />
               Deine Badges
             </CardTitle>
           </CardHeader>
@@ -115,11 +115,11 @@ export default function GamificationDashboard() {
               {badges.map((b) => (
                 <div
                   key={b.id}
-                  className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl bg-purple-50 dark:bg-purple-900/10"
+                  className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl bg-info-50 dark:bg-info-900/10"
                 >
                   <span className="text-2xl">{b.icon}</span>
                   <span className="text-xs font-semibold line-clamp-1">{b.name}</span>
-                  <span className="text-[10px] text-muted-foreground line-clamp-2">
+                  <span className="text-2xs text-muted-foreground line-clamp-2">
                     {b.description}
                   </span>
                 </div>
@@ -134,7 +134,7 @@ export default function GamificationDashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-amber-500" />
+              <Trophy className="h-4 w-4 text-warning-500" />
               Rangliste
             </CardTitle>
           </CardHeader>
@@ -151,11 +151,11 @@ export default function GamificationDashboard() {
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
                     entry.rank === 1
-                      ? 'bg-amber-100 text-amber-700'
+                      ? 'bg-warning-100 text-warning-700'
                       : entry.rank === 2
                         ? 'bg-muted text-foreground'
                         : entry.rank === 3
-                          ? 'bg-orange-100 text-orange-700'
+                          ? 'bg-brand-accent-100 text-brand-accent-700'
                           : 'bg-muted text-muted-foreground'
                   }`}
                 >

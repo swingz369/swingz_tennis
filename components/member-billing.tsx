@@ -17,7 +17,6 @@ import {
   Receipt,
   CheckCircle2,
 } from 'lucide-react';
-import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 import { toast } from 'sonner';
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import { useFamilyAccounts } from '@/hooks/use-family-accounts';
@@ -25,6 +24,7 @@ import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
 import type { Invoice, InvoiceItem } from '@/lib/invoice-pdf';
 import { apiFetch } from '@/lib/api-fetch';
+import { StatCard } from '@/components/ui/stat-card';
 
 export default function MemberBilling() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -172,27 +172,27 @@ export default function MemberBilling() {
     if (status === 'paid') {
       return {
         label: 'Bezahlt',
-        color: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400',
+        color: 'bg-success-100 text-success-700 dark:bg-success-900/20 dark:text-success-400',
         isPaid: true,
       };
     }
     if (status === 'cancelled' || status === 'refunded') {
       return {
         label: status === 'cancelled' ? 'Storniert' : 'Erstattet',
-        color: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
+        color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
         isPaid: true,
       };
     }
     if (invoice.dueDate && invoice.dueDate < now) {
       return {
         label: 'Überfällig',
-        color: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400',
+        color: 'bg-error-100 text-error-700 dark:bg-error-900/20 dark:text-error-400',
         isPaid: false,
       };
     }
     return {
       label: 'Ausstehend',
-      color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
+      color: 'bg-warning-100 text-warning-700 dark:bg-warning-900/20 dark:text-warning-400',
       isPaid: false,
     };
   };
@@ -225,8 +225,8 @@ export default function MemberBilling() {
     return (
       <div className="p-4 md:p-6">
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="h-16 w-16 rounded-2xl bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center mb-4">
-            <AlertCircle className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+          <div className="h-16 w-16 rounded-xl bg-warning-100 dark:bg-warning-900/20 flex items-center justify-center mb-4">
+            <AlertCircle className="h-8 w-8 text-warning-600 dark:text-warning-400" />
           </div>
           <h2 className="text-xl font-bold text-foreground mb-2">Zugang eingeschränkt</h2>
           <p className="text-muted-foreground max-w-md">
@@ -249,132 +249,61 @@ export default function MemberBilling() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* ── Hero Header ── */}
-      <ScrollReveal>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-          <div className="absolute inset-0 bg-noise opacity-5" />
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
-          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
-          <div className="relative">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-white/70 mb-1">Finanzen</p>
-                <h1 className="text-2xl md:text-3xl font-bold">Rechnungen & Zahlungen</h1>
-                <p className="text-white/70 mt-2">Verwalte deine Rechnungen und Zahlungen</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={goToToday}
-                    className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25"
-                  >
-                    Heute
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={goToPreviousMonth}
-                    className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="min-w-[130px] text-center font-medium text-sm">
-                    {format(currentMonth, 'MMMM yyyy', { locale: de })}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={goToNextMonth}
-                    className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-brand-primary">Rechnungen & Zahlungen</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Verwalte deine Rechnungen und Zahlungen
+          </p>
         </div>
-      </ScrollReveal>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={goToToday}>
+            Heute
+          </Button>
+          <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="min-w-[130px] text-center font-medium text-sm">
+            {format(currentMonth, 'MMMM yyyy', { locale: de })}
+          </span>
+          <Button variant="outline" size="icon" onClick={goToNextMonth}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
 
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <ScrollReveal delay={0}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Diesen Monat</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    €{monthlyTotal.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{monthSessions.length} Sessions</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <Calendar className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
-
-        <ScrollReveal delay={80}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Ausstehend</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    €{openAmount.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{openCount} Rechnungen</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <CreditCard className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
-
-        <ScrollReveal delay={160}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Bezahlt</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    €{paidAmount.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{paidCount} Rechnungen</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <CheckCircle2 className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
-
-        <ScrollReveal delay={240}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Gesamt</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={invoices.length} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">Rechnungen</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <Receipt className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
+        <StatCard
+          icon={Calendar}
+          label="Diesen Monat"
+          value={`€${monthlyTotal.toFixed(2)}`}
+          sub={`${monthSessions.length} Sessions`}
+          color="blue"
+        />
+        <StatCard
+          icon={CreditCard}
+          label="Ausstehend"
+          value={`€${openAmount.toFixed(2)}`}
+          sub={`${openCount} Rechnungen`}
+          color="orange"
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label="Bezahlt"
+          value={`€${paidAmount.toFixed(2)}`}
+          sub={`${paidCount} Rechnungen`}
+          color="green"
+        />
+        <StatCard
+          icon={Receipt}
+          label="Gesamt"
+          value={invoices.length}
+          sub="Rechnungen"
+          color="brand"
+          animate
+        />
       </div>
       {/* Current Month Summary — Enhanced Kosten-Monatsübersicht (QW3) */}
       <Card>
@@ -420,10 +349,10 @@ export default function MemberBilling() {
               <>
                 <div className="grid gap-3">
                   {membershipCosts > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-info-50 dark:bg-info-900/30 border border-info-200 dark:border-info-800">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/40">
-                          <CreditCard className="h-4 w-4 text-blue-600" />
+                        <div className="p-2 rounded-xl bg-info-100 dark:bg-info-900/40">
+                          <CreditCard className="h-4 w-4 text-info-600" />
                         </div>
                         <div>
                           <div className="font-medium text-sm">Mitgliedsbeitrag</div>
@@ -434,10 +363,10 @@ export default function MemberBilling() {
                     </div>
                   )}
                   {trainingCosts > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-success-50 dark:bg-success-900/30 border border-success-200 dark:border-success-800">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/40">
-                          <Calendar className="h-4 w-4 text-green-600" />
+                        <div className="p-2 rounded-xl bg-success-100 dark:bg-success-900/40">
+                          <Calendar className="h-4 w-4 text-success-600" />
                         </div>
                         <div>
                           <div className="font-medium text-sm">Training</div>
@@ -450,10 +379,10 @@ export default function MemberBilling() {
                     </div>
                   )}
                   {otherCosts > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-info-50 dark:bg-info-900/30 border border-info-200 dark:border-info-800">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/40">
-                          <Receipt className="h-4 w-4 text-purple-600" />
+                        <div className="p-2 rounded-xl bg-info-100 dark:bg-info-900/40">
+                          <Receipt className="h-4 w-4 text-info-600" />
                         </div>
                         <div>
                           <div className="font-medium text-sm">Sonstiges</div>
@@ -506,10 +435,10 @@ export default function MemberBilling() {
                 return (
                   <div
                     key={invoice.id}
-                    className="flex items-center justify-between p-4 bg-muted rounded-lg hover:bg-muted transition-colors"
+                    className="flex items-center justify-between p-4 bg-muted rounded-xl hover:bg-muted transition-colors"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="p-3 bg-brand-primary/10 rounded-lg">
+                      <div className="p-3 bg-brand-primary/10 rounded-xl">
                         <FileText className="h-5 w-5 text-brand-primary" />
                       </div>
                       <div>
@@ -558,10 +487,10 @@ export default function MemberBilling() {
         </CardContent>
       </Card>
       {/* Payment Info */}
-      <Card className="bg-blue-50 border-blue-200">
+      <Card className="bg-info-50 border-info-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-blue-600" />
+            <AlertCircle className="h-5 w-5 text-info-600" />
             Zahlungsinformationen
           </CardTitle>
         </CardHeader>

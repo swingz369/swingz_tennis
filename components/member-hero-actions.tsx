@@ -23,42 +23,42 @@ const ACTIONS: QuickAction[] = [
     href: '/bookings',
     icon: Calendar,
     color:
-      'bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-500/20 dark:text-blue-300 dark:hover:bg-blue-500/30',
+      'bg-info-50 text-info-700 hover:bg-info-100 dark:bg-info-500/20 dark:text-info-300 dark:hover:bg-info-500/30',
   },
   {
     label: 'Nachrichten',
     href: '/messages',
     icon: MessageSquare,
     color:
-      'bg-violet-50 text-violet-700 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-300 dark:hover:bg-violet-500/30',
+      'bg-info-50 text-info-700 hover:bg-info-100 dark:bg-info-500/20 dark:text-info-300 dark:hover:bg-info-500/30',
   },
   {
     label: 'Rechnungen',
     href: '/billing',
     icon: CreditCard,
     color:
-      'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30',
+      'bg-warning-50 text-warning-700 hover:bg-warning-100 dark:bg-warning-500/20 dark:text-warning-300 dark:hover:bg-warning-500/30',
   },
   {
     label: 'Trainer',
     href: '/member/trainer-booking',
     icon: GraduationCap,
     color:
-      'bg-teal-50 text-teal-700 hover:bg-teal-100 dark:bg-teal-500/20 dark:text-teal-300 dark:hover:bg-teal-500/30',
+      'bg-info-50 text-info-700 hover:bg-info-100 dark:bg-info-500/20 dark:text-info-300 dark:hover:bg-info-500/30',
   },
   {
     label: 'Turniere',
     href: '/member/tournaments',
     icon: Trophy,
     color:
-      'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-500/20 dark:text-orange-300 dark:hover:bg-orange-500/30',
+      'bg-brand-accent-50 text-brand-accent-700 hover:bg-brand-accent-100 dark:bg-brand-accent-500/20 dark:text-brand-accent-300 dark:hover:bg-brand-accent-500/30',
   },
   {
     label: 'Präferenzen',
     href: '/member/preferences',
     icon: ClipboardCheck,
     color:
-      'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/20 dark:text-emerald-300 dark:hover:bg-emerald-500/30',
+      'bg-success-50 text-success-700 hover:bg-success-100 dark:bg-success-500/20 dark:text-success-300 dark:hover:bg-success-500/30',
   },
 ];
 
@@ -71,7 +71,7 @@ export function MemberHeroActions() {
           <Link
             key={action.href}
             href={action.href}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${action.color}`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${action.color}`}
           >
             <Icon className="h-3.5 w-3.5" />
             {action.label}

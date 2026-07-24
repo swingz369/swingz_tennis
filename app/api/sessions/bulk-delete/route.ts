@@ -78,18 +78,21 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to delete sessions' }, { status: 500 });
       }
 
-      // Audit log
+      // Audit log — one row per deleted session (resource_id is NOT NULL)
       if (deleted && deleted.length > 0) {
-        await supabase.from('audit_logs').insert({
-          user_id: auth.user.id,
-          action: 'session_bulk_deleted',
-          resource_type: 'session',
-          resource_id: null as unknown as string,
-          metadata: { reason, count: deleted.length, sessionIds },
-          ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
-          user_agent: request.headers.get('user-agent'),
-          created_at: new Date().toISOString(),
-        } as any);
+        await supabase.from('audit_logs').insert(
+          deleted.map((s) => ({
+            actor_id: auth.user.id,
+            action: 'session_bulk_deleted',
+            resource_type: 'session',
+            resource_id: s.id,
+            club_id: auth.clubId,
+            metadata: { reason, count: deleted.length },
+            ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
+            user_agent: request.headers.get('user-agent'),
+            created_at: new Date().toISOString(),
+          })) as any
+        );
       }
 
       return NextResponse.json({

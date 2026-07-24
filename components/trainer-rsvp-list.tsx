@@ -114,7 +114,7 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                   <button
                     key={session.id}
                     onClick={() => setSelectedSessionId(session.id)}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                    className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                       isSelected
                         ? 'bg-brand-primary text-white shadow-md'
                         : 'bg-muted text-muted-foreground hover:bg-muted'
@@ -135,13 +135,19 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
             ) : (
               <>
                 <div className="flex gap-3">
-                  <Badge variant="default" className="bg-green-100 text-green-700 border-green-200">
+                  <Badge
+                    variant="default"
+                    className="bg-success-100 text-success-700 border-success-200"
+                  >
                     {accepted.length} zugesagt
                   </Badge>
-                  <Badge variant="default" className="bg-red-100 text-red-700 border-red-200">
+                  <Badge variant="default" className="bg-error-100 text-error-700 border-error-200">
                     {declined.length} abgesagt
                   </Badge>
-                  <Badge variant="default" className="bg-amber-100 text-amber-700 border-amber-200">
+                  <Badge
+                    variant="default"
+                    className="bg-warning-100 text-warning-700 border-warning-200"
+                  >
                     {maybe.length} vielleicht
                   </Badge>
                 </div>
@@ -149,7 +155,7 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                 {/* Accepted list with check-in */}
                 {accepted.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-green-700 mb-2 flex items-center gap-1">
+                    <h4 className="text-sm font-medium text-success-700 mb-2 flex items-center gap-1">
                       <Check className="h-4 w-4" /> Zugesagt ({accepted.length})
                     </h4>
                     <div className="space-y-1">
@@ -159,13 +165,13 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                         return (
                           <div
                             key={rsvp.id}
-                            className={`flex items-center justify-between p-2.5 rounded-lg text-sm ${
-                              isCheckedIn ? 'bg-green-50 border border-green-200' : 'bg-muted'
+                            className={`flex items-center justify-between p-2.5 rounded-xl text-sm ${
+                              isCheckedIn ? 'bg-success-50 border border-success-200' : 'bg-muted'
                             }`}
                           >
                             <span className="font-medium">{rsvp.user?.fullName || 'Mitglied'}</span>
                             {isCheckedIn ? (
-                              <Badge variant="default" className="bg-green-600 text-white">
+                              <Badge variant="default" className="bg-success-600 text-white">
                                 <UserCheck className="h-3 w-3 mr-1" /> Eingecheckt
                               </Badge>
                             ) : (
@@ -196,14 +202,14 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                 {/* Maybe list */}
                 {maybe.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-amber-700 mb-2">
+                    <h4 className="text-sm font-medium text-warning-700 mb-2">
                       Vielleicht ({maybe.length})
                     </h4>
                     <div className="space-y-1">
                       {maybe.map((rsvp) => (
                         <div
                           key={rsvp.id}
-                          className="flex items-center justify-between p-2.5 rounded-lg bg-amber-50 text-sm"
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-warning-50 text-sm"
                         >
                           <span className="font-medium">{rsvp.user?.fullName || 'Mitglied'}</span>
                         </div>
@@ -215,17 +221,17 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                 {/* Declined list */}
                 {declined.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-red-700 mb-2 flex items-center gap-1">
+                    <h4 className="text-sm font-medium text-error-700 mb-2 flex items-center gap-1">
                       <X className="h-4 w-4" /> Abgesagt ({declined.length})
                     </h4>
                     <div className="space-y-1">
                       {declined.map((rsvp) => (
                         <div
                           key={rsvp.id}
-                          className="flex items-center justify-between p-2.5 rounded-lg bg-red-50 text-sm"
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-error-50 text-sm"
                         >
                           <span className="font-medium">{rsvp.user?.fullName || 'Mitglied'}</span>
-                          <Badge variant="outline" className="text-red-600 border-red-200">
+                          <Badge variant="outline" className="text-error-600 border-error-200">
                             Abwesend
                           </Badge>
                         </div>

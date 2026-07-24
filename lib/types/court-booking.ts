@@ -49,6 +49,7 @@ export const CourtSchema = z.object({
   lighting_hours_start: z.string().nullable().optional(),
   lighting_hours_end: z.string().nullable().optional(),
   is_active: z.boolean(),
+  usable_for_training: z.boolean().default(true),
   created_at: z.string().or(z.date()),
   updated_at: z.string().or(z.date()),
 });

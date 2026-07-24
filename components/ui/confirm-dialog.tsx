@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { LoadingButton } from '@/components/ui/loading-button';
 import { AlertTriangle, CheckCircle, Trash2, XCircle } from 'lucide-react';
 
-export type ConfirmVariant = 'danger' | 'warning' | 'default' | 'destructive' | 'brand';
+export type ConfirmVariant = 'danger' | 'warning' | 'default' | 'destructive' | 'primary';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -30,9 +30,9 @@ const variantStyles: Record<ConfirmVariant, { icon: React.ElementType; buttonCla
     icon: Trash2,
     buttonClass: 'bg-destructive hover:bg-destructive/90 text-destructive-foreground',
   },
-  warning: { icon: AlertTriangle, buttonClass: 'bg-yellow-500 hover:bg-yellow-600 text-white' },
+  warning: { icon: AlertTriangle, buttonClass: 'bg-warning-500 hover:bg-warning-600 text-white' },
   default: { icon: XCircle, buttonClass: '' },
-  brand: {
+  primary: {
     icon: CheckCircle,
     buttonClass: 'bg-brand-primary hover:bg-brand-primary/90 text-white',
   },
@@ -71,8 +71,8 @@ export function ConfirmDialog({
               variant === 'danger' || variant === 'destructive'
                 ? 'bg-destructive/10'
                 : variant === 'warning'
-                  ? 'bg-yellow-100'
-                  : variant === 'brand'
+                  ? 'bg-warning-100'
+                  : variant === 'primary'
                     ? 'bg-brand-primary/10'
                     : 'bg-muted'
             }`}
@@ -82,8 +82,8 @@ export function ConfirmDialog({
                 variant === 'danger' || variant === 'destructive'
                   ? 'text-destructive'
                   : variant === 'warning'
-                    ? 'text-yellow-600'
-                    : variant === 'brand'
+                    ? 'text-warning-600'
+                    : variant === 'primary'
                       ? 'text-brand-primary'
                       : 'text-muted-foreground'
               }`}

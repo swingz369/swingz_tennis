@@ -9,7 +9,7 @@ export interface PieChartDatum {
   label: string;
   /** Numeric value (>= 0). Zero values are dropped from the chart. */
   value: number;
-  /** Tailwind color token, e.g. "green-500" or a hex like "#16a34a". */
+  /** Tailwind color token, e.g. "success-500" or a hex like "#16a34a". */
   color: string;
 }
 
@@ -28,46 +28,46 @@ interface Props {
 }
 
 const DEFAULT_COLORS = [
-  '#16a34a', // green-600
-  '#dc2626', // red-600
-  '#d97706', // amber-600
-  '#2563eb', // blue-600
+  '#16a34a', // success-600
+  '#dc2626', // error-600
+  '#d97706', // warning-600
+  '#2563eb', // info-600
   '#6b7280', // gray-500
-  '#9333ea', // purple-600
+  '#9333ea', // info-600
 ];
 
-/** Map a Tailwind token like "green-500" to a hex equivalent. */
+/** Map a Tailwind token like "success-500" to a hex equivalent. */
 function resolveColor(token: string, fallbackIndex: number): string {
   if (token.startsWith('#') || token.startsWith('rgb')) return token;
   const map: Record<string, string> = {
-    'green-100': '#dcfce7',
-    'green-200': '#bbf7d0',
-    'green-300': '#86efac',
-    'green-400': '#4ade80',
-    'green-500': '#22c55e',
-    'green-600': '#16a34a',
-    'green-700': '#15803d',
-    'red-100': '#fee2e2',
-    'red-200': '#fecaca',
-    'red-300': '#fca5a5',
-    'red-400': '#f87171',
-    'red-500': '#ef4444',
-    'red-600': '#dc2626',
-    'red-700': '#b91c1c',
-    'amber-100': '#fef3c7',
-    'amber-200': '#fde68a',
-    'amber-300': '#fcd34d',
-    'amber-400': '#fbbf24',
-    'amber-500': '#f59e0b',
-    'amber-600': '#d97706',
-    'amber-700': '#b45309',
-    'blue-100': '#dbeafe',
-    'blue-200': '#bfdbfe',
-    'blue-300': '#93c5fd',
-    'blue-400': '#60a5fa',
-    'blue-500': '#3b82f6',
-    'blue-600': '#2563eb',
-    'blue-700': '#1d4ed8',
+    'success-100': '#dcfce7',
+    'success-200': '#bbf7d0',
+    'success-300': '#86efac',
+    'success-400': '#4ade80',
+    'success-500': '#22c55e',
+    'success-600': '#16a34a',
+    'success-700': '#15803d',
+    'error-100': '#fee2e2',
+    'error-200': '#fecaca',
+    'error-300': '#fca5a5',
+    'error-400': '#f87171',
+    'error-500': '#ef4444',
+    'error-600': '#dc2626',
+    'error-700': '#b91c1c',
+    'warning-100': '#fef3c7',
+    'warning-200': '#fde68a',
+    'warning-300': '#fcd34d',
+    'warning-400': '#fbbf24',
+    'warning-500': '#f59e0b',
+    'warning-600': '#d97706',
+    'warning-700': '#b45309',
+    'info-100': '#dbeafe',
+    'info-200': '#bfdbfe',
+    'info-300': '#93c5fd',
+    'info-400': '#60a5fa',
+    'info-500': '#3b82f6',
+    'info-600': '#2563eb',
+    'info-700': '#1d4ed8',
     'gray-300': '#d1d5db',
     'gray-400': '#9ca3af',
     'gray-500': '#6b7280',
@@ -200,7 +200,7 @@ export function PieChart({
             <span className="text-sm font-bold tabular-nums text-foreground">{centerLabel}</span>
           )}
           {centerSubLabel && (
-            <span className="text-[10px] text-muted-foreground">{centerSubLabel}</span>
+            <span className="text-2xs text-muted-foreground">{centerSubLabel}</span>
           )}
         </div>
       )}

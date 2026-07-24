@@ -84,7 +84,7 @@ export function ThemeToggle({ className, iconSize = 18, showLabel = false }: The
         <span
           suppressHydrationWarning
           className={cn(
-            'absolute -top-1 -right-1 z-10 h-2.5 w-2.5 rounded-full bg-blue-500 ring-2 ring-background transition-all duration-500',
+            'absolute -top-1 -right-1 z-10 h-2.5 w-2.5 rounded-full bg-info-500 ring-2 ring-background transition-all duration-500',
             mounted && theme === 'system' ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
           )}
           aria-hidden="true"
@@ -94,7 +94,7 @@ export function ThemeToggle({ className, iconSize = 18, showLabel = false }: The
         <span className="text-sm font-medium flex items-center gap-1.5">
           {label}
           {theme === 'system' && (
-            <span className="text-[10px] leading-none px-1.5 py-0.5 rounded-full font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition-all duration-300">
+            <span className="text-2xs leading-none px-1.5 py-0.5 rounded-full font-medium bg-info-100 dark:bg-info-900/40 text-info-600 dark:text-info-300 border border-info-200 dark:border-info-800 transition-all duration-300">
               Auto
             </span>
           )}

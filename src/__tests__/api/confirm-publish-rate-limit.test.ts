@@ -128,7 +128,7 @@ vi.mock('@/src/infrastructure/persistence/schema', () => ({
 vi.mock('drizzle-orm', async (importOriginal) => {
   const actual = await importOriginal();
   return {
-    ...actual,
+    ...(actual as any),
     eq: vi.fn(() => ({})),
     and: vi.fn(() => ({})),
     inArray: vi.fn(() => ({})),
@@ -209,14 +209,14 @@ function ctx(id: string = SEASON_ID) {
 
 describe('POST /api/seasons/[id]/planning/confirm — 3/h Rate Limit', () => {
   let POST: (req: NextRequest, ctx: { params: Promise<{ id: string }> }) => Promise<Response>;
-  let mockedRateLimit: ReturnType<typeof vi.fn>;
+  let mockedRateLimit: any;
 
   beforeAll(async () => {
     const mod = await import('@/app/api/seasons/[id]/planning/confirm/route');
     POST = mod.POST;
     // Use the already-mocked checkRateLimitOrFail (defined at top of file)
     mockedRateLimit = mockCheckRateLimitOrFail;
-  });
+  }, 30000); // Route-Import braucht unter Volllast der Suite > 10s
 
   beforeEach(() => {
     mockedRateLimit.mockReset();

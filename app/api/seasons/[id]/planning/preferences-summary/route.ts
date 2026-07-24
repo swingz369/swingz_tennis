@@ -11,6 +11,7 @@ import { seasonStatistics } from '@/src/infrastructure/persistence/season-planni
 import { eq, and } from 'drizzle-orm';
 import type { PreferencesSummary } from '@/lib/season-planning/types';
 import type { SkillLevel } from '@/lib/types/season-planning';
+import { DAY_LABELS } from '@/lib/season-planning/schedule-constants';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:[id]:planning:preferences-summary');
@@ -32,6 +33,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const isAdmin = await verifyRole(auth, 'admin');
       const isSuperadmin = await verifyRole(auth, 'superadmin');
       if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
+
+      if (!isSuperadmin) {
+        const hasClubAccess = auth.memberships.some(
+          (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
+        );
+        if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
+      }
 
       // Get all preferences
       const prefs = await db
@@ -74,7 +82,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
                 dayOfWeek: val.day_of_week,
                 startTime: val.start_time,
                 failureRate: val.failure_rate,
-                warning: `Tag ${val.day_of_week} um ${val.start_time} hat ${(val.failure_rate * 100).toFixed(0)}% Ausfallrate – Nutzung nicht empfohlen`,
+                warning: `${DAY_LABELS[val.day_of_week] ?? `Tag ${val.day_of_week}`} um ${val.start_time} hat ${(val.failure_rate * 100).toFixed(0)}% Ausfallrate – Nutzung nicht empfohlen`,
               });
             }
           }

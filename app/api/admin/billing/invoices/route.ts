@@ -2,15 +2,19 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { getPagination, buildPaginationMeta } from '@/lib/pagination';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:admin:billing:invoices');
 
-// GET /api/admin/billing/invoices – All invoices for the current club (Admin/Superadmin)
-export async function GET(_request: NextRequest) {
-  return withApiAuth(_request, async (auth) => {
+const VALID_TYPES = new Set(['season', 'membership', 'adhoc']);
+
+// GET /api/admin/billing/invoices – Paginated invoices for the current club (Admin/Superadmin)
+// Query params: page, limit (default 25), type (season|membership|adhoc, omit for all)
+export async function GET(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
     // Rate limiting
-    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     // Permission check
@@ -24,8 +28,12 @@ export async function GET(_request: NextRequest) {
         return NextResponse.json({ error: 'No club selected' }, { status: 400 });
       }
 
+      const { searchParams } = new URL(request.url);
+      const { page, offset, limit } = getPagination(Object.fromEntries(searchParams), 25);
+      const type = searchParams.get('type');
+
       // Fetch invoices for the current club, joining with users for member name
-      const { data: invoicesData, error: invoicesError } = await supabase
+      let query = supabase
         .from('invoices')
         .select(
           `
@@ -40,11 +48,20 @@ export async function GET(_request: NextRequest) {
           due_date,
           paid_at,
           member_id,
+          invoice_type,
           users!invoices_member_id_fkey(full_name, email)
-        `
+        `,
+          { count: 'exact' }
         )
         .eq('club_id', clubId)
-        .order('due_date', { ascending: false });
+        .order('due_date', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (type && VALID_TYPES.has(type)) {
+        query = query.eq('invoice_type', type);
+      }
+
+      const { data: invoicesData, error: invoicesError, count } = await query;
 
       if (invoicesError) {
         return NextResponse.json({ error: invoicesError.message }, { status: 500 });
@@ -60,12 +77,16 @@ export async function GET(_request: NextRequest) {
         paidAmount: inv.paid_amount,
         currency: inv.currency,
         status: inv.status,
+        invoiceType: inv.invoice_type ?? undefined,
         invoiceDate: inv.invoice_date,
         dueDate: inv.due_date,
         paidAt: inv.paid_at,
       }));
 
-      return NextResponse.json({ data: invoices });
+      return NextResponse.json({
+        data: invoices,
+        pagination: buildPaginationMeta(page, limit, count),
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Internal server error';
       log.error('Error fetching invoices:', error);

@@ -37,7 +37,7 @@ export function QuickActions({
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {actions.map((action) => (
             <Link key={action.href + action.label} href={action.href}>
-              <div className="border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group rounded-2xl h-full">
+              <div className="border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group rounded-xl h-full">
                 <div className="p-5 flex flex-col gap-3 h-full">
                   <IconBox
                     icon={action.icon}
@@ -76,7 +76,7 @@ export function QuickActions({
           <Link
             key={action.href + action.label}
             href={action.href}
-            className="flex flex-col items-center gap-2 p-3.5 rounded-2xl bg-background border border-border hover:border-brand-light/30 hover:shadow-sm transition-all active:scale-95 group"
+            className="flex flex-col items-center gap-2 p-3.5 rounded-xl border border-border dark:border-white/10 shadow-sm hover:border-brand-light/30 hover:shadow-md transition-all active:scale-95 group"
           >
             <IconBox
               icon={action.icon}
@@ -84,7 +84,7 @@ export function QuickActions({
               variant={action.variant ?? 'light'}
               className="group-hover:scale-110 transition-transform duration-300"
             />
-            <span className="text-[11px] font-semibold text-center leading-tight text-muted-foreground group-hover:text-foreground transition-colors">
+            <span className="text-2xs font-semibold text-center leading-tight text-muted-foreground group-hover:text-foreground transition-colors">
               {action.label}
             </span>
           </Link>

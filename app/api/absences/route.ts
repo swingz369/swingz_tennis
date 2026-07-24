@@ -26,6 +26,10 @@ export async function POST(request: NextRequest) {
       return rateLimitError;
     }
 
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Club-Kontext ausgewählt' }, { status: 400 });
+    }
+
     try {
       const body = await request.json();
 
@@ -41,7 +45,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const absence = await absenceService.createAbsence(validation.data as any);
+      const absence = await absenceService.createAbsence(validation.data as any, auth.clubId);
 
       return NextResponse.json({ success: true, absence });
     } catch (error) {
@@ -67,6 +71,11 @@ export async function GET(request: NextRequest) {
       return rateLimitError;
     }
 
+    if (!auth.clubId) {
+      return NextResponse.json({ absences: [] });
+    }
+    const clubId = auth.clubId;
+
     try {
       const { searchParams } = new URL(request.url);
       const trainerId = searchParams.get('trainerId');
@@ -78,36 +87,38 @@ export async function GET(request: NextRequest) {
 
       if (active) {
         const today = new Date().toISOString().split('T')[0];
-        const absences = await absenceService.getActiveAbsencesForDate(today);
+        const absences = await absenceService.getActiveAbsencesForDate(today, clubId);
         return NextResponse.json({ absences });
       }
 
       if (trainerId) {
-        const absences = await absenceService.getAbsencesByTrainerId(trainerId);
+        const absences = await absenceService.getAbsencesByTrainerId(trainerId, clubId);
         return NextResponse.json({ absences });
       }
 
       if (status) {
         const absences = await absenceService.getAbsencesByStatus(
-          status as 'pending' | 'approved' | 'rejected'
+          status as 'pending' | 'approved' | 'rejected',
+          clubId
         );
         return NextResponse.json({ absences });
       }
 
       if (type) {
         const absences = await absenceService.getAbsencesByType(
-          type as 'sick' | 'vacation' | 'personal' | 'other'
+          type as 'sick' | 'vacation' | 'personal' | 'other',
+          clubId
         );
         return NextResponse.json({ absences });
       }
 
       if (startDate && endDate) {
-        const absences = await absenceService.getAbsencesByDateRange(startDate, endDate);
+        const absences = await absenceService.getAbsencesByDateRange(startDate, endDate, clubId);
         return NextResponse.json({ absences });
       }
 
-      // Get all absences (filtered by club via auth.clubId)
-      const absences = await absenceService.getAllAbsences();
+      // Get all absences, scoped to the caller's active club
+      const absences = await absenceService.getAllAbsences(clubId);
       return NextResponse.json({ absences });
     } catch (error) {
       log.error('Absence fetch error:', error);

@@ -66,10 +66,11 @@ export async function POST(request: NextRequest) {
       // Audit log each deactivation
       if (deactivated && deactivated.length > 0) {
         const auditEntries = deactivated.map((entry) => ({
-          user_id: auth.user.id,
+          actor_id: auth.user.id,
           action: 'member_bulk_deactivated',
           resource_type: 'member',
           resource_id: entry.user_id,
+          club_id: clubId,
           metadata: { reason, bulk: true, count: deactivated.length },
           ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
           user_agent: request.headers.get('user-agent'),

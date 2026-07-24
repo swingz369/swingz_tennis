@@ -51,7 +51,7 @@ export function PushNotificationToggle({
       >
         <div className="flex items-center gap-3">
           <div
-            className={`rounded-lg p-2 ${isSubscribed ? 'bg-brand-primary/10 text-brand-primary' : 'bg-muted text-muted-foreground'}`}
+            className={`rounded-xl p-2 ${isSubscribed ? 'bg-brand-primary/10 text-brand-primary' : 'bg-muted text-muted-foreground'}`}
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />

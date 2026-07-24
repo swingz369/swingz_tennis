@@ -6,7 +6,6 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:booking-rules');
@@ -20,17 +19,10 @@ export async function GET(req: NextRequest) {
     if (rateLimitError) return rateLimitError;
 
     const url = new URL(req.url);
-    let clubId = url.searchParams.get('clubId');
-
-    if (!clubId) {
-      if (auth.role === 'superadmin') {
-        clubId = req.cookies.get(ADMIN_CLUB_COOKIE)?.value ?? null;
-        if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
-      } else {
-        clubId = auth.clubId;
-      }
-    }
-
+    // auth.clubId was resolved by withApiAuth → buildAuthContext → resolveActiveClub,
+    // which honors ADMIN_CLUB_COOKIE for superadmin (club-exists strategy) and admins
+    // (membership-match). Query param still wins for explicit overrides.
+    const clubId = url.searchParams.get('clubId') ?? auth.clubId;
     if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
 
     const { data, error } = await auth.supabase
@@ -73,16 +65,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
-    let clubId: string | null = body.clubId ?? null;
-    if (!clubId) {
-      if (auth.role === 'superadmin') {
-        clubId = req.cookies.get(ADMIN_CLUB_COOKIE)?.value ?? null;
-        if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
-      } else {
-        clubId = auth.clubId;
-      }
-    }
-    if (!clubId) return NextResponse.json({ error: 'No club context' }, { status: 400 });
+    // auth.clubId is the cookie-aware resolution result (see comment in GET).
+    const clubId: string | null = body.clubId ?? auth.clubId;
+    if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
 
     const {
       max_booking_duration_minutes = 90,

@@ -140,7 +140,7 @@ function DefaultErrorFallback({
         </p>
 
         {showDetails && (
-          <details className="mb-6 rounded-lg bg-muted p-4 text-left">
+          <details className="mb-6 rounded-xl bg-muted p-4 text-left">
             <summary className="cursor-pointer font-semibold text-sm">
               Fehlerdetails anzeigen
             </summary>

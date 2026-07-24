@@ -42,7 +42,12 @@ const DEFAULT_RETRY_CONFIG = {
  * Enhanced fetch with timeout and retry
  */
 export async function fetchWithTimeout(url: string, options: FetchOptions = {}): Promise<Response> {
-  const { timeout = DEFAULT_TIMEOUT, retry = DEFAULT_RETRY_CONFIG, ...fetchOptions } = options;
+  const {
+    timeout = DEFAULT_TIMEOUT,
+    retry = DEFAULT_RETRY_CONFIG,
+    signal: externalSignal,
+    ...fetchOptions
+  } = options;
 
   const retryConfig = { ...DEFAULT_RETRY_CONFIG, ...retry };
   let lastError: Error | null = null;
@@ -50,11 +55,15 @@ export async function fetchWithTimeout(url: string, options: FetchOptions = {}):
   for (let attempt = 0; attempt < retryConfig.maxAttempts; attempt++) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
+    // Caller's signal (e.g. React Query's cancellation on unmount) must actually
+    // reach fetch() — otherwise a cancelled query's request keeps running in the
+    // background and a remount fires a second, real request against the server.
+    const signal = combineAbortSignals(externalSignal ?? undefined, controller.signal);
 
     try {
       const response = await fetch(url, {
         ...fetchOptions,
-        signal: controller.signal,
+        signal,
       });
 
       clearTimeout(timeoutId);

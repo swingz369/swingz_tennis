@@ -1,19 +1,11 @@
 import * as React from 'react';
+import { FormProvider } from 'react-hook-form';
 import { Slot } from '@radix-ui/react-slot';
-import { cva } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
-const formVariants = cva('space-y-6', {
-  variants: {},
-  defaultVariants: {},
-});
-
-const Form = React.forwardRef<HTMLFormElement, React.FormHTMLAttributes<HTMLFormElement>>(
-  ({ className, ...props }, ref) => {
-    return <form ref={ref} className={cn(formVariants(), className)} {...props} />;
-  }
-);
-Form.displayName = 'Form';
+// react-hook-form's context provider — renders no DOM element itself.
+// The actual <form onSubmit={...}> tag belongs to the consumer, nested inside.
+const Form = FormProvider;
 
 const FormField = React.forwardRef<
   HTMLDivElement,

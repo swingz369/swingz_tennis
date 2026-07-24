@@ -109,8 +109,10 @@ class MemoryCache {
 export const cache = new MemoryCache();
 
 // Run cleanup every 10 minutes
-if (typeof setInterval !== 'undefined') {
-  setInterval(
+// ponytail: globalThis-Guard verhindert doppelte Intervalle bei HMR-Reload in Dev
+const CACHE_CLEANUP_KEY = '__swingzCacheCleanup';
+if (typeof setInterval !== 'undefined' && !(globalThis as any)[CACHE_CLEANUP_KEY]) {
+  (globalThis as any)[CACHE_CLEANUP_KEY] = setInterval(
     () => {
       cache.cleanup();
     },

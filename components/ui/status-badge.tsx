@@ -49,6 +49,12 @@ const STATUS_CONFIG: Record<
   planning: { label: 'Planung', variant: 'info' },
   published: { label: 'Veröffentlicht', variant: 'success' },
   manual_review: { label: 'Prüfung', variant: 'warning' },
+
+  // Booking waitlist — domain-specific. The dashboard's `pending` bookings
+  // ARE waitlist entries (pending confirmation / free slot), so we expose
+  // an explicit `waitlist` key alongside the generic `pending` mapping.
+  // Consumers that need the booking-domain label use this key directly.
+  waitlist: { label: 'Warteliste', variant: 'warning' },
 };
 
 interface StatusBadgeProps {

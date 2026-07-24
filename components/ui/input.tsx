@@ -3,14 +3,15 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const inputVariants = cva(
-  'flex w-full rounded-xl border bg-background px-4 py-3 text-base shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brandPrimary/20 disabled:cursor-not-allowed disabled:opacity-50',
+  'flex w-full rounded-xl border bg-background px-4 py-3 text-base shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/20 disabled:cursor-not-allowed disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'border-border focus:border-brandPrimary',
+        default: 'border-border focus:border-brand-primary',
         filled:
-          'border-0 border-b-2 border-border bg-muted rounded-none px-0 focus:border-brandPrimary focus:ring-0',
-        underlined: 'border-0 border-b-2 border-border rounded-none px-0 focus:border-brandPrimary',
+          'border-0 border-b-2 border-border bg-muted rounded-none px-0 focus:border-brand-primary focus:ring-0',
+        underlined:
+          'border-0 border-b-2 border-border rounded-none px-0 focus:border-brand-primary',
         search: 'pl-10 pr-4 py-2.5',
       },
       size: {
@@ -50,7 +51,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             inputVariants({ variant, size }),
             leftIcon && 'pl-10',
             rightIcon && 'pr-10',
-            error && 'border-red-500 focus:border-red-500 focus:ring-red-500/20',
+            error && 'border-error-500 focus:border-error-500 focus:ring-error-500/20',
             className
           )}
           ref={ref}
@@ -61,7 +62,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {rightIcon}
           </div>
         )}
-        {error && <div className="absolute -bottom-6 left-0 text-sm text-red-600">{error}</div>}
+        {error && <div className="absolute -bottom-6 left-0 text-sm text-error-600">{error}</div>}
       </div>
     );
   }

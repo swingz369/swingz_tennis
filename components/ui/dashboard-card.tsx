@@ -13,15 +13,7 @@ interface DashboardCardProps {
   icon?: LucideIcon;
   /** Icon variant for the IconBox */
   iconVariant?:
-    | 'primary'
-    | 'light'
-    | 'blue'
-    | 'green'
-    | 'amber'
-    | 'purple'
-    | 'red'
-    | 'orange'
-    | 'gray';
+    'primary' | 'light' | 'blue' | 'green' | 'amber' | 'purple' | 'red' | 'orange' | 'gray';
   /** Optional "View all" or action link */
   action?: {
     label: string;
@@ -44,7 +36,12 @@ export function DashboardCard({
   noHeaderPadding,
 }: DashboardCardProps) {
   return (
-    <Card className={cn('border border-border dark:border-white/10 shadow-sm', className)}>
+    <Card
+      className={cn(
+        'border border-border dark:border-white/10 shadow-none hover:shadow-none hover:translate-y-0',
+        className
+      )}
+    >
       <CardHeader className={cn('pb-3', noHeaderPadding && 'px-4 pt-4')}>
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">

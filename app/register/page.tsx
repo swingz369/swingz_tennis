@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { IconBox } from '@/components/ui/icon-box';
 import { Textarea } from '@/components/ui/textarea';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
@@ -42,22 +43,31 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="flex items-center justify-between px-6 py-4 border-b">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Trophy className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="font-bold text-lg">SwingZ</span>
-        </Link>
-        <ThemeToggle />
+      <header className="sticky top-0 z-40 glass">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <nav className="flex h-16 items-center justify-between">
+            <Link href="/" className="flex items-center gap-2.5">
+              <IconBox icon={Trophy} size="sm" variant="gradient-primary" />
+              <span className="font-display text-lg font-bold tracking-tight text-foreground">
+                SWINGZ
+              </span>
+            </Link>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/login">Anmelden</Link>
+              </Button>
+              <ThemeToggle />
+            </div>
+          </nav>
+        </div>
       </header>
 
       <div className="flex flex-1 items-center justify-center p-4">
         <div className="w-full max-w-md space-y-6">
           {done ? (
             <Card className="p-8 text-center space-y-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20 mx-auto">
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success-100 dark:bg-success-900/20 mx-auto">
+                <CheckCircle2 className="h-6 w-6 text-success-600" />
               </div>
               <h2 className="text-xl font-bold">Anfrage eingegangen!</h2>
               <p className="text-sm text-muted-foreground">
@@ -90,13 +100,14 @@ export default function RegisterPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="clubName">Vereinsname</Label>
+                    <Label htmlFor="clubName">Vereinsname *</Label>
                     <Input
                       id="clubName"
                       value={clubName}
                       onChange={(e) => setClubName(e.target.value)}
                       placeholder="TC Musterstadt e.V."
                       className="mt-1.5"
+                      required
                     />
                   </div>
                   <div>
@@ -123,7 +134,11 @@ export default function RegisterPage() {
                     />
                   </div>
                   {error && <p className="text-sm text-destructive">{error}</p>}
-                  <Button type="submit" className="w-full" disabled={loading || !name || !email}>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loading || !name || !clubName || !email}
+                  >
                     {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                     Anfrage absenden
                   </Button>

@@ -52,7 +52,7 @@ export function CalendarShell({
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 rounded-lg"
+                  className="h-8 w-8 rounded-xl"
                   onClick={nav.onPrev}
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -63,7 +63,7 @@ export function CalendarShell({
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 rounded-lg"
+                  className="h-8 w-8 rounded-xl"
                   onClick={nav.onNext}
                 >
                   <ChevronRight className="h-4 w-4" />

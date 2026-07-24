@@ -151,19 +151,19 @@ export default function OnboardingTrialBooking({
 
   if (success) {
     return (
-      <Card className="border-2 border-green-200 bg-green-50/50 dark:bg-green-900/10">
+      <Card className="border-2 border-success-200 bg-success-50/50 dark:bg-success-900/10">
         <CardContent className="p-8 text-center space-y-4">
           <div className="flex items-center justify-center">
-            <CheckCircle className="h-16 w-16 text-green-500" />
+            <CheckCircle className="h-16 w-16 text-success-500" />
           </div>
-          <h2 className="text-xl font-bold text-green-800 dark:text-green-300">
+          <h2 className="text-xl font-bold text-success-800 dark:text-success-300">
             Probetraining angefragt!
           </h2>
-          <p className="text-green-700 dark:text-green-400 max-w-md mx-auto">
+          <p className="text-success-700 dark:text-success-400 max-w-md mx-auto">
             Vielen Dank{resolvedClubName ? ` für dein Interesse an ${resolvedClubName}` : ''}! Wir
             prüfen deinen Wunschtermin und melden uns in Kürze per E-Mail.
           </p>
-          <p className="text-sm text-green-600 dark:text-green-500">
+          <p className="text-sm text-success-600 dark:text-success-500">
             Nach deinem Probetraining wirst du automatisch als Mitglied hinzugefügt.
           </p>
         </CardContent>
@@ -174,9 +174,9 @@ export default function OnboardingTrialBooking({
   return (
     <Card>
       <CardContent className="p-6 space-y-5">
-        <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-50 border border-blue-200 dark:bg-blue-900/10 dark:border-blue-800">
-          <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
-          <div className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-info-50 border border-info-200 dark:bg-info-900/10 dark:border-info-800">
+          <Info className="h-5 w-5 text-info-600 mt-0.5 shrink-0" />
+          <div className="text-sm text-info-800 dark:text-info-300 space-y-1">
             <p className="font-medium">So funktioniert&apos;s:</p>
             <ol className="list-decimal list-inside space-y-0.5">
               <li>Wähle deinen Wunschtermin für ein kostenloses Probetraining</li>
@@ -187,7 +187,7 @@ export default function OnboardingTrialBooking({
         </div>
 
         {/* Pre-filled info */}
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-primary to-brand-light flex items-center justify-center text-white font-bold text-sm">
             {firstName.charAt(0).toUpperCase()}
           </div>
@@ -200,7 +200,7 @@ export default function OnboardingTrialBooking({
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-error-50 border border-error-200 text-error-700 text-sm">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>
@@ -218,7 +218,7 @@ export default function OnboardingTrialBooking({
                   setFieldErrors((prev) => ({ ...prev, club: '' }));
                 }}
               >
-                <SelectTrigger id="club" className={fieldErrors.club ? 'border-red-300' : ''}>
+                <SelectTrigger id="club" className={fieldErrors.club ? 'border-error-300' : ''}>
                   <SelectValue placeholder="Verein auswählen..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -229,7 +229,9 @@ export default function OnboardingTrialBooking({
                   ))}
                 </SelectContent>
               </Select>
-              {fieldErrors.club && <p className="text-xs text-red-500 mt-1">{fieldErrors.club}</p>}
+              {fieldErrors.club && (
+                <p className="text-xs text-error-500 mt-1">{fieldErrors.club}</p>
+              )}
             </div>
           )}
 
@@ -248,10 +250,10 @@ export default function OnboardingTrialBooking({
                   setFieldErrors((prev) => ({ ...prev, phone: '' }));
                 }}
                 placeholder="+49 123 456789"
-                className={fieldErrors.phone ? 'border-red-300' : ''}
+                className={fieldErrors.phone ? 'border-error-300' : ''}
               />
               {fieldErrors.phone && (
-                <p className="text-xs text-red-500 mt-1">{fieldErrors.phone}</p>
+                <p className="text-xs text-error-500 mt-1">{fieldErrors.phone}</p>
               )}
             </div>
           )}
@@ -266,10 +268,10 @@ export default function OnboardingTrialBooking({
                 setDateOfBirth(e.target.value);
                 setFieldErrors((prev) => ({ ...prev, dateOfBirth: '' }));
               }}
-              className={fieldErrors.dateOfBirth ? 'border-red-300' : ''}
+              className={fieldErrors.dateOfBirth ? 'border-error-300' : ''}
             />
             {fieldErrors.dateOfBirth && (
-              <p className="text-xs text-red-500 mt-1">{fieldErrors.dateOfBirth}</p>
+              <p className="text-xs text-error-500 mt-1">{fieldErrors.dateOfBirth}</p>
             )}
           </div>
 
@@ -287,10 +289,10 @@ export default function OnboardingTrialBooking({
                   setFieldErrors((prev) => ({ ...prev, preferredDate: '' }));
                 }}
                 min={new Date().toISOString().split('T')[0]}
-                className={fieldErrors.preferredDate ? 'border-red-300' : ''}
+                className={fieldErrors.preferredDate ? 'border-error-300' : ''}
               />
               {fieldErrors.preferredDate && (
-                <p className="text-xs text-red-500 mt-1">{fieldErrors.preferredDate}</p>
+                <p className="text-xs text-error-500 mt-1">{fieldErrors.preferredDate}</p>
               )}
             </div>
             <div>
@@ -305,10 +307,10 @@ export default function OnboardingTrialBooking({
                   setPreferredTime(e.target.value);
                   setFieldErrors((prev) => ({ ...prev, preferredTime: '' }));
                 }}
-                className={fieldErrors.preferredTime ? 'border-red-300' : ''}
+                className={fieldErrors.preferredTime ? 'border-error-300' : ''}
               />
               {fieldErrors.preferredTime && (
-                <p className="text-xs text-red-500 mt-1">{fieldErrors.preferredTime}</p>
+                <p className="text-xs text-error-500 mt-1">{fieldErrors.preferredTime}</p>
               )}
             </div>
           </div>

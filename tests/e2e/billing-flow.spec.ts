@@ -11,29 +11,28 @@ test.describe('Billing Page', () => {
     await loginAs(page, process.env.TEST_ADMIN_EMAIL!, process.env.TEST_ADMIN_PASSWORD!);
   });
 
-  test('Billing page loads with subscriptions and invoices tabs', async ({ page }) => {
-    await page.goto('/admin/billing', { waitUntil: 'networkidle', timeout: 20000 });
+  test('Billing page loads with all five tabs', async ({ page }) => {
+    await page.goto('/admin/billing', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('h1')).toContainText(/abrechnung/i, { timeout: 8000 });
 
-    // Verify tab navigation exists
-    const subscriptionsTab = page.getByRole('button', { name: /abonnements/i });
-    const invoicesTab = page.getByRole('button', { name: /rechnungen/i });
+    // Tabs heute: Rechnungen · Kategorien · Trainer · SEPA-Export · DATEV
+    for (const tabName of [/rechnungen/i, /kategorien/i, /trainer/i, /sepa/i, /datev/i]) {
+      await expect(page.getByRole('tab', { name: tabName })).toBeVisible({ timeout: 5000 });
+    }
 
-    await expect(subscriptionsTab).toBeVisible({ timeout: 5000 });
-    await expect(invoicesTab).toBeVisible({ timeout: 5000 });
-
-    // Verify action buttons are present
-    await expect(page.getByRole('button', { name: /rechnungen generieren/i })).toBeVisible();
+    // Verify action buttons are present (Zahlungs-Import wurde entfernt)
+    await expect(
+      page.getByRole('button', { name: /rechnungen generieren/i }).first()
+    ).toBeVisible();
     await expect(page.getByRole('button', { name: /rechnung erstellen/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /zahlungen importieren/i })).toBeVisible();
   });
 
   test('Invoices tab shows invoice table or empty state', async ({ page }) => {
-    await page.goto('/admin/billing', { waitUntil: 'networkidle', timeout: 20000 });
+    await page.goto('/admin/billing', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('h1')).toContainText(/abrechnung/i, { timeout: 8000 });
 
     // Click invoices tab
-    const invoicesTab = page.getByRole('button', { name: /rechnungen/i });
+    const invoicesTab = page.getByRole('tab', { name: /rechnungen/i });
     await invoicesTab.click();
 
     // Either an empty state or a table should render
@@ -42,18 +41,16 @@ test.describe('Billing Page', () => {
     });
   });
 
-  test('Subscriptions tab shows subscription table or empty state', async ({ page }) => {
-    await page.goto('/admin/billing', { waitUntil: 'networkidle', timeout: 20000 });
+  test('Kategorien tab shows fee categories', async ({ page }) => {
+    await page.goto('/admin/billing', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('h1')).toContainText(/abrechnung/i, { timeout: 8000 });
 
-    // Subscriptions tab is default
-    await expect(page.locator('table, :text("Noch keine Abonnements")').first()).toBeVisible({
-      timeout: 8000,
-    });
+    await page.getByRole('tab', { name: /kategorien/i }).click();
+    await expect(page.locator('body')).toContainText(/kategorie/i, { timeout: 8000 });
   });
 
   test('Generate invoices button is clickable', async ({ page }) => {
-    await page.goto('/admin/billing', { waitUntil: 'networkidle', timeout: 20000 });
+    await page.goto('/admin/billing', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('h1')).toContainText(/abrechnung/i, { timeout: 8000 });
 
     const generateBtn = page.getByRole('button', { name: /rechnungen generieren/i });
@@ -71,7 +68,7 @@ test.describe('Billing Page', () => {
   });
 
   test('Create invoice dialog opens and closes', async ({ page }) => {
-    await page.goto('/admin/billing', { waitUntil: 'networkidle', timeout: 20000 });
+    await page.goto('/admin/billing', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('h1')).toContainText(/abrechnung/i, { timeout: 8000 });
 
     const createBtn = page.getByRole('button', { name: /rechnung erstellen/i });
@@ -89,24 +86,8 @@ test.describe('Billing Page', () => {
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 3000 });
   });
 
-  test('Payment import dialog opens and closes', async ({ page }) => {
-    await page.goto('/admin/billing', { waitUntil: 'networkidle', timeout: 20000 });
-    await expect(page.locator('h1')).toContainText(/abrechnung/i, { timeout: 8000 });
-
-    const importBtn = page.getByRole('button', { name: /zahlungen importieren/i });
-    await expect(importBtn).toBeVisible();
-
-    // Open dialog
-    await importBtn.click();
-    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5000 });
-
-    // Dialog should have file input and cancel button
-    await expect(page.getByRole('button', { name: /abbrechen/i })).toBeVisible();
-    await page.getByRole('button', { name: /abbrechen/i }).click();
-
-    // Dialog should close
-    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 3000 });
-  });
+  // "Zahlungen importieren" wurde aus der Billing-Seite entfernt (offener
+  // Backlog Cluster 4: Zahlungs-APIs in /admin/billing integrieren) — Test folgt dann.
 });
 
 test.describe('Billing API Access Control', () => {
@@ -118,12 +99,13 @@ test.describe('Billing API Access Control', () => {
     );
 
     // Navigate to admin billing (superadmin should see billing)
-    await page.goto('/admin/billing', { waitUntil: 'networkidle', timeout: 20000 });
+    await page.goto('/admin/billing', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('h1')).toContainText(/abrechnung/i, { timeout: 8000 });
   });
 
   test('Create invoice dialog — fill form and submit', async ({ page }) => {
-    await page.goto('/admin/billing', { waitUntil: 'networkidle', timeout: 20000 });
+    await loginAs(page, process.env.TEST_ADMIN_EMAIL!, process.env.TEST_ADMIN_PASSWORD!);
+    await page.goto('/admin/billing', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('h1')).toContainText(/abrechnung/i, { timeout: 8000 });
 
     // Open create invoice dialog
@@ -154,7 +136,7 @@ test.describe('Billing API Access Control', () => {
   test('member is redirected away from admin billing', async ({ page }) => {
     await loginAsRoleAware(page, process.env.TEST_MEMBER_EMAIL!, process.env.TEST_MEMBER_PASSWORD!);
 
-    await page.goto('/admin/billing', { waitUntil: 'networkidle', timeout: 20000 });
+    await page.goto('/admin/billing', { waitUntil: 'domcontentloaded' });
 
     // Member should be redirected away from admin route
     const url = page.url();

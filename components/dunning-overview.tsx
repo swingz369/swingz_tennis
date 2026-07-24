@@ -142,7 +142,7 @@ export function DunningOverview({ clubId, limit = 10 }: DunningOverviewProps) {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            <AlertTriangle className="h-4 w-4 text-warning-500" />
             Letzte Mahnungen ({recent.length} von {kpis.totalRecords})
           </CardTitle>
         </CardHeader>
@@ -177,12 +177,12 @@ export function DunningOverview({ clubId, limit = 10 }: DunningOverviewProps) {
                           </Badge>
                         )}
                         {r.is_b2b && (
-                          <Badge variant="outline" className="text-[10px]">
+                          <Badge variant="outline" className="text-2xs">
                             §288 Abs. 2 BGB
                           </Badge>
                         )}
                         {interest > 0 && (
-                          <Badge variant="secondary" className="text-[10px]">
+                          <Badge variant="secondary" className="text-2xs">
                             + {formatCurrency(interest)} Zinsen
                           </Badge>
                         )}
@@ -190,7 +190,7 @@ export function DunningOverview({ clubId, limit = 10 }: DunningOverviewProps) {
                       {r.notes && (
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{r.notes}</p>
                       )}
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                      <p className="text-2xs text-muted-foreground mt-0.5">
                         {r.sent_at && <>Versendet {formatRelativeTime(r.sent_at)}</>}
                         {r.due_date && (
                           <>
@@ -202,7 +202,7 @@ export function DunningOverview({ clubId, limit = 10 }: DunningOverviewProps) {
                     <div className="text-right shrink-0">
                       <p className="text-base font-bold tabular-nums">{formatCurrency(totalDue)}</p>
                       {r.base_rate_applied !== null && r.base_rate_applied > 0 && (
-                        <p className="text-[10px] text-muted-foreground tabular-nums">
+                        <p className="text-2xs text-muted-foreground tabular-nums">
                           Basis {(Number(r.base_rate_applied) * 100).toFixed(2)} %
                         </p>
                       )}
@@ -232,21 +232,21 @@ function KpiCard({
   tone: 'amber' | 'red' | 'purple' | 'green';
 }) {
   const toneClass = {
-    amber: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
-    red: 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400',
-    purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-    green: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
+    amber: 'bg-warning-50 dark:bg-warning-900/20 text-warning-600 dark:text-warning-400',
+    red: 'bg-error-50 dark:bg-error-900/20 text-error-600 dark:text-error-400',
+    purple: 'bg-info-50 dark:bg-info-900/20 text-info-600 dark:text-info-400',
+    green: 'bg-success-50 dark:bg-success-900/20 text-success-600 dark:text-success-400',
   }[tone];
 
   return (
     <Card className="border-0 shadow-sm">
       <CardContent className="p-4">
-        <div className={`flex h-9 w-9 items-center justify-center rounded-lg mb-2.5 ${toneClass}`}>
+        <div className={`flex h-9 w-9 items-center justify-center rounded-xl mb-2.5 ${toneClass}`}>
           <Icon className="h-5 w-5" />
         </div>
         <p className="text-xl font-bold tabular-nums leading-tight">{value}</p>
         <p className="text-xs font-medium mt-0.5">{label}</p>
-        {hint && <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">{hint}</p>}
+        {hint && <p className="text-2xs text-muted-foreground mt-1 line-clamp-1">{hint}</p>}
       </CardContent>
     </Card>
   );

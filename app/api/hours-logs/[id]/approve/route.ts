@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyTrainerInClub, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { billingEngine } from '@/lib/billing-engine';
@@ -26,6 +26,21 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
     try {
       const { id } = await params;
+
+      const existing = await hoursLogService.getHoursLogById(id);
+      if (!existing) {
+        return NextResponse.json(
+          { success: false, error: 'Stundennachweis nicht gefunden' },
+          { status: 404 }
+        );
+      }
+      if (!(await verifyTrainerInClub(auth, existing.trainerId))) {
+        return NextResponse.json(
+          { success: false, error: 'Stundennachweis nicht gefunden' },
+          { status: 404 }
+        );
+      }
+
       const hoursLog = await hoursLogService.approveHoursLog(id, auth.user.id);
 
       // Fire-and-forget: create an invoice line for the approved hours.

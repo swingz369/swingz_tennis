@@ -17,6 +17,7 @@ import {
   numeric,
   index,
   text,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm/relations';
 
@@ -49,6 +50,10 @@ export const clubs = pgTable(
     default_hourly_rate: numeric('default_hourly_rate', { precision: 10, scale: 2 })
       .notNull()
       .default('15.00'),
+    // city: varchar(200) ist seit den ursprünglichen Vereins-Migrations in der DB
+    // vorhanden, war aber bislang nicht im Drizzle-Abbild. Owner-Master-Drawer
+    // (Phase 2) patcht das Feld — daher jetzt ergänzt.
+    city: varchar('city', { length: 200 }),
     logo_url: text('logo_url'),
     description: text('description'),
     founding_date: timestamp('founding_date', { mode: 'date' }),
@@ -73,8 +78,15 @@ export const clubs = pgTable(
       weather_integration: false,
       league_lineup: false,
       work_duty: false,
+      dynamic_pricing: false,
     }),
     status: varchar('status', { length: 20 }).notNull().default('active'),
+    // Phase 1 Soft-Delete: deleted_at/deleted_by/deletion_reason über
+    // Migration 20260803 angelegt. Drizzle hier als TS-Abbild. Owner sieht
+    // status='deleted' Einträge; alle anderen Rollen via RLS gefiltert.
+    deleted_at: timestamp('deleted_at', { withTimezone: true }),
+    deleted_by: uuid('deleted_by').references(() => users.id),
+    deletion_reason: text('deletion_reason'),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),
   },
@@ -159,6 +171,7 @@ export const courts = pgTable(
     description: text('description'),
     status: text('status').default('active'),
     updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    usable_for_training: boolean('usable_for_training').notNull().default(true),
   },
   (table) => ({
     club_idx: index('courts_club_idx').on(table.club_id),
@@ -226,6 +239,9 @@ export const groups = pgTable(
     age_group: varchar('age_group', { length: 20 }).notNull().default('senior'),
     is_active: boolean('is_active').notNull().default(true),
     member_ids: jsonb('member_ids').$type<string[]>().notNull().default([]),
+    // Q2-Audit: optionale individuelle Kapazität; NULL = globaler Default aus
+    // season_planning_configs (group_max_size / kids_group_max_size).
+    max_size: integer('max_size'),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),
   },
@@ -244,12 +260,22 @@ export const pricing_rules = pgTable(
       .references(() => clubs.id, { onDelete: 'cascade' }),
     court_id: uuid('court_id').references(() => courts.id, { onDelete: 'cascade' }),
     rule_type: varchar('rule_type', { length: 50 }).notNull().default('hourly'), // 'hourly', 'member', 'trial', 'group'
+    name: varchar('name', { length: 200 }),
+    description: text('description'),
     min_booking_hours: numeric('min_booking_hours', { precision: 5, scale: 2 }).default('1'),
     max_booking_hours: numeric('max_booking_hours', { precision: 5, scale: 2 }).default('4'),
     price_per_hour: numeric('price_per_hour', { precision: 10, scale: 2 }).notNull(),
     advance_booking_days: integer('advance_booking_days').default(7),
     applies_to_member_types: jsonb('applies_to_member_types').$type<string[]>().default([]), // [] = all
     applies_to_groups: jsonb('applies_to_groups').$type<string[]>().default([]), // [] = all
+    // P2 #11: Dynamic Pricing — time-of-day, day-of-week, season
+    time_ranges: jsonb('time_ranges')
+      .$type<Array<{ start: string; end: string; priceMultiplier: number }>>()
+      .default([]),
+    days_of_week: integer('days_of_week').array(),
+    season_id: uuid('season_id'),
+    valid_from: timestamp('valid_from', { withTimezone: true }),
+    valid_until: timestamp('valid_until', { withTimezone: true }),
     priority: integer('priority').notNull().default(0), // higher = more specific, wins over lower
     is_active: boolean('is_active').notNull().default(true),
     created_at: timestamp('created_at').notNull().defaultNow(),
@@ -259,6 +285,7 @@ export const pricing_rules = pgTable(
     club_idx: index('pricing_rules_club_idx').on(table.club_id),
     court_idx: index('pricing_rules_court_idx').on(table.court_id),
     club_priority_idx: index('pricing_rules_club_priority_idx').on(table.club_id, table.priority),
+    season_idx: index('pricing_rules_season_id_idx').on(table.season_id),
   })
 );
 
@@ -281,6 +308,12 @@ export const sessions = pgTable(
     notes: text('notes'),
     cancelled_at: timestamp('cancelled_at', { withTimezone: true }),
     cancellation_reason: text('cancellation_reason'),
+    // Rückverweis zur Saisonplanungs-Vorlage — ermöglicht dem Reschedule-Endpoint,
+    // alle künftigen Sessions einer Gruppe wiederzufinden, wenn Zeit/Trainer/Platz
+    // mitten in der Saison geändert werden.
+    plan_entry_id: uuid('plan_entry_id').references((): AnyPgColumn => seasonPlanEntries.id, {
+      onDelete: 'set null',
+    }),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),
   },
@@ -289,6 +322,7 @@ export const sessions = pgTable(
     trainer_idx: index('sessions_trainer_idx').on(table.trainer_id),
     court_idx: index('sessions_court_idx').on(table.court_id),
     week_idx: index('sessions_week_idx').on(table.week_number),
+    plan_entry_idx: index('sessions_plan_entry_idx').on(table.plan_entry_id),
   })
 );
 
@@ -341,6 +375,13 @@ export const users = pgTable(
     subscription_status: varchar('subscription_status', { length: 20 }).default('active'),
     stripe_customer_id: varchar('stripe_customer_id', { length: 255 }),
     stripe_subscription_id: varchar('stripe_subscription_id', { length: 255 }),
+    // 3.6.1 Pay-per-Active-Member-Pricing — Stripe quantity idempotency cache.
+    // See supabase/migrations/20260628_add_stripe_quantity_sync.sql
+    // (lib/services/stripe-subscription-quantity-sync.service.ts).
+    stripe_subscription_quantity_synced: integer('stripe_subscription_quantity_synced'),
+    stripe_subscription_quantity_synced_at: timestamp('stripe_subscription_quantity_synced_at', {
+      withTimezone: true,
+    }),
     current_period_end: timestamp('current_period_end'),
     // Season planning fields
     experience_months: integer('experience_months').default(0),
@@ -371,6 +412,10 @@ export const userClubMemberships = pgTable(
     role: varchar('role', { length: 20 }).notNull().default('member'), // 'member' | 'trainer' | 'admin' | 'superadmin'
     joined_at: timestamp('joined_at').notNull().defaultNow(),
     is_active: boolean('is_active').notNull().default(true),
+    // Soft-Delete-Metadaten, gesetzt von app/api/members/[id]/route.ts (DELETE).
+    // Nachgezogen aus der DB — Spalten existierten dort bereits vor diesem Fix.
+    deactivated_at: timestamp('deactivated_at'),
+    deactivated_by: uuid('deactivated_by'),
     include_in_planning: boolean('include_in_planning').notNull().default(true),
     // A2 — Funktionale Vereinsämter (Host-Flag-System, komplement\u00e4r zur Rolle).
     // Keys + Typen definiert in `lib/auth-common.ts` (`OfficeRole` / `OfficeFlagMap`).
@@ -750,13 +795,30 @@ export const seasonPlanEntries = pgTable(
       .notNull()
       .references(() => trainers.id, { onDelete: 'restrict' }),
     court_id: uuid('court_id').references(() => courts.id, { onDelete: 'set null' }),
-    group_id: uuid('group_id').references(() => trainingGroups.id, { onDelete: 'cascade' }),
+    // FK points to the modern seasonal `groups` table (member_ids JSONB, created by
+    // SeasonClusteringEngine). NOT the legacy `training_groups` table (`schedule_id`
+    // NOT NULL, designed for fixed schedules — incompatible with clustering-driven groups).
+    // See supabase/migrations/20260630_recorrect_season_plan_entries_group_fk.sql
+    // for the matching DB-level FK correction (drizzle/0010 had pointed to the wrong table).
+    group_id: uuid('group_id').references(() => groups.id, { onDelete: 'cascade' }),
 
     // Timing (recurring weekly pattern)
     day_of_week: integer('day_of_week').notNull(),
     start_time: time('start_time').notNull(), // "HH:MM:SS"
     end_time: time('end_time').notNull(),
     duration_minutes: integer('duration_minutes').notNull(),
+
+    // Mehrfach-Training: 1 = einmal/Woche (Standard), 2 = zweimal/Woche
+    // Bei sessions_per_week=2 nutzt day_of_week_2 den zweiten Termin (default: day_of_week+3).
+    sessions_per_week: integer('sessions_per_week').notNull().default(1),
+    day_of_week_2: integer('day_of_week_2'),
+
+    // Trainer-Vertretung: ab substitute_from_week bis substitute_to_week übernimmt substitute_trainer_id
+    substitute_trainer_id: uuid('substitute_trainer_id').references(() => trainers.id, {
+      onDelete: 'set null',
+    }),
+    substitute_from_week: integer('substitute_from_week'),
+    substitute_to_week: integer('substitute_to_week'),
 
     // Recurrence within season
     starts_from_week: integer('starts_from_week').notNull().default(1),
@@ -954,9 +1016,9 @@ export const seasonPlanEntriesRelations = relations(seasonPlanEntries, ({ one })
     fields: [seasonPlanEntries.court_id],
     references: [courts.id],
   }),
-  group: one(trainingGroups, {
+  group: one(groups, {
     fields: [seasonPlanEntries.group_id],
-    references: [trainingGroups.id],
+    references: [groups.id],
   }),
   publishedSession: one(sessions, {
     fields: [seasonPlanEntries.published_session_id],
@@ -1901,6 +1963,12 @@ export const trialTrainings = pgTable(
     feedback_would_recommend: boolean('feedback_would_recommend'),
     // Conversion
     converted_to_member_id: uuid('converted_to_member_id'),
+    // Marketing consent (double opt-in) — see 20260730_trial_training_marketing_consent.sql
+    marketing_consent: boolean('marketing_consent').notNull().default(false),
+    marketing_consent_token: text('marketing_consent_token'),
+    marketing_consent_confirmed_at: timestamp('marketing_consent_confirmed_at', {
+      withTimezone: true,
+    }),
     // Timestamps
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -1916,6 +1984,9 @@ export const trialTrainings = pgTable(
     scheduled_date_idx: index('trial_trainings_scheduled_date_idx').on(table.scheduled_date),
     club_status_idx: index('trial_trainings_club_status_idx').on(table.club_id, table.status),
     club_date_idx: index('trial_trainings_club_date_idx').on(table.club_id, table.scheduled_date),
+    marketing_consent_token_idx: index('trial_trainings_marketing_consent_token_idx').on(
+      table.marketing_consent_token
+    ),
   })
 );
 
@@ -2629,6 +2700,10 @@ export const seasonBillingConfigs = pgTable('season_billing_configs', {
   season_id: uuid('season_id').notNull(),
   club_id: uuid('club_id').notNull(),
   cost_split_method: text('cost_split_method').notNull(),
+  // 'per_session' = Trainer-Stundensatz ÷ Teilnehmer (Standard/Tennisschule)
+  // 'membership_included' = Training im Jahresbeitrag, keine Einzelrechnung
+  // 'block_of_10' = Zehner-Block-Abrechnung
+  billing_model: varchar('billing_model', { length: 30 }).notNull().default('per_session'),
   trainer_hourly_rate: integer('trainer_hourly_rate').notNull(),
   tax_rate: integer('tax_rate').notNull(),
   payment_terms_days: integer('payment_terms_days').notNull(),

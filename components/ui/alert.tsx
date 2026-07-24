@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const alertVariants = cva(
-  'relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg]:w-4 [&>svg]:h-4',
+  'relative w-full rounded-xl border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg]:w-4 [&>svg]:h-4',
   {
     variants: {
       variant: {
@@ -11,10 +11,10 @@ const alertVariants = cva(
         destructive:
           'border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive',
         warning:
-          'border-yellow-500/50 text-yellow-900 dark:border-yellow-500 dark:text-yellow-100 [&>svg]:text-yellow-600',
+          'border-warning-500/50 text-warning-900 dark:border-warning-500 dark:text-warning-100 [&>svg]:text-warning-600',
         success:
-          'border-green-500/50 text-green-900 dark:border-green-500 dark:text-green-100 [&>svg]:text-green-600',
-        info: 'border-blue-500/50 text-blue-900 dark:border-blue-500 dark:text-blue-100 [&>svg]:text-blue-600',
+          'border-success-500/50 text-success-900 dark:border-success-500 dark:text-success-100 [&>svg]:text-success-600',
+        info: 'border-info-500/50 text-info-900 dark:border-info-500 dark:text-info-100 [&>svg]:text-info-600',
       },
     },
     defaultVariants: {

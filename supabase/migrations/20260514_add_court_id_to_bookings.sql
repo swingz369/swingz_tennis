@@ -1,9 +1,9 @@
 -- Add court_id column to bookings table
 -- The column existed in schema design but was missing from production DB
 
--- Step 1: Add column as nullable first (so we can backfill)
+-- Step 1: ADD COLUMN IF NOT EXISTS as nullable first (so we can backfill)
 ALTER TABLE bookings
-ADD COLUMN court_id uuid REFERENCES courts(id) ON DELETE CASCADE;
+ADD COLUMN IF NOT EXISTS court_id uuid REFERENCES courts(id) ON DELETE CASCADE;
 
 -- Step 2: Backfill court_id from sessions table
 UPDATE bookings b

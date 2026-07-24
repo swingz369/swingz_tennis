@@ -143,4 +143,13 @@ export interface ITrialTrainingRepository {
    * @returns true if deleted, false if not found
    */
   delete(id: string, clubId: string): Promise<boolean>;
+
+  /**
+   * Confirm marketing consent (double opt-in) by token — looked up across all
+   * clubs since the public confirmation link carries no club context.
+   * Clears the token on success so it cannot be reused.
+   * @param token - Single-use marketing consent confirmation token
+   * @returns true if a matching, unconfirmed token was found and confirmed
+   */
+  confirmMarketingConsentByToken(token: string): Promise<boolean>;
 }

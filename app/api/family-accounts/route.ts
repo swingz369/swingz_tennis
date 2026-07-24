@@ -1,15 +1,14 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { withApiAuth } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:family-accounts');
 
 // GET: List family members
-export async function GET() {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function GET(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
+    const { supabase, user } = auth;
 
     // Get family group for this user
     const { data: familyLink } = await (supabase as any)
@@ -53,19 +52,13 @@ export async function GET() {
         isSelf: m.user_id === user.id,
       })),
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  });
 }
 
 // POST: Add family member (via invite code)
 export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return withApiAuth(request, async (auth) => {
+    const { supabase, user } = auth;
 
     const { inviteCode } = await request.json();
 
@@ -145,19 +138,13 @@ export async function POST(request: NextRequest) {
       inviteCode: newInviteCode,
       message: 'Familie erstellt! Teile diesen Code mit deinen Familienmitgliedern',
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  });
 }
 
 // PUT: Generate a new invite code (invalidates old unused codes)
-export async function PUT() {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function PUT(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
+    const { supabase, user } = auth;
 
     const { data: familyLink } = await (supabase as any)
       .from('family_accounts')
@@ -165,13 +152,16 @@ export async function PUT() {
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (!familyLink)
+    if (!familyLink) {
+      log.warn('No family account found for user', { userId: user.id });
       return NextResponse.json({ error: 'Kein Familienkonto vorhanden' }, { status: 404 });
-    if (familyLink.role !== 'parent')
+    }
+    if (familyLink.role !== 'parent') {
       return NextResponse.json(
         { error: 'Nur Elternteile können neue Codes erstellen' },
         { status: 403 }
       );
+    }
 
     // Invalidate existing unused codes
     await (supabase as any)
@@ -188,7 +178,5 @@ export async function PUT() {
     });
 
     return NextResponse.json({ success: true, inviteCode: newCode });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  });
 }

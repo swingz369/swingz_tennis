@@ -102,7 +102,11 @@ const PUBLIC_ROUTES = [
   '/impressum', // Legal notice — public (TMG §5)
   '/privacy', // Privacy summary — public
   '/terms', // Terms of service — public
+  '/avv', // Data processing agreement info — public (Art. 28 DSGVO)
+  '/robots.txt', // SEO — Suchmaschinen dürfen nicht auf Login umgeleitet werden
+  '/sitemap.xml', // SEO — dito
   '/trial-training', // Public trial booking — no auth required
+  '/demo', // Public sales demo — no auth required
   '/join', // Member self-registration via club link
   '/api/auth/login',
   '/api/auth/logout',
@@ -140,18 +144,15 @@ export async function proxy(request: NextRequest) {
     (route) => pathname === route || pathname.startsWith(route + '/')
   );
 
-  // 2. CSRF-Token-Cookie SOFORT setzen (bevor Supabase setAll die Response ersetzen kann)
-  //    Das Cookie wird auf Page-Load-GETs gesetzt, damit der Browser es bei POSTs mitschickt.
-  const needsCSRFCookie =
-    !isPublic &&
-    !pathname.startsWith('/api/') &&
-    request.method === 'GET' &&
-    !request.cookies.get(CSRF_TOKEN_COOKIE);
-
+  // 2. CSRF-Token-Cookie setzen bzw. verlängern (bevor Supabase setAll die Response ersetzen kann)
+  //    Sliding expiry: bei JEDEM Request (nicht nur Page-Load-GETs) wird die maxAge erneuert,
+  //    damit lange Sessions (z.B. der Saisonplanungs-Wizard) das Cookie nicht mitten in der
+  //    Bearbeitung verlieren und der finale Submit nicht mit "Invalid CSRF token" fehlschlägt.
+  const existingCSRFToken = request.cookies.get(CSRF_TOKEN_COOKIE)?.value;
   let csrfTokenValue: string | undefined;
 
-  if (needsCSRFCookie) {
-    csrfTokenValue = generateCSRFToken(CSRF_TOKEN_LENGTH);
+  if (!isPublic) {
+    csrfTokenValue = existingCSRFToken || generateCSRFToken(CSRF_TOKEN_LENGTH);
     response.cookies.set(CSRF_TOKEN_COOKIE, csrfTokenValue, csrfCookieOptions);
   }
 
@@ -205,8 +206,14 @@ export async function proxy(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid or missing CSRF token' }, { status: 403 });
   }
 
-  // 6. Nicht eingeloggt → Login
+  // 6. Nicht eingeloggt → Login (Pages) bzw. 401 JSON (API)
+  //    API-Routen dürfen NIE einen Redirect erhalten: fetch() folgt dem Redirect
+  //    automatisch zur Login-Seite (HTML statt JSON), was der Client als Session-
+  //    Abbruch/"Ausgeloggt" wahrnimmt, obwohl es nur ein abgelaufenes CSRF/Auth-Token war.
   if (error || !user) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
+    }
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirectTo', pathname);
     return NextResponse.redirect(loginUrl);
@@ -222,7 +229,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // ALLE Routen außer Static Files, Images, Favicon
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)',
+    // ALLE Routen außer Static Files, Images, Videos, Favicon.
+    // Video-Container (webm|mp4|m4v|mov|ogv) sind statische Assets wie Bilder.
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webm|mp4|m4v|mov|ogv|ico|css|js)$).*)',
   ],
 };

@@ -1,0 +1,194 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { StatCard } from '@/components/ui/stat-card';
+import {
+  Plus,
+  Calendar,
+  Users,
+  AlertCircle,
+  CheckCircle,
+  TrendingUp,
+  LayoutGrid,
+} from 'lucide-react';
+import { NoSeasonsBrandedEmptyState } from '@/components/ui/empty-state';
+import type { SeasonWithStats } from '@/lib/types/season-planning';
+import { SEASON_STATUS_LABELS } from '@/lib/season-planning/status-labels';
+import { PaginationNav } from '@/components/ui/pagination-nav';
+import { PageHeader } from '@/components/ui/page-header';
+import type { PaginationMeta } from '@/lib/pagination';
+
+interface SeasonsClientProps {
+  initialSeasons: SeasonWithStats[];
+  pagination?: PaginationMeta;
+}
+
+export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps) {
+  const router = useRouter();
+  const seasons = initialSeasons;
+
+  const getStatusBadge = (status: string) => {
+    const config = SEASON_STATUS_LABELS[status] || { label: status, variant: 'outline' as const };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  const getSeasonIcon = (type: string) => {
+    return type === 'summer' ? '☀️' : '❄️';
+  };
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Saisonplanung"
+        description="Verwalten Sie Ihre Trainings-Seasons und Planungen"
+        breadcrumbs={[{ label: 'Saisonplanung' }]}
+        actions={[
+          { label: 'Neue Season', icon: Plus, onClick: () => router.push('/admin/seasons/new') },
+        ]}
+      />
+
+      {/* Stats Overview */}
+      {seasons.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-4">
+          <StatCard
+            icon={Calendar}
+            label="Seasons Gesamt"
+            value={seasons.length}
+            sub={`${seasons.filter((s) => s.is_active).length} aktiv`}
+            color="brand"
+          />
+          <StatCard
+            icon={Users}
+            label="Präferenzen"
+            value={seasons.reduce((sum, s) => sum + (Number(s.submitted_preferences) || 0), 0)}
+            sub="Eingereicht"
+            color="blue"
+          />
+          <StatCard
+            icon={TrendingUp}
+            label="Geplante Einheiten"
+            value={seasons.reduce((sum, s) => sum + (Number(s.planned_entries) || 0), 0)}
+            sub="Training-Sessions"
+            color="green"
+          />
+          <StatCard
+            icon={AlertCircle}
+            label="Offene Konflikte"
+            value={seasons.reduce((sum, s) => sum + (Number(s.open_conflicts) || 0), 0)}
+            sub="Zu lösen"
+            color="red"
+          />
+        </div>
+      )}
+
+      {/* Seasons List */}
+      {seasons.length === 0 ? (
+        <NoSeasonsBrandedEmptyState onCreate={() => router.push('/admin/seasons/new')} />
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {seasons.map((season) => (
+            <Card
+              key={season.id}
+              className="cursor-pointer transition-shadow hover:shadow-lg"
+              onClick={() => router.push(`/admin/seasons/${season.id}`)}
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{getSeasonIcon(season.season_type)}</span>
+                    <div>
+                      <CardTitle className="text-lg">{season.name}</CardTitle>
+                      <CardDescription>
+                        {new Date(season.start_date).toLocaleDateString('de-DE')} -{' '}
+                        {new Date(season.end_date).toLocaleDateString('de-DE')}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  {season.is_active && (
+                    <Badge variant="default" className="ml-2">
+                      <CheckCircle className="mr-1 h-3 w-3" />
+                      Aktiv
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Status:</span>
+                  {getStatusBadge(season.planning_status)}
+                </div>
+
+                <div className="space-y-2 border-t pt-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Präferenzen:</span>
+                    <span className="font-medium">
+                      {season.submitted_preferences} / {season.total_preferences}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Trainer:</span>
+                    <span className="font-medium">{season.trainers_count}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Geplante Einheiten:</span>
+                    <span className="font-medium">{season.planned_entries}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Gruppen:</span>
+                    <span className="font-medium">{season.groups_covered}</span>
+                  </div>
+                </div>
+
+                {['published', 'active', 'completed', 'archived'].includes(
+                  season.planning_status
+                ) &&
+                  season.planned_entries > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push('/scheduler');
+                      }}
+                    >
+                      <LayoutGrid className="mr-2 h-4 w-4" />
+                      Stundenplan
+                    </Button>
+                  )}
+
+                {season.open_conflicts > 0 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/admin/seasons/${season.id}?tab=conflicts`);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-xl bg-destructive/10 p-2 text-sm text-left hover:bg-destructive/20 transition-colors"
+                  >
+                    <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+                    <span className="text-destructive">
+                      {season.open_conflicts} offene Konflikte
+                    </span>
+                  </button>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pagination && (
+        <PaginationNav
+          meta={pagination}
+          compact
+          onPageChange={(p) => router.push(`/admin/seasons?page=${p}`)}
+        />
+      )}
+    </div>
+  );
+}

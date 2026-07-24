@@ -10,7 +10,7 @@ import { withValidation } from '@/application/validation/validator';
 import { db } from '@/src/infrastructure/persistence/db';
 import { eq } from 'drizzle-orm';
 import { sessions } from '@/infrastructure/persistence/schema';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { cache } from '@/lib/utils/cache';
 
@@ -31,6 +31,9 @@ export async function GET(req: NextRequest) {
 
     const clubIdParam = new URL(req.url).searchParams.get('clubId');
     if (!clubIdParam) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+    if (!verifyClubAccess(auth, clubIdParam)) {
+      return forbiddenResponse('Kein Zugriff auf diesen Verein');
+    }
 
     try {
       const clubId = ClubId.fromString(clubIdParam);
@@ -75,6 +78,9 @@ export async function POST(req: NextRequest) {
     if (rateLimitError) return rateLimitError;
 
     return withValidation(optimizeScheduleSchema, async (input) => {
+      if (!verifyClubAccess(auth, input.clubId)) {
+        return forbiddenResponse('Kein Zugriff auf diesen Verein');
+      }
       try {
         const output = await optimizeScheduleUseCase.execute({
           clubId: input.clubId,

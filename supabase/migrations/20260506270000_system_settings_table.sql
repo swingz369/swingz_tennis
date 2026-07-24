@@ -30,26 +30,26 @@ CREATE TABLE IF NOT EXISTS system_settings (
 -- ============================================================================
 
 -- Query by club (tenant isolation)
-CREATE INDEX idx_system_settings_club_id ON system_settings(club_id);
+CREATE INDEX IF NOT EXISTS idx_system_settings_club_id ON system_settings(club_id);
 
 -- Query by category
-CREATE INDEX idx_system_settings_category ON system_settings(category);
+CREATE INDEX IF NOT EXISTS idx_system_settings_category ON system_settings(category);
 
 -- Query by key (fast lookup)
-CREATE INDEX idx_system_settings_key ON system_settings(key);
+CREATE INDEX IF NOT EXISTS idx_system_settings_key ON system_settings(key);
 
 -- Query public settings
-CREATE INDEX idx_system_settings_is_public ON system_settings(is_public) 
+CREATE INDEX IF NOT EXISTS idx_system_settings_is_public ON system_settings(is_public) 
   WHERE is_public = true;
 
 -- Composite index for club + category queries
-CREATE INDEX idx_system_settings_club_category ON system_settings(club_id, category);
+CREATE INDEX IF NOT EXISTS idx_system_settings_club_category ON system_settings(club_id, category);
 
 -- Composite index for club + key queries (most common)
-CREATE INDEX idx_system_settings_club_key ON system_settings(club_id, key);
+CREATE INDEX IF NOT EXISTS idx_system_settings_club_key ON system_settings(club_id, key);
 
 -- GIN index for JSONB validation rules
-CREATE INDEX idx_system_settings_validation ON system_settings USING GIN (validation);
+CREATE INDEX IF NOT EXISTS idx_system_settings_validation ON system_settings USING GIN (validation);
 
 -- ============================================================================
 -- RLS POLICIES
@@ -59,12 +59,14 @@ CREATE INDEX idx_system_settings_validation ON system_settings USING GIN (valida
 ALTER TABLE system_settings ENABLE ROW LEVEL SECURITY;
 
 -- Policy 1: Superadmins have full access (cross-tenant)
+DROP POLICY IF EXISTS "Superadmins have full access to all system settings" ON system_settings;
 CREATE POLICY "Superadmins have full access to all system settings"
   ON system_settings
   FOR ALL
   USING (is_superadmin());
 
 -- Policy 2: Club admins can view all settings in their clubs
+DROP POLICY IF EXISTS "Club admins can view settings in their clubs" ON system_settings;
 CREATE POLICY "Club admins can view settings in their clubs"
   ON system_settings
   FOR SELECT
@@ -80,6 +82,7 @@ CREATE POLICY "Club admins can view settings in their clubs"
   );
 
 -- Policy 3: Club admins can create settings in their clubs
+DROP POLICY IF EXISTS "Club admins can create settings in their clubs" ON system_settings;
 CREATE POLICY "Club admins can create settings in their clubs"
   ON system_settings
   FOR INSERT
@@ -95,6 +98,7 @@ CREATE POLICY "Club admins can create settings in their clubs"
   );
 
 -- Policy 4: Club admins can update settings in their clubs
+DROP POLICY IF EXISTS "Club admins can update settings in their clubs" ON system_settings;
 CREATE POLICY "Club admins can update settings in their clubs"
   ON system_settings
   FOR UPDATE
@@ -110,6 +114,7 @@ CREATE POLICY "Club admins can update settings in their clubs"
   );
 
 -- Policy 5: Club admins can delete non-required settings in their clubs
+DROP POLICY IF EXISTS "Club admins can delete non-required settings in their clubs" ON system_settings;
 CREATE POLICY "Club admins can delete non-required settings in their clubs"
   ON system_settings
   FOR DELETE
@@ -126,6 +131,7 @@ CREATE POLICY "Club admins can delete non-required settings in their clubs"
   );
 
 -- Policy 6: All authenticated users can view public settings
+DROP POLICY IF EXISTS "Users can view public settings" ON system_settings;
 CREATE POLICY "Users can view public settings"
   ON system_settings
   FOR SELECT
@@ -154,6 +160,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS system_settings_updated_at ON system_settings;
 CREATE TRIGGER system_settings_updated_at
   BEFORE UPDATE ON system_settings
   FOR EACH ROW
@@ -173,6 +180,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS prevent_required_setting_deletion_trigger ON system_settings;
 CREATE TRIGGER prevent_required_setting_deletion_trigger
   BEFORE DELETE ON system_settings
   FOR EACH ROW

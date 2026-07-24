@@ -19,9 +19,11 @@ import {
   ChevronDown,
   AlertCircle,
   UserPlus,
+  Bell,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { useUserClub } from '@/hooks/use-user-data';
+import { PageHeader } from '@/components/ui/page-header';
 interface TrialParticipant {
   id: string;
   firstName: string;
@@ -85,6 +87,8 @@ export default function AdminTrialApprovals() {
   const [convertLoading, setConvertLoading] = useState(false);
   const [convertError, setConvertError] = useState<string | null>(null);
   const [convertedIds, setConvertedIds] = useState<Set<string>>(new Set());
+  const [reminderSending, setReminderSending] = useState<string | null>(null);
+  const [reminderSentIds, setReminderSentIds] = useState<Set<string>>(new Set());
 
   const fetchRequests = useCallback(async () => {
     try {
@@ -221,6 +225,22 @@ export default function AdminTrialApprovals() {
     }
   };
 
+  const handleSendReminder = async (id: string) => {
+    setReminderSending(id);
+    try {
+      const res = await apiFetch(`/api/trial-trainings/${id}/reminder`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Erinnerung konnte nicht gesendet werden');
+      setReminderSentIds((prev) => new Set(prev).add(id));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
+    } finally {
+      setReminderSending(null);
+    }
+  };
+
   const handleConvertToMember = async () => {
     if (!convertId || !adminClubId) return;
     const trial = requests.find((r) => r.id === convertId);
@@ -279,19 +299,19 @@ export default function AdminTrialApprovals() {
     switch (status) {
       case 'requested':
         return (
-          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700/50">
+          <Badge className="bg-warning-100 text-warning-700 border-warning-200 dark:bg-warning-900/30 dark:text-warning-400 dark:border-warning-700/50">
             Angefragt
           </Badge>
         );
       case 'scheduled':
         return (
-          <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700/50">
+          <Badge className="bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-700/50">
             Geplant
           </Badge>
         );
       case 'cancelled':
         return (
-          <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700/50">
+          <Badge className="bg-error-100 text-error-700 border-error-200 dark:bg-error-900/30 dark:text-error-400 dark:border-error-700/50">
             Abgelehnt
           </Badge>
         );
@@ -313,15 +333,11 @@ export default function AdminTrialApprovals() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Probetraining-Genehmigungen</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {requestedCount} ausstehende{requestedCount !== 1 ? '' : 's'} von {requests.length}{' '}
-            Probetrainings
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Probetraining-Genehmigungen"
+        description={`${requestedCount} ausstehende${requestedCount !== 1 ? '' : 's'} von ${requests.length} Probetrainings`}
+        breadcrumbs={[{ label: 'Probetrainings' }]}
+      />
 
       {/* Filter tabs */}
       <div className="flex gap-2 flex-wrap">
@@ -340,7 +356,7 @@ export default function AdminTrialApprovals() {
                   ? 'Abgelehnt'
                   : 'Alle'}
             {f === 'requested' && requestedCount > 0 && (
-              <span className="ml-1.5 bg-background/20 text-[11px] px-1.5 py-0 rounded-full">
+              <span className="ml-1.5 bg-background/20 text-2xs px-1.5 py-0 rounded-full">
                 {requestedCount}
               </span>
             )}
@@ -349,7 +365,7 @@ export default function AdminTrialApprovals() {
       </div>
 
       {error && (
-        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm dark:bg-red-900/20 dark:border-red-700/30 dark:text-red-400">
+        <div className="p-4 rounded-xl bg-error-50 border border-error-200 text-error-700 text-sm dark:bg-error-900/20 dark:border-error-700/30 dark:text-error-400">
           {error}
         </div>
       )}
@@ -368,9 +384,9 @@ export default function AdminTrialApprovals() {
               key={r.id}
               className={
                 r.status === 'requested'
-                  ? 'border-yellow-200 bg-yellow-50/30 dark:border-yellow-700/40 dark:bg-yellow-900/10'
+                  ? 'border-warning-200 bg-warning-50/30 dark:border-warning-700/40 dark:bg-warning-900/10'
                   : r.status === 'cancelled'
-                    ? 'border-red-100 bg-red-50/20 dark:border-red-800/30 dark:bg-red-900/10'
+                    ? 'border-error-100 bg-error-50/20 dark:border-error-800/30 dark:bg-error-900/10'
                     : ''
               }
             >
@@ -494,9 +510,30 @@ export default function AdminTrialApprovals() {
 
                     {/* Zu Mitglied konvertieren — für geplante/abgeschlossene Probetrainings */}
                     {(r.status === 'scheduled' || r.status === 'completed') && (
-                      <div className="pt-2">
+                      <div className="pt-2 flex flex-wrap items-center gap-2">
+                        {r.status === 'scheduled' &&
+                          (reminderSentIds.has(r.id) ? (
+                            <Badge className="bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-700/50 gap-1">
+                              <CheckCircle className="h-3 w-3" /> Erinnerung gesendet
+                            </Badge>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={reminderSending === r.id}
+                              onClick={() => handleSendReminder(r.id)}
+                              className="gap-1"
+                            >
+                              {reminderSending === r.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Bell className="h-4 w-4" />
+                              )}
+                              Erinnerung senden
+                            </Button>
+                          ))}
                         {convertedIds.has(r.id) ? (
-                          <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700/50 gap-1">
+                          <Badge className="bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-700/50 gap-1">
                             <CheckCircle className="h-3 w-3" /> Konvertiert
                           </Badge>
                         ) : (
@@ -528,7 +565,7 @@ export default function AdminTrialApprovals() {
           const trial = requests.find((r) => r.id === approveId);
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-              <div className="bg-background dark:bg-card rounded-2xl shadow-2xl border border-border dark:border-white/10 w-full max-w-lg mx-4 overflow-hidden">
+              <div className="bg-background dark:bg-card rounded-xl shadow-2xl border border-border dark:border-white/10 w-full max-w-lg mx-4 overflow-hidden">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-border dark:border-white/5 flex items-center justify-between">
                   <div>
@@ -566,7 +603,7 @@ export default function AdminTrialApprovals() {
                       Trainer zuweisen
                     </label>
                     {trainers.length === 0 ? (
-                      <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 text-amber-700 dark:text-amber-400 text-sm">
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700/30 text-warning-700 dark:text-warning-400 text-sm">
                         <AlertCircle className="h-4 w-4 shrink-0" />
                         Keine Trainer verfügbar. Bitte zuerst Trainer im System anlegen.
                       </div>
@@ -599,7 +636,7 @@ export default function AdminTrialApprovals() {
                       Platz zuweisen
                     </label>
                     {courts.length === 0 ? (
-                      <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 text-amber-700 dark:text-amber-400 text-sm">
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700/30 text-warning-700 dark:text-warning-400 text-sm">
                         <AlertCircle className="h-4 w-4 shrink-0" />
                         Keine Plätze verfügbar. Bitte zuerst Plätze im System anlegen.
                       </div>
@@ -663,7 +700,7 @@ export default function AdminTrialApprovals() {
           if (!trial) return null;
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-              <div className="bg-background dark:bg-card rounded-2xl shadow-2xl border border-border dark:border-white/10 w-full max-w-md mx-4 overflow-hidden">
+              <div className="bg-background dark:bg-card rounded-xl shadow-2xl border border-border dark:border-white/10 w-full max-w-md mx-4 overflow-hidden">
                 <div className="px-6 py-4 border-b border-border dark:border-white/5 flex items-center justify-between">
                   <div>
                     <h2 className="text-lg font-semibold text-brand-primary">
@@ -708,7 +745,7 @@ export default function AdminTrialApprovals() {
                   </p>
 
                   {convertError && (
-                    <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30 text-red-700 dark:text-red-400 text-sm flex items-start gap-2">
+                    <div className="p-3 rounded-xl bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-700/30 text-error-700 dark:text-error-400 text-sm flex items-start gap-2">
                       <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                       {convertError}
                     </div>

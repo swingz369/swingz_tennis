@@ -22,40 +22,12 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { resolve, basename } from 'path';
+import type { BenchEntry, BenchConfig, BenchReport } from '../tests/bench/bench-types';
 
-// ═══ Types ═══════════════════════════════════════════════════════════════
-interface BenchEntry {
-  label: string;
-  status?: string;
-  endToEndMs?: number;
-  apiRuntimeMs?: number;
-  meanMs?: number;
-  minMs?: number;
-  maxMs?: number;
-  totalGroups?: number;
-  totalMembers?: number;
-  avgNiveauMatch?: number;
-  unassignedCount?: number;
-  wishPartnerRate?: number;
-  error?: string;
-  config?: {
-    NUM_MEMBERS: number;
-    NUM_TRAINERS: number;
-    NUM_COURTS: number;
-  };
-  timestamp?: string;
-}
-
-interface BenchReport {
-  generatedAt?: string;
-  nodeVersion?: string;
-  baseUrl?: string;
-  platform?: string;
-  runType?: string;
-  config?: { NUM_MEMBERS: number; NUM_TRAINERS: number; NUM_COURTS: number };
-  runs: Record<string, BenchEntry>;
-  speedups?: Record<string, string>;
-}
+// `BenchEntry` + `BenchReport` + `BenchConfig` are shared with both writers
+// (tests/bench/clustering.bench.ts and tests/e2e/clustering-performance.spec.ts)
+// — see tests/bench/bench-types.ts for the canonical definition and
+// field-provenance docs.
 
 // ═══ Default input paths ═════════════════════════════════════════════════
 const DEFAULT_INPUTS = [
@@ -135,11 +107,7 @@ function generateSpeedupChart(runs: BenchEntry[]): string {
 }
 
 // ═══ Markdown-Tabelle ═══════════════════════════════════════════════════
-function generateMarkdownTable(
-  source: string,
-  runs: BenchEntry[],
-  cfg: { NUM_MEMBERS: number; NUM_TRAINERS: number; NUM_COURTS: number }
-): string {
+function generateMarkdownTable(source: string, runs: BenchEntry[], cfg: BenchConfig): string {
   if (runs.length === 0) return '_Keine Daten._\n';
 
   const lines: string[] = [];
@@ -159,14 +127,19 @@ function generateMarkdownTable(
 
   runs.forEach((r, idx) => {
     const e2e = r.meanMs ?? r.endToEndMs ?? null;
-    const apiMs = r.apiRuntimeMs ?? r.runtimeMs_internal ?? null;
+    const apiMs = r.apiRuntimeMs ?? null;
     const groups = r.totalGroups ?? '—';
     const members = r.totalMembers ?? '—';
     const match = r.avgNiveauMatch != null ? r.avgNiveauMatch.toFixed(1) : '—';
     const unassigned = r.unassignedCount ?? '—';
     const wish = r.wishPartnerRate != null ? r.wishPartnerRate.toFixed(1) : '—';
-    const status =
-      r.status === 'ok' || r.error == null ? '✅' : `❌ ${(r.error ?? '').slice(0, 30)}`;
+    // True-by-accident for bench entries; was `r.status === 'ok' || r.error == null` previously.
+    const isError = r.status === 'error' || (r.error != null && r.error !== '');
+    // `r.error ?? r.status` narrows to `string | undefined` for TS, so we need
+    // a final fallback for the slice (logically unreachable when isError, but
+    // TS doesn't track the isError ↔ non-empty guarantee).
+    const errorMsg = r.error ?? r.status ?? 'error';
+    const status = isError ? `❌ ${errorMsg.slice(0, 30)}` : '✅';
 
     let speedup = '';
     if (idx > 0 && baselineMs > 0 && e2e && e2e > 0) {

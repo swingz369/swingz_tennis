@@ -1,15 +1,25 @@
 -- Special Events: Sommercamp, Intensivkurs, Schnupperkurs, etc.
 -- Events außerhalb des regulären Saisonbetriebs
 
-CREATE TYPE special_event_type AS ENUM (
+DO $$
+BEGIN
+  CREATE TYPE special_event_type AS ENUM (
   'sommercamp', 'intensivkurs', 'schnupperkurs', 'turnier', 'social', 'sonstiges'
 );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE special_event_status AS ENUM (
+DO $$
+BEGIN
+  CREATE TYPE special_event_status AS ENUM (
   'draft', 'open', 'full', 'cancelled', 'completed'
 );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TABLE special_events (
+CREATE TABLE IF NOT EXISTS special_events (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   club_id           uuid NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
   created_by        uuid REFERENCES users(id),
@@ -33,7 +43,7 @@ CREATE TABLE special_events (
   CONSTRAINT valid_dates CHECK (end_date >= start_date)
 );
 
-CREATE TABLE special_event_registrations (
+CREATE TABLE IF NOT EXISTS special_event_registrations (
   id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id   uuid NOT NULL REFERENCES special_events(id) ON DELETE CASCADE,
   user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -46,6 +56,7 @@ CREATE TABLE special_event_registrations (
 ALTER TABLE special_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE special_event_registrations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "club_staff_manage_events" ON special_events;
 CREATE POLICY "club_staff_manage_events" ON special_events
   FOR ALL USING (
     EXISTS (
@@ -57,6 +68,7 @@ CREATE POLICY "club_staff_manage_events" ON special_events
     )
   );
 
+DROP POLICY IF EXISTS "club_members_read_events" ON special_events;
 CREATE POLICY "club_members_read_events" ON special_events
   FOR SELECT USING (
     status != 'draft' AND
@@ -68,9 +80,11 @@ CREATE POLICY "club_members_read_events" ON special_events
     )
   );
 
+DROP POLICY IF EXISTS "own_registrations" ON special_event_registrations;
 CREATE POLICY "own_registrations" ON special_event_registrations
   FOR ALL USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "admin_see_registrations" ON special_event_registrations;
 CREATE POLICY "admin_see_registrations" ON special_event_registrations
   FOR SELECT USING (
     EXISTS (
@@ -82,6 +96,6 @@ CREATE POLICY "admin_see_registrations" ON special_event_registrations
     )
   );
 
-CREATE INDEX ON special_events(club_id, start_date);
-CREATE INDEX ON special_event_registrations(event_id);
-CREATE INDEX ON special_event_registrations(user_id);
+CREATE INDEX IF NOT EXISTS special_events_club_start_idx ON special_events(club_id, start_date);
+CREATE INDEX IF NOT EXISTS special_event_registrations_event_idx ON special_event_registrations(event_id);
+CREATE INDEX IF NOT EXISTS special_event_registrations_user_idx ON special_event_registrations(user_id);

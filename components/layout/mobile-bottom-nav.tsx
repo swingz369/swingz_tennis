@@ -5,19 +5,9 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { isActivePath } from '@/lib/navigation-utils';
 import { useUserRole } from '@/hooks/use-user-role';
-import {
-  Home,
-  Calendar,
-  User,
-  Menu,
-  Users,
-  BarChart3,
-  Building2,
-  CreditCard,
-  Clock,
-  ClipboardList,
-} from 'lucide-react';
+import { Home, Menu } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { mobileNavItems } from '@/lib/navigation';
 
 interface MobileBottomNavProps {
   roles?: string[];
@@ -38,48 +28,17 @@ export function MobileBottomNav({
   // Centralised role detection via hook
   const { isOwner, isSuperAdmin, isAdmin, isTrainer } = useUserRole(roles);
 
-  // Navigation items based on HIGHEST role — matches TSOW tab bar
-  let navItems: { name: string; href: string; icon: React.ElementType }[] = [];
-
-  if (isOwner) {
-    navItems = [
-      { name: 'Dashboard', href: '/owner', icon: Home },
-      { name: 'Vereine', href: '/owner/clubs', icon: Building2 },
-      { name: 'Anfragen', href: '/owner/access', icon: ClipboardList },
-      { name: 'Billing', href: '/owner/billing', icon: CreditCard },
-    ];
-  } else if (isSuperAdmin) {
-    navItems = [
-      { name: 'Dashboard', href: '/superadmin', icon: Home },
-      { name: 'Vereine', href: '/superadmin/tenants', icon: Building2 },
-      { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-      { name: 'Profil', href: '/profile', icon: User },
-    ];
-  } else if (isAdmin) {
-    navItems = [
-      { name: 'Dashboard', href: '/admin', icon: Home },
-      { name: 'Mitglieder', href: '/admin/members', icon: Users },
-      { name: 'Saison', href: '/admin/seasons', icon: Calendar },
-      { name: 'Finanzen', href: '/admin/billing', icon: CreditCard },
-      { name: 'Profil', href: '/profile', icon: User },
-    ];
-  } else if (isTrainer) {
-    // Trainer: 4 tabs (Profil accessible via user menu in header)
-    navItems = [
-      { name: 'Übersicht', href: '/trainer', icon: Home },
-      { name: 'Einheiten', href: '/scheduler', icon: Calendar },
-      { name: 'Verfügbarkeit', href: '/trainer/availability', icon: Clock },
-      { name: 'Saisonplanung', href: '/trainer/planning-preferences', icon: ClipboardList },
-    ];
-  } else {
-    // Member: 4 tabs (Profil accessible via user menu in header)
-    navItems = [
-      { name: 'Home', href: '/member', icon: Home },
-      { name: 'Stundenplan', href: '/scheduler', icon: Calendar },
-      { name: 'Buchen', href: '/bookings', icon: ClipboardList },
-      { name: 'Rechnungen', href: '/billing', icon: CreditCard },
-    ];
-  }
+  // Einträge zentral in lib/navigation.ts — höchste Rolle gewinnt (TSOW tab bar)
+  const role = isOwner
+    ? ('owner' as const)
+    : isSuperAdmin
+      ? ('superadmin' as const)
+      : isAdmin
+        ? ('admin' as const)
+        : isTrainer
+          ? ('trainer' as const)
+          : ('member' as const);
+  const navItems = mobileNavItems(role);
 
   return (
     <nav
@@ -94,7 +53,7 @@ export function MobileBottomNav({
       <div className="relative flex justify-around items-center h-16 px-2">
         {/* Theme Toggle — absolutely positioned so it doesn't affect justify-around distribution */}
         <div className="absolute left-2 top-1/2 -translate-y-1/2 z-10">
-          <ThemeToggle iconSize={16} className="h-8 w-8 rounded-lg" />
+          <ThemeToggle iconSize={16} className="h-8 w-8 rounded-xl" />
         </div>
         {/* Active indicator background */}
         {navItems.map((item) => {
@@ -112,6 +71,7 @@ export function MobileBottomNav({
         })}
         {navItems.map((item) => {
           const isActive = isActivePath(pathname, item.href);
+          const Icon = item.icon ?? Home;
           return (
             <Link
               key={item.name}
@@ -126,7 +86,7 @@ export function MobileBottomNav({
               aria-label={`${item.name}${isActive ? ' (aktuelle Seite)' : ''}`}
             >
               <div className="relative">
-                <item.icon
+                <Icon
                   className={cn(
                     'h-5 w-5 transition-all duration-300',
                     isActive && 'scale-110 drop-shadow-sm'
@@ -136,7 +96,7 @@ export function MobileBottomNav({
               </div>
               <span
                 className={cn(
-                  'text-[10px] font-medium leading-tight transition-all duration-300',
+                  'text-2xs font-medium leading-tight transition-all duration-300',
                   isActive ? 'opacity-100 translate-y-0' : 'opacity-80'
                 )}
               >
@@ -156,7 +116,7 @@ export function MobileBottomNav({
               className="h-5 w-5 transition-transform duration-200 group-hover:scale-110"
               aria-hidden="true"
             />
-            <span className="text-[10px] font-medium leading-tight">Menü</span>
+            <span className="text-2xs font-medium leading-tight">Menü</span>
           </button>
         )}
       </div>

@@ -53,23 +53,23 @@ const levelLabels: Record<string, string> = {
 };
 
 const levelColors: Record<string, string> = {
-  beginner: 'bg-green-100 text-green-700 border-green-200',
-  advanced_beginner: 'bg-blue-100 text-blue-700 border-blue-200',
-  intermediate: 'bg-amber-100 text-amber-700 border-amber-200',
-  advanced: 'bg-orange-100 text-orange-700 border-orange-200',
-  tournament: 'bg-purple-100 text-purple-700 border-purple-200',
+  beginner: 'bg-success-100 text-success-700 border-success-200',
+  advanced_beginner: 'bg-info-100 text-info-700 border-info-200',
+  intermediate: 'bg-warning-100 text-warning-700 border-warning-200',
+  advanced: 'bg-brand-accent-100 text-brand-accent-700 border-brand-accent-200',
+  tournament: 'bg-info-100 text-info-700 border-info-200',
 };
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return 'text-green-600';
-  if (score >= 60) return 'text-amber-600';
+  if (score >= 80) return 'text-success-600';
+  if (score >= 60) return 'text-warning-600';
   return 'text-muted-foreground';
 }
 
 function getScoreBarColor(score: number): string {
-  if (score >= 80) return 'bg-green-500';
-  if (score >= 60) return 'bg-amber-500';
-  return 'bg-blue-500';
+  if (score >= 80) return 'bg-success-500';
+  if (score >= 60) return 'bg-warning-500';
+  return 'bg-info-500';
 }
 
 function getLevelColor(level: string): string {
@@ -139,7 +139,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+          <div className="p-2 rounded-xl bg-info-500 text-white">
             <Shuffle className="h-5 w-5" />
           </div>
           <div>
@@ -167,7 +167,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
       {/* Loading state */}
       {loading && !data && (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <RefreshCw className="h-8 w-8 animate-spin mb-3 text-blue-400" />
+          <RefreshCw className="h-8 w-8 animate-spin mb-3 text-info-400" />
           <p className="text-sm font-medium">Suche nach passenden Partnern...</p>
           <p className="text-xs">Analysiere Level, Gruppen und gemeinsame Sessions</p>
         </div>
@@ -175,7 +175,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
 
       {/* Error state */}
       {error && (
-        <div className="flex items-center gap-2 p-4 bg-red-50 rounded-lg text-red-600 text-sm border border-red-200">
+        <div className="flex items-center gap-2 p-4 bg-error-50 rounded-xl text-error-600 text-sm border border-error-200">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span>{error}</span>
         </div>
@@ -244,7 +244,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
                     key={match.userId}
                     variant={isSelected ? 'elevated' : 'bordered'}
                     className={`transition-all duration-200 cursor-pointer hover:shadow-md ${
-                      isSelected ? 'ring-2 ring-blue-400 shadow-md' : ''
+                      isSelected ? 'ring-2 ring-info-400 shadow-md' : ''
                     }`}
                     onClick={() => setSelectedMatch(isSelected ? null : match.userId)}
                   >
@@ -253,12 +253,12 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
                       <div className="flex items-start justify-between mb-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-info-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                               {match.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">
                               <p className="text-sm font-medium truncate">{match.name}</p>
-                              <p className="text-[10px] text-muted-foreground truncate">
+                              <p className="text-2xs text-muted-foreground truncate">
                                 {match.email}
                               </p>
                             </div>
@@ -288,7 +288,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
                       <div className="flex flex-wrap gap-1.5 mb-3">
                         <Badge
                           variant="secondary"
-                          className={`text-[10px] px-1.5 py-0 border ${getLevelColor(match.playingLevel)} bg-background`}
+                          className={`text-2xs px-1.5 py-0 border ${getLevelColor(match.playingLevel)} bg-background`}
                         >
                           <Target className="h-2.5 w-2.5 mr-1" />
                           {getLevelLabel(match.playingLevel)}
@@ -296,7 +296,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
                         {match.groupOverlap.length > 0 && (
                           <Badge
                             variant="secondary"
-                            className="text-[10px] px-1.5 py-0 bg-indigo-50 text-indigo-700 border-indigo-200"
+                            className="text-2xs px-1.5 py-0 bg-info-50 text-info-700 border-info-200"
                           >
                             <Users className="h-2.5 w-2.5 mr-1" />
                             {match.groupOverlap.length} Gruppen
@@ -305,7 +305,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
                         {match.commonSessions > 0 && (
                           <Badge
                             variant="secondary"
-                            className="text-[10px] px-1.5 py-0 bg-cyan-50 text-cyan-700 border-cyan-200"
+                            className="text-2xs px-1.5 py-0 bg-info-50 text-info-700 border-info-200"
                           >
                             <Calendar className="h-2.5 w-2.5 mr-1" />
                             {match.commonSessions} Sessions
@@ -314,7 +314,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
                         {match.levelDiff === 0 && (
                           <Badge
                             variant="secondary"
-                            className="text-[10px] px-1.5 py-0 bg-green-50 text-green-700 border-green-200"
+                            className="text-2xs px-1.5 py-0 bg-success-50 text-success-700 border-success-200"
                           >
                             <Star className="h-2.5 w-2.5 mr-1" />
                             Gleiches Level
@@ -327,9 +327,9 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
                         {match.reasons.map((reason, i) => (
                           <p
                             key={i}
-                            className="text-[11px] text-muted-foreground flex items-start gap-1.5"
+                            className="text-2xs text-muted-foreground flex items-start gap-1.5"
                           >
-                            <Sparkles className="h-3 w-3 text-blue-400 mt-0.5 flex-shrink-0" />
+                            <Sparkles className="h-3 w-3 text-info-400 mt-0.5 flex-shrink-0" />
                             <span>{reason}</span>
                           </p>
                         ))}
@@ -339,39 +339,39 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
                       {isSelected && (
                         <div className="border-t pt-3 mt-2 space-y-2">
                           <div className="grid grid-cols-2 gap-2">
-                            <div className="p-2 bg-muted rounded-lg text-center">
+                            <div className="p-2 bg-muted rounded-xl text-center">
                               <p className="text-lg font-semibold text-foreground tabular-nums">
                                 {match.compatibilityScore}
                               </p>
-                              <p className="text-[10px] text-muted-foreground">Gesamt-Score</p>
+                              <p className="text-2xs text-muted-foreground">Gesamt-Score</p>
                             </div>
-                            <div className="p-2 bg-muted rounded-lg text-center">
+                            <div className="p-2 bg-muted rounded-xl text-center">
                               <p className="text-lg font-semibold text-foreground tabular-nums">
                                 {match.commonSessions}
                               </p>
-                              <p className="text-[10px] text-muted-foreground">Sessions</p>
+                              <p className="text-2xs text-muted-foreground">Sessions</p>
                             </div>
-                            <div className="p-2 bg-muted rounded-lg text-center">
+                            <div className="p-2 bg-muted rounded-xl text-center">
                               <p className="text-lg font-semibold text-foreground tabular-nums">
                                 {match.groupOverlap.length}
                               </p>
-                              <p className="text-[10px] text-muted-foreground">Gruppen</p>
+                              <p className="text-2xs text-muted-foreground">Gruppen</p>
                             </div>
-                            <div className="p-2 bg-muted rounded-lg text-center">
+                            <div className="p-2 bg-muted rounded-xl text-center">
                               <p className="text-lg font-semibold text-foreground">
                                 <span
                                   className={
                                     match.levelDiff === 0
-                                      ? 'text-green-600'
+                                      ? 'text-success-600'
                                       : match.levelDiff <= 1
-                                        ? 'text-amber-600'
+                                        ? 'text-warning-600'
                                         : 'text-muted-foreground'
                                   }
                                 >
                                   {match.levelDiff}
                                 </span>
                               </p>
-                              <p className="text-[10px] text-muted-foreground">Level-Diff</p>
+                              <p className="text-2xs text-muted-foreground">Level-Diff</p>
                             </div>
                           </div>
 
@@ -446,7 +446,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
 
                       {/* Click hint */}
                       {!isSelected && (
-                        <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground pt-1">
+                        <div className="flex items-center justify-center gap-1 text-2xs text-muted-foreground pt-1">
                           <span>Klicken für Details</span>
                           <ChevronRight className="h-3 w-3" />
                         </div>
@@ -473,12 +473,12 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
               </div>
               <div className="flex items-center gap-2">
                 {showAdminBadge && (
-                  <Badge variant="secondary" className="text-[10px] gap-1">
+                  <Badge variant="secondary" className="text-2xs gap-1">
                     <TrendingUp className="h-3 w-3" />
                     Admin-Ansicht
                   </Badge>
                 )}
-                <Badge variant="outline" className="text-[10px] gap-1">
+                <Badge variant="outline" className="text-2xs gap-1">
                   <Shuffle className="h-3 w-3" />
                   KI-gestützt
                 </Badge>

@@ -40,6 +40,7 @@ import type { User } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
 import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
 import { hasRole, getHighestRole } from '@/lib/auth-common';
+import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
 
 export interface AuthContext {
   user: User;
@@ -76,68 +77,65 @@ async function buildAuthContext(
     throw new Error('User has no active membership');
   }
 
-  // Highest role wins — track which membership granted it
-  // FIX P0-3: Always use the role from the membership that matches the effective club,
-  // not the global highest. This prevents role-bleeding across clubs.
+  // Highest role wins — used to branch the helper. The FIX P0-3 role-bleed
+  // fix is implemented AFTER the helper returns, via a per-club lookup.
   const effectiveRole = getHighestRole(memberships.map((m) => m.role));
-  const effectiveMembership = memberships.find((m) => m.role === effectiveRole) || memberships[0];
 
-  // Superadmin/Admin: can select club via cookie
-  let selectedClubId: string | undefined;
-  let effectiveClubId: string | null = null;
+  // Resolve active club via shared helper. Owner/superadmin path uses the
+  // legacy 'club-exists' strategy (per pre-refactor behavior: any existing
+  // club in `clubs` is selectable, no per-superadmin-membership requirement).
+  // Admin path uses default 'membership-match' so cookie must point at an
+  // admin-managed club — preserves P0-3 boundary semantics.
+  const cookieValue = request.cookies.get(ADMIN_CLUB_COOKIE)?.value ?? null;
+  const isPlatformStaff = effectiveRole === 'owner' || effectiveRole === 'superadmin';
 
-  const cookieValue = request.cookies.get(ADMIN_CLUB_COOKIE)?.value;
-  if (effectiveRole === 'owner' || effectiveRole === 'superadmin') {
-    if (cookieValue) {
-      const { data: clubCheck } = await supabase
-        .from('clubs')
-        .select('id')
-        .eq('id', cookieValue)
-        .maybeSingle();
-      if (clubCheck) {
-        selectedClubId = cookieValue;
-        effectiveClubId = cookieValue;
-      }
-    }
-  } else {
-    // Admin: honor ADMIN_CLUB_COOKIE to allow club switching across managed clubs.
-    // This matches the behavior in lib/admin-context.ts (requireAdminClub).
-    if (cookieValue) {
-      const isValid = memberships.some((m) => m.role === 'admin' && m.club_id === cookieValue);
-      if (isValid) {
-        effectiveClubId = cookieValue;
-      }
-    }
-    // Fallback: first admin membership
-    if (!effectiveClubId) {
-      effectiveClubId = effectiveMembership.club_id ?? null;
-    }
+  const {
+    clubId: helperClubId,
+    resolvedRole,
+    isValid,
+  } = await resolveActiveClub({
+    cookieValue,
+    memberships,
+    highestRole: effectiveRole,
+    ...(isPlatformStaff
+      ? {
+          strategy: {
+            type: 'club-exists' as const,
+            clubExists: async (id) => {
+              const { data } = await supabase.from('clubs').select('id').eq('id', id).maybeSingle();
+              return Boolean(data);
+            },
+          },
+        }
+      : {}),
+  });
 
-    // FIX P0-3: Re-resolve role for the specific club.
-    // If user is admin in Club A but trainer in Club B, accessing Club B should give role=trainer.
-    if (effectiveClubId) {
-      const clubMembership = memberships.find((m) => m.club_id === effectiveClubId);
-      if (clubMembership) {
-        return {
-          user,
-          session: null,
-          supabase,
-          clubId: effectiveClubId,
-          role: clubMembership.role as AuthContext['role'],
-          roles: memberships.map((m) => m.role),
-          memberships,
-        };
-      }
+  // FIX P0-3: Re-resolve role for the specific club.
+  // If user is admin in Club A but trainer in Club B, accessing Club B
+  // should give role=trainer. Helper's resolvedRole covers the admin/owner
+  // superadmin happy paths; in club-bleed cases we override with the
+  // per-club lookup.
+  let finalRole: AuthContext['role'] = resolvedRole;
+  if (helperClubId) {
+    const clubMembership = memberships.find((m) => m.club_id === helperClubId);
+    if (clubMembership) {
+      finalRole = clubMembership.role as AuthContext['role'];
     }
   }
+
+  // selectedClubId only meaningful for platform-staff.
+  const selectedClubId =
+    isPlatformStaff && isValid && helperClubId === cookieValue
+      ? (cookieValue ?? undefined)
+      : undefined;
 
   return {
     user,
     session: null,
     supabase,
-    clubId: effectiveClubId,
-    ...(selectedClubId != null ? { selectedClubId } : {}),
-    role: effectiveRole,
+    clubId: helperClubId,
+    ...(selectedClubId !== undefined ? { selectedClubId } : {}),
+    role: finalRole,
     roles: memberships.map((m) => m.role),
     memberships,
   };
@@ -192,8 +190,25 @@ export async function verifyRole(
  * Superadmin has access to ALL clubs (even without cookie).
  */
 export function verifyClubAccess(auth: AuthContext, requestedClubId: string): boolean {
-  if (auth.role === 'superadmin') return true;
+  if (auth.role === 'owner' || auth.role === 'superadmin') return true;
   return auth.clubId === requestedClubId;
+}
+
+/**
+ * Verify a trainer is active in the admin's club. Used for resources like
+ * hours_logs that reference trainer_id but carry no club_id of their own —
+ * club membership is looked up via trainer_club. Superadmin/owner bypass.
+ */
+export async function verifyTrainerInClub(auth: AuthContext, trainerId: string): Promise<boolean> {
+  if (auth.role === 'owner' || auth.role === 'superadmin') return true;
+  if (!auth.clubId) return false;
+  const { data } = await auth.supabase
+    .from('trainer_club')
+    .select('trainer_id')
+    .eq('trainer_id', trainerId)
+    .eq('club_id', auth.clubId)
+    .maybeSingle();
+  return Boolean(data);
 }
 
 /**

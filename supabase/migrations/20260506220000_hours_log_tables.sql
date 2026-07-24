@@ -25,10 +25,10 @@ CREATE TABLE IF NOT EXISTS hours_logs (
     CONSTRAINT hours_logs_time_order CHECK (start_time < end_time)
 );
 
-CREATE INDEX hours_logs_trainer_idx ON hours_logs(trainer_id);
-CREATE INDEX hours_logs_session_idx ON hours_logs(session_id);
-CREATE INDEX hours_logs_date_idx ON hours_logs(date);
-CREATE INDEX hours_logs_status_idx ON hours_logs(status);
+CREATE INDEX IF NOT EXISTS hours_logs_trainer_idx ON hours_logs(trainer_id);
+CREATE INDEX IF NOT EXISTS hours_logs_session_idx ON hours_logs(session_id);
+CREATE INDEX IF NOT EXISTS hours_logs_date_idx ON hours_logs(date);
+CREATE INDEX IF NOT EXISTS hours_logs_status_idx ON hours_logs(status);
 
 COMMENT ON TABLE hours_logs IS 'Trainer time tracking (hours worked per session)';
 COMMENT ON COLUMN hours_logs.duration IS 'Duration in minutes (calculated: end_time - start_time)';
@@ -55,10 +55,10 @@ CREATE TABLE IF NOT EXISTS attendance_records (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX attendance_records_session_idx ON attendance_records(session_id);
-CREATE INDEX attendance_records_trainer_idx ON attendance_records(trainer_id);
-CREATE INDEX attendance_records_participant_idx ON attendance_records(participant_id);
-CREATE INDEX attendance_records_date_idx ON attendance_records(date);
+CREATE INDEX IF NOT EXISTS attendance_records_session_idx ON attendance_records(session_id);
+CREATE INDEX IF NOT EXISTS attendance_records_trainer_idx ON attendance_records(trainer_id);
+CREATE INDEX IF NOT EXISTS attendance_records_participant_idx ON attendance_records(participant_id);
+CREATE INDEX IF NOT EXISTS attendance_records_date_idx ON attendance_records(date);
 
 COMMENT ON TABLE attendance_records IS 'Session attendance tracking (who attended which session)';
 COMMENT ON COLUMN attendance_records.status IS 'Status: present, absent, late, excused';
@@ -72,6 +72,7 @@ ALTER TABLE hours_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE attendance_records ENABLE ROW LEVEL SECURITY;
 
 -- Hours Logs: Superadmins see all, trainers see their own
+DROP POLICY IF EXISTS "hours_logs_select" ON hours_logs;
 CREATE POLICY "hours_logs_select" ON hours_logs
     FOR SELECT
     USING (
@@ -79,6 +80,7 @@ CREATE POLICY "hours_logs_select" ON hours_logs
         trainer_id = auth.uid()
     );
 
+DROP POLICY IF EXISTS "hours_logs_insert" ON hours_logs;
 CREATE POLICY "hours_logs_insert" ON hours_logs
     FOR INSERT
     WITH CHECK (
@@ -86,6 +88,7 @@ CREATE POLICY "hours_logs_insert" ON hours_logs
         trainer_id = auth.uid()
     );
 
+DROP POLICY IF EXISTS "hours_logs_update" ON hours_logs;
 CREATE POLICY "hours_logs_update" ON hours_logs
     FOR UPDATE
     USING (
@@ -93,6 +96,7 @@ CREATE POLICY "hours_logs_update" ON hours_logs
         (trainer_id = auth.uid() AND status = 'pending')
     );
 
+DROP POLICY IF EXISTS "hours_logs_delete" ON hours_logs;
 CREATE POLICY "hours_logs_delete" ON hours_logs
     FOR DELETE
     USING (
@@ -101,6 +105,7 @@ CREATE POLICY "hours_logs_delete" ON hours_logs
     );
 
 -- Attendance Records: Trainers can manage their own sessions, superadmins see all
+DROP POLICY IF EXISTS "attendance_records_select" ON attendance_records;
 CREATE POLICY "attendance_records_select" ON attendance_records
     FOR SELECT
     USING (
@@ -108,6 +113,7 @@ CREATE POLICY "attendance_records_select" ON attendance_records
         trainer_id = auth.uid()
     );
 
+DROP POLICY IF EXISTS "attendance_records_insert" ON attendance_records;
 CREATE POLICY "attendance_records_insert" ON attendance_records
     FOR INSERT
     WITH CHECK (
@@ -115,6 +121,7 @@ CREATE POLICY "attendance_records_insert" ON attendance_records
         trainer_id = auth.uid()
     );
 
+DROP POLICY IF EXISTS "attendance_records_update" ON attendance_records;
 CREATE POLICY "attendance_records_update" ON attendance_records
     FOR UPDATE
     USING (
@@ -122,6 +129,7 @@ CREATE POLICY "attendance_records_update" ON attendance_records
         trainer_id = auth.uid()
     );
 
+DROP POLICY IF EXISTS "attendance_records_delete" ON attendance_records;
 CREATE POLICY "attendance_records_delete" ON attendance_records
     FOR DELETE
     USING (
@@ -133,11 +141,13 @@ CREATE POLICY "attendance_records_delete" ON attendance_records
 -- 4. Updated_at Trigger
 -- ==============================================================================
 
+DROP TRIGGER IF EXISTS update_hours_logs_updated_at ON hours_logs;
 CREATE TRIGGER update_hours_logs_updated_at
     BEFORE UPDATE ON hours_logs
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_attendance_records_updated_at ON attendance_records;
 CREATE TRIGGER update_attendance_records_updated_at
     BEFORE UPDATE ON attendance_records
     FOR EACH ROW

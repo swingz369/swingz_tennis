@@ -61,7 +61,7 @@ export default function OfflinePage() {
         </button>
 
         {/* Cached Pages Info */}
-        <div className="mt-8 rounded-2xl border border-border bg-card p-4 text-left">
+        <div className="mt-8 rounded-xl border border-border bg-card p-4 text-left">
           <h2 className="mb-2 text-sm font-semibold text-foreground">Letzte besuchte Seiten</h2>
           <p className="text-sm text-muted-foreground">
             Einige zuvor besuchte Seiten könnten noch verfügbar sein. Gehe in deinem Browser zurück

@@ -134,24 +134,24 @@ const SEVERITY_STYLES: Record<
 > = {
   critical: {
     icon: ShieldAlert,
-    color: 'text-red-700',
+    color: 'text-error-700',
     label: 'Kritisch',
-    border: 'border-red-300',
-    bg: 'bg-red-50/50',
+    border: 'border-error-300',
+    bg: 'bg-error-50/50',
   },
   warning: {
     icon: AlertTriangle,
-    color: 'text-amber-700',
+    color: 'text-warning-700',
     label: 'Warnung',
-    border: 'border-amber-300',
-    bg: 'bg-amber-50/40',
+    border: 'border-warning-300',
+    bg: 'bg-warning-50/40',
   },
   info: {
     icon: Info,
-    color: 'text-blue-700',
+    color: 'text-info-700',
     label: 'Hinweis',
-    border: 'border-blue-300',
-    bg: 'bg-blue-50/40',
+    border: 'border-info-300',
+    bg: 'bg-info-50/40',
   },
 };
 
@@ -196,10 +196,10 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
   // ── Loading state ────────────────────────────────────────────
   if (loading && !report) {
     return (
-      <Card className="border-purple-200 bg-purple-50/30">
+      <Card className="border-info-200 bg-info-50/30">
         <CardContent className="py-10 flex flex-col items-center gap-3">
-          <Loader2 className="h-7 w-7 animate-spin text-purple-600" />
-          <p className="text-sm text-purple-700">
+          <Loader2 className="h-7 w-7 animate-spin text-info-600" />
+          <p className="text-sm text-info-700">
             Simuliere Veröffentlichung — Konflikte, Finanzen, E-Mails werden vorberechnet…
           </p>
         </CardContent>
@@ -210,10 +210,10 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
   // ── Error state ──────────────────────────────────────────────
   if (error && !report) {
     return (
-      <Card className="border-red-200 bg-red-50/30">
+      <Card className="border-error-200 bg-error-50/30">
         <CardContent className="py-8 space-y-3 text-center">
-          <AlertCircle className="h-8 w-8 text-red-600 mx-auto" />
-          <p className="text-sm text-red-700">{error}</p>
+          <AlertCircle className="h-8 w-8 text-error-600 mx-auto" />
+          <p className="text-sm text-error-700">{error}</p>
           <Button onClick={runDryRun} variant="outline" size="sm" className="gap-2">
             <RefreshCw className="h-3.5 w-3.5" />
             Erneut versuchen
@@ -230,11 +230,11 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
 
   // ── Render full report ───────────────────────────────────────
   return (
-    <Card className="border-purple-200">
+    <Card className="border-info-200">
       <CardHeader>
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <CardTitle className="flex items-center gap-2 text-purple-800">
+            <CardTitle className="flex items-center gap-2 text-info-800">
               <Beaker className="h-5 w-5" />
               Dry-Run Vorschau
             </CardTitle>
@@ -265,26 +265,26 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
       <CardContent className="space-y-6">
         {/* ═══ Verdict Banner ═══ */}
         {hasBlockers ? (
-          <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 flex items-start gap-3">
-            <ShieldAlert className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="rounded-xl border border-error-300 bg-error-50 px-4 py-3 flex items-start gap-3">
+            <ShieldAlert className="h-5 w-5 text-error-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-red-800">
+              <p className="text-sm font-semibold text-error-800">
                 Veröffentlichung blockiert — {summary.criticalConflictCount} kritische Konflikt
                 {summary.criticalConflictCount !== 1 ? 'e' : ''} erkannt
               </p>
-              <p className="text-xs text-red-700 mt-0.5">
+              <p className="text-xs text-error-700 mt-0.5">
                 Löse die kritischen Konflikte oder akzeptiere sie unten, bevor du fortfährst.
               </p>
             </div>
           </div>
         ) : (
-          <div className="rounded-lg border border-green-300 bg-green-50 px-4 py-3 flex items-start gap-3">
-            <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+          <div className="rounded-xl border border-success-300 bg-success-50 px-4 py-3 flex items-start gap-3">
+            <CheckCircle2 className="h-5 w-5 text-success-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-green-800">
+              <p className="text-sm font-semibold text-success-800">
                 Bereit zur Veröffentlichung — keine kritischen Konflikte
               </p>
-              <p className="text-xs text-green-700 mt-0.5">
+              <p className="text-xs text-success-700 mt-0.5">
                 {summary.wouldCreateSessions} Sessions, {summary.invoicedMemberCount} Rechnungen und{' '}
                 {summary.emailRecipientCount} E-Mails würden gesendet.
               </p>
@@ -295,7 +295,7 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
         {/* ═══ Top-line KPIs ═══ */}
         <div className="grid gap-3 md:grid-cols-4">
           <KpiCard
-            icon={<Calendar className="h-4 w-4 text-green-600" />}
+            icon={<Calendar className="h-4 w-4 text-success-600" />}
             label="Sessions (erstellt)"
             value={summary.wouldCreateSessions.toString()}
             subtitle={
@@ -314,13 +314,13 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
             highlight
           />
           <KpiCard
-            icon={<Mail className="h-4 w-4 text-amber-600" />}
+            icon={<Mail className="h-4 w-4 text-warning-600" />}
             label="E-Mails"
             value={summary.emailRecipientCount.toString()}
             subtitle={`~${summary.estimatedEmailCost.toFixed(2)} € Versandkosten`}
           />
           <KpiCard
-            icon={<Users className="h-4 w-4 text-blue-600" />}
+            icon={<Users className="h-4 w-4 text-info-600" />}
             label="Trainer / Plätze"
             value={`${summary.activeTrainerCount} / ${summary.activeCourtCount}`}
             subtitle={`${summary.totalActiveWeeks} aktive KW × Gruppen`}
@@ -376,7 +376,7 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
                     <div className="flex items-start gap-2">
                       <Icon className={cn('h-3.5 w-3.5 flex-shrink-0 mt-0.5', style.color)} />
                       <div className="flex-1">
-                        <Badge className={cn('text-[10px] mb-1', style.color)} variant="outline">
+                        <Badge className={cn('text-2xs mb-1', style.color)} variant="outline">
                           {style.label}
                         </Badge>
                         <p className="text-foreground">{c.description}</p>
@@ -409,7 +409,7 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
         )}
 
         {/* ═══ Resource Utilization ═══ */}
-        <div className="rounded-lg border border-border bg-muted/20 p-3">
+        <div className="rounded-xl border border-border bg-muted/20 p-3">
           <h4 className="text-sm font-semibold flex items-center gap-2 mb-2">
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
             Ressourcen-Auslastung
@@ -437,7 +437,7 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
         {report.rsvpDistribution && report.rsvpDistribution.total > 0 ? (
           <RsvpPieSection distribution={report.rsvpDistribution} />
         ) : (
-          <div className="rounded-lg border border-dashed border-border bg-muted/20 p-4 text-center">
+          <div className="rounded-xl border border-dashed border-border bg-muted/20 p-4 text-center">
             <Mail className="h-5 w-5 text-muted-foreground mx-auto mb-1.5" />
             <p className="text-xs text-muted-foreground">
               Noch keine RSVP-Daten für diese Saison — Verteilung wird beim ersten Publish
@@ -497,7 +497,7 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
                           key={`${s.date}-${s.hour}-${i}`}
                           className={cn(
                             'border-t border-border',
-                            !s.wouldCreate && 'bg-amber-50/40'
+                            !s.wouldCreate && 'bg-warning-50/40'
                           )}
                         >
                           <td className="px-2 py-1.5 tabular-nums">{s.date}</td>
@@ -509,11 +509,11 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
                           </td>
                           <td className="px-2 py-1.5">
                             {s.wouldCreate ? (
-                              <Badge className="bg-green-100 text-green-700 text-[10px] h-4">
+                              <Badge className="bg-success-100 text-success-700 text-2xs h-4">
                                 Erstellen
                               </Badge>
                             ) : (
-                              <Badge className="bg-amber-100 text-amber-700 text-[10px] h-4">
+                              <Badge className="bg-warning-100 text-warning-700 text-2xs h-4">
                                 Überspringen
                               </Badge>
                             )}
@@ -546,8 +546,8 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
                 className={cn(
                   'rounded-md border px-3 py-2 text-xs flex items-start gap-2',
                   w.level === 'warning'
-                    ? 'border-amber-300 bg-amber-50/30 text-amber-800'
-                    : 'border-blue-300 bg-blue-50/30 text-blue-800'
+                    ? 'border-warning-300 bg-warning-50/30 text-warning-800'
+                    : 'border-info-300 bg-info-50/30 text-info-800'
                 )}
               >
                 {w.level === 'warning' ? (
@@ -561,7 +561,7 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
           </div>
         )}
 
-        <p className="text-[11px] text-muted-foreground text-center pt-2 border-t">
+        <p className="text-2xs text-muted-foreground text-center pt-2 border-t">
           🧪 Dry-Run — keine Daten geschrieben. Klicke „Neu simulieren" nach jeder Plan-Änderung.
         </p>
       </CardContent>
@@ -591,7 +591,7 @@ function KpiCard({
   return (
     <div
       className={cn(
-        'rounded-lg border p-3',
+        'rounded-xl border p-3',
         highlight ? 'border-brand-primary/30 bg-brand-primary/5' : 'border-border bg-background'
       )}
     >
@@ -607,7 +607,7 @@ function KpiCard({
       >
         {value}
       </p>
-      <p className="text-[10px] text-muted-foreground">{subtitle}</p>
+      <p className="text-2xs text-muted-foreground">{subtitle}</p>
     </div>
   );
 }
@@ -704,10 +704,10 @@ const RSVP_PIE_DATA: ReadonlyArray<{
   label: string;
   color: string;
 }> = [
-  { key: 'accepted', label: 'Zusage', color: 'green-500' },
-  { key: 'declined', label: 'Absage', color: 'red-500' },
-  { key: 'maybe', label: 'Vielleicht', color: 'amber-500' },
-  { key: 'pending', label: 'Wartet auf Antwort', color: 'blue-500' },
+  { key: 'accepted', label: 'Zusage', color: 'success-500' },
+  { key: 'declined', label: 'Absage', color: 'error-500' },
+  { key: 'maybe', label: 'Vielleicht', color: 'warning-500' },
+  { key: 'pending', label: 'Wartet auf Antwort', color: 'info-500' },
   { key: 'unknown', label: 'Unbekannt', color: 'gray-400' },
 ];
 
@@ -728,7 +728,7 @@ function RsvpPieSection({
       <h4 className="text-sm font-semibold flex items-center gap-2 mb-3">
         <Mail className="h-4 w-4 text-muted-foreground" />
         RSVP-Verteilung (bisherige Saison)
-        <Badge variant="secondary" className="text-[10px] ml-1">
+        <Badge variant="secondary" className="text-2xs ml-1">
           {distribution.total} Antworten
         </Badge>
       </h4>
@@ -754,36 +754,25 @@ function RsvpPieSection({
                 <div className="flex items-center gap-2 min-w-0">
                   <span
                     className={cn(
-                      'inline-block h-2.5 w-2.5 rounded-sm flex-shrink-0',
-                      d.color.replace(/-(\d{3})$/, '-500') === 'green-500' && 'bg-green-500',
-                      d.color === 'green-500' && 'bg-green-500',
-                      d.color === 'red-500' && 'bg-red-500',
-                      d.color === 'amber-500' && 'bg-amber-500',
-                      d.color === 'blue-500' && 'bg-blue-500',
+                      'inline-block h-2.5 w-2.5 rounded-md flex-shrink-0',
+                      d.color.replace(/-(\d{3})$/, '-500') === 'success-500' && 'bg-success-500',
+                      d.color === 'success-500' && 'bg-success-500',
+                      d.color === 'error-500' && 'bg-error-500',
+                      d.color === 'warning-500' && 'bg-warning-500',
+                      d.color === 'info-500' && 'bg-info-500',
                       d.color === 'gray-400' && 'bg-gray-400'
                     )}
-                    style={{
-                      backgroundColor: (
-                        {
-                          'green-500': '#22c55e',
-                          'red-500': '#ef4444',
-                          'amber-500': '#f59e0b',
-                          'blue-500': '#3b82f6',
-                          'gray-400': '#9ca3af',
-                        } as Record<string, string>
-                      )[d.color],
-                    }}
                   />
                   <span className="text-foreground truncate">{d.label}</span>
                 </div>
                 <div className="flex items-center gap-2 tabular-nums text-muted-foreground">
                   <span className="font-medium text-foreground">{count}</span>
-                  <span className="text-[10px]">({pct}%)</span>
+                  <span className="text-2xs">({pct}%)</span>
                 </div>
               </div>
             );
           })}
-          <p className="text-[10px] text-muted-foreground pt-1.5 border-t border-border/50">
+          <p className="text-2xs text-muted-foreground pt-1.5 border-t border-border/50">
             Stichprobe aus {distribution.sessionSampleSize} veröffentlichter
             {distribution.sessionSampleSize === 1 ? ' Session' : ' Sessions'} · Acceptance-Rate{' '}
             {acceptancePct}%

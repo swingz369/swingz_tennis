@@ -95,7 +95,8 @@ async function comprehensiveClubSetup() {
       console.log(`\n⚠️  Multiple admins found (${adminCount}), keeping first one only`);
 
       const admins = memberships!.filter((m) => m.role === 'admin');
-      const _toKeep = admins[0];
+      // Note: only the first admin is kept (others deactivated below). The
+      // list itself is read implicitly via .slice(1), so we don't bind it.
       const toDeactivate = admins.slice(1);
 
       for (const admin of toDeactivate) {

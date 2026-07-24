@@ -1,22 +1,36 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { withApiAuth, verifyRole } from '@/lib/api-auth';
+import type { AuthContext } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:members:[id]:schedule-preferences');
 
+// ponytail: eigener User, admin (global), oder trainer/admin desselben Clubs
+async function canAccess(auth: AuthContext, userId: string, clubId: string): Promise<boolean> {
+  if (auth.user.id === userId) return true;
+  if (await verifyRole(auth, 'admin')) return true;
+  return auth.memberships.some(
+    (m) => m.club_id === clubId && (m.role === 'trainer' || m.role === 'admin')
+  );
+}
+
 /**
  * GET /api/members/[userId]/schedule-preferences?clubId=...
- * Fetches a member's general schedule preferences
  */
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id: userId } = await params;
-    const { searchParams } = new URL(_request.url);
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: userId } = await params;
+  return withApiAuth(request, async (auth) => {
+    const { searchParams } = new URL(request.url);
     const clubId = searchParams.get('clubId');
 
     if (!clubId) {
       return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+    }
+
+    if (!(await canAccess(auth, userId, clubId))) {
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const supabase = createServiceClient();
@@ -53,20 +67,16 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         notes: null,
       },
     });
-  } catch (error) {
-    log.error('Schedule preferences GET error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+  });
 }
 
 /**
  * PUT /api/members/[userId]/schedule-preferences
- * Creates or updates a member's general schedule preferences
  */
-export async function PUT(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id: userId } = await params;
-    const body = await _request.json();
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: userId } = await params;
+  return withApiAuth(request, async (auth) => {
+    const body = await request.json();
     const {
       clubId,
       preferred_level,
@@ -82,6 +92,10 @@ export async function PUT(_request: NextRequest, { params }: { params: Promise<{
 
     if (!clubId) {
       return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+    }
+
+    if (!(await canAccess(auth, userId, clubId))) {
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const supabase = createServiceClient();
@@ -139,8 +153,5 @@ export async function PUT(_request: NextRequest, { params }: { params: Promise<{
     }
 
     return NextResponse.json({ success: true, preferences: result.data });
-  } catch (error) {
-    log.error('Schedule preferences PUT error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+  });
 }

@@ -14,6 +14,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { StatCard } from '@/components/ui/stat-card';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,66 +60,39 @@ export default async function OwnerPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Plattform-Übersicht</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Hallo {firstName} — Swingz Plattform-Dashboard
-          </p>
-        </div>
-        <Badge
-          variant="outline"
-          className="flex items-center gap-1 border-indigo-300 text-indigo-700 dark:border-indigo-700 dark:text-indigo-300"
-        >
-          <Shield className="h-3 w-3" /> Owner
-        </Badge>
-      </div>
+      {/*
+        Bewusst KEIN redundanter "Owner"-Badge rechts: das violette
+        Plattform-Konsole-Banner aus /owner/layout.tsx ist die sichtbare
+        Rollen-Markierung und wird nicht doppelt ausgespielt. Andere
+        Owner-Pages folgen demselben Pattern.
+      */}
+      <PageHeader
+        title="Plattform-Übersicht"
+        description={<>Hallo {firstName} — Swingz Plattform-Dashboard</>}
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          {
-            label: 'Vereine gesamt',
-            value: clubCount ?? 0,
-            icon: Building2,
-            color: 'text-indigo-600',
-            bg: 'bg-indigo-50 dark:bg-indigo-900/20',
-          },
-          {
-            label: 'Nutzer gesamt',
-            value: totalUsers ?? 0,
-            icon: Users,
-            color: 'text-blue-600',
-            bg: 'bg-blue-50 dark:bg-blue-900/20',
-          },
-          {
-            label: 'Superadmins',
-            value: superadminCount ?? 0,
-            icon: UserCog,
-            color: 'text-purple-600',
-            bg: 'bg-purple-50 dark:bg-purple-900/20',
-          },
-          {
-            label: 'Admins',
-            value: adminCount ?? 0,
-            icon: GraduationCap,
-            color: 'text-green-600',
-            bg: 'bg-green-50 dark:bg-green-900/20',
-          },
-        ].map((stat) => (
-          <Card key={stat.label} className="border-0 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value.toLocaleString('de-DE')}</p>
-                </div>
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {(
+          [
+            { label: 'Vereine gesamt', value: clubCount ?? 0, icon: Building2, color: 'brand' },
+            { label: 'Nutzer gesamt', value: totalUsers ?? 0, icon: Users, color: 'blue' },
+            {
+              label: 'Superadmins',
+              value: superadminCount ?? 0,
+              icon: UserCog,
+              color: 'purple',
+            },
+            { label: 'Admins', value: adminCount ?? 0, icon: GraduationCap, color: 'green' },
+          ] as const
+        ).map((stat) => (
+          <StatCard
+            key={stat.label}
+            icon={stat.icon}
+            label={stat.label}
+            value={stat.value.toLocaleString('de-DE')}
+            color={stat.color}
+          />
         ))}
       </div>
 
@@ -127,14 +102,14 @@ export default async function OwnerPage() {
           <CardTitle className="text-sm font-semibold flex items-center justify-between">
             Vereine
             <div className="flex items-center gap-2">
-              <Link href="/owner/clubs/new">
+              <Link href="/owner/clubs?new=1">
                 <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
                   <Plus className="h-3 w-3" /> Verein anlegen
                 </Button>
               </Link>
               <Link
                 href="/owner/clubs"
-                className="text-xs text-indigo-600 hover:underline font-normal flex items-center gap-1"
+                className="text-xs text-info-600 hover:underline font-normal flex items-center gap-1"
               >
                 Alle <ChevronRight className="h-3 w-3" />
               </Link>
@@ -145,8 +120,8 @@ export default async function OwnerPage() {
           <div className="divide-y divide-border dark:divide-white/10">
             {(clubs ?? []).map((club: any) => (
               <div key={club.id} className="flex items-center gap-4 py-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/20 shrink-0">
-                  <Building2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-info-50 dark:bg-info-900/20 shrink-0">
+                  <Building2 className="h-4 w-4 text-info-600 dark:text-info-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{club.name}</p>
@@ -162,7 +137,7 @@ export default async function OwnerPage() {
                   )}
                   <Link
                     href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 hover:underline whitespace-nowrap"
+                    className="text-xs text-info-600 hover:text-info-800 dark:text-info-400 hover:underline whitespace-nowrap"
                   >
                     Als Admin →
                   </Link>
@@ -185,7 +160,7 @@ export default async function OwnerPage() {
         </p>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: 'Verein anlegen', href: '/owner/clubs/new', icon: Building2 },
+            { label: 'Verein anlegen', href: '/owner/clubs?new=1', icon: Building2 },
             { label: 'Admin einladen', href: '/owner/clubs', icon: UserCog },
             { label: 'Alle Vereine', href: '/owner/clubs', icon: Activity },
             { label: 'Superadmins', href: '/owner/superadmins', icon: Shield },
@@ -193,10 +168,10 @@ export default async function OwnerPage() {
             <Link
               key={action.label}
               href={action.href}
-              className="flex items-center gap-3 p-3 rounded-xl border border-border dark:border-white/10 hover:border-indigo-400/50 hover:shadow-sm transition-all bg-background dark:bg-card/5"
+              className="flex items-center gap-3 p-3 rounded-xl border border-border dark:border-white/10 hover:border-info-400/50 hover:shadow-sm transition-all bg-background dark:bg-card/5"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/20 shrink-0">
-                <action.icon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-info-50 dark:bg-info-900/20 shrink-0">
+                <action.icon className="h-4 w-4 text-info-600 dark:text-info-400" />
               </div>
               <span className="text-sm font-medium">{action.label}</span>
               <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />

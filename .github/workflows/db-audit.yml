@@ -1,0 +1,149 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# .github/workflows/db-audit.yml
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# WHAT THIS WORKFLOW DOES
+#
+#   Runs the two forensic audit-trail helpers daily + on-demand:
+#     (1) scripts/bulk-track-only-migrations.sh (always DRY-RUN in CI)
+#     (2) scripts/file-count-vs-claim-reconciliation.sh (read-only)
+#
+#   Both Scripts return a single-line JSON as the last line of stdout —
+#   this workflow slices that JSON and asserts `errors == 0` (bulk-track)
+#   and `fail == 0` (reconciliation) for clean-PASS exit. Exit 2 (reconciliation
+#   ASPIRATIONAL-CLOSURE) is reported as soft-fail with an Artifact upload —
+#   not a CI-blocker per ADR-002 ("forensic ground-truth, no fake-pass").
+#
+#   CI-side DATABASE_URL is supplied via GitHub Secrets
+#   `DATABASE_URL_PROD` (read-replica, not the primary). The script never
+#   writes to DB (both scripts default-to read-only / dry-run), so a
+#   read-replica connection is appropriate.
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+name: db-audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_dry_run:
+        description: 'Force DRY-RUN even for bulk-track (default true)'
+        required: false
+        type: boolean
+        default: true
+  schedule:
+    # Weekly Sonntag 03:00 UTC (after the nulliga-sync at 06:00 has settled
+    # but before any production traffic picks up). Drift-window-aligned.
+    - cron: '0 3 * * 0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Forensic audit-trail reconciliation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      # Forces bash-strict-mode in script subshells.
+      PSQL_HISTORY_DISABLE: '1'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history for `git log` forensic refs in transcripts
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Cache psql cold-connect (read-replica use)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/psql
+          key: psql-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: |
+            psql-${{ runner.os }}-
+
+      - name: Install postgres client + jq
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends postgresql-client jq
+
+      - name: Run bulk-track-only-migrations.sh (DRY-RUN)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+        run: |
+          bash scripts/bulk-track-only-migrations.sh \
+            2>bulk-track-stderr.log \
+            1>bulk-track-stdout.log
+          BULK_TRACK_EXIT=$?
+          echo "bulk-track-exit=$BULK_TRACK_EXIT"
+          # Always DRY-RUN in CI per ADR-002 forensic-default.
+          # Per ADR-002 exit-code-semantics:
+          #   exit 0 = PASS
+          #   exit 1 = SETUP-FAIL (real CI failure — block!)
+          #   exit 0 = also returned for DRY-RUN-by-default mode
+          # Tighten: exit 1 IS a real failure (block); anything else is soft.
+          if [[ "$BULK_TRACK_EXIT" -eq 1 ]]; then
+            echo "::error::bulk-track-only-migrations.sh SETUP-FAIL (exit=1)"
+            exit 1
+          fi
+          # Parse JSON last-line of stdout for errors field via jq (empty-fallback safe).
+          BULK_TRACK_JSON=$(tail -1 bulk-track-stdout.log 2>/dev/null || echo '{}')
+          echo "JSON last-line: $BULK_TRACK_JSON"
+          BULK_TRACK_ERRORS=$(echo "$BULK_TRACK_JSON" | jq -r '.errors // 0' 2>/dev/null || echo 0)
+          echo "errors=$BULK_TRACK_ERRORS"
+          if [[ "$BULK_TRACK_ERRORS" -gt 0 ]]; then
+            echo "::error::bulk-track reported errors=$BULK_TRACK_ERRORS"
+            exit 1
+          fi
+          echo "✓ bulk-track-only PASS"
+
+      - name: Run file-count-vs-claim-reconciliation.sh
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+        run: |
+          bash scripts/file-count-vs-claim-reconciliation.sh \
+            2>reconciliation-stderr.log \
+            1>reconciliation-stdout.log
+          RECO_EXIT=$?
+          echo "reconciliation-exit=$RECO_EXIT"
+          # Per ADR-002:
+          #   exit 0 = PASS (clean)
+          #   exit 1 = SETUP-FAIL (env-config issue — surface as warning, NOT block)
+          #   exit 2 = ASPIRATIONAL-CLOSURE (paperwork-vs-reality gap — soft-fail, ADR-002)
+          if [[ "$RECO_EXIT" -eq 0 ]]; then
+            echo "✓ reconciliation PASS"
+          elif [[ "$RECO_EXIT" -eq 1 ]]; then
+            echo "::warning::reconciliation SETUP-FAIL (env-config issue, env-vars missing — surface gap as warning per developer-doc)"
+          elif [[ "$RECO_EXIT" -eq 2 ]]; then
+            echo "::warning::reconciliation ASPIRATIONAL-CLOSURE detected (paperwork-vs-reality gap)"
+            echo "  → siehe docs/README-development.md \"Known-Limitations-Tabelle\""
+            # ADR-002: surface GAP but DO NOT block CI. Forensic ground-truth.
+          else
+            echo "::error::reconciliation unknown exit=$RECO_EXIT"
+            exit 1
+          fi
+          # Always emit the JSON-last-line for artifact-archival
+          RECO_JSON=$(tail -1 reconciliation-stdout.log 2>/dev/null || echo '{}')
+          echo "JSON last-line: $RECO_JSON"
+
+      - name: Upload transcripts as Artifacts (retention 14 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-audit-transcript-${{ github.run_id }}
+          path: |
+            bulk-track-stdout.log
+            bulk-track-stderr.log
+            reconciliation-stdout.log
+            reconciliation-stderr.log
+          retention-days: 14
+          if-no-files-found: error

@@ -12,9 +12,11 @@ import {
   BarChart3,
   Bell,
   Timer,
+  Target,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { QuickActions } from '@/components/ui/quick-actions';
+import { IconBox } from '@/components/ui/icon-box';
 import { TrainerRsvpList } from '@/components/trainer-rsvp-list';
 import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 import { Button } from '@/components/ui/button';
@@ -76,45 +78,37 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
 
   return (
     <div className="space-y-6">
-      {/* ── Hero Header ── */}
-      <ScrollReveal>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-          <div className="absolute inset-0 bg-noise opacity-5" />
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
-          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
-          <div className="relative">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-white/70 mb-1">Trainer-Bereich</p>
-                <h1 className="text-2xl md:text-3xl font-bold">Willkommen zurück</h1>
-                <p className="text-white/70 mt-2">
-                  Deine Übersicht über Sessions, Anwesenheit und mehr
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  asChild
-                  className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25"
-                >
-                  <Link href="/scheduler">Alle Einheiten</Link>
-                </Button>
-                <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">
-                  <Clock className="h-5 w-5 text-brand-accent" />
-                  <span className="text-sm font-medium">
-                    {todaySessions.length > 0 ? (
-                      <>{todaySessions.length} Sessions heute</>
-                    ) : (
-                      <>
-                        <AnimatedCounter value={stats.upcomingSessions} /> kommende
-                      </>
-                    )}
-                  </span>
-                </div>
-              </div>
-            </div>
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
+            Trainer-Bereich
+          </p>
+          <h1 className="text-2xl font-bold font-display text-foreground dark:text-white tracking-tight">
+            Willkommen zurück
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Deine Übersicht über Sessions, Anwesenheit und mehr
+          </p>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <Button asChild variant="outline">
+            <Link href="/scheduler">Alle Einheiten</Link>
+          </Button>
+          <div className="hidden sm:flex items-center gap-2 rounded-xl border border-border dark:border-white/10 px-4 py-2.5">
+            <Clock className="h-4 w-4 text-brand-light" />
+            <span className="text-sm font-medium text-foreground dark:text-white">
+              {todaySessions.length > 0 ? (
+                <>{todaySessions.length} Sessions heute</>
+              ) : (
+                <>
+                  <AnimatedCounter value={stats.upcomingSessions} /> kommende
+                </>
+              )}
+            </span>
           </div>
         </div>
-      </ScrollReveal>
+      </div>
 
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -129,9 +123,12 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
                   </p>
                   <p className="text-xs text-muted-foreground">alle Zeiten</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <Calendar className="h-5 w-5" />
-                </div>
+                <IconBox
+                  icon={Calendar}
+                  size="md"
+                  variant="blue"
+                  className="transition-transform duration-300 group-hover:scale-110"
+                />
               </div>
             </CardContent>
           </Card>
@@ -148,9 +145,12 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
                   </p>
                   <p className="text-xs text-muted-foreground">anstehende Einheiten</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <TrendingUp className="h-5 w-5" />
-                </div>
+                <IconBox
+                  icon={TrendingUp}
+                  size="md"
+                  variant="primary"
+                  className="transition-transform duration-300 group-hover:scale-110"
+                />
               </div>
             </CardContent>
           </Card>
@@ -167,9 +167,12 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
                   </p>
                   <p className="text-xs text-muted-foreground">Einheiten geplant</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <Timer className="h-5 w-5" />
-                </div>
+                <IconBox
+                  icon={Timer}
+                  size="md"
+                  variant="purple"
+                  className="transition-transform duration-300 group-hover:scale-110"
+                />
               </div>
             </CardContent>
           </Card>
@@ -186,9 +189,12 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
                   </p>
                   <p className="text-xs text-muted-foreground">Quote</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <CheckCircle className="h-5 w-5" />
-                </div>
+                <IconBox
+                  icon={CheckCircle}
+                  size="md"
+                  variant="green"
+                  className="transition-transform duration-300 group-hover:scale-110"
+                />
               </div>
             </CardContent>
           </Card>
@@ -201,7 +207,7 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
           <CardHeader className="px-5 pt-5 pb-3 border-b border-border dark:border-white/10">
             <CardTitle className="text-sm font-semibold flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-brand-light/10 text-brand-light">
+                <div className="p-1.5 rounded-xl bg-brand-light/10 text-brand-light">
                   <Calendar className="h-4 w-4" />
                 </div>
                 <span>Kommende Einheiten</span>
@@ -218,7 +224,7 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
           <CardContent className="px-5 pb-5">
             {sessions.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-3">
+                <div className="h-14 w-14 rounded-xl bg-muted flex items-center justify-center mb-3">
                   <Calendar className="h-7 w-7 text-muted-foreground/50" />
                 </div>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -233,7 +239,7 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
                 {sessions.slice(0, 5).map((session) => (
                   <div
                     key={session.id}
-                    className="flex items-center gap-3 py-3.5 hover:bg-muted/50 transition-colors rounded-lg -mx-2 px-2 group/item"
+                    className="flex items-center gap-3 py-3.5 hover:bg-muted/50 transition-colors rounded-xl -mx-2 px-2 group/item"
                   >
                     <div className="h-10 w-10 rounded-xl bg-brand-light/10 text-brand-light flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
                       <Calendar className="h-5 w-5" />
@@ -285,6 +291,12 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
               href: '/trainer/availability',
               icon: Clock,
               variant: 'purple',
+            },
+            {
+              label: 'Planungspräferenzen',
+              href: '/trainer/planning-preferences',
+              icon: Target,
+              variant: 'indigo',
             },
             { label: 'Profil', href: '/trainer/profile', icon: Users, variant: 'green' },
             { label: 'Abrechnung', href: '/billing', icon: BarChart3, variant: 'amber' },

@@ -36,28 +36,28 @@ CREATE TABLE IF NOT EXISTS trainer_absences (
 -- ============================================================================
 
 -- Query by trainer
-CREATE INDEX idx_trainer_absences_trainer_id ON trainer_absences(trainer_id);
+CREATE INDEX IF NOT EXISTS idx_trainer_absences_trainer_id ON trainer_absences(trainer_id);
 
 -- Query by club (tenant isolation)
-CREATE INDEX idx_trainer_absences_club_id ON trainer_absences(club_id);
+CREATE INDEX IF NOT EXISTS idx_trainer_absences_club_id ON trainer_absences(club_id);
 
 -- Query by status (pending approvals)
-CREATE INDEX idx_trainer_absences_status ON trainer_absences(status);
+CREATE INDEX IF NOT EXISTS idx_trainer_absences_status ON trainer_absences(status);
 
 -- Query by type (vacation, sick, etc.)
-CREATE INDEX idx_trainer_absences_type ON trainer_absences(type);
+CREATE INDEX IF NOT EXISTS idx_trainer_absences_type ON trainer_absences(type);
 
 -- Query by date range (conflict detection, active absences)
-CREATE INDEX idx_trainer_absences_date_range ON trainer_absences(start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_trainer_absences_date_range ON trainer_absences(start_date, end_date);
 
 -- Composite index for trainer + date range queries (most common)
-CREATE INDEX idx_trainer_absences_trainer_dates ON trainer_absences(trainer_id, start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_trainer_absences_trainer_dates ON trainer_absences(trainer_id, start_date, end_date);
 
 -- Composite index for club + date range queries (tenant + temporal)
-CREATE INDEX idx_trainer_absences_club_dates ON trainer_absences(club_id, start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_trainer_absences_club_dates ON trainer_absences(club_id, start_date, end_date);
 
 -- Query pending approvals by club
-CREATE INDEX idx_trainer_absences_club_status ON trainer_absences(club_id, status) 
+CREATE INDEX IF NOT EXISTS idx_trainer_absences_club_status ON trainer_absences(club_id, status) 
   WHERE status = 'pending';
 
 -- ============================================================================
@@ -68,12 +68,14 @@ CREATE INDEX idx_trainer_absences_club_status ON trainer_absences(club_id, statu
 ALTER TABLE trainer_absences ENABLE ROW LEVEL SECURITY;
 
 -- Policy 1: Superadmins have full access (cross-tenant)
+DROP POLICY IF EXISTS "Superadmins have full access to all absences" ON trainer_absences;
 CREATE POLICY "Superadmins have full access to all absences"
   ON trainer_absences
   FOR ALL
   USING (is_superadmin());
 
 -- Policy 2: Club admins can view all absences in their clubs
+DROP POLICY IF EXISTS "Club admins can view absences in their clubs" ON trainer_absences;
 CREATE POLICY "Club admins can view absences in their clubs"
   ON trainer_absences
   FOR SELECT
@@ -88,6 +90,7 @@ CREATE POLICY "Club admins can view absences in their clubs"
   );
 
 -- Policy 3: Club admins can create absences for trainers in their clubs
+DROP POLICY IF EXISTS "Club admins can create absences in their clubs" ON trainer_absences;
 CREATE POLICY "Club admins can create absences in their clubs"
   ON trainer_absences
   FOR INSERT
@@ -102,6 +105,7 @@ CREATE POLICY "Club admins can create absences in their clubs"
   );
 
 -- Policy 4: Club admins can update/approve/reject absences in their clubs
+DROP POLICY IF EXISTS "Club admins can update absences in their clubs" ON trainer_absences;
 CREATE POLICY "Club admins can update absences in their clubs"
   ON trainer_absences
   FOR UPDATE
@@ -116,6 +120,7 @@ CREATE POLICY "Club admins can update absences in their clubs"
   );
 
 -- Policy 5: Club admins can delete absences in their clubs
+DROP POLICY IF EXISTS "Club admins can delete absences in their clubs" ON trainer_absences;
 CREATE POLICY "Club admins can delete absences in their clubs"
   ON trainer_absences
   FOR DELETE
@@ -130,6 +135,7 @@ CREATE POLICY "Club admins can delete absences in their clubs"
   );
 
 -- Policy 6: Trainers can view their own absences
+DROP POLICY IF EXISTS "Trainers can view their own absences" ON trainer_absences;
 CREATE POLICY "Trainers can view their own absences"
   ON trainer_absences
   FOR SELECT
@@ -151,6 +157,7 @@ CREATE POLICY "Trainers can view their own absences"
   );
 
 -- Policy 7: Trainers can create absences for themselves
+DROP POLICY IF EXISTS "Trainers can create their own absences" ON trainer_absences;
 CREATE POLICY "Trainers can create their own absences"
   ON trainer_absences
   FOR INSERT
@@ -172,6 +179,7 @@ CREATE POLICY "Trainers can create their own absences"
   );
 
 -- Policy 8: Trainers can update their own pending absences (not approved/rejected)
+DROP POLICY IF EXISTS "Trainers can update their own pending absences" ON trainer_absences;
 CREATE POLICY "Trainers can update their own pending absences"
   ON trainer_absences
   FOR UPDATE
@@ -194,6 +202,7 @@ CREATE POLICY "Trainers can update their own pending absences"
   );
 
 -- Policy 9: Trainers can delete their own pending absences
+DROP POLICY IF EXISTS "Trainers can delete their own pending absences" ON trainer_absences;
 CREATE POLICY "Trainers can delete their own pending absences"
   ON trainer_absences
   FOR DELETE
@@ -227,6 +236,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trainer_absences_updated_at ON trainer_absences;
 CREATE TRIGGER trainer_absences_updated_at
   BEFORE UPDATE ON trainer_absences
   FOR EACH ROW

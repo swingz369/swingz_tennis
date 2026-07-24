@@ -7,6 +7,7 @@ export type AuditAction =
   | 'create'
   | 'update'
   | 'delete'
+  | 'restore'
   | 'login'
   | 'logout'
   | 'approve'
@@ -33,6 +34,7 @@ export interface AuditLogEntry {
   action: AuditAction;
   entityType: AuditEntityType;
   entityId: string;
+  clubId?: string;
   details?: Record<string, any>;
   ipAddress?: string;
   userAgent?: string;

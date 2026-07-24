@@ -359,23 +359,58 @@ export interface BulkToggleInput {
 
 /**
  * Bulk toggle a contiguous range of weeks for one group (drag-select).
+ *
+ * Implementiert als EINZELNER PostgREST-Upsert statt N-rundreisen durch
+ * `toggleGroupWeek`. Voraussetzung: die Tabelle `season_group_weeks` muss
+ * einen UNIQUE-Index auf (season_id, group_id, week_monday) haben (alter
+ * Code-Path setzte `ON CONFLICT` implizit voraus). Wenn der Constraint
+ * fehlt, schlägt der Upsert mit PostgreSQL-Fehler 23505 auf, was Supabase
+ * in einen sauberen 500er-Response umsetzt — kein silent fallback auf die
+ * alte N+1-Logik.
  */
 export async function bulkToggleGroupWeeks(
   supabase: SupabaseClient<Database>,
   seasonId: string,
   clubId: string,
   input: BulkToggleInput
-): Promise<{ ok: boolean; affected: number }> {
-  let affected = 0;
-  for (const weekMonday of input.weekMondaYs) {
-    await toggleGroupWeek(supabase, seasonId, clubId, {
-      groupId: input.groupId,
-      weekMonday,
-      isActive: input.isActive,
-    });
-    affected += 1;
+): Promise<{ ok: boolean; affected: number; error?: string }> {
+  if (input.weekMondaYs.length === 0) {
+    return { ok: true, affected: 0 };
   }
-  return { ok: true, affected };
+
+  const rows = input.weekMondaYs.map((weekMonday) => ({
+    season_id: seasonId,
+    club_id: clubId,
+    group_id: input.groupId,
+    week_monday: weekMonday,
+    week_number: getIsoWeekNumber(weekMonday),
+    is_active: input.isActive,
+    reason: null,
+  }));
+
+  const { error } = await supabase.from('season_group_weeks').upsert(rows, {
+    // Unique-Constraint muss auf (season_id, group_id, week_monday) liegen —
+    // siehe Migration 20260627_season_group_weeks.sql. Wenn der Constraint
+    // dort fehlt, schlägt dieser Upsert sauber mit 500 fehl statt im
+    // Hintergrund halb-still durchzurutschen.
+    onConflict: 'season_id,group_id,week_monday',
+    // Kein `count: 'exact'` — PostgREST liefert das nur für DELETE/SELECT,
+    // bei UPSERT gibt es je nach Version einen Fehler (HTTP 400). Wir
+    // melden rows.length als `affected` (semantisch: alle angefragten
+    // Zeilen sind entweder neu oder aktualisiert; das vorherige Verhalten
+    // war identisch, da upsert grundsätzlich N Zeilen trifft).
+    ignoreDuplicates: false,
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      affected: 0,
+      error: error.message,
+    };
+  }
+
+  return { ok: true, affected: rows.length };
 }
 
 /** Export the helper so components can re-render the same Sep→Jul range. */

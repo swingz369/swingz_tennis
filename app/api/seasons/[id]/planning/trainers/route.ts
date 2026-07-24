@@ -40,6 +40,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const isSuperadmin = await verifyRole(auth, 'superadmin');
       if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
 
+      if (!isSuperadmin) {
+        const hasClubAccess = auth.memberships.some(
+          (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
+        );
+        if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
+      }
+
       // Get trainer preferences
       const trainerPrefs = await db
         .select({
@@ -49,7 +56,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         })
         .from(userTrainingPreferences)
         .innerJoin(users, eq(userTrainingPreferences.user_id, users.id))
-        .innerJoin(trainersTable, eq(users.email, trainersTable.email))
+        .innerJoin(trainersTable, eq(users.id, trainersTable.user_id))
         .where(
           and(
             eq(userTrainingPreferences.season_id, seasonId),
@@ -113,6 +120,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         currentAssignedHours: number;
         availableSlots: number;
         utilizationStatus: 'under' | 'optimal' | 'near_limit' | 'over';
+        hasSubmittedPreferences: boolean;
       }> = [];
       const processedTrainerIds = new Set<string>();
 
@@ -151,6 +159,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           currentAssignedHours: hoursAssigned,
           availableSlots,
           utilizationStatus,
+          hasSubmittedPreferences: true,
         });
       });
 
@@ -188,6 +197,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           currentAssignedHours: hoursAssigned,
           availableSlots,
           utilizationStatus,
+          hasSubmittedPreferences: false,
         });
       }
 

@@ -35,30 +35,34 @@ export interface AdminSectionProps {
     icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
     onClick: () => void;
   };
+  /** Open this section on first render even without an active child route —
+   * for the groups an admin reaches for constantly (members, court ops), so
+   * the dashboard doesn't hide its own main features behind an extra click. */
+  defaultOpen?: boolean;
 }
 
 // Pre-defined colour themes (mirrors roleColors in sidebar)
 export const adminSectionColors: Record<string, AdminSectionColors> = {
   superadmin: {
-    gradient: 'from-purple-500 to-purple-700',
-    bg: 'bg-purple-50 dark:bg-purple-900/20',
-    text: 'text-purple-700 dark:text-purple-300',
+    gradient: 'from-info-500 to-info-700',
+    bg: 'bg-info-50 dark:bg-info-900/20',
+    text: 'text-info-700 dark:text-info-300',
     light: 'purple',
-    ring: 'ring-purple-300/40',
+    ring: 'ring-info-300/40',
   },
   admin: {
     gradient: 'from-brand-light to-brand-primary',
     bg: 'bg-brand-light/10 dark:bg-brand-light/15',
-    text: 'text-brand-light dark:text-green-300',
+    text: 'text-brand-light dark:text-success-300',
     light: 'brand-light',
     ring: 'ring-brand-light/30',
   },
   trainer: {
-    gradient: 'from-emerald-500 to-emerald-700',
-    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-    text: 'text-emerald-600 dark:text-emerald-300',
+    gradient: 'from-success-500 to-success-700',
+    bg: 'bg-success-50 dark:bg-success-900/20',
+    text: 'text-success-600 dark:text-success-300',
     light: 'emerald',
-    ring: 'ring-emerald-300/40',
+    ring: 'ring-success-300/40',
   },
   neutral: {
     gradient: 'from-gray-500 to-gray-700',
@@ -86,9 +90,10 @@ export function AdminSection({
   onClose,
   colors,
   extraAction,
+  defaultOpen = false,
 }: AdminSectionProps) {
   const hasActiveChild = subItems.some((item) => isActivePath(pathname, item.href));
-  const [isOpen, setIsOpen] = useState(hasActiveChild);
+  const [isOpen, setIsOpen] = useState(hasActiveChild || defaultOpen);
   const sectionRef = useRef<HTMLDivElement>(null);
 
   // Keyboard navigation within section (roving tabindex)
@@ -136,29 +141,24 @@ export function AdminSection({
       role="group"
       aria-label={`${label} Bereich`}
     >
-      {/* Section header / toggle — unified with Dashboard + secondary nav items */}
+      {/* Section header / toggle — small uppercase label above the group,
+          still a disclosure button so collapse behaviour is unchanged. */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          'w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+          'w-full flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider transition-colors duration-200',
           hasActiveChild
-            ? `${colors.bg} ${colors.text} shadow-sm`
-            : 'text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-white'
+            ? `${colors.bg} ${colors.text}`
+            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
         )}
         aria-expanded={isOpen}
         aria-label={`${label} ${isOpen ? 'einklappen' : 'ausklappen'}`}
       >
-        <Icon
-          className={cn(
-            'h-5 w-5 shrink-0 transition-transform duration-200',
-            hasActiveChild && 'scale-110'
-          )}
-          aria-hidden="true"
-        />
+        <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <span className="flex-1 text-left">{label}</span>
         <ChevronDown
           className={cn(
-            'h-4 w-4 shrink-0 transition-all duration-300 opacity-50',
+            'h-3.5 w-3.5 shrink-0 transition-transform duration-200',
             isOpen && 'rotate-180'
           )}
           aria-hidden="true"
@@ -172,10 +172,7 @@ export function AdminSection({
           isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         )}
       >
-        <div
-          className="ml-2 pl-2 border-l border-border/50 dark:border-white/[0.06] space-y-0.5 pb-0.5"
-          role="list"
-        >
+        <div className="ml-2 pl-2 border-l border-border space-y-0.5 pb-0.5">
           {subItems.map((item) => {
             const isActive = isActivePath(pathname, item.href);
             return (
@@ -183,12 +180,11 @@ export function AdminSection({
                 key={item.name}
                 href={item.href}
                 onClick={() => onClose?.()}
-                role="listitem"
                 className={cn(
                   'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-all duration-150',
                   isActive
-                    ? `${colors.bg} ${colors.text} shadow-sm`
-                    : 'text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-foreground'
+                    ? `${colors.bg} ${colors.text}`
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
@@ -213,7 +209,7 @@ export function AdminSection({
           {extraAction && (
             <button
               onClick={extraAction.onClick}
-              className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-foreground transition-all duration-150"
+              className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-150"
             >
               <extraAction.icon className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
               <span>{extraAction.label}</span>

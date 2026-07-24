@@ -57,7 +57,7 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
   {
     key: 'seasons',
     label: 'Saisonplanung',
-    description: 'Saisonen, KI-Clustering und Stundenpläne für Trainingsgruppen.',
+    description: 'Saisonen, automatisches Clustering und Stundenpläne für Trainingsgruppen.',
     icon: 'CalendarDays',
     category: 'core',
     sidebarSection: 'seasons',
@@ -136,6 +136,41 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     category: 'optional',
     sidebarSection: 'work_duty',
     order: 11,
+  },
+  // ponytail: add-on priced separately (€79/Monat) — gates hardware vendor access from 3.1.x
+  {
+    key: 'smart_court',
+    label: 'Smart Court',
+    description:
+      'Automatische Platzkontrolle via Hardware-Integration (Nuki, Shelly, Loxone). Add-On € 79/Monat.',
+    icon: 'Wifi',
+    category: 'optional',
+    sidebarSection: 'smart_court',
+    order: 12,
+  },
+  {
+    key: 'dynamic_pricing',
+    label: 'Dynamische Preisgestaltung',
+    description:
+      'Zeitbasierte Preise für Plätze: Peak/Off-Peak, Tagespreise und Saison-Aufschläge.',
+    icon: 'TrendingUp',
+    category: 'optional',
+    sidebarSection: 'pricing',
+    order: 13,
+  },
+  // Tier-4 (Audit): KI-Analyse als eigenes Modul. Server-seitiges Gate in
+  // api/seasons/planning/ai-analysis/route.ts checkt `clubs.features.ai_analysis`
+  // via requireFeature. Default OFF — Clubs können das Modul im Onboarding-
+  // Wizard oder in Settings → Module aktivieren.
+  {
+    key: 'ai_analysis',
+    label: 'KI-Analyse (Saisonplanung)',
+    description:
+      'KI-gestützte Plausibilitäts- und Konflikt-Analyse des generierten Saisonplans (Google Gemini Flash).',
+    icon: 'Brain',
+    category: 'optional',
+    sidebarSection: 'ai_analysis',
+    order: 14,
   },
 ] as const;
 

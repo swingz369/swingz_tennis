@@ -18,6 +18,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api-fetch';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Trainer {
   id: string;
@@ -194,7 +195,7 @@ export default function MemberTrainerBookingPage() {
   if (bookingSuccess) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-6">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success-100 dark:bg-success-900/30">
           <CheckCircle className="h-8 w-8 text-brand-light" />
         </div>
         <h2 className="text-xl font-bold">Buchung erfolgreich!</h2>
@@ -202,7 +203,7 @@ export default function MemberTrainerBookingPage() {
           Deine Einzelstunde wurde gebucht. Du erhältst eine Bestätigung.
         </p>
         <Button
-          variant="brand"
+          variant="primary"
           onClick={() => {
             setBookingSuccess(false);
             setSelectedTrainer(null);
@@ -217,8 +218,8 @@ export default function MemberTrainerBookingPage() {
   if (waitlistSuccess) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-6">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-          <Clock3 className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-warning-100 dark:bg-warning-900/30">
+          <Clock3 className="h-8 w-8 text-warning-600 dark:text-warning-400" />
         </div>
         <h2 className="text-xl font-bold">Auf der Warteliste!</h2>
         <p className="text-sm text-muted-foreground">
@@ -241,19 +242,17 @@ export default function MemberTrainerBookingPage() {
   if (!selectedTrainer) {
     return (
       <div className="space-y-5">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Trainer buchen</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Wähle einen Trainer für deine Einzelstunde
-          </p>
-        </div>
+        <PageHeader
+          title="Trainer buchen"
+          description="Wähle einen Trainer für deine Einzelstunde"
+        />
 
         {loadingTrainers ? (
           <div className="text-center py-10 text-muted-foreground text-sm">
             Trainer werden geladen…
           </div>
         ) : errorTrainers ? (
-          <div className="text-center py-10 text-red-500 text-sm">{errorTrainers}</div>
+          <div className="text-center py-10 text-error-500 text-sm">{errorTrainers}</div>
         ) : trainers.length === 0 ? (
           <div className="text-center py-10 text-muted-foreground text-sm">
             Keine Trainer verfügbar
@@ -277,7 +276,7 @@ export default function MemberTrainerBookingPage() {
                           {trainer.specialties.slice(0, 3).map((s) => (
                             <Badge
                               key={s}
-                              className="text-[11px] bg-brand-light/10 text-brand-light border-0"
+                              className="text-2xs bg-brand-light/10 text-brand-light border-0"
                             >
                               {s}
                             </Badge>
@@ -356,12 +355,12 @@ export default function MemberTrainerBookingPage() {
             return (
               <div key={idx} className="min-h-24">
                 <div
-                  className={`text-center text-[11px] font-semibold mb-1 py-1 rounded-lg ${
+                  className={`text-center text-2xs font-semibold mb-1 py-1 rounded-xl ${
                     isToday ? 'bg-brand-light text-white' : 'text-muted-foreground'
                   }`}
                 >
                   <div>{DAY_NAMES[idx]}</div>
-                  <div className="text-[11px] font-normal">{day.getDate()}</div>
+                  <div className="text-2xs font-normal">{day.getDate()}</div>
                 </div>
                 <div className="space-y-1">
                   {daySlots.map((slot) => {
@@ -375,17 +374,15 @@ export default function MemberTrainerBookingPage() {
                           setBookingError(null);
                         }}
                         className={cn(
-                          'w-full text-left rounded-md px-1.5 py-1 text-[11px] leading-tight transition-colors cursor-pointer',
+                          'w-full text-left rounded-md px-1.5 py-1 text-2xs leading-tight transition-colors cursor-pointer',
                           isBooked
-                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/40'
-                            : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/40'
+                            ? 'bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300 hover:bg-warning-200 dark:hover:bg-warning-800/40'
+                            : 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300 hover:bg-success-200 dark:hover:bg-success-800/40'
                         )}
                       >
                         <div className="font-medium">{slot.start_time}</div>
-                        <div className="text-[11px] opacity-75">{slot.end_time}</div>
-                        {isBooked && (
-                          <div className="text-[10px] opacity-75 mt-0.5">Warteliste</div>
-                        )}
+                        <div className="text-2xs opacity-75">{slot.end_time}</div>
+                        {isBooked && <div className="text-2xs opacity-75 mt-0.5">Warteliste</div>}
                       </button>
                     );
                   })}
@@ -412,7 +409,7 @@ export default function MemberTrainerBookingPage() {
         title={
           <span className="flex items-center gap-2">
             {actionMode === 'waitlist' ? (
-              <Clock3 className="h-4 w-4 text-amber-500" />
+              <Clock3 className="h-4 w-4 text-warning-500" />
             ) : (
               <Calendar className="h-4 w-4 text-brand-light" />
             )}
@@ -428,14 +425,14 @@ export default function MemberTrainerBookingPage() {
               ? 'Auf Warteliste setzen'
               : 'Jetzt buchen'
         }
-        variant={actionMode === 'waitlist' ? 'default' : 'brand'}
+        variant={actionMode === 'waitlist' ? 'default' : 'primary'}
         loading={bookingLoading}
         onConfirm={actionMode === 'waitlist' ? handleWaitlist : handleBook}
       >
         {confirmSlot && (
           <div className="space-y-3 py-2">
             {actionMode === 'waitlist' && (
-              <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+              <div className="rounded-xl bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-800 px-3 py-2 text-xs text-warning-700 dark:text-warning-300">
                 Dieser Slot ist bereits gebucht. Du kannst dich auf die Warteliste setzen und wirst
                 benachrichtigt, wenn er frei wird.
               </div>
@@ -466,7 +463,7 @@ export default function MemberTrainerBookingPage() {
             {confirmSlot.notes && (
               <p className="text-xs text-muted-foreground">{confirmSlot.notes}</p>
             )}
-            {bookingError && <p className="text-xs text-red-500">{bookingError}</p>}
+            {bookingError && <p className="text-xs text-error-500">{bookingError}</p>}
           </div>
         )}
       </ConfirmDialog>

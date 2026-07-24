@@ -147,6 +147,29 @@ export async function GET(_request: NextRequest) {
           );
           profiles = [];
         } else {
+          // ── NaN-Guard helper for Supabase PostgREST numeric coercion ───────
+          // If the service-client fallback returns malformed numeric strings
+          // (rare but observed on legacy rows: raw quotes, trailing junk),
+          // parseFloat returns NaN, which the UI then renders as "NaN/h" in
+          // the Stundensatz-Spalte. The helper collapses ANY non-finite input
+          // (NaN / Infinity / non-numeric / null / undefined) to `null` —
+          // explicit and idempotent. Mirrors parseNumericField in
+          // trainer-profile.repository.ts#mapToEntity so the Drizzle path
+          // and this PostgREST-fallback path produce the same entity shape.
+          const parseNumOrNull = (raw: unknown): number | null => {
+            if (raw == null) return null;
+            // Runtime-Type-Check statt unsafe `as number` Cast. Number.isFinite(true)
+            // ist true (coerced zu 1), und Number.isFinite({}) ist false — aber
+            // ohne expliziten Type-Check landet ein slipped boolean oder object
+            // unsauber im Number-Pfad. Mit dem expliziten Branch akzeptieren wir
+            // nur `string` + `number`, alles andere kollabiert deterministisch auf null.
+            if (typeof raw === 'string') {
+              const n = parseFloat(raw);
+              return Number.isFinite(n) ? n : null;
+            }
+            if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null;
+            return null;
+          };
           profiles = (fallbackRows ?? []).map((row: any) => ({
             id: row.id,
             userId: row.user_id,
@@ -161,7 +184,27 @@ export async function GET(_request: NextRequest) {
             specializations: row.specializations ?? [],
             experience: row.experience ?? { years: 0, previousClubs: [], achievements: [] },
             status: row.status ?? 'active',
-            hourlyRate: row.hourlyRate ?? row.hourly_rate ?? undefined,
+            // Falls NaN/Infinity hier durchschlagen würden (PostgREST-malformed-number),
+            // leiten wir auch das LEGACY `hourlyRate` durch den Helper. Konsistent mit
+            // mapToEntity, das ALLE 3 Felder guarded. Das `?? undefined` am Ende erhält
+            // den domain Type `?: number` (hourlyRate ist nicht nullable im Gegensatz zu
+            // contracted/extra deren Type `?: number | null` ist).
+            hourlyRate: parseNumOrNull(row.hourlyRate ?? row.hourly_rate) ?? undefined,
+            // Sprint 4 Trainer Dual-Rate: ALSO map the two new columns in the
+            // fallback path so the admin UI doesn't silently lose the contracted
+            // rate (admin-editable) + extra-hours rate (trainer-editable) when
+            // Drizzle throws (stale-socket fallback). See migration
+            // supabase/migrations/20260610_add_trainer_dual_rate.sql and
+            // TrainerProfile.$inferSelect for the canonical column names.
+            //
+            // Mirror the Drizzle `mapToEntity` coercion pattern (see
+            // trainer-profile.repository.ts): Supabase PostgREST returns
+            // `numeric(10, 2)` columns as strings. The helper `parseNumOrNull`
+            // defined just above this `.map(...)` ALSO rejects non-finite
+            // (NaN/Infinity) inputs — closing the gap that previously rendered
+            // "NaN/h" in the UI for malformed legacy rows.
+            contractedHourlyRate: parseNumOrNull(row.contracted_hourly_rate),
+            extraHoursRate: parseNumOrNull(row.extra_hours_rate),
             availability: row.availability ?? {
               monday: true,
               tuesday: true,

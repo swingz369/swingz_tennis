@@ -29,6 +29,7 @@ import {
   Search,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { PageHeader } from '@/components/ui/page-header';
 
 const MAX_TIME_PREFS = 4;
 const MAX_WISH_PARTNERS = 3;
@@ -306,14 +307,12 @@ export default function MemberPreferencesPage() {
     <div className="max-w-2xl mx-auto space-y-5 py-8 px-4">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Trainings&shy;präferenzen</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Wann möchtest du trainieren? Mit wem? — wird für die Gruppenplanung genutzt.
-          </p>
-        </div>
+        <PageHeader
+          title="Trainings&shy;präferenzen"
+          description="Wann möchtest du trainieren? Mit wem? — wird für die Gruppenplanung genutzt."
+        />
         {isSubmitted && (
-          <Badge className="bg-green-100 text-green-700 border-green-200 mt-1 flex-shrink-0">
+          <Badge className="bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300 border-success-200 dark:border-success-800 mt-1 flex-shrink-0">
             <CheckCircle className="h-3 w-3 mr-1" /> Eingereicht
           </Badge>
         )}
@@ -342,9 +341,9 @@ export default function MemberPreferencesPage() {
       )}
 
       {!preferencesOpen && selectedSeasonId && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2 text-sm text-amber-700">
+        <div className="flex items-center gap-2 rounded-xl border border-warning-200 dark:border-warning-800 bg-warning-50/60 dark:bg-warning-900/20 px-3 py-2 text-sm text-warning-700 dark:text-warning-300">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-          Präferenzabgabe für diese Saison geschlossen — Speichern bleibt möglich.
+          Präferenzabgabe für diese Saison ist geschlossen — Speichern nicht mehr möglich.
         </div>
       )}
 
@@ -374,7 +373,7 @@ export default function MemberPreferencesPage() {
           {timePrefs.map((pref, idx) => (
             <div
               key={idx}
-              className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-2.5"
+              className="flex items-center gap-2 rounded-xl border border-border bg-muted/30 p-2.5"
             >
               <span className="text-xs font-semibold text-muted-foreground w-5 text-center shrink-0">
                 {idx + 1}
@@ -414,7 +413,7 @@ export default function MemberPreferencesPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-muted-foreground hover:text-red-500 shrink-0"
+                className="h-9 w-9 text-muted-foreground hover:text-error-500 shrink-0"
                 onClick={() => removeTimePref(idx)}
                 disabled={isSubmitted}
               >
@@ -455,7 +454,7 @@ export default function MemberPreferencesPage() {
                 key={key}
                 onClick={() => !isSubmitted && setLevel(level === key ? '' : key)}
                 disabled={isSubmitted}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors border ${
                   level === key
                     ? 'bg-brand-primary text-white border-brand-primary shadow-sm'
                     : 'border-border bg-background text-foreground hover:bg-muted'
@@ -496,7 +495,7 @@ export default function MemberPreferencesPage() {
                     {!isSubmitted && (
                       <button
                         onClick={() => toggleWishPartner(id)}
-                        className="ml-1 rounded-sm hover:text-red-500"
+                        className="ml-1 rounded-md hover:text-error-500"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -519,7 +518,7 @@ export default function MemberPreferencesPage() {
                   className="pl-8 h-9"
                 />
               </div>
-              <div className="max-h-40 overflow-y-auto rounded-lg border border-border divide-y divide-border">
+              <div className="max-h-40 overflow-y-auto rounded-xl border border-border divide-y divide-border">
                 {filteredMembers.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-3">
                     Keine Mitglieder gefunden
@@ -576,19 +575,19 @@ export default function MemberPreferencesPage() {
             onChange={(e) => setSpecialRequests(e.target.value)}
             disabled={isSubmitted}
             placeholder="Optionale Hinweise an den Trainer / Admin..."
-            className="w-full min-h-[80px] rounded-lg border border-border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:opacity-50"
+            className="w-full min-h-[80px] rounded-xl border border-border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:opacity-50"
           />
         </CardContent>
       </Card>
 
       {/* Feedback */}
       {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+        <div className="flex items-center gap-2 rounded-xl border border-error-200 dark:border-error-800 bg-error-50 dark:bg-error-900/20 px-3 py-2 text-sm text-error-600 dark:text-error-400">
           <AlertTriangle className="h-4 w-4 shrink-0" /> {error}
         </div>
       )}
       {savedOk && (
-        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+        <div className="flex items-center gap-2 rounded-xl border border-success-200 dark:border-success-800 bg-success-50 dark:bg-success-900/20 px-3 py-2 text-sm text-success-700 dark:text-success-300">
           <CheckCircle className="h-4 w-4 shrink-0" /> Gespeichert
         </div>
       )}
@@ -599,16 +598,16 @@ export default function MemberPreferencesPage() {
           variant="outline"
           className="gap-2"
           onClick={handleSave}
-          disabled={saving || isSubmitted}
+          disabled={saving || isSubmitted || !preferencesOpen}
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Speichern
         </Button>
         <Button
-          variant="brand"
+          variant="primary"
           className="gap-2"
           onClick={handleSubmit}
-          disabled={submitting || isSubmitted || filledPrefs.length === 0}
+          disabled={submitting || isSubmitted || filledPrefs.length === 0 || !preferencesOpen}
         >
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           {isSubmitted ? 'Eingereicht ✓' : 'Einreichen'}

@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { StatCard } from '@/components/ui/stat-card';
 import { QuickActions } from '@/components/ui/quick-actions';
 import { MemberHeroActions } from '@/components/member-hero-actions';
+import { TennisBallEmptyState } from '@/components/ui/empty-state';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,22 +44,24 @@ export default async function MemberPage() {
 
   if (!membership) {
     return (
-      <div className="max-w-xl mx-auto py-12 text-center space-y-4">
-        <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-muted mb-2">
-          <Sparkles className="h-7 w-7 text-muted-foreground" />
-        </div>
-        <h2 className="text-xl font-bold text-foreground">Kein aktives Mitgliedschaft</h2>
-        <p className="text-sm text-muted-foreground">
-          Du bist aktuell keinem Verein zugeordnet. Bitte wende dich an den Administrator deines
-          Vereins.
-        </p>
-      </div>
+      <TennisBallEmptyState
+        title="Keine aktive Mitgliedschaft"
+        description="Du bist aktuell keinem Verein zugeordnet. Bitte wende dich an den Administrator deines Vereins."
+        size="md"
+      />
     );
   }
 
   const clubsData = membership.clubs;
   const club = Array.isArray(clubsData) ? clubsData[0] : clubsData;
   const clubId = membership.club_id;
+
+  const { data: clubRow } = await supabase
+    .from('clubs')
+    .select('features')
+    .eq('id', clubId)
+    .single();
+  const features = (clubRow?.features as Record<string, boolean>) ?? {};
 
   const { data: profile } = await supabase
     .from('users')
@@ -137,7 +140,7 @@ export default async function MemberPage() {
       {/* ── Greeting ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight font-display text-foreground dark:text-white">
             Hallo, {firstName}!
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -150,60 +153,47 @@ export default async function MemberPage() {
         </div>
       </div>
 
-      {/* ── Next Session (Hero Card) ── */}
-      {nextSession ? (
-        <Link href="/bookings">
-          <Card className="border-0 bg-gradient-to-br from-brand-primary to-brand-light text-white cursor-pointer hover:shadow-lg transition-all duration-300 group">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
-                    <Zap className="h-4 w-4 text-white" />
-                  </div>
-                  <p className="text-xs font-semibold text-white/75 uppercase tracking-wider">
-                    Nächste Session
-                  </p>
-                </div>
-                {isToday(nextSession.timeslot_start) && (
-                  <span className="text-[11px] font-bold bg-white/25 text-white px-3 py-1 rounded-full">
-                    HEUTE
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-lg font-bold text-white">{nextCourt?.name ?? 'Training'}</p>
-                  <p className="text-sm text-white/75 mt-0.5">
-                    {formatDate(nextSession.timeslot_start)} ·{' '}
-                    {formatTime(nextSession.timeslot_start)}–{formatTime(nextSession.timeslot_end)}
-                  </p>
-                </div>
-                <ArrowRight className="h-5 w-5 text-white/60 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-      ) : (
-        <Card className="border border-border dark:border-white/10">
-          <CardContent className="p-5">
-            <div className="flex items-start gap-4">
-              <IconBox icon={Sparkles} size="lg" variant="light" />
-              <div>
-                <p className="font-semibold text-foreground">Bereit für dein erstes Training?</p>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  Buche jetzt deine erste Session und starte durch.
-                </p>
-                <Link
-                  href="/bookings"
-                  className="inline-flex items-center gap-1.5 mt-2 text-sm font-semibold text-brand-light hover:underline"
-                >
-                  Jetzt buchen <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* ── Quick Actions ── */}
+      <QuickActions
+        label="Schnellzugriff"
+        actions={[
+          { label: 'Buchen', href: '/bookings', icon: Calendar, variant: 'light' },
+          { label: 'Training', href: '/training-schedule', icon: BookOpen, variant: 'blue' },
+          {
+            label: 'Trainer',
+            href: '/member/trainer-booking',
+            icon: GraduationCap,
+            variant: 'teal',
+          },
+          ...(features.tournaments === true
+            ? [
+                {
+                  label: 'Turniere',
+                  href: '/member/tournaments',
+                  icon: Trophy,
+                  variant: 'amber' as const,
+                },
+              ]
+            : []),
+          { label: 'Rechnungen', href: '/billing', icon: CreditCard, variant: 'purple' },
+          ...(features.work_duty === true
+            ? [
+                {
+                  label: 'Dienste',
+                  href: '/member/work-duties',
+                  icon: HardHat,
+                  variant: 'amber' as const,
+                },
+              ]
+            : []),
+          {
+            label: 'Präferenzen',
+            href: '/member/preferences',
+            icon: ClipboardCheck,
+            variant: 'green',
+          },
+        ]}
+      />
 
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -242,6 +232,61 @@ export default async function MemberPage() {
         />
       </div>
 
+      {/* ── Next Session (Hero Card) ── */}
+      {nextSession ? (
+        <Link href="/bookings">
+          <Card className="border border-border dark:border-white/10 cursor-pointer hover:border-brand-light/40 hover:shadow-sm transition-all duration-300 group">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <IconBox icon={Zap} size="sm" variant="light" />
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Nächste Session
+                  </p>
+                </div>
+                {isToday(nextSession.timeslot_start) && (
+                  <span className="text-2xs font-bold bg-brand-light/10 text-brand-light px-3 py-1 rounded-full">
+                    HEUTE
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-lg font-bold text-foreground dark:text-white">
+                    {nextCourt?.name ?? 'Training'}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {formatDate(nextSession.timeslot_start)} ·{' '}
+                    {formatTime(nextSession.timeslot_start)}–{formatTime(nextSession.timeslot_end)}
+                  </p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground/40 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      ) : (
+        <Card className="border border-border dark:border-white/10">
+          <CardContent className="p-5">
+            <div className="flex items-start gap-4">
+              <IconBox icon={Sparkles} size="lg" variant="light" />
+              <div>
+                <p className="font-semibold text-foreground">Bereit für dein erstes Training?</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Buche jetzt deine erste Session und starte durch.
+                </p>
+                <Link
+                  href="/bookings"
+                  className="inline-flex items-center gap-1.5 mt-2 text-sm font-semibold text-brand-light hover:underline"
+                >
+                  Jetzt buchen <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* ── Next Bookings ── */}
       {(upcomingBookings ?? []).length > 0 && (
         <Card className="border border-border dark:border-white/10 p-0">
@@ -265,7 +310,7 @@ export default async function MemberPage() {
                 return (
                   <div
                     key={b.id}
-                    className="flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
+                    className="flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-xl transition-colors"
                   >
                     <IconBox icon={MapPin} size="sm" variant="green" />
                     <div className="flex-1 min-w-0">
@@ -276,7 +321,7 @@ export default async function MemberPage() {
                         {formatDate(b.session_start_time)} · {formatTime(b.session_start_time)}
                       </p>
                     </div>
-                    <Badge className="text-[11px] bg-green-50 text-green-700 border-green-200 font-medium">
+                    <Badge className="text-2xs bg-success-50 text-success-700 border-success-200 font-medium">
                       Bestätigt
                     </Badge>
                   </div>
@@ -308,7 +353,7 @@ export default async function MemberPage() {
                 return (
                   <div
                     key={s.id}
-                    className="flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
+                    className="flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-xl transition-colors"
                   >
                     <IconBox icon={Clock} size="sm" variant="light" />
                     <div className="flex-1 min-w-0">
@@ -327,35 +372,6 @@ export default async function MemberPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* ── Quick Actions ── */}
-      <QuickActions
-        label="Schnellzugriff"
-        actions={[
-          { label: 'Buchen', href: '/bookings', icon: Calendar, variant: 'light' },
-          { label: 'Training', href: '/training-schedule', icon: BookOpen, variant: 'blue' },
-          {
-            label: 'Trainer',
-            href: '/member/trainer-booking',
-            icon: GraduationCap,
-            variant: 'teal',
-          },
-          { label: 'Turniere', href: '/member/tournaments', icon: Trophy, variant: 'amber' },
-          { label: 'Rechnungen', href: '/billing', icon: CreditCard, variant: 'purple' },
-          {
-            label: 'Dienste',
-            href: '/member/work-duties',
-            icon: HardHat,
-            variant: 'amber',
-          },
-          {
-            label: 'Präferenzen',
-            href: '/member/preferences',
-            icon: ClipboardCheck,
-            variant: 'green',
-          },
-        ]}
-      />
     </div>
   );
 }

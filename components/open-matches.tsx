@@ -33,6 +33,7 @@ import {
   X,
   Sparkles,
   Shield,
+  Swords,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from '@/lib/locale';
@@ -84,19 +85,20 @@ function getSkillBadge(level: string) {
   const map: Record<string, { label: string; className: string }> = {
     beginner: {
       label: 'Anfänger',
-      className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+      className: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300',
     },
     intermediate: {
       label: 'Mittel',
-      className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
     },
     advanced: {
       label: 'Fortg.',
-      className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+      className:
+        'bg-brand-accent-100 text-brand-accent-700 dark:bg-brand-accent-900/30 dark:text-brand-accent-300',
     },
     tournament: {
       label: 'Turnier',
-      className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+      className: 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-300',
     },
     all: { label: 'Alle', className: 'bg-muted text-muted-foreground' },
   };
@@ -110,6 +112,7 @@ export default function OpenMatches({ clubId, userId }: Props) {
   const [creating, setCreating] = useState(false);
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [challengingId, setChallengingId] = useState<string | null>(null);
 
   // Create form state
   const [form, setForm] = useState({
@@ -251,6 +254,37 @@ export default function OpenMatches({ clubId, userId }: Props) {
       toast.error(err instanceof Error ? err.message : 'Fehler');
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const handleChallenge = async (match: OpenMatch) => {
+    setChallengingId(match.id);
+    try {
+      const res = await apiFetch('/api/open-matches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          clubId,
+          title: `Match gegen ${match.creatorName}`,
+          matchDate: match.match_date,
+          startTime: match.start_time.substring(0, 5),
+          endTime: match.end_time.substring(0, 5),
+          skillLevel: match.skill_level,
+          matchType: 'singles',
+          maxPlayers: 2,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Erstellung fehlgeschlagen');
+      }
+      toast.success(`Herausforderung an ${match.creatorName} gesendet!`);
+      loadMatches();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler');
+    } finally {
+      setChallengingId(null);
     }
   };
 
@@ -482,14 +516,14 @@ export default function OpenMatches({ clubId, userId }: Props) {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Spieler</span>
-                      <span className={`font-medium ${isFull ? 'text-green-600' : ''}`}>
+                      <span className={`font-medium ${isFull ? 'text-success-600' : ''}`}>
                         {match.current_players}/{match.max_players}
                       </span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all ${
-                          isFull ? 'bg-green-500' : 'bg-brand-primary'
+                          isFull ? 'bg-success-500' : 'bg-brand-primary'
                         }`}
                         style={{ width: `${(match.current_players / match.max_players) * 100}%` }}
                       />
@@ -517,7 +551,7 @@ export default function OpenMatches({ clubId, userId }: Props) {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="flex-1 gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="flex-1 gap-1.5 text-error-600 hover:text-error-700 hover:bg-error-50"
                             onClick={() => handleCancel(match.id)}
                             disabled={cancellingId === match.id}
                           >
@@ -546,19 +580,37 @@ export default function OpenMatches({ clubId, userId }: Props) {
                         )}
                       </>
                     ) : (
-                      <Button
-                        size="sm"
-                        className="flex-1 gap-1.5"
-                        onClick={() => handleJoin(match.id)}
-                        disabled={isFull || isPast || joiningId === match.id}
-                      >
-                        {joiningId === match.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <UserPlus className="h-3.5 w-3.5" />
+                      <>
+                        <Button
+                          size="sm"
+                          className="flex-1 gap-1.5"
+                          onClick={() => handleJoin(match.id)}
+                          disabled={isFull || isPast || joiningId === match.id}
+                        >
+                          {joiningId === match.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <UserPlus className="h-3.5 w-3.5" />
+                          )}
+                          {isFull ? 'Ausgebucht' : isPast ? 'Vorbei' : 'Beitreten'}
+                        </Button>
+                        {userId && match.creator_id !== userId && !isPast && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5"
+                            onClick={() => handleChallenge(match)}
+                            disabled={challengingId === match.id}
+                          >
+                            {challengingId === match.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Swords className="h-3.5 w-3.5" />
+                            )}
+                            Fordern
+                          </Button>
                         )}
-                        {isFull ? 'Ausgebucht' : isPast ? 'Vorbei' : 'Beitreten'}
-                      </Button>
+                      </>
                     )}
                   </div>
                 </CardContent>

@@ -49,11 +49,11 @@ export function ContactFormClient() {
 
   if (submitted) {
     return (
-      <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-700/30 rounded-3xl p-8 text-center">
-        <div className="h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+      <div className="bg-success-50 dark:bg-success-900/10 border border-success-200 dark:border-success-700/30 rounded-xl p-8 text-center">
+        <div className="h-16 w-16 rounded-full bg-success-100 dark:bg-success-900/30 flex items-center justify-center mx-auto mb-4">
+          <CheckCircle2 className="h-8 w-8 text-success-600 dark:text-success-400" />
         </div>
-        <h3 className="text-xl font-bold text-foreground mb-2">Early Access angefragt!</h3>
+        <h3 className="text-xl font-bold text-foreground mb-2">Nachricht gesendet!</h3>
         <p className="text-muted-foreground">
           Danke für dein Interesse! Wir melden uns persönlich bei dir — in der Regel innerhalb von
           24 Stunden.
@@ -116,13 +116,13 @@ export function ContactFormClient() {
           name="message"
           required
           rows={5}
-          className="flex w-full rounded-xl border border-border bg-background px-4 py-3 text-base shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brandPrimary/20 focus:border-brand-light resize-none"
+          className="flex w-full rounded-xl border border-border bg-background px-4 py-3 text-base shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-light resize-none"
           placeholder="Erzähl uns von deinem Verein und was dich an SWINGZ interessiert..."
         />
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-700/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+        <div className="rounded-xl bg-error-50 dark:bg-error-900/10 border border-error-200 dark:border-error-700/30 px-4 py-3 text-sm text-error-700 dark:text-error-400">
           {error}
         </div>
       )}
@@ -141,7 +141,7 @@ export function ContactFormClient() {
         ) : (
           <>
             <Send className="h-4 w-4 mr-2" />
-            Early Access anfragen
+            Nachricht senden
           </>
         )}
       </Button>

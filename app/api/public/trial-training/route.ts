@@ -19,6 +19,7 @@ const publicTrialTrainingSchema = z.object({
   experienceLevel: z.string().optional(),
   notes: z.string().max(2000).optional(),
   clubId: z.string().uuid('Ungültige Club-ID').optional(),
+  marketingConsent: z.boolean().optional().default(false),
 });
 
 export async function POST(request: NextRequest) {
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
       experienceLevel,
       notes,
       clubId,
+      marketingConsent,
     } = validation.data;
 
     // Build notes with experience level if provided
@@ -77,6 +79,7 @@ export async function POST(request: NextRequest) {
       trainerId: '00000000-0000-0000-0000-000000000000', // Placeholder — admin assigns later
       courtId: '00000000-0000-0000-0000-000000000000', // Placeholder — admin assigns later
       ...(combinedNotes ? { notes: combinedNotes } : {}),
+      marketingConsent,
     };
 
     const trialTraining = await trialTrainingService.createPublicTrialTraining(input, clubId || '');
@@ -93,6 +96,13 @@ export async function POST(request: NextRequest) {
       .notifyParticipantOfTrialTraining(trialTraining, clubId)
       .catch((err) =>
         log.error('Participant confirmation failed', err instanceof Error ? err : undefined)
+      );
+
+    // Send double opt-in marketing consent confirmation, if requested — fire-and-forget
+    trialTrainingService
+      .sendMarketingConsentConfirmationIfNeeded(trialTraining, clubId)
+      .catch((err) =>
+        log.error('Marketing consent DOI email failed', err instanceof Error ? err : undefined)
       );
 
     return NextResponse.json(

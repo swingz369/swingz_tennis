@@ -128,7 +128,7 @@ export function PerfHistoryClient() {
           <div
             role="tablist"
             aria-label="Datenquelle"
-            className="inline-flex rounded-lg border border-border/60 dark:border-white/10 p-1 bg-muted/40 dark:bg-background/40"
+            className="inline-flex rounded-xl border border-border/60 dark:border-white/10 p-1 bg-muted/40 dark:bg-background/40"
           >
             <button
               type="button"
@@ -264,7 +264,7 @@ export function PerfHistoryClient() {
                     <td className="py-2 pr-3 tabular-nums">
                       {new Date(p.timestamp).toLocaleString('de-DE')}
                     </td>
-                    <td className="py-2 pr-3 font-mono text-[11px]">{p.label}</td>
+                    <td className="py-2 pr-3 font-mono text-2xs">{p.label}</td>
                     <td className="py-2 pr-3 text-muted-foreground">{p.source}</td>
                     <td className="py-2 pr-3 tabular-nums text-right">{p.numMembers ?? '—'}</td>
                     <td className="py-2 pr-3 tabular-nums text-right font-semibold">

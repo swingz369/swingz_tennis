@@ -235,11 +235,11 @@ export default function SeriesBookingForm({
   const getStatusIcon = (status: BookingPreview['status']) => {
     switch (status) {
       case 'valid':
-        return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+        return <CheckCircle2 className="h-4 w-4 text-success-600" />;
       case 'conflict':
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
+        return <AlertCircle className="h-4 w-4 text-error-600" />;
       case 'warning':
-        return <Info className="h-4 w-4 text-yellow-600" />;
+        return <Info className="h-4 w-4 text-warning-600" />;
     }
   };
 
@@ -383,7 +383,7 @@ export default function SeriesBookingForm({
               <Label className="text-base">Vorschau ({previews.length} Termine)</Label>
               <div className="flex gap-2">
                 {validCount > 0 && (
-                  <Badge variant="default" className="bg-green-600">
+                  <Badge variant="default" className="bg-success-600">
                     {validCount} verfügbar
                   </Badge>
                 )}
@@ -405,10 +405,10 @@ export default function SeriesBookingForm({
                   key={index}
                   className={`flex items-center justify-between p-2 rounded border ${
                     preview.status === 'valid'
-                      ? 'bg-green-50 border-green-200'
+                      ? 'bg-success-50 border-success-200'
                       : preview.status === 'conflict'
-                        ? 'bg-red-50 border-red-200'
-                        : 'bg-yellow-50 border-yellow-200'
+                        ? 'bg-error-50 border-error-200'
+                        : 'bg-warning-50 border-warning-200'
                   }`}
                 >
                   <div className="flex items-center gap-2">

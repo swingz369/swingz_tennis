@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 type Doc = {
   id: string;
@@ -31,12 +32,10 @@ export default function MemberDocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Vereinsdokumente</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Satzung, Beschlüsse und weitere Unterlagen.
-        </p>
-      </div>
+      <PageHeader
+        title="Vereinsdokumente"
+        description="Satzung, Beschlüsse und weitere Unterlagen."
+      />
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold">Alle Dokumente</CardTitle>

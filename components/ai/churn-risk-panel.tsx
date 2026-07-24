@@ -84,11 +84,11 @@ export function ChurnRiskPanel() {
   const riskColor = (level: string) => {
     switch (level) {
       case 'high':
-        return 'text-red-600 bg-red-50 border-red-200';
+        return 'text-error-600 bg-error-50 border-error-200';
       case 'medium':
-        return 'text-amber-600 bg-amber-50 border-amber-200';
+        return 'text-warning-600 bg-warning-50 border-warning-200';
       default:
-        return 'text-blue-600 bg-blue-50 border-blue-200';
+        return 'text-info-600 bg-info-50 border-info-200';
     }
   };
 
@@ -97,13 +97,16 @@ export function ChurnRiskPanel() {
     return (
       <>
         {trends.attendanceDecline && (
-          <CalendarX className="h-3.5 w-3.5 text-red-500" aria-label="Keine Anwesenheit" />
+          <CalendarX className="h-3.5 w-3.5 text-error-500" aria-label="Keine Anwesenheit" />
         )}
         {trends.bookingDecline && (
-          <TrendingDown className="h-3.5 w-3.5 text-amber-500" aria-label="Buchungsrückgang" />
+          <TrendingDown className="h-3.5 w-3.5 text-warning-500" aria-label="Buchungsrückgang" />
         )}
         {trends.hasOverdueInvoices && (
-          <DollarSign className="h-3.5 w-3.5 text-orange-500" aria-label="Offene Rechnungen" />
+          <DollarSign
+            className="h-3.5 w-3.5 text-brand-accent-500"
+            aria-label="Offene Rechnungen"
+          />
         )}
       </>
     );
@@ -113,8 +116,8 @@ export function ChurnRiskPanel() {
     <Card variant="bordered" className="transition-all duration-300 hover:shadow-md">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-red-50">
-            <AlertTriangle className="h-5 w-5 text-red-500" />
+          <div className="p-2 rounded-xl bg-error-50">
+            <AlertTriangle className="h-5 w-5 text-error-500" />
           </div>
           <div>
             <CardTitle className="text-lg font-semibold">Churn Prediction</CardTitle>
@@ -144,7 +147,7 @@ export function ChurnRiskPanel() {
         )}
 
         {error && (
-          <div className="flex items-center gap-2 p-4 bg-red-50 rounded-lg text-red-600 text-sm">
+          <div className="flex items-center gap-2 p-4 bg-error-50 rounded-xl text-error-600 text-sm">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -152,7 +155,7 @@ export function ChurnRiskPanel() {
 
         {data && data.atRisk.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-            <Info className="h-8 w-8 mb-2 text-green-500" />
+            <Info className="h-8 w-8 mb-2 text-success-500" />
             <p className="text-sm font-medium">Keine gefährdeten Mitglieder</p>
             <p className="text-xs">Alle {data.totalMembers} Mitglieder sind aktiv</p>
           </div>
@@ -169,9 +172,9 @@ export function ChurnRiskPanel() {
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                     riskFilter === filter
                       ? filter === 'high'
-                        ? 'bg-red-100 text-red-700'
+                        ? 'bg-error-100 text-error-700'
                         : filter === 'medium'
-                          ? 'bg-amber-100 text-amber-700'
+                          ? 'bg-warning-100 text-warning-700'
                           : 'bg-muted text-foreground'
                       : 'bg-muted text-muted-foreground hover:bg-muted'
                   }`}
@@ -193,7 +196,7 @@ export function ChurnRiskPanel() {
                   return (
                     <div
                       key={member.userId}
-                      className={`rounded-lg border p-3 transition-all duration-200 ${
+                      className={`rounded-xl border p-3 transition-all duration-200 ${
                         isExpanded ? 'shadow-sm' : ''
                       } ${riskColor(member.riskLevel)}`}
                     >
@@ -203,7 +206,7 @@ export function ChurnRiskPanel() {
                             <span className="font-medium text-sm truncate">{member.name}</span>
                             <Badge
                               variant={member.riskLevel === 'high' ? 'error' : 'warning'}
-                              className="text-[10px] px-1.5 py-0"
+                              className="text-2xs px-1.5 py-0"
                             >
                               {member.riskScore}
                             </Badge>

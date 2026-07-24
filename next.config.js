@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 
+const { withSentryConfig } = require('@sentry/nextjs');
+
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });
@@ -66,7 +68,13 @@ const nextConfig = {
   },
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-icons',
+      'date-fns',
+      'recharts',
+      '@supabase/supabase-js',
+    ],
   },
   // Security Headers
   async headers() {
@@ -157,15 +165,23 @@ const nextConfig = {
   // Redirects
   async redirects() {
     return [
+      // Duplicate/contradictory privacy page removed — /datenschutz is canonical
+      // (linked from landing/terms/support/impressum; /privacy was only linked
+      // from login and falsely claimed data never leaves the EU).
+      {
+        source: '/privacy',
+        destination: '/datenschutz',
+        permanent: true,
+      },
       // Navigation consolidation: old routes → new merged pages
+      // Note: /admin/season-plan/:seasonId is NOT redirected — it's the
+      // grid/schedule view (SeasonPlanGridClient), linked from the "Plan"
+      // tab's "Stundenplan (Grid-Ansicht)" button once a season is
+      // published. It used to be caught by this same-prefix redirect,
+      // which made that button a dead link.
       {
         source: '/admin/season-plan',
         destination: '/admin/seasons',
-        permanent: true,
-      },
-      {
-        source: '/admin/season-plan/:seasonId',
-        destination: '/admin/seasons/:seasonId/planning',
         permanent: true,
       },
       {
@@ -198,10 +214,26 @@ const nextConfig = {
         destination: '/admin/settings',
         permanent: true,
       },
+      // Abwesenheiten wurde als Tab in Stundennachweise integriert (gehört fachlich
+      // zusammen: beides Trainer-Zeiterfassung). permanent:false (307), nicht 308 —
+      // ein 308 hier hat zuvor schon einmal eine Seite dauerhaft im Browser-Cache
+      // "verschluckt", siehe /admin/hours-logs-Vorfall.
       {
-        source: '/admin/hours-logs',
-        destination: '/admin/trainers',
-        permanent: true,
+        source: '/admin/absences',
+        destination: '/admin/hours-logs',
+        permanent: false,
+      },
+      // Versammlungen + Board-Beschlüsse wurden als Tabs in Dokumente integriert
+      // (Vereinsführungs-Themen gehören fachlich zusammen). permanent:false (307).
+      {
+        source: '/admin/meetings',
+        destination: '/admin/documents',
+        permanent: false,
+      },
+      {
+        source: '/admin/decisions',
+        destination: '/admin/documents',
+        permanent: false,
       },
     ];
   },
@@ -262,4 +294,13 @@ const nextConfig = {
   },
 };
 
-module.exports = withBundleAnalyzer(nextConfig);
+module.exports = withSentryConfig(withBundleAnalyzer(nextConfig), {
+  silent: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  widenClientFileUpload: true,
+  webpack: {
+    treeshake: { removeDebugLogging: true },
+  },
+});

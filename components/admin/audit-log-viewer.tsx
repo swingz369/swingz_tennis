@@ -218,7 +218,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
               {filteredLogs.map((log) => (
                 <div key={log.id} className="p-4 hover:bg-muted transition-colors">
                   <div className="flex items-start gap-4">
-                    <div className="p-2 bg-muted rounded-lg">
+                    <div className="p-2 bg-muted rounded-xl">
                       <FileText className="h-5 w-5 text-muted-foreground" />
                     </div>
 
@@ -251,7 +251,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
                           <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
                             View changes
                           </summary>
-                          <div className="mt-2 p-3 bg-muted rounded-lg">
+                          <div className="mt-2 p-3 bg-muted rounded-xl">
                             <pre className="text-xs overflow-x-auto">
                               {JSON.stringify(log.changes, null, 2)}
                             </pre>

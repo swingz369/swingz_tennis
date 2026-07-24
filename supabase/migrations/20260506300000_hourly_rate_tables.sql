@@ -96,23 +96,23 @@ CREATE TABLE IF NOT EXISTS public.rate_history (
 -- =====================================================
 
 -- Hourly Rate Tiers Indexes
-CREATE INDEX idx_hourly_rate_tiers_club_id ON public.hourly_rate_tiers(club_id);
-CREATE INDEX idx_hourly_rate_tiers_is_active ON public.hourly_rate_tiers(is_active)
+CREATE INDEX IF NOT EXISTS idx_hourly_rate_tiers_club_id ON public.hourly_rate_tiers(club_id);
+CREATE INDEX IF NOT EXISTS idx_hourly_rate_tiers_is_active ON public.hourly_rate_tiers(is_active)
   WHERE is_active = true;
-CREATE INDEX idx_hourly_rate_tiers_experience_level ON public.hourly_rate_tiers(experience_level);
-CREATE INDEX idx_hourly_rate_tiers_club_active ON public.hourly_rate_tiers(club_id, is_active)
+CREATE INDEX IF NOT EXISTS idx_hourly_rate_tiers_experience_level ON public.hourly_rate_tiers(experience_level);
+CREATE INDEX IF NOT EXISTS idx_hourly_rate_tiers_club_active ON public.hourly_rate_tiers(club_id, is_active)
   WHERE is_active = true;
 
 -- Trainer Hourly Rates Indexes
-CREATE INDEX idx_trainer_hourly_rates_club_id ON public.trainer_hourly_rates(club_id);
-CREATE INDEX idx_trainer_hourly_rates_trainer_id ON public.trainer_hourly_rates(trainer_id);
-CREATE INDEX idx_trainer_hourly_rates_valid_from ON public.trainer_hourly_rates(valid_from DESC);
-CREATE INDEX idx_trainer_hourly_rates_valid_period ON public.trainer_hourly_rates(trainer_id, valid_from, valid_until);
+CREATE INDEX IF NOT EXISTS idx_trainer_hourly_rates_club_id ON public.trainer_hourly_rates(club_id);
+CREATE INDEX IF NOT EXISTS idx_trainer_hourly_rates_trainer_id ON public.trainer_hourly_rates(trainer_id);
+CREATE INDEX IF NOT EXISTS idx_trainer_hourly_rates_valid_from ON public.trainer_hourly_rates(valid_from DESC);
+CREATE INDEX IF NOT EXISTS idx_trainer_hourly_rates_valid_period ON public.trainer_hourly_rates(trainer_id, valid_from, valid_until);
 
 -- Rate History Indexes
-CREATE INDEX idx_rate_history_club_id ON public.rate_history(club_id);
-CREATE INDEX idx_rate_history_trainer_id ON public.rate_history(trainer_id);
-CREATE INDEX idx_rate_history_changed_at ON public.rate_history(changed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_rate_history_club_id ON public.rate_history(club_id);
+CREATE INDEX IF NOT EXISTS idx_rate_history_trainer_id ON public.rate_history(trainer_id);
+CREATE INDEX IF NOT EXISTS idx_rate_history_changed_at ON public.rate_history(changed_at DESC);
 
 -- =====================================================
 -- 3. ROW LEVEL SECURITY (RLS)
@@ -124,53 +124,63 @@ ALTER TABLE public.trainer_hourly_rates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rate_history ENABLE ROW LEVEL SECURITY;
 
 -- Hourly Rate Tiers Policies
+DROP POLICY IF EXISTS hourly_rate_tiers_superadmin_all ON public.hourly_rate_tiers;
 CREATE POLICY hourly_rate_tiers_superadmin_all
   ON public.hourly_rate_tiers
   FOR ALL
   USING (is_superadmin());
 
+DROP POLICY IF EXISTS hourly_rate_tiers_admin_manage ON public.hourly_rate_tiers;
 CREATE POLICY hourly_rate_tiers_admin_manage
   ON public.hourly_rate_tiers
   FOR ALL
   USING (user_is_admin_of_club(club_id));
 
+DROP POLICY IF EXISTS hourly_rate_tiers_trainer_view ON public.hourly_rate_tiers;
 CREATE POLICY hourly_rate_tiers_trainer_view
   ON public.hourly_rate_tiers
   FOR SELECT
   USING (user_is_trainer_of_club(club_id));
 
+DROP POLICY IF EXISTS hourly_rate_tiers_member_view_active ON public.hourly_rate_tiers;
 CREATE POLICY hourly_rate_tiers_member_view_active
   ON public.hourly_rate_tiers
   FOR SELECT
   USING (user_is_member_of_club(club_id) AND is_active = true);
 
 -- Trainer Hourly Rates Policies
+DROP POLICY IF EXISTS trainer_hourly_rates_superadmin_all ON public.trainer_hourly_rates;
 CREATE POLICY trainer_hourly_rates_superadmin_all
   ON public.trainer_hourly_rates
   FOR ALL
   USING (is_superadmin());
 
+DROP POLICY IF EXISTS trainer_hourly_rates_admin_manage ON public.trainer_hourly_rates;
 CREATE POLICY trainer_hourly_rates_admin_manage
   ON public.trainer_hourly_rates
   FOR ALL
   USING (user_is_admin_of_club(club_id));
 
+DROP POLICY IF EXISTS trainer_hourly_rates_trainer_view_own ON public.trainer_hourly_rates;
 CREATE POLICY trainer_hourly_rates_trainer_view_own
   ON public.trainer_hourly_rates
   FOR SELECT
   USING (trainer_id = auth.uid() OR user_is_trainer_of_club(club_id));
 
 -- Rate History Policies
+DROP POLICY IF EXISTS rate_history_superadmin_all ON public.rate_history;
 CREATE POLICY rate_history_superadmin_all
   ON public.rate_history
   FOR ALL
   USING (is_superadmin());
 
+DROP POLICY IF EXISTS rate_history_admin_view ON public.rate_history;
 CREATE POLICY rate_history_admin_view
   ON public.rate_history
   FOR SELECT
   USING (user_is_admin_of_club(club_id));
 
+DROP POLICY IF EXISTS rate_history_system_insert ON public.rate_history;
 CREATE POLICY rate_history_system_insert
   ON public.rate_history
   FOR INSERT
@@ -181,11 +191,13 @@ CREATE POLICY rate_history_system_insert
 -- =====================================================
 
 -- Update updated_at timestamp
+DROP TRIGGER IF EXISTS set_hourly_rate_tiers_updated_at ON public.hourly_rate_tiers;
 CREATE TRIGGER set_hourly_rate_tiers_updated_at
   BEFORE UPDATE ON public.hourly_rate_tiers
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS set_trainer_hourly_rates_updated_at ON public.trainer_hourly_rates;
 CREATE TRIGGER set_trainer_hourly_rates_updated_at
   BEFORE UPDATE ON public.trainer_hourly_rates
   FOR EACH ROW

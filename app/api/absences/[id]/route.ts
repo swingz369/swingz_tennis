@@ -19,9 +19,13 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       return rateLimitError;
     }
 
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
+    }
+
     try {
       const { id } = await params;
-      const absence = await absenceService.getAbsenceById(id);
+      const absence = await absenceService.getAbsenceById(id, auth.clubId);
 
       if (!absence) {
         return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
@@ -51,20 +55,28 @@ export async function PATCH(
       return rateLimitError;
     }
 
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
+    }
+
     try {
       const { id } = await params;
       const body = await _request.json();
 
       const { type, startDate, endDate, status, reason, notes } = body;
 
-      const updated = await absenceService.updateAbsence(id, {
-        type,
-        startDate,
-        endDate,
-        status,
-        reason,
-        notes,
-      });
+      const updated = await absenceService.updateAbsence(
+        id,
+        {
+          type,
+          startDate,
+          endDate,
+          status,
+          reason,
+          notes,
+        },
+        auth.clubId
+      );
 
       if (!updated) {
         return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
@@ -97,9 +109,13 @@ export async function DELETE(
       return rateLimitError;
     }
 
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
+    }
+
     try {
       const { id } = await params;
-      const success = await absenceService.deleteAbsence(id);
+      const success = await absenceService.deleteAbsence(id, auth.clubId);
 
       if (!success) {
         return NextResponse.json({ error: 'Absence not found' }, { status: 404 });

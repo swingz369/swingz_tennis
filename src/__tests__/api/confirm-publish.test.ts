@@ -5,7 +5,7 @@
  * fails, all prior writes (sessions, plan entries, season status, conflicts,
  * audit trail) must be rolled back.
  */
-import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 
 // Ensure DATABASE_URL is set before any dynamic import triggers db.ts module evaluation.
 // CI environments may not have DATABASE_URL, and vi.mock hoisting may not intercept
@@ -234,7 +234,7 @@ function createTx(): any {
 
 // The global DB — used outside the transaction (season lookup, entry lookup,
 // post-transaction user lookup)
-let mockGetDb: ReturnType<typeof vi.fn>;
+let mockGetDb: any;
 
 // ── vi.mock calls (hoisted to module top) ───────────────────
 
@@ -244,7 +244,7 @@ let mockGetDb: ReturnType<typeof vi.fn>;
 vi.mock('drizzle-orm', async (importOriginal) => {
   const actual = await importOriginal();
   return {
-    ...actual,
+    ...(actual as any),
     eq: vi.fn(() => ({})),
     and: vi.fn(() => ({})),
     inArray: vi.fn(() => ({})),
@@ -341,6 +341,14 @@ vi.mock('@/src/infrastructure/persistence/schema', () => ({
     id: { name: 'id' },
     bundesland: { name: 'bundesland' },
   },
+  seasonGroupWeeks: {
+    _table: 'season_group_weeks',
+    season_id: 'season_id',
+    group_id: 'group_id',
+    club_id: 'club_id',
+    week_number: 'week_number',
+    is_active: 'is_active',
+  },
 }));
 
 // ── Holiday checking (now integrated into the session creation loop) ───
@@ -380,7 +388,17 @@ vi.mock('resend', () => ({
 }));
 
 const mockBuildRecipients = vi.fn().mockResolvedValue([
-  { memberId: 'member-001', email: 'max@test.com', name: 'Max', groupName: 'Gruppe A', trainerName: 'Trainer', dayOfWeek: 2, startTime: '17:00', endTime: '18:30', firstSessionDate: '2025-05-06' },
+  {
+    memberId: 'member-001',
+    email: 'max@test.com',
+    name: 'Max',
+    groupName: 'Gruppe A',
+    trainerName: 'Trainer',
+    dayOfWeek: 2,
+    startTime: '17:00',
+    endTime: '18:30',
+    firstSessionDate: '2025-05-06',
+  },
 ]);
 const mockSendConfirmationEmails = vi.fn().mockResolvedValue({ sent: 1, failed: 0, errors: [] });
 vi.mock('@/lib/season-planning/season-confirmation-email.service', () => ({
@@ -517,7 +535,17 @@ beforeEach(() => {
   mockGetCriticalConflicts.mockReset().mockReturnValue([]);
   mockResendSend.mockReset().mockResolvedValue({ id: 'email-001' });
   mockBuildRecipients.mockReset().mockResolvedValue([
-    { memberId: 'member-001', email: 'max@test.com', name: 'Max', groupName: 'Gruppe A', trainerName: 'Trainer', dayOfWeek: 2, startTime: '17:00', endTime: '18:30', firstSessionDate: '2025-05-06' },
+    {
+      memberId: 'member-001',
+      email: 'max@test.com',
+      name: 'Max',
+      groupName: 'Gruppe A',
+      trainerName: 'Trainer',
+      dayOfWeek: 2,
+      startTime: '17:00',
+      endTime: '18:30',
+      firstSessionDate: '2025-05-06',
+    },
   ]);
   mockSendConfirmationEmails.mockReset().mockResolvedValue({ sent: 1, failed: 0, errors: [] });
 });
@@ -600,16 +628,14 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
       expect(body.publishedSessions).toBe(16);
     });
 
-    it('handles empty entries gracefully', async () => {
+    it('rejects with a clear 400 when there are no plan entries', async () => {
       resetConfig({ entries: [], schedule: [] });
       mockGetDb = vi.fn(() => buildDb());
 
       const res = await POST(buildRequest(), ctx());
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(400);
       const body = await res.json();
-      expect(body.success).toBe(true);
-      expect(body.publishedSessions).toBe(0);
-      expect(body.publishedSessionIds).toEqual([]);
+      expect(body.error).toContain('Keine Planeinträge vorhanden');
     });
   });
 

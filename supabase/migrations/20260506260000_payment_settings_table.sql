@@ -36,25 +36,25 @@ CREATE TABLE IF NOT EXISTS payment_settings (
 -- ============================================================================
 
 -- Query by club (tenant isolation)
-CREATE INDEX idx_payment_settings_club_id ON payment_settings(club_id);
+CREATE INDEX IF NOT EXISTS idx_payment_settings_club_id ON payment_settings(club_id);
 
 -- Query by gateway type
-CREATE INDEX idx_payment_settings_gateway ON payment_settings(gateway);
+CREATE INDEX IF NOT EXISTS idx_payment_settings_gateway ON payment_settings(gateway);
 
 -- Query active settings
-CREATE INDEX idx_payment_settings_is_active ON payment_settings(is_active) 
+CREATE INDEX IF NOT EXISTS idx_payment_settings_is_active ON payment_settings(is_active) 
   WHERE is_active = true;
 
 -- Query default settings per club (fast lookup)
-CREATE INDEX idx_payment_settings_default ON payment_settings(club_id, is_default) 
+CREATE INDEX IF NOT EXISTS idx_payment_settings_default ON payment_settings(club_id, is_default) 
   WHERE is_default = true;
 
 -- Composite index for active settings by club
-CREATE INDEX idx_payment_settings_club_active ON payment_settings(club_id, is_active) 
+CREATE INDEX IF NOT EXISTS idx_payment_settings_club_active ON payment_settings(club_id, is_active) 
   WHERE is_active = true;
 
 -- GIN index for JSONB config (fast filtering by API keys, merchant IDs, etc.)
-CREATE INDEX idx_payment_settings_config ON payment_settings USING GIN (config);
+CREATE INDEX IF NOT EXISTS idx_payment_settings_config ON payment_settings USING GIN (config);
 
 -- ============================================================================
 -- RLS POLICIES
@@ -64,12 +64,14 @@ CREATE INDEX idx_payment_settings_config ON payment_settings USING GIN (config);
 ALTER TABLE payment_settings ENABLE ROW LEVEL SECURITY;
 
 -- Policy 1: Superadmins have full access (cross-tenant)
+DROP POLICY IF EXISTS "Superadmins have full access to all payment settings" ON payment_settings;
 CREATE POLICY "Superadmins have full access to all payment settings"
   ON payment_settings
   FOR ALL
   USING (is_superadmin());
 
 -- Policy 2: Club admins can view payment settings in their clubs
+DROP POLICY IF EXISTS "Club admins can view payment settings in their clubs" ON payment_settings;
 CREATE POLICY "Club admins can view payment settings in their clubs"
   ON payment_settings
   FOR SELECT
@@ -84,6 +86,7 @@ CREATE POLICY "Club admins can view payment settings in their clubs"
   );
 
 -- Policy 3: Club admins can create payment settings in their clubs
+DROP POLICY IF EXISTS "Club admins can create payment settings in their clubs" ON payment_settings;
 CREATE POLICY "Club admins can create payment settings in their clubs"
   ON payment_settings
   FOR INSERT
@@ -98,6 +101,7 @@ CREATE POLICY "Club admins can create payment settings in their clubs"
   );
 
 -- Policy 4: Club admins can update payment settings in their clubs
+DROP POLICY IF EXISTS "Club admins can update payment settings in their clubs" ON payment_settings;
 CREATE POLICY "Club admins can update payment settings in their clubs"
   ON payment_settings
   FOR UPDATE
@@ -112,6 +116,7 @@ CREATE POLICY "Club admins can update payment settings in their clubs"
   );
 
 -- Policy 5: Club admins can delete payment settings in their clubs
+DROP POLICY IF EXISTS "Club admins can delete payment settings in their clubs" ON payment_settings;
 CREATE POLICY "Club admins can delete payment settings in their clubs"
   ON payment_settings
   FOR DELETE
@@ -137,6 +142,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS payment_settings_updated_at ON payment_settings;
 CREATE TRIGGER payment_settings_updated_at
   BEFORE UPDATE ON payment_settings
   FOR EACH ROW
@@ -162,6 +168,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS ensure_single_default_payment_setting_trigger ON payment_settings;
 CREATE TRIGGER ensure_single_default_payment_setting_trigger
   BEFORE INSERT OR UPDATE OF is_default ON payment_settings
   FOR EACH ROW

@@ -32,9 +32,10 @@ async function seed() {
     console.log(`🏟️  Using club: ${club.name} (${clubId})`);
 
     // ── 1b. Ensure admin user has 'admin' role ──────────────────────
+    // `email` is not in Supabase PageParams but is accepted at runtime.
     const {
       data: { users: adminUsers },
-    } = await supabaseAdmin.auth.admin.listUsers({ email: 'admin@swingz.com' });
+    } = await supabaseAdmin.auth.admin.listUsers({ email: 'admin@swingz.com' } as never);
     if (adminUsers && adminUsers.length > 0) {
       const adminUserId = adminUsers[0].id;
       const { rows: adminMembership } = await client.query(
@@ -90,10 +91,10 @@ async function seed() {
     ];
 
     for (const m of members) {
-      // Check if auth user exists
+      // Check if auth user exists        // `email` is not in Supabase PageParams but is accepted at runtime.
       const {
         data: { users },
-      } = await supabaseAdmin.auth.admin.listUsers({ email: m.email });
+      } = await supabaseAdmin.auth.admin.listUsers({ email: m.email } as never);
       let userId: string;
 
       if (users && users.length > 0) {

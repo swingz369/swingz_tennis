@@ -68,7 +68,7 @@ export function PremiumUpsell({
     >
       {/* ═══ Hero ═══ */}
       <div className="flex flex-col items-center text-center gap-2 -mt-2 mb-4">
-        <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-primary to-brand-accent text-white shadow-lg shadow-brand-accent/20">
+        <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-primary to-brand-accent text-white shadow-lg shadow-brand-accent/20">
           <Sparkles className="h-6 w-6" />
         </div>
         <h2 className="text-xl font-bold text-foreground">
@@ -120,7 +120,7 @@ export function PremiumUpsell({
       <ul className="space-y-2 mb-5">
         {stats.bullets.map((bullet, i) => (
           <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+            <CheckCircle2 className="h-4 w-4 text-success-600 flex-shrink-0 mt-0.5" />
             <span className="leading-relaxed">{bullet}</span>
           </li>
         ))}
@@ -128,7 +128,7 @@ export function PremiumUpsell({
 
       {/* ═══ CTAs ═══ */}
       <div className="flex flex-col sm:flex-row gap-2">
-        <Button asChild variant="brand" className="flex-1 gap-2">
+        <Button asChild variant="primary" className="flex-1 gap-2">
           <Link href={pricingHref}>
             <Sparkles className="h-4 w-4" />
             Pro entdecken
@@ -140,7 +140,7 @@ export function PremiumUpsell({
           Vielleicht später
         </Button>
       </div>
-      <p className="text-[11px] text-muted-foreground text-center mt-3">
+      <p className="text-2xs text-muted-foreground text-center mt-3">
         Starter-Tier bleibt aktiv. KI-Hilfen sind optional in Pro enthalten.
       </p>
     </CenteredModal>
@@ -161,13 +161,13 @@ function StatTile({
   // Tailwind stat-pill palette — explicit string-literal class names so the
   // JIT compiler can pick them up (no string-built classes).
   const accentStyles: Record<typeof accent, string> = {
-    emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-    blue: 'bg-blue-50 border-blue-200 text-blue-700',
-    purple: 'bg-purple-50 border-purple-200 text-purple-700',
+    emerald: 'bg-success-50 border-success-200 text-success-700',
+    blue: 'bg-info-50 border-info-200 text-info-700',
+    purple: 'bg-info-50 border-info-200 text-info-700',
   };
   return (
-    <div className={cn('rounded-lg border p-3', accentStyles[accent])}>
-      <div className="flex items-center gap-1.5 text-[11px] font-medium opacity-90">
+    <div className={cn('rounded-xl border p-3', accentStyles[accent])}>
+      <div className="flex items-center gap-1.5 text-2xs font-medium opacity-90">
         {icon}
         <span className="leading-tight">{label}</span>
       </div>

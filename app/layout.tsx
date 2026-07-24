@@ -4,10 +4,11 @@ import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'sonner';
 import { cookies } from 'next/headers';
-import { QueryProvider } from './query-provider';
 import { ServiceWorkerRegistration } from '@/components/sw-registration';
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt';
 import { SkipToContent } from '@/lib/accessibility';
+import { AriaLiveProvider } from '@/components/aria-live-region';
+import { SonnerAriaBridge } from '@/components/sonner-aria-bridge';
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -58,26 +59,57 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
     >
       <head>
+        {/* Theme persistence: read localStorage before React hydration to avoid flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('theme');
+                  var isDark = theme === 'dark' ||
+                    (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                  if (isDark) document.documentElement.classList.add('dark');
+                  else document.documentElement.classList.remove('dark');
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+        {/* Kill stale service workers before hydration — a leftover SW from a
+            local prod build can serve mismatched Turbopack chunks and break
+            hard reloads before the sw-registration.tsx useEffect ever runs. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (${process.env.NODE_ENV === 'development'} && 'serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(regs) {
+                  regs.forEach(function(r) { r.unregister(); });
+                });
+              }
+            `,
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://api.fontshare.com" />
         <link rel="preconnect" href="https://cdn.fontshare.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://api.fontshare.com/v2/css?f[]=clash-display@1&display=swap"
+          href="https://api.fontshare.com/v2/css?f[]=clash-display@1&f[]=pally@1,400,500,600,700,400i,500i,700i&display=swap"
         />
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
         )}
       </head>
       <body className={`${dmSans.className} antialiased`}>
-        <SkipToContent />
-        <ServiceWorkerRegistration />
-        <PwaInstallPrompt />
-        <QueryProvider>
+        <AriaLiveProvider>
+          <SkipToContent />
+          <ServiceWorkerRegistration />
+          <PwaInstallPrompt />
           <Providers>{children}</Providers>
           <Toaster position="top-right" richColors />
-        </QueryProvider>
+          <SonnerAriaBridge />
+        </AriaLiveProvider>
       </body>
     </html>
   );

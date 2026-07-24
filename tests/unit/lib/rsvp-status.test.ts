@@ -15,19 +15,19 @@ describe('getRsvpStatusBadge', () => {
       const badge = getRsvpStatusBadge('yes');
       expect(badge).not.toBeNull();
       expect(badge?.label).toBe('Zusage');
-      expect(badge?.color).toBe('bg-green-100 text-green-700 border-green-200');
+      expect(badge?.color).toBe('bg-success-100 text-success-700 border-success-200');
     });
 
     it('returns Zusage badge for "attending"', () => {
       const badge = getRsvpStatusBadge('attending');
       expect(badge?.label).toBe('Zusage');
-      expect(badge?.color).toContain('green-100');
+      expect(badge?.color).toContain('success-100');
     });
 
     it('returns Zusage badge for "accepted" (case-insensitive)', () => {
       const badge = getRsvpStatusBadge('Accepted');
       expect(badge?.label).toBe('Zusage');
-      expect(badge?.color).toContain('green-100');
+      expect(badge?.color).toContain('success-100');
     });
   });
 
@@ -37,13 +37,13 @@ describe('getRsvpStatusBadge', () => {
       const badge = getRsvpStatusBadge('no');
       expect(badge).not.toBeNull();
       expect(badge?.label).toBe('Absage');
-      expect(badge?.color).toBe('bg-red-100 text-red-700 border-red-200');
+      expect(badge?.color).toBe('bg-error-100 text-error-700 border-error-200');
     });
 
     it('returns Absage badge for "declined"', () => {
       const badge = getRsvpStatusBadge('declined');
       expect(badge?.label).toBe('Absage');
-      expect(badge?.color).toContain('red-100');
+      expect(badge?.color).toContain('error-100');
     });
   });
 
@@ -53,13 +53,13 @@ describe('getRsvpStatusBadge', () => {
       const badge = getRsvpStatusBadge('maybe');
       expect(badge).not.toBeNull();
       expect(badge?.label).toBe('Vielleicht');
-      expect(badge?.color).toBe('bg-amber-100 text-amber-700 border-amber-200');
+      expect(badge?.color).toBe('bg-warning-100 text-warning-700 border-warning-200');
     });
 
     it('returns Vielleicht badge for "tentative"', () => {
       const badge = getRsvpStatusBadge('tentative');
       expect(badge?.label).toBe('Vielleicht');
-      expect(badge?.color).toContain('amber-100');
+      expect(badge?.color).toContain('warning-100');
     });
   });
 
@@ -69,13 +69,13 @@ describe('getRsvpStatusBadge', () => {
       const badge = getRsvpStatusBadge('pending');
       expect(badge).not.toBeNull();
       expect(badge?.label).toBe('Wartet auf Antwort');
-      expect(badge?.color).toBe('bg-blue-100 text-blue-700 border-blue-200');
+      expect(badge?.color).toBe('bg-info-100 text-info-700 border-info-200');
     });
 
     it('returns "Wartet auf Antwort" badge for "waiting"', () => {
       const badge = getRsvpStatusBadge('waiting');
       expect(badge?.label).toBe('Wartet auf Antwort');
-      expect(badge?.color).toContain('blue-100');
+      expect(badge?.color).toContain('info-100');
     });
   });
 

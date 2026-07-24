@@ -14,14 +14,14 @@ const FeatureCard = React.forwardRef<HTMLDivElement, FeatureCardProps>(
       <div
         ref={ref}
         className={cn(
-          'group relative rounded-2xl bg-background p-8 shadow-soft transition-all duration-300',
+          'group relative rounded-xl bg-background p-8 shadow-soft transition-all duration-300',
           'hover:shadow-[0_12px_40px_-8px_hsl(var(--brand-primary)/0.3)] hover:-translate-y-1',
-          highlight && 'border-2 border-brandPrimary/20',
+          highlight && 'border-2 border-brand-primary/20',
           className
         )}
         {...props}
       >
-        <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-brandPrimary/10 text-brandPrimary transition-transform group-hover:scale-110">
+        <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary transition-transform group-hover:scale-110">
           {icon}
         </div>
         <h3 className="mb-2 text-xl font-bold text-foreground">{title}</h3>

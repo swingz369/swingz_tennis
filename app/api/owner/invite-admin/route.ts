@@ -68,7 +68,49 @@ export async function POST(request: NextRequest) {
 
     const userId: string | undefined = inviteJson?.id;
 
+    // Hoist pre-flight-Variablen auf if(userId)-Scope, weil sie UNTERHALB
+    // des if(clubId)-Blocks im Audit-Details referenziert werden (Block-Scoping
+    // würde sonst TS6133 werfen).
+    let reactivation = false;
+    let anyClubMembershipExists = false;
+
     if (userId) {
+      // Pre-flight: zwei verschiedene Audit-relevante Zustände.
+      //   1) reactivation (exactMatch): existiert bereits eine Membership für
+      //      (user, club, role)? Falls ja ist die jetzige Einladung eine
+      //      REAKTIVIERUNG — eigenes Audit-Flag (Common-Case: false).
+      //   2) anyClubMembershipExists (anyMatch): gibt es IRGENDEINE
+      //      Membership-Row für (user, club) in einer ANDEREN Rolle? Selbst
+      //      wenn der User vorher nur Member war, ist die jetzige
+      //      Admin-Einladung eine ROLLEN-ESCALATION mit bestehendem
+      //      Vereinsbezug → Audit-Leser sehen das über
+      //      details.previous_club_relationship.
+      // Conditional Sequencing: die teurere 2. Query läuft nur wenn die
+      // 1. Query KEIN exaktes Match findet. Spart einen Roundtrip im
+      // Common-Case (frische Erst-Einladung). Beide robust gegen
+      // Supabase-MSG-Lokalisierung (stringbasiertes MSG-Matching würde
+      // bei i18n brechen).
+      if (clubId) {
+        const { data: exactMatch } = await sb
+          .from('user_club_memberships')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('club_id', clubId)
+          .eq('role', inviteRole)
+          .maybeSingle();
+        reactivation = !!exactMatch;
+
+        if (!reactivation) {
+          const { data: anyMatch } = await sb
+            .from('user_club_memberships')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('club_id', clubId)
+            .maybeSingle();
+          anyClubMembershipExists = !!anyMatch;
+        }
+      }
+
       await sb
         .from('users')
         .upsert(
@@ -95,6 +137,37 @@ export async function POST(request: NextRequest) {
     }
 
     log.info(`${inviteRole} invited`, { email, clubId, clubName: club?.name });
+
+    // AuditLog-Pflicht (CLAUDE.md): jede Owner-Mutation erfasst eine Zeile in
+    // audit_logs mit actor=Aktor-UserID, action=invite, resource_type=membership,
+    // resource_id=userId (semantischer Anker: der neu eingeladene User).
+    // details enthält den vollen Kontext, damit das /owner/audit-Log die
+    // Aktion später rekonstruieren kann ohne JOIN auf andere Tabellen.
+    try {
+      await sb.from('audit_logs').insert({
+        actor_id: auth.user.id,
+        action: 'invite',
+        resource_type: 'membership',
+        resource_id: userId ?? null,
+        club_id: club?.id ?? null,
+        details: {
+          email,
+          full_name: fullName ?? email.split('@')[0],
+          invited_role: inviteRole,
+          club_name: club?.name ?? null,
+          reactivation: reactivation,
+          previous_club_relationship: anyClubMembershipExists,
+        },
+      });
+    } catch (auditErr) {
+      // Audit-Failure darf die Haupt-Aktion nicht rollbacken — Logging ist
+      // 'super-best-effort'. Fehler wird geloggt, damit Ops es nachverfolgen kann.
+      log.warn('AuditLog insert failed for invite (non-fatal)', {
+        email,
+        auditErr: auditErr instanceof Error ? auditErr.message : String(auditErr),
+      });
+    }
+
     return NextResponse.json({ success: true, clubName: club?.name });
   });
 }

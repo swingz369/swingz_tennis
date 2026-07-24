@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { NoTrainersBrandedEmptyState } from '@/components/ui/empty-state';
 import {
   Table,
   TableBody,
@@ -41,6 +42,9 @@ import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import { Checkbox } from '@/components/ui/checkbox';
 import TrainerImportDialog from '@/components/admin/trainer-import-dialog';
+import { PageHeader } from '@/components/ui/page-header';
+import { PaginationNav } from '@/components/ui/pagination-nav';
+import { buildPaginationMeta, ALL_LIMIT } from '@/lib/pagination';
 
 export interface TrainerAvailabilitySlot {
   id: string;
@@ -125,6 +129,8 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
   const [bulkDeactivating, setBulkDeactivating] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const loadTrainers = async () => {
     try {
@@ -247,14 +253,23 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
   const setSearchAndClear = (v: string) => {
     setSearchQuery(v);
     setSelectedIds(new Set());
+    setPage(1);
   };
   const setStatusFilterAndClear = (v: string) => {
     setStatusFilter(v);
     setSelectedIds(new Set());
+    setPage(1);
   };
 
-  // Bulk deactivate selection metrics — must live after filteredTrainers.
-  const selectableTrainers = filteredTrainers.filter(
+  // Client-side pagination over the filtered set (no server-side trainer list endpoint).
+  const pagination = buildPaginationMeta(page, pageSize, filteredTrainers.length);
+  const paginatedTrainers =
+    pageSize >= ALL_LIMIT
+      ? filteredTrainers
+      : filteredTrainers.slice((page - 1) * pageSize, page * pageSize);
+
+  // Bulk deactivate selection metrics — scoped to the visible page, matching the members list.
+  const selectableTrainers = paginatedTrainers.filter(
     (t) => t.status !== 'terminated' && t.status !== 'on_leave'
   );
   const allSelected =
@@ -347,9 +362,9 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
           <Skeleton className="h-11 w-64 rounded-xl" />
           <Skeleton className="h-11 w-44 rounded-xl" />
         </div>
-        <div className="rounded-lg border border-border/60 dark:border-white/10 p-6 space-y-4">
+        <div className="rounded-xl border border-border/60 dark:border-white/10 p-6 space-y-4">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-lg" />
+            <Skeleton key={i} className="h-12 w-full rounded-xl" />
           ))}
         </div>
       </div>
@@ -358,17 +373,15 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in space-y-6">
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-brand-primary">Trainer-Verwaltung</h1>
-          <p className="text-muted-foreground dark:text-muted-foreground mt-1 text-sm">
-            Übersicht und Management aller Trainerprofile
-          </p>
-        </div>
+        <PageHeader
+          title="Trainer-Verwaltung"
+          description="Übersicht und Management aller Trainerprofile"
+          breadcrumbs={[{ label: 'Trainer-Profile' }]}
+        />
         <div className="flex items-center gap-3">
           <TrainerImportDialog onImportComplete={loadTrainers} />
-          <Button size="md" variant="gradient" onClick={() => setShowInviteForm(true)}>
+          <Button size="md" variant="primary" onClick={() => setShowInviteForm(true)}>
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline ml-2">Neuer Trainer</span>
           </Button>
@@ -403,33 +416,22 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
 
       {/* ── Empty State ────────────────────────────────────────────────────── */}
       {filteredTrainers.length === 0 ? (
-        <Card variant="flat" className="p-12 gradient-border glass text-center">
-          <div className="flex h-20 w-20 mx-auto items-center justify-center rounded-2xl bg-brandPrimary/10 mb-6 shadow-glow-primary">
-            <GraduationCap className="h-10 w-10 text-brandPrimary" />
-          </div>
-          <h3 className="text-2xl font-bold text-brand-primary">
-            {searchQuery || statusFilter !== 'all' ? 'Keine Treffer' : 'Noch keine Trainer'}
-          </h3>
-          <p className="text-muted-foreground dark:text-muted-foreground mt-2 max-w-sm mx-auto">
-            {searchQuery || statusFilter !== 'all'
-              ? 'Passe deine Filterkriterien an, um Ergebnisse zu sehen.'
-              : 'Füge deinen ersten Trainer hinzu, um loszulegen.'}
-          </p>
-          {!searchQuery && statusFilter === 'all' && (
-            <Button
-              size="lg"
-              variant="gradient"
-              onClick={() => setShowInviteForm(true)}
-              className="mt-8"
-              leftIcon={<Plus className="h-5 w-5" />}
-            >
-              Trainer hinzufügen
-            </Button>
-          )}
-        </Card>
+        searchQuery || statusFilter !== 'all' ? (
+          <Card variant="flat" className="p-12 text-center">
+            <div className="flex h-20 w-20 mx-auto items-center justify-center rounded-xl bg-brand-primary/10 mb-6">
+              <GraduationCap className="h-10 w-10 text-brand-primary" />
+            </div>
+            <h3 className="text-2xl font-bold text-brand-primary">Keine Treffer</h3>
+            <p className="text-muted-foreground dark:text-muted-foreground mt-2 max-w-sm mx-auto">
+              Passe deine Filterkriterien an, um Ergebnisse zu sehen.
+            </p>
+          </Card>
+        ) : (
+          <NoTrainersBrandedEmptyState onInvite={() => setShowInviteForm(true)} />
+        )
       ) : (
         /* ── Full-Width Trainer Table ─────────────────────────────────── */
-        <div className="rounded-lg border border-border/60 dark:border-white/10 overflow-x-auto">
+        <div className="rounded-xl border border-border/60 dark:border-white/10 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -460,7 +462,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTrainers.map((trainer) => {
+              {paginatedTrainers.map((trainer) => {
                 const selectable = trainer.status !== 'terminated' && trainer.status !== 'on_leave';
                 return (
                   <TableRow
@@ -477,8 +479,8 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                     </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-brandPrimary/20 to-brandPrimary/5 shrink-0">
-                          <User className="h-4 w-4 text-brandPrimary" />
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-brand-primary/10 shrink-0">
+                          <User className="h-4 w-4 text-brand-primary" />
                         </div>
                         <div className="min-w-0">
                           <div className="truncate text-sm font-semibold">
@@ -523,9 +525,35 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                       </span>
                     </TableCell>
                     <TableCell className="hidden xl:table-cell text-right tabular-nums text-sm">
-                      {trainer.hourlyRate ? (
-                        <span className="inline-flex items-center gap-1">
-                          <Euro className="h-3.5 w-3.5 text-muted-foreground" />
+                      {trainer.contractedHourlyRate != null ? (
+                        // Sprint 4 Trainer Dual-Rate: show the contracted rate
+                        // (admin-controlled) as the primary value, and add a tiny
+                        // "+Z" badge when the trainer has also configured an extra-
+                        // hours rate (trainer-editable). The Detail page renders
+                        // the full form, so this list view stays terse.
+                        <div className="inline-flex items-center justify-end gap-1.5">
+                          <span
+                            className="inline-flex items-center gap-1 font-medium text-brand-primary"
+                            title={`Vertragssatz (Admin-only) · ${trainer.contractedHourlyRate.toFixed(2)} €/h`}
+                          >
+                            <Euro className="h-3.5 w-3.5" />
+                            {trainer.contractedHourlyRate.toFixed(2)}/h
+                          </span>
+                          {trainer.extraHoursRate != null && (
+                            <Badge
+                              variant="outline"
+                              className="text-2xs px-1.5 py-0"
+                              title={`Zusatzstunden-Satz · ${trainer.extraHoursRate.toFixed(2)} €/h`}
+                            >
+                              +Z
+                            </Badge>
+                          )}
+                        </div>
+                      ) : trainer.hourlyRate ? (
+                        // Legacy fallback for trainers created before the dual-rate
+                        // migration was applied (contracted_hourly_rate IS NULL).
+                        <span className="inline-flex items-center gap-1 text-muted-foreground">
+                          <Euro className="h-3.5 w-3.5" />
                           {trainer.hourlyRate}/h
                         </span>
                       ) : (
@@ -534,7 +562,13 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" title="Details" asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Details"
+                          aria-label="Details"
+                          asChild
+                        >
                           <Link href={`/admin/trainers/${trainer.id}`}>
                             <Eye className="h-4 w-4" />
                           </Link>
@@ -543,12 +577,13 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                           variant="ghost"
                           size="icon"
                           title={trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
+                          aria-label={trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
                           onClick={() => handleToggleTrainerStatus(trainer.id, trainer.status)}
                         >
                           {trainer.status === 'active' ? (
-                            <UserX className="h-4 w-4 text-orange-600" />
+                            <UserX className="h-4 w-4 text-brand-accent-600" />
                           ) : (
-                            <UserCheck className="h-4 w-4 text-green-600" />
+                            <UserCheck className="h-4 w-4 text-success-600" />
                           )}
                         </Button>
                       </div>
@@ -561,11 +596,19 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
         </div>
       )}
 
-      {/* ── Count ──────────────────────────────────────────────────────────── */}
-      {trainers.length > 0 && (
-        <p className="text-sm text-muted-foreground text-center">
-          {filteredTrainers.length} von {trainers.length} Trainern
-        </p>
+      {/* ── Pagination ─────────────────────────────────────────────────────── */}
+      {filteredTrainers.length > 0 && (
+        <PaginationNav
+          meta={pagination}
+          onPageChange={setPage}
+          pageSizeOptions={[10, 25, 50, 'all']}
+          currentLimit={pageSize}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+          compact
+        />
       )}
 
       {/* ── Floating Bulk-Action Bar ───────────────────────────────────────── */}
@@ -617,6 +660,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
             className="h-8 w-8"
             onClick={() => setBulkConfirmOpen(false)}
             disabled={bulkDeactivating}
+            aria-label="Schließen"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -625,7 +669,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
           Die ausgewählten Trainer werden auf <strong>inaktiv</strong> gesetzt. Sie können sie
           später jederzeit wieder aktivieren.
         </p>
-        <div className="max-h-72 overflow-y-auto rounded-lg border border-border bg-muted/30 p-3">
+        <div className="max-h-72 overflow-y-auto rounded-xl border border-border bg-muted/30 p-3">
           <ul className="space-y-1.5 text-sm">
             {Array.from(selectedIds).map((id) => {
               const t = trainers.find((x) => x.id === id);
@@ -680,6 +724,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
             size="icon"
             className="h-8 w-8"
             onClick={() => setShowInviteForm(false)}
+            aria-label="Schließen"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -711,7 +756,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
               onChange={(e) => setInviteName(e.target.value)}
             />
           </div>
-          <div className="bg-brandPrimary/5 border border-brandPrimary/10 p-3 rounded-lg text-sm text-muted-foreground dark:text-muted-foreground">
+          <div className="bg-brand-primary/5 border border-brand-primary/10 p-3 rounded-xl text-sm text-muted-foreground dark:text-muted-foreground">
             Der Trainer erhält eine Einladungs-E-Mail und wird dem Verein mit der Rolle
             &quot;Trainer&quot; hinzugefügt.
           </div>
@@ -732,7 +777,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
           <Button
             onClick={handleInviteTrainer}
             disabled={inviteLoading || !inviteEmail}
-            variant="gradient"
+            variant="primary"
             className="flex-1"
           >
             {inviteLoading ? 'Wird gesendet...' : 'Einladung senden'}

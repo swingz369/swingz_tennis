@@ -49,19 +49,27 @@ export interface PaginationMeta {
 
 const DEFAULT_LIMIT = 25;
 
+/** Sentinel "items per page" value for the "Alle" (show all) option. */
+export const ALL_LIMIT = 100000;
+
 /**
  * Extract pagination parameters from searchParams.
  *
  * @param searchParams - The searchParams object from Next.js page props
- * @param limit - Items per page (default: 25)
+ * @param defaultLimit - Items per page if no `limit` param is present (default: 25)
  * @returns PaginationParams for use with Supabase queries
  */
 export function getPagination(
   searchParams: Record<string, string | string[] | undefined>,
-  limit: number = DEFAULT_LIMIT
+  defaultLimit: number = DEFAULT_LIMIT
 ): PaginationParams {
   const pageRaw = typeof searchParams.page === 'string' ? searchParams.page : '1';
   const page = Math.max(1, parseInt(pageRaw, 10) || 1);
+
+  const limitRaw = typeof searchParams.limit === 'string' ? searchParams.limit : '';
+  const limit =
+    limitRaw === 'all' ? ALL_LIMIT : Math.max(1, parseInt(limitRaw, 10) || defaultLimit);
+
   const offset = (page - 1) * limit;
   const search = typeof searchParams.search === 'string' ? searchParams.search : '';
 

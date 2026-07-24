@@ -244,6 +244,14 @@ class TrialTrainingServiceAdapter {
   }
 
   /**
+   * Confirm marketing consent (double opt-in) for a public trial-training lead.
+   * @returns true if a matching, unconfirmed token was found and confirmed
+   */
+  async confirmMarketingConsent(token: string): Promise<boolean> {
+    return this.trialTrainingRepo.confirmMarketingConsentByToken(token);
+  }
+
+  /**
    * Notify club admins about a new trial training request from the public booking page.
    * Queries the DB for admin/superadmin emails in the given club and sends
    * a notification email to each of them.
@@ -369,6 +377,63 @@ class TrialTrainingServiceAdapter {
       // Don't fail the request if notification fails — log and continue
       log.error(
         'Failed to send trial request confirmation to participant',
+        error instanceof Error ? error : undefined
+      );
+    }
+  }
+
+  /**
+   * Send the double opt-in (DOI) marketing consent confirmation email, if the
+   * participant checked the marketing consent box during signup. No-op
+   * otherwise — no token means no email is sent.
+   *
+   * This is a separate email from the transactional trial-request
+   * confirmation and does not itself send any marketing content — it only
+   * asks the participant to confirm they want to receive occasional
+   * marketing emails in the future. Until confirmed, no marketing email may
+   * ever be sent to this lead.
+   */
+  async sendMarketingConsentConfirmationIfNeeded(
+    trialTraining: TrialTraining,
+    clubId?: string
+  ): Promise<void> {
+    if (!trialTraining.marketingConsentToken) {
+      return;
+    }
+
+    const participant = trialTraining.participant;
+
+    try {
+      let clubName = 'SwingZ Tennis Club';
+      if (clubId) {
+        const clubResult = await db
+          .select({ name: clubs.name })
+          .from(clubs)
+          .where(eq(clubs.id, clubId))
+          .limit(1);
+        if (clubResult[0]?.name) {
+          clubName = clubResult[0].name;
+        }
+      }
+
+      const baseUrl =
+        process.env.NEXT_PUBLIC_APP_URL ||
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        'https://swingz.cloud';
+      const confirmUrl = `${baseUrl}/api/public/trial-training/confirm-marketing?token=${trialTraining.marketingConsentToken}`;
+
+      await EmailService.sendMarketingConsentConfirmation({
+        participantName: `${participant.firstName} ${participant.lastName}`,
+        participantEmail: participant.email,
+        clubName,
+        confirmUrl,
+      });
+
+      log.info('Marketing consent DOI email sent', { email: participant.email });
+    } catch (error) {
+      // Don't fail the request if this fails — log and continue
+      log.error(
+        'Failed to send marketing consent DOI email',
         error instanceof Error ? error : undefined
       );
     }

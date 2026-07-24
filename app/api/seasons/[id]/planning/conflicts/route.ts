@@ -6,61 +6,15 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { db } from '@/src/infrastructure/persistence/db';
-import {
-  seasons,
-  seasonPlanEntries,
-  planningConflicts,
-} from '@/src/infrastructure/persistence/schema';
+import { seasons, planningConflicts } from '@/src/infrastructure/persistence/schema';
 import { eq } from 'drizzle-orm';
-import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
-import type { GroupAssignment } from '@/lib/season-planning/types';
+import { detectConflictsForSeason } from '@/lib/season-planning/conflict-detector';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:[id]:planning:conflicts');
 
 interface RouteContext {
   params: Promise<{ id: string }>;
-}
-
-async function detectConflictsForSeason(seasonId: string, clubId: string) {
-  const detector = new ConflictDetector(seasonId, clubId);
-  const entries = await db
-    .select()
-    .from(seasonPlanEntries)
-    .where(eq(seasonPlanEntries.season_id, seasonId));
-
-  // Build assignments from plan entries
-  const assignments: GroupAssignment[] = [];
-  const groupMap = new Map<string, GroupAssignment>();
-  for (const entry of entries) {
-    const gid = entry.group_id || entry.id;
-    if (groupMap.has(gid)) {
-      groupMap.get(gid)!.memberIds.push(...((entry.expected_participants as string[]) || []));
-    } else {
-      groupMap.set(gid, {
-        groupId: gid,
-        groupName: gid,
-        trainerId: entry.trainer_id,
-        trainerName: entry.trainer_id,
-        dayOfWeek: entry.day_of_week as any,
-        startTime: entry.start_time?.substring(0, 5) || '00:00',
-        endTime: entry.end_time?.substring(0, 5) || '00:00',
-        courtId: entry.court_id,
-        courtName: entry.court_id,
-        memberIds: (entry.expected_participants as string[]) || [],
-        memberDetails: [],
-        waitlistIds: [],
-        waitlistDetails: [],
-        warnings: [],
-        conflictIds: [],
-      });
-    }
-  }
-  assignments.push(...groupMap.values());
-
-  const conflicts = await detector.detectAll(assignments);
-  const summary = detector.summarize(conflicts);
-  return { conflicts, summary };
 }
 
 export async function GET(request: NextRequest, context: RouteContext) {

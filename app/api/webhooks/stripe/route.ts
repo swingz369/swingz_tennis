@@ -119,6 +119,12 @@ export async function POST(_request: NextRequest) {
         break;
       }
 
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        await handleSaasInvoicePaymentFailed(invoice);
+        break;
+      }
+
       case 'payment_intent.payment_failed': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         // Look up payment by external_id (stripe payment intent id)
@@ -532,6 +538,46 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
 
   await supabase.from('users').update(update).eq('stripe_customer_id', customerId);
   log.info('SaaS subscription updated', { customerId, tier, status: sub.status });
+}
+
+/** Dunning: notify the SaaS customer their subscription invoice failed. */
+async function handleSaasInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  const customerId = invoice.customer as string | null;
+  if (!customerId) return;
+
+  const supabase = createServiceClient();
+  const { data: userData } = await supabase
+    .from('users')
+    .select('id, email, full_name, stripe_subscription_id')
+    .eq('stripe_customer_id', customerId)
+    .maybeSingle();
+
+  // Not a SaaS-subscription customer (e.g. a club's own Stripe Connect invoice) — ignore.
+  if (!userData?.id || !userData.stripe_subscription_id) return;
+
+  await supabase.from('notifications').insert({
+    user_id: userData.id,
+    club_id: null,
+    title: 'Zahlung fehlgeschlagen',
+    message:
+      'Die Zahlung für dein SwingZ-Abonnement konnte nicht verarbeitet werden. Bitte aktualisiere deine Zahlungsmethode, um den Zugriff nicht zu verlieren.',
+    type: 'billing',
+    action_url: '/admin/subscription',
+  });
+
+  if (userData.email) {
+    const resend = getResend();
+    await resend?.emails
+      .send({
+        from: process.env.EMAIL_FROM ?? 'SwingZ <noreply@swingz.cloud>',
+        to: userData.email,
+        subject: 'Zahlung fehlgeschlagen – SwingZ Abonnement',
+        html: `<p>Hallo ${userData.full_name ?? ''},</p><p>die Zahlung für dein SwingZ-Abonnement ist fehlgeschlagen. Bitte aktualisiere deine Zahlungsmethode im Kundenportal, um deinen Zugriff nicht zu verlieren.</p><p>Dein SwingZ-Team</p>`,
+      })
+      .catch(() => {});
+  }
+
+  log.warn('SaaS invoice payment failed', { userId: userData.id, customerId });
 }
 
 async function handleSubscriptionDeleted(sub: Stripe.Subscription) {

@@ -14,6 +14,7 @@ import {
   CATEGORY_LABELS,
 } from '@/src/constants/tournaments';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Tournament {
   id: string;
@@ -102,13 +103,10 @@ export default function MemberTournamentsPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-brand-primary">Turniere</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Vereinsturniere und Anmeldung</p>
-      </div>
+      <PageHeader title="Turniere" description="Vereinsturniere und Anmeldung" />
 
       {registerSuccess && (
-        <div className="flex items-center gap-2 rounded-xl bg-green-50 dark:bg-green-900/20 p-4 text-green-700 dark:text-green-300 text-sm">
+        <div className="flex items-center gap-2 rounded-xl bg-success-50 dark:bg-success-900/20 p-4 text-success-700 dark:text-success-300 text-sm">
           <CheckCircle className="h-4 w-4 shrink-0" />
           Du wurdest für &quot;{registerSuccess}&quot; angemeldet!
         </div>
@@ -119,7 +117,7 @@ export default function MemberTournamentsPage() {
           Turniere werden geladen…
         </div>
       ) : error ? (
-        <div className="text-center py-10 text-red-500 text-sm">{error}</div>
+        <div className="text-center py-10 text-error-500 text-sm">{error}</div>
       ) : tournaments.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
           <IconBox icon={Trophy} size="lg" variant="amber" className="h-16 w-16" />
@@ -146,11 +144,11 @@ export default function MemberTournamentsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-sm">{t.name}</p>
-                        <Badge className={`text-[11px] border-0 ${STATUS_COLORS[t.status] ?? ''}`}>
+                        <Badge className={`text-2xs border-0 ${STATUS_COLORS[t.status] ?? ''}`}>
                           {STATUS_LABELS[t.status] ?? t.status}
                         </Badge>
                         {isRegistered && (
-                          <Badge className="text-[11px] border-0 bg-brand-light/10 text-brand-light">
+                          <Badge className="text-2xs border-0 bg-brand-light/10 text-brand-light">
                             Angemeldet
                           </Badge>
                         )}
@@ -185,7 +183,7 @@ export default function MemberTournamentsPage() {
                         )}
                       </div>
                       {t.registration_deadline && (
-                        <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
+                        <p className="text-2xs text-muted-foreground mt-1 flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           Anmeldeschluss:{' '}
                           {new Date(t.registration_deadline).toLocaleDateString('de-DE', {
@@ -196,15 +194,13 @@ export default function MemberTournamentsPage() {
                         </p>
                       )}
                       {t.prize_info && (
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          🏆 {t.prize_info}
-                        </p>
+                        <p className="text-2xs text-muted-foreground mt-0.5">🏆 {t.prize_info}</p>
                       )}
                       <div className="mt-3">
                         {canRegister && (
                           <Button
                             size="sm"
-                            variant="brand"
+                            variant="primary"
                             className="h-8 text-xs"
                             onClick={() => {
                               setConfirmTournament(t);
@@ -215,7 +211,7 @@ export default function MemberTournamentsPage() {
                           </Button>
                         )}
                         {isFull && (
-                          <span className="text-xs text-red-500 font-medium">Ausgebucht</span>
+                          <span className="text-xs text-error-500 font-medium">Ausgebucht</span>
                         )}
                         {isRegistered && (
                           <span className="text-xs text-brand-light font-medium flex items-center gap-1">
@@ -239,18 +235,18 @@ export default function MemberTournamentsPage() {
         onOpenChange={() => setConfirmTournament(null)}
         title={
           <span className="flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-amber-500" />
+            <Trophy className="h-4 w-4 text-warning-500" />
             Für Turnier anmelden
           </span>
         }
         confirmLabel={registerLoading ? 'Anmelden…' : 'Jetzt anmelden'}
-        variant="brand"
+        variant="primary"
         loading={registerLoading}
         onConfirm={handleRegister}
       >
         {confirmTournament && (
           <div className="space-y-3 py-2">
-            <div className="rounded-xl bg-amber-50 dark:bg-amber-900/10 p-4 space-y-2">
+            <div className="rounded-xl bg-warning-50 dark:bg-warning-900/10 p-4 space-y-2">
               <p className="font-semibold text-sm">{confirmTournament.name}</p>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
@@ -271,7 +267,7 @@ export default function MemberTournamentsPage() {
             <p className="text-xs text-muted-foreground">
               Durch die Anmeldung bestätigst du deine Teilnahme an diesem Turnier.
             </p>
-            {registerError && <p className="text-xs text-red-500">{registerError}</p>}
+            {registerError && <p className="text-xs text-error-500">{registerError}</p>}
           </div>
         )}
       </ConfirmDialog>

@@ -50,9 +50,10 @@ async function seed() {
         const fullName = `Member ${i} (Club ${club.name.slice(0, 10)})`;
         try {
           // Check if user exists first
+          // `email` is not in Supabase PageParams but is accepted at runtime.
           const {
             data: { users },
-          } = await supabaseAdmin.auth.admin.listUsers({ email });
+          } = await supabaseAdmin.auth.admin.listUsers({ email } as never);
           let userId: string;
           if (users && users.length > 0) {
             userId = users[0].id;
@@ -87,9 +88,10 @@ async function seed() {
         const fullName = `Trainer ${i} (Club ${club.name.slice(0, 10)})`;
         try {
           // Check if user exists first
+          // `email` is not in Supabase PageParams but is accepted at runtime.
           const {
             data: { users },
-          } = await supabaseAdmin.auth.admin.listUsers({ email });
+          } = await supabaseAdmin.auth.admin.listUsers({ email } as never);
           let userId: string;
           if (users && users.length > 0) {
             userId = users[0].id;
@@ -129,7 +131,7 @@ async function seed() {
         // Check if user exists first
         const {
           data: { users },
-        } = await supabaseAdmin.auth.admin.listUsers({ email: adminEmail });
+        } = await supabaseAdmin.auth.admin.listUsers({ email: adminEmail } as never);
         let userId: string;
         if (users && users.length > 0) {
           userId = users[0].id;
@@ -165,7 +167,7 @@ async function seed() {
       // Check if user exists first
       const {
         data: { users },
-      } = await supabaseAdmin.auth.admin.listUsers({ email: superadminEmail });
+      } = await supabaseAdmin.auth.admin.listUsers({ email: superadminEmail } as never);
       let superadminId: string;
       if (users && users.length > 0) {
         superadminId = users[0].id;

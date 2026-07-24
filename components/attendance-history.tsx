@@ -90,36 +90,36 @@ export default function AttendanceHistory() {
             label: 'Gesamt',
             value: stats.total,
             icon: Calendar,
-            color: 'text-blue-600',
-            bg: 'bg-blue-50 dark:bg-blue-900/20',
+            color: 'text-info-600',
+            bg: 'bg-info-50 dark:bg-info-900/20',
           },
           {
             label: 'Anwesend',
             value: stats.attended,
             icon: CheckCircle,
-            color: 'text-green-600',
-            bg: 'bg-green-50 dark:bg-green-900/20',
+            color: 'text-success-600',
+            bg: 'bg-success-50 dark:bg-success-900/20',
           },
           {
             label: 'Verpasst',
             value: stats.missed,
             icon: XCircle,
-            color: 'text-red-600',
-            bg: 'bg-red-50 dark:bg-red-900/20',
+            color: 'text-error-600',
+            bg: 'bg-error-50 dark:bg-error-900/20',
           },
           {
             label: 'Quote',
             value: `${stats.rate}%`,
             icon: Clock,
-            color: 'text-amber-600',
-            bg: 'bg-amber-50 dark:bg-amber-900/20',
+            color: 'text-warning-600',
+            bg: 'bg-warning-50 dark:bg-warning-900/20',
           },
         ].map((s) => (
           <Card key={s.label} className="border-0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-muted-foreground">{s.label}</p>
-                <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${s.bg}`}>
+                <div className={`flex h-7 w-7 items-center justify-center rounded-xl ${s.bg}`}>
                   <s.icon className={`h-3.5 w-3.5 ${s.color}`} />
                 </div>
               </div>
@@ -154,7 +154,7 @@ export default function AttendanceHistory() {
         </div>
       ) : error ? (
         <Card>
-          <CardContent className="py-8 text-center text-red-600">{error}</CardContent>
+          <CardContent className="py-8 text-center text-error-600">{error}</CardContent>
         </Card>
       ) : records.length === 0 ? (
         <Card>

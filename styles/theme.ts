@@ -1,55 +1,25 @@
-// SWINGZ Design Tokens – Premium Tennis Club Management
-// Philosophy: Refined Elegance meets Athletic Performance
-// Colors: Deep Forest + Midnight Navy + Sunrise Orange
+// SWINGZ Design Tokens — reiner Tailwind-Config-Zulieferer.
+// EINZIGE Laufzeit-Token-Quelle ist app/globals.css (CSS-Variablen, Light/Dark).
+// Diese Datei liefert nur statische Skalen an tailwind.config.ts — sie wird
+// nirgendwo sonst importiert. Neue Farben hier NICHT ergänzen; erst prüfen,
+// ob ein semantisches Token (success/warning/error/info, brand-*) passt.
 
 export const colors = {
-  // Primary – Forest Green (SwingZ Brand Core)
-  primary: {
-    50: '#f0fdf4',
-    100: '#dcfce7',
-    200: '#bbf7d0',
-    300: '#86efac',
-    400: '#4ade80',
-    500: '#22c55e',
-    600: '#16a34a',
-    700: '#15803d',
-    800: '#166534',
-    900: '#14532d',
-    950: '#0a3d2e',
-    brand: '#1B4332',
-    velvet: '#0f2d22',
-  },
-  // Secondary – Midnight Navy (Depth & Trust)
-  secondary: {
-    50: '#f0f4f8',
-    100: '#d9e2ec',
-    200: '#bcccdc',
-    300: '#9fb3c8',
-    400: '#829ab1',
-    500: '#627d98',
-    600: '#486581',
-    700: '#3e5c76',
-    800: '#334e68',
-    900: '#1e3a5f',
-    950: '#0f1f33',
-    brand: '#1e3a5f',
-    obsidian: '#0a1420',
-  },
-  // Accent – Sunrise Orange (Energy & Action)
+  // Accent – Court Green (aus Club-Logo abgeleitet) — als brand-accent-Skala in Tailwind
   accent: {
-    50: '#fff7ed',
-    100: '#ffedd5',
-    200: '#fed7aa',
-    300: '#fdba74',
-    400: '#fb923c',
-    500: '#f97316',
-    600: '#ea580c',
-    700: '#c2410c',
-    800: '#9a3412',
-    900: '#7c2d12',
-    950: '#4a1a0b',
-    brand: '#FF6B35',
-    ember: '#e85a2a',
+    50: '#f5f9e8',
+    100: '#e7f2c9',
+    200: '#d3e696',
+    300: '#bcd662',
+    400: '#a6cb3d',
+    500: '#94c121',
+    600: '#749419',
+    700: '#5c7515',
+    800: '#465913',
+    900: '#3a4a12',
+    950: '#212b08',
+    brand: '#94C121',
+    ember: '#749419',
   },
   // Neutrals – Refined Warm Grays with Depth
   gray: {
@@ -67,21 +37,69 @@ export const colors = {
     900: '#151921',
     950: '#0c0f14',
   },
-  // Semantic
-  success: '#22c55e',
-  successLight: '#dcfce7',
-  warning: '#f59e0b',
-  warningLight: '#fef3c7',
-  error: '#ef4444',
-  errorLight: '#fee2e2',
-  info: '#3b82f6',
-  infoLight: '#dbeafe',
+  // Semantic — shade scales match Tailwind's green/red/amber/blue defaults
+  // so `success-500` etc. render identically to the raw classes they replace.
+  success: {
+    50: '#f0fdf4',
+    100: '#dcfce7',
+    200: '#bbf7d0',
+    300: '#86efac',
+    400: '#4ade80',
+    500: '#22c55e',
+    600: '#16a34a',
+    700: '#15803d',
+    800: '#166534',
+    900: '#14532d',
+    DEFAULT: '#22c55e',
+  },
+  warning: {
+    50: '#fffbeb',
+    100: '#fef3c7',
+    200: '#fde68a',
+    300: '#fcd34d',
+    400: '#fbbf24',
+    500: '#f59e0b',
+    600: '#d97706',
+    700: '#b45309',
+    800: '#92400e',
+    900: '#78350f',
+    DEFAULT: '#f59e0b',
+  },
+  error: {
+    50: '#fef2f2',
+    100: '#fee2e2',
+    200: '#fecaca',
+    300: '#fca5a5',
+    400: '#f87171',
+    500: '#ef4444',
+    600: '#dc2626',
+    700: '#b91c1c',
+    800: '#991b1b',
+    900: '#7f1d1d',
+    DEFAULT: '#ef4444',
+  },
+  info: {
+    50: '#eff6ff',
+    100: '#dbeafe',
+    200: '#bfdbfe',
+    300: '#93c5fd',
+    400: '#60a5fa',
+    500: '#3b82f6',
+    600: '#2563eb',
+    700: '#1d4ed8',
+    800: '#1e40af',
+    900: '#1e3a8a',
+    DEFAULT: '#3b82f6',
+  },
 };
 
 export const typography = {
   fontFamily: {
     sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
     display: ['"Clash Display"', '"DM Sans"', 'system-ui', 'sans-serif'],
+    // Marketing-only (Editorial Sports theme). Pally via Fontshare CDN — switch
+    // to PP Editorial New once Pangram license is procured (~next/font/local).
+    editorial: ['"Pally"', '"PP Editorial New"', 'Georgia', 'serif'],
     mono: ['"JetBrains Mono"', 'Consolas', 'monospace'],
   },
   fontSize: {
@@ -127,23 +145,22 @@ export const typography = {
   },
 };
 
-export const spacing = {
-  xs: '0.5rem',
-  sm: '0.75rem',
-  md: '1rem',
-  lg: '1.5rem',
-  xl: '2rem',
-  '2xl': '3rem',
-  '3xl': '4rem',
-  '4xl': '6rem',
-};
-
 export const radius = {
   none: '0',
+  /** Single Source of Truth for the dashboard design system (10 px).
+   *  Mirrored exactly to `app/globals.css` `--radius: 10px` (literal
+   *  pixel, was 0.625rem so the contract is root-font-independent and
+   *  self-documenting). Use this when building new components or when
+   *  the CSS variable isn't reachable (e.g. inline styles in email
+   *  templates, SVG geometry). */
+  base: '10px',
+  // Kanonische 3er-Skala: md (Inputs/Buttons), xl (Cards, = --radius SSOT), full.
+  // sm/lg/2xl/3xl bleiben definiert (dynamische Klassen), sind aber im Code migriert
+  // und werden vom Guardrail (scripts/check-design-tokens.sh) blockiert.
   sm: '0.375rem',
   md: '0.5rem',
   lg: '0.75rem',
-  xl: '1rem',
+  xl: '10px',
   '2xl': '1.5rem',
   '3xl': '2rem',
   '4xl': '3rem',
@@ -162,10 +179,10 @@ export const shadows = {
   '3xl': '0 48px 80px -16px rgb(0 0 0 / 0.25)',
   inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
   glow: {
-    primary: '0 0 60px -12px rgba(27, 67, 50, 0.4), 0 0 24px -8px rgba(27, 67, 50, 0.3)',
-    primaryStrong: '0 0 80px -16px rgba(27, 67, 50, 0.5), 0 0 40px -12px rgba(27, 67, 50, 0.4)',
-    accent: '0 0 60px -12px rgba(255, 107, 53, 0.4), 0 0 24px -8px rgba(255, 107, 53, 0.3)',
-    accentStrong: '0 0 80px -16px rgba(255, 107, 53, 0.5), 0 0 40px -12px rgba(255, 107, 53, 0.4)',
+    primary: '0 0 60px -12px hsl(206 100% 31% / 0.4), 0 0 24px -8px hsl(206 100% 31% / 0.3)',
+    primaryStrong: '0 0 80px -16px hsl(206 100% 31% / 0.5), 0 0 40px -12px hsl(206 100% 31% / 0.4)',
+    accent: '0 0 60px -12px hsl(77 71% 44% / 0.4), 0 0 24px -8px hsl(77 71% 44% / 0.3)',
+    accentStrong: '0 0 80px -16px hsl(77 71% 44% / 0.5), 0 0 40px -12px hsl(77 71% 44% / 0.4)',
     premium:
       '0 24px 64px -16px rgba(0, 0, 0, 0.15), 0 8px 32px -8px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
   },
@@ -176,69 +193,44 @@ export const shadows = {
       '0 24px 48px -12px rgb(0 0 0 / 0.12), 0 8px 24px -8px rgb(0 0 0 / 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
   },
   button: {
-    default: '0 2px 8px -2px rgba(27, 67, 50, 0.3), 0 1px 2px rgba(0, 0, 0, 0.05)',
-    hover: '0 8px 24px -4px rgba(27, 67, 50, 0.4), 0 2px 8px -2px rgba(27, 67, 50, 0.2)',
-    active: '0 1px 4px rgba(27, 67, 50, 0.3) inset',
+    default: '0 2px 8px -2px hsl(206 100% 31% / 0.3), 0 1px 2px rgba(0, 0, 0, 0.05)',
+    hover: '0 8px 24px -4px hsl(206 100% 31% / 0.4), 0 2px 8px -2px hsl(206 100% 31% / 0.2)',
+    active: '0 1px 4px hsl(206 100% 31% / 0.3) inset',
   },
 };
 
 export const gradients = {
-  primary: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 50%, #40916C 100%)',
-  primaryRadial: 'radial-gradient(ellipse 80% 50% at 50% 0%, #40916C 0%, #1B4332 100%)',
-  primaryMesh: `
-    radial-gradient(at 40% 20%, hsla(150, 48%, 25%, 0.8) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, hsla(150, 45%, 35%, 0.6) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, hsla(217, 33%, 20%, 0.5) 0px, transparent 50%),
-    radial-gradient(at 80% 50%, hsla(150, 48%, 30%, 0.4) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsla(217, 33%, 25%, 0.6) 0px, transparent 50%),
-    radial-gradient(at 80% 100%, hsla(150, 45%, 35%, 0.5) 0px, transparent 50%),
-    radial-gradient(at 0% 0%, hsla(150, 50%, 20%, 0.7) 0px, transparent 50%)
+  primary:
+    'linear-gradient(135deg, hsl(206 100% 31%) 0%, hsl(204 85% 45%) 50%, hsl(201 68% 59%) 100%)',
+  primaryRadial:
+    'radial-gradient(ellipse 80% 50% at 50% 0%, hsl(201 68% 59%) 0%, hsl(206 100% 31%) 100%)',
+  primaryMesh: `    radial-gradient(at 40% 20%, hsl(206 100% 25% / 0.8) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsl(201 68% 59% / 0.6) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsl(217 40% 22% / 0.5) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, hsl(206 90% 35% / 0.4) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsl(217 40% 27% / 0.6) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, hsl(201 68% 59% / 0.5) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, hsl(206 100% 22% / 0.7) 0px, transparent 50%)
   `,
-  accent: 'linear-gradient(135deg, #FF6B35 0%, #FF8C5A 50%, #FFAB76 100%)',
-  accentRadial: 'radial-gradient(circle at 70% 30%, #FFAB76 0%, #FF6B35 100%)',
-  hero: 'linear-gradient(160deg, #0A3D2E 0%, #1B4332 40%, #2D6A4F 100%)',
+  accent: 'linear-gradient(135deg, hsl(77 71% 44%) 0%, hsl(77 71% 52%) 50%, hsl(77 71% 58%) 100%)',
+  accentRadial: 'radial-gradient(circle at 70% 30%, hsl(77 71% 58%) 0%, hsl(77 71% 44%) 100%)',
+  hero: 'linear-gradient(160deg, hsl(206 100% 18%) 0%, hsl(206 100% 31%) 40%, hsl(204 85% 45%) 100%)',
   heroMesh: `
-    radial-gradient(ellipse 100% 100% at 20% 0%, rgba(64, 145, 108, 0.25) 0%, transparent 50%),
-    radial-gradient(ellipse 80% 80% at 80% 20%, rgba(255, 107, 53, 0.1) 0%, transparent 40%),
-    radial-gradient(ellipse 60% 60% at 40% 80%, rgba(30, 58, 95, 0.2) 0%, transparent 50%),
-    linear-gradient(160deg, #0A3D2E 0%, #1B4332 40%, #2D6A4F 100%)
+    radial-gradient(ellipse 100% 100% at 20% 0%, hsl(201 68% 59% / 0.25) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 80% at 80% 20%, hsl(77 71% 44% / 0.1) 0%, transparent 40%),
+    radial-gradient(ellipse 60% 60% at 40% 80%, hsl(217 40% 27% / 0.2) 0%, transparent 50%),
+    linear-gradient(160deg, hsl(206 100% 18%) 0%, hsl(206 100% 31%) 40%, hsl(204 85% 45%) 100%)
   `,
   glass: 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)',
   glassDark: 'linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.05) 100%)',
-  mesh: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 25%, #40916C 50%, #52B788 75%, #74C69D 100%)',
+  mesh: 'linear-gradient(135deg, hsl(206 100% 31%) 0%, hsl(204 85% 45%) 25%, hsl(201 68% 59%) 50%, hsl(201 65% 50%) 75%, hsl(201 60% 70%) 100%)',
   aurora: `
-    radial-gradient(ellipse 60% 40% at 10% 20%, rgba(64, 145, 108, 0.3) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(255, 107, 53, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse 80% 30% at 50% 90%, rgba(30, 58, 95, 0.2) 0%, transparent 40%)
+    radial-gradient(ellipse 60% 40% at 10% 20%, hsl(201 68% 59% / 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 50% at 90% 80%, hsl(77 71% 44% / 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 30% at 50% 90%, hsl(217 40% 27% / 0.2) 0%, transparent 40%)
   `,
   text: {
-    primary: 'linear-gradient(135deg, #1B4332 0%, #40916C 100%)',
-    accent: 'linear-gradient(135deg, #FF6B35 0%, #FFAB76 100%)',
+    primary: 'linear-gradient(135deg, hsl(206 100% 31%) 0%, hsl(201 68% 59%) 100%)',
+    accent: 'linear-gradient(135deg, hsl(77 71% 44%) 0%, hsl(77 71% 58%) 100%)',
   },
-};
-
-export const transitions = {
-  fast: '150ms cubic-bezier(0.4, 0, 0.2, 1)',
-  base: '250ms cubic-bezier(0.4, 0, 0.2, 1)',
-  slow: '350ms cubic-bezier(0.4, 0, 0.2, 1)',
-  spring: '500ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-};
-
-export const breakpoints = {
-  sm: '640px',
-  md: '768px',
-  lg: '1024px',
-  xl: '1280px',
-  '2xl': '1536px',
-};
-
-export const zIndex = {
-  dropdown: 1000,
-  sticky: 1020,
-  fixed: 1030,
-  modalBackdrop: 1040,
-  modal: 1050,
-  popover: 1060,
-  tooltip: 1070,
-  toast: 1080,
 };

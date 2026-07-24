@@ -4,6 +4,7 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { createLogger } from '@/lib/logger';
+import { detectConflictsForSeason } from '@/lib/season-planning/conflict-detector';
 
 const log = createLogger('api:seasons:[id]');
 
@@ -49,28 +50,31 @@ export async function GET(request: NextRequest, context: RouteContext) {
         { count: totalPrefs },
         { count: submittedPrefs },
         { count: plannedEntries },
-        { count: openConflicts },
+        openConflictsResult,
         { count: trainerCount },
         { data: groupsData },
       ] = await Promise.all([
-        supabase
-          .from('user_training_preferences')
-          .select('id', { count: 'exact', head: true })
-          .eq('season_id', seasonId),
+        // Erwartete Präferenzen = alle planungsrelevanten Mitglieder des Vereins
+        clubId
+          ? supabase
+              .from('user_club_memberships')
+              .select('id', { count: 'exact', head: true })
+              .eq('club_id', clubId)
+              .eq('role', 'member')
+              .eq('is_active', true)
+              .eq('include_in_planning', true)
+          : Promise.resolve({ count: 0 }),
         supabase
           .from('user_training_preferences')
           .select('id', { count: 'exact', head: true })
           .eq('season_id', seasonId)
+          .eq('user_role', 'member')
           .eq('is_submitted', true),
         supabase
           .from('season_plan_entries')
           .select('id', { count: 'exact', head: true })
           .eq('season_id', seasonId),
-        supabase
-          .from('planning_conflicts')
-          .select('id', { count: 'exact', head: true })
-          .eq('season_id', seasonId)
-          .eq('status', 'open'),
+        detectConflictsForSeason(seasonId, clubId ?? ''),
         clubId
           ? supabase
               .from('user_club_memberships')
@@ -95,7 +99,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           submitted_preferences: submittedPrefs ?? 0,
           total_preferences: totalPrefs ?? 0,
           planned_entries: plannedEntries ?? 0,
-          open_conflicts: openConflicts ?? 0,
+          open_conflicts: openConflictsResult.summary.total,
           trainers_count: trainerCount ?? 0,
           groups_covered: groupsCovered,
         },
@@ -147,6 +151,24 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         }
 
         const body = await request.json();
+
+        // Trainingspläne/Sessions/Buchungen werden aus season_type/Zeitraum
+        // abgeleitet — nach der Veröffentlichung dürfen sie nicht mehr geändert
+        // werden, sonst laufen sie aus dem Ruder der bereits generierten Daten.
+        const structuralFields = ['season_type', 'year', 'start_date', 'end_date'] as const;
+        if (
+          existing.planning_status !== 'draft' &&
+          structuralFields.some((field) => body[field] !== undefined)
+        ) {
+          return NextResponse.json(
+            {
+              error:
+                'Saison-Typ, Jahr und Zeitraum können nach der Veröffentlichung nicht mehr geändert werden.',
+            },
+            { status: 409 }
+          );
+        }
+
         const allowed = [
           'name',
           'season_type',

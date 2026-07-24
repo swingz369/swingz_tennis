@@ -197,11 +197,11 @@ export default function NewsAnnouncements({
   const getPriorityColor = (priority: NewsItem['priority']) => {
     switch (priority) {
       case 'urgent':
-        return 'bg-red-100 text-red-700 border-red-200';
+        return 'bg-error-100 text-error-700 border-error-200';
       case 'high':
-        return 'bg-orange-100 text-orange-700 border-orange-200';
+        return 'bg-brand-accent-100 text-brand-accent-700 border-brand-accent-200';
       case 'medium':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+        return 'bg-warning-100 text-warning-700 border-warning-200';
       case 'low':
         return 'bg-muted text-foreground border-border';
     }
@@ -271,8 +271,7 @@ export default function NewsAnnouncements({
       {/* ── Hero Header ── */}
       {!compact && (
         <ScrollReveal>
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-            <div className="absolute inset-0 bg-noise opacity-5" />
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
             <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
             <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
             <div className="relative">
@@ -321,7 +320,7 @@ export default function NewsAnnouncements({
                     </p>
                     <p className="text-xs text-muted-foreground">Nachrichten</p>
                   </div>
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <div className="p-3 rounded-xl bg-info-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                     <Bell className="h-5 w-5" />
                   </div>
                 </div>
@@ -340,7 +339,7 @@ export default function NewsAnnouncements({
                     </p>
                     <p className="text-xs text-muted-foreground">wichtige Nachrichten</p>
                   </div>
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                     <CheckCircle className="h-5 w-5" />
                   </div>
                 </div>
@@ -364,7 +363,7 @@ export default function NewsAnnouncements({
                     </p>
                     <p className="text-xs text-muted-foreground">Priorität hoch+</p>
                   </div>
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-red-500 to-rose-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <div className="p-3 rounded-xl bg-error-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                     <AlertTriangle className="h-5 w-5" />
                   </div>
                 </div>
@@ -388,7 +387,7 @@ export default function NewsAnnouncements({
                     </p>
                     <p className="text-xs text-muted-foreground">neue Beiträge</p>
                   </div>
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <div className="p-3 rounded-xl bg-success-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                     <TrendingUp className="h-5 w-5" />
                   </div>
                 </div>
@@ -486,7 +485,7 @@ export default function NewsAnnouncements({
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start gap-3 flex-1">
                       <div
-                        className={`p-2 rounded-lg ${
+                        className={`p-2 rounded-xl ${
                           item.isPinned ? 'bg-brand-primary/20' : 'bg-muted'
                         }`}
                       >
@@ -524,7 +523,7 @@ export default function NewsAnnouncements({
                         size="icon"
                         onClick={() => handleDelete(item.id)}
                         disabled={deletingId === item.id}
-                        className="text-muted-foreground hover:text-red-600 shrink-0"
+                        className="text-muted-foreground hover:text-error-600 shrink-0"
                         aria-label={`Nachricht "${item.title}" löschen`}
                       >
                         {deletingId === item.id ? (

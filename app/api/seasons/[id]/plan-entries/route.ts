@@ -1,11 +1,10 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { db } from '@/src/infrastructure/persistence/db';
 import {
-  seasons,
   seasonPlanEntries,
   trainers,
   courts,
@@ -14,6 +13,7 @@ import {
 import { and, eq, sql, inArray } from 'drizzle-orm';
 import type { CreatePlanEntryRequest } from '@/lib/types/season-planning';
 import { createLogger } from '@/lib/logger';
+import { authorizeSeasonAccess } from '@/lib/season-auth';
 
 const log = createLogger('api:seasons:[id]:plan-entries');
 
@@ -44,23 +44,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const { id: seasonId } = await context.params;
       const { searchParams } = new URL(request.url);
 
-      // Verify season exists
-      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-
-      if (!season) {
-        return NextResponse.json({ error: 'Season not found' }, { status: 404 });
-      }
-
-      // Check permissions
-      const isAdmin = await verifyRole(auth, 'admin');
-      const isSuperadmin = await verifyRole(auth, 'superadmin');
-
-      if (!isAdmin && !isSuperadmin) {
-        const hasClubAccess = auth.memberships.some((m) => m.club_id === season.club_id);
-        if (!hasClubAccess) {
-          return forbiddenResponse('You do not have access to this season');
-        }
-      }
+      // Centralized authorization — see lib/season-auth.ts. Reads club_id
+      // from the resolved season to enforce membership + role checks once.
+      const access = await authorizeSeasonAccess(auth, seasonId, {
+        allowedRoles: ['admin', 'trainer', 'member'],
+      });
+      if (!access.ok) return access.response;
 
       // Build query conditions
       const conditions = [eq(seasonPlanEntries.season_id, seasonId)];
@@ -142,28 +131,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
       try {
         const { id: seasonId } = await context.params;
 
-        // Only admins can create plan entries
-        const isAdmin = await verifyRole(auth, 'admin');
-        const isSuperadmin = await verifyRole(auth, 'superadmin');
-
-        if (!isAdmin && !isSuperadmin) {
-          return forbiddenResponse('Only admins can create plan entries');
-        }
-
-        // Verify season exists
-        const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-
-        if (!season) {
-          return NextResponse.json({ error: 'Season not found' }, { status: 404 });
-        }
-
-        // Verify access
-        if (!isSuperadmin) {
-          const hasClubAccess = auth.memberships.some(
-            (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
-          );
-          if (!hasClubAccess) return forbiddenResponse('You do not have access to this season');
-        }
+        // POST is admin-only (state-changing endpoint). Note we include
+        // 'superadmin' in `allowedRoles` so a club-scoped superadmin
+        // (e.g. one who holds superadmin role in this club but not
+        // globally) is preserved at parity with the original semantics.
+        // The helper's platform-staff fast path separately handles
+        // global superadmin/owner (no membership lookup needed).
+        const access = await authorizeSeasonAccess(auth, seasonId, {
+          allowedRoles: ['admin', 'superadmin'],
+        });
+        if (!access.ok) return access.response;
+        const { season } = access;
 
         const body: CreatePlanEntryRequest = await request.json();
 
@@ -188,6 +166,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
         if (body.day_of_week < 0 || body.day_of_week > 6) {
           return NextResponse.json(
             { error: 'day_of_week must be between 0 (Monday) and 6 (Sunday)' },
+            { status: 400 }
+          );
+        }
+
+        // Vereinsrealität: regulärer Trainingsbetrieb findet nicht sonntags statt
+        // (Sonntag ist spielfrei/Turniertag). Andere entry_types (z.B. Turniere)
+        // dürfen weiterhin auf Sonntag fallen.
+        const resolvedEntryType = body.entry_type || 'training';
+        if (body.day_of_week === 6 && resolvedEntryType === 'training') {
+          return NextResponse.json(
+            { error: 'Trainingsstunden können nicht auf einen Sonntag gelegt werden (nur Mo-Sa).' },
             { status: 400 }
           );
         }

@@ -23,7 +23,7 @@ export default function BookingsError({ error, reset }: ErrorProps) {
         Die Buchungen konnten nicht geladen werden. Bitte versuche es erneut.
       </p>
       {process.env.NODE_ENV === 'development' && (
-        <pre className="text-xs text-red-500 bg-red-50 p-2 rounded">{error.message}</pre>
+        <pre className="text-xs text-error-500 bg-error-50 p-2 rounded">{error.message}</pre>
       )}
       <Button onClick={reset}>Erneut versuchen</Button>
     </div>

@@ -6,25 +6,16 @@ import {
   Search,
   Home,
   Calendar,
-  MessageSquare,
-  CreditCard,
   Users,
-  User,
-  Settings,
   UserPlus,
   PenSquare,
   FileText,
-  BarChart3,
   GraduationCap,
-  Trophy,
-  ClipboardCheck,
-  Bell,
-  Newspaper,
-  MapPin,
   Sun,
   Moon,
   Monitor,
 } from 'lucide-react';
+import { paletteNavItems, paletteAdminNavItems } from '@/lib/navigation';
 import {
   CommandDialog,
   CommandInput,
@@ -36,7 +27,9 @@ import {
 } from '@/components/ui/command';
 import { useTheme } from 'next-themes';
 import { useUserRole } from '@/hooks/use-user-role';
+import { useClubFeatures } from '@/hooks/use-club-features';
 import { apiFetch } from '@/lib/api-fetch';
+import { useCommandPalette } from '@/components/command-palette-context';
 
 interface SearchResult {
   id: string;
@@ -46,14 +39,27 @@ interface SearchResult {
   url: string;
 }
 
-export function CommandPalette() {
-  const [open, setOpen] = useState(false);
+interface CommandPaletteProps {
+  roles?: string[];
+  selectedClubId?: string | null;
+  clubs?: { id: string }[];
+}
+
+export function CommandPalette({ roles, selectedClubId, clubs }: CommandPaletteProps = {}) {
+  const { open, setOpen } = useCommandPalette();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const { isAdmin, isSuperAdmin } = useUserRole();
+  const { isAdmin, isSuperAdmin } = useUserRole(roles);
+  const activeClubId = selectedClubId ?? clubs?.[0]?.id;
+  const { features } = useClubFeatures(activeClubId);
+  const hiddenSections = new Set(
+    Object.entries(features)
+      .filter(([, enabled]) => !enabled)
+      .map(([key]) => key)
+  );
 
   // Keyboard shortcut Cmd/Ctrl + K
   useEffect(() => {
@@ -65,7 +71,7 @@ export function CommandPalette() {
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [setOpen]);
 
   // Search API when query changes
   useEffect(() => {
@@ -98,45 +104,37 @@ export function CommandPalette() {
       setQuery('');
       router.push(path);
     },
-    [router]
+    [router, setOpen]
   );
 
   const isMac =
     typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   const modKey = isMac ? '⌘' : 'Ctrl';
 
-  // Navigation items based on role
+  // Einträge zentral in lib/navigation.ts — hier nur um Shortcuts dekoriert
   const navItems: Array<{
     label: string;
     href: string;
     icon: React.ElementType;
     shortcut?: string;
     roles?: string[];
-  }> = [
-    { label: 'Dashboard', href: '/dashboard', icon: Home, shortcut: `${modKey}+D` },
-    { label: 'Buchungen', href: '/bookings', icon: Calendar, shortcut: `${modKey}+B` },
-    { label: 'Nachrichten', href: '/messages', icon: MessageSquare },
-    { label: 'Rechnungen', href: '/billing', icon: CreditCard },
-    { label: 'Trainingsplan', href: '/training-schedule', icon: ClipboardCheck },
-    { label: 'Benachrichtigungen', href: '/notifications', icon: Bell },
-    { label: 'News', href: '/news', icon: Newspaper },
-    { label: 'Profil', href: '/profile', icon: User },
-  ];
+  }> = paletteNavItems().map((item) => ({
+    label: item.name,
+    href: item.href,
+    icon: item.icon ?? Search,
+    ...(item.href === '/dashboard' ? { shortcut: `${modKey}+D` } : {}),
+    ...(item.href === '/bookings' ? { shortcut: `${modKey}+B` } : {}),
+  }));
 
   const adminNavItems: Array<{
     label: string;
     href: string;
     icon: React.ElementType;
-  }> = [
-    { label: 'Admin Dashboard', href: '/admin', icon: Home },
-    { label: 'Mitglieder', href: '/admin/members', icon: Users },
-    { label: 'Trainer', href: '/admin/trainers', icon: GraduationCap },
-    { label: 'Plätze', href: '/admin/courts/manage', icon: MapPin },
-    { label: 'Abrechnung', href: '/admin/billing', icon: FileText },
-    { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-    { label: 'Einstellungen', href: '/admin/settings', icon: Settings },
-    { label: 'Turniere', href: '/admin/tournaments', icon: Trophy },
-  ];
+  }> = paletteAdminNavItems(hiddenSections).map((item) => ({
+    label: item.name,
+    href: item.href,
+    icon: item.icon ?? Search,
+  }));
 
   const quickActions: Array<{
     label: string;
@@ -224,7 +222,7 @@ export function CommandPalette() {
                       <span className="text-xs text-muted-foreground ml-2">{result.subtitle}</span>
                     )}
                   </div>
-                  <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                  <span className="text-2xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                     {result.type === 'member'
                       ? 'Mitglied'
                       : result.type === 'booking'

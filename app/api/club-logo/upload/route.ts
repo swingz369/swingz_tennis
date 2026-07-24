@@ -11,6 +11,7 @@ const log = createLogger('api:club-logo:upload');
 const STORAGE_BUCKET = 'swingz-files';
 const UPLOAD_PREFIX = 'club-logos';
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
+const MAX_BG_FILE_SIZE = 5 * 1024 * 1024; // 5 MB — dashboard cover photos are larger than logos
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/svg+xml'];
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.avif', '.svg'];
 const EXT_TO_MIME: Record<string, string> = {
@@ -79,9 +80,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
+    const maxSize = variant === 'dashboard-bg' ? MAX_BG_FILE_SIZE : MAX_FILE_SIZE;
+    if (file.size > maxSize) {
       return NextResponse.json(
-        { error: `Datei zu groß. Maximal ${MAX_FILE_SIZE / 1024 / 1024} MB erlaubt.` },
+        { error: `Datei zu groß. Maximal ${maxSize / 1024 / 1024} MB erlaubt.` },
         { status: 400 }
       );
     }
@@ -101,7 +103,9 @@ export async function POST(request: NextRequest) {
           ? 'logo_dark_url'
           : variant === 'favicon'
             ? 'favicon_url'
-            : 'logo_light_url';
+            : variant === 'dashboard-bg'
+              ? 'dashboard_bg_url'
+              : 'logo_light_url';
 
       const { data: existingClub } = await supabase
         .from('clubs')
@@ -141,6 +145,12 @@ export async function POST(request: NextRequest) {
 
       if (updateError) {
         log.error('Club logo URL update error:', updateError);
+        return NextResponse.json(
+          {
+            error: 'Logo wurde hochgeladen, aber Speichern fehlgeschlagen. Bitte erneut versuchen.',
+          },
+          { status: 500 }
+        );
       }
 
       return NextResponse.json({
@@ -180,10 +190,10 @@ export async function DELETE(request: NextRequest) {
       variant = 'light';
     }
     // Validate variant to prevent arbitrary column access
-    const validVariants = ['light', 'dark', 'favicon'] as const;
+    const validVariants = ['light', 'dark', 'favicon', 'dashboard-bg'] as const;
     if (!validVariants.includes(variant as (typeof validVariants)[number])) {
       return NextResponse.json(
-        { error: 'Ungültige Variante. Erlaubt: light, dark, favicon' },
+        { error: 'Ungültige Variante. Erlaubt: light, dark, favicon, dashboard-bg' },
         { status: 400 }
       );
     }
@@ -196,7 +206,9 @@ export async function DELETE(request: NextRequest) {
           ? 'logo_dark_url'
           : variant === 'favicon'
             ? 'favicon_url'
-            : 'logo_light_url';
+            : variant === 'dashboard-bg'
+              ? 'dashboard_bg_url'
+              : 'logo_light_url';
 
       const { data: existingClub } = await supabase
         .from('clubs')

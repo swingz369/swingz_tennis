@@ -10,22 +10,18 @@ const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000';
 
 test.describe('Public Registration Page', () => {
   test('registration page loads without auth', async ({ page }) => {
-    await page.goto(`${BASE_URL}/register`, { waitUntil: 'networkidle', timeout: 15000 });
+    await page.goto(`${BASE_URL}/register`, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('body')).toBeVisible();
-    // Should show registration card with form fields
-    await expect(page.getByText('Mitglied werden')).toBeVisible({ timeout: 8000 });
+    // /register ist heute ein Zugangs-Anfrage-Formular (kein Self-Signup)
+    await expect(page.getByText('Zugang anfragen')).toBeVisible({ timeout: 8000 });
   });
 
   test('registration form has required fields', async ({ page }) => {
-    await page.goto(`${BASE_URL}/register`, { waitUntil: 'networkidle', timeout: 15000 });
-    // Check for name and email fields
-    await expect(
-      page.locator('input[name="firstName"], input[id*="firstName"], input[id*="vorname"]').first()
-    ).toBeVisible({ timeout: 5000 });
-    await expect(
-      page.locator('input[name="lastName"], input[id*="lastName"], input[id*="nachname"]').first()
-    ).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('input[type="email"], input[name="email"]').first()).toBeVisible({
+    await page.goto(`${BASE_URL}/register`, { waitUntil: 'domcontentloaded' });
+    // Zugangs-Anfrage: Name, Vereinsname, E-Mail
+    await expect(page.locator('input#name')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('input#clubName')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('input[type="email"], input#email').first()).toBeVisible({
       timeout: 5000,
     });
   });
@@ -37,7 +33,7 @@ test.describe('Admin Approvals Page', () => {
   });
 
   test('approvals page loads for admin', async ({ page }) => {
-    await page.goto('/admin/approvals', { waitUntil: 'networkidle', timeout: 20000 });
+    await page.goto('/admin/approvals', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('body')).toBeVisible();
     // Should show approvals list or empty state
     await expect(page.locator('body')).toContainText(/genehmigung|anfrage|registrierung|keine/i, {
@@ -46,8 +42,8 @@ test.describe('Admin Approvals Page', () => {
   });
 
   test('approvals accessible from sidebar', async ({ page }) => {
-    await page.goto('/admin', { waitUntil: 'networkidle', timeout: 20000 });
-    const sidebar = page.locator('aside[aria-label="Main navigation"]');
+    await page.goto('/admin', { waitUntil: 'domcontentloaded' });
+    const sidebar = page.locator('aside[aria-label="Seitennavigation"]');
     await expect(sidebar).toBeVisible({ timeout: 10000 });
 
     // Expand "Mitglieder" section
@@ -69,7 +65,7 @@ test.describe('Admin Reports Page', () => {
   });
 
   test('reports page loads for admin', async ({ page }) => {
-    await page.goto('/admin/reports', { waitUntil: 'networkidle', timeout: 20000 });
+    await page.goto('/admin/reports', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('body')).toBeVisible();
     await expect(page.locator('body')).toContainText(/bericht|report|export|statistik/i, {
       timeout: 8000,
@@ -77,8 +73,8 @@ test.describe('Admin Reports Page', () => {
   });
 
   test('reports accessible from sidebar', async ({ page }) => {
-    await page.goto('/admin', { waitUntil: 'networkidle', timeout: 20000 });
-    const sidebar = page.locator('aside[aria-label="Main navigation"]');
+    await page.goto('/admin', { waitUntil: 'domcontentloaded' });
+    const sidebar = page.locator('aside[aria-label="Seitennavigation"]');
     await expect(sidebar).toBeVisible({ timeout: 10000 });
 
     // Expand "Finanzen" section
@@ -100,7 +96,7 @@ test.describe('Shop Page', () => {
   });
 
   test('shop page loads', async ({ page }) => {
-    await page.goto('/shop', { waitUntil: 'networkidle', timeout: 20000 });
+    await page.goto('/shop', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('body')).toBeVisible();
     // Shop might show products or empty state
     await expect(page.locator('body')).toContainText(/shop|produkt|product|artikel|keine/i, {
@@ -109,8 +105,8 @@ test.describe('Shop Page', () => {
   });
 
   test('shop accessible from sidebar settings', async ({ page }) => {
-    await page.goto('/admin', { waitUntil: 'networkidle', timeout: 20000 });
-    const sidebar = page.locator('aside[aria-label="Main navigation"]');
+    await page.goto('/admin', { waitUntil: 'domcontentloaded' });
+    const sidebar = page.locator('aside[aria-label="Seitennavigation"]');
     await expect(sidebar).toBeVisible({ timeout: 10000 });
 
     // Expand "Einstellungen" section
@@ -132,7 +128,7 @@ test.describe('Gamification Page', () => {
   });
 
   test('gamification page loads', async ({ page }) => {
-    await page.goto('/gamification', { waitUntil: 'networkidle', timeout: 20000 });
+    await page.goto('/gamification', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('body')).toBeVisible();
     // Gamification might show dashboard or loading state
     await expect(page.locator('body')).toContainText(
@@ -143,12 +139,12 @@ test.describe('Gamification Page', () => {
 
   test('gamification accessible from member sidebar', async ({ page }) => {
     await loginAs(page, process.env.TEST_MEMBER_EMAIL!, process.env.TEST_MEMBER_PASSWORD!);
-    await page.goto('/member', { waitUntil: 'networkidle', timeout: 20000 });
+    await page.goto('/member', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('body')).toBeVisible();
-    // Members use bottom nav, click Gamification tab
-    const bottomNav = page.locator('nav[aria-label="Navigation"]');
-    await expect(bottomNav).toBeVisible({ timeout: 10000 });
-    const gamificationLink = bottomNav.getByRole('link', { name: /Gamification/i });
+    // Sidebar-Sektion "Spielen" (standardmäßig offen) → "Erfolge & Ranglisten"
+    const sidebar = page.locator('aside[aria-label="Seitennavigation"]');
+    await expect(sidebar).toBeVisible({ timeout: 10000 });
+    const gamificationLink = sidebar.getByRole('link', { name: /Erfolge/i });
     await expect(gamificationLink).toBeVisible({ timeout: 5000 });
     await gamificationLink.click();
     await expect(page).toHaveURL(/\/gamification/, { timeout: 8000 });
@@ -161,7 +157,7 @@ test.describe('Attendance History Page', () => {
   });
 
   test('attendance history loads for member', async ({ page }) => {
-    await page.goto('/attendance-history', { waitUntil: 'networkidle', timeout: 20000 });
+    await page.goto('/attendance-history', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('body')).toBeVisible();
     await expect(page.locator('body')).toContainText(/anwesenheit|attendance|teilnahme/i, {
       timeout: 8000,
@@ -172,7 +168,7 @@ test.describe('Attendance History Page', () => {
 test.describe('Trainer Availability Page', () => {
   test('trainer availability page loads', async ({ page }) => {
     await loginAs(page, process.env.TEST_TRAINER_EMAIL!, process.env.TEST_TRAINER_PASSWORD!);
-    await page.goto('/trainer/availability', { waitUntil: 'networkidle', timeout: 20000 });
+    await page.goto('/trainer/availability', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('body')).toBeVisible();
     await expect(page.locator('body')).toContainText(/verfügbarkeit|availability|kalender|zeit/i, {
       timeout: 8000,
@@ -181,8 +177,9 @@ test.describe('Trainer Availability Page', () => {
 
   test('trainer availability accessible from bottom nav', async ({ page }) => {
     await loginAs(page, process.env.TEST_TRAINER_EMAIL!, process.env.TEST_TRAINER_PASSWORD!);
-    await page.goto('/trainer', { waitUntil: 'networkidle', timeout: 20000 });
-    // Trainers use bottom nav (no sidebar) — click "Verfügbarkeit" tab
+    // Bottom-Nav ist md:hidden — nur im Mobile-Viewport sichtbar
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/trainer', { waitUntil: 'domcontentloaded' });
     const bottomNav = page.locator('nav[aria-label="Navigation"]');
     await expect(bottomNav).toBeVisible({ timeout: 10000 });
     const availabilityLink = bottomNav.getByRole('link', { name: /Verfügbarkeit/i });
@@ -195,14 +192,14 @@ test.describe('Trainer Availability Page', () => {
 test.describe('Role-Based Access Control for New Pages', () => {
   test('non-admin cannot access admin/approvals', async ({ page }) => {
     await loginAs(page, process.env.TEST_MEMBER_EMAIL!, process.env.TEST_MEMBER_PASSWORD!);
-    await page.goto('/admin/approvals', { waitUntil: 'networkidle', timeout: 15000 });
+    await page.goto('/admin/approvals', { waitUntil: 'domcontentloaded' });
     await page.waitForURL((url) => !url.pathname.includes('/admin/approvals'), { timeout: 15000 });
     expect(page.url()).not.toContain('/admin/approvals');
   });
 
   test('non-admin cannot access admin/reports', async ({ page }) => {
     await loginAs(page, process.env.TEST_MEMBER_EMAIL!, process.env.TEST_MEMBER_PASSWORD!);
-    await page.goto('/admin/reports', { waitUntil: 'networkidle', timeout: 15000 });
+    await page.goto('/admin/reports', { waitUntil: 'domcontentloaded' });
     await page.waitForURL((url) => !url.pathname.includes('/admin/reports'), { timeout: 15000 });
     expect(page.url()).not.toContain('/admin/reports');
   });

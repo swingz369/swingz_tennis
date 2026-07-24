@@ -120,17 +120,17 @@ export function CourtRowHeader({
 }) {
   return (
     <div className="p-3 flex items-center gap-2.5 border-r border-border/40 bg-muted/20">
-      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
+      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary/10 text-primary">
         <MapPin className="h-4 w-4" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-foreground truncate">{court.name}</div>
         <div className="flex items-center gap-1.5 mt-0.5">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-muted text-[10px] font-medium text-muted-foreground border border-border/50">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-muted text-2xs font-medium text-muted-foreground border border-border/50">
             {getSurfaceLabel(court.surface)}
           </span>
           {court.hasIndoor && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-50 text-[10px] font-medium text-blue-600 border border-blue-100">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-info-50 text-2xs font-medium text-info-600 border border-info-100">
               Indoor
             </span>
           )}

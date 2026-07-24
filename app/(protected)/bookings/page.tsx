@@ -50,6 +50,7 @@ import {
 } from '@/hooks/use-sessions';
 import FeedbackModal from '@/components/feedback/feedback-modal';
 import SessionWaitlistButton from '@/components/session-waitlist-button';
+import { MyBookings } from '@/components/bookings/my-bookings';
 import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 import { Card, CardContent } from '@/components/ui/card';
 import UnifiedCourtCalendar from '@/components/unified-court-calendar';
@@ -85,7 +86,7 @@ function BookingsContent() {
   // Update tab when URL param changes
   useEffect(() => {
     const tab = searchParams?.get('tab');
-    if (tab && (tab === 'bookings' || tab === 'courts')) {
+    if (tab && (tab === 'bookings' || tab === 'courts' || tab === 'my')) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -213,7 +214,7 @@ function BookingsContent() {
   if (clubError) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-red-600">Kein Vereinszugang gefunden</div>
+        <div className="text-center py-12 text-error-600">Kein Vereinszugang gefunden</div>
       </div>
     );
   }
@@ -221,7 +222,7 @@ function BookingsContent() {
   if (sessionsError) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-red-600">Fehler beim Laden der Sessions</div>
+        <div className="text-center py-12 text-error-600">Fehler beim Laden der Sessions</div>
       </div>
     );
   }
@@ -238,15 +239,14 @@ function BookingsContent() {
     <div className="space-y-6">
       {/* ── Hero Header ── */}
       <ScrollReveal>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-          <div className="absolute inset-0 bg-noise opacity-5" />
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
           <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
           <div className="relative">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-white/70 mb-1">Buchungen</p>
-                <h1 className="text-2xl md:text-3xl font-bold">Kalender & Reservierungen</h1>
+                <h1 className="text-2xl font-bold tracking-tight">Kalender & Reservierungen</h1>
                 <p className="text-white/70 mt-2">
                   Platzverfügbarkeit, Training und Buchungen verwalten
                 </p>
@@ -283,7 +283,7 @@ function BookingsContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">diesen Monat</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-xl bg-info-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <CalendarIcon className="h-5 w-5" />
                 </div>
               </div>
@@ -302,7 +302,7 @@ function BookingsContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">reserviert</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <CalendarCheck className="h-5 w-5" />
                 </div>
               </div>
@@ -321,7 +321,7 @@ function BookingsContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">aktive Buchungen</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-xl bg-success-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <CheckCircle2 className="h-5 w-5" />
                 </div>
               </div>
@@ -340,7 +340,7 @@ function BookingsContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">verfügbare Plätze</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-accent to-orange-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-brand-accent to-brand-accent-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <Timer className="h-5 w-5" />
                 </div>
               </div>
@@ -352,14 +352,18 @@ function BookingsContent() {
       {/* ── Tabs ── */}
       <ScrollReveal delay={300}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-xl grid-cols-3">
             <TabsTrigger value="courts" className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
               <span>Platz-Kalender</span>
             </TabsTrigger>
             <TabsTrigger value="bookings" className="flex items-center gap-2">
               <CalendarIcon className="h-4 w-4" />
-              <span>Buchungen</span>
+              <span>Trainerstunden</span>
+            </TabsTrigger>
+            <TabsTrigger value="my" className="flex items-center gap-2">
+              <CalendarCheck className="h-4 w-4" />
+              <span>Meine Buchungen</span>
             </TabsTrigger>
           </TabsList>
 
@@ -390,7 +394,7 @@ function BookingsContent() {
                 <div className="text-center py-12 text-muted-foreground">Laden...</div>
               ) : (
                 <div className="overflow-x-auto -mx-4 px-4">
-                  <div className="grid grid-cols-7 gap-px bg-muted dark:bg-muted rounded-lg overflow-hidden min-w-[600px]">
+                  <div className="grid grid-cols-7 gap-px bg-muted dark:bg-muted rounded-xl overflow-hidden min-w-[600px]">
                     {/* Day headers */}
                     {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
                       <div
@@ -420,10 +424,10 @@ function BookingsContent() {
                                 key={session.id}
                                 className={`p-1 rounded text-xs transition-colors ${
                                   session.bookedByUser
-                                    ? 'bg-red-50 text-red-800 border border-red-200'
+                                    ? 'bg-error-50 text-error-800 border border-error-200'
                                     : (session.currentBookings ?? 0) >= session.maxParticipants
-                                      ? 'bg-amber-50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300'
-                                      : 'bg-blue-50 text-blue-800 hover:bg-blue-100 cursor-pointer'
+                                      ? 'bg-warning-50 text-warning-800 dark:bg-warning-900/20 dark:text-warning-300'
+                                      : 'bg-info-50 text-info-800 hover:bg-info-100 cursor-pointer'
                                 }`}
                                 role="button"
                                 tabIndex={
@@ -458,7 +462,7 @@ function BookingsContent() {
                                           handleCancelBooking(session.id, session.bookingId);
                                         }
                                       }}
-                                      className="ml-1 p-0.5 rounded hover:bg-red-100 text-red-600 transition-colors"
+                                      className="ml-1 p-0.5 rounded hover:bg-error-100 text-error-600 transition-colors"
                                       title="Buchung stornieren"
                                     >
                                       <svg
@@ -477,7 +481,7 @@ function BookingsContent() {
                                     </button>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-1 text-[11px]">
+                                <div className="flex items-center gap-1 text-2xs">
                                   <Clock className="h-3 w-3" />
                                   <span className="truncate">
                                     {session.trainerName || session.trainerId}
@@ -487,14 +491,14 @@ function BookingsContent() {
                                   <div className="flex flex-col gap-1 mt-0.5">
                                     <div className="flex items-center gap-1">
                                       <span
-                                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${
+                                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-2xs font-medium ${
                                           session.bookingStatus === 'confirmed'
-                                            ? 'bg-green-100 text-green-700'
+                                            ? 'bg-success-100 text-success-700'
                                             : session.bookingStatus === 'cancelled'
-                                              ? 'bg-red-100 text-red-700'
+                                              ? 'bg-error-100 text-error-700'
                                               : session.bookingStatus === 'no_show'
                                                 ? 'bg-muted text-foreground'
-                                                : 'bg-yellow-100 text-yellow-700'
+                                                : 'bg-warning-100 text-warning-700'
                                         }`}
                                       >
                                         {getBookingStatusLabel(session.bookingStatus)}
@@ -512,7 +516,7 @@ function BookingsContent() {
                                             )
                                           }
                                         >
-                                          <SelectTrigger className="h-6 text-[11px] px-1 py-0">
+                                          <SelectTrigger className="h-6 text-2xs px-1 py-0">
                                             <SelectValue />
                                           </SelectTrigger>
                                           <SelectContent>
@@ -540,7 +544,7 @@ function BookingsContent() {
                                           e.stopPropagation();
                                           openFeedbackModal(session, day);
                                         }}
-                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-2xs bg-info-50 text-info-700 hover:bg-info-100 transition-colors"
                                         title="Feedback geben"
                                       >
                                         <MessageSquare className="h-3 w-3" />
@@ -576,6 +580,10 @@ function BookingsContent() {
           {/* Courts Tab */}
           <TabsContent value="courts" className="mt-6">
             <UnifiedCourtCalendar />
+          </TabsContent>
+
+          <TabsContent value="my" className="mt-6">
+            <MyBookings />
           </TabsContent>
         </Tabs>
       </ScrollReveal>

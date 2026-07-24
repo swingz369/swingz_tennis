@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyTrainerInClub, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
 
@@ -24,6 +24,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const hoursLog = await hoursLogService.getHoursLogById(id);
 
       if (!hoursLog) {
+        return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
+      }
+
+      const isAdmin = await verifyRole(auth, 'admin');
+      if (isAdmin && !(await verifyTrainerInClub(auth, hoursLog.trainerId))) {
         return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
       }
 
@@ -57,6 +62,16 @@ export async function PATCH(
       const isAdmin = await verifyRole(auth, 'admin');
       if (body.status && !isAdmin) {
         return forbiddenResponse('Nur Admins können den Status ändern');
+      }
+
+      if (isAdmin) {
+        const existing = await hoursLogService.getHoursLogById(id);
+        if (!existing) {
+          return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
+        }
+        if (!(await verifyTrainerInClub(auth, existing.trainerId))) {
+          return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
+        }
       }
 
       const { startTime, endTime, type, status, notes } = body;
@@ -101,6 +116,14 @@ export async function DELETE(
 
     try {
       const { id } = await params;
+      const existing = await hoursLogService.getHoursLogById(id);
+      if (!existing) {
+        return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
+      }
+      if (!(await verifyTrainerInClub(auth, existing.trainerId))) {
+        return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
+      }
+
       const success = await hoursLogService.deleteHoursLog(id);
 
       if (!success) {

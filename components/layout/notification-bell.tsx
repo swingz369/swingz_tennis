@@ -175,7 +175,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
         >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white animate-in fade-in-0 zoom-in-95">
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-error-500 text-2xs font-bold text-white animate-in fade-in-0 zoom-in-95">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
@@ -216,7 +216,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                   <Link href={n.link || '/notifications'}>
                     <div
                       className={cn(
-                        'flex h-7 w-7 items-center justify-center rounded-lg shrink-0 mt-0.5',
+                        'flex h-7 w-7 items-center justify-center rounded-xl shrink-0 mt-0.5',
                         !n.is_read
                           ? 'bg-brand-light/10 text-brand-light'
                           : 'bg-muted text-muted-foreground'
@@ -236,7 +236,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                       {n.message && (
                         <p className="text-xs text-muted-foreground truncate mt-0.5">{n.message}</p>
                       )}
-                      <p className="text-[11px] text-muted-foreground/60 mt-0.5">
+                      <p className="text-2xs text-muted-foreground/60 mt-0.5">
                         {timeAgo(n.created_at)}
                       </p>
                     </div>

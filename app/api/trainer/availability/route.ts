@@ -69,22 +69,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find trainer record for this user
+    // Find trainer record for this user (trainers.id ≠ users.id — join via user_id)
     const { data: trainerRecord } = await supabase
       .from('trainers')
       .select('id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .maybeSingle();
 
     if (!trainerRecord) {
       return NextResponse.json({ error: 'No trainer profile found' }, { status: 404 });
     }
 
-    // Check for overlap
+    // Check for overlap using the correct trainer record id
     const { data: overlaps } = await supabase
       .from('trainer_availabilities')
       .select('id')
-      .eq('trainer_id', user.id)
+      .eq('trainer_id', trainerRecord.id)
       .eq('date', date)
       .or(`and(start_time.lt.${end_time},end_time.gt.${start_time})`);
 
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     const { data: slot, error } = await supabase
       .from('trainer_availabilities')
       .insert({
-        trainer_id: user.id,
+        trainer_id: trainerRecord.id,
         date,
         start_time,
         end_time,

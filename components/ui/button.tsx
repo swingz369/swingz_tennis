@@ -1,7 +1,26 @@
+'use client';
+
 import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
+
+// Recurses into fragments/elements (e.g. `<>{icon}{label}</>`) so icon+text
+// buttons aren't misdetected as textless — a shallow direct-children check
+// missed text nested one level down and fell back to a meaningless
+// aria-label="Button" even though the button had a real visible label.
+function nodeHasVisibleText(node: React.ReactNode): boolean {
+  if (typeof node === 'string' || typeof node === 'number') {
+    return String(node).trim().length > 0;
+  }
+  if (Array.isArray(node)) {
+    return node.some(nodeHasVisibleText);
+  }
+  if (React.isValidElement(node)) {
+    return nodeHasVisibleText((node.props as { children?: React.ReactNode }).children);
+  }
+  return false;
+}
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-xl font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
@@ -9,9 +28,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-gradient-primary text-white shadow-md hover:shadow-lg hover:brightness-105 focus-visible:ring-brand-light/50',
+          'bg-[hsl(var(--brand-accent-dashboard))] text-white shadow-sm hover:brightness-110 focus-visible:ring-[hsl(var(--brand-accent-dashboard)/0.5)]',
         primary:
-          'bg-gradient-primary text-white shadow-lg hover:shadow-xl hover:brightness-110 focus-visible:ring-brand-light/50',
+          'bg-[hsl(var(--brand-accent-dashboard))] text-white shadow-sm hover:brightness-110 focus-visible:ring-[hsl(var(--brand-accent-dashboard)/0.5)]',
         secondary:
           'bg-brand-secondary text-white shadow-md hover:bg-brand-secondary/90 hover:shadow-lg focus-visible:ring-brand-secondary/50',
         outline:
@@ -19,14 +38,10 @@ const buttonVariants = cva(
         ghost:
           'text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/10 hover:text-foreground dark:hover:text-white focus-visible:ring-ring',
         destructive:
-          'bg-red-600 text-white shadow-md hover:bg-red-700 hover:shadow-lg focus-visible:ring-red-500',
+          'bg-error-600 text-white shadow-md hover:bg-error-700 hover:shadow-lg focus-visible:ring-error-500',
         accent:
           'bg-gradient-accent text-white shadow-lg hover:shadow-xl focus-visible:ring-brand-accent/50',
-        gradient:
-          'bg-gradient-to-r from-brand-primary via-brand-primary/80 to-brand-light text-white shadow-lg hover:shadow-xl focus-visible:ring-brand-light/50',
         link: 'text-brand-light underline-offset-4 hover:underline',
-        brand:
-          'bg-brand-light hover:bg-brand-light/80 text-white shadow-md hover:shadow-lg focus-visible:ring-brand-light/50',
       },
       size: {
         sm: 'h-9 px-4 text-sm gap-1.5',
@@ -76,11 +91,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const Comp = asChild ? Slot : 'button';
 
-    const hasTextContent =
-      React.Children.count(children) > 0 &&
-      React.Children.toArray(children).some(
-        (child) => typeof child === 'string' || typeof child === 'number'
-      );
+    const hasTextContent = nodeHasVisibleText(children);
 
     const computedAriaLabel = ariaLabel || (!hasTextContent ? 'Button' : undefined);
 

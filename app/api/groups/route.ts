@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { DrizzleGroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
 import { GroupEntity } from '@/domain/entities/group.entity';
 import { ClubId } from '@/domain/value-objects';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
@@ -36,6 +36,9 @@ export async function GET(req: NextRequest) {
 
     if (!clubId) {
       return NextResponse.json({ error: 'clubId query parameter required' }, { status: 400 });
+    }
+    if (!verifyClubAccess(auth, clubId)) {
+      return forbiddenResponse('Kein Zugriff auf diesen Verein');
     }
 
     try {
@@ -85,6 +88,9 @@ export async function POST(req: NextRequest) {
       }
 
       const { clubId, name, level, ageGroup, description } = validation.data;
+      if (!verifyClubAccess(auth, clubId)) {
+        return forbiddenResponse('Kein Zugriff auf diesen Verein');
+      }
 
       const group = GroupEntity.create(
         ClubId.fromString(clubId),

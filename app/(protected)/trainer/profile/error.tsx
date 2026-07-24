@@ -24,8 +24,8 @@ export default function TrainerProfileError({
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="w-full max-w-lg text-center space-y-4 p-6">
-        <div className="mx-auto h-14 w-14 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-          <XCircle className="h-7 w-7 text-red-400" />
+        <div className="mx-auto h-14 w-14 rounded-xl bg-error-50 dark:bg-error-900/20 flex items-center justify-center">
+          <XCircle className="h-7 w-7 text-error-400" />
         </div>
         <h2 className="text-lg font-bold text-foreground dark:text-white">
           Profil konnte nicht geladen werden
@@ -33,7 +33,7 @@ export default function TrainerProfileError({
         <p className="text-sm text-muted-foreground">
           Beim Laden deines Profils ist ein Fehler aufgetreten. Bitte versuche es erneut.
         </p>
-        <div className="rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 p-3 text-xs text-red-600 dark:text-red-400 break-all">
+        <div className="rounded-xl bg-error-50 dark:bg-error-900/10 border border-error-200 dark:border-error-800 p-3 text-xs text-error-600 dark:text-error-400 break-all">
           {error.message}
         </div>
         <div className="flex gap-3 justify-center pt-2">

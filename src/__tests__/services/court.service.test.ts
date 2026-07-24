@@ -44,11 +44,13 @@ vi.mock('@/lib/supabase/service', () => ({
 const { CourtService } = await import('@/lib/booking/court.service');
 
 describe('CourtService – Pagination Methods', () => {
-  let service: InstanceType<typeof CourtService>;
+  // `typeof CourtService` in InstanceType<> is invalid syntax for an abstract
+  // class. `any` is fine here: the test only cares about behaviour, not types.
+  let service: any;
 
   beforeEach(() => {
     // Reset the singleton so each test gets a fresh instance with the fresh mock
-    (CourtService as unknown as { instance: CourtService | undefined }).instance = undefined;
+    (CourtService as unknown as { instance: typeof CourtService | undefined }).instance = undefined;
     mockChain = makeChainable();
     mockRangeData = [];
     mockRangeCount = 0;

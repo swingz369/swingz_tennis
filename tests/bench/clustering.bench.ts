@@ -171,6 +171,7 @@ vi.mock('drizzle-orm', () => ({
 // ═══ Imports after mocks ════════════════════════════════════════════════
 import { SeasonClusteringEngine } from '@/lib/season-planning/clustering-engine';
 import type { SkillLevel } from '@/lib/types/season-planning';
+import type { BenchEntry, BenchReport } from '@/tests/bench/bench-types';
 
 // ═══ Constants ═══════════════════════════════════════════════════════════
 const NUM_MEMBERS = 200;
@@ -380,13 +381,16 @@ function seedMockData() {
 }
 
 // ═══ Report writer ═══════════════════════════════════════════════════════
-const BENCH_RESULTS: Record<string, any> = {};
+// Typed against the shared `BenchEntry` interface (see tests/bench/bench-types.ts)
+// so dead-code fields like the historical `runtimeMs_internal` /
+// `iterations_internal` are caught at compile time via TypeScript's
+// excess-property check on the assignment below.
+const BENCH_RESULTS: Record<string, BenchEntry> = {};
 
 function recordRun(label: string, elapsedMs: number, result: any) {
   BENCH_RESULTS[label] = {
     label,
     timestamp: new Date().toISOString(),
-    iterations: 1,
     meanMs: elapsedMs,
     minMs: elapsedMs,
     maxMs: elapsedMs,
@@ -395,8 +399,6 @@ function recordRun(label: string, elapsedMs: number, result: any) {
     avgNiveauMatch: result.metrics.avgNiveauMatch,
     unassignedCount: result.unassignedMembers.length,
     wishPartnerRate: result.metrics.wishPartnerRate,
-    iterations_internal: result.metrics.iterations,
-    runtimeMs_internal: result.metrics.runtimeMs,
     config: {
       NUM_MEMBERS,
       NUM_TRAINERS,
@@ -411,7 +413,21 @@ function recordRun(label: string, elapsedMs: number, result: any) {
 }
 
 function writeReport() {
-  const reportPath = resolve(__dirname, '.bench-results.json');
+  // Guard: skip writing the report if this bench instance is running from
+  // a parallel-agent worktree under `.claude/worktrees/agent-*/`. Only the
+  // main-project instance should own the canonical `.bench-results.json`.
+  // Without this, each worktree instance writes to its own copy and the
+  // main project's file is never created.
+  //
+  // Also resolve the report path relative to `process.cwd()` (where vitest
+  // was invoked = main project root) instead of `__dirname` (which differs
+  // per worktree instance). This ensures the main instance writes to
+  // `<main-project>/tests/bench/.bench-results.json` regardless of how
+  // vitest's auto-discovery routes the bench file.
+  if (__dirname.includes('.claude' + '/worktrees/')) {
+    return;
+  }
+  const reportPath = resolve(process.cwd(), 'tests/bench/.bench-results.json');
   try {
     mkdirSync(dirname(reportPath), { recursive: true });
     writeFileSync(
@@ -423,7 +439,7 @@ function writeReport() {
           platform: `${process.platform}/${process.arch}`,
           config: { NUM_MEMBERS, NUM_TRAINERS, NUM_COURTS },
           runs: BENCH_RESULTS,
-        },
+        } satisfies BenchReport,
         null,
         2
       )
@@ -459,7 +475,7 @@ describe('Clustering Benchmark — 200 Members / 8 Trainer / 5 Courts', () => {
       for (const lbl of labels) {
         const r = BENCH_RESULTS[lbl];
         const padded = lbl.padEnd(30);
-        const ms = `${r.meanMs.toFixed(1)} ms`.padStart(9);
+        const ms = `${(r.meanMs ?? 0).toFixed(1)} ms`.padStart(9);
 
         console.log(`│ ${padded} │ ${ms} │`);
       }
@@ -472,10 +488,10 @@ describe('Clustering Benchmark — 200 Members / 8 Trainer / 5 Courts', () => {
         for (const lbl of labels) {
           if (lbl === '(1) baseline greedy') continue;
           const r = BENCH_RESULTS[lbl];
-          const speedup = (baseline.meanMs / r.meanMs).toFixed(2);
+          const speedup = ((baseline.meanMs ?? 0) / (r.meanMs ?? 0)).toFixed(2);
 
           console.log(
-            `[BENCH] Speedup ${lbl} vs baseline: ${speedup}× (${r.meanMs.toFixed(1)} ms)`
+            `[BENCH] Speedup ${lbl} vs baseline: ${speedup}× (${(r.meanMs ?? 0).toFixed(1)} ms)`
           );
         }
       }

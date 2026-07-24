@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { PaginationMeta } from '@/lib/pagination';
+import { ALL_LIMIT, type PaginationMeta } from '@/lib/pagination';
 
 interface PaginationNavProps {
   /** Pagination metadata from `buildPaginationMeta()`. */
@@ -35,12 +35,12 @@ interface PaginationNavProps {
    * onPageChange={(p) => router.push(`/admin/items?page=${p}`)}
    */
   onPageChange?: (page: number) => void;
-  /** Show a page-size selector dropdown (e.g. `[10, 25, 50]`). */
-  pageSizeOptions?: number[];
+  /** Show a page-size selector dropdown (e.g. `[10, 25, 50, 'all']`). */
+  pageSizeOptions?: (number | 'all')[];
   /** Current page size value (required when using `pageSizeOptions`). */
   currentLimit?: number;
-  /** Called when user selects a new page size. Returns the new URL string. */
-  onPageSizeChange?: (size: number) => string;
+  /** Called when user selects a new page size (resolved to `ALL_LIMIT` for `'all'`). */
+  onPageSizeChange?: (size: number) => void;
   /** Compact mode: hides first/last buttons and page numbers, shows only `page / total`. */
   compact?: boolean;
   /** Additional CSS classes on the outer `<nav>`. */
@@ -76,9 +76,9 @@ interface PaginationNavProps {
  * <PaginationNav
  *   meta={pagination}
  *   buildUrl={buildUrl}
- *   pageSizeOptions={[10, 25, 50]}
+ *   pageSizeOptions={[10, 25, 50, 'all']}
  *   currentLimit={limit}
- *   onPageSizeChange={(size) => `?page=1&limit=${size}`}
+ *   onPageSizeChange={(size) => router.push(`?page=1&limit=${size}`)}
  * />
  */
 export function PaginationNav({
@@ -183,11 +183,14 @@ export function PaginationNav({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {pageSizeOptions.map((size) => (
-                  <SelectItem key={size} value={String(size)}>
-                    {size}
-                  </SelectItem>
-                ))}
+                {pageSizeOptions.map((size) => {
+                  const value = size === 'all' ? ALL_LIMIT : size;
+                  return (
+                    <SelectItem key={String(size)} value={String(value)}>
+                      {size === 'all' ? 'Alle' : size}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

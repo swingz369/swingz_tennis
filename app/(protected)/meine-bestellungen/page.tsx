@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { IconBox } from '@/components/ui/icon-box';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface OrderItem {
   product_id: string;
@@ -51,13 +52,13 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, string> = {
   pending:
-    'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/30',
+    'text-warning-600 dark:text-warning-400 bg-warning-50 dark:bg-warning-900/20 border-warning-200 dark:border-warning-800/30',
   confirmed:
-    'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/30',
+    'text-info-600 dark:text-info-400 bg-info-50 dark:bg-info-900/20 border-info-200 dark:border-info-800/30',
   shipped:
-    'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/30',
+    'text-success-600 dark:text-success-400 bg-success-50 dark:bg-success-900/20 border-success-200 dark:border-success-800/30',
   cancelled:
-    'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30',
+    'text-error-600 dark:text-error-400 bg-error-50 dark:bg-error-900/20 border-error-200 dark:border-error-800/30',
 };
 
 const FILTER_TABS = [
@@ -107,10 +108,7 @@ export default function MeineBestellungenPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-brand-primary">Meine Bestellungen</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Verfolge deine Shop-Bestellungen</p>
-      </div>
+      <PageHeader title="Meine Bestellungen" description="Verfolge deine Shop-Bestellungen" />
 
       {/* Filter tabs */}
       <div className="flex gap-2 flex-wrap">
@@ -183,16 +181,16 @@ export default function MeineBestellungenPage() {
                         </p>
                         <div className="flex items-center gap-2 mt-1.5">
                           <Badge
-                            className={`text-[11px] px-1.5 py-0 border ${STATUS_COLORS[order.status]}`}
+                            className={`text-2xs px-1.5 py-0 border ${STATUS_COLORS[order.status]}`}
                           >
                             <StatusIcon className="h-3 w-3 mr-1 inline" />
                             {STATUS_LABELS[order.status] || order.status}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className={`text-[11px] px-1.5 py-0 ${
+                            className={`text-2xs px-1.5 py-0 ${
                               order.payment_status === 'paid'
-                                ? 'border-emerald-200 dark:border-emerald-800/30 text-emerald-600 dark:text-emerald-400'
+                                ? 'border-success-200 dark:border-success-800/30 text-success-600 dark:text-success-400'
                                 : 'border-border dark:border-white/10 text-muted-foreground'
                             }`}
                           >
@@ -270,7 +268,7 @@ export default function MeineBestellungenPage() {
                     variant="outline"
                     className={`text-xs px-2 py-0.5 ${
                       selectedOrder.payment_status === 'paid'
-                        ? 'border-emerald-200 dark:border-emerald-800/30 text-emerald-600 dark:text-emerald-400'
+                        ? 'border-success-200 dark:border-success-800/30 text-success-600 dark:text-success-400'
                         : 'border-border dark:border-white/10 text-muted-foreground'
                     }`}
                   >
@@ -290,7 +288,7 @@ export default function MeineBestellungenPage() {
                         className="flex items-center justify-between py-2 border-b border-border dark:border-white/5 last:border-0"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted dark:bg-card/5 shrink-0">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted dark:bg-card/5 shrink-0">
                             <Package className="h-4 w-4 text-muted-foreground" />
                           </div>
                           <div>

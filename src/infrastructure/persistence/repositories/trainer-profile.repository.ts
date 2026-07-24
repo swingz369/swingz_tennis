@@ -480,6 +480,35 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
   }
 
   /**
+   * NaN-Guard helper for numeric columns. Mirror of the same guard in
+   * app/api/trainer-profiles/route.ts (the Supabase service-client fallback
+   * mapper).
+   *
+   * Rationale: numeric columns sourced through PostgREST or via a buggy Drizzle
+   * driver may surface non-finite values (NaN / Infinity) or strings that
+   * parseFloat cannot resolve (raw double quotes, trailing junk from legacy
+   * rows). Collapsing any non-finite input to `null` keeps the entity shape
+   * clean — the UI then renders the Stundensatz cell as "—" instead of
+   * crashing on `.toFixed` with a NaN value.
+   *
+   * Marked static (no instance state needed) so callers in `mapToEntity` can
+   * use it without per-call allocation overhead.
+   */
+  private static parseNumericField(raw: unknown): number | null {
+    if (raw == null) return null;
+    // Runtime-Type-Check statt unsafe `as number` Cast. `Number.isFinite(true)`
+    // ist true (coerced zu 1) und würde ohne den expliziten Branch unsauber
+    // durchschlagen. Wir akzeptieren NUR `string` + `number`, alle anderen Typen
+    // (boolean, object, array, bigint) kollabieren deterministisch auf `null`.
+    if (typeof raw === 'string') {
+      const n = parseFloat(raw);
+      return Number.isFinite(n) ? n : null;
+    }
+    if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null;
+    return null;
+  }
+
+  /**
    * Map database row to TrainerProfile entity
    */
   private mapToEntity(row: typeof trainerProfiles.$inferSelect): TrainerProfile {
@@ -501,18 +530,16 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
         achievements: [],
       },
       status: row.status as TrainerProfile['status'],
-      hourlyRate:
-        typeof row.hourlyRate === 'string'
-          ? parseFloat(row.hourlyRate)
-          : (row.hourlyRate ?? undefined),
-      contractedHourlyRate:
-        typeof row.contracted_hourly_rate === 'string'
-          ? parseFloat(row.contracted_hourly_rate)
-          : (row.contracted_hourly_rate ?? null),
-      extraHoursRate:
-        typeof row.extra_hours_rate === 'string'
-          ? parseFloat(row.extra_hours_rate)
-          : (row.extra_hours_rate ?? null),
+      // NaN-Guard: mirror of the service-client fallback helper in
+      // app/api/trainer-profiles/route.ts. parseNumericField collapses
+      // malformed inputs (NaN / Infinity / non-numeric strings) to `null`
+      // so the UI never renders "NaN/h". For `hourlyRate` (which the
+      // domain types as `number | undefined` rather than nullable) we
+      // also map null → undefined to preserve the original "not set"
+      // semantic that downstream readers (billing, exports) rely on.
+      hourlyRate: TrainerProfileRepository.parseNumericField(row.hourlyRate) ?? undefined,
+      contractedHourlyRate: TrainerProfileRepository.parseNumericField(row.contracted_hourly_rate),
+      extraHoursRate: TrainerProfileRepository.parseNumericField(row.extra_hours_rate),
       availability: (row.availability as TrainerProfile['availability']) || {
         monday: true,
         tuesday: true,

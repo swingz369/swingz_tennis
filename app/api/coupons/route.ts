@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { withAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 
 // GET: Validate coupon (no auth required — public endpoint)
 export async function GET(request: NextRequest) {
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
 // POST: Create coupon (admin only)
 export async function POST(request: NextRequest) {
-  return withAuth(request, async (auth) => {
+  return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) return forbiddenResponse('Admin access required');
 

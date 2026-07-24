@@ -1,16 +1,16 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Registrieren — SWINGZ',
+  title: 'Zugang anfragen — SWINGZ',
   description:
-    'Registriere deinen Tennisclub bei SWINGZ. 14 Tage kostenlos testen, keine Kreditkarte erforderlich. KI-gestützte Trainingsplanung ab sofort.',
+    'Fordere Zugang zu SWINGZ für deinen Tennisclub an. Wir richten dein Konto persönlich ein und melden uns innerhalb von 1–2 Werktagen.',
   alternates: {
     canonical: '/register',
   },
   openGraph: {
-    title: 'Jetzt registrieren — SWINGZ',
+    title: 'Zugang anfragen — SWINGZ',
     description:
-      'Erstelle deinen Club in wenigen Minuten und starte mit KI-gestützter Trainingsplanung. 14 Tage kostenlos.',
+      'Fordere Zugang für deinen Verein an — persönliche Einrichtung, Antwort innerhalb von 1–2 Werktagen.',
     url: '/register',
   },
 };

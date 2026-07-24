@@ -135,7 +135,7 @@ export default function PaymentImportDialog() {
               id="payment-csv-upload"
             />
             <label htmlFor="payment-csv-upload">
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors">
+              <div className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-gray-400 transition-colors">
                 <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground mb-2">
                   Klicken Sie, um eine CSV-Datei auszuwählen
@@ -156,15 +156,15 @@ export default function PaymentImportDialog() {
                   {/* Summary */}
                   <div className="grid grid-cols-3 gap-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">{result.imported}</div>
+                      <div className="text-2xl font-bold text-success-600">{result.imported}</div>
                       <div className="text-sm text-muted-foreground">Erfolgreich</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-red-600">{result.failed}</div>
+                      <div className="text-2xl font-bold text-error-600">{result.failed}</div>
                       <div className="text-sm text-muted-foreground">Fehlgeschlagen</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-600">
+                      <div className="text-2xl font-bold text-warning-600">
                         {result.invalid.length}
                       </div>
                       <div className="text-sm text-muted-foreground">Ungültig</div>
@@ -175,12 +175,12 @@ export default function PaymentImportDialog() {
                   {result.invalid.length > 0 && (
                     <div>
                       <h4 className="font-medium mb-2 flex items-center">
-                        <AlertCircle className="h-4 w-4 mr-2 text-yellow-600" />
+                        <AlertCircle className="h-4 w-4 mr-2 text-warning-600" />
                         Ungültige Datensätze ({result.invalid.length})
                       </h4>
                       <div className="max-h-40 overflow-y-auto space-y-2">
                         {result.invalid.map((item, index) => (
-                          <div key={index} className="text-xs bg-yellow-50 p-2 rounded">
+                          <div key={index} className="text-xs bg-warning-50 p-2 rounded">
                             <div className="font-medium">
                               {String(
                                 item.record.memberEmail ?? item.record.memberId ?? 'Unbekannt'
@@ -197,12 +197,12 @@ export default function PaymentImportDialog() {
                   {result.errors.length > 0 && (
                     <div>
                       <h4 className="font-medium mb-2 flex items-center">
-                        <AlertCircle className="h-4 w-4 mr-2 text-red-600" />
+                        <AlertCircle className="h-4 w-4 mr-2 text-error-600" />
                         Fehlgeschlagene Importe ({result.errors.length})
                       </h4>
                       <div className="max-h-40 overflow-y-auto space-y-2">
                         {result.errors.map((item, index) => (
-                          <div key={index} className="text-xs bg-red-50 p-2 rounded">
+                          <div key={index} className="text-xs bg-error-50 p-2 rounded">
                             <div className="font-medium">
                               {String(
                                 item.record.memberEmail ?? item.record.memberId ?? 'Unbekannt'
@@ -217,7 +217,7 @@ export default function PaymentImportDialog() {
 
                   {/* Success Message */}
                   {result.imported > 0 && result.failed === 0 && result.invalid.length === 0 && (
-                    <div className="flex items-center justify-center text-green-600">
+                    <div className="flex items-center justify-center text-success-600">
                       <CheckCircle className="h-5 w-5 mr-2" />
                       <span className="font-medium">Alle Zahlungen erfolgreich importiert!</span>
                     </div>

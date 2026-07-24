@@ -24,8 +24,7 @@ export function AdminHeroHeader({
 }: AdminHeroHeaderProps) {
   return (
     <ScrollReveal>
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-        <div className="absolute inset-0 bg-noise opacity-5" />
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
         <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
         <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
         <div className="relative">
@@ -33,11 +32,11 @@ export function AdminHeroHeader({
             <div>
               <p className="text-sm font-medium text-white/70 mb-1">
                 {clubName} ·{' '}
-                <span className={isSuperadmin ? 'text-purple-300' : 'text-brand-accent'}>
+                <span className={isSuperadmin ? 'text-info-300' : 'text-brand-accent'}>
                   {isSuperadmin ? 'Superadmin' : 'Admin'}
                 </span>
               </p>
-              <h1 className="text-2xl md:text-3xl font-bold">Hallo, {firstName}</h1>
+              <h1 className="text-2xl md:text-3xl font-bold font-display">Hallo, {firstName}</h1>
               <p className="text-white/70 mt-2">
                 <AnimatedCounter value={memberCount} /> Mitglieder ·{' '}
                 <AnimatedCounter value={trainerCount} /> Trainer ·{' '}
@@ -66,7 +65,7 @@ export function AdminHeroHeader({
               {isSuperadmin && (
                 <Link
                   href="/select-admin-club"
-                  className="flex items-center gap-1.5 text-xs font-medium text-white/80 bg-white/10 backdrop-blur-sm hover:bg-white/20 px-3 py-2 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-medium text-white/80 bg-white/10 backdrop-blur-sm hover:bg-white/20 px-3 py-2 rounded-xl transition-colors"
                 >
                   Verein wechseln <ChevronRight className="h-3 w-3" />
                 </Link>

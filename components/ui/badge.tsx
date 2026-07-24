@@ -7,17 +7,20 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-brandPrimary/10 text-brandPrimary border-brandPrimary/20',
-        secondary: 'bg-brandSecondary/10 text-brandSecondary border-brandSecondary/20',
-        accent: 'bg-brandAccent/10 text-brandAccent border-brandAccent/20',
-        success: 'bg-green-100 text-green-700 border-green-200',
-        warning: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-        error: 'bg-red-100 text-red-700 border-red-200',
-        info: 'bg-blue-100 text-blue-700 border-blue-200',
+        default: 'bg-brand-primary/10 text-brand-primary border-brand-primary/20',
+        secondary: 'bg-brand-secondary/10 text-brand-secondary border-brand-secondary/20',
+        accent: 'bg-brand-accent/10 text-brand-accent border-brand-accent/20',
+        success:
+          'bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-300 dark:border-success-800',
+        warning:
+          'bg-warning-100 text-warning-700 border-warning-200 dark:bg-warning-900/30 dark:text-warning-300 dark:border-warning-800',
+        error:
+          'bg-error-100 text-error-700 border-error-200 dark:bg-error-900/30 dark:text-error-300 dark:border-error-800',
+        info: 'bg-info-100 text-info-700 border-info-200 dark:bg-info-900/30 dark:text-info-300 dark:border-info-800',
         outline: 'bg-transparent border-border text-foreground',
       },
       size: {
-        sm: 'px-2 py-0.5 text-[11px]',
+        sm: 'px-2 py-0.5 text-2xs',
         md: 'px-2.5 py-0.5 text-xs',
         lg: 'px-3 py-1 text-sm',
       },

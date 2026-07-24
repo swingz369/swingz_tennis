@@ -4,14 +4,23 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { IconBox } from '@/components/ui/icon-box';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { Menu, LogOut, Settings, Trophy, ChevronDown, LayoutDashboard, User } from 'lucide-react';
+import { useUserRole } from '@/hooks/use-user-role';
+import {
+  Menu,
+  LogOut,
+  Settings,
+  Trophy,
+  ChevronDown,
+  LayoutDashboard,
+  User,
+  Search,
+} from 'lucide-react';
 import { useTenant } from '@/lib/tenant-context';
-import { GlobalSearch } from '@/components/layout/global-search';
 import { NotificationBell } from '@/components/layout/notification-bell';
 import { createClient } from '@/infrastructure/external/supabase/client';
+import { useCommandPalette } from '@/components/command-palette-context';
 
 interface HeaderProps {
   user?: {
@@ -20,6 +29,7 @@ interface HeaderProps {
     email?: string;
     avatarUrl?: string | null;
     roles?: string[];
+    club?: { id: string; name: string } | null;
   };
   onMenuClick?: () => void;
 }
@@ -32,6 +42,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   const router = useRouter();
   const { branding } = useTenant();
   const clubLogoUrl = branding.logos.light || branding.logos.dark;
+  const { setOpen: setCommandPaletteOpen } = useCommandPalette();
 
   // Close user menu on outside click
   useEffect(() => {
@@ -45,9 +56,21 @@ export function Header({ user, onMenuClick }: HeaderProps) {
     return () => document.removeEventListener('mousedown', handler);
   }, [userMenuOpen]);
 
-  const isOwner = user?.roles?.includes('owner');
-  const isAdmin = user?.roles?.some((r) => r === 'admin' || r === 'superadmin');
-  const isSuperAdmin = user?.roles?.includes('superadmin');
+  // Rollen-basierter Header-Subtitle (analog zur Sidebar, damit Owner/Superadmin
+  // nicht das falsche Label sehen).
+  // Phase 3: Owner wird jetzt klar als „Plattform-Konsole“ markiert,
+  // Superadmin als „Tennisschule-Verwaltung“ — vorher stand dort beim
+  // Owner einfach „Swingz“, was leicht mit dem Login-Screen verwechselt wurde.
+  const { isOwner, isSuperAdmin, isAdmin, isTrainer } = useUserRole(user?.roles);
+  const headerSectionLabel = isOwner
+    ? 'Plattform-Konsole'
+    : isSuperAdmin
+      ? 'Tennisschule-Verwaltung'
+      : isAdmin
+        ? 'Vereinsverwaltung'
+        : isTrainer
+          ? 'Mein Training'
+          : 'Mein Verein';
 
   const handleSignOut = async () => {
     setIsLoggingOut(true);
@@ -75,51 +98,61 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full bg-background/70 dark:bg-brand-950/70 backdrop-blur-2xl border-b border-border/60 dark:border-white/[0.06] supports-[backdrop-filter]:bg-background/60 supports-[backdrop-filter]:dark:bg-brand-950/60"
+      className="sticky top-0 z-50 w-full bg-background/80 dark:bg-brand-dark/80 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/70 supports-[backdrop-filter]:dark:bg-brand-dark/70"
       role="banner"
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
+      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
+        {/* Brand cluster — Logo + Marke als geschlossene Einheit.
+            Tintierter Gradient-Ring gibt dem Logo visuell Gewicht,
+            damit es nicht in der 16-px-Bar „verloren“ wirkt. */}
         <Link
           href={dashboardLink}
-          className="flex items-center gap-3 group"
+          className="flex items-center gap-3 shrink-0 group"
           aria-label="SwingZ Home"
         >
-          <div className="relative">
-            <div
-              className="absolute -inset-1.5 bg-gradient-to-br from-brand-light/40 via-brand-primary/30 to-brand-light/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"
-              aria-hidden="true"
-            />
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-light/15 via-brand-light/10 to-brand-primary/15 ring-1 ring-brand-light/25 group-hover:ring-brand-light/50 transition-all overflow-hidden">
             {clubLogoUrl && !imgFailed ? (
               // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/no-noninteractive-element-interactions
               <img
                 key={clubLogoUrl}
                 src={clubLogoUrl}
                 alt="Club Logo"
-                className="h-8 w-8 object-contain relative"
+                className="h-6 w-6 object-contain"
                 onError={() => setImgFailed(true)}
                 onLoad={() => setImgFailed(false)}
               />
             ) : (
-              <IconBox icon={Trophy} size="md" variant="gradient-primary" />
+              <Trophy className="h-5 w-5 text-brand-light" aria-hidden="true" />
             )}
           </div>
-          <span className="hidden sm:inline text-xl font-bold tracking-tight text-foreground dark:text-white">
-            SWINGZ
-          </span>
+          <div className="hidden sm:flex flex-col leading-tight">
+            <span className="text-base font-bold tracking-tight text-foreground dark:text-white">
+              {user?.club?.name || 'SWINGZ'}
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70 -mt-0.5">
+              {headerSectionLabel}
+            </span>
+          </div>
         </Link>
 
-        {/* Global Search */}
-        <div
-          className="hidden md:block flex-1 max-w-md mx-8"
-          role="search"
-          aria-label="Suchfunktion"
-        >
-          <GlobalSearch />
-        </div>
+        {/* Right actions — Utility-Cluster (Suche / Theme / Notifications / User / Mobile).
+            Suche war früher eine dauerhaft zentrierte Bar — auf allen Rollen (auch
+            Member/Trainer ohne echten Bedarf) sichtbar und hat in der Mitte Platz
+            gefressen. Jetzt nur noch ein Icon neben dem Theme-Toggle, Klick öffnet
+            weiterhin die Command Palette. `ml-auto` schiebt den Cluster nach rechts,
+            da die zentrierte Bar als Spacer wegfällt. */}
+        <div className="flex items-center gap-0.5 shrink-0 ml-auto">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-foreground dark:text-white rounded-xl hover:bg-muted dark:hover:bg-background/10"
+            onClick={() => setCommandPaletteOpen(true)}
+            aria-label="Suche oder Befehl öffnen (⌘K)"
+          >
+            <Search className="h-5 w-5" aria-hidden="true" />
+            <span className="sr-only">Suche oder Befehl öffnen</span>
+          </Button>
 
-        {/* Right actions */}
-        <div className="flex items-center gap-1.5">
           {/* Theme Toggle */}
           <ThemeToggle />
 
@@ -153,7 +186,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
             {/* Dropdown menu with enter animation */}
             <div
-              className={`absolute right-0 top-full mt-2 w-64 rounded-2xl bg-background dark:bg-surface-dark py-2 shadow-2xl ring-1 ring-ring/60 dark:ring-white/10 z-50 transition-all duration-200 origin-top-right ${
+              className={`absolute right-0 top-full mt-2 w-64 rounded-xl bg-background dark:bg-surface-dark py-2 shadow-2xl ring-1 ring-ring/60 dark:ring-white/10 z-50 transition-all duration-200 origin-top-right ${
                 userMenuOpen
                   ? 'opacity-100 scale-100 translate-y-0'
                   : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
@@ -170,8 +203,20 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                   {user?.email || 'user@example.com'}
                 </p>
                 {user?.roles && user.roles.length > 0 && (
-                  <span className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-brand-light/10 text-brand-light dark:bg-brand-light/20 dark:text-green-300">
-                    {user.roles[0]}
+                  <span
+                    className={
+                      isOwner
+                        ? 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300'
+                        : isSuperAdmin
+                          ? 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+                          : 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-brand-light/10 text-brand-light dark:bg-brand-light/20 dark:text-success-300'
+                    }
+                  >
+                    {isOwner
+                      ? 'Plattform-Eigentümer'
+                      : isSuperAdmin
+                        ? 'Tennisschule'
+                        : user.roles[0]}
                   </span>
                 )}
               </div>
@@ -214,7 +259,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                 <button
                   onClick={handleSignOut}
                   disabled={isLoggingOut}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-50 transition-colors"
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-error-600 dark:text-error-400 hover:bg-error-50 dark:hover:bg-error-500/10 disabled:opacity-50 transition-colors"
                   role="menuitem"
                 >
                   <LogOut className="h-4 w-4" aria-hidden="true" />

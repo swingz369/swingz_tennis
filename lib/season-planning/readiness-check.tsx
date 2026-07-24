@@ -60,21 +60,25 @@ export default function ScheduleReadinessCheck({ clubId, seasonId, onReady }: Re
         },
         {
           key: 'trainer_avail',
-          label: `${availCount ?? 0} Trainer-Verfügbarkeiten`,
+          label: `${availCount ?? 0} Trainer-Präferenzen`,
           count: availCount ?? 0,
-          required: 1,
-          status: (availCount ?? 0) >= 1 ? 'ok' : 'error',
-          hint: `${trainerCount ?? 0} Trainer vorhanden — aber noch keine Verfügbarkeiten. Trainer unter Admin → Trainer eintragen.`,
-          link: '/admin/trainers',
-          linkLabel: 'Trainer verwalten',
+          required: 0,
+          status: (availCount ?? 0) >= 1 ? 'ok' : 'warn',
+          hint: `${trainerCount ?? 0} Trainer vorhanden. ${
+            (availCount ?? 0) === 0
+              ? 'Ohne Planungspräferenzen nutzt der Algorithmus Mo–Fr 8–22 Uhr als Fallback. Trainer können Präferenzen unter Trainer → Planungspräferenzen eintragen.'
+              : `${(trainerCount ?? 0) - (availCount ?? 0)} Trainer ohne Präferenzen — Fallback Mo–Fr 8–22 Uhr wird verwendet.`
+          }`,
+          link: '/trainer/planning-preferences',
+          linkLabel: 'Planungspräferenzen (Trainer)',
         },
         {
           key: 'courts',
-          label: `${courtCount ?? 0} Aktive Plätze`,
+          label: `${courtCount ?? 0} Plätze für Trainingsplanung`,
           count: courtCount ?? 0,
           required: 1,
           status: (courtCount ?? 0) >= 1 ? 'ok' : 'error',
-          hint: 'Lege mindestens einen aktiven Platz an.',
+          hint: 'Lege mindestens einen aktiven, für die Trainingsplanung freigegebenen Platz an.',
           link: '/admin/courts',
           linkLabel: 'Plätze verwalten',
         },
@@ -107,24 +111,24 @@ export default function ScheduleReadinessCheck({ clubId, seasonId, onReady }: Re
   return (
     <div
       className={`rounded-xl border p-4 ${
-        allOk ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+        allOk ? 'bg-success-50 border-success-200' : 'bg-error-50 border-error-200'
       }`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {allOk ? (
-            <CheckCircle className="w-5 h-5 text-green-600" />
+            <CheckCircle className="w-5 h-5 text-success-600" />
           ) : (
-            <XCircle className="w-5 h-5 text-red-600" />
+            <XCircle className="w-5 h-5 text-error-600" />
           )}
           <div>
-            <p className={`text-sm font-semibold ${allOk ? 'text-green-800' : 'text-red-800'}`}>
+            <p className={`text-sm font-semibold ${allOk ? 'text-success-800' : 'text-error-800'}`}>
               {allOk
                 ? 'Bereit für Planung'
                 : `${errors.length} Problem${errors.length > 1 ? 'e' : ''} muss${errors.length > 1 ? 'en' : ''} behoben werden`}
             </p>
             {!allOk && (
-              <p className="text-xs text-red-600 mt-0.5">
+              <p className="text-xs text-error-600 mt-0.5">
                 {errors.map((e) => e.label).join(' · ')}
               </p>
             )}
@@ -132,7 +136,7 @@ export default function ScheduleReadinessCheck({ clubId, seasonId, onReady }: Re
         </div>
         <button
           onClick={() => setExpanded((v) => !v)}
-          className={`text-xs font-medium ${allOk ? 'text-green-700' : 'text-red-700'}`}
+          className={`text-xs font-medium ${allOk ? 'text-success-700' : 'text-error-700'}`}
         >
           {expanded ? 'Schließen' : 'Details'}
         </button>
@@ -145,10 +149,10 @@ export default function ScheduleReadinessCheck({ clubId, seasonId, onReady }: Re
             key={item.key}
             className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium ${
               item.status === 'ok'
-                ? 'bg-green-100 text-green-700'
+                ? 'bg-success-100 text-success-700'
                 : item.status === 'warn'
-                  ? 'bg-amber-100 text-amber-700'
-                  : 'bg-red-100 text-red-700'
+                  ? 'bg-warning-100 text-warning-700'
+                  : 'bg-error-100 text-error-700'
             }`}
           >
             {item.status === 'ok' ? (
@@ -171,11 +175,11 @@ export default function ScheduleReadinessCheck({ clubId, seasonId, onReady }: Re
             .map((item) => (
               <div
                 key={item.key}
-                className={`rounded-lg p-3 ${item.status === 'warn' ? 'bg-amber-50' : 'bg-red-50'}`}
+                className={`rounded-xl p-3 ${item.status === 'warn' ? 'bg-warning-50' : 'bg-error-50'}`}
               >
                 <p
                   className={`text-xs font-semibold mb-1 flex items-center gap-1.5 ${
-                    item.status === 'warn' ? 'text-amber-800' : 'text-red-800'
+                    item.status === 'warn' ? 'text-warning-800' : 'text-error-800'
                   }`}
                 >
                   {item.status === 'warn' ? (
@@ -185,11 +189,15 @@ export default function ScheduleReadinessCheck({ clubId, seasonId, onReady }: Re
                   )}
                   {item.label}
                 </p>
-                <p className="text-xs leading-relaxed text-red-700">{item.hint}</p>
+                <p
+                  className={`text-xs leading-relaxed ${item.status === 'warn' ? 'text-warning-700' : 'text-error-700'}`}
+                >
+                  {item.hint}
+                </p>
                 {item.link && (
                   <a
                     href={item.link}
-                    className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-red-700"
+                    className={`inline-flex items-center gap-1 mt-2 text-xs font-medium ${item.status === 'warn' ? 'text-warning-700' : 'text-error-700'}`}
                   >
                     {item.linkLabel} <ArrowRight className="w-3 h-3" />
                   </a>
@@ -197,7 +205,7 @@ export default function ScheduleReadinessCheck({ clubId, seasonId, onReady }: Re
               </div>
             ))}
           {allOk && (
-            <p className="text-xs text-green-700">
+            <p className="text-xs text-success-700">
               Alle Voraussetzungen erfüllt.{' '}
               {warnings.length > 0 &&
                 `${warnings.length} optionale Empfehlung${warnings.length > 1 ? 'en' : ''}.`}

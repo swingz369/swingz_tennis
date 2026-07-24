@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { IconBox } from '@/components/ui/icon-box';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Trophy, Sparkles, ArrowRight, Eye, EyeOff, Shield, Zap } from 'lucide-react';
 import { analytics } from '@/lib/analytics';
@@ -38,7 +40,7 @@ export default function LoginPage() {
       }
 
       analytics.login('email', true);
-      window.location.href = '/';
+      window.location.href = '/dashboard';
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login fehlgeschlagen';
       analytics.login('email', false);
@@ -53,72 +55,77 @@ export default function LoginPage() {
       {/* ── Left: Brand Panel ── */}
       <div className="hidden lg:flex lg:flex-1 relative">
         <div className="absolute inset-0">
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `
-                radial-gradient(ellipse 100% 100% at 30% 0%, hsl(var(--brand-primary-light) / 0.3) 0%, transparent 50%),
-                radial-gradient(ellipse 80% 80% at 70% 100%, hsl(var(--brand-accent) / 0.18) 0%, transparent 50%),
-                linear-gradient(135deg, hsl(150 55% 10%) 0%, hsl(var(--brand-primary)) 50%, hsl(150 30% 8%) 100%)
-              `,
-            }}
-          />
-          <div className="absolute inset-0 noise opacity-[0.015]" />
-          {/* Floating orbs */}
-          <div className="absolute top-20 left-20 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
-          <div
-            className="absolute bottom-20 right-20 w-56 h-56 bg-brand-accent/8 rounded-full blur-3xl animate-aurora"
-            style={{ animationDelay: '5s' }}
-          />
+          <div className="absolute inset-0 bg-login-hero" />
+          {/* Aurora blobs */}
+          <div className="absolute inset-0 opacity-25 overflow-hidden">
+            <div className="absolute top-20 left-10 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
+            <div className="absolute top-40 right-20 w-64 h-64 bg-brand-accent/8 rounded-full blur-3xl animate-aurora [animation-delay:5s]" />
+            <div className="absolute bottom-20 left-1/3 w-56 h-56 bg-brand-secondary/10 rounded-full blur-3xl animate-aurora [animation-delay:10s]" />
+          </div>
+          <div className="absolute inset-0 noise opacity-[0.04]" />
+          <svg
+            className="absolute inset-0 w-full h-full opacity-[0.025]"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <pattern id="login-dotgrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <circle cx="1" cy="1" r="1" fill="white" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#login-dotgrid)" />
+          </svg>
         </div>
 
         <div className="relative z-10 flex flex-col justify-between p-16 text-white">
-          {/* Theme Toggle — top right */}
-          <div className="absolute top-6 right-6">
-            <ThemeToggle className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-background/10" />
-          </div>
           <div>
-            <div className="flex items-center gap-3 mb-12 group">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                <Trophy className="h-7 w-7 text-white" />
+            <Link href="/" prefetch={false} className="flex items-center gap-3 mb-12 group w-fit">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                <IconBox
+                  icon={Trophy}
+                  size="md"
+                  variant="gradient-primary"
+                  className="h-12 w-12"
+                  iconClassName="h-7 w-7"
+                />
               </div>
               <span className="text-2xl font-bold font-display">SWINGZ</span>
-            </div>
+            </Link>
 
             <h1 className="text-4xl font-extrabold leading-tight max-w-md">
               Die Zukunft des{' '}
-              <span className="text-gradient-primary bg-clip-text text-transparent">
+              <span className="text-gradient-accent bg-clip-text text-transparent">
                 Tennisclub-Managements
               </span>
             </h1>
 
             <p className="mt-6 text-white/55 text-lg max-w-md leading-relaxed">
-              KI-gestützte Trainingsplanung, intuitive Buchungsverwaltung und smarter Club-Betrieb —
-              ab sofort verfügbar.
+              Automatisierte Trainingsplanung, intuitive Buchungsverwaltung und smarter Club-Betrieb
+              — ab sofort verfügbar.
             </p>
           </div>
 
           {/* Stats + Feature cards */}
           <div className="space-y-4">
-            <div className="flex items-center gap-4 p-4 rounded-2xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-brand-accent to-orange-600 flex items-center justify-center shadow-lg">
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-brand-accent to-brand-accent-600 flex items-center justify-center shadow-lg">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
               <div>
-                <p className="font-semibold">KI-gestützte Saisonplanung</p>
+                <p className="font-semibold">Automatisierte Saisonplanung</p>
                 <p className="text-white/60 text-sm">Automatisch optimierte Trainingspläne</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 rounded-2xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
+              <div className="p-4 rounded-xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
                 <div className="flex items-center gap-2 mb-1">
                   <Zap className="h-4 w-4 text-brand-accent" />
-                  <p className="font-semibold text-sm">Kostenlos testen</p>
+                  <p className="font-semibold text-sm">Persönliches Onboarding</p>
                 </div>
-                <p className="text-white/55 text-xs">14 Tage Probezeit</p>
+                <p className="text-white/55 text-xs">Wir richten deinen Club ein</p>
               </div>
-              <div className="p-4 rounded-2xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
+              <div className="p-4 rounded-xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
                 <div className="flex items-center gap-2 mb-1">
                   <Shield className="h-4 w-4 text-brand-light" />
                   <p className="font-semibold text-sm">DSGVO-konform</p>
@@ -141,14 +148,14 @@ export default function LoginPage() {
         <div className="relative w-full max-w-md animate-fade-in-up">
           {/* Mobile logo */}
           <div className="lg:hidden mb-8 text-center">
-            <div className="inline-flex items-center gap-3 mb-4">
+            <Link href="/" prefetch={false} className="inline-flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg">
                 <Trophy className="h-6 w-6 text-white" />
               </div>
               <span className="text-2xl font-bold text-foreground dark:text-white font-display">
                 SWINGZ
               </span>
-            </div>
+            </Link>
           </div>
 
           <Card variant="elevated" className="p-6 sm:p-8 border-0 shadow-premium">
@@ -203,7 +210,7 @@ export default function LoginPage() {
                   />
                   <button
                     type="button"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground hover:text-muted-foreground hover:bg-muted transition-colors z-10"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-muted-foreground hover:bg-muted transition-colors z-10"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
                   >
@@ -213,8 +220,8 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="rounded-xl bg-red-50 p-4 text-sm text-red-600 border border-red-100 animate-scale-in flex items-start gap-3">
-                  <Shield className="h-5 w-5 flex-shrink-0 mt-0.5 text-red-400" />
+                <div className="rounded-xl bg-error-50 p-4 text-sm text-error-600 border border-error-100 animate-scale-in flex items-start gap-3">
+                  <Shield className="h-5 w-5 flex-shrink-0 mt-0.5 text-error-400" />
                   <span>{error}</span>
                 </div>
               )}
@@ -268,7 +275,7 @@ export default function LoginPage() {
                   href="/register"
                   className="text-brand-primary hover:text-brand-light font-semibold transition-colors underline-offset-2 hover:underline"
                 >
-                  Registrierung anfragen
+                  Zugang anfragen
                 </a>
               </p>
             </div>
@@ -291,7 +298,7 @@ export default function LoginPage() {
             </a>{' '}
             und{' '}
             <a
-              href="/privacy"
+              href="/datenschutz"
               className="text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
             >
               Datenschutzrichtlinie

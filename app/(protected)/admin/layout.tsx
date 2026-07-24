@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation';
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
+import { getHighestRole } from '@/lib/auth-common';
 
 /**
  * Admin Layout — Auth + Role Guard
@@ -30,38 +32,36 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect('/member');
   }
 
-  if (isSuperadmin) {
-    const cookieStore = await cookies();
-    const clubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value;
-    if (!clubId) redirect('/select-admin-club');
+  // Resolve club context via shared helper. Superadmin path is mandatory
+  // and redirects to /select-admin-club on missing/stale cookie; admin
+  // path is informational-only — gated layout owns the actionable fallback
+  // chain (admin-membership → onboarding redirect).
+  const cookieStore = await cookies();
+  const cookieValue = cookieStore.get(ADMIN_CLUB_COOKIE)?.value ?? null;
+  const highestRole = getHighestRole(roles);
+  const { clubId: resolvedClubId, isValid } = await resolveActiveClub({
+    cookieValue,
+    memberships: memberships ?? [],
+    highestRole,
+  });
 
-    const { data: club } = await supabase.from('clubs').select('id').eq('id', clubId).maybeSingle();
+  if (isSuperadmin) {
+    // Strict: cookie must exist AND validate against a superadmin membership.
+    if (!cookieValue || !isValid || resolvedClubId !== cookieValue) {
+      redirect('/select-admin-club');
+    }
+    // Separate existence check on `clubs` — defends against deleted/renamed clubs.
+    const { data: club } = await supabase
+      .from('clubs')
+      .select('id')
+      .eq('id', cookieValue)
+      .maybeSingle();
     if (!club) redirect('/select-admin-club');
   }
-
-  // Onboarding check for non-superadmin admins only
-  // (superadmin always has access regardless of setup state)
-  if (!isSuperadmin && isAdmin) {
-    const adminMembership = memberships.find((m: any) => m.role === 'admin');
-    const clubId = adminMembership?.club_id;
-
-    if (clubId) {
-      const { data: clubData } = await supabase
-        .from('clubs')
-        .select('setup_completed_at')
-        .eq('id', clubId)
-        .maybeSingle();
-
-      if (clubData && !clubData.setup_completed_at) {
-        const headersList = await headers();
-        const pathname = headersList.get('x-pathname') ?? headersList.get('x-invoke-path') ?? '';
-        const isOnboarding = pathname.includes('/admin/onboarding');
-        if (!isOnboarding) {
-          redirect('/admin/onboarding');
-        }
-      }
-    }
-  }
+  // Admin branch: no redirect — gated layout performs the actionable
+  // resolution (membership fallback + onboarding check). Helper call above
+  // exists purely for resolution-parity so the admin auth-chain never
+  // silently diverges on cold-SSR F5.
 
   return <>{children}</>;
 }

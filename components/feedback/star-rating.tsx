@@ -71,7 +71,7 @@ export default function StarRating({
                 ${sizeClasses[size]}
                 ${
                   value <= displayRating
-                    ? 'fill-yellow-400 text-yellow-400'
+                    ? 'fill-warning-400 text-warning-400'
                     : 'fill-none text-muted-foreground/50'
                 }
                 transition-colors

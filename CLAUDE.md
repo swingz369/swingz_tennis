@@ -1,7 +1,10 @@
 # SwingZ — Project Instructions
 
+@AGENTS.md
+
 > Automatisch bei jedem Session-Start geladen. Nur Dinge die NICHT aus dem Code offensichtlich sind.
 > Zuletzt verifiziert: 21. Juni 2026 (5-Rollen-Hierarchie: owner > superadmin > admin > trainer > member)
+> Doku-Governance-Regeln (welche Datei wohin, wann updaten statt neu anlegen): siehe `AGENTS.md`.
 
 ---
 
@@ -147,7 +150,7 @@ In `notifications`-Tabelle via Service-Client einfügen.
 
 ### Stripe
 
-- API-Version: `2026-05-27.dahlia`
+- API-Version: `2026-06-24.dahlia`
 - Checkout (Client, graceful — gibt `null` wenn nicht konfiguriert): `@/lib/stripe/client.ts`
 - Webhooks (Server, wirft Fehler wenn nicht konfiguriert): `@/lib/stripe/stripe-client.ts`
 - **Niemals** `stripe`-Package direkt importieren — immer diese Wrapper nutzen
@@ -208,14 +211,19 @@ Component-Tests verwenden `TestProviders` aus `src/__tests__/test-utils.tsx`.
 
 ## Test-Accounts (Entwicklung)
 
-| E-Mail                           | Rolle   | Details                            |
-| -------------------------------- | ------- | ---------------------------------- |
-| `admin@swingz.com`               | owner   | Plattformbetreiber (Swingz GmbH)   |
-| `admin@tc-rheinland.de`          | admin   | TC Rheinland e.V. (genau 1 Verein) |
-| `trainer.1-8@tc-rheinland.de`    | trainer | TC Rheinland e.V.                  |
-| `mitglied.1-120@tc-rheinland.de` | member  | TC Rheinland e.V.                  |
+| E-Mail                           | Rolle      | Details                                  |
+| -------------------------------- | ---------- | ---------------------------------------- |
+| `admin@swingz.com`               | owner      | Plattformbetreiber (Swingz GmbH)         |
+| `superadmin@ts-westfalen.de`     | superadmin | Tennisschule Westfalen (mehrere Vereine) |
+| `admin@tsv-dortmund.de`          | admin      | TSV Dortmund (genau 1 Verein)            |
+| `trainer.1-8@tc-rheinland.de`    | trainer    | TC Rheinland e.V.                        |
+| `mitglied.1-120@tc-rheinland.de` | member     | TC Rheinland e.V.                        |
 
-Passwörter: `TEST-CREDENTIALS.md` (nicht in Git).
+> ⚠️ `admin@tc-rheinland.de` existiert **nicht** mehr in Supabase-Auth (Stand 16.07.2026).
+> Die vier `TEST_*`-Accounts in `.env.local` (admin/superadmin/trainer/member) sind verifiziert;
+> ihre Passwörter wurden am 16.07.2026 per Admin-API auf die `.env.local`-Werte gesetzt.
+
+Passwörter: `TEST_*_PASSWORD` in `.env.local` (nicht in Git).
 
 ---
 

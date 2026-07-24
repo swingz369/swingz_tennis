@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
 import { AI_PROMPTS } from '@/lib/ai-prompts';
 import { apiFetch } from '@/lib/api-fetch';
 import { createLogger } from '@/lib/logger';
@@ -11,14 +12,35 @@ const env = process.env;
 
 /**
  * AI Analysis API for season planning
- * Accepts a prompt describing the generated plan and returns an AI analysis.
- * Falls back gracefully if the AI API key is not configured.
+ *
+ * Tier-4 (Audit): Server-side Premium-Gate in Ergänzung zum Client-seitigen
+ * `premium-upsell.tsx`. Der Client-Upsell allein reicht NICHT, weil Admins
+ * den Endpoint direkt per `curl` aufrufen könnten — daher prüfen wir
+ * serverseitig, ob `clubs.features.ai_analysis` aktiviert ist.
+ *
+ * Akzeptiert einen Prompt, der den generierten Plan beschreibt, und gibt
+ * eine KI-Analyse zurück. Falls der GOOGLE_GENERATIVE_AI_API_KEY fehlt,
+ * fällt der Endpoint graceful auf einen statischen Text zurück.
  */
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const isAdmin = await verifyRole(auth, 'admin');
     const isSuperadmin = await verifyRole(auth, 'superadmin');
     if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
+
+    // Server-side feature gate. Ohne aktives Modul → 403 auch für Admins.
+    // Owner/Superadmin dürfen die KI unabhängig vom Modul-Status nutzen
+    // (Plattform-Rolle — sie haben ohnehin globale Sicht auf alle Clubs
+    // und müssen KI zur Diagnose einsetzen können).
+    if (!isSuperadmin) {
+      if (!auth.clubId) {
+        return forbiddenResponse('KI-Analyse nur mit aktivem Vereins-Kontext verfügbar');
+      }
+      const features = await getClubFeatures(auth.supabase, auth.clubId);
+      if (!features.ai_analysis) {
+        return featureDisabledResponse('ai_analysis');
+      }
+    }
 
     try {
       const body = await request.json();

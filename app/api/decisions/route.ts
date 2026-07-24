@@ -19,27 +19,31 @@ const log = createLogger('api:decisions');
 
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
-    const hasRole = await verifyRole(auth, 'member');
-    if (!hasRole) {
-      // Members sehen nur completed-Beschlüsse (RLS);
-      // Admin/Trainer/Superadmin sehen alle.
-      const hasAdminRole = await verifyRole(auth, 'trainer');
-      if (!hasAdminRole) return forbiddenResponse('Keine Berechtigung.');
-    }
+    const hasMemberRole = await verifyRole(auth, 'member');
+    if (!hasMemberRole) return forbiddenResponse('Keine Berechtigung.');
+    const hasAdminRole = await verifyRole(auth, 'trainer'); // trainer/admin/superadmin
 
     if (!auth.clubId) return unauthorizedResponse('Club-Kontext fehlt');
 
     const statusParam = request.nextUrl.searchParams.get('status') as
-      | 'draft'
-      | 'scheduled'
-      | 'in_progress'
-      | 'completed'
-      | 'cancelled'
-      | null;
+      'draft' | 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | null;
+
+    // decisionService uses a service-role client (bypasses RLS), so plain
+    // members must never be handed 'draft' decisions regardless of what
+    // status they request — those aren't published/votable yet.
+    const effectiveStatus = hasAdminRole
+      ? (statusParam ?? undefined)
+      : statusParam === 'draft'
+        ? undefined // fall through to the default member-visible set below
+        : statusParam;
+
     try {
-      const decisions = await decisionService.listDecisions(auth.clubId, {
-        status: statusParam ?? undefined,
+      let decisions = await decisionService.listDecisions(auth.clubId, {
+        status: effectiveStatus ?? undefined,
       });
+      if (!hasAdminRole) {
+        decisions = decisions.filter((d) => d.status !== 'draft');
+      }
       return NextResponse.json({ decisions });
     } catch (err) {
       log.error('GET /api/decisions fehlgeschlagen', {

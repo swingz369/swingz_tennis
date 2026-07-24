@@ -9,7 +9,7 @@ export interface AvatarProps extends React.ComponentPropsWithoutRef<typeof Avata
 }
 
 const sizeClasses = {
-  xs: 'h-6 w-6 text-[11px]',
+  xs: 'h-6 w-6 text-2xs',
   sm: 'h-8 w-8 text-xs',
   md: 'h-10 w-10 text-sm',
   lg: 'h-12 w-12 text-base',
@@ -75,9 +75,9 @@ const statusSizeClasses = {
 };
 
 const statusColors = {
-  online: 'bg-green-500',
+  online: 'bg-success-500',
   offline: 'bg-muted-foreground',
-  busy: 'bg-red-500',
+  busy: 'bg-error-500',
 };
 
 const AvatarWithStatus = React.forwardRef<HTMLDivElement, AvatarWithStatusProps>(
@@ -101,7 +101,7 @@ const AvatarWithStatus = React.forwardRef<HTMLDivElement, AvatarWithStatusProps>
         ) : (
           <div
             className={cn(
-              'rounded-full bg-gradient-to-br from-brandPrimary to-brandPrimary/80 flex items-center justify-center font-semibold text-white ring-2 ring-white',
+              'rounded-full bg-gradient-to-br from-brand-primary to-brand-primary/80 flex items-center justify-center font-semibold text-white ring-2 ring-white',
               sizeClasses[size]
             )}
           >

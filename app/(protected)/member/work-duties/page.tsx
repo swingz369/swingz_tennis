@@ -1,5 +1,6 @@
 import { requireAuth } from '@/lib/auth';
 import WorkDutiesMemberClient from './work-duties-member-client';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const metadata = {
   title: 'Meine Arbeitsdienste — SwingZ',
@@ -30,7 +31,7 @@ export default async function MemberWorkDutiesPage() {
   const { data: club } = await supabase.from('clubs').select('features').eq('id', clubId).single();
 
   const features = (club?.features as Record<string, boolean>) ?? {};
-  if (features.work_duty === false) {
+  if (features.work_duty !== true) {
     return (
       <div className="p-4 md:p-6">
         <p className="text-muted-foreground">
@@ -42,12 +43,7 @@ export default async function MemberWorkDutiesPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-brand-primary">Arbeitsdienste</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Deine Dienste und verfügbare Einsätze
-        </p>
-      </div>
+      <PageHeader title="Arbeitsdienste" description="Deine Dienste und verfügbare Einsätze" />
       <WorkDutiesMemberClient userId={user.id} />
     </div>
   );

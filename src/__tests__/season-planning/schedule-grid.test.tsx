@@ -31,14 +31,8 @@ const noop = () => {};
 // ============================================
 
 describe('ScheduleGrid — rendering', () => {
-  it('should render day headers (Mo–So)', () => {
-    render(
-      <ScheduleGrid
-        plan={[]}
-        onSlotMove={noop}
-        onSlotUpdate={noop}
-      />
-    );
+  it('should render day headers Mo-Sa only (Sonntag ist kein Trainingstag)', () => {
+    render(<ScheduleGrid plan={[]} onSlotMove={noop} onSlotUpdate={noop} />);
 
     expect(screen.getByText('Mo')).toBeInTheDocument();
     expect(screen.getByText('Di')).toBeInTheDocument();
@@ -46,30 +40,18 @@ describe('ScheduleGrid — rendering', () => {
     expect(screen.getByText('Do')).toBeInTheDocument();
     expect(screen.getByText('Fr')).toBeInTheDocument();
     expect(screen.getByText('Sa')).toBeInTheDocument();
-    expect(screen.getByText('So')).toBeInTheDocument();
+    expect(screen.queryByText('So')).not.toBeInTheDocument();
   });
 
   it('should render the section title', () => {
-    render(
-      <ScheduleGrid
-        plan={[]}
-        onSlotMove={noop}
-        onSlotUpdate={noop}
-      />
-    );
+    render(<ScheduleGrid plan={[]} onSlotMove={noop} onSlotUpdate={noop} />);
 
     expect(screen.getByText('Wochenstundenplan')).toBeInTheDocument();
     expect(screen.getByText('Drag & Drop zum Verschieben')).toBeInTheDocument();
   });
 
   it('should render time rows from 08:00 to 21:00', () => {
-    render(
-      <ScheduleGrid
-        plan={[]}
-        onSlotMove={noop}
-        onSlotUpdate={noop}
-      />
-    );
+    render(<ScheduleGrid plan={[]} onSlotMove={noop} onSlotUpdate={noop} />);
 
     // Spot-check a few time labels
     expect(screen.getByText('08:00')).toBeInTheDocument();
@@ -86,13 +68,7 @@ describe('ScheduleGrid — rendering', () => {
 describe('ScheduleGrid — slot rendering', () => {
   it('should render a slot with group name and member count', () => {
     const plan = [makeSlot({ dayOfWeek: 1, startTime: '17:00' })];
-    render(
-      <ScheduleGrid
-        plan={plan}
-        onSlotMove={noop}
-        onSlotUpdate={noop}
-      />
-    );
+    render(<ScheduleGrid plan={plan} onSlotMove={noop} onSlotUpdate={noop} />);
 
     // Group name
     expect(screen.getByText('Gruppe A')).toBeInTheDocument();
@@ -106,13 +82,7 @@ describe('ScheduleGrid — slot rendering', () => {
       makeSlot({ id: 's1', dayOfWeek: 1, startTime: '17:00', groupName: 'Gruppe A' }),
       makeSlot({ id: 's2', dayOfWeek: 1, startTime: '17:00', groupName: 'Gruppe B' }),
     ];
-    render(
-      <ScheduleGrid
-        plan={plan}
-        onSlotMove={noop}
-        onSlotUpdate={noop}
-      />
-    );
+    render(<ScheduleGrid plan={plan} onSlotMove={noop} onSlotUpdate={noop} />);
 
     expect(screen.getByText('Gruppe A')).toBeInTheDocument();
     expect(screen.getByText('Gruppe B')).toBeInTheDocument();
@@ -120,13 +90,7 @@ describe('ScheduleGrid — slot rendering', () => {
 
   it('should apply the slot groupColor as gradient background', () => {
     const plan = [makeSlot({ dayOfWeek: 1, startTime: '17:00', groupColor: '#EF4444' })];
-    render(
-      <ScheduleGrid
-        plan={plan}
-        onSlotMove={noop}
-        onSlotUpdate={noop}
-      />
-    );
+    render(<ScheduleGrid plan={plan} onSlotMove={noop} onSlotUpdate={noop} />);
 
     // The component uses @dnd-kit with useDraggable — slot card uses
     // style={{ background: linear-gradient(...) }} not native [draggable]
@@ -141,13 +105,7 @@ describe('ScheduleGrid — slot rendering', () => {
 
   it('should show time and trainer in the slot info', () => {
     const plan = [makeSlot({ dayOfWeek: 1, startTime: '17:00' })];
-    render(
-      <ScheduleGrid
-        plan={plan}
-        onSlotMove={noop}
-        onSlotUpdate={noop}
-      />
-    );
+    render(<ScheduleGrid plan={plan} onSlotMove={noop} onSlotUpdate={noop} />);
 
     const timeEls = screen.getAllByText(/17:00/);
     expect(timeEls.length).toBeGreaterThanOrEqual(1);
@@ -167,13 +125,7 @@ describe('ScheduleGrid — drag behaviour', () => {
       makeSlot({ id: 's2', dayOfWeek: 1, startTime: '18:30', groupName: 'Gruppe B' }),
     ];
 
-    render(
-      <ScheduleGrid
-        plan={plan}
-        onSlotMove={noop}
-        onSlotUpdate={noop}
-      />
-    );
+    render(<ScheduleGrid plan={plan} onSlotMove={noop} onSlotUpdate={noop} />);
 
     // Component uses @dnd-kit useDraggable — slot cards have cursor-grab class
     // In jsdom, both slot cards should render with the cursor-grab class
@@ -188,13 +140,7 @@ describe('ScheduleGrid — drag behaviour', () => {
   it('should render slot cards with touchAction: none for mobile drag', () => {
     const plan = [makeSlot({ dayOfWeek: 1, startTime: '17:00' })];
 
-    render(
-      <ScheduleGrid
-        plan={plan}
-        onSlotMove={noop}
-        onSlotUpdate={noop}
-      />
-    );
+    render(<ScheduleGrid plan={plan} onSlotMove={noop} onSlotUpdate={noop} />);
 
     const slotEl = screen.getByText('Gruppe A').closest('div[class*="cursor-grab"]');
     expect(slotEl).toBeTruthy();
@@ -207,13 +153,7 @@ describe('ScheduleGrid — drag behaviour', () => {
     const plan = [makeSlot({ dayOfWeek: 1, startTime: '17:00' })];
 
     // Should render without throwing
-    render(
-      <ScheduleGrid
-        plan={plan}
-        onSlotMove={onSlotMove}
-        onSlotUpdate={noop}
-      />
-    );
+    render(<ScheduleGrid plan={plan} onSlotMove={onSlotMove} onSlotUpdate={noop} />);
 
     // The callback is wired but not triggered during render
     expect(onSlotMove).not.toHaveBeenCalled();
@@ -223,13 +163,7 @@ describe('ScheduleGrid — drag behaviour', () => {
     const onSlotUpdate = vi.fn();
     const plan = [makeSlot({ dayOfWeek: 1, startTime: '17:00' })];
 
-    render(
-      <ScheduleGrid
-        plan={plan}
-        onSlotMove={noop}
-        onSlotUpdate={onSlotUpdate}
-      />
-    );
+    render(<ScheduleGrid plan={plan} onSlotMove={noop} onSlotUpdate={onSlotUpdate} />);
 
     expect(onSlotUpdate).not.toHaveBeenCalled();
   });
@@ -237,13 +171,7 @@ describe('ScheduleGrid — drag behaviour', () => {
   it('should render droppable cells for each day/hour combination', () => {
     const plan = [makeSlot({ dayOfWeek: 1, startTime: '17:00' })];
 
-    render(
-      <ScheduleGrid
-        plan={plan}
-        onSlotMove={noop}
-        onSlotUpdate={noop}
-      />
-    );
+    render(<ScheduleGrid plan={plan} onSlotMove={noop} onSlotUpdate={noop} />);
 
     // Verify grid rendered with day headers and time labels
     expect(screen.getByText('Mo')).toBeInTheDocument();
@@ -257,13 +185,7 @@ describe('ScheduleGrid — drag behaviour', () => {
       makeSlot({ id: 's2', dayOfWeek: 2, startTime: '18:00', groupName: 'Gruppe B' }),
     ];
 
-    render(
-      <ScheduleGrid
-        plan={plan}
-        onSlotMove={noop}
-        onSlotUpdate={noop}
-      />
-    );
+    render(<ScheduleGrid plan={plan} onSlotMove={noop} onSlotUpdate={noop} />);
 
     expect(screen.getByText('2 Gruppen')).toBeInTheDocument();
   });

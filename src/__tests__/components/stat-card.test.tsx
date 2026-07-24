@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '../test-utils';
 import { StatCard } from '@/components/ui/stat-card';
 import { Users, Calendar, DollarSign } from 'lucide-react';
@@ -28,18 +28,18 @@ describe('StatCard Component', () => {
 
   it('should apply custom iconClassName', () => {
     const { container } = render(
-      <StatCard icon={Users} value={8} label="Test" iconClassName="bg-blue-100" />
+      <StatCard icon={Users} value={8} label="Test" iconClassName="bg-info-100" />
     );
     const iconContainer = container.querySelector('.h-10.w-10');
-    expect(iconContainer).toHaveClass('bg-blue-100');
+    expect(iconContainer).toHaveClass('bg-info-100');
   });
 
   it('should apply custom valueClassName to value and icon', () => {
     const { container } = render(
-      <StatCard icon={Users} value={99} label="Test" valueClassName="text-green-600" />
+      <StatCard icon={Users} value={99} label="Test" valueClassName="text-success-600" />
     );
     const valueElement = container.querySelector('.text-2xl.font-bold');
-    expect(valueElement).toHaveClass('text-green-600');
+    expect(valueElement).toHaveClass('text-success-600');
   });
 
   it('should apply custom className', () => {
@@ -53,7 +53,7 @@ describe('StatCard Component', () => {
   it('should render with default blue icon background', () => {
     const { container } = render(<StatCard icon={Users} value={7} label="Test" />);
     const iconContainer = container.querySelector('.h-10.w-10');
-    expect(iconContainer).toHaveClass('bg-blue-50');
+    expect(iconContainer).toHaveClass('bg-info-50');
   });
 
   it('should handle zero value', () => {

@@ -15,25 +15,32 @@ test.describe('Sidebar Navigation by Role', () => {
       await page.goto('/superadmin', { waitUntil: 'networkidle' });
       const sidebar = page.locator('aside[role="navigation"]');
       await expect(sidebar).toBeVisible({ timeout: 10000 });
-      // Platform-wide links
-      await expect(sidebar.getByRole('link', { name: /Superadmin Dashboard/i })).toBeVisible();
-      await expect(sidebar.getByRole('link', { name: /Vereinsübersicht/i })).toBeVisible();
-      await expect(sidebar.getByRole('link', { name: /Club-Verwaltung/i })).toBeVisible();
-      await expect(sidebar.getByRole('link', { name: /Plattform-Analyse/i })).toBeVisible();
-      // Section labels
-      await expect(sidebar.getByRole('heading', { name: /Plattform/i })).toBeVisible();
-      await expect(sidebar.getByRole('heading', { name: /Verwaltung/i })).toBeVisible();
+      // Section buttons (Collapsibles, siehe lib/navigation.ts superadminSidebarSections)
+      const meineVereine = sidebar.getByRole('button', { name: /Meine Vereine/i });
+      await expect(meineVereine).toBeVisible();
+      await expect(sidebar.getByRole('button', { name: /Verwaltung/i })).toBeVisible();
+      // Expand → platform-wide items (getByText — unabhängig von der Link-Rolle)
+      if ((await meineVereine.getAttribute('aria-expanded')) !== 'true') {
+        await meineVereine.click();
+      }
+      await expect(sidebar.getByText('Vereinsübersicht')).toBeVisible();
+      await expect(sidebar.getByText('Admins verwalten')).toBeVisible();
       // Club-scoped admin items should NOT be visible
-      await expect(sidebar.getByText('Saisonplanung')).not.toBeVisible();
       await expect(sidebar.getByText('Alle Mitglieder')).not.toBeVisible();
+      await expect(sidebar.getByRole('button', { name: /Spielbetrieb/i })).not.toBeVisible();
     });
 
     test('shows Verwaltung settings section', async ({ page }) => {
       await page.goto('/superadmin', { waitUntil: 'networkidle' });
       const sidebar = page.locator('aside[role="navigation"]');
       await expect(sidebar).toBeVisible({ timeout: 10000 });
-      await expect(sidebar.getByRole('heading', { name: /Verwaltung/i })).toBeVisible();
-      await expect(sidebar.getByText('Plattform-Verwaltung')).toBeVisible();
+      const verwaltung = sidebar.getByRole('button', { name: /Verwaltung/i });
+      await expect(verwaltung).toBeVisible();
+      if ((await verwaltung.getAttribute('aria-expanded')) !== 'true') {
+        await verwaltung.click();
+      }
+      await expect(sidebar.getByText('Statistiken')).toBeVisible();
+      await expect(sidebar.getByText('Einstellungen')).toBeVisible();
     });
   });
 
@@ -46,19 +53,15 @@ test.describe('Sidebar Navigation by Role', () => {
       await page.goto('/admin', { waitUntil: 'networkidle' });
       const sidebar = page.locator('aside[role="navigation"]');
       await expect(sidebar).toBeVisible({ timeout: 10000 });
-      // Übersicht section heading and Dashboard link
-      await expect(sidebar.getByRole('heading', { name: /Übersicht/i })).toBeVisible();
-      await expect(sidebar.getByRole('link', { name: /Dashboard/i })).toBeVisible();
-      // Section header buttons
+      // Section header buttons (siehe lib/navigation.ts adminSidebarSections)
       await expect(sidebar.getByRole('button', { name: /Mitglieder/i })).toBeVisible();
       await expect(sidebar.getByRole('button', { name: /Training/i })).toBeVisible();
-      await expect(sidebar.getByRole('button', { name: /Plätze & Buchungen/i })).toBeVisible();
+      await expect(sidebar.getByRole('button', { name: /Spielbetrieb/i })).toBeVisible();
       await expect(sidebar.getByRole('button', { name: /Finanzen/i })).toBeVisible();
-      await expect(sidebar.getByRole('button', { name: /Einstellungen/i })).toBeVisible();
+      await expect(sidebar.getByRole('button', { name: /Vereinsführung/i })).toBeVisible();
       // Superadmin items should NOT be visible
-      await expect(sidebar.getByText('Superadmin Dashboard')).not.toBeVisible();
       await expect(sidebar.getByText('Vereinsübersicht')).not.toBeVisible();
-      await expect(sidebar.getByRole('heading', { name: /Plattform/i })).not.toBeVisible();
+      await expect(sidebar.getByRole('button', { name: /Meine Vereine/i })).not.toBeVisible();
     });
   });
 
@@ -77,9 +80,8 @@ test.describe('Sidebar Navigation by Role', () => {
       await expect(bottomNav).toBeVisible({ timeout: 10000 });
       await expect(bottomNav.getByRole('link', { name: /Übersicht/i })).toBeVisible();
       await expect(bottomNav.getByRole('link', { name: /Einheiten/i })).toBeVisible();
-      await expect(bottomNav.getByRole('link', { name: /Anwesenheit/i })).toBeVisible();
       await expect(bottomNav.getByRole('link', { name: /Verfügbarkeit/i })).toBeVisible();
-      await expect(bottomNav.getByRole('link', { name: /Profil/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /Saisonplanung/i })).toBeVisible();
     });
   });
 
@@ -97,8 +99,8 @@ test.describe('Sidebar Navigation by Role', () => {
       const bottomNav = page.locator('nav[aria-label="Navigation"]');
       await expect(bottomNav).toBeVisible({ timeout: 10000 });
       await expect(bottomNav.getByRole('link', { name: /Home/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /Stundenplan/i })).toBeVisible();
       await expect(bottomNav.getByRole('link', { name: /Buchen/i })).toBeVisible();
-      await expect(bottomNav.getByRole('link', { name: /Chat/i })).toBeVisible();
       await expect(bottomNav.getByRole('link', { name: /Rechnungen/i })).toBeVisible();
       // Profil removed — accessible via user menu in header
     });
@@ -114,9 +116,10 @@ test.describe('Sidebar Navigation by Role', () => {
       await page.goto('/superadmin', { waitUntil: 'networkidle' });
       const sidebar = page.locator('aside[role="navigation"]');
       await expect(sidebar).toBeVisible({ timeout: 10000 });
-      // Superadmin should see Plattform items but NOT admin-specific section labels
-      await expect(sidebar.getByRole('heading', { name: /Plattform/i })).toBeVisible();
-      await expect(sidebar.getByText('Mitglieder')).not.toBeVisible();
+      // Superadmin sieht eigene Sektionen, aber keine club-scoped Admin-Sektionen
+      await expect(sidebar.getByRole('button', { name: /Meine Vereine/i })).toBeVisible();
+      await expect(sidebar.getByRole('button', { name: /Spielbetrieb/i })).not.toBeVisible();
+      await expect(sidebar.getByRole('button', { name: /Vereinsführung/i })).not.toBeVisible();
     });
   });
 });

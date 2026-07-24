@@ -34,18 +34,25 @@ export async function generateAIAnalysis(input: AIAnalysisInput): Promise<string
   } = input;
 
   try {
+    // Datenschutz: Klarnamen (Mitglieder, Trainer) verlassen die App nicht in
+    // Richtung Gemini. Trainer werden pro Aufruf pseudonymisiert (damit die
+    // Analyse Auslastungs-Muster über Gruppen hinweg noch erkennen kann),
+    // Mitgliedernamen werden komplett weggelassen — nur Zählwerte sind nötig.
+    const trainerPseudonyms = new Map<string, string>();
+    const pseudonymFor = (name: string) => {
+      if (!trainerPseudonyms.has(name)) {
+        trainerPseudonyms.set(name, `Trainer ${String.fromCharCode(65 + trainerPseudonyms.size)}`);
+      }
+      return trainerPseudonyms.get(name)!;
+    };
+
     const planSummary = plan
       .slice(0, 15)
       .map(
         (s) =>
-          `${s.groupName}: ${DNAMES[s.dayOfWeek]} ${s.startTime} · ${s.trainerName} · ${s.courtName} · ${s.memberNames.length} Teilnehmer (${s.memberNames.join(', ')})`
+          `${s.groupName}: ${DNAMES[s.dayOfWeek]} ${s.startTime} · ${pseudonymFor(s.trainerName)} · ${s.courtName} · ${s.memberNames.length} Teilnehmer`
       )
       .join('\n');
-
-    const notPlannedNames = membersNotPlanned
-      .slice(0, 5)
-      .map((m) => m.name)
-      .join(', ');
 
     const userPrompt = `Analysiere diesen automatisch generierten Trainingsplan (max. 150 Wörter auf Deutsch).
 
@@ -55,7 +62,7 @@ ${planSummary}${plan.length > 15 ? `\n... und ${plan.length - 15} weitere Gruppe
 STATISTIK:
 - ${totalMembersPlanned} von ${totalMembers} Mitgliedern eingeplant
 - ${membersMultipleGroups} Mitglieder trainieren mehrfach pro Woche
-- ${membersNotPlanned.length} nicht eingeplant${notPlannedNames ? ': ' + notPlannedNames : ''}
+- ${membersNotPlanned.length} nicht eingeplant
 - Saison: ${seasonStart} bis ${seasonEnd} (${activeWeeks} Trainingswochen)
 
 Bewerte:

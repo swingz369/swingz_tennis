@@ -156,7 +156,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
       const { error } = await serviceRoleClient
         .from('billing_periods')
         .update({ status: 'processing' })
-        .eq('id', period.id);
+        .eq('id', period!.id);
 
       expect(error).toBeNull();
     });
@@ -175,7 +175,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
       const { error } = await serviceRoleClient
         .from('billing_periods')
         .delete()
-        .eq('id', period.id);
+        .eq('id', period!.id);
 
       expect(error).toBeNull();
     });
@@ -252,7 +252,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
         .eq('trainer_id', testTrainerId);
 
       expect(error).toBeNull();
-      expect(data.length).toBeGreaterThan(0);
+      expect(data!.length).toBeGreaterThan(0);
     });
 
     it('club admins can view all hours logs in their club', async () => {
@@ -338,7 +338,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
             approved_by: trainersWithUser[0].user_id,
             approved_at: new Date().toISOString(),
           })
-          .eq('id', absence.id);
+          .eq('id', absence!.id);
 
         expect(error).toBeNull();
       }
@@ -365,7 +365,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
         .eq('is_active', true);
 
       expect(error).toBeNull();
-      expect(data.length).toBeGreaterThan(0);
+      expect(data!.length).toBeGreaterThan(0);
     });
 
     it('admin can create fee configurations', async () => {
@@ -409,7 +409,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
         .eq('club_id', testClubId);
 
       expect(error).toBeNull();
-      expect(data.length).toBeGreaterThan(0);
+      expect(data!.length).toBeGreaterThan(0);
     });
   });
 
@@ -437,7 +437,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
         .eq('club_id', testClubId);
 
       expect(error).toBeNull();
-      expect(data.length).toBeGreaterThan(0);
+      expect(data!.length).toBeGreaterThan(0);
     });
 
     it('global settings have null club_id', async () => {
@@ -456,7 +456,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
         .eq('key', 'global_test');
 
       expect(error).toBeNull();
-      expect(data.length).toBeGreaterThan(0);
+      expect(data!.length).toBeGreaterThan(0);
     });
   });
 
@@ -485,7 +485,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
         .eq('club_id', testClubId);
 
       expect(error).toBeNull();
-      expect(data.length).toBeGreaterThan(0);
+      expect(data!.length).toBeGreaterThan(0);
     });
   });
 
@@ -522,7 +522,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
           .eq('status', 'active');
 
         expect(error).toBeNull();
-        expect(data.length).toBeGreaterThan(0);
+        expect(data!.length).toBeGreaterThan(0);
       }
     });
 
@@ -545,7 +545,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
           const { error } = await serviceRoleClient
             .from('trainer_profiles')
             .update({ bio: 'Updated bio' })
-            .eq('id', profile.id);
+            .eq('id', profile!.id);
 
           expect(error).toBeNull();
         }
@@ -568,7 +568,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
         .eq('club_id', testClubId);
 
       expect(error).toBeNull();
-      expect(data.length).toBeGreaterThan(0);
+      expect(data!.length).toBeGreaterThan(0);
     });
 
     it('trainer can view their assigned rate', async () => {
@@ -603,7 +603,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
         .eq('club_id', testClubId);
 
       expect(error).toBeNull();
-      expect(data.length).toBeGreaterThan(0);
+      expect(data!.length).toBeGreaterThan(0);
     });
 
     it('member can view their own mandate', async () => {
@@ -628,7 +628,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
         .eq('member_id', memberId);
 
       expect(error).toBeNull();
-      expect(data.length).toBeGreaterThan(0);
+      expect(data!.length).toBeGreaterThan(0);
     });
   });
 

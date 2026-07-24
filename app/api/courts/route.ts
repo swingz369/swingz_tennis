@@ -8,7 +8,6 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:courts');
@@ -22,21 +21,10 @@ export async function GET(req: NextRequest) {
     if (rateLimitError) return rateLimitError;
 
     const url = new URL(req.url);
-    let clubId = url.searchParams.get('clubId');
-
-    // If no clubId in query, use from auth context
-    if (!clubId) {
-      if (auth.role === 'superadmin') {
-        const cookieClubId = req.cookies.get(ADMIN_CLUB_COOKIE)?.value;
-        if (!cookieClubId) {
-          return NextResponse.json({ error: 'clubId required' }, { status: 400 });
-        }
-        clubId = cookieClubId;
-      } else {
-        clubId = auth.clubId;
-      }
-    }
-
+    // auth.clubId was resolved by withApiAuth → resolveActiveClub, honoring
+    // ADMIN_CLUB_COOKIE for superadmin (club-exists) and members/admins (membership).
+    // Query ?clubId= still wins for explicit overrides.
+    const clubId = url.searchParams.get('clubId') ?? auth.clubId;
     if (!clubId) {
       return NextResponse.json({ error: 'clubId required' }, { status: 400 });
     }
@@ -44,9 +32,10 @@ export async function GET(req: NextRequest) {
     const { data: courts, error } = await auth.supabase
       .from('courts')
       .select(
-        'id, club_id, court_type_id, name, surface, has_indoor, has_lighting, is_active, created_at'
+        'id, club_id, court_type_id, name, number, surface, has_indoor, has_lighting, is_active, usable_for_training, created_at'
       )
       .eq('club_id', clubId)
+      .eq('is_active', true)
       .order('name', { ascending: true });
 
     if (error) {
@@ -59,7 +48,7 @@ export async function GET(req: NextRequest) {
       clubId: c.club_id,
       courtTypeId: c.court_type_id,
       name: c.name,
-      number: null,
+      number: c.number,
       surface: c.surface ?? 'clay',
       location: null,
       description: null,
@@ -67,6 +56,7 @@ export async function GET(req: NextRequest) {
       hasLighting: c.has_lighting ?? false,
       hasIndoor: c.has_indoor ?? false,
       isActive: c.is_active ?? true,
+      usableForTraining: c.usable_for_training ?? true,
       createdAt: c.created_at,
     }));
 
@@ -85,38 +75,55 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
-    const { name, hasLighting, clubId: bodyClubId, isActive } = body;
+    const {
+      name,
+      hasLighting,
+      clubId: bodyClubId,
+      isActive,
+      usableForTraining,
+      courtTypeId,
+      number,
+    } = body;
 
     if (!name) {
       return NextResponse.json({ error: 'name is required' }, { status: 400 });
     }
 
-    // Determine effective clubId
-    let effectiveClubId: string | null = null;
-    if (auth.role === 'superadmin') {
-      effectiveClubId = bodyClubId || req.cookies.get(ADMIN_CLUB_COOKIE)?.value || null;
-      if (!effectiveClubId) {
-        return NextResponse.json({ error: 'clubId required for superadmin' }, { status: 400 });
-      }
-    } else {
-      effectiveClubId = auth.clubId;
+    if (!courtTypeId) {
+      return NextResponse.json({ error: 'courtTypeId is required' }, { status: 400 });
     }
 
+    if (!Number.isInteger(number) || number <= 0) {
+      return NextResponse.json({ error: 'number must be a positive integer' }, { status: 400 });
+    }
+
+    // Determine effective clubId. auth.clubId is the cookie-aware resolved club
+    // for the caller; body.clubId still wins for superadmin overrides. For
+    // non-superadmins, body.clubId is intentionally NOT honored — admin/trainer
+    // membership is pinned to exactly one club (or trainers can be cross-club
+    // but cannot create courts in clubs they don't manage).
+    const effectiveClubId: string | null =
+      auth.role === 'superadmin' ? (bodyClubId ?? auth.clubId) : auth.clubId;
     if (!effectiveClubId) {
-      return NextResponse.json({ error: 'No club context' }, { status: 400 });
+      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
     }
 
     const { data: court, error } = await auth.supabase
       .from('courts')
       .insert({
         club_id: effectiveClubId,
+        court_type_id: courtTypeId,
         name,
+        number,
         surface: body.surface ?? 'clay',
         has_indoor: body.hasIndoor ?? false,
         has_lighting: hasLighting ?? false,
         is_active: isActive ?? true,
+        usable_for_training: usableForTraining ?? true,
       })
-      .select()
+      .select(
+        'id, club_id, court_type_id, name, number, location, surface, status, has_indoor, has_lighting, is_active, usable_for_training, created_at'
+      )
       .single();
 
     if (error) {
@@ -124,22 +131,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        court: {
-          id: court.id,
-          clubId: court.club_id,
-          name: court.name,
-          number: court.number,
-          location: court.location,
-          hasLighting: court.has_lighting,
-          isActive: court.is_active,
-          status: court.status,
-          createdAt: court.created_at,
-        },
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({ success: true, court }, { status: 201 });
   });
 }

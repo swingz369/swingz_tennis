@@ -36,6 +36,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
         return NextResponse.json({ error: 'Season not found' }, { status: 404 });
       }
 
+      if (!isSuperadmin) {
+        const hasClubAccess = auth.memberships.some(
+          (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
+        );
+        if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
+      }
+
       // 2. Get active members for this club
       const { data: memberships, error: membErr } = await sb
         .from('user_club_memberships')

@@ -27,7 +27,7 @@ describeIntegration('Payment Flow Integration Tests', () => {
     // Create test club
     const { data: club, error: clubError } = await supabase
       .from('clubs')
-      .insert({ name: `Payment Test Club ${Date.now()}`, opening_hours: {} })
+      .insert({ name: `Payment Test Club ${Date.now()}`, opening_hours: {} } as never)
       .select('id')
       .single();
 
@@ -51,13 +51,18 @@ describeIntegration('Payment Flow Integration Tests', () => {
     testMemberId = authUser.user.id;
 
     // Insert into users/profile table
-    await supabase.from('users').upsert({
+    // The `as any` cast bypasses Supabase's typed-schema mismatch (test
+    // uses dynamic field names that the generated types don't know about).
+    // NB: public.users hat keine role-Spalte — Rolle lebt in user_club_memberships.
+    const { error: profileError } = await supabase.from('users').upsert({
       id: testMemberId,
       email,
       full_name: 'Payment Test User',
-      role: 'member',
       created_at: new Date().toISOString(),
-    });
+    } as any);
+    if (profileError) {
+      throw new Error(`Failed to create user profile: ${profileError.message}`);
+    }
   });
 
   afterAll(async () => {
@@ -271,6 +276,7 @@ describeIntegration('Payment Flow Integration Tests', () => {
           invoice_id: overdueInvoice.id,
           level: 1,
           due_date: '2026-01-15',
+          is_b2b: false,
         });
 
         expect(d1).toBeDefined();
@@ -283,6 +289,7 @@ describeIntegration('Payment Flow Integration Tests', () => {
           invoice_id: overdueInvoice.id,
           level: 2,
           due_date: '2026-01-29',
+          is_b2b: false,
         });
 
         expect(d2.level).toBe(2);

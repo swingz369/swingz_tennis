@@ -209,7 +209,6 @@ function formatJsonReport(results: SkillResult[], readmeSkills: string[]): strin
 function main() {
   const args = process.argv.slice(2);
   const jsonMode = args.includes('--json') || args.includes('-j');
-  const webhook = process.env.SKILLS_WEBHOOK_URL || process.env.SLACK_WEBHOOK_URL || null;
 
   const cwd = process.cwd();
   const skillsDir = resolve(cwd, '.codebuff/skills');

@@ -57,17 +57,35 @@ export async function GET(request: NextRequest) {
       const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
       // ── 1. Alle aktiven Mitglieder abrufen (ein Query) ──
-      const { data: members, error: membersError } = (await supabase
+      // Kein `users!inner(...)`-Embed: user_club_memberships.user_id hat keinen FK
+      // auf users.id (nur deactivated_by), PostgREST würde den Embed sonst über
+      // deactivated_by auflösen und aktive Mitglieder (deactivated_by = NULL) rausfiltern.
+      const { data: memberships, error: membersError } = (await supabase
         .from('user_club_memberships')
-        .select('user_id, users!inner(full_name, email), created_at')
+        .select('user_id, created_at')
         .eq('club_id', clubId)
-        .eq('is_active', true)) as { data: MemberWithUser[] | null; error: unknown };
+        .eq('is_active', true)) as {
+        data: { user_id: string; created_at: string | null }[] | null;
+        error: unknown;
+      };
 
-      if (membersError || !members || members.length === 0) {
+      if (membersError || !memberships || memberships.length === 0) {
         return NextResponse.json({ atRisk: [], churnRiskRate: 0, totalMembers: 0, trends: [] });
       }
 
-      const memberIds = members.map((m) => m.user_id);
+      const memberIds = memberships.map((m) => m.user_id);
+
+      const { data: usersData } = await supabase
+        .from('users')
+        .select('id, full_name, email')
+        .in('id', memberIds);
+
+      const userMap = new Map((usersData ?? []).map((u) => [u.id, u]));
+      const members: MemberWithUser[] = memberships.map((m) => ({
+        user_id: m.user_id,
+        created_at: m.created_at,
+        users: userMap.get(m.user_id) ?? null,
+      }));
 
       // ── 2. Batch: Attendance Records (ein Query) ──
       const { data: attendanceRecords } = (await supabase

@@ -195,21 +195,21 @@ export default function SEPAMandateSigning() {
   if (isSigned) {
     return (
       <div className="p-4 md:p-6 space-y-6">
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-success-200 bg-success-50">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <div className="flex justify-center">
-                <CheckCircle className="h-16 w-16 text-green-600" />
+                <CheckCircle className="h-16 w-16 text-success-600" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-green-900 mb-2">
+                <h2 className="text-2xl font-bold text-success-900 mb-2">
                   SEPA-Mandat erfolgreich unterzeichnet
                 </h2>
-                <p className="text-green-700">
+                <p className="text-success-700">
                   Dein SEPA-Lastschriftmandat wurde erfolgreich gespeichert.
                 </p>
               </div>
-              <div className="bg-background rounded-lg p-4 text-left space-y-2">
+              <div className="bg-background rounded-xl p-4 text-left space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Kontoinhaber:</span>
                   <span className="font-medium">{formData.accountHolder}</span>
@@ -288,10 +288,10 @@ export default function SEPAMandateSigning() {
                     value={formData.accountHolder}
                     onChange={handleChange}
                     placeholder="Max Mustermann"
-                    className={errors.accountHolder ? 'border-red-500' : ''}
+                    className={errors.accountHolder ? 'border-error-500' : ''}
                   />
                   {errors.accountHolder && (
-                    <p className="text-sm text-red-600">{errors.accountHolder}</p>
+                    <p className="text-sm text-error-600">{errors.accountHolder}</p>
                   )}
                 </div>
 
@@ -303,9 +303,9 @@ export default function SEPAMandateSigning() {
                     value={formData.iban}
                     onChange={handleChange}
                     placeholder="DE89 3704 0044 0532 0130 00"
-                    className={errors.iban ? 'border-red-500' : ''}
+                    className={errors.iban ? 'border-error-500' : ''}
                   />
-                  {errors.iban && <p className="text-sm text-red-600">{errors.iban}</p>}
+                  {errors.iban && <p className="text-sm text-error-600">{errors.iban}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -316,9 +316,9 @@ export default function SEPAMandateSigning() {
                     value={formData.bic}
                     onChange={handleChange}
                     placeholder="z.B. MARKDEF1100"
-                    className={errors.bic ? 'border-red-500' : ''}
+                    className={errors.bic ? 'border-error-500' : ''}
                   />
-                  {errors.bic && <p className="text-sm text-red-600">{errors.bic}</p>}
+                  {errors.bic && <p className="text-sm text-error-600">{errors.bic}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -329,9 +329,9 @@ export default function SEPAMandateSigning() {
                     value={formData.bankName}
                     onChange={handleChange}
                     placeholder="Commerzbank"
-                    className={errors.bankName ? 'border-red-500' : ''}
+                    className={errors.bankName ? 'border-error-500' : ''}
                   />
-                  {errors.bankName && <p className="text-sm text-red-600">{errors.bankName}</p>}
+                  {errors.bankName && <p className="text-sm text-error-600">{errors.bankName}</p>}
                 </div>
               </div>
             </div>
@@ -348,9 +348,9 @@ export default function SEPAMandateSigning() {
                     value={formData.street}
                     onChange={handleChange}
                     placeholder="Musterstraße"
-                    className={errors.street ? 'border-red-500' : ''}
+                    className={errors.street ? 'border-error-500' : ''}
                   />
-                  {errors.street && <p className="text-sm text-red-600">{errors.street}</p>}
+                  {errors.street && <p className="text-sm text-error-600">{errors.street}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -361,10 +361,10 @@ export default function SEPAMandateSigning() {
                     value={formData.houseNumber}
                     onChange={handleChange}
                     placeholder="123"
-                    className={errors.houseNumber ? 'border-red-500' : ''}
+                    className={errors.houseNumber ? 'border-error-500' : ''}
                   />
                   {errors.houseNumber && (
-                    <p className="text-sm text-red-600">{errors.houseNumber}</p>
+                    <p className="text-sm text-error-600">{errors.houseNumber}</p>
                   )}
                 </div>
 
@@ -376,9 +376,11 @@ export default function SEPAMandateSigning() {
                     value={formData.postalCode}
                     onChange={handleChange}
                     placeholder="12345"
-                    className={errors.postalCode ? 'border-red-500' : ''}
+                    className={errors.postalCode ? 'border-error-500' : ''}
                   />
-                  {errors.postalCode && <p className="text-sm text-red-600">{errors.postalCode}</p>}
+                  {errors.postalCode && (
+                    <p className="text-sm text-error-600">{errors.postalCode}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -389,9 +391,9 @@ export default function SEPAMandateSigning() {
                     value={formData.city}
                     onChange={handleChange}
                     placeholder="Musterstadt"
-                    className={errors.city ? 'border-red-500' : ''}
+                    className={errors.city ? 'border-error-500' : ''}
                   />
-                  {errors.city && <p className="text-sm text-red-600">{errors.city}</p>}
+                  {errors.city && <p className="text-sm text-error-600">{errors.city}</p>}
                 </div>
               </div>
             </div>
@@ -408,10 +410,10 @@ export default function SEPAMandateSigning() {
                     value={formData.mandateReference}
                     onChange={handleChange}
                     placeholder="SWINGZ-001234"
-                    className={errors.mandateReference ? 'border-red-500' : ''}
+                    className={errors.mandateReference ? 'border-error-500' : ''}
                   />
                   {errors.mandateReference && (
-                    <p className="text-sm text-red-600">{errors.mandateReference}</p>
+                    <p className="text-sm text-error-600">{errors.mandateReference}</p>
                   )}
                   <p className="text-xs text-muted-foreground">
                     Wird automatisch generiert, wenn leer gelassen
@@ -453,7 +455,7 @@ export default function SEPAMandateSigning() {
                   </p>
                 </div>
               </div>
-              {errors.acceptTerms && <p className="text-sm text-red-600">{errors.acceptTerms}</p>}
+              {errors.acceptTerms && <p className="text-sm text-error-600">{errors.acceptTerms}</p>}
 
               <div className="flex items-start gap-3">
                 <Checkbox
@@ -475,7 +477,7 @@ export default function SEPAMandateSigning() {
                 </div>
               </div>
               {errors.acceptDirectDebit && (
-                <p className="text-sm text-red-600">{errors.acceptDirectDebit}</p>
+                <p className="text-sm text-error-600">{errors.acceptDirectDebit}</p>
               )}
             </div>
 
@@ -491,13 +493,13 @@ export default function SEPAMandateSigning() {
       </Card>
 
       {/* Additional Information */}
-      <Card className="bg-blue-50 border-blue-200">
+      <Card className="bg-info-50 border-info-200">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-            <div className="space-y-2 text-sm text-blue-900">
+            <AlertCircle className="h-5 w-5 text-info-600 mt-0.5" />
+            <div className="space-y-2 text-sm text-info-900">
               <p className="font-medium">Wichtige Informationen</p>
-              <ul className="list-disc list-inside space-y-1 text-blue-800">
+              <ul className="list-disc list-inside space-y-1 text-info-800">
                 <li>Dieses Mandat gilt für alle Zahlungen an SwingZ Tennis Club</li>
                 <li>Du kannst dieses Mandat jederzeit schriftlich widerrufen</li>
                 <li>Die Gläubiger-Identifikationsnummer: DE98ZZZ00000000000</li>

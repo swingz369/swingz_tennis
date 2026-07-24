@@ -1,0 +1,119 @@
+/**
+ * POST /api/admin/nuliga/import
+ * 1.3.3 — CSV-Import-Fallback: Tabelle (standings) + Spielplan (matches)
+ * Multipart, 1 MB cap, idempotenter Upsert.
+ */
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createServiceClient } from '@/lib/supabase/service';
+import { createLogger } from '@/lib/logger';
+import {
+  parseStandingsCsv,
+  parseMatchesCsv,
+  NuligaCsvParseError,
+} from '@/lib/services/nuliga-csv-parser';
+
+const log = createLogger('api:admin:nuliga:import');
+const MAX_BYTES = 1_048_576; // 1 MB
+
+async function readFilePart(part: File): Promise<string> {
+  if (part.size > MAX_BYTES) throw new Error(`Datei zu groß (max 1 MB): ${part.name}`);
+  return part.text();
+}
+
+export async function POST(req: NextRequest) {
+  return withApiAuth(req, async (auth) => {
+    const canImport =
+      (await verifyRole(auth, 'admin')) ||
+      (await verifyRole(auth, 'superadmin')) ||
+      (await verifyRole(auth, 'owner'));
+    if (!canImport) return forbiddenResponse('Admin-Zugriff erforderlich');
+
+    const form = await req.formData();
+    const leagueId = form.get('leagueId') as string | null;
+    const teamName = (form.get('teamName') as string | null) ?? '';
+    const standingsFile = form.get('standings') as File | null;
+    const matchesFile = form.get('matches') as File | null;
+
+    if (!leagueId) return NextResponse.json({ error: 'leagueId fehlt' }, { status: 400 });
+
+    const sb = createServiceClient();
+    let standingsImported = 0;
+    let matchesImported = 0;
+
+    try {
+      if (standingsFile) {
+        const csv = await readFilePart(standingsFile);
+        const rows = parseStandingsCsv(csv);
+        for (const row of rows) {
+          const { error } = await (sb as any).from('teams').upsert(
+            {
+              league_id: leagueId,
+              club_id: auth.clubId,
+              name: row.name,
+              position: row.rank,
+              matches_played: row.matchesPlayed,
+              matches_won: row.wins,
+              matches_drawn: row.draws,
+              matches_lost: row.losses,
+              points: row.points,
+            },
+            { onConflict: 'league_id,name' }
+          );
+          if (error)
+            throw new Error(`Tabellen-Import fehlgeschlagen (${row.name}): ${error.message}`);
+          standingsImported++;
+        }
+      }
+
+      if (matchesFile) {
+        const csv = await readFilePart(matchesFile);
+        const rows = parseMatchesCsv(csv, teamName);
+        for (const row of rows) {
+          const { error } = await (sb as any).from('match_days').upsert(
+            {
+              league_id: leagueId,
+              matchday_number: row.matchdayNumber,
+              opponent: row.opponent,
+              scheduled_date: row.scheduledDate?.toISOString() ?? null,
+              is_home: row.isHome,
+              status: 'scheduled',
+            },
+            { onConflict: 'league_id,matchday_number' }
+          );
+          if (error)
+            throw new Error(
+              `Spielplan-Import fehlgeschlagen (Spieltag ${row.matchdayNumber}): ${error.message}`
+            );
+          matchesImported++;
+        }
+      }
+
+      void (async () => {
+        try {
+          await (sb as any).from('nuliga_sync_log').insert({
+            league_id: leagueId,
+            club_id: auth.clubId,
+            trigger: 'csv_import',
+            status: 'success',
+            details: { standingsImported, matchesImported, actor_id: auth.user.id },
+          });
+        } catch (err) {
+          log.error('sync_log insert failed', err instanceof Error ? err : undefined);
+        }
+      })();
+
+      return NextResponse.json({ standingsImported, matchesImported });
+    } catch (err) {
+      const msg =
+        err instanceof NuligaCsvParseError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : 'Import fehlgeschlagen';
+      log.error('nuliga csv import error', err instanceof Error ? err : undefined);
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
+  });
+}

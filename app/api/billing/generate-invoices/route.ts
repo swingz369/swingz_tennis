@@ -10,7 +10,6 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:billing:generate-invoices');
@@ -52,18 +51,21 @@ interface InvoicePreviewData {
 // ─── Shared helper ───────────────────────────────────────────────────────────
 
 /**
- * Resolves clubId from body/query params, cookie, or auth context.
+ * Resolves the target club for this invoice operation.
+ *
+ * Layering: `withApiAuth` already routed the request through the shared
+ * `resolveActiveClub` helper inside `buildAuthContext` and exposed the
+ * result as `auth.clubId` (which honors `ADMIN_CLUB_COOKIE` against the
+ * user's memberships, with no per-route re-implementation needed). The
+ * only route-specific override is the explicit `body/query` param, which
+ * lets a superadmin target a specific club for invoice generation without
+ * affecting their visible admin session context.
  */
 function resolveClubId(
-  auth: { role: string; clubId: string | null },
-  req: NextRequest,
+  auth: { clubId: string | null },
   explicitClubId?: string | null
 ): string | null {
-  if (explicitClubId) return explicitClubId;
-  if (auth.role === 'superadmin') {
-    return req.cookies.get(ADMIN_CLUB_COOKIE)?.value ?? null;
-  }
-  return auth.clubId;
+  return explicitClubId ?? auth.clubId;
 }
 
 /**
@@ -219,7 +221,7 @@ export async function GET(req: NextRequest) {
     if (!isAdmin) return forbiddenResponse('Admin access required');
 
     const url = new URL(req.url);
-    const clubId = resolveClubId(auth, req, url.searchParams.get('clubId'));
+    const clubId = resolveClubId(auth, url.searchParams.get('clubId'));
     if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
 
     const monthStr: string = url.searchParams.get('month') ?? new Date().toISOString().slice(0, 7);
@@ -265,7 +267,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => ({}));
 
-    const clubId = resolveClubId(auth, req, body.clubId ?? null);
+    const clubId = resolveClubId(auth, body.clubId ?? null);
     if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
 
     const monthStr: string = body.month ?? new Date().toISOString().slice(0, 7);

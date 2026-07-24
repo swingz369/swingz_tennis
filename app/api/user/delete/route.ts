@@ -25,6 +25,7 @@ export async function DELETE(request: NextRequest) {
           date_of_birth: null,
           bio: null,
           emergency_contact: null,
+          emergency_phone: null,
           avatar_url: null,
         })
         .eq('id', user.id);
@@ -35,15 +36,29 @@ export async function DELETE(request: NextRequest) {
         .update({ is_active: false })
         .eq('user_id', user.id);
 
+      // Wipe SEPA bank details (direct financial PII) and revoke the mandate
+      await (serviceSb as any)
+        .from('sepa_mandates')
+        .update({
+          iban: 'DE00000000000000000000',
+          account_holder: 'Gelöschter Nutzer',
+          bank_name: 'Gelöscht',
+          address: { street: '', houseNumber: '', postalCode: '', city: '' },
+          is_active: false,
+          revoked_at: new Date().toISOString(),
+          revoke_reason: 'dsgvo_delete',
+        })
+        .eq('member_id', user.id);
+
       // Remove trainer notes about this member (PII)
       await (serviceSb as any).from('trainer_member_notes').delete().eq('member_id', user.id);
 
       // Audit trail (DSGVO Art. 5 Abs. 2)
       await (serviceSb as any).from('audit_logs').insert({
         action: 'DSGVO_DELETE',
-        table_name: 'users',
-        record_id: user.id,
-        performed_by: user.id,
+        resource_type: 'user',
+        resource_id: user.id,
+        actor_id: user.id,
         details: { pseudonym: `deleted-${user.id}`, timestamp: new Date().toISOString() },
       });
 

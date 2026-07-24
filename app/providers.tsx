@@ -1,14 +1,15 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { AnalyticsProvider } from '@/components/analytics-provider';
-import { TenantProvider } from '@/lib/tenant-context';
+import { CookieConsentBanner } from '@/components/cookie-consent-banner';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { NextIntlClientProvider } from 'next-intl';
 import deMessages from '@/i18n/dictionaries/de.json';
 import enMessages from '@/i18n/dictionaries/en.json';
+import { createQueryClient } from '@/lib/query-client';
 
 const messages: Record<string, typeof deMessages> = {
   de: deMessages,
@@ -16,17 +17,7 @@ const messages: Record<string, typeof deMessages> = {
 };
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 60 * 1000,
-            gcTime: 5 * 60 * 1000,
-          },
-        },
-      })
-  );
+  const [queryClient] = useState(() => createQueryClient());
 
   const locale =
     typeof document !== 'undefined'
@@ -35,15 +26,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages[locale] ?? deMessages}>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <TenantProvider>
-          <QueryClientProvider client={queryClient}>
-            <ErrorBoundary>{children}</ErrorBoundary>
-          </QueryClientProvider>
-          <Suspense fallback={null}>
-            <AnalyticsProvider />
-          </Suspense>
-        </TenantProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="theme">
+        <QueryClientProvider client={queryClient}>
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </QueryClientProvider>
+        <Suspense fallback={null}>
+          <AnalyticsProvider />
+        </Suspense>
+        <CookieConsentBanner />
       </ThemeProvider>
     </NextIntlClientProvider>
   );

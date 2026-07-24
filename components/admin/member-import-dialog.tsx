@@ -154,7 +154,7 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
               id="member-csv-upload"
             />
             <label htmlFor="member-csv-upload">
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-brand-primary/50 transition-colors">
+              <div className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-brand-primary/50 transition-colors">
                 <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground mb-2">
                   Klicke hier, um eine CSV-Datei auszuwählen
@@ -187,19 +187,19 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
                   {/* Summary */}
                   <div className="grid grid-cols-4 gap-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">{result.imported}</div>
+                      <div className="text-2xl font-bold text-success-600">{result.imported}</div>
                       <div className="text-xs text-muted-foreground">Importiert</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">{result.skipped}</div>
+                      <div className="text-2xl font-bold text-info-600">{result.skipped}</div>
                       <div className="text-xs text-muted-foreground">Übersprungen</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-red-600">{result.failed}</div>
+                      <div className="text-2xl font-bold text-error-600">{result.failed}</div>
                       <div className="text-xs text-muted-foreground">Fehlgeschlagen</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-600">
+                      <div className="text-2xl font-bold text-warning-600">
                         {result.invalid.length}
                       </div>
                       <div className="text-xs text-muted-foreground">Ungültig</div>
@@ -210,14 +210,14 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
                   {result.invalid.length > 0 && (
                     <div>
                       <h4 className="font-medium mb-2 flex items-center text-sm">
-                        <AlertCircle className="h-4 w-4 mr-2 text-yellow-600" />
+                        <AlertCircle className="h-4 w-4 mr-2 text-warning-600" />
                         Ungültige Datensätze ({result.invalid.length})
                       </h4>
                       <div className="max-h-40 overflow-y-auto space-y-2">
                         {result.invalid.map((item, index) => (
                           <div
                             key={index}
-                            className="text-xs bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded"
+                            className="text-xs bg-warning-50 dark:bg-warning-900/20 p-2 rounded"
                           >
                             <div className="font-medium">{item.record.email || 'Unbekannt'}</div>
                             <div className="text-muted-foreground">{item.errors.join(', ')}</div>
@@ -231,14 +231,14 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
                   {result.errors.length > 0 && (
                     <div>
                       <h4 className="font-medium mb-2 flex items-center text-sm">
-                        <AlertCircle className="h-4 w-4 mr-2 text-red-600" />
+                        <AlertCircle className="h-4 w-4 mr-2 text-error-600" />
                         Fehlgeschlagene Importe ({result.errors.length})
                       </h4>
                       <div className="max-h-40 overflow-y-auto space-y-2">
                         {result.errors.map((item, index) => (
                           <div
                             key={index}
-                            className="text-xs bg-red-50 dark:bg-red-900/20 p-2 rounded"
+                            className="text-xs bg-error-50 dark:bg-error-900/20 p-2 rounded"
                           >
                             <div className="font-medium">{item.record.email || 'Unbekannt'}</div>
                             <div className="text-muted-foreground">{item.error}</div>
@@ -250,7 +250,7 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
 
                   {/* Skipped Info */}
                   {result.skipped > 0 && (
-                    <div className="flex items-center text-sm text-blue-600 dark:text-blue-400">
+                    <div className="flex items-center text-sm text-info-600 dark:text-info-400">
                       <Users className="h-4 w-4 mr-2" />
                       {result.skipped} Mitglied{result.skipped !== 1 ? 'er' : ''} bereits im Verein
                       — übersprungen
@@ -259,7 +259,7 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
 
                   {/* Success Message */}
                   {result.imported > 0 && result.failed === 0 && result.invalid.length === 0 && (
-                    <div className="flex items-center justify-center text-green-600">
+                    <div className="flex items-center justify-center text-success-600">
                       <CheckCircle className="h-5 w-5 mr-2" />
                       <span className="font-medium">Alle Mitglieder erfolgreich importiert!</span>
                     </div>

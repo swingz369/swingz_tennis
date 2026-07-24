@@ -32,7 +32,7 @@ export default function ProtectedError({
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-foreground dark:text-gray-100">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-100">
             Etwas ist schiefgelaufen
           </h1>
           <p className="text-muted-foreground dark:text-muted-foreground">

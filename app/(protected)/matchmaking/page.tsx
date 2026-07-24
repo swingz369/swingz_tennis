@@ -1,25 +1,48 @@
-'use client';
-
+import { requireAuth } from '@/lib/auth';
 import { MatchmakingPanel } from '@/components/ai/matchmaking-panel';
 import { ScrollReveal } from '@/components/animations';
+import { PageHeader } from '@/components/ui/page-header';
 
-export default function MatchmakingPage() {
+export default async function MatchmakingPage() {
+  const { supabase, user } = await requireAuth();
+
+  const { data: memberships } = await supabase
+    .from('user_club_memberships')
+    .select('club_id')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .limit(1);
+
+  const clubId = memberships?.[0]?.club_id;
+  if (clubId) {
+    const { data: club } = await supabase
+      .from('clubs')
+      .select('features')
+      .eq('id', clubId)
+      .single();
+    const features = (club?.features as Record<string, boolean>) ?? {};
+    if (features.ai_matchmaking !== true) {
+      return (
+        <div className="p-4 md:p-6">
+          <p className="text-muted-foreground">
+            Das Modul „KI-Matchmaking" ist für diesen Verein nicht aktiviert.
+          </p>
+        </div>
+      );
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <ScrollReveal>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-          <div className="absolute inset-0 bg-noise opacity-5" />
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
-          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
-          <div className="relative">
-            <p className="text-sm font-medium text-white/70 mb-1">KI-gestützt</p>
-            <h1 className="text-2xl md:text-3xl font-bold">Matchmaking</h1>
-            <p className="text-white/70 mt-2">
-              Finde Trainingspartner mit passendem Level und gemeinsamen Interessen
-            </p>
-          </div>
-        </div>
-      </ScrollReveal>
+      <div>
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
+          KI-gestützt
+        </p>
+        <PageHeader
+          title="Matchmaking"
+          description="Finde Trainingspartner mit passendem Level und gemeinsamen Interessen"
+        />
+      </div>
 
       <ScrollReveal delay={100}>
         <MatchmakingPanel />

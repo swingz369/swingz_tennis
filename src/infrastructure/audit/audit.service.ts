@@ -31,7 +31,8 @@ export class AuditServiceImpl implements IAuditService {
       Id.fromString(entry.entityId),
       entry.details || {},
       entry.ipAddress,
-      entry.userAgent
+      entry.userAgent,
+      entry.clubId ? Id.fromString(entry.clubId) : undefined
     );
 
     const repo = await getRepo();

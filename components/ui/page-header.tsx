@@ -16,13 +16,14 @@ export interface PageHeaderAction {
   href?: string;
   onClick?: () => void;
   variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive';
+  disabled?: boolean;
 }
 
 interface PageHeaderProps {
   /** Page title */
   title: string;
-  /** Optional description below the title */
-  description?: string;
+  /** Optional description below the title (Text oder einfacher JSX-Inhalt) */
+  description?: ReactNode;
   /** Breadcrumb trail (optional) */
   breadcrumbs?: BreadcrumbItem[];
   /** Action buttons rendered on the right */
@@ -72,7 +73,7 @@ export function PageHeader({
       {/* Title row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-foreground dark:text-white tracking-tight">
+          <h1 className="text-2xl font-bold font-display text-foreground dark:text-white tracking-tight">
             {title}
           </h1>
           {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
@@ -92,13 +93,23 @@ export function PageHeader({
 
               if (action.href) {
                 return (
-                  <Button key={i} variant={action.variant ?? 'default'} asChild>
+                  <Button
+                    key={i}
+                    variant={action.variant ?? 'default'}
+                    disabled={action.disabled}
+                    asChild
+                  >
                     <Link href={action.href}>{btnContent}</Link>
                   </Button>
                 );
               }
               return (
-                <Button key={i} variant={action.variant ?? 'default'} onClick={action.onClick}>
+                <Button
+                  key={i}
+                  variant={action.variant ?? 'default'}
+                  onClick={action.onClick}
+                  disabled={action.disabled}
+                >
                   {btnContent}
                 </Button>
               );

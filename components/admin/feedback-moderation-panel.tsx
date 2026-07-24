@@ -211,7 +211,7 @@ export function FeedbackModerationPanel({ clubId: _clubId }: FeedbackModerationP
         </Card>
         <Card variant="bordered">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">{stats.visible}</div>
+            <div className="text-2xl font-bold text-success-600">{stats.visible}</div>
             <div className="text-xs text-muted-foreground">Visible</div>
           </CardContent>
         </Card>
@@ -223,7 +223,7 @@ export function FeedbackModerationPanel({ clubId: _clubId }: FeedbackModerationP
         </Card>
         <Card variant="bordered">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-red-600">{stats.flagged}</div>
+            <div className="text-2xl font-bold text-error-600">{stats.flagged}</div>
             <div className="text-xs text-muted-foreground">Flagged</div>
           </CardContent>
         </Card>
@@ -275,7 +275,7 @@ export function FeedbackModerationPanel({ clubId: _clubId }: FeedbackModerationP
           </div>
 
           {selectedIds.size > 0 && (
-            <div className="mt-4 flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+            <div className="mt-4 flex items-center gap-2 p-3 bg-info-50 rounded-xl">
               <span className="text-sm font-medium">{selectedIds.size} selected</span>
               <div className="flex gap-2 ml-auto">
                 <Button size="sm" variant="outline" onClick={() => handleBulkAction('show')}>
@@ -290,7 +290,7 @@ export function FeedbackModerationPanel({ clubId: _clubId }: FeedbackModerationP
                   size="sm"
                   variant="outline"
                   onClick={() => handleBulkAction('delete')}
-                  className="text-red-600"
+                  className="text-error-600"
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
                   Delete
@@ -320,7 +320,7 @@ export function FeedbackModerationPanel({ clubId: _clubId }: FeedbackModerationP
             <Card
               key={item.id}
               variant="bordered"
-              className={item.is_flagged ? 'border-red-300' : ''}
+              className={item.is_flagged ? 'border-error-300' : ''}
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
@@ -361,7 +361,7 @@ export function FeedbackModerationPanel({ clubId: _clubId }: FeedbackModerationP
                     {item.comment && <p className="text-sm text-foreground">{item.comment}</p>}
 
                     {item.is_flagged && item.flagged_reason && (
-                      <div className="p-2 bg-red-50 rounded text-sm text-red-700">
+                      <div className="p-2 bg-error-50 rounded text-sm text-error-700">
                         <strong>Reason:</strong> {item.flagged_reason}
                       </div>
                     )}
@@ -396,7 +396,7 @@ export function FeedbackModerationPanel({ clubId: _clubId }: FeedbackModerationP
                         size="sm"
                         variant="outline"
                         onClick={() => handleDelete(item.id)}
-                        className="text-red-600"
+                        className="text-error-600"
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
                         Delete

@@ -9,10 +9,8 @@
 import { setHours, setMinutes, isSameDay, isBefore, isAfter } from 'date-fns';
 import type { Session } from '@/hooks/use-sessions';
 
-/** Standard hourly time slots for court booking views (06:00–22:00) */
+/** Standard hourly time slots for court booking views (08:00–22:00) */
 export const CALENDAR_TIME_SLOTS = [
-  '06:00',
-  '07:00',
   '08:00',
   '09:00',
   '10:00',
@@ -75,16 +73,66 @@ export function getSessionForSlot(
   });
 }
 
+/** Admin-created court closure (court_closures table) — date-range block. */
+export interface CourtClosure {
+  id: string;
+  court_id: string;
+  reason: string;
+  description: string | null;
+  start_date: string;
+  end_date: string | null;
+  weather_condition?: string | null;
+}
+
+/**
+ * Find the closure that covers a given court+date+timeslot.
+ * `end_date === null` means the closure blocks indefinitely from `start_date` on
+ * (matches the "aktiv bis manuell aufgehoben" semantics used in the Platzsperren-UI).
+ */
+export function getClosureForSlot(
+  courtId: string,
+  date: Date,
+  timeSlot: string,
+  closures: CourtClosure[]
+): CourtClosure | undefined {
+  const [hour, minute] = timeSlot.split(':').map(Number);
+  const slotStart = setMinutes(setHours(date, hour), minute);
+  const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
+
+  return closures.find((c) => {
+    if (c.court_id !== courtId) return false;
+    const rangeStart = new Date(c.start_date);
+    const rangeEnd = c.end_date ? new Date(c.end_date) : null;
+    return rangeEnd ? slotStart < rangeEnd && slotEnd > rangeStart : slotEnd > rangeStart;
+  });
+}
+
 /**
  * Determine the visual status of a calendar slot.
  */
+export interface CalendarPlanEntry {
+  court_id: string;
+  start_time: string;
+  end_time: string;
+  group_name?: string;
+  group_color?: string;
+  trainer_name?: string;
+  [k: string]: unknown;
+}
+
 export function getSlotStatus(
   courtId: string,
   date: Date,
   timeSlot: string,
   sessions: Session[],
-  planEntries: Array<{ court_id: string; start_time: string; end_time: string }>
-): { status: SlotStatus; session?: Session } {
+  planEntries: CalendarPlanEntry[],
+  closures: CourtClosure[] = []
+): {
+  status: SlotStatus;
+  session?: Session;
+  closure?: CourtClosure;
+  planEntry?: CalendarPlanEntry;
+} {
   const session = getSessionForSlot(courtId, date, timeSlot, sessions);
   if (session) {
     // Blocked sessions (event/maintenance) take visual priority
@@ -98,10 +146,15 @@ export function getSlotStatus(
     return { status: 'session', session };
   }
 
-  const hasPlanEntry = planEntries.some(
+  // Admin-created closure (Platzverwaltung / Wochenstundenplan "Platz sperren") — same
+  // visual status as an event/maintenance session, just from the court_closures table.
+  const closure = getClosureForSlot(courtId, date, timeSlot, closures);
+  if (closure) return { status: 'blocked', closure };
+
+  const planEntry = planEntries.find(
     (e) => e.court_id === courtId && e.start_time <= timeSlot && e.end_time > timeSlot
   );
-  if (hasPlanEntry) return { status: 'plan' };
+  if (planEntry) return { status: 'plan', planEntry };
 
   return { status: 'available' };
 }
@@ -114,20 +167,20 @@ export function getSlotStatus(
  */
 export const SLOT_STATUS_STYLES: Record<SlotStatus, string> = {
   available:
-    'bg-emerald-50/60 text-emerald-700 border border-emerald-200/60 hover:bg-emerald-100 hover:border-emerald-300 hover:shadow-sm cursor-pointer',
+    'bg-success-50/60 text-success-700 border border-success-200/60 hover:bg-success-100 hover:border-success-300 hover:shadow-sm cursor-pointer',
   session:
-    'bg-gradient-to-r from-blue-100 to-blue-200/70 text-blue-800 border-l-[3px] border-l-blue-500 border border-blue-200 shadow-sm',
+    'bg-gradient-to-r from-info-100 to-info-200/70 text-info-800 border-l-[3px] border-l-info-500 border border-info-200 shadow-sm',
   booked:
-    'bg-gradient-to-r from-amber-100 via-amber-100 to-amber-200 text-amber-900 border-l-[4px] border-l-amber-600 border border-amber-300 shadow-md ring-1 ring-inset ring-amber-200/60',
+    'bg-gradient-to-r from-warning-100 via-warning-100 to-warning-200 text-warning-900 border-l-[4px] border-l-warning-600 border border-warning-300 shadow-md ring-1 ring-inset ring-warning-200/60',
   'own-booking':
-    'bg-gradient-to-r from-rose-100 to-rose-200/70 text-rose-800 border-l-[3px] border-l-rose-500 border border-rose-200 shadow-sm',
-  plan: 'bg-violet-50/60 text-violet-700 border border-violet-200/60',
-  blocked: 'bg-zinc-50 text-muted-foreground border border-zinc-200/80 cursor-not-allowed',
+    'bg-gradient-to-r from-error-100 to-error-200/70 text-error-800 border-l-[3px] border-l-error-500 border border-error-200 shadow-sm',
+  plan: 'bg-info-50/60 text-info-700 border border-info-200/60',
+  blocked: 'bg-gray-50 text-muted-foreground border border-gray-200/80 cursor-not-allowed',
 };
 
 /** Admin override for blocked slots — adds hover effect + cursor-pointer */
 export const SLOT_STATUS_STYLES_ADMIN_BLOCKED =
-  'bg-zinc-50 text-muted-foreground border border-zinc-200/80 cursor-pointer hover:bg-zinc-100 hover:shadow-sm';
+  'bg-gray-50 text-muted-foreground border border-gray-200/80 cursor-pointer hover:bg-gray-100 hover:shadow-sm';
 
 /**
  * Decomposed style tokens for the daily-view PositionedSessionBlock.
@@ -140,29 +193,29 @@ export const DAILY_BLOCK_STYLES: Record<
   /* Note: 'available' is kept for API completeness but is not used by
      PositionedSessionBlock (which only renders when a session exists). */
   available: {
-    bg: 'bg-emerald-50/60 border-emerald-200/60',
-    text: 'text-emerald-700',
-    accent: 'border-l-emerald-500',
+    bg: 'bg-success-50/60 border-success-200/60',
+    text: 'text-success-700',
+    accent: 'border-l-success-500',
   },
   session: {
-    bg: 'bg-blue-100 border-blue-200 shadow-sm',
-    text: 'text-blue-800',
-    accent: 'border-l-blue-500',
+    bg: 'bg-info-100 border-info-200 shadow-sm',
+    text: 'text-info-800',
+    accent: 'border-l-info-500',
   },
   booked: {
-    bg: 'bg-gradient-to-br from-amber-100 to-amber-200 border-amber-300 shadow-md ring-1 ring-inset ring-amber-200/60',
-    text: 'text-amber-900',
-    accent: 'border-l-amber-600',
+    bg: 'bg-gradient-to-br from-warning-100 to-warning-200 border-warning-300 shadow-md ring-1 ring-inset ring-warning-200/60',
+    text: 'text-warning-900',
+    accent: 'border-l-warning-600',
   },
   'own-booking': {
-    bg: 'bg-rose-100 border-rose-200 shadow-sm',
-    text: 'text-rose-800',
-    accent: 'border-l-rose-500',
+    bg: 'bg-error-100 border-error-200 shadow-sm',
+    text: 'text-error-800',
+    accent: 'border-l-error-500',
   },
   blocked: {
-    bg: 'bg-zinc-100 border-zinc-300 shadow-sm',
-    text: 'text-zinc-600',
-    accent: 'border-l-zinc-400',
+    bg: 'bg-gray-100 border-gray-300 shadow-sm',
+    text: 'text-gray-600',
+    accent: 'border-l-gray-400',
   },
 };
 
@@ -174,17 +227,17 @@ export type LegendItem = { label: string; className: string };
 
 export function getCalendarLegendItems(isAdmin: boolean): LegendItem[] {
   const items: LegendItem[] = [
-    { label: 'Verfügbar', className: 'bg-emerald-500' },
-    { label: 'Gruppentraining', className: 'bg-violet-500' },
+    { label: 'Verfügbar', className: 'bg-success-500' },
+    { label: 'Gruppentraining', className: 'bg-info-500' },
   ];
 
   if (isAdmin) {
-    items.push({ label: 'Session (Drag & Drop)', className: 'bg-blue-500' });
-    items.push({ label: 'Gesperrt', className: 'bg-zinc-400' });
+    items.push({ label: 'Session (Drag & Drop)', className: 'bg-info-500' });
+    items.push({ label: 'Gesperrt', className: 'bg-gray-400' });
   } else {
-    items.push({ label: 'Offene Session', className: 'bg-blue-500' });
-    items.push({ label: 'Belegt (gebucht)', className: 'bg-amber-500' });
-    items.push({ label: 'Deine Buchung', className: 'bg-rose-500' });
+    items.push({ label: 'Offene Session', className: 'bg-info-500' });
+    items.push({ label: 'Belegt (gebucht)', className: 'bg-warning-500' });
+    items.push({ label: 'Deine Buchung', className: 'bg-error-500' });
   }
 
   return items;

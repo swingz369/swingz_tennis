@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Building2, Plus, UserPlus, ExternalLink, Search } from 'lucide-react';
+import { Building2, Plus, UserPlus, ExternalLink, Search, Pencil } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,8 @@ import {
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
+import { ClubDetailSheet } from './_components/club-detail-sheet';
 
 interface Club {
   id: string;
@@ -42,6 +44,17 @@ export default function OwnerClubsPage() {
   const [inviteName, setInviteName] = useState('');
   const [inviting, setInviting] = useState(false);
   const [activating, setActivating] = useState<string | null>(null);
+  const [editingClubId, setEditingClubId] = useState<string | null>(null);
+
+  const refreshClubs = useCallback(async () => {
+    try {
+      const r = await apiFetch('/api/clubs');
+      const d = await r.json();
+      setClubs(d.clubs ?? []);
+    } catch {
+      toast.error('Vereine konnten nicht neu geladen werden');
+    }
+  }, []);
 
   const handleActivateClub = async (clubId: string) => {
     setActivating(clubId);
@@ -60,6 +73,11 @@ export default function OwnerClubsPage() {
       setActivating(null);
     }
   };
+
+  // /owner → "Verein anlegen" verlinkt hierher mit ?new=1 — Dialog direkt öffnen
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has('new')) setNewClubOpen(true);
+  }, []);
 
   useEffect(() => {
     apiFetch('/api/clubs')
@@ -120,12 +138,10 @@ export default function OwnerClubsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Alle Vereine</h1>
-        <Button onClick={() => setNewClubOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> Verein anlegen
-        </Button>
-      </div>
+      <PageHeader
+        title="Alle Vereine"
+        actions={[{ label: 'Verein anlegen', icon: Plus, onClick: () => setNewClubOpen(true) }]}
+      />
 
       <div className="relative">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -144,8 +160,8 @@ export default function OwnerClubsPage() {
           {filtered.map((club) => (
             <Card key={club.id} className="border shadow-sm">
               <CardContent className="p-4 flex items-center gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/20 shrink-0">
-                  <Building2 className="h-5 w-5 text-indigo-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-50 dark:bg-info-900/20 shrink-0">
+                  <Building2 className="h-5 w-5 text-info-600 dark:text-info-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{club.name}</p>
@@ -158,7 +174,7 @@ export default function OwnerClubsPage() {
                     <Button
                       size="sm"
                       variant="default"
-                      className="gap-1 text-xs h-7 bg-amber-500 hover:bg-amber-600"
+                      className="gap-1 text-xs h-7 bg-warning-500 hover:bg-warning-600"
                       disabled={activating === club.id}
                       onClick={() => handleActivateClub(club.id)}
                     >
@@ -180,9 +196,17 @@ export default function OwnerClubsPage() {
                   >
                     <UserPlus className="h-3 w-3" /> Admin einladen
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="gap-1 text-xs h-7"
+                    onClick={() => setEditingClubId(club.id)}
+                  >
+                    <Pencil className="h-3 w-3" /> Bearbeiten
+                  </Button>
                   <Link
                     href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
-                    className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs text-info-600 dark:text-info-400 hover:underline"
                   >
                     <ExternalLink className="h-3 w-3" /> Als Admin
                   </Link>
@@ -199,6 +223,13 @@ export default function OwnerClubsPage() {
           )}
         </div>
       )}
+
+      {/* Detail-Drawer (Phase 2) */}
+      <ClubDetailSheet
+        clubId={editingClubId}
+        onClose={() => setEditingClubId(null)}
+        onSaved={refreshClubs}
+      />
 
       {/* Dialog: Neuer Verein */}
       <Dialog open={newClubOpen} onOpenChange={setNewClubOpen}>

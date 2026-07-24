@@ -19,15 +19,16 @@ import type {
 // ============================================
 
 function createInitialState(seasonId: string, clubId: string, initialStep?: number): WizardState {
-  const step = initialStep && initialStep >= 1 && initialStep <= 3 ? initialStep : 1;
+  const step = initialStep && initialStep >= 1 && initialStep <= 4 ? initialStep : 1;
   return {
     seasonId,
     clubId,
-    currentStep: Math.min(step, 2) as WizardStep,
-    maxReachedStep: Math.min(step, 2) as WizardStep,
+    currentStep: Math.min(step, 4) as WizardStep,
+    maxReachedStep: Math.min(step, 4) as WizardStep,
     isReady: false,
     isProcessing: false,
     error: null,
+    adminNotes: '',
     selectedMemberIds: [],
     promotedMemberIds: [],
     preferencesResponseRate: 0,
@@ -50,6 +51,7 @@ function createInitialState(seasonId: string, clubId: string, initialStep?: numb
       allowOverbooking: false,
       preferConsistentTimeslots: true,
       useAI: false,
+      includeSunday: false,
     },
     clusteringResult: null,
     scheduleSlots: [],
@@ -84,6 +86,7 @@ type WizardAction =
   | { type: 'SET_CLUSTERING_RESULT'; result: ClusteringResult }
   | { type: 'SET_CONFLICTS'; conflicts: ConflictDetectionResult[] }
   | { type: 'CONFIRM_PLAN'; response: ConfirmPlanResponse }
+  | { type: 'SET_ADMIN_NOTES'; notes: string }
   | { type: 'RESET_WIZARD' };
 
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
@@ -159,7 +162,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         ...state,
         clusteringResult: action.result,
         scheduleSlots: [],
-        maxReachedStep: 2 as WizardStep,
+        maxReachedStep: Math.max(state.maxReachedStep, 4) as WizardStep,
         isProcessing: false,
       };
 
@@ -177,6 +180,9 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         publishedSessionIds: action.response.publishedSessionIds ?? [],
         isProcessing: false,
       };
+
+    case 'SET_ADMIN_NOTES':
+      return { ...state, adminNotes: action.notes };
 
     case 'RESET_WIZARD':
       return createInitialState(state.seasonId, state.clubId);
@@ -226,7 +232,7 @@ export function WizardProvider({
   }, []);
 
   const nextStep = useCallback(() => {
-    const next = Math.min(2, state.currentStep + 1) as WizardStep;
+    const next = Math.min(4, state.currentStep + 1) as WizardStep;
     dispatch({ type: 'SET_STEP', step: next });
   }, [state.currentStep]);
 
@@ -308,7 +314,7 @@ export function WizardProvider({
           acceptedWarnings: state.conflicts
             .filter((c) => c.severity !== 'critical')
             .map((c) => c.id),
-          adminNotes: 'Planung bestätigt via Wizard',
+          adminNotes: state.adminNotes || 'Planung bestätigt via Wizard',
         }),
       });
       if (!res.ok) {
@@ -325,7 +331,7 @@ export function WizardProvider({
       });
       throw err;
     }
-  }, [state.seasonId, state.conflicts]);
+  }, [state.seasonId, state.conflicts, state.adminNotes]);
 
   const resetWizard = useCallback(() => {
     dispatch({ type: 'RESET_WIZARD' });

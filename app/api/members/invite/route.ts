@@ -2,7 +2,6 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 
@@ -43,14 +42,13 @@ export async function POST(request: NextRequest) {
 
     const { email, full_name, role, club_id: bodyClubId } = parsed.data;
 
-    // Determine target club
-    let targetClubId: string | null = auth.clubId;
-    if (auth.role === 'superadmin') {
-      // Superadmin: use cookie or body club_id
-      const cookieClubId = request.cookies.get(ADMIN_CLUB_COOKIE)?.value;
-      targetClubId = bodyClubId || cookieClubId || null;
-    }
-
+    // Determine target club. auth.clubId is the cookie-aware resolved club
+    // for the caller (see lib/auth/resolve-active-club.ts via buildAuthContext).
+    // body.clubId is ONLY honored for superadmin — regular admins cannot
+    // invite into clubs they don't manage (their admin role is pinned to
+    // exactly one club per docs/BUSINESS_RULES.md).
+    const targetClubId: string | null =
+      auth.role === 'superadmin' ? (bodyClubId ?? auth.clubId) : auth.clubId;
     if (!targetClubId) {
       return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
     }

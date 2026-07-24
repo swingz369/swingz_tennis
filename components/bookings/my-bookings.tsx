@@ -79,8 +79,8 @@ export function MyBookings() {
   const handleCancel = async (id: string) => {
     setCancelling(id);
     try {
-      const res = await apiFetch(`/api/bookings/${id}`, {
-        method: 'DELETE',
+      const res = await apiFetch(`/api/bookings/${id}/cancel`, {
+        method: 'POST',
         credentials: 'include',
       });
       if (!res.ok) {
@@ -99,10 +99,10 @@ export function MyBookings() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return <Badge className="bg-green-500">Bestätigt</Badge>;
+        return <Badge className="bg-success-500">Bestätigt</Badge>;
       case 'pending':
         return (
-          <Badge variant="outline" className="border-yellow-500 text-yellow-700">
+          <Badge variant="outline" className="border-warning-500 text-warning-700">
             Ausstehend
           </Badge>
         );
@@ -152,7 +152,7 @@ export function MyBookings() {
           {bookings.map((booking) => (
             <div
               key={booking.id}
-              className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+              className="border rounded-xl p-4 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 space-y-2">
@@ -190,7 +190,7 @@ export function MyBookings() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-error-600 hover:text-error-700 hover:bg-error-50"
                       disabled={cancelling === booking.id}
                       onClick={() => handleCancel(booking.id)}
                     >

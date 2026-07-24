@@ -87,7 +87,9 @@ export function MiniChart({
         <span
           className={cn(
             'text-xs font-semibold tabular-nums',
-            trendPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+            trendPositive
+              ? 'text-success-600 dark:text-success-400'
+              : 'text-error-600 dark:text-error-400'
           )}
         >
           {trendPositive ? '↑' : '↓'} {Math.abs(trendPercent)}%

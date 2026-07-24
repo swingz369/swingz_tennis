@@ -25,6 +25,10 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       return rateLimitError;
     }
 
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
+    }
+
     try {
       const { id } = await params;
       const body = await _request.json();
@@ -37,13 +41,23 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         );
       }
 
-      const updated = await absenceService.approveAbsence(id, validation.data.approvedBy);
+      const updated = await absenceService.approveAbsence(
+        id,
+        validation.data.approvedBy,
+        auth.clubId
+      );
 
       if (!updated) {
         return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
       }
 
-      return NextResponse.json({ success: true, absence: updated });
+      const sessionConflicts = await absenceService.findSessionConflicts(
+        updated.trainerId,
+        updated.startDate,
+        updated.endDate
+      );
+
+      return NextResponse.json({ success: true, absence: updated, sessionConflicts });
     } catch (error) {
       log.error('Absence approval error:', error);
       return NextResponse.json(

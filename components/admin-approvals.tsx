@@ -107,12 +107,14 @@ export default function AdminApprovals() {
     switch (status) {
       case 'pending':
         return (
-          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Ausstehend</Badge>
+          <Badge className="bg-warning-100 text-warning-700 border-warning-200">Ausstehend</Badge>
         );
       case 'approved':
-        return <Badge className="bg-green-100 text-green-700 border-green-200">Genehmigt</Badge>;
+        return (
+          <Badge className="bg-success-100 text-success-700 border-success-200">Genehmigt</Badge>
+        );
       case 'rejected':
-        return <Badge className="bg-red-100 text-red-700 border-red-200">Abgelehnt</Badge>;
+        return <Badge className="bg-error-100 text-error-700 border-error-200">Abgelehnt</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -164,7 +166,7 @@ export default function AdminApprovals() {
       </div>
 
       {error && (
-        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+        <div className="p-4 rounded-xl bg-error-50 border border-error-200 text-error-700 text-sm">
           {error}
         </div>
       )}
@@ -181,7 +183,7 @@ export default function AdminApprovals() {
           {filtered.map((r) => (
             <Card
               key={r.id}
-              className={r.status === 'pending' ? 'border-yellow-200 bg-yellow-50/30' : ''}
+              className={r.status === 'pending' ? 'border-warning-200 bg-warning-50/30' : ''}
             >
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-4">
@@ -224,7 +226,7 @@ export default function AdminApprovals() {
                     </div>
 
                     {r.status === 'rejected' && r.rejection_reason && (
-                      <p className="text-sm text-red-600 bg-red-50 p-2 rounded">
+                      <p className="text-sm text-error-600 bg-error-50 p-2 rounded">
                         Grund: {r.rejection_reason}
                       </p>
                     )}

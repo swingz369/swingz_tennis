@@ -9,6 +9,7 @@ import { Loader2, ShoppingCart, Package, Plus, Minus, X, Trash2, ExternalLink } 
 import { toast } from 'sonner';
 import { CartProvider, useCart } from '@/lib/shop/cart-context';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Product {
   id: string;
@@ -86,10 +87,7 @@ function ShopContent() {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Vereins-Shop</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Trikots, Bälle & mehr</p>
-        </div>
+        <PageHeader title="Vereins-Shop" description="Trikots, Bälle & mehr" />
         <Button
           onClick={() => setCartOpen(true)}
           variant="outline"
@@ -99,7 +97,7 @@ function ShopContent() {
           <ShoppingCart className="h-4 w-4" />
           <span className="hidden sm:inline">Warenkorb</span>
           {cartCount > 0 && (
-            <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-[11px] font-bold text-white shadow-sm">
+            <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-2xs font-bold text-white shadow-sm">
               {cartCount}
             </span>
           )}
@@ -171,7 +169,7 @@ function ShopContent() {
                       <div>
                         <div className="flex items-start justify-between gap-1">
                           <p className="font-semibold text-sm line-clamp-2">{p.name}</p>
-                          <Badge variant="outline" className="text-[10px] shrink-0">
+                          <Badge variant="outline" className="text-2xs shrink-0">
                             {p.category}
                           </Badge>
                         </div>
@@ -180,9 +178,9 @@ function ShopContent() {
                             <span
                               className={
                                 p.stock <= 2
-                                  ? 'text-orange-600 font-medium'
+                                  ? 'text-brand-accent-600 font-medium'
                                   : p.stock <= 5
-                                    ? 'text-amber-600'
+                                    ? 'text-warning-600'
                                     : ''
                               }
                             >
@@ -299,13 +297,13 @@ function ShopContent() {
                   key={item.productId}
                   className="flex items-center gap-3 p-3 rounded-xl bg-muted dark:bg-muted/50"
                 >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted dark:bg-muted relative">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted dark:bg-muted relative">
                     {item.imageUrl ? (
                       <Image
                         src={item.imageUrl}
                         alt={item.productName}
                         fill
-                        className="object-cover rounded-lg"
+                        className="object-cover rounded-xl"
                       />
                     ) : (
                       <Package className="h-5 w-5 text-muted-foreground" />
@@ -346,7 +344,7 @@ function ShopContent() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 w-7 p-0 mt-1 text-muted-foreground hover:text-red-500"
+                      className="h-7 w-7 p-0 mt-1 text-muted-foreground hover:text-error-500"
                       onClick={() => updateQuantity(item.productId, 0)}
                     >
                       <Trash2 className="h-3.5 w-3.5" />

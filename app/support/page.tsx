@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { IconBox } from '@/components/ui/icon-box';
 import {
   Trophy,
   LifeBuoy,
@@ -75,8 +76,8 @@ const CHANNELS = [
     description: '+49 123 4567890',
     note: 'Für Enterprise-Kunden',
     href: 'tel:+491234567890',
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
+    color: 'text-info-600',
+    bg: 'bg-info-50',
   },
 ];
 
@@ -84,14 +85,23 @@ export default function SupportPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-brand-secondary">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      <header className="relative overflow-hidden bg-brand-secondary">
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-auth-hero" />
+          <div className="absolute inset-0 opacity-25 overflow-hidden">
+            <div className="absolute -top-10 left-10 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
+            <div className="absolute -bottom-16 right-20 w-56 h-56 bg-brand-accent/8 rounded-full blur-3xl animate-aurora [animation-delay:5s]" />
+          </div>
+          <div className="absolute inset-0 noise opacity-[0.04]" />
+        </div>
+        <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
           <nav className="flex h-20 items-center justify-between">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center">
-                <Trophy className="h-6 w-6 text-white" />
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                <IconBox icon={Trophy} variant="gradient-primary" iconClassName="h-6 w-6" />
               </div>
-              <span className="text-2xl font-bold text-white">SWINGZ</span>
+              <span className="text-2xl font-bold text-white font-display">SWINGZ</span>
             </Link>
             <div className="flex items-center gap-3">
               <Link href="/login">
@@ -167,21 +177,21 @@ export default function SupportPage() {
               title="Über uns"
               description="Vollständige Anleitungen, API-Referenz und Best Practices."
               href="/about"
-              color="bg-blue-50 text-blue-600"
+              color="bg-info-50 text-info-600"
             />
             <ResourceCard
               icon={<BookOpen className="h-5 w-5" />}
               title="Über SWINGZ"
               description="Erfahre mehr über unsere Mission und unser Team."
               href="/about"
-              color="bg-green-50 text-green-600"
+              color="bg-success-50 text-success-600"
             />
             <ResourceCard
               icon={<Bug className="h-5 w-5" />}
               title="Bug melden"
               description="Hast du einen Fehler gefunden? Sag uns Bescheid."
               href="mailto:bugs@swingz.cloud"
-              color="bg-red-50 text-red-600"
+              color="bg-error-50 text-error-600"
             />
           </div>
         </div>
@@ -221,7 +231,7 @@ export default function SupportPage() {
       {/* Status Banner */}
       <section className="pb-16 sm:pb-20">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-2xl bg-gradient-to-br from-brand-primary to-brand-light p-8 text-white">
+          <div className="rounded-xl bg-gradient-to-br from-brand-primary to-brand-light p-8 text-white">
             <div className="flex items-start gap-4">
               <div className="h-10 w-10 rounded-xl bg-background/20 flex items-center justify-center shrink-0">
                 <Sparkles className="h-5 w-5" />

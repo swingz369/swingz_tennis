@@ -81,6 +81,16 @@ class MemberServiceAdapter {
   }
 
   /**
+   * Count active members in a club.
+   * Sprint 3 / Ticket 3.6.1 — Pay-per-Active-Member-Pricing.
+   * Used by `lib/services/stripe-subscription-quantity-sync.service.ts`
+   * to drive the Stripe subscription-item quantity. Returns 0 on error.
+   */
+  async getActiveMemberCount(clubId?: string): Promise<number> {
+    return MemberService.getActiveMemberCount(clubId);
+  }
+
+  /**
    * Get members by training group
    */
   async getMembersByTrainingGroup(trainingGroup: string): Promise<Member[]> {

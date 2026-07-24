@@ -1,20 +1,18 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 import type { ClubBranding } from '@/lib/branding';
-import { DEFAULT_BRANDING, mergeBranding, brandingToCSSVars } from '@/lib/branding';
+import { DEFAULT_BRANDING } from '@/lib/branding';
 
 interface TenantContextType {
   clubId: string | null;
   branding: ClubBranding;
-  isLoading: boolean;
 }
 
 const TenantContext = createContext<TenantContextType>({
   clubId: null,
   branding: DEFAULT_BRANDING,
-  isLoading: true,
 });
 
 export function useTenant() {
@@ -23,68 +21,27 @@ export function useTenant() {
 
 interface TenantProviderProps {
   children: ReactNode;
+  /** Active club id, resolved server-side in app/(protected)/layout.tsx. */
+  clubId?: string | null;
+  /**
+   * Club branding, resolved server-side in app/(protected)/layout.tsx.
+   * Colors are already applied via an SSR-rendered <style> tag (no flash);
+   * this provider only needs to expose the data to client components
+   * (logo <img> src in header/sidebar) and keep the favicon <link> in sync.
+   */
+  branding?: ClubBranding;
 }
 
-export function TenantProvider({ children }: TenantProviderProps) {
-  const [clubId, setClubId] = useState<string | null>(null);
-  const [branding, setBranding] = useState<ClubBranding>(DEFAULT_BRANDING);
-  const [isLoading, setIsLoading] = useState(true);
-
+export function TenantProvider({
+  children,
+  clubId = null,
+  branding = DEFAULT_BRANDING,
+}: TenantProviderProps) {
   useEffect(() => {
-    async function resolveTenant() {
-      try {
-        // Try to get clubId from cookie (set by middleware)
-        const cookieClubId = document.cookie
-          .split('; ')
-          .find((row) => row.startsWith('tenant-club='))
-          ?.split('=')[1];
-
-        if (cookieClubId) {
-          setClubId(cookieClubId);
-          const res = await fetch(`/api/branding?clubId=${cookieClubId}`);
-          if (res.ok) {
-            const data = await res.json();
-            const merged = mergeBranding({
-              clubId: cookieClubId,
-              brand: data.brand,
-              logos: data.logos,
-              customDomain: data.customDomain,
-            });
-            setBranding(merged);
-            applyBrandingToDOM(merged);
-          }
-        } else {
-          // No tenant context, use defaults
-          setBranding(DEFAULT_BRANDING);
-        }
-      } catch (err) {
-        console.error('Tenant resolution failed', err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    resolveTenant();
-  }, []);
-
-  return (
-    <TenantContext.Provider value={{ clubId, branding, isLoading }}>
-      {children}
-    </TenantContext.Provider>
-  );
-}
-
-function applyBrandingToDOM(branding: ClubBranding) {
-  const vars = brandingToCSSVars(branding);
-  const root = document.documentElement;
-
-  Object.entries(vars).forEach(([key, value]) => {
-    root.style.setProperty(key, value);
-  });
-
-  // Also update favicon if provided
-  if (branding.logos.favicon) {
-    const link = document.querySelector("link[rel='icon']") as HTMLLinkElement;
+    if (!branding.logos.favicon) return;
+    const link = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
     if (link) link.href = branding.logos.favicon;
-  }
+  }, [branding.logos.favicon]);
+
+  return <TenantContext.Provider value={{ clubId, branding }}>{children}</TenantContext.Provider>;
 }

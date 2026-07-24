@@ -65,12 +65,12 @@ export const RSVP_STATUS_CONFIG: Record<RsvpStatusKey, RsvpStatusConfig> = {
   accepted: {
     key: 'accepted',
     label: 'Zusage',
-    badgeClass: 'bg-green-100 text-green-700 border-green-200',
+    badgeClass: 'bg-success-100 text-success-700 border-success-200',
     buttonClass:
-      'text-muted-foreground hover:bg-green-50 hover:text-green-700 hover:border-green-200',
+      'text-muted-foreground hover:bg-success-50 hover:text-success-700 hover:border-success-200',
     buttonActiveClass:
-      'bg-green-100 text-green-700 border-green-300 ring-1 ring-green-400 hover:bg-green-100',
-    iconClass: 'text-green-600',
+      'bg-success-100 text-success-700 border-success-300 ring-1 ring-success-400 hover:bg-success-100',
+    iconClass: 'text-success-600',
     icon: CheckCircle2,
     buttonIcon: Check,
     order: 1,
@@ -78,11 +78,12 @@ export const RSVP_STATUS_CONFIG: Record<RsvpStatusKey, RsvpStatusConfig> = {
   declined: {
     key: 'declined',
     label: 'Absage',
-    badgeClass: 'bg-red-100 text-red-700 border-red-200',
-    buttonClass: 'text-muted-foreground hover:bg-red-50 hover:text-red-700 hover:border-red-200',
+    badgeClass: 'bg-error-100 text-error-700 border-error-200',
+    buttonClass:
+      'text-muted-foreground hover:bg-error-50 hover:text-error-700 hover:border-error-200',
     buttonActiveClass:
-      'bg-red-100 text-red-700 border-red-300 ring-1 ring-red-400 hover:bg-red-100',
-    iconClass: 'text-red-600',
+      'bg-error-100 text-error-700 border-error-300 ring-1 ring-error-400 hover:bg-error-100',
+    iconClass: 'text-error-600',
     icon: XCircle,
     buttonIcon: X,
     order: 2,
@@ -90,12 +91,12 @@ export const RSVP_STATUS_CONFIG: Record<RsvpStatusKey, RsvpStatusConfig> = {
   maybe: {
     key: 'maybe',
     label: 'Vielleicht',
-    badgeClass: 'bg-amber-100 text-amber-700 border-amber-200',
+    badgeClass: 'bg-warning-100 text-warning-700 border-warning-200',
     buttonClass:
-      'text-muted-foreground hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200',
+      'text-muted-foreground hover:bg-warning-50 hover:text-warning-700 hover:border-warning-200',
     buttonActiveClass:
-      'bg-amber-100 text-amber-700 border-amber-300 ring-1 ring-amber-400 hover:bg-amber-100',
-    iconClass: 'text-amber-600',
+      'bg-warning-100 text-warning-700 border-warning-300 ring-1 ring-warning-400 hover:bg-warning-100',
+    iconClass: 'text-warning-600',
     icon: HelpCircle,
     buttonIcon: HelpCircle,
     order: 3,
@@ -103,11 +104,11 @@ export const RSVP_STATUS_CONFIG: Record<RsvpStatusKey, RsvpStatusConfig> = {
   pending: {
     key: 'pending',
     label: 'Wartet auf Antwort',
-    badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
-    buttonClass: 'text-muted-foreground hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200',
+    badgeClass: 'bg-info-100 text-info-700 border-info-200',
+    buttonClass: 'text-muted-foreground hover:bg-info-50 hover:text-info-700 hover:border-info-200',
     buttonActiveClass:
-      'bg-blue-100 text-blue-700 border-blue-300 ring-1 ring-blue-400 hover:bg-blue-100',
-    iconClass: 'text-blue-600',
+      'bg-info-100 text-info-700 border-info-300 ring-1 ring-info-400 hover:bg-info-100',
+    iconClass: 'text-info-600',
     icon: Hourglass,
     buttonIcon: Hourglass,
     order: 4,

@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS billing_periods (
     CONSTRAINT billing_periods_date_range CHECK (end_date > start_date)
 );
 
-CREATE INDEX billing_periods_date_idx ON billing_periods(start_date, end_date);
-CREATE INDEX billing_periods_status_idx ON billing_periods(status);
+CREATE INDEX IF NOT EXISTS billing_periods_date_idx ON billing_periods(start_date, end_date);
+CREATE INDEX IF NOT EXISTS billing_periods_status_idx ON billing_periods(status);
 
 COMMENT ON TABLE billing_periods IS 'Billing periods for trainer compensation (typically monthly)';
 COMMENT ON COLUMN billing_periods.status IS 'Status: open (can add billings), processing (generating invoices), closed (finalized)';
@@ -44,10 +44,10 @@ CREATE TABLE IF NOT EXISTS trainer_billings (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX trainer_billings_period_idx ON trainer_billings(billing_period_id);
-CREATE INDEX trainer_billings_trainer_idx ON trainer_billings(trainer_id);
-CREATE INDEX trainer_billings_status_idx ON trainer_billings(status);
-CREATE UNIQUE INDEX trainer_billings_invoice_number_unique ON trainer_billings(invoice_number) WHERE invoice_number IS NOT NULL;
+CREATE INDEX IF NOT EXISTS trainer_billings_period_idx ON trainer_billings(billing_period_id);
+CREATE INDEX IF NOT EXISTS trainer_billings_trainer_idx ON trainer_billings(trainer_id);
+CREATE INDEX IF NOT EXISTS trainer_billings_status_idx ON trainer_billings(status);
+CREATE UNIQUE INDEX IF NOT EXISTS trainer_billings_invoice_number_unique ON trainer_billings(invoice_number) WHERE invoice_number IS NOT NULL;
 
 COMMENT ON TABLE trainer_billings IS 'Trainer compensation records per billing period';
 COMMENT ON COLUMN trainer_billings.status IS 'Status: pending (awaiting approval), processed (invoice generated), paid (payment completed), overdue (payment late)';
@@ -70,9 +70,9 @@ CREATE TABLE IF NOT EXISTS billing_line_items (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX billing_line_items_billing_idx ON billing_line_items(trainer_billing_id);
-CREATE INDEX billing_line_items_session_idx ON billing_line_items(session_id);
-CREATE INDEX billing_line_items_date_idx ON billing_line_items(date);
+CREATE INDEX IF NOT EXISTS billing_line_items_billing_idx ON billing_line_items(trainer_billing_id);
+CREATE INDEX IF NOT EXISTS billing_line_items_session_idx ON billing_line_items(session_id);
+CREATE INDEX IF NOT EXISTS billing_line_items_date_idx ON billing_line_items(date);
 
 COMMENT ON TABLE billing_line_items IS 'Detailed breakdown of trainer hours per billing period';
 COMMENT ON COLUMN billing_line_items.type IS 'Type: training (teaching session), preparation (lesson planning), meeting (staff meetings), other';
@@ -87,23 +87,28 @@ ALTER TABLE trainer_billings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE billing_line_items ENABLE ROW LEVEL SECURITY;
 
 -- Billing Periods: Only superadmins and admins can manage
+DROP POLICY IF EXISTS "billing_periods_select" ON billing_periods;
 CREATE POLICY "billing_periods_select" ON billing_periods
     FOR SELECT
     USING (is_superadmin());
 
+DROP POLICY IF EXISTS "billing_periods_insert" ON billing_periods;
 CREATE POLICY "billing_periods_insert" ON billing_periods
     FOR INSERT
     WITH CHECK (is_superadmin());
 
+DROP POLICY IF EXISTS "billing_periods_update" ON billing_periods;
 CREATE POLICY "billing_periods_update" ON billing_periods
     FOR UPDATE
     USING (is_superadmin());
 
+DROP POLICY IF EXISTS "billing_periods_delete" ON billing_periods;
 CREATE POLICY "billing_periods_delete" ON billing_periods
     FOR DELETE
     USING (is_superadmin());
 
 -- Trainer Billings: Superadmins see all, trainers see their own
+DROP POLICY IF EXISTS "trainer_billings_select" ON trainer_billings;
 CREATE POLICY "trainer_billings_select" ON trainer_billings
     FOR SELECT
     USING (
@@ -111,19 +116,23 @@ CREATE POLICY "trainer_billings_select" ON trainer_billings
         trainer_id = auth.uid()
     );
 
+DROP POLICY IF EXISTS "trainer_billings_insert" ON trainer_billings;
 CREATE POLICY "trainer_billings_insert" ON trainer_billings
     FOR INSERT
     WITH CHECK (is_superadmin());
 
+DROP POLICY IF EXISTS "trainer_billings_update" ON trainer_billings;
 CREATE POLICY "trainer_billings_update" ON trainer_billings
     FOR UPDATE
     USING (is_superadmin());
 
+DROP POLICY IF EXISTS "trainer_billings_delete" ON trainer_billings;
 CREATE POLICY "trainer_billings_delete" ON trainer_billings
     FOR DELETE
     USING (is_superadmin());
 
 -- Billing Line Items: Same as trainer billings
+DROP POLICY IF EXISTS "billing_line_items_select" ON billing_line_items;
 CREATE POLICY "billing_line_items_select" ON billing_line_items
     FOR SELECT
     USING (
@@ -135,14 +144,17 @@ CREATE POLICY "billing_line_items_select" ON billing_line_items
         )
     );
 
+DROP POLICY IF EXISTS "billing_line_items_insert" ON billing_line_items;
 CREATE POLICY "billing_line_items_insert" ON billing_line_items
     FOR INSERT
     WITH CHECK (is_superadmin());
 
+DROP POLICY IF EXISTS "billing_line_items_update" ON billing_line_items;
 CREATE POLICY "billing_line_items_update" ON billing_line_items
     FOR UPDATE
     USING (is_superadmin());
 
+DROP POLICY IF EXISTS "billing_line_items_delete" ON billing_line_items;
 CREATE POLICY "billing_line_items_delete" ON billing_line_items
     FOR DELETE
     USING (is_superadmin());
@@ -159,11 +171,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_billing_periods_updated_at ON billing_periods;
 CREATE TRIGGER update_billing_periods_updated_at
     BEFORE UPDATE ON billing_periods
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_trainer_billings_updated_at ON trainer_billings;
 CREATE TRIGGER update_trainer_billings_updated_at
     BEFORE UPDATE ON trainer_billings
     FOR EACH ROW

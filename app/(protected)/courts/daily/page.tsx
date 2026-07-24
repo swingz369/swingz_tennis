@@ -1,5 +1,6 @@
-import UnifiedCourtCalendar from '@/components/unified-court-calendar';
+import { redirect } from 'next/navigation';
 
-export default function DailyCourtViewPage() {
-  return <UnifiedCourtCalendar defaultView="daily" />;
+// Konsolidiert: Tagesansicht lebt im Platz-Kalender-Tab von /bookings.
+export default function DailyCourtViewRedirect() {
+  redirect('/bookings?tab=courts');
 }

@@ -207,29 +207,29 @@ export function QrCheckinForm({ onSuccess }: QrScannerManualProps) {
         {/* Result feedback */}
         {result && (
           <div
-            className={`rounded-lg p-4 flex items-start gap-3 ${
+            className={`rounded-xl p-4 flex items-start gap-3 ${
               result.success
-                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                ? 'bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800'
+                : 'bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800'
             }`}
           >
             {result.success ? (
-              <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-success-600 dark:text-success-400 shrink-0 mt-0.5" />
             ) : (
-              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-error-600 dark:text-error-400 shrink-0 mt-0.5" />
             )}
             <div>
               <p
                 className={`text-sm font-medium ${
                   result.success
-                    ? 'text-green-800 dark:text-green-300'
-                    : 'text-red-800 dark:text-red-300'
+                    ? 'text-success-800 dark:text-success-300'
+                    : 'text-error-800 dark:text-error-300'
                 }`}
               >
                 {result.message}
               </p>
               {result.pointsAwarded && (
-                <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
+                <p className="text-xs text-success-600 dark:text-success-400 mt-1 flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />
                   +10 Punkte erhalten!
                 </p>

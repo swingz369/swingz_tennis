@@ -20,6 +20,7 @@ export type AuditAction =
   | 'create'
   | 'update'
   | 'delete'
+  | 'restore'
   | 'read'
   | 'login'
   | 'logout'

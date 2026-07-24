@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service';
+import { createLogger } from '@/lib/logger';
 import type {
   Member,
   CreateMemberInput,
@@ -8,6 +9,7 @@ import type {
 
 /** Service role client — used for all DB operations (server-side only, not exposed to browser) */
 const db = createServiceClient();
+const log = createLogger('member-service');
 
 export class MemberService {
   /**
@@ -89,11 +91,8 @@ export class MemberService {
     return {
       id: m.id as string,
       userId: m.user_id as string,
-      firstName:
-        (user?.first_name as string) || user?.full_name
-          ? ((user?.full_name as string) || '').split(' ')[0] || ''
-          : '',
-      lastName: (user?.last_name as string) || '',
+      firstName: ((user?.full_name as string) || '').split(' ')[0] || '',
+      lastName: ((user?.full_name as string) || '').split(' ').slice(1).join(' '),
       email: (user?.email as string) || '',
       phone: (user?.phone as string) || '',
       dateOfBirth: (user?.date_of_birth as string) || '',
@@ -151,10 +150,19 @@ export class MemberService {
     userIds: string[]
   ): Promise<Map<string, Record<string, unknown>>> {
     if (userIds.length === 0) return new Map();
-    const { data } = await db.from('users').select('*').in('id', userIds);
     const map = new Map<string, Record<string, unknown>>();
-    for (const user of data || []) {
-      map.set(user.id as string, user);
+    // Chunk to keep the `.in()` query string well under PostgREST/URL length limits.
+    const chunkSize = 100;
+    for (let i = 0; i < userIds.length; i += chunkSize) {
+      const chunk = userIds.slice(i, i + chunkSize);
+      const { data, error } = await db.from('users').select('*').in('id', chunk);
+      if (error) {
+        log.error('getUserProfiles chunk failed', error instanceof Error ? error : undefined);
+        continue;
+      }
+      for (const user of data || []) {
+        map.set(user.id as string, user);
+      }
     }
     return map;
   }
@@ -331,6 +339,35 @@ export class MemberService {
    */
   static async getActiveMembers(): Promise<Member[]> {
     return this.queryMembers({ status: 'active' });
+  }
+
+  /**
+   * Count active members in a club (lightweight `.select('id', { count: 'exact', head: true })`
+   * — does not fetch row data).
+   *
+   * Used by Stripe Subscription Quantity Sync (ticket 3.6.1) to drive the
+   * subscription-item quantity. Returns 0 for clubs with no members.
+   *
+   * Note: uses `is_active = true` rather than `status = 'active'` because
+   * `user_club_memberships` is the authoritative soft-delete layer (GoBD § 147
+   * AO 10-year retention requires we keep `status` history; `is_active` is the
+   * runtime gate). Members with `status='suspended'` are still counted as
+   * "active" because their subscription is still being billed.
+   */
+  static async getActiveMemberCount(clubId?: string): Promise<number> {
+    let q = db
+      .from('user_club_memberships')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_active', true)
+      .eq('role', 'member');
+    if (clubId) {
+      q = q.eq('club_id', clubId);
+    }
+    const { count, error } = await q;
+    if (error) {
+      return 0;
+    }
+    return count ?? 0;
   }
 
   /**

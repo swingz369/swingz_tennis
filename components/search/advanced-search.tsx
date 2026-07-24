@@ -105,7 +105,7 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+          <div className="space-y-4 p-4 border rounded-xl bg-muted/50">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {/* Type Filter */}
               <div className="space-y-2">
