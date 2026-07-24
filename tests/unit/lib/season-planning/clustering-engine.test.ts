@@ -121,7 +121,10 @@ describe('SeasonClusteringEngine.loadMembers — Sprint-4 cast-widening regressi
     const { SeasonClusteringEngine } = await import('@/lib/season-planning/clustering-engine');
     // Constructor takes positional (seasonId, clubId, config?). Default
     // config is acceptable for the regression test.
-    const engine = new SeasonClusteringEngine('s-1', 'c-1');
+    const engine = new SeasonClusteringEngine(
+      's0000000-0000-0000-0000-000000000001',
+      'c0000000-0000-0000-0000-000000000001'
+    );
 
     // loadMembers is private; access via canonical `as unknown as` cast
     const merged = (await (
@@ -173,7 +176,10 @@ describe('SeasonClusteringEngine.loadMembers — Sprint-4 cast-widening regressi
     setResp(trainerFeedback, []);
 
     const { SeasonClusteringEngine } = await import('@/lib/season-planning/clustering-engine');
-    const engine = new SeasonClusteringEngine('s', 'c');
+    const engine = new SeasonClusteringEngine(
+      's0000000-0000-0000-0000-000000000001',
+      'c0000000-0000-0000-0000-000000000001'
+    );
 
     const merged = (await (
       engine as unknown as { loadMembers: () => Promise<MemberResultRow[]> }
@@ -188,7 +194,10 @@ describe('SeasonClusteringEngine.loadMembers — Sprint-4 cast-widening regressi
   it('returns [] without throwing when both sources are empty (cast is safe)', async () => {
     // No setResp() calls → all tables return []
     const { SeasonClusteringEngine } = await import('@/lib/season-planning/clustering-engine');
-    const engine = new SeasonClusteringEngine('s', 'c');
+    const engine = new SeasonClusteringEngine(
+      's0000000-0000-0000-0000-000000000001',
+      'c0000000-0000-0000-0000-000000000001'
+    );
 
     const merged = (await (
       engine as unknown as { loadMembers: () => Promise<MemberResultRow[]> }

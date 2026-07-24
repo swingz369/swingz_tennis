@@ -206,9 +206,9 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                   <span
                     className={
                       isOwner
-                        ? 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300'
+                        ? 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-info-100 text-info-700 dark:bg-info-900/40 dark:text-info-300'
                         : isSuperAdmin
-                          ? 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+                          ? 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-info-100 text-info-700 dark:bg-info-900/40 dark:text-info-300'
                           : 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-brand-light/10 text-brand-light dark:bg-brand-light/20 dark:text-success-300'
                     }
                   >

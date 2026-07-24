@@ -180,7 +180,7 @@ export default function DemoPage() {
 
         {/* ═══════════ CTA ═══════════ */}
         <section className="pt-6">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-primary text-white px-6 py-12 sm:px-16 sm:py-16 text-center shadow-strong">
+          <div className="relative overflow-hidden rounded-xl bg-gradient-primary text-white px-6 py-12 sm:px-16 sm:py-16 text-center shadow-strong">
             <div className="absolute inset-0 noise opacity-[0.04]" aria-hidden="true" />
             <div className="relative">
               <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">

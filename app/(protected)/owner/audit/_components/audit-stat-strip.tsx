@@ -50,7 +50,7 @@ export function AuditStatStrip() {
                 {card.comingSoon && (
                   <Badge
                     variant="outline"
-                    className="border-violet-300/70 text-violet-700 dark:border-violet-700/60 dark:text-violet-300 text-2xs py-0 px-1.5"
+                    className="border-info-300/70 text-info-700 dark:border-info-700/60 dark:text-info-300 text-2xs py-0 px-1.5"
                   >
                     Bald
                   </Badge>
@@ -59,7 +59,7 @@ export function AuditStatStrip() {
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground leading-relaxed">{card.body}</p>
-              <p className="mt-2 text-xs font-mono text-violet-600/70 dark:text-violet-400/70">—</p>
+              <p className="mt-2 text-xs font-mono text-info-600/70 dark:text-info-400/70">—</p>
             </CardContent>
             {/* dezenter Bau-Licht-Vermerk */}
             <div
@@ -73,21 +73,21 @@ export function AuditStatStrip() {
       </div>
 
       {/* Tipps-Karte */}
-      <Card className="border-violet-200/60 dark:border-violet-700/40 bg-violet-50/40 dark:bg-violet-900/10">
+      <Card className="border-info-200/60 dark:border-info-700/40 bg-info-50/40 dark:bg-info-900/10">
         <CardContent className="py-4 px-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300 mb-1.5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-info-700 dark:text-info-300 mb-1.5">
             Schnellstart
           </p>
-          <ul className="space-y-1 text-sm text-foreground dark:text-violet-100">
+          <ul className="space-y-1 text-sm text-foreground dark:text-info-100">
             <li className="flex gap-2">
-              <span className="text-violet-500 dark:text-violet-400 shrink-0">①</span>
+              <span className="text-info-500 dark:text-info-400 shrink-0">①</span>
               <span>
                 <strong>Verein-Filter:</strong> links einen Verein auswählen, um nur dessen Logs zu
                 sehen. Wirkt auch auf den CSV-Export.
               </span>
             </li>
             <li className="flex gap-2">
-              <span className="text-violet-500 dark:text-violet-400 shrink-0">②</span>
+              <span className="text-info-500 dark:text-info-400 shrink-0">②</span>
               <span>
                 <strong>Akteur suchen:</strong> E-Mail-Teilstring ins Filterfeld (z. B.
                 <code className="mx-1 px-1 py-0.5 rounded bg-background text-xs">
@@ -97,7 +97,7 @@ export function AuditStatStrip() {
               </span>
             </li>
             <li className="flex gap-2">
-              <span className="text-violet-500 dark:text-violet-400 shrink-0">③</span>
+              <span className="text-info-500 dark:text-info-400 shrink-0">③</span>
               <span>
                 <strong>Zeitfenster:</strong> „Von/Bis" wirkt sofort, Tabelle lädt neu. Maximal 100
                 Einträge pro Seite; für Reports den <strong>CSV-Export</strong> unten links nutzen

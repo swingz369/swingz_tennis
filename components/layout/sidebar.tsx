@@ -34,16 +34,16 @@ interface Club {
 // der User beide Rollen-Memberships parallel hat (selten aber möglich).
 const roleColors = {
   owner: {
-    bg: 'bg-violet-50 dark:bg-violet-900/20',
-    text: 'text-violet-700 dark:text-violet-300',
-    light: 'violet',
-    ring: 'ring-violet-300/50',
+    bg: 'bg-info-50 dark:bg-info-900/20',
+    text: 'text-info-700 dark:text-info-300',
+    light: 'info',
+    ring: 'ring-info-300/50',
   },
   superadmin: {
-    bg: 'bg-purple-50 dark:bg-purple-900/20',
-    text: 'text-purple-700 dark:text-purple-300',
-    light: 'purple',
-    ring: 'ring-purple-300/50',
+    bg: 'bg-info-50 dark:bg-info-900/20',
+    text: 'text-info-700 dark:text-info-300',
+    light: 'info',
+    ring: 'ring-info-300/50',
   },
   admin: {
     bg: 'bg-brand-light/10 dark:bg-brand-light/15',

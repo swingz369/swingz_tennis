@@ -263,7 +263,7 @@ export default function LandingPage() {
       {/* ═══════════ CTA ═══════════ */}
       <SectionReveal as="section" aria-labelledby="cta-heading" className="pb-20 sm:pb-28">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-primary text-white px-6 py-16 sm:px-16 sm:py-20 text-center shadow-strong">
+          <div className="relative overflow-hidden rounded-xl bg-gradient-primary text-white px-6 py-16 sm:px-16 sm:py-20 text-center shadow-strong">
             <div className="absolute inset-0 noise opacity-[0.04]" aria-hidden="true" />
             <div className="relative">
               <h2

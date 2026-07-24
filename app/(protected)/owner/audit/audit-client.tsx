@@ -464,7 +464,7 @@ function ActionBadge({ action }: { action: string }) {
       'bg-warning-50 text-warning-700 border-warning-200 dark:bg-warning-900/20 dark:text-warning-300 dark:border-warning-800';
   } else if (/login|logout|PII_READ/.test(action)) {
     className =
-      'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800';
+      'bg-error-50 text-error-700 border-error-200 dark:bg-error-900/20 dark:text-error-300 dark:border-error-800';
   }
 
   return (

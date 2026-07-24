@@ -1773,7 +1773,7 @@ export default function UnifiedCourtCalendar({
             }}
             className="w-full flex items-center gap-3 rounded-xl border border-primary/25 bg-primary/[0.06] hover:bg-primary/[0.1] transition-colors px-4 py-3 text-left"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary flex-shrink-0">
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary flex-shrink-0">
               <Search className="h-4 w-4" />
             </div>
             <div className="min-w-0">

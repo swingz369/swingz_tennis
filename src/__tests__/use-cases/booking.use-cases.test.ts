@@ -29,8 +29,8 @@ describe('CreateBookingUseCase', () => {
 
   it('should create booking successfully', async () => {
     mockScheduleRepo.getSessionDetails.mockResolvedValue({
-      clubId: { toString: () => 'club-1' } as any,
-      scheduleId: { toString: () => 'sch-1' } as any,
+      clubId: { getValue: () => 'club-1', toString: () => 'club-1' } as any,
+      scheduleId: { getValue: () => 'sch-1', toString: () => 'sch-1' } as any,
       timeslot: { getStart: () => new Date(), getEnd: () => new Date() },
       maxParticipants: 10,
     });
@@ -96,8 +96,8 @@ describe('CancelBookingUseCase', () => {
     };
     mockBookingRepo.findById.mockResolvedValue(mockBooking);
     mockScheduleRepo.getSessionDetails.mockResolvedValue({
-      clubId: { toString: () => 'club-1' } as any,
-      scheduleId: { toString: () => 'sch-1' } as any,
+      clubId: { getValue: () => 'club-1', toString: () => 'club-1' } as any,
+      scheduleId: { getValue: () => 'sch-1', toString: () => 'sch-1' } as any,
       timeslot: { getStart: () => new Date(), getEnd: () => new Date() },
       maxParticipants: 10,
     });
