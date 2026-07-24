@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const [{ data: auditLogs }, { count }] = await Promise.all([
       sb
         .from('audit_logs')
-        .select('*')
+        .select('*, actor:actor_id(full_name, email)')
         .eq('club_id', clubId)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1),
@@ -29,7 +29,13 @@ export async function GET(request: NextRequest) {
 
     const pagination = buildPaginationMeta(page, limit, count);
 
-    return NextResponse.json({ logs: auditLogs ?? [], pagination });
+    const logs = (auditLogs ?? []).map((row: any) => ({
+      ...row,
+      performed_by_name: row.actor?.full_name ?? null,
+      performed_by: row.actor?.email ?? null,
+    }));
+
+    return NextResponse.json({ logs, pagination });
   } catch {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

@@ -2,33 +2,30 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
-const cardVariants = cva(
-  'rounded-xl bg-background dark:bg-surface-dark transition-all duration-500 ease-out',
-  {
-    variants: {
-      variant: {
-        default:
-          'border border-border dark:border-white/10 shadow-sm hover:shadow-xl hover:-translate-y-1',
-        elevated:
-          'border border-border dark:border-white/10 shadow-lg hover:shadow-2xl hover:-translate-y-2',
-        bordered:
-          'border-2 border-border dark:border-white/20 hover:border-brand-light/50 hover:shadow-xl',
-        flat: 'bg-muted dark:bg-card/5 border border-border dark:border-white/10',
-      },
-      padding: {
-        none: '',
-        sm: 'p-3',
-        md: 'p-4',
-        lg: 'p-6',
-        xl: 'p-8',
-      },
+const cardVariants = cva('rounded-xl bg-card dark:bg-card transition-all duration-500 ease-out', {
+  variants: {
+    variant: {
+      default:
+        'border border-border dark:border-white/10 shadow-sm hover:shadow-xl hover:-translate-y-1',
+      elevated:
+        'border border-border dark:border-white/10 shadow-lg hover:shadow-2xl hover:-translate-y-2',
+      bordered:
+        'border-2 border-border dark:border-white/20 hover:border-brand-light/50 hover:shadow-xl',
+      flat: 'bg-muted dark:bg-card/5 border border-border dark:border-white/10',
     },
-    defaultVariants: {
-      variant: 'default',
-      padding: 'md',
+    padding: {
+      none: '',
+      sm: 'p-3',
+      md: 'p-4',
+      lg: 'p-6',
+      xl: 'p-8',
     },
-  }
-);
+  },
+  defaultVariants: {
+    variant: 'default',
+    padding: 'md',
+  },
+});
 
 export interface CardProps
   extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof cardVariants> {

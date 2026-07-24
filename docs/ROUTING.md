@@ -188,36 +188,10 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 > **Guard:** `superadmin` Rolle
 > **Sidebar:** Superadmin-Links + Club-Switcher
 
-### Konzept: Superadmin als Tennisschulen-Chef
-
-Der Superadmin ist **nicht** einem spezifischen Verein zugeordnet. Er ist der übergeordnete
-Leiter der Tennisschule und verwaltet **alle zugehörigen Vereine (Clubs)** von einer zentralen
-Stelle aus.
-
 ```
-Tennisschule (Superadmin)
-├── Verein A (Admin A verwaltet)
-├── Verein B (Admin B verwaltet)
-├── Verein C (Admin C verwaltet)
-└── ...
-```
-
-- **Superadmin-Dashboard** (`/superadmin`) — Plattform-Übersicht über ALLE Vereine:
-  Gesamtmitglieder, Trainer-Anzahl, aktive Sessions, Umsatz über alle Clubs hinweg.
-  Kein einzelner Verein im Fokus.
-- **Vereinsübersicht** (`/superadmin/tenants`) — Alle Clubs mit ihren Kennzahlen.
-  Hier kann der Superadmin sehen, welcher Verein wie läuft.
-- **Club-Switcher** — Wenn der Superadmin verwaltend in einen bestimmten Verein eingreifen
-  möchte (z.B. Mitglieder bearbeiten, Rechnungen erstellen), wählt er über den Club-Switcher
-  einen Verein aus. Erst dann arbeitet er im Admin-Kontext dieses einen Vereins.
-- **Ohne Club-Auswahl** → Redirect zu `/select-admin-club` für Admin-Funktionen.
-
-### Routen
-
-```
-/superadmin                      ← Plattform-Dashboard (alle Vereine)
-/superadmin/dashboard            ← Plattform-Analyse (alle Vereine)
-/superadmin/tenants              ← Vereinsübersicht (alle Clubs mit Kennzahlen)
+/superadmin                      ← Plattform-Dashboard
+/superadmin/dashboard            ← Plattform-Analyse
+/superadmin/tenants              ← Vereinsübersicht (alle Clubs)
 /superadmin/clubs                ← Club-Verwaltung (erstellen/bearbeiten)
 /superadmin/onboarding           ← Setup-Wizard (erster Login)
 ```

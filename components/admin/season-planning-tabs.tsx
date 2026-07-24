@@ -16,7 +16,7 @@ export function SeasonPlanningTabs({ seasonId }: { seasonId: string }) {
   const tabs = [
     { name: 'Übersicht', href: overviewHref },
     { name: 'Planungs-Wizard', href: `${overviewHref}/planning` },
-    { name: 'Bearbeiten', href: `${overviewHref}/edit` },
+    { name: 'Saison-Einstellungen', href: `${overviewHref}/edit` },
   ];
 
   return (

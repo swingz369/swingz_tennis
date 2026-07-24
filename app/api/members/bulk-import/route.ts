@@ -290,10 +290,11 @@ export async function POST(request: NextRequest) {
     // Audit log
     if (result.imported > 0) {
       await adminSupabase.from('audit_logs').insert({
-        user_id: auth.user.id,
+        actor_id: auth.user.id,
         action: 'members_bulk_imported',
         resource_type: 'member',
         resource_id: targetClubId,
+        club_id: targetClubId,
         metadata: {
           total: result.total,
           imported: result.imported,

@@ -75,6 +75,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             `,
           }}
         />
+        {/* Kill stale service workers before hydration — a leftover SW from a
+            local prod build can serve mismatched Turbopack chunks and break
+            hard reloads before the sw-registration.tsx useEffect ever runs. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (${process.env.NODE_ENV === 'development'} && 'serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(regs) {
+                  regs.forEach(function(r) { r.unregister(); });
+                });
+              }
+            `,
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://api.fontshare.com" />

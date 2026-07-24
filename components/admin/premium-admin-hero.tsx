@@ -57,7 +57,7 @@ export function PremiumAdminHero({
             'text-2xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
             isSuperadmin
               ? 'bg-info-50 text-info-700 dark:bg-info-900/20 dark:text-info-300'
-              : 'bg-[hsl(var(--brand-accent-dashboard)/0.1)] text-[hsl(var(--brand-accent-dashboard))]'
+              : 'bg-brand-accent-100 text-brand-accent-700 dark:bg-brand-accent-900/30 dark:text-brand-accent-300'
           )}
         >
           {isSuperadmin ? 'Superadmin' : 'Admin'}

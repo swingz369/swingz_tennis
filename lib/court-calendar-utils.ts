@@ -9,10 +9,8 @@
 import { setHours, setMinutes, isSameDay, isBefore, isAfter } from 'date-fns';
 import type { Session } from '@/hooks/use-sessions';
 
-/** Standard hourly time slots for court booking views (06:00–22:00) */
+/** Standard hourly time slots for court booking views (08:00–22:00) */
 export const CALENDAR_TIME_SLOTS = [
-  '06:00',
-  '07:00',
   '08:00',
   '09:00',
   '10:00',
@@ -75,16 +73,66 @@ export function getSessionForSlot(
   });
 }
 
+/** Admin-created court closure (court_closures table) — date-range block. */
+export interface CourtClosure {
+  id: string;
+  court_id: string;
+  reason: string;
+  description: string | null;
+  start_date: string;
+  end_date: string | null;
+  weather_condition?: string | null;
+}
+
+/**
+ * Find the closure that covers a given court+date+timeslot.
+ * `end_date === null` means the closure blocks indefinitely from `start_date` on
+ * (matches the "aktiv bis manuell aufgehoben" semantics used in the Platzsperren-UI).
+ */
+export function getClosureForSlot(
+  courtId: string,
+  date: Date,
+  timeSlot: string,
+  closures: CourtClosure[]
+): CourtClosure | undefined {
+  const [hour, minute] = timeSlot.split(':').map(Number);
+  const slotStart = setMinutes(setHours(date, hour), minute);
+  const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
+
+  return closures.find((c) => {
+    if (c.court_id !== courtId) return false;
+    const rangeStart = new Date(c.start_date);
+    const rangeEnd = c.end_date ? new Date(c.end_date) : null;
+    return rangeEnd ? slotStart < rangeEnd && slotEnd > rangeStart : slotEnd > rangeStart;
+  });
+}
+
 /**
  * Determine the visual status of a calendar slot.
  */
+export interface CalendarPlanEntry {
+  court_id: string;
+  start_time: string;
+  end_time: string;
+  group_name?: string;
+  group_color?: string;
+  trainer_name?: string;
+  [k: string]: unknown;
+}
+
 export function getSlotStatus(
   courtId: string,
   date: Date,
   timeSlot: string,
   sessions: Session[],
-  planEntries: Array<{ court_id: string; start_time: string; end_time: string }>
-): { status: SlotStatus; session?: Session } {
+  planEntries: CalendarPlanEntry[],
+  closures: CourtClosure[] = []
+): {
+  status: SlotStatus;
+  session?: Session;
+  closure?: CourtClosure;
+  planEntry?: CalendarPlanEntry;
+} {
   const session = getSessionForSlot(courtId, date, timeSlot, sessions);
   if (session) {
     // Blocked sessions (event/maintenance) take visual priority
@@ -98,10 +146,15 @@ export function getSlotStatus(
     return { status: 'session', session };
   }
 
-  const hasPlanEntry = planEntries.some(
+  // Admin-created closure (Platzverwaltung / Wochenstundenplan "Platz sperren") — same
+  // visual status as an event/maintenance session, just from the court_closures table.
+  const closure = getClosureForSlot(courtId, date, timeSlot, closures);
+  if (closure) return { status: 'blocked', closure };
+
+  const planEntry = planEntries.find(
     (e) => e.court_id === courtId && e.start_time <= timeSlot && e.end_time > timeSlot
   );
-  if (hasPlanEntry) return { status: 'plan' };
+  if (planEntry) return { status: 'plan', planEntry };
 
   return { status: 'available' };
 }

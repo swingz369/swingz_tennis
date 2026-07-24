@@ -34,9 +34,9 @@ import type {
 import type { GroupAssignment } from '@/lib/season-planning/types';
 import { DAY_LABELS } from '@/lib/season-planning/schedule-constants';
 
-/** Convert 1-indexed dayOfWeek (1=Mo..7=So) to German weekday name */
+/** Convert app-wide dayOfWeek (0=Mo..6=So, see lib/types/season-planning.ts) to German weekday name */
 function dayName(dow: number): string {
-  return DAY_LABELS[dow - 1] ?? `Tag ${dow}`;
+  return DAY_LABELS[dow] ?? `Tag ${dow}`;
 }
 
 // ============================================
@@ -753,6 +753,18 @@ export class ConflictDetector {
  * Publish-time and drifts out of sync as the plan changes afterwards.
  */
 export async function detectConflictsForSeason(seasonId: string, clubId: string) {
+  // ponytail: hard timeout so a stuck Drizzle/Supavisor connection (max:1 pool,
+  // seen intermittently on the self-hosted pooler) rejects instead of hanging
+  // every page/route that awaits this forever. Callers already catch errors.
+  return Promise.race([
+    detectConflictsForSeasonInner(seasonId, clubId),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Konfliktprüfung: Datenbank-Timeout')), 8000)
+    ),
+  ]);
+}
+
+async function detectConflictsForSeasonInner(seasonId: string, clubId: string) {
   const detector = new ConflictDetector(seasonId, clubId);
   const entries = await db
     .select()

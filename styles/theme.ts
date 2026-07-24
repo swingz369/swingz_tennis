@@ -5,21 +5,21 @@
 // ob ein semantisches Token (success/warning/error/info, brand-*) passt.
 
 export const colors = {
-  // Accent – Sunrise Orange (Energy & Action) — als brand-accent-Skala in Tailwind
+  // Accent – Court Green (aus Club-Logo abgeleitet) — als brand-accent-Skala in Tailwind
   accent: {
-    50: '#fff7ed',
-    100: '#ffedd5',
-    200: '#fed7aa',
-    300: '#fdba74',
-    400: '#fb923c',
-    500: '#f97316',
-    600: '#ea580c',
-    700: '#c2410c',
-    800: '#9a3412',
-    900: '#7c2d12',
-    950: '#4a1a0b',
-    brand: '#FF6B35',
-    ember: '#e85a2a',
+    50: '#f5f9e8',
+    100: '#e7f2c9',
+    200: '#d3e696',
+    300: '#bcd662',
+    400: '#a6cb3d',
+    500: '#94c121',
+    600: '#749419',
+    700: '#5c7515',
+    800: '#465913',
+    900: '#3a4a12',
+    950: '#212b08',
+    brand: '#94C121',
+    ember: '#749419',
   },
   // Neutrals – Refined Warm Grays with Depth
   gray: {
@@ -179,10 +179,10 @@ export const shadows = {
   '3xl': '0 48px 80px -16px rgb(0 0 0 / 0.25)',
   inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
   glow: {
-    primary: '0 0 60px -12px hsl(150 48% 18% / 0.4), 0 0 24px -8px hsl(150 48% 18% / 0.3)',
-    primaryStrong: '0 0 80px -16px hsl(150 48% 18% / 0.5), 0 0 40px -12px hsl(150 48% 18% / 0.4)',
-    accent: '0 0 60px -12px hsl(26 100% 60% / 0.4), 0 0 24px -8px hsl(26 100% 60% / 0.3)',
-    accentStrong: '0 0 80px -16px hsl(26 100% 60% / 0.5), 0 0 40px -12px hsl(26 100% 60% / 0.4)',
+    primary: '0 0 60px -12px hsl(206 100% 31% / 0.4), 0 0 24px -8px hsl(206 100% 31% / 0.3)',
+    primaryStrong: '0 0 80px -16px hsl(206 100% 31% / 0.5), 0 0 40px -12px hsl(206 100% 31% / 0.4)',
+    accent: '0 0 60px -12px hsl(77 71% 44% / 0.4), 0 0 24px -8px hsl(77 71% 44% / 0.3)',
+    accentStrong: '0 0 80px -16px hsl(77 71% 44% / 0.5), 0 0 40px -12px hsl(77 71% 44% / 0.4)',
     premium:
       '0 24px 64px -16px rgba(0, 0, 0, 0.15), 0 8px 32px -8px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
   },
@@ -193,45 +193,44 @@ export const shadows = {
       '0 24px 48px -12px rgb(0 0 0 / 0.12), 0 8px 24px -8px rgb(0 0 0 / 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
   },
   button: {
-    default: '0 2px 8px -2px hsl(150 48% 18% / 0.3), 0 1px 2px rgba(0, 0, 0, 0.05)',
-    hover: '0 8px 24px -4px hsl(150 48% 18% / 0.4), 0 2px 8px -2px hsl(150 48% 18% / 0.2)',
-    active: '0 1px 4px hsl(150 48% 18% / 0.3) inset',
+    default: '0 2px 8px -2px hsl(206 100% 31% / 0.3), 0 1px 2px rgba(0, 0, 0, 0.05)',
+    hover: '0 8px 24px -4px hsl(206 100% 31% / 0.4), 0 2px 8px -2px hsl(206 100% 31% / 0.2)',
+    active: '0 1px 4px hsl(206 100% 31% / 0.3) inset',
   },
 };
 
 export const gradients = {
   primary:
-    'linear-gradient(135deg, hsl(150 48% 18%) 0%, hsl(150 41% 30%) 50%, hsl(150 45% 35%) 100%)',
+    'linear-gradient(135deg, hsl(206 100% 31%) 0%, hsl(204 85% 45%) 50%, hsl(201 68% 59%) 100%)',
   primaryRadial:
-    'radial-gradient(ellipse 80% 50% at 50% 0%, hsl(150 45% 35%) 0%, hsl(150 48% 18%) 100%)',
-  primaryMesh: `    radial-gradient(at 40% 20%, hsl(150 48% 25% / 0.8) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, hsl(150 45% 35% / 0.6) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, hsl(217 33% 20% / 0.5) 0px, transparent 50%),
-    radial-gradient(at 80% 50%, hsl(150 48% 30% / 0.4) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsl(217 33% 25% / 0.6) 0px, transparent 50%),
-    radial-gradient(at 80% 100%, hsl(150 45% 35% / 0.5) 0px, transparent 50%),
-    radial-gradient(at 0% 0%, hsl(150 50% 20% / 0.7) 0px, transparent 50%)
+    'radial-gradient(ellipse 80% 50% at 50% 0%, hsl(201 68% 59%) 0%, hsl(206 100% 31%) 100%)',
+  primaryMesh: `    radial-gradient(at 40% 20%, hsl(206 100% 25% / 0.8) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsl(201 68% 59% / 0.6) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsl(217 40% 22% / 0.5) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, hsl(206 90% 35% / 0.4) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsl(217 40% 27% / 0.6) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, hsl(201 68% 59% / 0.5) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, hsl(206 100% 22% / 0.7) 0px, transparent 50%)
   `,
-  accent:
-    'linear-gradient(135deg, hsl(26 100% 60%) 0%, hsl(26 100% 67%) 50%, hsl(26 100% 73%) 100%)',
-  accentRadial: 'radial-gradient(circle at 70% 30%, hsl(26 100% 73%) 0%, hsl(26 100% 60%) 100%)',
-  hero: 'linear-gradient(160deg, hsl(150 72% 14%) 0%, hsl(150 48% 18%) 40%, hsl(150 41% 30%) 100%)',
+  accent: 'linear-gradient(135deg, hsl(77 71% 44%) 0%, hsl(77 71% 52%) 50%, hsl(77 71% 58%) 100%)',
+  accentRadial: 'radial-gradient(circle at 70% 30%, hsl(77 71% 58%) 0%, hsl(77 71% 44%) 100%)',
+  hero: 'linear-gradient(160deg, hsl(206 100% 18%) 0%, hsl(206 100% 31%) 40%, hsl(204 85% 45%) 100%)',
   heroMesh: `
-    radial-gradient(ellipse 100% 100% at 20% 0%, hsl(150 45% 35% / 0.25) 0%, transparent 50%),
-    radial-gradient(ellipse 80% 80% at 80% 20%, hsl(26 100% 60% / 0.1) 0%, transparent 40%),
-    radial-gradient(ellipse 60% 60% at 40% 80%, hsl(217 33% 24% / 0.2) 0%, transparent 50%),
-    linear-gradient(160deg, hsl(150 72% 14%) 0%, hsl(150 48% 18%) 40%, hsl(150 41% 30%) 100%)
+    radial-gradient(ellipse 100% 100% at 20% 0%, hsl(201 68% 59% / 0.25) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 80% at 80% 20%, hsl(77 71% 44% / 0.1) 0%, transparent 40%),
+    radial-gradient(ellipse 60% 60% at 40% 80%, hsl(217 40% 27% / 0.2) 0%, transparent 50%),
+    linear-gradient(160deg, hsl(206 100% 18%) 0%, hsl(206 100% 31%) 40%, hsl(204 85% 45%) 100%)
   `,
   glass: 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)',
   glassDark: 'linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.05) 100%)',
-  mesh: 'linear-gradient(135deg, hsl(150 48% 18%) 0%, hsl(150 41% 30%) 25%, hsl(150 45% 35%) 50%, hsl(150 41% 52%) 75%, hsl(150 40% 62%) 100%)',
+  mesh: 'linear-gradient(135deg, hsl(206 100% 31%) 0%, hsl(204 85% 45%) 25%, hsl(201 68% 59%) 50%, hsl(201 65% 50%) 75%, hsl(201 60% 70%) 100%)',
   aurora: `
-    radial-gradient(ellipse 60% 40% at 10% 20%, hsl(150 45% 35% / 0.3) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 50% at 90% 80%, hsl(26 100% 60% / 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse 80% 30% at 50% 90%, hsl(217 33% 24% / 0.2) 0%, transparent 40%)
+    radial-gradient(ellipse 60% 40% at 10% 20%, hsl(201 68% 59% / 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 50% at 90% 80%, hsl(77 71% 44% / 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 30% at 50% 90%, hsl(217 40% 27% / 0.2) 0%, transparent 40%)
   `,
   text: {
-    primary: 'linear-gradient(135deg, hsl(150 48% 18%) 0%, hsl(150 45% 35%) 100%)',
-    accent: 'linear-gradient(135deg, hsl(26 100% 60%) 0%, hsl(26 100% 73%) 100%)',
+    primary: 'linear-gradient(135deg, hsl(206 100% 31%) 0%, hsl(201 68% 59%) 100%)',
+    accent: 'linear-gradient(135deg, hsl(77 71% 44%) 0%, hsl(77 71% 58%) 100%)',
   },
 };

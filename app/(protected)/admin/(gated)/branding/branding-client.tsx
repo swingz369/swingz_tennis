@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Palette, Image as ImageIcon, Globe } from 'lucide-react';
+import { Palette, Image as ImageIcon, Globe, ImagePlus } from 'lucide-react';
 import { LogoUpload } from '@/components/ui/logo-upload';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
@@ -19,6 +19,7 @@ interface BrandingData {
   accentColor: string;
   logoLightUrl: string;
   logoDarkUrl: string;
+  dashboardBgUrl: string;
   customDomain: string;
 }
 
@@ -31,6 +32,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
     accentColor: '#FF6B35',
     logoLightUrl: '',
     logoDarkUrl: '',
+    dashboardBgUrl: '',
     customDomain: '',
   });
 
@@ -45,6 +47,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
           accentColor: data.brand.accentColor,
           logoLightUrl: data.logos.light || '',
           logoDarkUrl: data.logos.dark || '',
+          dashboardBgUrl: data.logos.dashboardBg || '',
           customDomain: data.customDomain || '',
         });
       }
@@ -108,6 +111,9 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
           </TabsTrigger>
           <TabsTrigger value="logos">
             <ImageIcon className="h-4 w-4 mr-2" /> Logos
+          </TabsTrigger>
+          <TabsTrigger value="background">
+            <ImagePlus className="h-4 w-4 mr-2" /> Dashboard-Hintergrund
           </TabsTrigger>
           <TabsTrigger value="domain">
             <Globe className="h-4 w-4 mr-2" /> Domain
@@ -205,6 +211,26 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
                   if (link) link.href = url;
                 }
               }}
+            />
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="background" className="space-y-4">
+          <Card className="p-6 space-y-4">
+            <div>
+              <p className="text-sm font-medium">Hintergrundbild im Admin-Dashboard</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Zeigt ein Foto (z. B. Vereinsgelände) hinter der Begrüßung oben im Dashboard.
+                Wichtige Kennzahlen bleiben immer gut lesbar, da das Bild nur rechts sichtbar ist
+                und links zur Hintergrundfarbe ausblendet.
+              </p>
+            </div>
+            <LogoUpload
+              logoUrl={branding.dashboardBgUrl}
+              variant="dashboard-bg"
+              label="Hintergrundbild"
+              clubId={clubId}
+              onLogoChange={(url) => setBranding({ ...branding, dashboardBgUrl: url || '' })}
             />
           </Card>
         </TabsContent>

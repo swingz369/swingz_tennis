@@ -102,12 +102,19 @@ export default async function SeasonsPage({
     const displayedSeasonIds = (seasonsData || []).map((s: any) => s.id as string);
     const conflictsBySeasonLive = new Map<string, number>();
     if (displayedSeasonIds.length > 0) {
-      const results = await Promise.all(
+      // ponytail: allSettled — a single stuck/timed-out conflict check must not
+      // blank out the whole season list (see detectConflictsForSeason timeout).
+      const results = await Promise.allSettled(
         displayedSeasonIds.map((sid) =>
           detectConflictsForSeason(sid, clubId).then((r) => [sid, r.summary.total] as const)
         )
       );
-      for (const [sid, total] of results) conflictsBySeasonLive.set(sid, total);
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          const [sid, total] = result.value;
+          conflictsBySeasonLive.set(sid, total);
+        }
+      }
     }
 
     // Compute per-season statistics (eingereichte Mitglieder-Präferenzen)

@@ -29,10 +29,10 @@ export function TennisBallSvg({ width = 320, height = 320, className }: TennisBa
     >
       <defs>
         <radialGradient id="adminBallGrad" cx="30%" cy="30%" r="70%">
-          <stop offset="0%" stopColor="hsl(150 38% 63%)" />
+          <stop offset="0%" stopColor="hsl(201 55% 70%)" />
           <stop offset="40%" stopColor="hsl(var(--brand-primary-light))" />
           <stop offset="70%" stopColor="hsl(var(--brand-primary))" />
-          <stop offset="100%" stopColor="hsl(150 50% 12%)" />
+          <stop offset="100%" stopColor="hsl(206 60% 12%)" />
         </radialGradient>
         <filter id="adminBallShadow" x="-50%" y="-50%" width="200%" height="200%">
           <feDropShadow

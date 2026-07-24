@@ -5,7 +5,7 @@
 ## 🧱 Architektur
 
 ```
-Stripe-Payment-Provider (API 2026-05-27.dahlia)
+Stripe-Payment-Provider (API 2026-06-24.dahlia)
    │
    ├── lib/stripe/client.ts        ← Graceful (für Checkout-UI, returnt null wenn nicht konfiguriert)
    ├── lib/stripe/stripe-client.ts ← Strict (für Webhooks, wirft wenn nicht konfiguriert)
@@ -124,8 +124,7 @@ Pure-Logic-First:
 
 ```ts
 export type QuantitySyncResult =
-  | { kind: 'noop' }
-  | { kind: 'update'; newQuantity: number; delta: number };
+  { kind: 'noop' } | { kind: 'update'; newQuantity: number; delta: number };
 
 export function computeQuantitySync(
   currentSubscription: Subscription,

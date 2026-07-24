@@ -42,6 +42,7 @@ type ClubRow = {
   name: string;
   status: string | null;
   setup_completed_at: string | null;
+  dashboard_bg_url: string | null;
 };
 
 type SmartAction = {
@@ -85,7 +86,7 @@ export default async function AdminPage() {
   // without an `any`-cast downstream.
   const { data: club } = await supabase
     .from('clubs')
-    .select('id, name, status, setup_completed_at')
+    .select('id, name, status, setup_completed_at, dashboard_bg_url')
     .eq('id', clubId)
     .maybeSingle<ClubRow>();
 
@@ -556,25 +557,46 @@ export default async function AdminPage() {
           already carry the orange pulse treatment, so there is no
           separate "attention" banner repeating the same CTA below. */}
       <ScrollReveal>
-        <div className="rounded-xl border border-border dark:border-white/10 bg-card p-5 sm:p-6">
-          <div className="grid gap-5 lg:grid-cols-5 lg:items-start">
-            <div className="lg:col-span-3">
-              <PremiumAdminHero
-                firstName={firstName}
-                clubName={club.name}
-                isSuperadmin={isSuperadmin}
-                todaySessionCount={activeSessions ?? 0}
-              />
-            </div>
-            <div className="lg:col-span-2">
+        <div
+          className={
+            club.dashboard_bg_url
+              ? 'grid grid-cols-1 lg:grid-cols-[1fr_200px] gap-4 items-stretch'
+              : ''
+          }
+        >
+          <div className="rounded-xl border border-border dark:border-white/10 bg-card p-5 sm:p-6 space-y-5">
+            <PremiumAdminHero
+              firstName={firstName}
+              clubName={club.name}
+              isSuperadmin={isSuperadmin}
+              todaySessionCount={activeSessions ?? 0}
+            />
+            <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                 Schnellaktionen
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {smartActions.map(renderSmartAction)}
               </div>
             </div>
           </div>
+
+          {club.dashboard_bg_url && (
+            // Small side thumbnail instead of a full-width banner — a
+            // near-square crop (capped width, stretches to the hero
+            // card's height on lg+) is forgiving for whatever aspect
+            // ratio an admin's photo happens to have, unlike a wide,
+            // short strip which crops almost any real photo badly.
+            <div className="rounded-xl border border-border dark:border-white/10 overflow-hidden aspect-square lg:aspect-auto max-w-[220px] w-full mx-auto lg:mx-0 lg:max-w-none lg:w-full lg:h-full">
+              {/* eslint-disable-next-line @next/next/no-img-element -- decorative club photo, dynamic external URL */}
+              <img
+                src={club.dashboard_bg_url}
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )}
         </div>
       </ScrollReveal>
 

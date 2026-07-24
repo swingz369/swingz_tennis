@@ -49,6 +49,10 @@ export const clubs = pgTable(
     default_hourly_rate: numeric('default_hourly_rate', { precision: 10, scale: 2 })
       .notNull()
       .default('15.00'),
+    // city: varchar(200) ist seit den ursprünglichen Vereins-Migrations in der DB
+    // vorhanden, war aber bislang nicht im Drizzle-Abbild. Owner-Master-Drawer
+    // (Phase 2) patcht das Feld — daher jetzt ergänzt.
+    city: varchar('city', { length: 200 }),
     logo_url: text('logo_url'),
     description: text('description'),
     founding_date: timestamp('founding_date', { mode: 'date' }),
@@ -76,6 +80,12 @@ export const clubs = pgTable(
       dynamic_pricing: false,
     }),
     status: varchar('status', { length: 20 }).notNull().default('active'),
+    // Phase 1 Soft-Delete: deleted_at/deleted_by/deletion_reason über
+    // Migration 20260803 angelegt. Drizzle hier als TS-Abbild. Owner sieht
+    // status='deleted' Einträge; alle anderen Rollen via RLS gefiltert.
+    deleted_at: timestamp('deleted_at', { withTimezone: true }),
+    deleted_by: uuid('deleted_by').references(() => users.id),
+    deletion_reason: text('deletion_reason'),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),
   },

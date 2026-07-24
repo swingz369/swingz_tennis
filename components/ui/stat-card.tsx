@@ -147,7 +147,7 @@ export function StatCard({
   const content = (
     <div
       className={cn(
-        'border border-border dark:border-white/10 rounded-xl shadow-sm cursor-pointer group transition-colors',
+        'bg-card dark:bg-card border border-border dark:border-white/10 rounded-xl shadow-sm cursor-pointer group transition-colors',
         colors.border,
         featured &&
           'border-t-[3px] border-t-[hsl(var(--brand-accent-dashboard))] bg-gradient-to-b from-[hsl(var(--brand-accent-dashboard)/0.06)] to-transparent',

@@ -1,9 +1,10 @@
 /**
- * 3-Schritt Saisonplanung Wizard
+ * 4-Schritt Saisonplanung Wizard
  *
  * Schritt 1: Konfigurieren — ReadinessCheck + Saison-Einstellungen + Mitgliederauswahl
- * Schritt 2: Planen & Bearbeiten — Algorithmus starten → Stundenplan mit Drag & Drop editieren
- * Schritt 3: Abschließen — Konfliktprüfung + Bestätigung + Veröffentlichung
+ * Schritt 2: Trainer & Verfügbarkeit — Trainerauslastung prüfen, Präferenzen anmahnen
+ * Schritt 3: Planen & Bearbeiten — Algorithmus starten → Stundenplan mit Drag & Drop editieren
+ * Schritt 4: Abschließen — Konfliktprüfung + Bestätigung + Veröffentlichung
  */
 'use client';
 
@@ -22,13 +23,13 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  Users,
 } from 'lucide-react';
 import { WizardProvider, useWizard } from '@/lib/season-planning/wizard-context';
 import { ConfigStep } from './steps/config-step';
+import { TrainerScheduleStep } from './steps/trainer-schedule-step';
 import { PlanEditStep } from './steps/plan-edit-step';
 import { FinalizeStep } from './steps/finalize-step';
-
-// Step 2 = PlanEditStep + FinalizeStep combined (finalize is embedded inside plan edit)
 
 // ============================================
 // STEP DEFINITIONS
@@ -80,9 +81,15 @@ class StepErrorBoundary extends Component<
 
 const STEPS = [
   { number: 1, label: 'Konfigurieren', icon: Settings, hint: 'Daten prüfen & einstellen' },
-  { number: 2, label: 'Planen', icon: LayoutGrid, hint: 'Plan generieren & bearbeiten' },
   {
-    number: 3,
+    number: 2,
+    label: 'Trainer & Verfügbarkeit',
+    icon: Users,
+    hint: 'Trainerauslastung prüfen',
+  },
+  { number: 3, label: 'Planen', icon: LayoutGrid, hint: 'Plan generieren & bearbeiten' },
+  {
+    number: 4,
     label: 'Abschließen',
     icon: ClipboardCheck,
     hint: 'Konflikte prüfen & bestätigen',
@@ -128,8 +135,10 @@ function WizardContent({
       case 1:
         return <ConfigStep aiAvailable={aiAvailable} />;
       case 2:
-        return <PlanEditStep />;
+        return <TrainerScheduleStep />;
       case 3:
+        return <PlanEditStep />;
+      case 4:
         return <FinalizeStep />;
       default:
         return <ConfigStep aiAvailable={aiAvailable} />;
@@ -137,11 +146,11 @@ function WizardContent({
   };
 
   const canGoNext =
-    currentStep < 3 &&
+    currentStep < 4 &&
     !(currentStep === 1 && !state.isReady) &&
-    !(currentStep === 2 && !state.clusteringResult);
+    !(currentStep === 3 && !state.clusteringResult);
   const canGoPrev = currentStep > 1;
-  const isLast = currentStep === 3;
+  const isLast = currentStep === 4;
 
   return (
     <div className="space-y-6">
@@ -207,7 +216,7 @@ function WizardContent({
       <div className="h-1.5 w-full rounded-full bg-muted dark:bg-muted overflow-hidden">
         <div
           className="h-full rounded-full bg-brand-primary transition-all duration-500"
-          style={{ width: `${(currentStep / 3) * 100}%` }}
+          style={{ width: `${(currentStep / 4) * 100}%` }}
         />
       </div>
 
@@ -250,13 +259,17 @@ function WizardContent({
                 <p className="text-xs text-warning-600 mr-2">
                   Bereitschaftsprüfung nicht bestanden — Schritt 1 muss komplett sein
                 </p>
-              ) : currentStep === 2 && !state.clusteringResult ? (
+              ) : currentStep === 3 && !state.clusteringResult ? (
                 <p className="text-xs text-warning-600 mr-2">
-                  Plan muss erst generiert werden — Button in Schritt 2
+                  Plan muss erst generiert werden — Button in Schritt 3
                 </p>
               ) : null}
               <Button onClick={nextStep} disabled={!canGoNext || isProcessing}>
-                {currentStep === 1 ? 'Zu Planung' : 'Zu Abschluss'}
+                {currentStep === 1
+                  ? 'Zu Trainer & Verfügbarkeit'
+                  : currentStep === 2
+                    ? 'Zu Planung'
+                    : 'Zu Abschluss'}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             </>

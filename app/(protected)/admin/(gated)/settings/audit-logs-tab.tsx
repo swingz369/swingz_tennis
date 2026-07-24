@@ -27,6 +27,20 @@ const actionIcons: Record<string, React.ReactNode> = {
   season_created: <Clock className="h-4 w-4 text-brand-light" />,
   season_published: <Clock className="h-4 w-4 text-brand-light" />,
   billing_generated: <AlertTriangle className="h-4 w-4 text-warning-500" />,
+  member_deactivated: <ShieldAlert className="h-4 w-4 text-warning-500" />,
+  member_status_changed: <ShieldAlert className="h-4 w-4 text-warning-500" />,
+  member_bulk_deactivated: <ShieldAlert className="h-4 w-4 text-warning-500" />,
+  members_bulk_imported: <UserCheck className="h-4 w-4 text-success-500" />,
+  session_bulk_deleted: <ShieldAlert className="h-4 w-4 text-error-500" />,
+  membership_cancelled: <ShieldAlert className="h-4 w-4 text-error-500" />,
+  family_account_created: <UserCheck className="h-4 w-4 text-success-500" />,
+  family_account_member_added: <UserCheck className="h-4 w-4 text-success-500" />,
+  family_account_member_removed: <ShieldAlert className="h-4 w-4 text-warning-500" />,
+  STRIPE_QUANTITY_SYNC: <Settings className="h-4 w-4 text-info-500" />,
+  hardware_vendor_update: <Settings className="h-4 w-4 text-info-500" />,
+  DSGVO_DELETE: <ShieldAlert className="h-4 w-4 text-error-500" />,
+  PII_READ: <UserCheck className="h-4 w-4 text-muted-foreground" />,
+  READ_MEMBER: <UserCheck className="h-4 w-4 text-muted-foreground" />,
 };
 
 const actionLabels: Record<string, string> = {
@@ -39,6 +53,20 @@ const actionLabels: Record<string, string> = {
   season_created: 'Saison erstellt',
   season_published: 'Saison veröffentlicht',
   billing_generated: 'Abrechnung erstellt',
+  member_deactivated: 'Mitglied deaktiviert',
+  member_status_changed: 'Mitgliedsstatus geändert',
+  member_bulk_deactivated: 'Mitglieder deaktiviert (Sammelaktion)',
+  members_bulk_imported: 'Mitglieder importiert (Sammelaktion)',
+  session_bulk_deleted: 'Trainingseinheiten gelöscht (Sammelaktion)',
+  membership_cancelled: 'Mitgliedschaft gekündigt',
+  family_account_created: 'Familienkonto erstellt',
+  family_account_member_added: 'Mitglied zu Familienkonto hinzugefügt',
+  family_account_member_removed: 'Mitglied aus Familienkonto entfernt',
+  STRIPE_QUANTITY_SYNC: 'Stripe-Abrechnung synchronisiert',
+  hardware_vendor_update: 'Hardware-Anbieter geändert',
+  DSGVO_DELETE: 'Konto gelöscht (DSGVO)',
+  PII_READ: 'Personenbezogene Daten eingesehen',
+  READ_MEMBER: 'Mitgliedsdaten eingesehen',
 };
 
 export default function AuditLogsTab({ clubId }: { clubId: string }) {

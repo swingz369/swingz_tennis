@@ -83,6 +83,9 @@ export interface ClusteringConfig {
   teamSlotMinutes: number; // duration for U18/advanced groups (default 120 = 2h)
   teamLevels: SkillLevel[]; // levels that get double slots (default: advanced, professional)
   minTrainingWeeks: number; // Fix 5: warn if season has fewer active weeks (default 12)
+  // Sonntag ist standardmäßig spielfrei (Vereinsrealität / Arbeits- & Ruhezeitregeln
+  // für Trainer). Opt-in pro Saison über die Wizard-Checkbox, nicht global änderbar.
+  includeSunday: boolean; // default false
 }
 
 const DEFAULT_CONFIG: ClusteringConfig = {
@@ -106,6 +109,7 @@ const DEFAULT_CONFIG: ClusteringConfig = {
   teamSlotMinutes: 120,
   teamLevels: ['advanced', 'professional'],
   minTrainingWeeks: 12,
+  includeSunday: false,
 };
 
 // ============================================
@@ -479,6 +483,9 @@ export class SeasonClusteringEngine {
         teamSlotMinutes: DEFAULT_CONFIG.teamSlotMinutes,
         teamLevels: DEFAULT_CONFIG.teamLevels,
         minTrainingWeeks: DEFAULT_CONFIG.minTrainingWeeks,
+        // Keine DB-Spalte (request-scoped Wizard-Checkbox) — Wert aus dem
+        // Konstruktor-Merge erhalten statt auf den Default zurückzufallen.
+        includeSunday: this.config.includeSunday,
       };
     }
   }
@@ -1923,9 +1930,11 @@ export class SeasonClusteringEngine {
 
     const groupHasMinors = members.some((m) => m.isMinor);
 
-    // HARD CONSTRAINT: kein Trainingsbetrieb am Sonntag (Vereinsrealität — Sonntag ist
-    // spielfrei/Turniertag, kein regulärer Trainingstag). Mo(0)-Sa(5) only.
-    for (let dayOfWeek = 0; dayOfWeek < 6; dayOfWeek++) {
+    // Sonntag ist standardmäßig kein Trainingstag (Vereinsrealität — spielfrei/Turniertag —
+    // sowie Arbeits-/Ruhezeitregeln für Trainer). Mo(0)-Sa(5) per Default, So(6) nur wenn
+    // im Wizard bewusst per Checkbox aktiviert (config.includeSunday).
+    const lastDay = this.config.includeSunday ? 7 : 6;
+    for (let dayOfWeek = 0; dayOfWeek < lastDay; dayOfWeek++) {
       for (const timeSlot of timeSlots) {
         // HARD CONSTRAINT: Kinder/Jugendliche sind Mo-Fr in der Schule → frühestens 14:00
         // Samstag: keine Einschränkung (kein Schultag)

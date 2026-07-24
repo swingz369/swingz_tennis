@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Building2, Plus, UserPlus, ExternalLink, Search } from 'lucide-react';
+import { Building2, Plus, UserPlus, ExternalLink, Search, Pencil } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
+import { ClubDetailSheet } from './_components/club-detail-sheet';
 
 interface Club {
   id: string;
@@ -43,6 +44,17 @@ export default function OwnerClubsPage() {
   const [inviteName, setInviteName] = useState('');
   const [inviting, setInviting] = useState(false);
   const [activating, setActivating] = useState<string | null>(null);
+  const [editingClubId, setEditingClubId] = useState<string | null>(null);
+
+  const refreshClubs = useCallback(async () => {
+    try {
+      const r = await apiFetch('/api/clubs');
+      const d = await r.json();
+      setClubs(d.clubs ?? []);
+    } catch {
+      toast.error('Vereine konnten nicht neu geladen werden');
+    }
+  }, []);
 
   const handleActivateClub = async (clubId: string) => {
     setActivating(clubId);
@@ -184,6 +196,14 @@ export default function OwnerClubsPage() {
                   >
                     <UserPlus className="h-3 w-3" /> Admin einladen
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="gap-1 text-xs h-7"
+                    onClick={() => setEditingClubId(club.id)}
+                  >
+                    <Pencil className="h-3 w-3" /> Bearbeiten
+                  </Button>
                   <Link
                     href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
                     className="inline-flex items-center gap-1 text-xs text-info-600 dark:text-info-400 hover:underline"
@@ -203,6 +223,13 @@ export default function OwnerClubsPage() {
           )}
         </div>
       )}
+
+      {/* Detail-Drawer (Phase 2) */}
+      <ClubDetailSheet
+        clubId={editingClubId}
+        onClose={() => setEditingClubId(null)}
+        onSaved={refreshClubs}
+      />
 
       {/* Dialog: Neuer Verein */}
       <Dialog open={newClubOpen} onOpenChange={setNewClubOpen}>

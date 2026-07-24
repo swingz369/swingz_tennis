@@ -29,6 +29,7 @@ interface HeaderProps {
     email?: string;
     avatarUrl?: string | null;
     roles?: string[];
+    club?: { id: string; name: string } | null;
   };
   onMenuClick?: () => void;
 }
@@ -57,14 +58,19 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
   // Rollen-basierter Header-Subtitle (analog zur Sidebar, damit Owner/Superadmin
   // nicht das falsche Label sehen).
-  const { isOwner, isSuperAdmin, isAdmin } = useUserRole(user?.roles);
+  // Phase 3: Owner wird jetzt klar als „Plattform-Konsole“ markiert,
+  // Superadmin als „Tennisschule-Verwaltung“ — vorher stand dort beim
+  // Owner einfach „Swingz“, was leicht mit dem Login-Screen verwechselt wurde.
+  const { isOwner, isSuperAdmin, isAdmin, isTrainer } = useUserRole(user?.roles);
   const headerSectionLabel = isOwner
-    ? 'Swingz'
+    ? 'Plattform-Konsole'
     : isSuperAdmin
-      ? 'Plattform'
+      ? 'Tennisschule-Verwaltung'
       : isAdmin
-        ? 'Administration'
-        : 'Mitglied';
+        ? 'Vereinsverwaltung'
+        : isTrainer
+          ? 'Mein Training'
+          : 'Mein Verein';
 
   const handleSignOut = async () => {
     setIsLoggingOut(true);
@@ -95,7 +101,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
       className="sticky top-0 z-50 w-full bg-background/80 dark:bg-brand-dark/80 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/70 supports-[backdrop-filter]:dark:bg-brand-dark/70"
       role="banner"
     >
-      <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4 sm:px-6 lg:px-8">
+      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
         {/* Brand cluster — Logo + Marke als geschlossene Einheit.
             Tintierter Gradient-Ring gibt dem Logo visuell Gewicht,
             damit es nicht in der 16-px-Bar „verloren“ wirkt. */}
@@ -121,7 +127,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           </div>
           <div className="hidden sm:flex flex-col leading-tight">
             <span className="text-base font-bold tracking-tight text-foreground dark:text-white">
-              SWINGZ
+              {user?.club?.name || 'SWINGZ'}
             </span>
             <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70 -mt-0.5">
               {headerSectionLabel}
@@ -129,40 +135,22 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           </div>
         </Link>
 
-        {/* Command palette trigger — als zentrierte primäre Aktion.
-            Subtiler bg (kein input-border mehr), gerundet-xl, mit kbd-Hint.
-            `hidden md:flex` verhindert, dass die Search-Bar auf Mobile die
-            rechten Action-Buttons aus dem Viewport drückt. */}
-        <div className="hidden md:flex flex-1 justify-center min-w-0">
-          <button
-            type="button"
-            onClick={() => setCommandPaletteOpen(true)}
-            className="group flex w-full max-w-md items-center gap-2.5 rounded-xl bg-muted/40 dark:bg-white/[0.04] hover:bg-muted/70 dark:hover:bg-white/[0.08] border border-transparent hover:border-border/50 dark:hover:border-white/[0.08] px-3.5 py-2 text-sm text-muted-foreground hover:text-foreground transition-all"
-            aria-label="Suche oder Befehl öffnen"
-          >
-            <Search
-              className="h-4 w-4 shrink-0 transition-colors group-hover:text-brand-light"
-              aria-hidden="true"
-            />
-            <span className="flex-1 text-left truncate">Suche oder Befehl…</span>
-            <kbd className="hidden lg:inline-flex items-center h-5 rounded-md border border-border/60 dark:border-white/10 bg-background/80 dark:bg-white/[0.04] px-1.5 text-[11px] font-mono font-medium text-muted-foreground">
-              ⌘K
-            </kbd>
-          </button>
-        </div>
-
-        {/* Right actions — Utility-Cluster (Theme / Notifications / User / Mobile) */}
-        <div className="flex items-center gap-0.5 shrink-0">
-          {/* Suche auf Mobile — Desktop hat die zentrierte Suchleiste (hidden md:flex) */}
+        {/* Right actions — Utility-Cluster (Suche / Theme / Notifications / User / Mobile).
+            Suche war früher eine dauerhaft zentrierte Bar — auf allen Rollen (auch
+            Member/Trainer ohne echten Bedarf) sichtbar und hat in der Mitte Platz
+            gefressen. Jetzt nur noch ein Icon neben dem Theme-Toggle, Klick öffnet
+            weiterhin die Command Palette. `ml-auto` schiebt den Cluster nach rechts,
+            da die zentrierte Bar als Spacer wegfällt. */}
+        <div className="flex items-center gap-0.5 shrink-0 ml-auto">
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden h-9 w-9 text-foreground dark:text-white rounded-xl hover:bg-muted dark:hover:bg-background/10"
+            className="h-9 w-9 text-foreground dark:text-white rounded-xl hover:bg-muted dark:hover:bg-background/10"
             onClick={() => setCommandPaletteOpen(true)}
-            aria-label="Suche öffnen"
+            aria-label="Suche oder Befehl öffnen (⌘K)"
           >
             <Search className="h-5 w-5" aria-hidden="true" />
-            <span className="sr-only">Suche öffnen</span>
+            <span className="sr-only">Suche oder Befehl öffnen</span>
           </Button>
 
           {/* Theme Toggle */}
@@ -215,8 +203,20 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                   {user?.email || 'user@example.com'}
                 </p>
                 {user?.roles && user.roles.length > 0 && (
-                  <span className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-brand-light/10 text-brand-light dark:bg-brand-light/20 dark:text-success-300">
-                    {user.roles[0]}
+                  <span
+                    className={
+                      isOwner
+                        ? 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300'
+                        : isSuperAdmin
+                          ? 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+                          : 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-brand-light/10 text-brand-light dark:bg-brand-light/20 dark:text-success-300'
+                    }
+                  >
+                    {isOwner
+                      ? 'Plattform-Eigentümer'
+                      : isSuperAdmin
+                        ? 'Tennisschule'
+                        : user.roles[0]}
                   </span>
                 )}
               </div>

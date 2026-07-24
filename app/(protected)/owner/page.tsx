@@ -60,18 +60,16 @@ export default async function OwnerPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <PageHeader
-          title="Plattform-Übersicht"
-          description={<>Hallo {firstName} — Swingz Plattform-Dashboard</>}
-        />
-        <Badge
-          variant="outline"
-          className="flex items-center gap-1 border-info-300 text-info-700 dark:border-info-700 dark:text-info-300"
-        >
-          <Shield className="h-3 w-3" /> Owner
-        </Badge>
-      </div>
+      {/*
+        Bewusst KEIN redundanter "Owner"-Badge rechts: das violette
+        Plattform-Konsole-Banner aus /owner/layout.tsx ist die sichtbare
+        Rollen-Markierung und wird nicht doppelt ausgespielt. Andere
+        Owner-Pages folgen demselben Pattern.
+      */}
+      <PageHeader
+        title="Plattform-Übersicht"
+        description={<>Hallo {firstName} — Swingz Plattform-Dashboard</>}
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

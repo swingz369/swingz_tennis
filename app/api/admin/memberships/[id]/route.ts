@@ -277,14 +277,14 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       // Audit log
       try {
         await auth.supabase.from('audit_logs').insert({
-          user_id: auth.user.id,
+          actor_id: auth.user.id,
           action: 'member_deactivated',
           resource_type: 'membership',
           resource_id: id,
+          club_id: currentMembership.club_id,
           details: {
             membership_id: id,
             user_id: currentMembership.user_id,
-            club_id: currentMembership.club_id,
             role: currentMembership.role,
           },
           ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),

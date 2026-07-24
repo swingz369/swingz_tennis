@@ -56,9 +56,9 @@ export async function DELETE(request: NextRequest) {
       // Audit trail (DSGVO Art. 5 Abs. 2)
       await (serviceSb as any).from('audit_logs').insert({
         action: 'DSGVO_DELETE',
-        table_name: 'users',
-        record_id: user.id,
-        performed_by: user.id,
+        resource_type: 'user',
+        resource_id: user.id,
+        actor_id: user.id,
         details: { pseudonym: `deleted-${user.id}`, timestamp: new Date().toISOString() },
       });
 

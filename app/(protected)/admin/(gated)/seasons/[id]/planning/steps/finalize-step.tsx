@@ -41,7 +41,7 @@ import { InactiveWeeksPanel } from './inactive-weeks-panel';
 import { SubstituteTrainerPanel } from './substitute-trainer-panel';
 
 /**
- * FinalizeStep (Schritt 3 von 3)
+ * FinalizeStep (Schritt 4 von 4)
  *
  * Responsibilities:
  * 1. Conflict Detection: Scan the plan for issues

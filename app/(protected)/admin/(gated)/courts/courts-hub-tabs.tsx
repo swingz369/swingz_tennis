@@ -3,10 +3,11 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Wrench, CloudRain, Cpu } from 'lucide-react';
+import { MapPin, Wrench, Ban, Cpu } from 'lucide-react';
 import { CourtsManageClient } from './courts-manage-client';
 import { MaintenanceTab } from './maintenance-tab';
 import WeatherClient from './weather-tab';
+import { ClosuresManager } from './closures-tab';
 import SmartCourtClient from './smart-court-tab';
 import type { Court } from '@/lib/types/court-booking';
 import type { HardwareVendor } from '@/lib/hardware/adapter';
@@ -21,7 +22,6 @@ type Props = {
 };
 
 const GRID_COLS: Record<number, string> = {
-  2: 'grid-cols-2',
   3: 'grid-cols-3',
   4: 'grid-cols-4',
 };
@@ -42,7 +42,7 @@ function CourtsHubTabsInner({
     if (tab) setActiveTab(tab);
   }, [searchParams]);
 
-  const tabCount = 2 + (showWeather ? 1 : 0) + (showSmartCourt ? 1 : 0);
+  const tabCount = 3 + (showSmartCourt ? 1 : 0);
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -55,12 +55,10 @@ function CourtsHubTabsInner({
           <Wrench className="h-4 w-4" />
           Wartungsplan
         </TabsTrigger>
-        {showWeather && (
-          <TabsTrigger value="weather" className="gap-2">
-            <CloudRain className="h-4 w-4" />
-            Wetter & Sperren
-          </TabsTrigger>
-        )}
+        <TabsTrigger value="closures" className="gap-2">
+          <Ban className="h-4 w-4" />
+          Platzsperren
+        </TabsTrigger>
         {showSmartCourt && (
           <TabsTrigger value="smart-court" className="gap-2">
             <Cpu className="h-4 w-4" />
@@ -77,11 +75,14 @@ function CourtsHubTabsInner({
         <MaintenanceTab />
       </TabsContent>
 
-      {showWeather && (
-        <TabsContent value="weather" className="mt-6">
-          <WeatherClient />
-        </TabsContent>
-      )}
+      <TabsContent value="closures" className="mt-6 space-y-6">
+        {showWeather && <WeatherClient />}
+        <ClosuresManager
+          courts={initialCourts
+            .filter((c) => c.is_active)
+            .map((c) => ({ id: c.id, name: c.name, surface: c.surface }))}
+        />
+      </TabsContent>
 
       {showSmartCourt && (
         <TabsContent value="smart-court" className="mt-6">

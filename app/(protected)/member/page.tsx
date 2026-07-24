@@ -153,6 +153,85 @@ export default async function MemberPage() {
         </div>
       </div>
 
+      {/* ── Quick Actions ── */}
+      <QuickActions
+        label="Schnellzugriff"
+        actions={[
+          { label: 'Buchen', href: '/bookings', icon: Calendar, variant: 'light' },
+          { label: 'Training', href: '/training-schedule', icon: BookOpen, variant: 'blue' },
+          {
+            label: 'Trainer',
+            href: '/member/trainer-booking',
+            icon: GraduationCap,
+            variant: 'teal',
+          },
+          ...(features.tournaments === true
+            ? [
+                {
+                  label: 'Turniere',
+                  href: '/member/tournaments',
+                  icon: Trophy,
+                  variant: 'amber' as const,
+                },
+              ]
+            : []),
+          { label: 'Rechnungen', href: '/billing', icon: CreditCard, variant: 'purple' },
+          ...(features.work_duty === true
+            ? [
+                {
+                  label: 'Dienste',
+                  href: '/member/work-duties',
+                  icon: HardHat,
+                  variant: 'amber' as const,
+                },
+              ]
+            : []),
+          {
+            label: 'Präferenzen',
+            href: '/member/preferences',
+            icon: ClipboardCheck,
+            variant: 'green',
+          },
+        ]}
+      />
+
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard
+          icon={Calendar}
+          label="Buchungen"
+          value={bookingCount}
+          sub="bevorstehend"
+          color="brand"
+          href="/bookings"
+          {...(bookingCount > 0 ? { badge: bookingCount } : {})}
+        />
+        <StatCard
+          icon={CreditCard}
+          label="Rechnungen"
+          value={invoiceCount}
+          sub={invoiceCount > 0 ? 'zu bezahlen' : 'offen'}
+          color={invoiceCount > 0 ? 'red' : 'gray'}
+          href="/billing"
+        />
+        <StatCard
+          icon={Bell}
+          label="Benachrichtigungen"
+          value={notifCount}
+          sub={notifCount > 0 ? 'ungelesen' : 'keine neuen'}
+          color={notifCount > 0 ? 'blue' : 'gray'}
+          href="/notifications"
+        />
+        <StatCard
+          icon={BookOpen}
+          label="Training"
+          value={(nextSessions ?? []).length}
+          sub="kommende Sessions"
+          color="green"
+          href="/bookings"
+        />
+      </div>
+
       {/* ── Next Session (Hero Card) ── */}
       {nextSession ? (
         <Link href="/bookings">
@@ -207,43 +286,6 @@ export default async function MemberPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* ── Stat Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard
-          icon={Calendar}
-          label="Buchungen"
-          value={bookingCount}
-          sub="bevorstehend"
-          color="brand"
-          href="/bookings"
-          {...(bookingCount > 0 ? { badge: bookingCount } : {})}
-        />
-        <StatCard
-          icon={CreditCard}
-          label="Rechnungen"
-          value={invoiceCount}
-          sub={invoiceCount > 0 ? 'zu bezahlen' : 'offen'}
-          color={invoiceCount > 0 ? 'red' : 'gray'}
-          href="/billing"
-        />
-        <StatCard
-          icon={Bell}
-          label="Benachrichtigungen"
-          value={notifCount}
-          sub={notifCount > 0 ? 'ungelesen' : 'keine neuen'}
-          color={notifCount > 0 ? 'blue' : 'gray'}
-          href="/notifications"
-        />
-        <StatCard
-          icon={BookOpen}
-          label="Training"
-          value={(nextSessions ?? []).length}
-          sub="kommende Sessions"
-          color="green"
-          href="/bookings"
-        />
-      </div>
 
       {/* ── Next Bookings ── */}
       {(upcomingBookings ?? []).length > 0 && (
@@ -330,48 +372,6 @@ export default async function MemberPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* ── Quick Actions ── */}
-      <QuickActions
-        label="Schnellzugriff"
-        actions={[
-          { label: 'Buchen', href: '/bookings', icon: Calendar, variant: 'light' },
-          { label: 'Training', href: '/training-schedule', icon: BookOpen, variant: 'blue' },
-          {
-            label: 'Trainer',
-            href: '/member/trainer-booking',
-            icon: GraduationCap,
-            variant: 'teal',
-          },
-          ...(features.tournaments === true
-            ? [
-                {
-                  label: 'Turniere',
-                  href: '/member/tournaments',
-                  icon: Trophy,
-                  variant: 'amber' as const,
-                },
-              ]
-            : []),
-          { label: 'Rechnungen', href: '/billing', icon: CreditCard, variant: 'purple' },
-          ...(features.work_duty === true
-            ? [
-                {
-                  label: 'Dienste',
-                  href: '/member/work-duties',
-                  icon: HardHat,
-                  variant: 'amber' as const,
-                },
-              ]
-            : []),
-          {
-            label: 'Präferenzen',
-            href: '/member/preferences',
-            icon: ClipboardCheck,
-            variant: 'green',
-          },
-        ]}
-      />
     </div>
   );
 }

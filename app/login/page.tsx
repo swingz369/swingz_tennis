@@ -78,7 +78,7 @@ export default function LoginPage() {
 
         <div className="relative z-10 flex flex-col justify-between p-16 text-white">
           <div>
-            <Link href="/" className="flex items-center gap-3 mb-12 group w-fit">
+            <Link href="/" prefetch={false} className="flex items-center gap-3 mb-12 group w-fit">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
                 <IconBox
@@ -148,7 +148,7 @@ export default function LoginPage() {
         <div className="relative w-full max-w-md animate-fade-in-up">
           {/* Mobile logo */}
           <div className="lg:hidden mb-8 text-center">
-            <Link href="/" className="inline-flex items-center gap-3 mb-4">
+            <Link href="/" prefetch={false} className="inline-flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg">
                 <Trophy className="h-6 w-6 text-white" />
               </div>

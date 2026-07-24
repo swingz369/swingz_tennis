@@ -136,6 +136,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'DB error' }, { status: 500 });
     }
 
+    try {
+      await db.from('audit_logs').insert({
+        actor_id: auth.user.id,
+        action: familyGroupId ? 'family_account_member_added' : 'family_account_created',
+        resource_type: 'family_group',
+        resource_id: groupId,
+        club_id: clubId,
+        details: { memberIds: toInsert, relationship },
+      });
+    } catch (auditError) {
+      log.error('Audit logging failed:', auditError);
+    }
+
     return NextResponse.json({ familyGroupId: groupId, added: toInsert.length });
   });
 }
@@ -160,6 +173,19 @@ export async function DELETE(request: NextRequest) {
     if (error) {
       log.error('Delete family member error:', error);
       return NextResponse.json({ error: 'DB error' }, { status: 500 });
+    }
+
+    try {
+      await db.from('audit_logs').insert({
+        actor_id: auth.user.id,
+        action: 'family_account_member_removed',
+        resource_type: 'family_group',
+        resource_id: familyGroupId,
+        club_id: auth.clubId,
+        details: { removedUserId: userId },
+      });
+    } catch (auditError) {
+      log.error('Audit logging failed:', auditError);
     }
 
     return NextResponse.json({ success: true });

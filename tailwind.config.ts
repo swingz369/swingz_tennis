@@ -113,7 +113,7 @@ const config: Config = {
         'gradient-primary':
           'linear-gradient(135deg, hsl(var(--brand-primary)) 0%, hsl(var(--brand-primary-light)) 100%)',
         'gradient-accent':
-          'linear-gradient(135deg, hsl(var(--brand-accent)) 0%, hsl(26 100% 75%) 100%)',
+          'linear-gradient(135deg, hsl(var(--brand-accent)) 0%, hsl(77 71% 62%) 100%)',
         'gradient-warm':
           'linear-gradient(135deg, hsl(var(--brand-accent)) 0%, hsl(var(--brand-primary-light)) 100%)',
         'gradient-hero': gradients.hero,

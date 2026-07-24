@@ -76,7 +76,7 @@ export function QuickActions({
           <Link
             key={action.href + action.label}
             href={action.href}
-            className="flex flex-col items-center gap-2 p-3.5 rounded-xl bg-background border border-border hover:border-brand-light/30 hover:shadow-sm transition-all active:scale-95 group"
+            className="flex flex-col items-center gap-2 p-3.5 rounded-xl border border-border dark:border-white/10 shadow-sm hover:border-brand-light/30 hover:shadow-md transition-all active:scale-95 group"
           >
             <IconBox
               icon={action.icon}

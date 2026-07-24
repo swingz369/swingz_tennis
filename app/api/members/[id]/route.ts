@@ -235,14 +235,14 @@ export async function DELETE(
       // Audit log
       try {
         await auth.supabase.from('audit_logs').insert({
-          user_id: auth.user.id,
+          actor_id: auth.user.id,
           action: 'member_deactivated',
           resource_type: 'membership',
           resource_id: id,
+          club_id: membership.club_id,
           details: {
             membership_id: id,
             user_id: membership.user_id,
-            club_id: membership.club_id,
             role: membership.role,
             method: 'soft_delete',
           },

@@ -56,6 +56,12 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
     params.set('page', String(p));
     return `?${params.toString()}`;
   };
+  const handlePageSizeChange = (size: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', '1');
+    params.set('limit', String(size));
+    router.push(`?${params.toString()}`);
+  };
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -631,13 +637,15 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
 
       {/* Server-side Pagination */}
       {pagination.totalCount > 0 && (
-        <PaginationNav meta={pagination} buildUrl={buildPageUrl} compact />
+        <PaginationNav
+          meta={pagination}
+          buildUrl={buildPageUrl}
+          compact
+          pageSizeOptions={[10, 25, 50, 'all']}
+          currentLimit={pagination.limit}
+          onPageSizeChange={handlePageSizeChange}
+        />
       )}
-
-      {/* Stats */}
-      <div className="text-sm text-muted-foreground dark:text-muted-foreground">
-        {pagination.totalCount > 0 ? `${pagination.totalCount} Mitglieder` : '0 Mitglieder'}
-      </div>
 
       {/* Bulk Selection Action Bar */}
       {selectedIds.size > 0 && (

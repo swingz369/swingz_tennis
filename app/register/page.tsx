@@ -43,34 +43,22 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="relative overflow-hidden bg-brand-secondary">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-auth-hero" />
-          <div className="absolute inset-0 opacity-25 overflow-hidden">
-            <div className="absolute -top-10 left-10 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
-            <div className="absolute -bottom-16 right-20 w-56 h-56 bg-brand-accent/8 rounded-full blur-3xl animate-aurora [animation-delay:5s]" />
-          </div>
-          <div className="absolute inset-0 noise opacity-[0.04]" />
-        </div>
-        <div className="relative flex items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-              <IconBox icon={Trophy} variant="gradient-primary" iconClassName="h-6 w-6" />
-            </div>
-            <span className="font-bold text-lg text-white font-display">SWINGZ</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button
-                variant="ghost"
-                className="text-white/90 hover:text-white hover:bg-background/10"
-              >
-                Anmelden
-              </Button>
+      <header className="sticky top-0 z-40 glass">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <nav className="flex h-16 items-center justify-between">
+            <Link href="/" className="flex items-center gap-2.5">
+              <IconBox icon={Trophy} size="sm" variant="gradient-primary" />
+              <span className="font-display text-lg font-bold tracking-tight text-foreground">
+                SWINGZ
+              </span>
             </Link>
-            <ThemeToggle className="text-white/70 hover:text-white hover:bg-background/10" />
-          </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/login">Anmelden</Link>
+              </Button>
+              <ThemeToggle />
+            </div>
+          </nav>
         </div>
       </header>
 

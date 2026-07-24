@@ -19,6 +19,7 @@ import { ModuleSelectionStep } from '@/components/onboarding/module-selection-st
 import { PageHeader } from '@/components/ui/page-header';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import MemberImportDialog from '@/components/admin/member-import-dialog';
+import TrainerImportDialog from '@/components/admin/trainer-import-dialog';
 import { SOLO_THRESHOLD } from '@/lib/plans';
 import { createLogger } from '@/lib/logger';
 
@@ -531,18 +532,25 @@ export default function SettingsClient() {
         </Card>
       )}
 
-      {/* Mitglieder-Import (einmaliger Bulk-Import, gehört nicht in die tägliche Mitgliederverwaltung) */}
+      {/* CSV-Import (einmaliger Bulk-Import, gehört nicht in die tägliche Mitglieder-/Trainerverwaltung) */}
       {activeTab === 'club' && (
         <Card>
           <CardHeader>
-            <CardTitle>Mitglieder-Import</CardTitle>
+            <CardTitle>CSV-Import</CardTitle>
             <CardDescription>
-              Mehrere Mitglieder auf einmal aus einer CSV-Datei importieren — typischerweise nur
-              einmalig beim Einrichten des Vereins nötig
+              Mehrere Mitglieder oder Trainer auf einmal aus einer CSV-Datei importieren —
+              typischerweise nur einmalig beim Einrichten des Vereins nötig
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <MemberImportDialog />
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
+              <span className="text-sm font-medium">Mitglieder</span>
+              <MemberImportDialog />
+            </div>
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
+              <span className="text-sm font-medium">Trainer</span>
+              <TrainerImportDialog />
+            </div>
           </CardContent>
         </Card>
       )}

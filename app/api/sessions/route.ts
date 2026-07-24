@@ -162,6 +162,20 @@ export async function GET(req: NextRequest) {
         sessionBookerNames.set(b.session_id, names);
       });
 
+      // Privacy: booker names (Klarnamen) dürfen nur Admin sehen, oder ein Trainer
+      // für die eigenen Sessions — sonst nur "belegt ja/nein" (currentBookings).
+      const isAdmin = auth.roles.includes('admin') || auth.roles.includes('superadmin');
+      const isTrainerRole = auth.roles.includes('trainer');
+      let callerTrainerId: string | null = null;
+      if (!isAdmin && isTrainerRole) {
+        const { data: trainerRec } = await createServiceClient()
+          .from('trainers')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+        callerTrainerId = trainerRec?.id ?? null;
+      }
+
       // Build current-user booking map
       const bookingsMap = new Map<string, { bookingId: string; status: string }>();
       typedBookings
@@ -203,7 +217,10 @@ export async function GET(req: NextRequest) {
         const booking = bookingsMap.get(s.id);
         const currentBookings = sessionBookingCount.get(s.id) ?? 0;
         const maxParticipants = s.max_participants ?? 4;
-        const bookerNames = sessionBookerNames.get(s.id) ?? [];
+        const rawBookerNames = sessionBookerNames.get(s.id) ?? [];
+        const canSeeBookerNames =
+          isAdmin || (!!callerTrainerId && s.trainer_id === callerTrainerId);
+        const bookerNames = canSeeBookerNames ? rawBookerNames : [];
 
         return {
           id: s.id,

@@ -51,6 +51,9 @@ import {
   Cloud,
   Sun,
   Snowflake,
+  Plus,
+  X,
+  Search,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import CourtBookingsList from '@/components/court-bookings-list';
@@ -60,6 +63,13 @@ import { toast } from 'sonner';
 import { CenteredModal } from '@/components/ui/centered-modal';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
 import { createClient } from '@/lib/supabase/client';
 import { useCourts } from '@/hooks/use-courts';
@@ -81,6 +91,7 @@ import {
   SLOT_STATUS_STYLES_ADMIN_BLOCKED,
   DAILY_BLOCK_STYLES,
   getCalendarLegendItems,
+  type CourtClosure,
 } from '@/lib/court-calendar-utils';
 import {
   CourtCalendarHeader,
@@ -94,7 +105,7 @@ import { SessionCancelDialog } from '@/components/session-cancel-dialog';
 
 /* ─────────────────── Types ─────────────────── */
 
-type ViewMode = 'weekly' | 'daily' | 'list';
+type ViewMode = 'agenda' | 'weekly' | 'daily' | 'list';
 
 interface SeasonInfo {
   id: string;
@@ -103,7 +114,7 @@ interface SeasonInfo {
 }
 
 interface UnifiedCourtCalendarProps {
-  /** Override view mode (default: weekly) */
+  /** Override view mode (default: agenda) */
   defaultView?: ViewMode;
   /** Override club ID (for admin pages) */
   initialClubId?: string;
@@ -126,7 +137,7 @@ interface PlanEntry {
 /* ─────────────────── Constants ─────────────────── */
 
 /** Hours shown in the daily view time axis */
-const DAILY_HOURS = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22] as const;
+const DAILY_HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22] as const;
 
 /** Pixels per hour in the daily time-axis grid */
 const PX_PER_HOUR = 64;
@@ -134,9 +145,55 @@ const PX_PER_HOUR = 64;
 /** Breakpoint width (px) below which we force the daily view */
 const MOBILE_BREAKPOINT = 768;
 
+/** Kurzlabel für court_closures.reason im Grid (Platz ist knapp) */
+const REASON_LABEL_SHORT: Record<string, string> = {
+  maintenance: 'Wartung',
+  event: 'Event',
+  tournament: 'Turnier',
+  weather: 'Wetter',
+  other: 'Sonstiges',
+};
+
 /* ─────────────────── Legend items ─────────────────── */
 
 /* ─────────────────── Helpers ─────────────────── */
+
+/**
+ * Scannt Plätze × kommende 7 Tage × Stunden-Slots nach dem ersten freien Termin.
+ * Als eigenständige Funktion gehalten (statt Logik direkt im useMemo), damit der
+ * React Compiler die Memoization sauber ableiten kann.
+ */
+function findNextFreeSlot(
+  courts: { id: string; name: string }[],
+  sessions: Session[],
+  closures: CourtClosure[],
+  getPlanEntries: (courtId: string, dayOfWeek: number) => (PlanEntry & { court_id: string })[]
+): { courtId: string; courtName: string; date: Date; timeSlot: string } | null {
+  if (courts.length === 0) return null;
+  const now = new Date();
+  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+    const date = addDays(now, dayOffset);
+    for (const timeSlot of TIME_SLOTS) {
+      const [h, m] = timeSlot.split(':').map(Number);
+      const slotDateTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), h, m);
+      if (slotDateTime <= now) continue;
+      const court = courts.find((c) => {
+        const planEntriesForDay = getPlanEntries(c.id, dateFnsGetDay(date));
+        const { status } = getSlotStatus(
+          c.id,
+          date,
+          timeSlot,
+          sessions,
+          planEntriesForDay,
+          closures
+        );
+        return status === 'available';
+      });
+      if (court) return { courtId: court.id, courtName: court.name, date, timeSlot };
+    }
+  }
+  return null;
+}
 
 /** Convert "HH:MM" → minutes since midnight */
 function timeToMinutes(time: string): number {
@@ -215,32 +272,6 @@ function DraggableSessionCard({
         >
           Training absagen
         </button>
-      )}
-    </div>
-  );
-}
-
-/* ─────────────────── Plan Entry Badge (Weekly) ─────────────────── */
-
-function PlanEntryBadge({ entry }: { entry: PlanEntry }) {
-  return (
-    <div
-      className="px-2 py-1 rounded-xl text-white text-2xs leading-tight shadow-sm border border-white/20"
-      style={{ backgroundColor: entry.group_color || '#7c3aed' }}
-      title={`${entry.group_name} · ${entry.trainer_name || ''} · ${entry.start_time}–${entry.end_time}`}
-    >
-      <div className="font-bold truncate">{entry.group_name}</div>
-      <div className="flex items-center gap-1 opacity-90 mt-0.5">
-        <Clock className="h-2 w-2 flex-shrink-0" />
-        <span>
-          {entry.start_time}–{entry.end_time}
-        </span>
-      </div>
-      {entry.trainer_name && (
-        <div className="flex items-center gap-1 opacity-80 mt-0.5">
-          <User className="h-2 w-2 flex-shrink-0" />
-          <span className="truncate">{entry.trainer_name}</span>
-        </div>
       )}
     </div>
   );
@@ -477,6 +508,55 @@ function PositionedPlanBlock({
   );
 }
 
+/** Tagesansicht-Block für eine court_closures-Sperre (getrennt von PositionedSessionBlock,
+ *  da eine Closure keine Session ist). Innerhalb des Tages auf DAILY_HOURS geclippt. */
+function PositionedClosureBlock({
+  closure,
+  topPx,
+  heightPx,
+  isAdmin,
+  onUnblock,
+}: {
+  closure: CourtClosure;
+  topPx: number;
+  heightPx: number;
+  isAdmin: boolean;
+  onUnblock: (closureId: string) => void;
+}) {
+  const label = closure.description || REASON_LABEL_SHORT[closure.reason] || closure.reason;
+  return (
+    <div
+      className={`absolute left-0.5 right-0.5 rounded-xl border-l-[3px] border-l-gray-400 ${DAILY_BLOCK_STYLES.blocked.bg} ${DAILY_BLOCK_STYLES.blocked.text} px-2 py-1.5 overflow-hidden group/block z-10 ${
+        isAdmin ? 'cursor-pointer hover:shadow-md' : ''
+      }`}
+      style={{ top: `${topPx}px`, height: `${heightPx}px` }}
+      role="button"
+      tabIndex={isAdmin ? 0 : -1}
+      onClick={isAdmin ? () => onUnblock(closure.id) : undefined}
+      onKeyDown={
+        isAdmin
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onUnblock(closure.id);
+              }
+            }
+          : undefined
+      }
+    >
+      <div className="flex items-start justify-between gap-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Lock className="h-3.5 w-3.5" />
+          <span className="font-bold text-2xs truncate">{isAdmin ? label : 'Gesperrt'}</span>
+        </div>
+        {isAdmin && (
+          <Unlock className="h-3 w-3 text-gray-400 opacity-0 group-hover/block:opacity-100 transition-opacity flex-shrink-0" />
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─────────────────── Droppable Time Slot Wrapper (Weekly View DnD) ─────────────────── */
 
 function DroppableSlot({
@@ -553,11 +633,13 @@ function useIsMobile(breakpoint = MOBILE_BREAKPOINT) {
 /* ─────────────────── Main Component ─────────────────── */
 
 export default function UnifiedCourtCalendar({
-  defaultView = 'weekly',
+  defaultView = 'agenda',
   initialClubId,
 }: UnifiedCourtCalendarProps) {
   // ── State ──
   const [viewMode, setViewMode] = useState<ViewMode>(defaultView);
+  // ── Agenda view (Tages-Buchungsflow) state ──
+  const [agendaExpandedSlot, setAgendaExpandedSlot] = useState<string | null>(null);
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
@@ -576,6 +658,16 @@ export default function UnifiedCourtCalendar({
   const [blockReason, setBlockReason] = useState('');
   const [blockLoading, setBlockLoading] = useState(false);
   const [blockDuration, setBlockDuration] = useState(1);
+
+  // ── Trainer ad-hoc session dialog state ──
+  const [adHocDialogOpen, setAdHocDialogOpen] = useState(false);
+  const [adHocCourtId, setAdHocCourtId] = useState<string>('');
+  const [adHocDate, setAdHocDate] = useState<Date>(new Date());
+  const [adHocTimeSlot, setAdHocTimeSlot] = useState<string>('');
+  const [adHocDuration, setAdHocDuration] = useState(1);
+  const [adHocMaxParticipants, setAdHocMaxParticipants] = useState(4);
+  const [adHocNotes, setAdHocNotes] = useState('');
+  const [adHocLoading, setAdHocLoading] = useState(false);
 
   // ── Session Cancel state ──
   const [cancelSessionId, setCancelSessionId] = useState<string | null>(null);
@@ -606,17 +698,7 @@ export default function UnifiedCourtCalendar({
     recommendation: 'green' | 'yellow' | 'red';
     city: string;
   } | null>(null);
-  const [courtClosures, setCourtClosures] = useState<
-    {
-      id: string;
-      court_id: string;
-      reason: string;
-      description: string | null;
-      start_date: string;
-      end_date: string | null;
-      weather_condition: string | null;
-    }[]
-  >([]);
+  const [courtClosures, setCourtClosures] = useState<CourtClosure[]>([]);
 
   // ── User context ──
   const { data: clubData } = useUserClub();
@@ -704,22 +786,34 @@ export default function UnifiedCourtCalendar({
   const touchStartRef = useRef({ x: 0, y: 0 });
   const swipeContainerRef = useRef<HTMLDivElement>(null);
 
-  // ── Fetch weather & closures (admin only) ──
+  // ── Fetch active court closures (alle Rollen — sonst sehen Member/Trainer
+  //    admin-gesetzte Sperren nicht im Grid) ──
+  const fetchClosures = useCallback(async () => {
+    if (!clubId) return;
+    try {
+      const res = await apiFetch('/api/weather/closures?active=true');
+      if (res.ok) {
+        const data = await res.json();
+        setCourtClosures(data.closures ?? []);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [clubId]);
+
+  useEffect(() => {
+    fetchClosures();
+  }, [fetchClosures]);
+
+  // ── Fetch weather forecast (admin only — rein informativ) ──
   useEffect(() => {
     if (!clubId || !isAdmin) return;
     const fetchWeather = async () => {
       try {
-        const [weatherRes, closuresRes] = await Promise.all([
-          apiFetch('/api/weather/check'),
-          apiFetch('/api/weather/closures?active=true'),
-        ]);
-        if (weatherRes.ok) {
-          const data = await weatherRes.json();
+        const res = await apiFetch('/api/weather/check');
+        if (res.ok) {
+          const data = await res.json();
           setWeatherData(data.weather ? { ...data.weather, city: data.city ?? 'Berlin' } : null);
-        }
-        if (closuresRes.ok) {
-          const data = await closuresRes.json();
-          setCourtClosures(data.closures ?? []);
         }
       } catch {
         /* ignore */
@@ -801,6 +895,19 @@ export default function UnifiedCourtCalendar({
       );
     },
     [visiblePlanSlots]
+  );
+
+  // ── "Nächster freier Platz" ──
+  const getPlanEntriesForNextFree = useCallback(
+    (courtId: string, dayOfWeek: number) =>
+      getPlanEntriesForCourtAndDay(courtId, dayOfWeek).filter(
+        (e): e is PlanEntry & { court_id: string } => e.court_id !== null
+      ),
+    [getPlanEntriesForCourtAndDay]
+  );
+  const nextFreeSlot = useMemo(
+    () => findNextFreeSlot(courts, visibleSessions, courtClosures, getPlanEntriesForNextFree),
+    [courts, visibleSessions, courtClosures, getPlanEntriesForNextFree]
   );
 
   // ── Direct booking (walk-in) ──
@@ -940,6 +1047,88 @@ export default function UnifiedCourtCalendar({
     [queryClient]
   );
 
+  // ── Closure (court_closures) unblock — separate von handleUnblockSlot, das nur
+  //    sessions-basierte Blocks kennt ──
+  const handleRemoveClosure = useCallback(
+    async (closureId: string) => {
+      const confirmed = window.confirm('Sperrung aufheben? Der Platz wird wieder freigegeben.');
+      if (!confirmed) return;
+      try {
+        const res = await apiFetch(`/api/weather/closures/${closureId}`, { method: 'DELETE' });
+        if (!res.ok) {
+          toast.error('Sperrung konnte nicht aufgehoben werden');
+          return;
+        }
+        toast.success('Sperrung aufgehoben');
+        void fetchClosures();
+      } catch {
+        toast.error('Netzwerkfehler beim Entsperren');
+      }
+    },
+    [fetchClosures]
+  );
+
+  // ── Trainer: einmalige Einheit eintragen ──
+  const openAdHocDialog = useCallback((courtId: string, date: Date, timeSlot: string) => {
+    setAdHocCourtId(courtId);
+    setAdHocDate(date);
+    setAdHocTimeSlot(timeSlot);
+    setAdHocDuration(1);
+    setAdHocMaxParticipants(4);
+    setAdHocNotes('');
+    setAdHocDialogOpen(true);
+  }, []);
+
+  const handleCreateAdHoc = useCallback(async () => {
+    if (!clubId) return;
+    const [h, m] = adHocTimeSlot.split(':').map(Number);
+    if (h + adHocDuration > 23) {
+      toast.error('Einheit endet nach 23:00 Uhr — bitte kürzere Dauer wählen');
+      return;
+    }
+    setAdHocLoading(true);
+    try {
+      const dateStr = format(adHocDate, 'yyyy-MM-dd');
+      const endH = h + adHocDuration;
+      const endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+
+      const res = await apiFetch('/api/sessions/ad-hoc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courtId: adHocCourtId,
+          date: dateStr,
+          startTime: adHocTimeSlot,
+          endTime,
+          clubId,
+          maxParticipants: adHocMaxParticipants,
+          notes: adHocNotes || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error ?? 'Einheit konnte nicht angelegt werden');
+        return;
+      }
+      toast.success('Einheit eingetragen');
+      setAdHocDialogOpen(false);
+      void queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    } catch {
+      toast.error('Netzwerkfehler beim Eintragen');
+    } finally {
+      setAdHocLoading(false);
+    }
+  }, [
+    clubId,
+    adHocCourtId,
+    adHocDate,
+    adHocTimeSlot,
+    adHocDuration,
+    adHocMaxParticipants,
+    adHocNotes,
+    queryClient,
+  ]);
+
   // ── Drag & Drop (admin) ──
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
@@ -1077,130 +1266,98 @@ export default function UnifiedCourtCalendar({
   }
 
   /* ═══════════════════════════════════════════════════
-     Court Selection Cards (Admin + Member)
-     Shown when no court is selected. Click a court to see its schedule.
+     Shared header pieces (View-Toggle + Rollen-Aktionen) — von Agenda- UND
+     Wochen-/Tagesansicht genutzt, damit beide nicht auseinanderlaufen.
      ═══════════════════════════════════════════════════ */
+  const viewToggleEl = (
+    <div className="flex rounded-xl border border-border overflow-hidden">
+      <Button
+        variant={viewMode === 'agenda' ? 'default' : 'ghost'}
+        size="sm"
+        className="rounded-none"
+        onClick={() => setViewMode('agenda')}
+      >
+        <CalendarIcon className="h-4 w-4 mr-1.5" />
+        Heute
+      </Button>
+      <Button
+        variant={viewMode === 'weekly' ? 'default' : 'ghost'}
+        size="sm"
+        className="rounded-none border-x border-border"
+        onClick={() => setViewMode('weekly')}
+      >
+        <CalendarIcon className="h-4 w-4 mr-1.5" />
+        Woche
+      </Button>
+      {(isAdmin || isTrainer) && (
+        <Button
+          variant={viewMode === 'daily' ? 'default' : 'ghost'}
+          size="sm"
+          className="rounded-none border-r border-border"
+          onClick={() => setViewMode('daily')}
+        >
+          <CalendarIcon className="h-4 w-4 mr-1.5" />
+          Tag (Planung)
+        </Button>
+      )}
+      {isAdmin && (
+        <Button
+          variant={viewMode === 'list' ? 'default' : 'ghost'}
+          size="sm"
+          className="rounded-none"
+          onClick={() => setViewMode('list')}
+        >
+          <List className="h-4 w-4 mr-1.5" />
+          Liste
+        </Button>
+      )}
+    </div>
+  );
 
-  // Admin and trainers go straight to the weekly overview — no court pre-selection required
-  if (!effectiveCourtId && !isAdmin && !isTrainer) {
-    return (
-      <div className="p-4 md:p-6 space-y-5">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Platz-Kalender</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Wähle einen Platz, um die Verfügbarkeit zu sehen und zu buchen
-          </p>
-        </div>
+  const roleActionButtonsEl = (
+    <>
+      <Button variant="outline" size="sm" onClick={handleExportICS}>
+        <Download className="h-4 w-4 mr-2" />
+        ICS
+      </Button>
+      {isAdmin && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => {
+            const d = viewMode === 'daily' || viewMode === 'agenda' ? selectedDate : new Date();
+            openBlockDialog(selectedCourtId ?? courts[0]?.id ?? '', d, '10:00');
+          }}
+        >
+          <Lock className="h-4 w-4" />
+          Sperren
+        </Button>
+      )}
+      {isTrainer && !isAdmin && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => {
+            const d = viewMode === 'daily' || viewMode === 'agenda' ? selectedDate : new Date();
+            openAdHocDialog(selectedCourtId ?? courts[0]?.id ?? '', d, '10:00');
+          }}
+        >
+          <CalendarIcon className="h-4 w-4" />
+          Einheit eintragen
+        </Button>
+      )}
+    </>
+  );
 
-        {/* Warning when no future sessions exist */}
-        {visibleSessions.length === 0 && (
-          <div className="bg-warning-50 border border-warning-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-warning-600 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-warning-800">
-                  Keine zukünftigen Sessions gefunden
-                </p>
-                <p className="text-sm text-warning-700 mt-1">
-                  Es sind aktuell keine Trainings-Sessions für die Zukunft geplant.{' '}
-                  {isAdmin && (
-                    <>
-                      Bitte den{' '}
-                      <Link
-                        href="/admin/seasons"
-                        className="font-semibold text-warning-800 underline hover:text-warning-900 transition-colors"
-                      >
-                        Saisonplan
-                      </Link>{' '}
-                      veröffentlichen, damit Sessions erstellt werden.
-                    </>
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {courts.map((court) => {
-            // Count sessions for today on this court
-            const todaySessions = visibleSessions.filter((s: Session) => {
-              if (s.courtId !== court.id || !s.timeslotStart) return false;
-              return isSameDay(new Date(s.timeslotStart), new Date());
-            });
-            const bookedCount = todaySessions.filter(
-              (s: Session) => s.hasActiveBooking || s.bookedByUser
-            ).length;
-            const totalToday = todaySessions.length;
-
-            return (
-              <button
-                key={court.id}
-                onClick={() => {
-                  setSelectedCourtId(court.id);
-                  setViewMode('daily');
-                }}
-                className="group relative flex flex-col text-left rounded-xl border border-border/60 bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
-              >
-                {/* Court icon */}
-                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary mb-3 group-hover:bg-primary/20 transition-colors">
-                  <MapPin className="h-6 w-6" />
-                </div>
-
-                {/* Name */}
-                <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
-                  {court.name}
-                </h3>
-
-                {/* Badges */}
-                <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-2xs font-semibold text-muted-foreground border border-border/50">
-                    {getSurfaceLabel(court.surface)}
-                  </span>
-                  {court.hasIndoor && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-info-50 text-2xs font-semibold text-info-600 border border-info-100">
-                      Indoor
-                    </span>
-                  )}
-                  {court.hasLighting && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-warning-50 text-2xs font-semibold text-warning-700 border border-warning-100">
-                      Flutlicht
-                    </span>
-                  )}
-                </div>
-
-                {/* Today's availability */}
-                <div className="mt-4 pt-3 border-t border-border/40">
-                  {totalToday > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`w-2 h-2 rounded-full ${bookedCount === totalToday ? 'bg-warning-500' : 'bg-success-500'}`}
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        {totalToday - bookedCount} von {totalToday} Slots frei
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-gray-300" />
-                      <span className="text-xs text-muted-foreground">Heute keine Sessions</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Arrow indicator */}
-                <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ChevronRight className="h-5 w-5 text-primary" />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Legend */}
-        <CourtCalendarLegend items={getCalendarLegendItems(false)} />
-      </div>
-    );
+  /* ═══════════════════════════════════════════════════
+     RENDER: Agenda View (Tages-Buchungsflow — Standard für alle Rollen)
+     Platz-Umschalter + Agenda-Karten statt Wochenzeilen. Ersetzt die frühere
+     reine Kartenauswahl-Seite für Member — die übernimmt jetzt der Pillen-Umschalter.
+     ═══════════════════════════════════════════════════ */
+  if (viewMode === 'agenda') {
+    return renderAgendaView();
   }
 
   /* ═══════════════════════════════════════════════════
@@ -1306,26 +1463,18 @@ export default function UnifiedCourtCalendar({
                     isSameDay(day, new Date()) ? 'bg-primary/[0.03]' : 'bg-background'
                   }`}
                 >
-                  {/* Season plan entries */}
-                  {planEntriesForDay.length > 0 && (
-                    <div className="space-y-1 mb-2">
-                      {planEntriesForDay.map((entry) => (
-                        <PlanEntryBadge key={entry.id} entry={entry} />
-                      ))}
-                    </div>
-                  )}
-
                   {/* Time slots */}
                   <div className="space-y-0.5">
                     {TIME_SLOTS.map((timeSlot) => {
-                      const { status, session } = getSlotStatus(
+                      const { status, session, closure, planEntry } = getSlotStatus(
                         court.id,
                         day,
                         timeSlot,
                         visibleSessions,
                         planEntriesForDay.filter(
                           (e): e is PlanEntry & { court_id: string } => e.court_id !== null
-                        )
+                        ),
+                        courtClosures
                       );
                       const dropTargetId = `${court.id}::${day.toISOString()}::${timeSlot}`;
 
@@ -1345,23 +1494,31 @@ export default function UnifiedCourtCalendar({
                                 : -1
                             }
                             onClick={
-                              !isAdmin && status === 'available'
-                                ? () => handleBookSlot(court.id, day, timeSlot)
-                                : isAdmin && status === 'available'
-                                  ? () => openBlockDialog(court.id, day, timeSlot)
-                                  : isAdmin && status === 'blocked' && session
-                                    ? () => handleUnblockSlot(session.id)
-                                    : undefined
+                              isAdmin && status === 'available'
+                                ? () => openBlockDialog(court.id, day, timeSlot)
+                                : isAdmin && status === 'blocked' && session
+                                  ? () => handleUnblockSlot(session.id)
+                                  : isAdmin && status === 'blocked' && closure
+                                    ? () => handleRemoveClosure(closure.id)
+                                    : !isAdmin && isTrainer && status === 'available'
+                                      ? () => openAdHocDialog(court.id, day, timeSlot)
+                                      : !isAdmin && !isTrainer && status === 'available'
+                                        ? () => handleBookSlot(court.id, day, timeSlot)
+                                        : undefined
                             }
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
-                                if (!isAdmin && status === 'available') {
-                                  handleBookSlot(court.id, day, timeSlot);
-                                } else if (isAdmin && status === 'available') {
+                                if (isAdmin && status === 'available') {
                                   openBlockDialog(court.id, day, timeSlot);
                                 } else if (isAdmin && status === 'blocked' && session) {
                                   handleUnblockSlot(session.id);
+                                } else if (isAdmin && status === 'blocked' && closure) {
+                                  handleRemoveClosure(closure.id);
+                                } else if (!isAdmin && isTrainer && status === 'available') {
+                                  openAdHocDialog(court.id, day, timeSlot);
+                                } else if (!isAdmin && !isTrainer && status === 'available') {
+                                  handleBookSlot(court.id, day, timeSlot);
                                 }
                               }
                             }}
@@ -1380,6 +1537,25 @@ export default function UnifiedCourtCalendar({
                                         (session.sessionType === 'maintenance'
                                           ? 'Wartung'
                                           : 'Event')}
+                                    </span>
+                                  </div>
+                                  <Unlock className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5 px-2">
+                                  <Lock className="h-3 w-3 text-gray-400" />
+                                  <span className="text-2xs font-semibold">Gesperrt</span>
+                                </div>
+                              )
+                            ) : status === 'blocked' && closure ? (
+                              isAdmin ? (
+                                <div className="flex items-center gap-1 w-full justify-between px-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <Lock className="h-3 w-3 text-gray-500" />
+                                    <span className="truncate text-2xs font-semibold">
+                                      {closure.description?.substring(0, 12) ||
+                                        REASON_LABEL_SHORT[closure.reason] ||
+                                        closure.reason}
                                     </span>
                                   </div>
                                   <Unlock className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -1493,10 +1669,24 @@ export default function UnifiedCourtCalendar({
                               )
                             ) : status === 'plan' ? (
                               <div className="flex items-center gap-1.5 px-2 min-w-0">
-                                <div className="w-2 h-2 rounded-full bg-info-500 flex-shrink-0" />
-                                <span className="text-2xs truncate font-semibold text-info-700">
-                                  Gruppentraining
-                                </span>
+                                <div
+                                  className={`w-2 h-2 rounded-full flex-shrink-0 ${planEntry?.group_color ? '' : 'bg-info-500'}`}
+                                  style={
+                                    planEntry?.group_color
+                                      ? { backgroundColor: planEntry.group_color }
+                                      : undefined
+                                  }
+                                />
+                                <div className="min-w-0">
+                                  <span className="text-2xs truncate font-semibold text-info-700 block">
+                                    {planEntry?.group_name || 'Gruppentraining'}
+                                  </span>
+                                  {planEntry?.trainer_name && (
+                                    <span className="text-[9px] text-info-500 font-medium truncate block">
+                                      {planEntry.trainer_name}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             ) : (
                               <span className="text-2xs px-2 text-success-600/70 font-medium">
@@ -1516,6 +1706,363 @@ export default function UnifiedCourtCalendar({
       ))}
     </CourtCalendarGrid>
   );
+
+  /* ═══════════════════════════════════════════════════
+     RENDER: Agenda View — Tages-Buchungsflow (Standard für alle Rollen)
+     Platz-Umschalter (Pillen) + Agenda-Karten. Statusfarbe ist reserviert und
+     läuft nur über einen schmalen Akzentbalken + Icon + ein Label — nie über
+     eine volle Kartenfläche (siehe Farb-Review). Klick auf eine freie Karte
+     klappt ein rollen-abhängiges Inline-Panel auf statt ein Modal zu öffnen —
+     der Kalender bleibt dabei sichtbar.
+     ═══════════════════════════════════════════════════ */
+  function renderAgendaView() {
+    const activeCourtId = selectedCourtId ?? courts[0]?.id ?? null;
+    const activeCourt = activeCourtId ? (courts.find((c) => c.id === activeCourtId) ?? null) : null;
+    const planEntriesForDay = activeCourtId
+      ? getPlanEntriesForCourtAndDay(activeCourtId, dateFnsGetDay(selectedDate)).filter(
+          (e): e is PlanEntry & { court_id: string } => e.court_id !== null
+        )
+      : [];
+    const isToday = isSameDay(selectedDate, new Date());
+    const nextFreeLabel =
+      nextFreeSlot &&
+      `${isSameDay(nextFreeSlot.date, new Date()) ? 'Heute' : format(nextFreeSlot.date, 'EEEE', { locale: de })} ${nextFreeSlot.timeSlot} Uhr · ${nextFreeSlot.courtName}`;
+
+    return (
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <CourtCalendarHeader
+          title="Heute"
+          subtitle={`${format(selectedDate, 'EEEE, dd. MMMM yyyy', { locale: de })}${activeCourt ? ' · ' + activeCourt.name : ''}`}
+          weekStart={weekStart}
+          weekEnd={weekEnd}
+          onGoPrevious={goToPrevious}
+          onGoNext={goToNext}
+          onGoToday={goToToday}
+        >
+          {viewToggleEl}
+          {roleActionButtonsEl}
+        </CourtCalendarHeader>
+
+        {/* Platz-Umschalter */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+          {courts.map((court) => (
+            <button
+              key={court.id}
+              onClick={() => {
+                setSelectedCourtId(court.id);
+                setAgendaExpandedSlot(null);
+              }}
+              className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
+                court.id === activeCourtId
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-background text-muted-foreground border-border hover:bg-muted'
+              }`}
+            >
+              {court.name}
+            </button>
+          ))}
+        </div>
+
+        {/* Nächster freier Platz */}
+        {nextFreeSlot && nextFreeLabel && (
+          <button
+            onClick={() => {
+              setSelectedCourtId(nextFreeSlot.courtId);
+              setSelectedDate(nextFreeSlot.date);
+              setAgendaExpandedSlot(nextFreeSlot.timeSlot);
+            }}
+            className="w-full flex items-center gap-3 rounded-xl border border-primary/25 bg-primary/[0.06] hover:bg-primary/[0.1] transition-colors px-4 py-3 text-left"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary flex-shrink-0">
+              <Search className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-bold text-foreground">Nächster freier Platz</div>
+              <div className="text-xs text-muted-foreground">{nextFreeLabel}</div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-primary ml-auto flex-shrink-0" />
+          </button>
+        )}
+
+        {/* Agenda-Liste */}
+        {activeCourtId && (
+          <div className="flex flex-col gap-2">
+            {TIME_SLOTS.map((timeSlot) => {
+              const { status, session, closure } = getSlotStatus(
+                activeCourtId,
+                selectedDate,
+                timeSlot,
+                visibleSessions,
+                planEntriesForDay,
+                courtClosures
+              );
+              const [slotH, slotM] = timeSlot.split(':').map(Number);
+              const isPast =
+                isToday &&
+                new Date(
+                  selectedDate.getFullYear(),
+                  selectedDate.getMonth(),
+                  selectedDate.getDate(),
+                  slotH,
+                  slotM
+                ) < new Date();
+              const isExpanded = agendaExpandedSlot === timeSlot;
+              const isMember = !isAdmin && !isTrainer;
+
+              // Mitglieder dürfen auch eine bereits geplante, noch offene Session antippen
+              // (status "session" = Trainingszeit ohne Buchung) — nicht nur leere Slots.
+              const canAct =
+                !isPast && (status === 'available' || (status === 'session' && isMember));
+              const canOwnCancel = status === 'own-booking' && session?.bookingId;
+              const canAdminUnblock = isAdmin && status === 'blocked';
+
+              let bar = '';
+              let icon = <Plus className="h-3.5 w-3.5" />;
+              let label = 'Frei';
+              let meta = '';
+              let cardClass = 'border-dashed border-border text-muted-foreground bg-transparent';
+
+              if (status === 'session') {
+                bar = 'bg-info-500';
+                icon = <User className="h-3.5 w-3.5 text-info-500" />;
+                label = session?.trainerName || 'Offene Session';
+                const free = Math.max(
+                  0,
+                  (session?.maxParticipants ?? 0) - (session?.currentBookings ?? 0)
+                );
+                meta = `${free} frei`;
+                cardClass = 'border-border bg-card';
+              } else if (status === 'booked') {
+                bar = 'bg-gray-500';
+                icon = <Lock className="h-3.5 w-3.5 text-gray-500" />;
+                label = 'Belegt';
+                meta = `${session?.currentBookings ?? 0}/${session?.maxParticipants ?? 0}`;
+                cardClass = 'border-border bg-card';
+              } else if (status === 'own-booking') {
+                bar = 'bg-brand-light';
+                icon = <div className="w-2.5 h-2.5 rounded-full bg-brand-light" />;
+                label = 'Deine Buchung';
+                meta = `${session?.startTime ?? timeSlot}–${session?.endTime ?? ''}`;
+                cardClass = 'border-brand-light/30 bg-card';
+              } else if (status === 'blocked') {
+                bar = 'bg-gray-700';
+                icon = <Lock className="h-3.5 w-3.5 text-gray-600" />;
+                label = isAdmin
+                  ? closure
+                    ? closure.description || REASON_LABEL_SHORT[closure.reason] || closure.reason
+                    : session?.notes ||
+                      (session?.sessionType === 'maintenance' ? 'Wartung' : 'Event')
+                  : 'Gesperrt';
+                cardClass = 'border-border bg-muted/40 text-muted-foreground';
+              } else if (status === 'plan') {
+                bar = 'bg-info-300';
+                icon = <Users className="h-3.5 w-3.5 text-info-400" />;
+                label = 'Gruppentraining';
+                cardClass = 'border-dashed border-info-200 bg-info-50/40 text-info-700';
+              } else if (isPast) {
+                cardClass = 'border-border bg-transparent text-muted-foreground/60';
+                label = 'Vorbei';
+              }
+
+              const clickable = canAct || canOwnCancel || canAdminUnblock;
+
+              const activateCard = () => {
+                if (canAct) {
+                  if (isMember) setAgendaExpandedSlot(isExpanded ? null : timeSlot);
+                  else if (isTrainer) {
+                    setAdHocCourtId(activeCourtId);
+                    setAdHocDate(selectedDate);
+                    setAdHocTimeSlot(timeSlot);
+                    setAdHocDuration(1);
+                    setAdHocMaxParticipants(4);
+                    setAdHocNotes('');
+                    setAgendaExpandedSlot(isExpanded ? null : timeSlot);
+                  } else if (isAdmin) {
+                    setBlockCourtId(activeCourtId);
+                    setBlockDate(selectedDate);
+                    setBlockTimeSlot(timeSlot);
+                    setBlockType('event');
+                    setBlockReason('');
+                    setBlockDuration(1);
+                    setAgendaExpandedSlot(isExpanded ? null : timeSlot);
+                  }
+                } else if (canOwnCancel && session) {
+                  handleCancelBooking(session.id, session.bookingId!);
+                } else if (canAdminUnblock) {
+                  if (closure) handleRemoveClosure(closure.id);
+                  else if (session) handleUnblockSlot(session.id);
+                }
+              };
+
+              return (
+                <div key={timeSlot}>
+                  <div
+                    className={`relative flex items-center gap-3 rounded-xl border pl-4 pr-3 py-2.5 transition-colors ${cardClass} ${
+                      clickable ? 'cursor-pointer hover:shadow-sm' : ''
+                    }`}
+                    role="button"
+                    tabIndex={clickable ? 0 : -1}
+                    onClick={clickable ? activateCard : undefined}
+                    onKeyDown={
+                      clickable
+                        ? (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              activateCard();
+                            }
+                          }
+                        : undefined
+                    }
+                  >
+                    {bar && (
+                      <span
+                        className={`absolute left-0 top-2 bottom-2 w-[3px] rounded-full ${bar}`}
+                      />
+                    )}
+                    <span className="w-11 flex-shrink-0 text-xs font-medium text-muted-foreground tabular-nums">
+                      {timeSlot}
+                    </span>
+                    {icon}
+                    <span className="flex-1 min-w-0 text-sm font-semibold truncate">{label}</span>
+                    {meta && (
+                      <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
+                        {meta}
+                      </span>
+                    )}
+                    {canOwnCancel && <X className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+                  </div>
+
+                  {/* Inline-Panel — Kalender bleibt sichtbar, kein Modal */}
+                  {isExpanded && (status === 'available' || (status === 'session' && isMember)) && (
+                    <div className="mt-1.5 ml-4 mr-3 rounded-xl border border-border bg-muted/30 p-3">
+                      {isMember && (
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm text-foreground">
+                            Platz {activeCourt?.name} um {timeSlot} Uhr buchen?
+                          </span>
+                          <div className="flex gap-2 flex-shrink-0">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setAgendaExpandedSlot(null)}
+                            >
+                              Abbrechen
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                handleBookSlot(activeCourtId, selectedDate, timeSlot);
+                                setAgendaExpandedSlot(null);
+                              }}
+                            >
+                              Jetzt buchen
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      {isTrainer && !isAdmin && (
+                        <div className="space-y-2.5">
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs shrink-0">Dauer</Label>
+                            {[1, 2, 3, 4].map((h) => (
+                              <Button
+                                key={h}
+                                type="button"
+                                size="sm"
+                                variant={adHocDuration === h ? 'default' : 'outline'}
+                                className="h-7 px-2.5 text-xs"
+                                onClick={() => setAdHocDuration(h)}
+                              >
+                                {h}h
+                              </Button>
+                            ))}
+                          </div>
+                          <Input
+                            placeholder="Notiz (optional)"
+                            value={adHocNotes}
+                            onChange={(e) => setAdHocNotes(e.target.value)}
+                            className="h-8 text-sm"
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setAgendaExpandedSlot(null)}
+                            >
+                              Abbrechen
+                            </Button>
+                            <Button size="sm" disabled={adHocLoading} onClick={handleCreateAdHoc}>
+                              {adHocLoading ? 'Wird eingetragen...' : 'Eintragen'}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      {isAdmin && (
+                        <div className="space-y-2.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {(['event', 'maintenance', 'weather'] as const).map((t) => (
+                              <button
+                                key={t}
+                                type="button"
+                                onClick={() => setBlockType(t)}
+                                className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
+                                  blockType === t
+                                    ? 'bg-gray-700 text-white border-gray-700'
+                                    : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                                }`}
+                              >
+                                {t === 'event'
+                                  ? 'Event'
+                                  : t === 'maintenance'
+                                    ? 'Wartung'
+                                    : 'Wetter'}
+                              </button>
+                            ))}
+                            {[1, 2, 3, 4].map((h) => (
+                              <Button
+                                key={h}
+                                type="button"
+                                size="sm"
+                                variant={blockDuration === h ? 'default' : 'outline'}
+                                className="h-7 px-2.5 text-xs"
+                                onClick={() => setBlockDuration(h)}
+                              >
+                                {h}h
+                              </Button>
+                            ))}
+                          </div>
+                          <Input
+                            placeholder="Grund (optional)"
+                            value={blockReason}
+                            onChange={(e) => setBlockReason(e.target.value)}
+                            className="h-8 text-sm"
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setAgendaExpandedSlot(null)}
+                            >
+                              Abbrechen
+                            </Button>
+                            <Button size="sm" disabled={blockLoading} onClick={handleBlockSlot}>
+                              {blockLoading ? 'Wird gesperrt...' : 'Sperren'}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <CourtCalendarLegend items={getCalendarLegendItems(isAdmin)} />
+      </div>
+    );
+  }
 
   /* ═══════════════════════════════════════════════════
      RENDER: Daily View — Google-Calendar-Style Time Axis
@@ -1652,6 +2199,49 @@ export default function UnifiedCourtCalendar({
                   );
                   const courtPlanEntries = planEntriesByCourt.get(court.id) ?? [];
 
+                  // Closures (court_closures) für diesen Platz/Tag, auf DAILY_HOURS geclippt
+                  const dayWindowStart = new Date(
+                    targetDate.getFullYear(),
+                    targetDate.getMonth(),
+                    targetDate.getDate(),
+                    gridStartHour,
+                    0,
+                    0
+                  );
+                  const dayWindowEnd = new Date(
+                    targetDate.getFullYear(),
+                    targetDate.getMonth(),
+                    targetDate.getDate(),
+                    gridStartHour + totalHours,
+                    0,
+                    0
+                  );
+                  const toHHMM = (d: Date) =>
+                    `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                  const courtClosuresForDay = courtClosures
+                    .filter((c) => c.court_id === court.id)
+                    .map((c) => {
+                      const rangeStart = new Date(c.start_date);
+                      const rangeEnd = c.end_date ? new Date(c.end_date) : null;
+                      const overlaps = rangeEnd
+                        ? rangeStart < dayWindowEnd && rangeEnd > dayWindowStart
+                        : rangeStart < dayWindowEnd;
+                      if (!overlaps) return null;
+                      const clippedStart =
+                        rangeStart > dayWindowStart ? rangeStart : dayWindowStart;
+                      const clippedEnd =
+                        rangeEnd && rangeEnd < dayWindowEnd ? rangeEnd : dayWindowEnd;
+                      return {
+                        closure: c,
+                        startTime: toHHMM(clippedStart),
+                        endTime: toHHMM(clippedEnd),
+                      };
+                    })
+                    .filter(
+                      (x): x is { closure: CourtClosure; startTime: string; endTime: string } =>
+                        x !== null
+                    );
+
                   return (
                     <div key={court.id} className="relative border-l border-border/20">
                       {/* Hour cell separators */}
@@ -1679,6 +2269,21 @@ export default function UnifiedCourtCalendar({
                             entry={entry}
                             topPx={pos.topPx}
                             heightPx={pos.heightPx}
+                          />
+                        );
+                      })}
+
+                      {/* Closure blocks (court_closures) */}
+                      {courtClosuresForDay.map(({ closure, startTime, endTime }) => {
+                        const pos = getBlockPosition(startTime, endTime, gridStartHour);
+                        return (
+                          <PositionedClosureBlock
+                            key={closure.id}
+                            closure={closure}
+                            topPx={pos.topPx}
+                            heightPx={pos.heightPx}
+                            isAdmin={isAdmin}
+                            onUnblock={handleRemoveClosure}
                           />
                         );
                       })}
@@ -1722,16 +2327,22 @@ export default function UnifiedCourtCalendar({
                       <div
                         className="absolute inset-0 z-0"
                         role="button"
-                        tabIndex={isAdmin ? 0 : -1}
+                        tabIndex={isAdmin || isTrainer ? 0 : -1}
                         onClick={(e) => {
-                          if (isAdmin && e.target === e.currentTarget) {
+                          if (e.target !== e.currentTarget) return;
+                          if (isAdmin) {
                             openBlockDialog(court.id, targetDate, '10:00');
+                          } else if (isTrainer) {
+                            openAdHocDialog(court.id, targetDate, '10:00');
                           }
                         }}
                         onKeyDown={(e) => {
-                          if (isAdmin && (e.key === 'Enter' || e.key === ' ')) {
-                            e.preventDefault();
+                          if (e.key !== 'Enter' && e.key !== ' ') return;
+                          e.preventDefault();
+                          if (isAdmin) {
                             openBlockDialog(court.id, targetDate, '10:00');
+                          } else if (isTrainer) {
+                            openAdHocDialog(court.id, targetDate, '10:00');
                           }
                         }}
                       />
@@ -1808,60 +2419,31 @@ export default function UnifiedCourtCalendar({
         onGoNext={goToNext}
         onGoToday={goToToday}
       >
-        {/* View toggle */}
-        <div className="flex rounded-xl border border-border overflow-hidden">
-          <Button
-            variant={viewMode === 'weekly' ? 'default' : 'ghost'}
-            size="sm"
-            className="rounded-none"
-            onClick={() => setViewMode('weekly')}
+        {/* Platz-Filter (Admin/Trainer) — bei vielen Plätzen auf einen einschränken */}
+        {(isAdmin || isTrainer) && courts.length > 1 && (
+          <Select
+            value={selectedCourtId ?? 'all'}
+            onValueChange={(v) => setSelectedCourtId(v === 'all' ? null : v)}
           >
-            <CalendarIcon className="h-4 w-4 mr-1.5" />
-            Woche
-          </Button>
-          <Button
-            variant={viewMode === 'daily' ? 'default' : 'ghost'}
-            size="sm"
-            className="rounded-none border-x border-border"
-            onClick={() => setViewMode('daily')}
-          >
-            <CalendarIcon className="h-4 w-4 mr-1.5" />
-            Tag
-          </Button>
-          {isAdmin && (
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              className="rounded-none"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="h-4 w-4 mr-1.5" />
-              Liste
-            </Button>
-          )}
-        </div>
-
-        {/* Export (all roles) */}
-        <Button variant="outline" size="sm" onClick={handleExportICS}>
-          <Download className="h-4 w-4 mr-2" />
-          ICS
-        </Button>
-
-        {/* Admin: block slot */}
-        {isAdmin && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={() => {
-              const d = viewMode === 'daily' ? selectedDate : new Date();
-              openBlockDialog(courts[0]?.id ?? '', d, '10:00');
-            }}
-          >
-            <Lock className="h-4 w-4" />
-            Sperren
-          </Button>
+            <SelectTrigger className="h-8 w-[160px] text-sm">
+              <SelectValue placeholder="Alle Plätze" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Plätze</SelectItem>
+              {courts.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
+
+        {/* View toggle */}
+        {viewToggleEl}
+
+        {/* Export + Rollen-Aktionen */}
+        {roleActionButtonsEl}
       </CourtCalendarHeader>
 
       {/* Weather banner (admin only) */}
@@ -1909,7 +2491,7 @@ export default function UnifiedCourtCalendar({
               </Badge>
             )}
             <Link
-              href="/admin/courts?tab=weather"
+              href="/admin/courts?tab=closures"
               className="text-xs font-medium text-muted-foreground hover:text-brand-light transition-colors whitespace-nowrap"
             >
               Details →
@@ -1918,8 +2500,8 @@ export default function UnifiedCourtCalendar({
         </Card>
       )}
 
-      {/* Active closure indicators */}
-      {isAdmin && courtClosures.length > 0 && (
+      {/* Active closure indicators — für alle Rollen sichtbar (kein Namensleck, nur Grund) */}
+      {courtClosures.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {courtClosures.map((c) => {
             const courtName = courts.find((ct) => ct.id === c.court_id)?.name ?? 'Platz';
@@ -2082,6 +2664,75 @@ export default function UnifiedCourtCalendar({
     </CenteredModal>
   );
 
+  /* ═══════════════════════════════════════════════════
+     RENDER: Trainer Ad-hoc Dialog
+     ═══════════════════════════════════════════════════ */
+
+  const adHocDialog = (
+    <CenteredModal open={adHocDialogOpen} onClose={() => setAdHocDialogOpen(false)}>
+      <div className="space-y-1.5">
+        <h2 className="text-lg font-bold flex items-center gap-2">
+          <CalendarIcon className="h-5 w-5" />
+          Einheit eintragen
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Trägt eine einmalige Trainingseinheit auf{' '}
+          {adHocCourtId && courts.find((c) => c.id === adHocCourtId)?.name} am{' '}
+          {format(adHocDate, 'dd.MM.yyyy', { locale: de })} um {adHocTimeSlot} Uhr ein.
+        </p>
+      </div>
+
+      <div className="space-y-4 py-2">
+        <div className="space-y-2">
+          <Label htmlFor="adhoc-duration">Dauer (Stunden)</Label>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4].map((h) => (
+              <Button
+                key={h}
+                variant={adHocDuration === h ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setAdHocDuration(h)}
+              >
+                {h}h
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="adhoc-max">Max. Teilnehmer</Label>
+          <Input
+            id="adhoc-max"
+            type="number"
+            min={1}
+            max={20}
+            value={adHocMaxParticipants}
+            onChange={(e) => setAdHocMaxParticipants(parseInt(e.target.value, 10) || 4)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="adhoc-notes">Notiz (optional)</Label>
+          <Input
+            id="adhoc-notes"
+            placeholder="z.B. Zusatztraining Kids..."
+            value={adHocNotes}
+            onChange={(e) => setAdHocNotes(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="flex gap-2 pt-2">
+        <Button variant="outline" onClick={() => setAdHocDialogOpen(false)}>
+          Abbrechen
+        </Button>
+        <Button onClick={handleCreateAdHoc} disabled={adHocLoading}>
+          {adHocLoading ? 'Wird eingetragen...' : 'Einheit eintragen'}
+        </Button>
+      </div>
+    </CenteredModal>
+  );
+
   const sessionCancelDialogEl = cancelSessionId && (
     <SessionCancelDialog
       open={!!cancelSessionId}
@@ -2116,12 +2767,14 @@ export default function UnifiedCourtCalendar({
         </DragOverlay>
       </DndContext>
       {blockDialog}
+      {adHocDialog}
       {sessionCancelDialogEl}
     </>
   ) : (
     <>
       {content}
       {blockDialog}
+      {adHocDialog}
       {sessionCancelDialogEl}
     </>
   );

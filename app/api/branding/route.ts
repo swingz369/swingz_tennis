@@ -33,6 +33,7 @@ const BrandingUpdateSchema = z
         light: z.string().url().optional().nullable(),
         dark: z.string().url().optional().nullable(),
         favicon: z.string().url().optional().nullable(),
+        dashboardBg: z.string().url().optional().nullable(),
       })
       .optional(),
     customDomain: z.string().url().optional().nullable(),
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
       const { data, error } = await auth.supabase
         .from('clubs')
         .select(
-          'primary_color, secondary_color, accent_color, logo_light_url, logo_dark_url, favicon_url, custom_domain'
+          'primary_color, secondary_color, accent_color, logo_light_url, logo_dark_url, favicon_url, dashboard_bg_url, custom_domain'
         )
         .eq('id', clubId)
         .single();
@@ -76,6 +77,7 @@ export async function GET(request: NextRequest) {
           light: data.logo_light_url || null,
           dark: data.logo_dark_url || null,
           favicon: data.favicon_url || null,
+          dashboardBg: data.dashboard_bg_url || null,
         },
         customDomain: data.custom_domain || null,
       });
@@ -114,6 +116,8 @@ export async function PUT(request: NextRequest) {
       if (validated.logos?.light !== undefined) updates.logo_light_url = validated.logos.light;
       if (validated.logos?.dark !== undefined) updates.logo_dark_url = validated.logos.dark;
       if (validated.logos?.favicon !== undefined) updates.favicon_url = validated.logos.favicon;
+      if (validated.logos?.dashboardBg !== undefined)
+        updates.dashboard_bg_url = validated.logos.dashboardBg;
       if (validated.customDomain !== undefined) updates.custom_domain = validated.customDomain;
 
       if (Object.keys(updates).length === 0) {
@@ -149,6 +153,7 @@ export async function PUT(request: NextRequest) {
         'logo_light_url',
         'logo_dark_url',
         'favicon_url',
+        'dashboard_bg_url',
         'custom_domain',
         'updated_at',
       ]);

@@ -35,17 +35,24 @@ import {
   CheckCircle2,
   Newspaper,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { ScrollReveal } from '@/components/animations';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RichTextEditor } from '@/components/messages/RichTextEditor';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 import { apiFetch } from '@/lib/api-fetch';
 import { useUserRole } from '@/hooks/use-user-role';
-import { useUserClub } from '@/hooks/use-user-data';
+import { useUserClub, useUserRoles } from '@/hooks/use-user-data';
 import { useMessagesRealtime } from '@/hooks/use-messages-realtime';
 import NewsAnnouncements from '@/components/news-announcements';
+
+const EmailCampaignsClient = dynamic(
+  () => import('@/app/(protected)/admin/(gated)/email-campaigns/email-campaigns-client'),
+  { ssr: false }
+);
 
 /* ─────────────────── Types ─────────────────── */
 
@@ -122,30 +129,36 @@ function MessagesContent() {
   }, [searchParams]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { isAdmin } = useUserRole();
+  const { data: userRoles } = useUserRoles();
+  const { isAdmin } = useUserRole(userRoles);
   const { data: clubData } = useUserClub();
   const clubId = clubData?.clubId ?? null;
 
   // ── Fetch messages ──
-  const fetchMessages = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await apiFetch(`/api/messages?folder=${folder}`);
-      if (!res.ok) throw new Error('Fehler beim Laden');
-      const data = await res.json();
-      setMessages(data.messages ?? []);
-      if (folder === 'inbox') setUnreadCount(data.unreadCount ?? 0);
-    } catch {
-      toast.error('Nachrichten konnten nicht geladen werden');
-    } finally {
-      setLoading(false);
-    }
-  }, [folder]);
+  const fetchMessages = useCallback(
+    async (signal?: AbortSignal) => {
+      setLoading(true);
+      try {
+        const res = await apiFetch(`/api/messages?folder=${folder}`, { signal });
+        if (!res.ok) throw new Error('Fehler beim Laden');
+        const data = await res.json();
+        setMessages(data.messages ?? []);
+        if (folder === 'inbox') setUnreadCount(data.unreadCount ?? 0);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        toast.error('Nachrichten konnten nicht geladen werden');
+      } finally {
+        if (!signal?.aborted) setLoading(false);
+      }
+    },
+    [folder]
+  );
 
   useEffect(() => {
-    if (folder !== 'news') {
-      fetchMessages();
-    }
+    if (folder === 'news') return;
+    const controller = new AbortController();
+    fetchMessages(controller.signal);
+    return () => controller.abort();
   }, [fetchMessages, folder]);
 
   // Supabase Realtime — live message updates
@@ -199,7 +212,7 @@ function MessagesContent() {
   const totalMessages = messages.length;
   const readMessages = messages.filter((m) => m.is_read).length;
 
-  return (
+  const messagesView = (
     <div className="space-y-6">
       {/* ── Header ── */}
       <ScrollReveal>
@@ -373,6 +386,31 @@ function MessagesContent() {
         />
       )}
     </div>
+  );
+
+  if (!isAdmin) return messagesView;
+
+  return (
+    <Tabs defaultValue="messages" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="messages" className="gap-1.5">
+          <MessageSquare className="h-4 w-4" /> Nachrichten
+        </TabsTrigger>
+        <TabsTrigger value="campaigns" className="gap-1.5">
+          <Mail className="h-4 w-4" /> E-Mail-Kampagnen
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="messages">{messagesView}</TabsContent>
+      <TabsContent value="campaigns">
+        {clubId ? (
+          <EmailCampaignsClient clubId={clubId} />
+        ) : (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        )}
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -652,6 +690,10 @@ function ComposeDialog({
 
       const data = await res.json();
       const count = data.count ?? 1;
+      if (count === 0) {
+        toast.error(data.note ?? 'Keine Empfänger gefunden — Nachricht wurde nicht gesendet');
+        return;
+      }
       toast.success(count > 1 ? `Nachricht an ${count} Empfänger gesendet` : 'Nachricht gesendet');
       onSent();
     } catch (err) {

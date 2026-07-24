@@ -4,14 +4,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { isActivePath, isExactActive } from '@/lib/navigation-utils';
+import { isExactActive } from '@/lib/navigation-utils';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useClubFeatures } from '@/hooks/use-club-features';
 
 import { AdminSection } from './admin-section';
 import { FamilySwitcher } from './family-switcher';
 import { useFamilyAccounts } from '@/hooks/use-family-accounts';
-import { Home, Trophy, X, CheckCircle, Building2, ChevronDown, UserPlus } from 'lucide-react';
+import { Home, X, CheckCircle, Building2, ChevronDown, UserPlus } from 'lucide-react';
 import {
   adminSidebarSections,
   memberSidebarSections,
@@ -20,7 +20,6 @@ import {
   ownerSidebarSections,
 } from '@/lib/navigation';
 import { apiFetch } from '@/lib/api-fetch';
-import { useTenant } from '@/lib/tenant-context';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('sidebar');
@@ -30,18 +29,21 @@ interface Club {
   name: string;
 }
 
+// Phase 3: Owner (Violett) und Superadmin (Lila) jetzt optisch unterschiedlich.
+// Vorher waren beide „info-50/700“ → in der Sidebar nicht unterscheidbar, wenn
+// der User beide Rollen-Memberships parallel hat (selten aber möglich).
 const roleColors = {
   owner: {
-    bg: 'bg-info-50 dark:bg-info-900/20',
-    text: 'text-info-700 dark:text-info-300',
-    light: 'indigo',
-    ring: 'ring-info-300/40',
+    bg: 'bg-violet-50 dark:bg-violet-900/20',
+    text: 'text-violet-700 dark:text-violet-300',
+    light: 'violet',
+    ring: 'ring-violet-300/50',
   },
   superadmin: {
-    bg: 'bg-info-50 dark:bg-info-900/20',
-    text: 'text-info-700 dark:text-info-300',
+    bg: 'bg-purple-50 dark:bg-purple-900/20',
+    text: 'text-purple-700 dark:text-purple-300',
     light: 'purple',
-    ring: 'ring-info-300/40',
+    ring: 'ring-purple-300/50',
   },
   admin: {
     bg: 'bg-brand-light/10 dark:bg-brand-light/15',
@@ -223,9 +225,6 @@ export function Sidebar({
 
   // Family accounts — parent/child switching
   const family = useFamilyAccounts();
-  const { branding } = useTenant();
-  const [imgFailed, setImgFailed] = useState(false);
-  const clubLogoUrl = branding.logos.light || branding.logos.dark;
 
   // Approval count is now fetched inside the MembersTabs component
 
@@ -297,10 +296,14 @@ export function Sidebar({
     }
 
     if (isOwner) {
+      // Owner: Konsistente Section-Darstellung wie Admin/Superadmin — die
+      // Section-Labels ("Plattform-Konsole", "Monetarisierung") sind die
+      // semantische Gruppierung und bleiben sichtbar (Audit-Log direkt
+      // unter "Vereine" weil es das operativ wichtigste Sicherheitsnetz ist).
       return ownerSidebarSections().map((s) => ({
         label: s.label,
         icon: s.icon,
-        subItems: s.items,
+        subItems: s.items.map((i) => ({ name: i.name, href: i.href })),
       }));
     }
 
@@ -351,15 +354,6 @@ export function Sidebar({
         : isTrainer
           ? '/trainer'
           : '/member';
-  const sectionLabel = isOwner
-    ? 'Swingz'
-    : isSuperAdmin
-      ? 'Plattform'
-      : isAdmin
-        ? 'Administration'
-        : isTrainer
-          ? 'Trainer'
-          : 'Mein Verein';
 
   // ────────────────────────────────────────────────────────────────────
   // Render
@@ -371,11 +365,11 @@ export function Sidebar({
       className={cn(
         // border-r entfernt — weiches bg-tone-shift zur Trennung statt harter Linie.
         // Mobile-overlay behält die volle shadow-2xl als modalen Lift.
-        'min-h-[calc(100vh-4rem)] w-64 overflow-y-auto bg-muted/40 dark:bg-white/[0.035] transition-transform duration-300 ease-out will-change-transform',
+        'h-[calc(100vh-4rem)] w-64 overflow-y-auto bg-muted/40 dark:bg-white/[0.035] transition-transform duration-300 ease-out will-change-transform',
         'md:translate-x-0',
         open
           ? 'fixed inset-y-0 left-0 z-50 translate-x-0 shadow-2xl shadow-black/10'
-          : 'fixed inset-y-0 left-0 z-50 -translate-x-full md:relative md:translate-x-0 md:shadow-none'
+          : 'fixed inset-y-0 left-0 z-50 -translate-x-full md:sticky md:top-16 md:translate-x-0 md:shadow-none'
       )}
       role="navigation"
       aria-label="Seitennavigation"
@@ -393,43 +387,7 @@ export function Sidebar({
         </button>
       )}
 
-      <div className="py-6">
-        {/* Logo + Role badge */}
-        <div className="px-4 mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <Link href="/dashboard" className="flex items-center gap-2 group">
-              <div className="relative">
-                {clubLogoUrl && !imgFailed ? (
-                  // eslint-disable-next-line @next/next/no-img-element,jsx-a11y/no-noninteractive-element-interactions -- external dynamic logo URL
-                  <img
-                    key={clubLogoUrl}
-                    src={clubLogoUrl}
-                    alt={activeClub?.name || 'Club Logo'}
-                    className="h-5 w-5 object-contain relative"
-                    onError={() => setImgFailed(true)}
-                    onLoad={() => setImgFailed(false)}
-                  />
-                ) : (
-                  <Trophy className="h-5 w-5 text-muted-foreground relative" />
-                )}
-              </div>
-              <span className="text-sm font-bold tracking-tight text-foreground">
-                {activeClub?.name || 'SWINGZ'}
-              </span>
-            </Link>
-            <span
-              className={cn(
-                'text-2xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
-                colors.bg,
-                colors.text
-              )}
-            >
-              {sectionLabel}
-            </span>
-          </div>
-          <div className="h-px bg-border" />
-        </div>
-
+      <div className="pb-6 pt-4">
         {/* Family Account Switcher — for parents with minor children */}
         {family.isParent && (
           <FamilySwitcher
@@ -514,49 +472,29 @@ export function Sidebar({
             <span>Dashboard</span>
           </Link>
 
-          {/* Role-specific sections — flat for owner, collapsible for admin/superadmin */}
+          {/* Role-specific sections — einheitlich collapsible für alle Rollen
+              inkl. Owner (war vorher flatMap, jetzt konsistent mit Admin/Superadmin). */}
           {roleSections.length > 0 && (
             <div className="mt-2 space-y-0.5">
-              {isOwner
-                ? roleSections
-                    .flatMap((section) => section.subItems)
-                    .map((item) => {
-                      const isActive = isActivePath(pathname, item.href);
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={() => onClose?.()}
-                          className={cn(
-                            'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200',
-                            isActive
-                              ? `${colors.bg} ${colors.text}`
-                              : 'text-muted-foreground hover:bg-muted/70 dark:hover:bg-white/[0.06] hover:text-foreground'
-                          )}
-                          aria-current={isActive ? 'page' : undefined}
-                        >
-                          <span>{item.name}</span>
-                        </Link>
-                      );
-                    })
-                : roleSections.map((section) => (
-                    <AdminSection
-                      key={section.label}
-                      label={section.label}
-                      icon={section.icon}
-                      subItems={section.subItems}
-                      pathname={pathname}
-                      onClose={onClose}
-                      colors={colors}
-                      extraAction={section.extraAction}
-                      defaultOpen={
-                        section.label === 'Mitglieder' ||
-                        section.label === 'Spielbetrieb' ||
-                        section.label === 'Spielen' ||
-                        (isTrainer && !isAdmin && section.label === 'Training')
-                      }
-                    />
-                  ))}
+              {roleSections.map((section) => (
+                <AdminSection
+                  key={section.label}
+                  label={section.label}
+                  icon={section.icon}
+                  subItems={section.subItems}
+                  pathname={pathname}
+                  onClose={onClose}
+                  colors={colors}
+                  extraAction={section.extraAction}
+                  defaultOpen={
+                    section.label === 'Mitglieder' ||
+                    section.label === 'Spielbetrieb' ||
+                    section.label === 'Spielen' ||
+                    section.label === 'Plattform-Konsole' ||
+                    (isTrainer && !isAdmin && section.label === 'Training')
+                  }
+                />
+              ))}
             </div>
           )}
         </nav>

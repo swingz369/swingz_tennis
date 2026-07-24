@@ -255,7 +255,7 @@ Server-Side Request Forgery. Risiko-Checkliste: Zapier-Webhook mit `NODE_ENV !==
 
 ### Stripe
 
-Payment-Provider. API-Version `2026-05-27.dahlia`. Wrapper: `lib/stripe/client.ts` (graceful) + `lib/stripe/stripe-client.ts` (strict, für Webhooks). Pricing: Starter €29/Monat, Professional €79/Monat.
+Payment-Provider. API-Version `2026-06-24.dahlia`. Wrapper: `lib/stripe/client.ts` (graceful) + `lib/stripe/stripe-client.ts` (strict, für Webhooks). Pricing: Starter €29/Monat, Professional €79/Monat.
 
 ### Superadmin
 

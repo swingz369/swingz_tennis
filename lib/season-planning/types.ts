@@ -32,8 +32,9 @@ export type NewSeasonPlanningConfig = typeof seasonPlanningConfigs.$inferInsert;
 
 export const WizardStep = {
   CONFIGURE: 1,
-  PLAN_EDIT: 2,
-  FINALIZE: 3,
+  TRAINER_SCHEDULE: 2,
+  PLAN_EDIT: 3,
+  FINALIZE: 4,
 } as const;
 export type WizardStep = (typeof WizardStep)[keyof typeof WizardStep];
 
@@ -75,6 +76,9 @@ export interface WizardState {
     allowOverbooking: boolean;
     preferConsistentTimeslots: boolean;
     useAI: boolean;
+    // Sonntag ist standardmäßig kein Trainingstag (Vereinsrealität, Arbeits-/
+    // Ruhezeitregeln). Opt-in, Default false — siehe ClusteringConfig.includeSunday.
+    includeSunday: boolean;
   };
 
   // Schritt 2: Plan bearbeiten

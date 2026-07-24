@@ -1,9 +1,9 @@
 import { requireAuth } from '@/lib/auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Settings, Mail, CreditCard, Database } from 'lucide-react';
+import { CheckCircle, XCircle, Settings, Mail, CreditCard } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
+import { SettingsEditorClient, type EditableSetting } from './_components/settings-editor-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,12 +27,44 @@ export default async function OwnerSettingsPage() {
   await requireAuth();
   const sb = createServiceClient();
 
+  // ── Globale Settings (club_id IS NULL) — editierbar + read-only BLOCK ──
   const { data: globalSettings } = await sb
     .from('system_settings')
-    .select('category, key, value, description')
+    .select('id, category, key, value, type, description, is_required, validation, club_id')
     .is('club_id', null)
     .order('category')
     .order('key');
+
+  // Drizzle liefert `validation` als JSONB. Supabase-JS gibt je nach Selektion
+  // ein rohes Objekt oder null zurück — coerce defensiv zu einer getypten Form.
+  function coerce(s: {
+    id: string;
+    category: string;
+    key: string;
+    value: string;
+    type: string;
+    description: string | null;
+    is_required: boolean;
+    validation: unknown;
+  }): EditableSetting {
+    return {
+      id: s.id,
+      category: s.category,
+      key: s.key,
+      value: s.value,
+      type: s.type,
+      description: s.description,
+      is_required: s.is_required,
+      validation:
+        s.validation && typeof s.validation === 'object'
+          ? (s.validation as EditableSetting['validation'])
+          : {},
+    };
+  }
+
+  const settings: EditableSetting[] = (globalSettings ?? [])
+    .filter((s) => s !== null)
+    .map((s) => coerce(s as Parameters<typeof coerce>[0]));
 
   const { count: clubCount } = await sb.from('clubs').select('id', { count: 'exact', head: true });
 
@@ -43,19 +75,11 @@ export default async function OwnerSettingsPage() {
     supabase: (clubCount ?? 0) >= 0,
   };
 
-  const settingsByCategory = (globalSettings ?? []).reduce<Record<string, typeof globalSettings>>(
-    (acc, s) => {
-      (acc[s.category] ??= []).push(s);
-      return acc;
-    },
-    {}
-  );
-
   return (
     <div className="space-y-6">
       <PageHeader
         title="Plattform-Einstellungen"
-        description="System-Status und globale Konfiguration"
+        description="System-Status, globale Konfiguration und DB-Einstellungen"
       />
 
       <Card>
@@ -122,8 +146,10 @@ export default async function OwnerSettingsPage() {
         </CardHeader>
         <CardContent className="text-sm">
           {[
-            ['Starter', '€ 29 / Monat'],
-            ['Professional', '€ 79 / Monat'],
+            ['Solo S (Einzelverein)', '€ 29 / Monat'],
+            ['Solo L (Einzelverein)', '€ 59 / Monat'],
+            ['Tennisschule S', '€ 99 / Monat'],
+            ['Tennisschule L', '€ 179 / Monat'],
             ['Stripe API-Version', '2026-05-27.dahlia'],
           ].map(([k, v]) => (
             <div
@@ -137,41 +163,8 @@ export default async function OwnerSettingsPage() {
         </CardContent>
       </Card>
 
-      {Object.keys(settingsByCategory).length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Database className="h-4 w-4" />
-              Globale DB-Einstellungen
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {Object.entries(settingsByCategory).map(([category, settings]) => (
-              <div key={category}>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                  {category}
-                </p>
-                {(settings ?? []).map((s) => (
-                  <div
-                    key={s.key}
-                    className="flex items-center justify-between py-1.5 border-b border-border last:border-0"
-                  >
-                    <div>
-                      <span className="text-sm font-mono">{s.key}</span>
-                      {s.description && (
-                        <p className="text-xs text-muted-foreground">{s.description}</p>
-                      )}
-                    </div>
-                    <Badge variant="secondary" className="font-mono text-xs max-w-[180px] truncate">
-                      {s.value}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      {/* Editierbare DB-Settings via Client */}
+      <SettingsEditorClient settings={settings} />
     </div>
   );
 }

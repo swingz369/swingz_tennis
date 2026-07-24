@@ -149,7 +149,7 @@ export function AdminSection({
           'w-full flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider transition-colors duration-200',
           hasActiveChild
             ? `${colors.bg} ${colors.text}`
-            : 'text-muted-foreground/70 hover:bg-muted hover:text-muted-foreground'
+            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
         )}
         aria-expanded={isOpen}
         aria-label={`${label} ${isOpen ? 'einklappen' : 'ausklappen'}`}

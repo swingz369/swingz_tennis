@@ -43,6 +43,8 @@ import { apiFetch } from '@/lib/api-fetch';
 import { Checkbox } from '@/components/ui/checkbox';
 import TrainerImportDialog from '@/components/admin/trainer-import-dialog';
 import { PageHeader } from '@/components/ui/page-header';
+import { PaginationNav } from '@/components/ui/pagination-nav';
+import { buildPaginationMeta, ALL_LIMIT } from '@/lib/pagination';
 
 export interface TrainerAvailabilitySlot {
   id: string;
@@ -127,6 +129,8 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
   const [bulkDeactivating, setBulkDeactivating] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const loadTrainers = async () => {
     try {
@@ -249,14 +253,23 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
   const setSearchAndClear = (v: string) => {
     setSearchQuery(v);
     setSelectedIds(new Set());
+    setPage(1);
   };
   const setStatusFilterAndClear = (v: string) => {
     setStatusFilter(v);
     setSelectedIds(new Set());
+    setPage(1);
   };
 
-  // Bulk deactivate selection metrics — must live after filteredTrainers.
-  const selectableTrainers = filteredTrainers.filter(
+  // Client-side pagination over the filtered set (no server-side trainer list endpoint).
+  const pagination = buildPaginationMeta(page, pageSize, filteredTrainers.length);
+  const paginatedTrainers =
+    pageSize >= ALL_LIMIT
+      ? filteredTrainers
+      : filteredTrainers.slice((page - 1) * pageSize, page * pageSize);
+
+  // Bulk deactivate selection metrics — scoped to the visible page, matching the members list.
+  const selectableTrainers = paginatedTrainers.filter(
     (t) => t.status !== 'terminated' && t.status !== 'on_leave'
   );
   const allSelected =
@@ -449,7 +462,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTrainers.map((trainer) => {
+              {paginatedTrainers.map((trainer) => {
                 const selectable = trainer.status !== 'terminated' && trainer.status !== 'on_leave';
                 return (
                   <TableRow
@@ -583,11 +596,19 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
         </div>
       )}
 
-      {/* ── Count ──────────────────────────────────────────────────────────── */}
-      {trainers.length > 0 && (
-        <p className="text-sm text-muted-foreground text-center">
-          {filteredTrainers.length} von {trainers.length} Trainern
-        </p>
+      {/* ── Pagination ─────────────────────────────────────────────────────── */}
+      {filteredTrainers.length > 0 && (
+        <PaginationNav
+          meta={pagination}
+          onPageChange={setPage}
+          pageSizeOptions={[10, 25, 50, 'all']}
+          currentLimit={pageSize}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+          compact
+        />
       )}
 
       {/* ── Floating Bulk-Action Bar ───────────────────────────────────────── */}

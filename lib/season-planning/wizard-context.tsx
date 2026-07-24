@@ -19,12 +19,12 @@ import type {
 // ============================================
 
 function createInitialState(seasonId: string, clubId: string, initialStep?: number): WizardState {
-  const step = initialStep && initialStep >= 1 && initialStep <= 3 ? initialStep : 1;
+  const step = initialStep && initialStep >= 1 && initialStep <= 4 ? initialStep : 1;
   return {
     seasonId,
     clubId,
-    currentStep: Math.min(step, 3) as WizardStep,
-    maxReachedStep: Math.min(step, 3) as WizardStep,
+    currentStep: Math.min(step, 4) as WizardStep,
+    maxReachedStep: Math.min(step, 4) as WizardStep,
     isReady: false,
     isProcessing: false,
     error: null,
@@ -51,6 +51,7 @@ function createInitialState(seasonId: string, clubId: string, initialStep?: numb
       allowOverbooking: false,
       preferConsistentTimeslots: true,
       useAI: false,
+      includeSunday: false,
     },
     clusteringResult: null,
     scheduleSlots: [],
@@ -161,7 +162,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         ...state,
         clusteringResult: action.result,
         scheduleSlots: [],
-        maxReachedStep: 2 as WizardStep,
+        maxReachedStep: Math.max(state.maxReachedStep, 4) as WizardStep,
         isProcessing: false,
       };
 
@@ -231,7 +232,7 @@ export function WizardProvider({
   }, []);
 
   const nextStep = useCallback(() => {
-    const next = Math.min(3, state.currentStep + 1) as WizardStep;
+    const next = Math.min(4, state.currentStep + 1) as WizardStep;
     dispatch({ type: 'SET_STEP', step: next });
   }, [state.currentStep]);
 

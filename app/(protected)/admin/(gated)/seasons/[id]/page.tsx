@@ -550,7 +550,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
       toast.success('Planung erstellt — Weiterleitung...');
       setQuickStarting(false);
-      router.push(`/admin/seasons/${id}/planning?step=2`);
+      router.push(`/admin/seasons/${id}/planning?step=3`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Fehler beim Auto-Plan');
       setQuickStarting(false);
@@ -673,7 +673,12 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
         <div className="flex items-center gap-2">
           {canQuickStart && (
-            <Button variant="default" onClick={handleQuickStart} disabled={quickStarting}>
+            <Button
+              variant="default"
+              onClick={handleQuickStart}
+              disabled={quickStarting}
+              title="Erstellt sofort einen automatischen Plan mit den Standard-Einstellungen und öffnet ihn zur Prüfung im Wizard — ohne die Konfiguration vorher zu zeigen."
+            >
               {quickStarting ? (
                 <Clock className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -970,9 +975,13 @@ function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: s
             <CardContent className="py-12 text-center">
               <Play className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
               <p className="font-medium text-muted-foreground">Noch keine Planung veröffentlicht</p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-1 mb-4">
                 Starte den Wizard, um eine Planung zu erstellen und zu veröffentlichen.
               </p>
+              <Button onClick={() => router.push(`/admin/seasons/${seasonId}/planning?step=3`)}>
+                <Play className="mr-2 h-4 w-4" />
+                Zum Planungs-Wizard
+              </Button>
             </CardContent>
           </Card>
         )}

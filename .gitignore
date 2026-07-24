@@ -171,6 +171,7 @@ tramp
 
 # Tool-generated scratch/output dirs
 .audit-captures/
+ds-bundle/
 graphify-out/
 tests/e2e/screenshots/
 

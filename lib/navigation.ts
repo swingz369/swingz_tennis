@@ -24,6 +24,7 @@ import {
   MapPin,
   MessageSquare,
   Newspaper,
+  ScrollText,
   Search,
   Settings,
   Shield,
@@ -72,7 +73,6 @@ export function adminSidebarSections(hidden: Hidden, belongsToTennisschule = fal
             ]
           : []),
         { name: 'Nachrichten', href: '/messages' },
-        { name: 'E-Mail-Kampagnen', href: '/admin/email-campaigns' },
       ],
     },
     {
@@ -91,9 +91,6 @@ export function adminSidebarSections(hidden: Hidden, belongsToTennisschule = fal
       items: [
         { name: 'Platzverwaltung', href: '/admin/courts' },
         { name: 'Sonderveranstaltungen', href: '/admin/special-events' },
-        ...(!hidden.has('weather_integration')
-          ? [{ name: 'Platzsperren & Wetter', href: '/admin/courts?tab=weather' }]
-          : []),
         ...(!hidden.has('league_lineup')
           ? [{ name: 'Ligen & Teams', href: '/admin/leagues' }]
           : []),
@@ -236,22 +233,28 @@ export function superadminSidebarSections(): NavSection[] {
 }
 
 export function ownerSidebarSections(): NavSection[] {
+  // Phase 3 Master-UX: Reihenfolge nach operativer Wichtigkeit, nicht nach
+  // Funktionsgruppe. Audit-Log als Sicherheitsnetz steht direkt nach Vereine,
+  // weil es die häufigste Use-Case-Anlaufstelle ist (Plattformbetreiber will
+  // schnell prüfen können: was ist passiert?).
   return [
     {
-      label: 'Plattform',
+      label: 'Plattform-Konsole',
       icon: Shield,
       items: [
-        { name: 'Alle Vereine', href: '/owner/clubs' },
-        { name: 'Superadmins', href: '/owner/superadmins' },
+        { name: 'Vereine', href: '/owner/clubs' },
+        { name: 'Audit-Log', href: '/owner/audit', icon: ScrollText },
         { name: 'Admins', href: '/owner/admins' },
+        { name: 'Superadmins', href: '/owner/superadmins' },
         { name: 'Zugänge & Anfragen', href: '/owner/access' },
       ],
     },
     {
-      label: 'System',
+      label: 'Monetarisierung',
       icon: Settings,
       items: [
         { name: 'Umsatz & Abos', href: '/owner/billing' },
+        // Coming-Soon: Systemweite Konfiguration. Seite fehlt aktuell noch.
         { name: 'System-Einstellungen', href: '/owner/settings' },
       ],
     },
@@ -268,7 +271,8 @@ export function mobileNavItems(
       return [
         { name: 'Dashboard', href: '/owner', icon: Home },
         { name: 'Vereine', href: '/owner/clubs', icon: Building2 },
-        { name: 'Anfragen', href: '/owner/access', icon: ClipboardList },
+        { name: 'Audit', href: '/owner/audit', icon: ScrollText },
+        { name: 'Admins', href: '/owner/admins', icon: Users },
         { name: 'Billing', href: '/owner/billing', icon: CreditCard },
       ];
     case 'superadmin':

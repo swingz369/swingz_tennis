@@ -28,7 +28,7 @@ import {
 import { COLORS } from '@/lib/season-planning/schedule-constants';
 
 /**
- * PlanEditStep (Schritt 2 von 3)
+ * PlanEditStep (Schritt 3 von 4)
  *
  * Responsibilities:
  * 1. Plan Generation: Run clustering algorithm with config

@@ -126,7 +126,12 @@ export async function POST(request: NextRequest) {
 
       if (updateError) {
         log.error('Avatar URL update error:', updateError);
-        // Don't fail — image is uploaded, just the DB update failed
+        return NextResponse.json(
+          {
+            error: 'Bild wurde hochgeladen, aber Speichern fehlgeschlagen. Bitte erneut versuchen.',
+          },
+          { status: 500 }
+        );
       }
 
       return NextResponse.json({

@@ -13,7 +13,7 @@ interface LogoUploadProps {
   /** Current logo URL (from DB or state) */
   logoUrl?: string | null;
   /** Which branding variant this is for */
-  variant?: 'light' | 'dark' | 'favicon';
+  variant?: 'light' | 'dark' | 'favicon' | 'dashboard-bg';
   /** Label shown above the component */
   label?: string;
   /** Club ID for API calls that need x-club-id header */
@@ -39,9 +39,9 @@ export function LogoUpload({
     async (file: File) => {
       if (!file) return;
 
-      const maxSize = 2 * 1024 * 1024;
+      const maxSize = variant === 'dashboard-bg' ? 5 * 1024 * 1024 : 2 * 1024 * 1024;
       if (file.size > maxSize) {
-        toast.error('Datei zu groß. Maximal 2 MB erlaubt.');
+        toast.error(`Datei zu groß. Maximal ${maxSize / 1024 / 1024} MB erlaubt.`);
         return;
       }
 
@@ -107,6 +107,7 @@ export function LogoUpload({
             ...(variant === 'light' ? { light: url } : {}),
             ...(variant === 'dark' ? { dark: url } : {}),
             ...(variant === 'favicon' ? { favicon: url } : {}),
+            ...(variant === 'dashboard-bg' ? { dashboardBg: url } : {}),
           },
         }),
       });
@@ -162,12 +163,22 @@ export function LogoUpload({
       {/* Preview */}
       {currentUrl && (
         <div className="relative group inline-block">
-          <div className="w-24 h-24 rounded-xl border border-border bg-muted/30 flex items-center justify-center overflow-hidden">
+          <div
+            className={
+              variant === 'dashboard-bg'
+                ? 'w-full max-w-md h-32 rounded-xl border border-border bg-muted/30 flex items-center justify-center overflow-hidden'
+                : 'w-24 h-24 rounded-xl border border-border bg-muted/30 flex items-center justify-center overflow-hidden'
+            }
+          >
             {/* eslint-disable-next-line @next/next/no-img-element,jsx-a11y/no-noninteractive-element-interactions -- logo upload preview needs raw <img> for dynamic external URLs */}
             <img
               src={currentUrl}
               alt={label}
-              className="max-w-full max-h-full object-contain"
+              className={
+                variant === 'dashboard-bg'
+                  ? 'w-full h-full object-cover'
+                  : 'max-w-full max-h-full object-contain'
+              }
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
@@ -217,7 +228,9 @@ export function LogoUpload({
             className="hidden"
             onChange={handleFileChange}
           />
-          <p className="text-2xs text-muted-foreground mt-1">JPG, PNG, WebP, SVG · Max. 2 MB</p>
+          <p className="text-2xs text-muted-foreground mt-1">
+            JPG, PNG, WebP, SVG · Max. {variant === 'dashboard-bg' ? '5' : '2'} MB
+          </p>
         </TabsContent>
 
         <TabsContent value="url" className="mt-2">

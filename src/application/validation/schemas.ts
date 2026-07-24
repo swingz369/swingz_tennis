@@ -72,6 +72,11 @@ export const createClubSchema = z.object({
 export const updateClubSchema = createClubSchema.partial().extend({
   status: z.enum(['active', 'inactive', 'suspended']).optional(),
   bundesland: z.string().max(50).optional(),
+  // Owner-Master-Drawer (Phase 2): mutable via PATCH for the Owner console.
+  // `nullable` matches the DB shape so we can explicitly clear a value.
+  city: z.string().max(200).nullable().optional(),
+  description: z.string().max(2000).nullable().optional(),
+  logo_url: z.string().url('Logo-URL muss eine gültige URL sein').max(500).nullable().optional(),
   billing_unit_minutes: z.coerce
     .number()
     .int()

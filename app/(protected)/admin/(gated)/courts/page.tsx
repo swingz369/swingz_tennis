@@ -46,7 +46,7 @@ export default async function AdminCourtsPage() {
     <div className="p-4 md:p-6 space-y-6">
       <PageHeader
         title="Platzverwaltung"
-        description="Plätze, Wartung, Wettersperren und Smart-Court an einem Ort"
+        description="Plätze, Wartung, Platzsperren und Smart-Court an einem Ort"
       />
       <CourtsHubTabs
         clubId={clubId}

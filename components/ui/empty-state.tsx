@@ -301,18 +301,13 @@ export function ForbiddenState() {
 export function TennisBallGraphic({ size = 96 }: { size?: number }) {
   return (
     <div className="animate-float" aria-hidden="true">
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 200 200"
-        className="drop-shadow-xl"
-      >
+      <svg width={size} height={size} viewBox="0 0 200 200" className="drop-shadow-xl">
         <defs>
           <radialGradient id="tbg-brand" cx="30%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="hsl(150 38% 63%)" />
+            <stop offset="0%" stopColor="hsl(201 55% 70%)" />
             <stop offset="40%" stopColor="hsl(var(--brand-primary-light))" />
             <stop offset="70%" stopColor="hsl(var(--brand-primary))" />
-            <stop offset="100%" stopColor="hsl(150 50% 12%)" />
+            <stop offset="100%" stopColor="hsl(206 60% 12%)" />
           </radialGradient>
         </defs>
         <circle cx="100" cy="100" r="85" fill="url(#tbg-brand)" />

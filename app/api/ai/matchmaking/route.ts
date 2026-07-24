@@ -76,23 +76,36 @@ export async function GET(request: NextRequest) {
       );
 
       // ── 4. Find candidates: active club members (excluding self) ──
-      const { data: members } = (await supabase
+      // Kein `users!inner(...)`-Embed: user_club_memberships.user_id hat keinen FK
+      // auf users.id (nur deactivated_by), PostgREST würde den Embed sonst über
+      // deactivated_by auflösen und aktive Mitglieder (deactivated_by = NULL) rausfiltern.
+      const { data: membershipRows } = (await supabase
         .from('user_club_memberships')
-        .select('user_id, users!inner(full_name, email, skill_level)')
+        .select('user_id')
         .eq('club_id', clubId)
         .eq('is_active', true)
-        .neq('user_id', userId)) as {
-        data: Array<{
-          user_id: string;
-          users: { full_name?: string | null; email?: string | null; skill_level?: string | null };
-        }> | null;
-      };
+        .neq('user_id', userId)) as { data: { user_id: string }[] | null };
 
-      if (!members || members.length === 0) {
+      if (!membershipRows || membershipRows.length === 0) {
         return NextResponse.json({ matches: [] });
       }
 
-      const allMemberIds = members.map((m) => m.user_id);
+      const allMemberIds = membershipRows.map((m) => m.user_id);
+
+      const { data: candidateUsers } = await supabase
+        .from('users')
+        .select('id, full_name, email, skill_level')
+        .in('id', allMemberIds);
+
+      const candidateUserMap = new Map((candidateUsers ?? []).map((u) => [u.id, u]));
+      const members = membershipRows.map((m) => ({
+        user_id: m.user_id,
+        users: candidateUserMap.get(m.user_id) ?? {
+          full_name: null,
+          email: null,
+          skill_level: null,
+        },
+      }));
 
       // ── 5. Batch: Load ALL groups for this club ──
       const { data: allGroups } = (await supabase

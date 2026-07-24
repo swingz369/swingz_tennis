@@ -1,5 +1,0 @@
-components/billing/payment-import-dialog.tsx(186,31): error TS2322: Type '{}' is not assignable to type 'ReactNode'.
-components/billing/payment-import-dialog.tsx(206,31): error TS2322: Type '{}' is not assignable to type 'ReactNode'.
-components/unified-court-calendar.tsx(546,60): error TS2739: Type '{ [k: string]: unknown; id: string; group_id: string | null; trainer_id: string; start_time: string; end_time: string; court_id: string | null; }' is missing the following properties from type '{ id: string; group_name: string; group_color: string; trainer_name?: string | undefined; start_time: string; end_time: string; }': group_name, group_color
-components/unified-court-calendar.tsx(736,36): error TS2322: Type '{}' is not assignable to type 'BackgroundColor | undefined'.
-components/unified-court-calendar.tsx(738,55): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.

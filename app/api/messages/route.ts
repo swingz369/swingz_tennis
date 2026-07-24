@@ -264,10 +264,13 @@ export async function POST(request: NextRequest) {
       }
 
       // Get club members (service client bypasses RLS)
+      // Note: plain `user_id` select — `user_club_memberships.user_id` has no FK
+      // constraint to `users.id` (only `deactivated_by` does), so a `users!inner(id)`
+      // embed silently resolves via that unrelated FK and drops every active member.
       const serviceSb = createServiceClient();
       let recipientQuery = serviceSb
         .from('user_club_memberships')
-        .select('user_id, users!inner(id)')
+        .select('user_id')
         .eq('club_id', resolvedClubId)
         .eq('is_active', true);
 

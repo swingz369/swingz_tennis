@@ -8,13 +8,8 @@ import { useEffect } from 'react';
  */
 export function ServiceWorkerRegistration() {
   useEffect(() => {
-    // In development, unregister any existing service worker to avoid stale Turbopack chunk caching
-    if (process.env.NODE_ENV === 'development') {
-      navigator.serviceWorker
-        .getRegistrations()
-        .then((regs) => regs.forEach((r) => r.unregister()));
-      return;
-    }
+    // Dev-mode SW unregister runs earlier, in app/layout.tsx's blocking <head> script.
+    if (process.env.NODE_ENV === 'development') return;
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/sw.js')

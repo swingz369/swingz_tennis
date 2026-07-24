@@ -1,7 +1,10 @@
 # SwingZ — Project Instructions
 
+@AGENTS.md
+
 > Automatisch bei jedem Session-Start geladen. Nur Dinge die NICHT aus dem Code offensichtlich sind.
 > Zuletzt verifiziert: 21. Juni 2026 (5-Rollen-Hierarchie: owner > superadmin > admin > trainer > member)
+> Doku-Governance-Regeln (welche Datei wohin, wann updaten statt neu anlegen): siehe `AGENTS.md`.
 
 ---
 
@@ -147,7 +150,7 @@ In `notifications`-Tabelle via Service-Client einfügen.
 
 ### Stripe
 
-- API-Version: `2026-05-27.dahlia`
+- API-Version: `2026-06-24.dahlia`
 - Checkout (Client, graceful — gibt `null` wenn nicht konfiguriert): `@/lib/stripe/client.ts`
 - Webhooks (Server, wirft Fehler wenn nicht konfiguriert): `@/lib/stripe/stripe-client.ts`
 - **Niemals** `stripe`-Package direkt importieren — immer diese Wrapper nutzen
