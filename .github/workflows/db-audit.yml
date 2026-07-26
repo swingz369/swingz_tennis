@@ -80,10 +80,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
         run: |
+          set +e
           bash scripts/bulk-track-only-migrations.sh \
             2>bulk-track-stderr.log \
             1>bulk-track-stdout.log
           BULK_TRACK_EXIT=$?
+          set -e
           echo "bulk-track-exit=$BULK_TRACK_EXIT"
           # Always DRY-RUN in CI per ADR-002 forensic-default.
           # Per ADR-002 exit-code-semantics:
@@ -110,10 +112,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
         run: |
+          set +e
           bash scripts/file-count-vs-claim-reconciliation.sh \
             2>reconciliation-stderr.log \
             1>reconciliation-stdout.log
           RECO_EXIT=$?
+          set -e
           echo "reconciliation-exit=$RECO_EXIT"
           # Per ADR-002:
           #   exit 0 = PASS (clean)
