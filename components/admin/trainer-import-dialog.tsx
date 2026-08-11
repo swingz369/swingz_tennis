@@ -9,6 +9,10 @@ import { Upload, Download, FileText, AlertCircle, CheckCircle, Users } from 'luc
 import { generateTrainerCsvTemplate } from '@/lib/csv/member-import';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:trainer-import-dialog');
+
 interface ImportResult {
   success: boolean;
   total: number;
@@ -61,7 +65,7 @@ export default function TrainerImportDialog({ onImportComplete }: TrainerImportD
         toast.error(`Fehler: ${data.error || 'Import fehlgeschlagen'}`);
       }
     } catch (err) {
-      console.error('Failed to import trainers:', err);
+      log.error('Failed to import trainers:', err);
       toast.error('Fehler beim Import der Trainer');
     } finally {
       setLoading(false);

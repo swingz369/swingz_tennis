@@ -26,6 +26,10 @@ import type { Invoice, InvoiceItem } from '@/lib/invoice-pdf';
 import { apiFetch } from '@/lib/api-fetch';
 import { StatCard } from '@/components/ui/stat-card';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('member-billing');
+
 export default function MemberBilling() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -89,7 +93,7 @@ export default function MemberBilling() {
         setInvoices(fetched);
       })
       .catch((err) => {
-        console.error('Error loading invoices:', err);
+        log.error('Error loading invoices:', err);
         toast.error('Rechnungen konnten nicht geladen werden');
       })
       .finally(() => setInvoicesLoading(false));
@@ -133,7 +137,7 @@ export default function MemberBilling() {
       toast.success('PDF-Download gestartet');
     } catch (error) {
       toast.error('PDF-Download fehlgeschlagen');
-      console.error('PDF download error:', error);
+      log.error('PDF download error:', error);
     }
   };
 

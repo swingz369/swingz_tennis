@@ -444,8 +444,13 @@ export class MemberService {
       if (input.dateOfBirth !== undefined) userUpdate.date_of_birth = input.dateOfBirth;
       if (input.address !== undefined) {
         userUpdate.address = input.address;
-        userUpdate.city = input.address.city;
-        userUpdate.postal_code = input.address.postalCode;
+        // ponytail: real callers (app/api/members/[id]/route.ts) send address as a
+        // flat string/null, not the nested {street,city,postalCode} shape UpdateMemberInput
+        // declares — city/postalCode go through their own separate fields there.
+        if (input.address && typeof input.address === 'object') {
+          userUpdate.city = input.address.city;
+          userUpdate.postal_code = input.address.postalCode;
+        }
       }
       if (input.emergencyContact !== undefined) {
         userUpdate.emergency_contact = input.emergencyContact;
@@ -504,7 +509,7 @@ export class MemberService {
       .eq('id', id);
 
     if (error) {
-      console.error('Failed to deactivate member:', error.message);
+      log.error('Failed to deactivate member:', error.message);
       return false;
     }
     return true;

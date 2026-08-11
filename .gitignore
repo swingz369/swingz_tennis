@@ -188,3 +188,4 @@ test-results/
 *.certSigningRequest
 tests/e2e/.auth/
 .tokensave
+.env*

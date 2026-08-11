@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { sanitizeFeatureFlags } from '@/lib/features';
@@ -17,8 +17,7 @@ const log = createLogger('api:clubs:[id]:features');
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     const { id } = await params;
-    const hasAccess = auth.role === 'owner' || auth.role === 'superadmin' || auth.clubId === id;
-    if (!hasAccess) return forbiddenResponse('No access to this club');
+    if (!verifyClubAccess(auth, id)) return forbiddenResponse('No access to this club');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
@@ -51,8 +50,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   return withApiAuth(req, async (auth) => {
     const { id } = await params;
     const isAdmin = await verifyRole(auth, 'admin');
-    const hasAccess = auth.role === 'owner' || auth.role === 'superadmin' || auth.clubId === id;
-    if (!isAdmin || !hasAccess) return forbiddenResponse('Admin access required');
+    if (!isAdmin || !verifyClubAccess(auth, id)) return forbiddenResponse('Admin access required');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;

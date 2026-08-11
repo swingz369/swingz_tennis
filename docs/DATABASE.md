@@ -1,10 +1,10 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 25. Juli 2026 (direkte Inspektion der Live-DB via SSH → `docker exec supabase-db psql`)
+> Zuletzt verifiziert: 11. August 2026 (direkter psql-Zugriff auf `supabase.swingz.cloud:6543`)
 
 ## Kernaussage: `supabase/migrations/` ist NICHT die Quelle der Wahrheit
 
-Dieses Projekt hat **nie** `supabase_migrations.schema_migrations` (die Tracking-Tabelle der Supabase-CLI) genutzt — sie existiert in der Live-DB schlicht nicht. Es gibt also keinen Mechanismus, der protokolliert, welche Datei in `supabase/migrations/` tatsächlich angewendet wurde.
+`supabase_migrations.schema_migrations` (die Tracking-Tabelle der Supabase-CLI) wurde am 26.07.2026 erstmals angelegt (`CREATE SCHEMA`/`CREATE TABLE`, Standard-CLI-Schema: `version` PK, `statements`, `name`, `created_by`, `idempotency_key`) und per `scripts/bulk-track-only-migrations.sh --no-dry-run` befüllt — **aber nur mit 8 von 155 Dateien**. Das Script akzeptiert per `DATE_PREFIX_REGEX='^[0-9]{8}$'` ausschließlich Dateinamen im reinen `YYYYMMDD_`-Format; die 132 Dateien im `YYYYMMDDHHMMSS_`-Format (14-stelliger Zeitstempel) laufen als `SKIPPED-NON-DATE-FILENAME` durch, und die 15 Dateien mit Datum ≤ `20260628` (`TODAY_PREFIX`-Konstante im Script) wurden gar nicht erst als Kandidat enumeriert. Die Tabelle existiert also jetzt, ist aber **weiterhin kein verlässliches Abbild** davon, welche Datei tatsächlich live angewendet wurde — die Kernaussage unten bleibt in der Praxis gültig, nur die Begründung hat sich geändert (unvollständiges Tracking statt komplett fehlendem Tracking).
 
 Bestätigt am 5. August 2026 durch direkten Vergleich von `pg_policies` (Live-DB) gegen die 22 Migrationsdateien, die RLS-Policies für Kerntabellen definieren:
 
@@ -43,6 +43,53 @@ docker exec supabase-db psql -U postgres -c "select count(*) from <table>;"
 - **`get_user_role()`** — komplett gedroppt (`20260805010000_drop_dead_club_members_and_get_user_role.sql`). Live bestätigt: `public.users` hat gar keine `role`-Spalte, die Funktion wäre bei Aufruf fehlgeschlagen. Keine Policy referenzierte sie mehr zum Zeitpunkt des Drops.
 - **`club_members`** — komplett gedroppt (Tabelle + Drizzle-Schema-Export `clubMemberships`). War kein reines Doku-Problem: `src/infrastructure/persistence/repositories/member.repository.ts` (`DrizzleMemberRepository.findByClub()`/`.save()`, verdrahtet über `container.ts` in echte Use-Cases: `get-club-members`, Buchungen, Reminder-Mails) las/schrieb aktiv gegen diese leere Tabelle — Mitgliederlisten waren dadurch leer, neu angelegte Mitgliedschaften landeten nirgends, wo sie sonst gelesen werden. Auf `user_club_memberships` umgestellt. Zusätzlich hingen an `club_members` noch vier `trial_trainings`-Admin-Policies (create/delete/update/view — Admins hatten dort faktisch KEINEN funktionierenden Zugriff) und zwei `season_group_weeks`-Policies (admin_all, member_read) — alle auf `is_club_admin`/`is_club_member` umgestellt. Backup-Script (`app/api/cron/backup/route.ts`) und ein Integrationstest-Cleanup wurden ebenfalls bereinigt.
 
+## `PUBLIC`-Policies eingeschränkt (Stand 11.08.2026)
+
+Live-Audit von `pg_policies` am 11.08.2026 (alle 114 `public`-Tabellen) fand fünf Policies ohne `TO`-Klausel und mit `USING (true)`/`WITH CHECK (true)`. Ohne `TO` gilt eine Policy für `PUBLIC`, und `PUBLIC` schließt `anon` ein — also jeden, der den im Browser-Bundle stehenden `NEXT_PUBLIC_SUPABASE_ANON_KEY` hat. Gefixt in `20260811000000_tighten_public_rls_policies.sql`:
+
+| Tabelle                | Alte Policy                                                                                                            | Effekt                                                                                                                   | Neu                                                                                                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `contact_requests`     | `contact_requests_service_read` (SELECT, `true`)                                                                       | Name/E-Mail/Nachricht aller Kontaktanfragen anonym lesbar — der Name suggeriert service_role, die Policy galt für PUBLIC | `contact_requests_owner_read`, `TO authenticated USING (is_owner() OR is_superadmin())`                                                                           |
+| `contact_requests`     | `contact_requests_insert_public` (INSERT, `true`)                                                                      | Beliebig viele Zeilen direkt über `/rest/v1` einfügbar, vorbei am `checkRateLimit()` der API-Route                       | ersatzlos gedroppt (Schreibpfad nutzt Service-Client)                                                                                                             |
+| `club_access_requests` | `owner can read access requests` (SELECT, `true`)                                                                      | Interessentendaten anonym lesbar                                                                                         | `club_access_requests_owner_read`, `TO authenticated USING (is_owner() OR is_superadmin())`                                                                       |
+| `gamification_points`  | `Everyone can view …` (SELECT, `true`), `System can update …` (UPDATE, `true`), `System can upsert …` (INSERT, `true`) | Punktestände anonym les- **und schreibbar**                                                                              | SELECT `TO authenticated USING (true)` (Leaderboard in `app/api/gamification/route.ts` läuft über `withApiAuth`); die beiden „System"-Policies ersatzlos gedroppt |
+| `players`              | `players_select_all` (SELECT, `true`, `TO authenticated`)                                                              | Jeder eingeloggte User sah alle Spieler/ELO-Werte vereinsübergreifend; kein Code-Pfad liest die Tabelle überhaupt        | ersatzlos gedroppt, `players_admin_manage` bleibt                                                                                                                 |
+
+Verifiziert vor dem Drop: `service_role` und `postgres` haben `rolbypassrls = true`, `anon`/`authenticated`/`authenticator` nicht — die „System"-Policies wurden von keinem Code gebraucht, alle Schreibpfade laufen über `createServiceClient()`.
+
+## Doppelte Policy-Generationen aufgelöst (Stand 12.08.2026, angewendet)
+
+`20260812000000_consolidate_duplicate_rls_policies.sql` — angewendet und verifiziert. Von 11 (Tabelle, cmd)-Gruppen mit mehr als zwei PERMISSIVE Policies sind 4 übrig, und die sind legitim (Admin/Trainer/Mitglied als drei getrennte Zielgruppen auf `dunning_records`, `fee_configurations`, `trainer_absences`, `trainer_feedback`).
+
+Entfernt wurden drei Fehlerklassen, keine pauschale Zusammenfassung:
+
+- **Exakte Dubletten** aus zwei Generationen: `Users can view/update/insert own schedule preferences` neben `member_schedule_prefs_*_own`, `user_prefs_admin_view` neben `Admins can view all preferences in club`, `users_admin_club` neben `Members can view club members`, `season_plan_entries_admin_all` neben `Admins can manage plan entries of their club`, `Admins can manage seasons of their club` neben `seasons_manage_admin` (wortgleich mit `is_club_admin(club_id)`).
+- **Tote Policies**: `Trainers can view session attendance` verglich `sessions.trainer_id` (FK auf `trainers`) mit `auth.uid()` (users) — konnte nie zutreffen. Ebenso der `'super_admin'`-Zweig (mit Unterstrich) in `Admins can view all feedback`; die Rolle heißt `superadmin`, Superadmins sahen Feedback ihres eigenen Vereins also nicht. Ersetzt durch `trainer_feedback_admin_select` auf `is_club_admin(club_id)`.
+- **Unscoped `is_superadmin()`**: `users_superadmin` (SELECT) und `seasons_all_superadmin` (ALL) — derselbe Cross-Tenant-Bypass, den `20260805000000` beseitigen sollte, auf zwei Tabellen übersehen.
+- **Lockerere Generation hebt strengere auf**: `member_schedule_prefs_admin_select` prüfte die Admin-Mitgliedschaft ohne `is_active` und machte die `is_active`-Prüfung der Parallel-Policy wirkungslos.
+- **Draft-Leak**: `Users can view plan entries of their club` gab jedem aktiven Mitglied jeden `season_plan_entries`-Eintrag unabhängig vom `status` und hob damit `season_plan_entries_member_view_published` auf. Heute folgenlos (alle 88 Zeilen `published`), ab dem ersten Entwurf nicht mehr.
+
+**Verifikationsmethode** (empfohlen für jede künftige Policy-Konsolidierung): vor dem Anwenden alles in einer Transaktion mit `ROLLBACK` durchspielen und pro Rolle (`set local request.jwt.claims` + `set local role authenticated`) die sichtbaren Zeilen je betroffener Tabelle vorher/nachher zählen. Ergebnis hier: 27 von 28 Zähler-Paaren identisch, einzige Abweichung `users` für Superadmin 446 → 437 — exakt die 9 vereinsfremden User, die nur über den Bypass sichtbar waren.
+
+Nicht angefasst: `trainer_absences` sieht nach Dublette aus, ist keine. `trainers_can_view_own_absences` prüft `trainer_absences.user_id`, und diese Spalte ist in **allen 22 Zeilen NULL** — der einzige funktionierende Trainer-Pfad ist die ältere Policy mit dem E-Mail-Join zwischen `trainers` und `users`. Erst `user_id` befüllen (Datenmigration), dann den E-Mail-Join entfernen.
+
+## FORCE RLS + anonyme Schreibrechte (Stand 12.08.2026, angewendet)
+
+`20260812010000_force_rls_and_close_anon_writes.sql` — angewendet über `docker exec supabase-db psql` auf dem VPS (Stack `swingz`, nicht über den Pooler). Verifiziert: `relforcerowsecurity` ist auf allen 114 Tabellen an, INSERT-Policies mit `WITH CHECK (true)` für PUBLIC gibt es nur noch bei `registration_requests` (gewollt).
+
+Inhalt und Befund:
+
+- **FORCE RLS** auf allen 114 Tabellen. Wichtig: Das ändert heute faktisch **nichts** — Eigentümer aller Tabellen ist `postgres` mit `rolbypassrls = true`, und BYPASSRLS gewinnt immer gegen FORCE. Es wirkt erst, wenn die App auf eine Rolle ohne BYPASSRLS umgestellt wird.
+- **Das eigentliche Risiko dahinter:** `DATABASE_URL` verbindet als `postgres` (BYPASSRLS). Die 26 API-Routes, die Drizzle statt Supabase-REST nutzen, umgehen RLS damit vollständig — dort schützt allein der Anwendungscode. Fix = dedizierte App-Rolle ohne BYPASSRLS + neue `DATABASE_URL`. Infra-Änderung, keine Migration.
+- **Sechs INSERT-Policies mit `WITH CHECK (true)` ohne `TO`** (gelten also für PUBLIC inkl. `anon`, und `anon` hat auf allen sechs das INSERT-Grant): `email_queue`, `nuliga_sync_log`, `newsletter_send_logs`, `rate_history`, `gamification_badges`, `registration_requests`. Vier der Namen sagen selbst „System"/„service role" — gemeint war `service_role`, gewirkt hat jeder. **`email_queue` ist der gravierendste Fall**: anonyme Zeilen in der Versand-Warteschlange bedeuten Mailversand über `noreply@swingz.cloud`, also Spam-/Phishing-Relay auf Kosten der Domain-Reputation. Gedroppt werden die vier reinen Service-Fälle; `gamification_badges` wird auf `TO authenticated` beschnitten (Schreibpfad läuft über `withApiAuth`); `registration_requests` bleibt bewusst offen (öffentlicher Registrierungspfad).
+
+Weitere Befunde desselben Audits, **noch offen**:
+
+- **`season_planning_configs` und `season_statistics`**: RLS an, aber **0 Policies** — nur über den Service-Client erreichbar.
+- **`20260812020000_scope_remaining_superadmin_policies.sql` — Datei liegt, noch NICHT angewendet** (Tool-Blockade in der Session, nicht DB-seitig). Behandelt die letzten drei echten Kandidaten mit unscoped `is_superadmin()`: `audit_logs` SELECT (zwei Policies zu einer auf `is_club_admin(club_id)` zusammengeführt), `trainers` ALL (ersetzt durch SELECT/UPDATE/DELETE club-scoped über `trainer_club`; kein INSERT-Pendant, weil Trainer per Service-Client angelegt werden) und `users` UPDATE (club-scoped über `user_club_memberships`). Trockenlauf mit `ROLLBACK` bestätigt: `audit_logs` 2 → 1 sichtbare Zeile für Admin und Superadmin (die zweite gehörte einem anderen Verein — beabsichtigte Verschärfung), `trainers` für Admin 0 → 12 (Admins hatten auf `trainers` bisher überhaupt keine RLS-Policy, nur `trainers_own` und den Superadmin-Bypass), alles andere unverändert.
+- **Verbleibende unscoped `is_superadmin()`-Policies nach diesem Durchgang, alle bewusst so**: `billing_periods`, `billing_line_items`, `trainer_billings` (per Ticket zurückgestellt, siehe unten), `background_jobs`, `base_interest_rates`, `school_holidays` (plattformweite Konzepte ohne Vereinsbezug).
+- **Der Pooler auf `supabase.swingz.cloud:6543` akzeptiert Klartext-Verbindungen** (Verbindung mit `ssl: false` erfolgreich, mit TLS „wrong version number"). DB-Credentials und Nutzdaten gehen unverschlüsselt über die Leitung. VPS-Thema, keine Migration.
+
 ## Bewusst zurückgestellt (siehe `docs/tickets/`)
 
 - **`billing_periods` / `trainer_billings` / `billing_line_items`**: kein `club_id` in der Tabelle erreichbar — vermutlich ein plattformweites Konzept, nicht pro Verein. `trainer_billings`/`billing_line_items` vergleichen zudem `trainer_id` direkt mit `auth.uid()` (derselbe Bug, der für `hours_logs`/`attendance_records`/`trainer_availabilities` bereits gefixt wurde). Ticket: `docs/tickets/TICKET-billing-tables-rls-scoping.md`.
@@ -55,7 +102,7 @@ Vollständiger Ordner-Check: 156 Migrationsdateien, alle bis auf zwei folgen dem
 - Die 5 jüngsten Migrationen (`20260804000000` bis `20260805010000`, siehe oben) lagen nach der letzten Session nur lokal vor (`git status` zeigte `??`) — jetzt committet. Live-Check per `docker exec supabase-db psql` bestätigt: `get_user_role`/`club_members` existieren nicht mehr, `is_superadmin_of` existiert — Dateien und Live-DB stimmen überein.
 - `fix_booking_rpc_and_overlap.sql` (kein Zeitstempel-Präfix) → umbenannt zu `20260505030000_fix_booking_rpc_and_overlap.sql`. Live-Check bestätigt: die `create_booking_safe`-Signatur in der DB entspricht exakt dieser Datei (kein späteres Migration überschreibt sie) — reine Umbenennung, keine erneute Anwendung nötig.
 - `TEMPLATE_person_user_split.sql` (im eigenen Header als "NOT APPLIED" markiert, Referenz auf das archivierte `docs/ARCHIV/INTEGRATION_ROADMAP.md`) → verschoben nach `docs/ARCHIV/`, da `supabase/migrations/` nur echte Historie enthalten soll.
-- `supabase_migrations.schema_migrations` existiert weiterhin nicht live (bestätigt) — die Kernaussage oben bleibt unverändert gültig.
+- `supabase_migrations.schema_migrations` existiert seit 26.07.2026 live, aber nur mit 8 Zeilen (Details: siehe Kernaussage oben) — Reconciliation-Script (`file-count-vs-claim-reconciliation.sh`, CI: `db-audit.yml`) zeigt entsprechend weiterhin eine große Lücke, per ADR-002 als Soft-Fail/Warning, nicht CI-Blocker.
 
 ## Prozess-Regel für künftige Migrationen
 

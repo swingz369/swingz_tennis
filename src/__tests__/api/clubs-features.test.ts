@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import type * as ApiAuth from '@/lib/api-auth';
 
 // ── Hoisted mock state (must run before vi.mock factories) ─────────────
 
@@ -23,7 +24,12 @@ vi.mock('@/lib/rate-limit', () => ({
   checkRateLimitOrFail: vi.fn().mockResolvedValue(null),
 }));
 
-vi.mock('@/lib/api-auth', () => ({
+// Partial mock: only the auth *wrapper* is stubbed, every other export stays
+// real. A full replacement rots — the route also calls verifyClubAccess(), and
+// a missing export makes vitest throw inside the route's try/catch, which
+// surfaces as a bogus 4xx instead of a clear failure.
+vi.mock('@/lib/api-auth', async (importOriginal) => ({
+  ...(await importOriginal<typeof ApiAuth>()),
   withApiAuth: vi.fn(async (_req: NextRequest, handler: (auth: any) => Promise<Response>) => {
     if (!mock.nextAuth) {
       throw new Error('No auth registered for this test');
@@ -94,7 +100,8 @@ function asAdmin(clubId = 'club-1') {
   };
 }
 
-function asSuperadmin() {
+/** @param managedClubId the club this superadmin actually holds a membership for */
+function asSuperadmin(managedClubId: string | null = 'club-1') {
   return {
     user: { id: 'user-1' },
     session: null,
@@ -103,7 +110,7 @@ function asSuperadmin() {
     selectedClubId: 'club-1',
     role: 'superadmin' as const,
     roles: ['superadmin'],
-    memberships: [{ club_id: null, role: 'superadmin' }],
+    memberships: [{ club_id: managedClubId, role: 'superadmin' }],
   };
 }
 
@@ -161,7 +168,9 @@ describe('GET /api/clubs/[id]/features', () => {
     expect(body.features.tournaments).toBe(false);
   });
 
-  it('returns sanitized feature flags for a superadmin (any club)', async () => {
+  // Tenant isolation: a superadmin manages SEVERAL clubs, not ALL of them —
+  // that is the `owner` role. Access is granted per superadmin membership.
+  it('returns sanitized feature flags for a superadmin OF THAT club', async () => {
     mock.dbRows = [
       {
         features: {
@@ -177,12 +186,21 @@ describe('GET /api/clubs/[id]/features', () => {
       },
     ];
 
-    const res = await withAuth(asSuperadmin(), () => GET(makeRequest(), ROUTE_PARAMS));
+    const res = await withAuth(asSuperadmin('club-1'), () => GET(makeRequest(), ROUTE_PARAMS));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.features.shop).toBe(true);
     expect(body.features.tournaments).toBe(true);
     expect(body.features.ai_matchmaking).toBe(true);
+  });
+
+  it('denies a superadmin access to a club they do not manage', async () => {
+    mock.dbRows = [{ features: { shop: true } }];
+
+    const res = await withAuth(asSuperadmin('some-other-club'), () =>
+      GET(makeRequest(), ROUTE_PARAMS)
+    );
+    expect(res.status).toBe(403);
   });
 
   it('forces core features to true even if DB has them off', async () => {

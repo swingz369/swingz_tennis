@@ -4,6 +4,10 @@ import Image from 'next/image';
 import type { Metadata } from 'next';
 import { Sparkles } from 'lucide-react';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('trial-training:page');
+
 export const metadata: Metadata = {
   title: 'Probetraining buchen — SWINGZ',
   description: 'Buche jetzt ein kostenloses Probetraining bei deinem Tennisclub über SWINGZ.',
@@ -34,7 +38,7 @@ async function fetchClubInfo(
     if (result.length === 0) return null;
     return { name: result[0].name, logoUrl: result[0].logoUrl ?? null };
   } catch (error) {
-    console.error('Failed to fetch club info for trial booking page:', error);
+    log.error('Failed to fetch club info for trial booking page:', error);
     return null;
   }
 }

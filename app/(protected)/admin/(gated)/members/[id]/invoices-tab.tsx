@@ -14,6 +14,10 @@ import { Loader2, FileText, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:members:[id]:invoices-tab');
+
 interface InvoiceData {
   id: string;
   invoice_number: string;
@@ -91,7 +95,7 @@ export function InvoicesTab({ userId }: Props) {
         toast.error('Rechnungen konnten nicht geladen werden');
       }
     } catch (err) {
-      console.error('Failed to fetch invoices:', err);
+      log.error('Failed to fetch invoices:', err);
     } finally {
       setLoading(false);
     }

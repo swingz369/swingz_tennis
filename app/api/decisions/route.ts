@@ -14,6 +14,7 @@ import { validateRequestBody, formatValidationErrors } from '@/lib/validation-sc
 import type { ZodError } from 'zod';
 import { CreateDecisionSchema, type CreateDecisionInput } from '@/lib/types/decisions';
 import { decisionService } from '@/lib/decisions/decision.service';
+import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
 
 const log = createLogger('api:decisions');
 
@@ -24,6 +25,8 @@ export async function GET(request: NextRequest) {
     const hasAdminRole = await verifyRole(auth, 'trainer'); // trainer/admin/superadmin
 
     if (!auth.clubId) return unauthorizedResponse('Club-Kontext fehlt');
+    const features = await getClubFeatures(auth.supabase, auth.clubId);
+    if (!features.decisions) return featureDisabledResponse('decisions');
 
     const statusParam = request.nextUrl.searchParams.get('status') as
       'draft' | 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | null;
@@ -60,6 +63,8 @@ export async function POST(request: NextRequest) {
       const hasRole = await verifyRole(auth, 'admin');
       if (!hasRole) return forbiddenResponse('Admin erforderlich');
       if (!auth.clubId) return unauthorizedResponse('Club-Kontext fehlt');
+      const features = await getClubFeatures(auth.supabase, auth.clubId);
+      if (!features.decisions) return featureDisabledResponse('decisions');
 
       const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STRICT);
       if (rateLimitError) return rateLimitError;

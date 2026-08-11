@@ -15,6 +15,10 @@ import {
   PieChart,
 } from 'lucide-react';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api-fetch';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('reports-dashboard');
 
 interface ReportStats {
   totalMembers: number;
@@ -32,10 +36,10 @@ export default function ReportsDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/analytics')
+    apiFetch('/api/analytics')
       .then((r) => (r.ok ? r.json() : Promise.reject('Fehler')))
       .then((data) => setStats(data))
-      .catch(console.error)
+      .catch((error) => log.error('Report-Statistiken konnten nicht geladen werden', error))
       .finally(() => setLoading(false));
   }, []);
 

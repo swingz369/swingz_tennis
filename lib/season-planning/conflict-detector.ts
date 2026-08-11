@@ -15,6 +15,10 @@ import {
 } from '@/src/infrastructure/persistence/season-planning-schema';
 import { and, eq } from 'drizzle-orm';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('season-planning:conflict-detector');
+
 /**
  * Minimal query-builder interface for the optional transaction parameter.
  * Drizzle's `PgTransaction` and `PostgresJsDatabase` both satisfy this.
@@ -565,7 +569,7 @@ export class ConflictDetector {
           allConflicts.push(conflict);
         }
       } catch (error) {
-        console.error(`[ConflictDetector] Rule ${rule.type} failed:`, error);
+        log.error(`[ConflictDetector] Rule ${rule.type} failed:`, error);
       }
     }
 

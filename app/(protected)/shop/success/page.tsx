@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, CheckCircle2, ArrowRight, ShoppingBag, Package, Home } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface OrderItem {
   product_id: string;
@@ -39,7 +40,7 @@ function SuccessContent() {
       return;
     }
 
-    fetch(`/api/shop/orders/${orderId}`)
+    apiFetch(`/api/shop/orders/${orderId}`)
       .then((r) => r.json())
       .then((data) => setOrder(data.order || null))
       .catch(() => setOrder(null))

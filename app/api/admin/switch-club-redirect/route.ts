@@ -5,33 +5,42 @@ import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
 
 /**
  * GET /api/admin/switch-club-redirect?clubId=xxx
- * Superadmin wählt einen Verein → Cookie setzen → /admin weiterleiten
+ * Owner/Superadmin wählt einen Verein → Cookie setzen → /admin weiterleiten
  */
 export async function GET(request: NextRequest) {
   const { supabase, user } = await requireAuth();
 
-  // Only superadmin
+  // Only platform staff (owner/superadmin)
   const { data: memberships } = await supabase
     .from('user_club_memberships')
-    .select('role')
+    .select('role, club_id')
     .eq('user_id', user.id)
     .eq('is_active', true);
 
+  const isOwner = (memberships ?? []).some((m: any) => m.role === 'owner');
   const isSuperadmin = (memberships ?? []).some((m: any) => m.role === 'superadmin');
-  if (!isSuperadmin) {
+  if (!isOwner && !isSuperadmin) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   const clubId = request.nextUrl.searchParams.get('clubId');
   if (!clubId) {
-    return NextResponse.redirect(new URL('/select-admin-club', request.url));
+    return NextResponse.redirect(
+      new URL(isOwner ? '/owner/clubs' : '/select-admin-club', request.url)
+    );
   }
 
-  // Validate club exists
-  const { data: club } = await supabase.from('clubs').select('id').eq('id', clubId).maybeSingle();
+  // Owner: any existing club. Superadmin: only clubs their Tennisschule
+  // actually manages — a real user_club_memberships row (role='superadmin')
+  // for this exact clubId, not just "club exists somewhere on the platform".
+  const hasAccess = isOwner
+    ? Boolean((await supabase.from('clubs').select('id').eq('id', clubId).maybeSingle()).data)
+    : (memberships ?? []).some((m: any) => m.role === 'superadmin' && m.club_id === clubId);
 
-  if (!club) {
-    return NextResponse.redirect(new URL('/select-admin-club', request.url));
+  if (!hasAccess) {
+    return NextResponse.redirect(
+      new URL(isOwner ? '/owner/clubs' : '/select-admin-club', request.url)
+    );
   }
 
   const response = NextResponse.redirect(new URL('/admin', request.url));

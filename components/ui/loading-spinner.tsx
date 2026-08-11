@@ -66,6 +66,32 @@ export function LoadingSpinner({
 }
 
 /**
+ * PageLoading — Standard-Fallback für `loading.tsx` beim Seitenwechsel.
+ *
+ * Indeterminierter Balken in den Markenfarben statt eines nackten Spinners.
+ * Nutzt die bestehende `shimmer`-Animation aus app/globals.css; die globale
+ * `prefers-reduced-motion`-Regel dort schaltet sie automatisch ab.
+ *
+ * @example
+ * // app/(protected)/irgendwas/loading.tsx
+ * export { PageLoading as default } from '@/components/ui/loading-spinner';
+ */
+export function PageLoading({ text = 'Wird geladen…' }: { text?: string }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex min-h-[50vh] flex-col items-center justify-center gap-4 px-6"
+    >
+      <div className="h-1.5 w-48 overflow-hidden rounded-full bg-muted">
+        <div className="animate-shimmer h-full w-full rounded-full bg-[linear-gradient(90deg,transparent_0%,hsl(var(--brand-primary))_35%,hsl(var(--brand-primary-light))_65%,transparent_100%)] bg-[length:200%_100%]" />
+      </div>
+      <p className="text-sm text-muted-foreground">{text}</p>
+    </div>
+  );
+}
+
+/**
  * PageLoader — Full-page loading overlay with brand spinner
  */
 export function PageLoader({ text = 'Wird geladen...' }: { text?: string }) {

@@ -7,19 +7,25 @@ export const dynamic = 'force-dynamic';
 export default async function SelectAdminClubPage() {
   const { supabase, user } = await requireAuth();
 
-  // Only superadmin can access this page
+  // Only superadmin can access this page — owner selects clubs via /owner/clubs.
   const { data: memberships } = await supabase
     .from('user_club_memberships')
-    .select('role')
+    .select('role, club_id')
     .eq('user_id', user.id)
     .eq('is_active', true);
 
-  const isSuperadmin = (memberships ?? []).some((m: any) => m.role === 'superadmin');
+  const managedClubIds = (memberships ?? [])
+    .filter((m: any) => m.role === 'superadmin' && m.club_id)
+    .map((m: any) => m.club_id as string);
 
-  if (!isSuperadmin) redirect('/dashboard');
+  if (managedClubIds.length === 0) redirect('/dashboard');
 
-  // Superadmin sees ALL clubs (platform-wide)
-  const { data: allClubs } = await supabase.from('clubs').select('id, name, status').order('name');
+  // Superadmin sees only the clubs their Tennisschule actually manages.
+  const { data: allClubs } = await supabase
+    .from('clubs')
+    .select('id, name, status')
+    .in('id', managedClubIds)
+    .order('name');
 
   const clubsWithStats = await Promise.all(
     (allClubs ?? []).map(async (club: any) => {

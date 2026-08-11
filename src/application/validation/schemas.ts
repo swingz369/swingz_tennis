@@ -76,7 +76,12 @@ export const updateClubSchema = createClubSchema.partial().extend({
   // `nullable` matches the DB shape so we can explicitly clear a value.
   city: z.string().max(200).nullable().optional(),
   description: z.string().max(2000).nullable().optional(),
-  logo_url: z.string().url('Logo-URL muss eine gültige URL sein').max(500).nullable().optional(),
+  // Formulare senden bei leerem Feld '' statt null/undefined — als "kein Logo" akzeptieren.
+  logo_url: z
+    .union([z.literal(''), z.string().url('Logo-URL muss eine gültige URL sein').max(500)])
+    .nullable()
+    .optional()
+    .transform((v) => (v === '' ? null : v)),
   billing_unit_minutes: z.coerce
     .number()
     .int()

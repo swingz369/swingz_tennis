@@ -1,5 +1,9 @@
 import { parse } from 'csv-parse/sync';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('csv:payment-import');
+
 export interface CsvPaymentRecord {
   paymentNumber?: string;
   paymentDate: string;
@@ -49,7 +53,7 @@ export function parsePaymentCsv(csvContent: string): CsvPaymentRecord[] {
       notes: sanitizeCsvField(record['Notizen'] || record['notes'] || ''),
     }));
   } catch (error) {
-    console.error('Error parsing CSV:', error);
+    log.error('Error parsing CSV:', error);
     throw new Error('Failed to parse CSV file');
   }
 }

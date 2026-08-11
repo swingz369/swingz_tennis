@@ -1,6 +1,10 @@
 import { redirect } from 'next/navigation';
 import { requireAuth } from '@/lib/auth';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('dashboard:page');
+
 /**
  * Dashboard Dispatch Page
  *
@@ -23,7 +27,7 @@ export default async function DashboardPage() {
     .eq('is_active', true);
 
   if (error || !memberships || memberships.length === 0) {
-    console.warn('[Dashboard Dispatch] No active memberships for user:', user.id);
+    log.warn('[Dashboard Dispatch] No active memberships for user:', user.id);
     // Do NOT redirect to /member here — that causes a redirect loop when
     // /member also finds no membership and redirects back to /dashboard.
     // Instead, render the member area directly (it handles the no-membership case).

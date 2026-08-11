@@ -20,7 +20,7 @@
 set -euo pipefail
 
 BACKUP_DIR=".supabase-types-backup"
-FILES=("supabase-types.ts" "types/supabase.ts")
+FILES=("types/supabase.ts")
 
 cmd_save() {
     mkdir -p "$BACKUP_DIR"

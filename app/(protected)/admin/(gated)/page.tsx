@@ -80,7 +80,7 @@ async function safe<T extends { count: number | null; data: unknown; error: unkn
 // ─── Component ─────────────────────────────────────────────────────────
 
 export default async function AdminPage() {
-  const { supabase, user, clubId, isSuperadmin } = await requireAdminClub();
+  const { supabase, user, clubId, role } = await requireAdminClub();
 
   // Club info — explicit generic keeps `setup_completed_at` available
   // without an `any`-cast downstream.
@@ -568,7 +568,7 @@ export default async function AdminPage() {
             <PremiumAdminHero
               firstName={firstName}
               clubName={club.name}
-              isSuperadmin={isSuperadmin}
+              role={role as 'owner' | 'superadmin' | 'admin'}
               todaySessionCount={activeSessions ?? 0}
             />
             <div>

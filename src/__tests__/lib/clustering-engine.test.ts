@@ -90,6 +90,24 @@ const h = vi.hoisted(() => {
   return { state, makeSelectChain };
 });
 
+// ═══ Mock the Supabase service client ═══════════════════════════════════
+// The engine loads `groups` over Supabase REST, not Drizzle (see
+// clustering-engine.ts loadGroups). Mocking only the Drizzle module let those
+// calls escape to the live database, where the non-UUID fixture ids ('c1')
+// failed with "invalid input syntax for type uuid".
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceClient: () => {
+    const chain: any = {
+      from: () => chain,
+      select: () => chain,
+      eq: () => chain,
+      then: (resolve: any, reject: any) =>
+        Promise.resolve({ data: h.state.groups, error: null }).then(resolve, reject),
+    };
+    return chain;
+  },
+}));
+
 // ═══ Mock the DB module ══════════════════════════════════════════════════
 vi.mock('@/src/infrastructure/persistence/db', () => ({
   db: {

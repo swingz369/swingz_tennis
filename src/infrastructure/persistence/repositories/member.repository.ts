@@ -1,6 +1,6 @@
-import { eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { users, clubMemberships } from '../schema';
+import { users, userClubMemberships } from '../schema';
 import type { Member } from '@/domain/repositories/member-repository.interface';
 import { MemberId, ClubId } from '@/domain/value-objects';
 import type { MemberRepository } from '@/domain/repositories/member-repository.interface';
@@ -21,15 +21,20 @@ export class DrizzleMemberRepository implements MemberRepository {
   async findByClub(clubId: ClubId): Promise<Member[]> {
     const memberships = await db
       .select()
-      .from(clubMemberships)
-      .where(eq(clubMemberships.club_id, clubId.getValue()));
-    const userIds = memberships.map((m: typeof clubMemberships.$inferSelect) => m.user_id);
+      .from(userClubMemberships)
+      .where(
+        and(
+          eq(userClubMemberships.club_id, clubId.getValue()),
+          eq(userClubMemberships.is_active, true)
+        )
+      );
+    const userIds = memberships.map((m: typeof userClubMemberships.$inferSelect) => m.user_id);
     if (userIds.length === 0) return [];
     const usersData = await db.select().from(users).where(inArray(users.id, userIds));
     return usersData.map((user: typeof users.$inferSelect) => {
       const clubIds = memberships
-        .filter((m: typeof clubMemberships.$inferSelect) => m.user_id === user.id)
-        .map((m: typeof clubMemberships.$inferSelect) => m.club_id)
+        .filter((m: typeof userClubMemberships.$inferSelect) => m.user_id === user.id)
+        .map((m: typeof userClubMemberships.$inferSelect) => m.club_id)
         .map(ClubId.fromString);
       return {
         id: MemberId.fromString(user.id),
@@ -57,10 +62,10 @@ export class DrizzleMemberRepository implements MemberRepository {
     } else {
       await db.insert(users).values(userData);
       for (const clubId of member.clubIds) {
-        await db.insert(clubMemberships).values({
+        await db.insert(userClubMemberships).values({
           club_id: clubId.getValue(),
           user_id: member.id.getValue(),
-          join_date: now,
+          joined_at: now,
           is_active: true,
         });
       }

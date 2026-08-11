@@ -5,6 +5,10 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import Link from 'next/link';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('error');
+
 export default function ProtectedError({
   error,
   reset,
@@ -21,7 +25,7 @@ export default function ProtectedError({
         })
         .catch(() => {});
     }
-    console.error('Protected route error:', error);
+    log.error('Protected route error:', error);
   }, [error]);
 
   return (

@@ -246,20 +246,26 @@ describe('GET /api/clubs', () => {
     expect(clubsChain.in).toHaveBeenCalledWith('id', ['club-abc']);
   });
 
-  it('returns all clubs for superadmin (no .in() membership filter)', async () => {
+  // Tenant isolation: a superadmin manages SEVERAL clubs, not ALL of them —
+  // seeing every club on the platform is the `owner` role. So the membership
+  // filter MUST be applied for a superadmin too.
+  it('scopes clubs for superadmin to their own memberships (.in() filter applied)', async () => {
     mockAuthCtx.role = 'superadmin';
-    mockAuthCtx.memberships = [];
+    mockAuthCtx.memberships = [
+      { club_id: 'c1', role: 'superadmin' },
+      { club_id: 'c2', role: 'superadmin' },
+    ];
 
     const clubs = [
       { id: 'c1', name: 'TC Alpha', status: 'active', max_members: 100 },
       { id: 'c2', name: 'TC Beta', status: 'active', max_members: 200 },
-      { id: 'c3', name: 'TC Gamma', status: 'active', max_members: 150 },
     ];
 
-    const clubsChain = makeChain({ data: clubs, count: 3 });
+    const clubsChain = makeChain({ data: clubs, count: 2 });
     mockSupabase.from.mockImplementation((table: string) => {
       if (table === 'clubs') return clubsChain;
-      if (table === 'user_club_memberships') return makeChain({ data: [] });
+      if (table === 'user_club_memberships')
+        return makeChain({ data: [{ club_id: 'c1' }, { club_id: 'c2' }] });
       return makeChain({});
     });
 
@@ -268,10 +274,10 @@ describe('GET /api/clubs', () => {
 
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.clubs).toHaveLength(3);
-    expect(body.pagination.totalCount).toBe(3);
-    // Verify .in() was NOT called — superadmin sees all clubs
-    expect(clubsChain.in).not.toHaveBeenCalled();
+    expect(body.clubs).toHaveLength(2);
+    // The third club (c3) must never be reachable — .in() carries exactly the
+    // superadmin's own club ids.
+    expect(clubsChain.in).toHaveBeenCalledWith('id', ['c1', 'c2']);
   });
 
   // ── Member counts ───────────────────────────────────────

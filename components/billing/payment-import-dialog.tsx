@@ -9,6 +9,10 @@ import { Upload, Download, FileText, AlertCircle, CheckCircle } from 'lucide-rea
 import { generatePaymentCsvTemplate } from '@/lib/csv/payment-import';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('billing:payment-import-dialog');
+
 interface ImportResult {
   success: boolean;
   total: number;
@@ -49,7 +53,7 @@ export default function PaymentImportDialog() {
         toast.error(`Fehler: ${data.error || 'Import fehlgeschlagen'}`);
       }
     } catch (err) {
-      console.error('Failed to import payments:', err);
+      log.error('Failed to import payments:', err);
       toast.error('Fehler beim Import der Zahlungen');
     } finally {
       setLoading(false);

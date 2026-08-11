@@ -83,12 +83,3 @@ export const PLAN_LABELS: Record<string, string> = {
   starter: 'Starter',
   professional: 'Professional',
 };
-
-export const PLAN_MONTHLY_PRICE: Record<string, number> = {
-  solo_s: 29,
-  solo_l: 49,
-  school_s: 79,
-  school_l: 99,
-  starter: 29,
-  professional: 79,
-};

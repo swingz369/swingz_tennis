@@ -4,6 +4,10 @@ import { SeasonsClient } from './seasons-client';
 import type { PaginationMeta } from '@/lib/pagination';
 import { detectConflictsForSeason } from '@/lib/season-planning/conflict-detector';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:seasons:page');
+
 export const dynamic = 'force-dynamic';
 
 export default async function SeasonsPage({
@@ -45,7 +49,7 @@ export default async function SeasonsPage({
       .range(offset, offset + limit - 1);
 
     if (seasonsError) {
-      console.error('[SeasonsPage] Query error:', seasonsError);
+      log.error('[SeasonsPage] Query error:', seasonsError);
     }
 
     pagination = buildPaginationMeta(page, limit, count);
@@ -164,7 +168,7 @@ export default async function SeasonsPage({
       };
     }) as typeof seasons;
   } catch (err) {
-    console.error('[SeasonsPage] Unexpected error:', err);
+    log.error('[SeasonsPage] Unexpected error:', err);
   }
 
   return <SeasonsClient initialSeasons={seasons} pagination={pagination} />;

@@ -6,6 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:billing:error');
+
 export default function BillingError({
   error,
   reset,
@@ -16,7 +20,7 @@ export default function BillingError({
   const router = useRouter();
 
   useEffect(() => {
-    console.error('Billing page error:', error);
+    log.error('Billing page error:', error);
   }, [error]);
 
   return (

@@ -11,6 +11,10 @@ import { FileText, Download, CheckCircle, AlertCircle, Info } from 'lucide-react
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('sepa-mandate-signing');
+
 interface SEPAMandateFormData {
   accountHolder: string;
   iban: string;
@@ -181,7 +185,7 @@ export default function SEPAMandateSigning() {
       toast.error(
         error instanceof Error ? error.message : 'Fehler beim Speichern des SEPA-Mandats'
       );
-      console.error('SEPA mandate error:', error);
+      log.error('SEPA mandate error:', error);
     } finally {
       setIsSubmitting(false);
     }

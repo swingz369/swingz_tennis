@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 
 export default function JoinPage() {
   const { clubId } = useParams<{ clubId: string }>();
@@ -22,7 +23,7 @@ export default function JoinPage() {
   const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
-    fetch(`/api/public/club/${clubId}`)
+    apiFetch(`/api/public/club/${clubId}`)
       .then((r) => r.json())
       .then((d) => (d.club ? setClubName(d.club.name) : setNotFound(true)))
       .catch(() => setNotFound(true));
@@ -32,9 +33,8 @@ export default function JoinPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/join', {
+      const res = await apiFetch('/api/auth/join', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, fullName, clubId }),
       });
       const data = await res.json();

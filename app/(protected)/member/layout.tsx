@@ -1,6 +1,10 @@
 import { redirect } from 'next/navigation';
 import { requireAuth } from '@/lib/auth';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('member:layout');
+
 /**
  * Member Layout — Authentication & Authorization Guard
  * Members with trainer/admin/superadmin roles are redirected to their appropriate area.
@@ -16,7 +20,7 @@ export default async function MemberLayout({ children }: { children: React.React
     .eq('is_active', true);
 
   if (error) {
-    console.error('[Member Layout] Failed to load memberships:', error);
+    log.error('[Member Layout] Failed to load memberships:', error);
     redirect('/login?error=no_memberships');
   }
 

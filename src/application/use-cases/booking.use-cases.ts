@@ -14,6 +14,10 @@ import { BookingNotFoundError, SessionNotFoundError, DoubleBookingError } from '
 import type { IEmailService, IAuditService } from '@/domain/services';
 import { TOKENS } from '@/application/container';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('application:use-cases:booking.use-cases');
+
 export interface CreateBookingInput {
   memberId: string;
   sessionId: string;
@@ -81,7 +85,9 @@ export class CreateBookingUseCase {
     });
 
     // Send confirmation email (fire and forget)
-    this.sendConfirmationEmail(booking, sessionDetails).catch(console.error);
+    this.sendConfirmationEmail(booking, sessionDetails).catch((error) =>
+      log.error('Bestätigungs-E-Mail konnte nicht gesendet werden', error)
+    );
 
     return {
       bookingId: booking.getId().getValue(),
@@ -100,7 +106,7 @@ export class CreateBookingUseCase {
     try {
       const memberData = await this.memberRepository.getMemberEmailAndName(booking.getMemberId());
       if (!memberData) {
-        console.warn('No member data found for:', booking.getMemberId().getValue());
+        log.warn('No member data found for:', booking.getMemberId().getValue());
         return;
       }
 
@@ -115,7 +121,7 @@ export class CreateBookingUseCase {
         clubName,
       });
     } catch (error) {
-      console.warn('Failed to send confirmation email:', error);
+      log.warn('Failed to send confirmation email:', error);
     }
   }
 }
@@ -171,7 +177,9 @@ export class CancelBookingUseCase {
     });
 
     // Send cancellation email (async, don't block response)
-    this.sendCancellationEmail(booking, sessionDetails, input).catch(console.error);
+    this.sendCancellationEmail(booking, sessionDetails, input).catch((error) =>
+      log.error('Stornierungs-E-Mail konnte nicht gesendet werden', error)
+    );
 
     return { success: true };
   }
@@ -190,7 +198,7 @@ export class CancelBookingUseCase {
       const memberData = await this.memberRepository.getMemberEmailAndName(booking.getMemberId());
 
       if (!memberData) {
-        console.warn('No email found for member:', booking.getMemberId().getValue());
+        log.warn('No email found for member:', booking.getMemberId().getValue());
         return;
       }
 
@@ -206,7 +214,7 @@ export class CancelBookingUseCase {
         reason: input.reason || undefined,
       });
     } catch (error) {
-      console.warn('Failed to send cancellation email:', error);
+      log.warn('Failed to send cancellation email:', error);
     }
   }
 }

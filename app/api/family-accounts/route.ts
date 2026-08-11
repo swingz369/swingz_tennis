@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
+import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
 
 const log = createLogger('api:family-accounts');
 
@@ -9,6 +10,11 @@ const log = createLogger('api:family-accounts');
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const { supabase, user } = auth;
+
+    if (auth.clubId) {
+      const features = await getClubFeatures(supabase, auth.clubId);
+      if (!features.family_accounts) return featureDisabledResponse('family_accounts');
+    }
 
     // Get family group for this user
     const { data: familyLink } = await (supabase as any)
@@ -59,6 +65,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const { supabase, user } = auth;
+
+    if (auth.clubId) {
+      const features = await getClubFeatures(supabase, auth.clubId);
+      if (!features.family_accounts) return featureDisabledResponse('family_accounts');
+    }
 
     const { inviteCode } = await request.json();
 
@@ -145,6 +156,11 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const { supabase, user } = auth;
+
+    if (auth.clubId) {
+      const features = await getClubFeatures(supabase, auth.clubId);
+      if (!features.family_accounts) return featureDisabledResponse('family_accounts');
+    }
 
     const { data: familyLink } = await (supabase as any)
       .from('family_accounts')

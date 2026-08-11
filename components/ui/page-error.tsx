@@ -6,6 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ui:page-error');
+
 interface PageErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
@@ -33,7 +37,7 @@ export function PageError({
   const router = useRouter();
 
   useEffect(() => {
-    console.error('Page error:', error);
+    log.error('Page error:', error);
   }, [error]);
 
   return (

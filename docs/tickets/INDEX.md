@@ -106,3 +106,5 @@
 - 🔶 **[TICKET-002](roadmap/TICKET-002.md)** — Beschlussdatenbank digital (BGB §§ 32, 33)
 - ✅ **[TICKET-003](roadmap/TICKET-003.md)** — Medenspiel-CSV-Export für Verbände
 - 🔶 **[TICKET-W2-CAST-CLEANUP](roadmap/TICKET-W2-CAST-CLEANUP.md)** — Wave-2 Cast-Cleanup Complex Routes
+- ❌ **[TICKET-billing-tables-rls-scoping](roadmap/TICKET-billing-tables-rls-scoping.md)** — Abrechnungstabellen: Superadmin-Scoping + auth.uid()-Bug
+- ❌ **[TICKET-mandatory-subscription-onboarding](roadmap/TICKET-mandatory-subscription-onboarding.md)** — Abo zur Voraussetzung machen statt Freemium-Default (Trial/Grace-Period/Bestandskonten klären)

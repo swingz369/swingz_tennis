@@ -46,6 +46,10 @@ import { PaginationNav } from '@/components/ui/pagination-nav';
 import { PageHeader } from '@/components/ui/page-header';
 import type { PaginationMeta } from '@/lib/pagination';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:shop:page');
+
 interface Product {
   id: string;
   name: string;
@@ -182,7 +186,7 @@ export default function AdminShopPage() {
       setProducts(data.products ?? []);
       setProductsPagination(data.pagination ?? null);
     } catch (err) {
-      console.error('Failed to fetch products:', err);
+      log.error('Failed to fetch products:', err);
     } finally {
       setLoading(false);
     }
@@ -206,7 +210,7 @@ export default function AdminShopPage() {
       setOrdersPagination(data.pagination ?? null);
     } catch (err) {
       if (process.env.NODE_ENV !== 'production') {
-        console.error('Shop orders fetch failed:', err);
+        log.error('Shop orders fetch failed:', err);
       }
     } finally {
       setOrdersLoading(false);

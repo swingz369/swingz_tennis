@@ -95,26 +95,6 @@ export const clubs = pgTable(
   })
 );
 
-export const clubMemberships = pgTable(
-  'club_members',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    club_id: uuid('club_id')
-      .notNull()
-      .references(() => clubs.id, { onDelete: 'cascade' }),
-    user_id: uuid('user_id').notNull(),
-    role: varchar('role', { length: 50 }).notNull().default('member'),
-    join_date: timestamp('join_date').notNull().defaultNow(),
-    is_active: boolean('is_active').notNull().default(true),
-    created_at: timestamp('created_at').notNull().defaultNow(),
-  },
-  (table) => ({
-    club_user_idx: index('club_members_club_user_idx').on(table.club_id, table.user_id),
-    user_idx: index('club_members_user_idx').on(table.user_id),
-    role_idx: index('club_members_role_idx').on(table.role),
-  })
-);
-
 export const trainers = pgTable(
   'trainers',
   {
@@ -612,13 +592,6 @@ export const dunningRecordsRelations = relations(dunningRecords, ({ one }) => ({
   invoice: one(invoices, {
     fields: [dunningRecords.invoice_id],
     references: [invoices.id],
-  }),
-}));
-
-export const clubMembershipsRelations = relations(clubMemberships, ({ one }) => ({
-  club: one(clubs, {
-    fields: [clubMemberships.club_id],
-    references: [clubs.id],
   }),
 }));
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -443,12 +444,13 @@ export default function OpenMatches({ clubId, userId }: Props) {
         </div>
       ) : matches.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center space-y-3">
-            <Users className="h-12 w-12 mx-auto text-muted-foreground/50" />
-            <p className="text-muted-foreground">Keine offenen Spiele gefunden</p>
-            <p className="text-sm text-muted-foreground/70">
-              Erstelle ein offenes Spiel und finde Mitspieler!
-            </p>
+          <CardContent>
+            <EmptyState
+              icon={Users}
+              title="Keine offenen Spiele gefunden"
+              description="Erstelle ein offenes Spiel und finde Mitspieler!"
+              size="sm"
+            />
           </CardContent>
         </Card>
       ) : (

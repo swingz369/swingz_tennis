@@ -2,6 +2,10 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { EmailService as InfraEmailService } from '@/src/infrastructure/email/email.service';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('application:services:email.service');
+
 export interface EmailTemplate {
   subject: string;
   html: string;
@@ -933,7 +937,7 @@ Dein ${clubName}-Team
       await infraEmail.sendEmail({ to, ...email });
       return true;
     } catch (error) {
-      console.error('Email send error:', error);
+      log.error('Email send error:', error);
       return false;
     }
   }

@@ -19,9 +19,15 @@ function getGreeting(): string {
 interface PremiumAdminHeroProps {
   firstName: string;
   clubName: string;
-  isSuperadmin: boolean;
+  role: 'owner' | 'superadmin' | 'admin';
   todaySessionCount: number;
 }
+
+const ROLE_BADGE_LABEL: Record<PremiumAdminHeroProps['role'], string> = {
+  owner: 'Owner',
+  superadmin: 'Superadmin',
+  admin: 'Admin',
+};
 
 /**
  * PremiumAdminHero — flat page topbar.
@@ -34,9 +40,10 @@ interface PremiumAdminHeroProps {
 export function PremiumAdminHero({
   firstName,
   clubName,
-  isSuperadmin,
+  role,
   todaySessionCount,
 }: PremiumAdminHeroProps) {
+  const isPlatformStaff = role === 'owner' || role === 'superadmin';
   const todayLabel = new Date().toLocaleDateString('de-DE', {
     weekday: 'long',
     day: 'numeric',
@@ -55,12 +62,12 @@ export function PremiumAdminHero({
         <span
           className={cn(
             'text-2xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
-            isSuperadmin
+            isPlatformStaff
               ? 'bg-info-50 text-info-700 dark:bg-info-900/20 dark:text-info-300'
               : 'bg-brand-accent-100 text-brand-accent-700 dark:bg-brand-accent-900/30 dark:text-brand-accent-300'
           )}
         >
-          {isSuperadmin ? 'Superadmin' : 'Admin'}
+          {ROLE_BADGE_LABEL[role]}
         </span>
       </div>
 

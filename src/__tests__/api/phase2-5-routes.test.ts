@@ -816,11 +816,20 @@ describe('GET /api/gamification', () => {
         .mockResolvedValue({ data: { role: 'member', club_id: 'club-1' }, error: null }),
     });
 
+    const qbClub = createMockQueryBuilder({
+      select: vi.fn(() => qbClub),
+      eq: vi.fn(() => qbClub),
+      single: vi
+        .fn()
+        .mockResolvedValue({ data: { features: { gamification: true } }, error: null }),
+    });
+
     const mockSupabase = createMockSupabase((table: string) => {
       if (table === 'user_club_memberships') return qbMembership;
       if (table === 'gamification_points') return qbPoints;
       if (table === 'gamification_badges') return qbBadges;
       if (table === 'attendance_records') return qbAttendance;
+      if (table === 'clubs') return qbClub;
       return createMockQueryBuilder();
     });
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });

@@ -124,7 +124,19 @@ const MEMBERS = [
 function makeQueryResult(result: { data: unknown; error: unknown }) {
   const builder: Record<string, unknown> = {};
   // Chainable methods — all return self
-  for (const key of ['select', 'eq', 'in', 'single', 'maybeSingle', 'limit', 'order', 'neq', 'gte', 'lte', 'filter']) {
+  for (const key of [
+    'select',
+    'eq',
+    'in',
+    'single',
+    'maybeSingle',
+    'limit',
+    'order',
+    'neq',
+    'gte',
+    'lte',
+    'filter',
+  ]) {
     builder[key] = () => builder;
   }
   // thenable — makes `await` resolve to `result`
@@ -156,8 +168,18 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
     mockRpc.mockResolvedValueOnce({
       data: {
         created: [
-          { member_id: M1, invoice_id: 'inv-1', invoice_number: 'INV-AAA-2026-00001', total_amount: 89.25 },
-          { member_id: M2, invoice_id: 'inv-2', invoice_number: 'INV-AAA-2026-00002', total_amount: 89.25 },
+          {
+            member_id: M1,
+            invoice_id: 'inv-1',
+            invoice_number: 'INV-AAA-2026-00001',
+            total_amount: 89.25,
+          },
+          {
+            member_id: M2,
+            invoice_id: 'inv-2',
+            invoice_number: 'INV-AAA-2026-00002',
+            total_amount: 89.25,
+          },
         ],
         skipped: [],
         failed: [],
@@ -317,7 +339,12 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
     mockRpc.mockResolvedValueOnce({
       data: {
         created: [
-          { member_id: M1, invoice_id: 'inv-1', invoice_number: 'INV-AAA-2026-00001', total_amount: 89.25 },
+          {
+            member_id: M1,
+            invoice_id: 'inv-1',
+            invoice_number: 'INV-AAA-2026-00001',
+            total_amount: 89.25,
+          },
         ],
         skipped: [],
         failed: [{ member_id: M2, error: 'duplicate invoice_number' }],
@@ -353,8 +380,18 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
     mockRpc.mockResolvedValueOnce({
       data: {
         created: [
-          { member_id: M1, invoice_id: 'inv-1', invoice_number: 'INV-AAA-2026-00001', total_amount: 89.24 },
-          { member_id: M2, invoice_id: 'inv-2', invoice_number: 'INV-AAA-2026-00002', total_amount: 89.24 },
+          {
+            member_id: M1,
+            invoice_id: 'inv-1',
+            invoice_number: 'INV-AAA-2026-00001',
+            total_amount: 89.24,
+          },
+          {
+            member_id: M2,
+            invoice_id: 'inv-2',
+            invoice_number: 'INV-AAA-2026-00002',
+            total_amount: 89.24,
+          },
         ],
         skipped: [],
         failed: [],
@@ -362,15 +399,16 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
       error: null,
     });
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    // createLogger() routes through console.log under jsdom (this project's
+    // global test environment) since logger.ts's isServer check is false there.
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     const result = await seasonBillingService.generateInvoices(SEASON_ID);
 
     expect(result.roundingDrift).toBeCloseTo(0.02, 1); // 178.5 - 178.48
-    expect(warnSpy).toHaveBeenCalledWith(
+    expect(logSpy).toHaveBeenCalledWith(
+      '[WARN]',
       expect.stringContaining('[SeasonBilling] Rounding drift detected'),
-      expect.anything(),
-      expect.anything(),
       expect.anything()
     );
   });

@@ -20,6 +20,10 @@ import { de } from '@/lib/locale';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('trainer:hours-logs:page');
+
 interface HoursLog {
   id: string;
   trainer_id: string;
@@ -77,7 +81,7 @@ export default function TrainerHoursLogsPage() {
       const data = await response.json();
       setLogs(data.hoursLogs || []);
     } catch (error) {
-      console.error('Fetch error:', error);
+      log.error('Fetch error:', error);
       toast.error('Fehler beim Laden der Stundennachweise');
     } finally {
       setLoading(false);
@@ -130,7 +134,7 @@ export default function TrainerHoursLogsPage() {
       });
       fetchHoursLogs();
     } catch (error) {
-      console.error('Create error:', error);
+      log.error('Create error:', error);
       toast.error(error instanceof Error ? error.message : 'Fehler beim Erstellen');
     } finally {
       setSubmitting(false);

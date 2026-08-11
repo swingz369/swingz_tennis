@@ -193,7 +193,7 @@ export class SeasonBillingService {
         if (error.message.toLowerCase().includes('does not exist')) {
           return map; // migration not run yet — assume everything active
         }
-        console.warn('[SeasonBilling] Failed to load inactive weeks:', error.message);
+        log.warn('[SeasonBilling] Failed to load inactive weeks:', error.message);
         return map;
       }
       for (const row of (data ?? []) as Array<{
@@ -204,7 +204,7 @@ export class SeasonBillingService {
         map.get(row.group_id)!.add(row.week_monday);
       }
     } catch (err) {
-      console.warn('[SeasonBilling] Error loading inactive weeks, assuming all active:', err);
+      log.warn('[SeasonBilling] Error loading inactive weeks, assuming all active:', err);
     }
     return map;
   }
@@ -240,10 +240,7 @@ export class SeasonBillingService {
         });
         log.info('Auto-created default billing config for season', { seasonId });
       } catch (err) {
-        console.warn(
-          '[SeasonBilling] Could not auto-create config, using in-memory defaults:',
-          err
-        );
+        log.warn('[SeasonBilling] Could not auto-create config, using in-memory defaults:', err);
       }
     }
     const trainerRate = config?.trainer_hourly_rate ?? 50.0;
@@ -633,12 +630,12 @@ export class SeasonBillingService {
     const actualTotal = created.reduce((sum, inv) => sum + inv.totalAmount, 0);
     const roundingDrift = this.roundCurrency(preview.grandTotal - actualTotal);
     if (Math.abs(roundingDrift) >= 0.01) {
-      console.warn(
-        `[SeasonBilling] Rounding drift detected for season ${seasonId}:`,
-        `preview.grandTotal=${preview.grandTotal}`,
-        `createdTotal=${actualTotal}`,
-        `drift=${roundingDrift} EUR`
-      );
+      log.warn('[SeasonBilling] Rounding drift detected', {
+        seasonId,
+        grandTotal: preview.grandTotal,
+        createdTotal: actualTotal,
+        driftEUR: roundingDrift,
+      });
     }
 
     return {
@@ -697,7 +694,7 @@ export class SeasonBillingService {
         // PGRST202 = PostgREST could not find the function → fallback
         const code = (error as { code?: string }).code;
         if (code === '42883' || code === 'PGRST202') {
-          console.warn(
+          log.warn(
             '[SeasonBilling] Atomic RPC not available, falling back to legacy loop:',
             error.message
           );
@@ -705,10 +702,7 @@ export class SeasonBillingService {
         }
         // Any other RPC error is a real failure — bubble up so the caller
         // sees it via the catch in tryAtomicRpc (returns null → fallback).
-        console.error(
-          '[SeasonBilling] Atomic RPC error, falling back to legacy loop:',
-          error.message
-        );
+        log.error('[SeasonBilling] Atomic RPC error, falling back to legacy loop:', error.message);
         return null;
       }
 
@@ -723,7 +717,7 @@ export class SeasonBillingService {
         failed: Array<{ member_id: string; error: string }>;
       };
     } catch (err) {
-      console.error('[SeasonBilling] Atomic RPC exception, falling back to legacy loop:', err);
+      log.error('[SeasonBilling] Atomic RPC exception, falling back to legacy loop:', err);
       return null;
     }
   }
@@ -764,7 +758,7 @@ export class SeasonBillingService {
         created.push(invoice);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
-        console.error(`[SeasonBilling] Failed to create invoice for ${member.memberId}:`, err);
+        log.error(`[SeasonBilling] Failed to create invoice for ${member.memberId}:`, err);
         failed.push({ memberId: member.memberId, error: errorMessage });
       }
     }
@@ -772,12 +766,12 @@ export class SeasonBillingService {
     const actualTotal = created.reduce((sum, inv) => sum + inv.totalAmount, 0);
     const roundingDrift = this.roundCurrency(preview.grandTotal - actualTotal);
     if (Math.abs(roundingDrift) >= 0.01) {
-      console.warn(
-        `[SeasonBilling] Rounding drift detected for season ${seasonId}:`,
-        `preview.grandTotal=${preview.grandTotal}`,
-        `createdTotal=${actualTotal}`,
-        `drift=${roundingDrift} EUR`
-      );
+      log.warn('[SeasonBilling] Rounding drift detected', {
+        seasonId,
+        grandTotal: preview.grandTotal,
+        createdTotal: actualTotal,
+        driftEUR: roundingDrift,
+      });
     }
 
     return {

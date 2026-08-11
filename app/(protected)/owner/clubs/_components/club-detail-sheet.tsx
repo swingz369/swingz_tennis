@@ -52,6 +52,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
+import { recommendSoloPlan, PLAN_LABELS } from '@/lib/plans';
 
 const BUNDESLAENDER = [
   'Baden-Württemberg',
@@ -220,7 +221,13 @@ export function ClubDetailSheet({
     try {
       const res = await apiFetch(`/api/clubs/${clubId}`, {
         method: 'PATCH',
-        body: JSON.stringify(form),
+        // API-Schema erwartet camelCase (maxMembers/defaultHourlyRate) — Form-State
+        // ist snake_case, hier explizit gemappt statt Feldnamen zu duplizieren.
+        body: JSON.stringify({
+          ...form,
+          maxMembers: form.max_members,
+          defaultHourlyRate: form.default_hourly_rate,
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -338,15 +345,12 @@ export function ClubDetailSheet({
                   <div className="flex items-center gap-3 pt-3 border-t border-border dark:border-white/10">
                     <Users className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div className="flex-1">
-                      <p className="text-xs text-muted-foreground">Mitglieder / Maximum</p>
+                      <p className="text-xs text-muted-foreground">Mitglieder</p>
                       <p className="text-sm font-medium">
-                        {detail.memberCount ?? 0} / {form.max_members}
+                        {detail.memberCount ?? 0}
                         <span className="ml-2 text-xs text-muted-foreground">
-                          (
-                          {Math.round(
-                            ((detail.memberCount ?? 0) / Math.max(1, form.max_members)) * 100
-                          )}
-                          % Auslastung)
+                          (kein Limit — Tarif:{' '}
+                          {PLAN_LABELS[recommendSoloPlan(detail.memberCount ?? 0)]})
                         </span>
                       </p>
                     </div>

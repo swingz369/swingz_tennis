@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { withApiAuth } from '@/lib/api-auth';
+import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
 
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const { supabase, user } = auth;
+
+    if (auth.clubId) {
+      const features = await getClubFeatures(supabase, auth.clubId);
+      if (!features.gamification) return featureDisabledResponse('gamification');
+    }
 
     // Get user points
     const { data: pointsData } = await (supabase as any)

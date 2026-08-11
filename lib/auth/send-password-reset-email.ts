@@ -9,6 +9,10 @@
 import { Resend } from 'resend';
 import { env } from '@/lib/env';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('auth:send-password-reset-email');
+
 // ─── Resend singleton ────────────────────────────────────────────────────────
 
 let resendInstance: Resend | null = null;
@@ -118,7 +122,7 @@ export async function sendPasswordResetEmail(
   const resend = getResend();
   if (!resend) {
     if (process.env.NODE_ENV !== 'test') {
-      console.warn('[sendPasswordResetEmail] RESEND_API_KEY not configured — email skipped');
+      log.warn('[sendPasswordResetEmail] RESEND_API_KEY not configured — email skipped');
     }
     return false;
   }
@@ -135,13 +139,13 @@ export async function sendPasswordResetEmail(
     });
 
     if (error) {
-      console.error('[sendPasswordResetEmail] Resend error:', error.message);
+      log.error('[sendPasswordResetEmail] Resend error:', error.message);
       return false;
     }
 
     return true;
   } catch (err) {
-    console.error('[sendPasswordResetEmail] Unexpected error:', err);
+    log.error('[sendPasswordResetEmail] Unexpected error:', err);
     return false;
   }
 }

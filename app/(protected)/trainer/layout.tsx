@@ -1,6 +1,10 @@
 import { redirect } from 'next/navigation';
 import { requireAuth } from '@/lib/auth';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('trainer:layout');
+
 /**
  * Trainer Layout — Authentication & Authorization Guard
  *
@@ -21,7 +25,7 @@ export default async function TrainerLayout({ children }: { children: React.Reac
     .eq('is_active', true);
 
   if (error || !memberships || memberships.length === 0) {
-    console.error('[Trainer Layout] Failed to load memberships:', error);
+    log.error('[Trainer Layout] Failed to load memberships:', error);
     redirect('/login?error=no_memberships');
   }
 

@@ -19,6 +19,10 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:feedback-moderation-panel');
+
 interface Feedback {
   id: string;
   rating: number;
@@ -55,7 +59,7 @@ export function FeedbackModerationPanel({ clubId: _clubId }: FeedbackModerationP
       const data = await response.json();
       setFeedback(data.feedback || []);
     } catch (_error) {
-      console.error('Error fetching feedback:', _error);
+      log.error('Error fetching feedback:', _error);
       toast.error('Failed to load feedback');
     } finally {
       setIsLoading(false);

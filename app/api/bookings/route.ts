@@ -13,6 +13,11 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { DrizzlePricingRuleRepository } from '@/infrastructure/persistence/repositories/pricing-rule.repository';
 import { ClubId, CourtId } from '@/domain/value-objects';
 import { createLogger } from '@/lib/logger';
+import {
+  CreateBookingSchema,
+  validateRequestBody,
+  formatValidationErrors,
+} from '@/lib/validation-schemas';
 
 const log = createLogger('api:bookings');
 const pricingRepo = new DrizzlePricingRuleRepository();
@@ -29,10 +34,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
-    const { sessionId, memberId, clubId } = body;
-    if (!sessionId || !clubId) {
-      return NextResponse.json({ error: 'sessionId and clubId required' }, { status: 400 });
+    const validation = validateRequestBody(CreateBookingSchema, body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Ungültige Eingabe', details: formatValidationErrors(validation.errors) },
+        { status: 400 }
+      );
     }
+    const { sessionId, memberId, clubId } = validation.data;
 
     const userId = memberId || auth.user.id;
     const supabase = auth.supabase;

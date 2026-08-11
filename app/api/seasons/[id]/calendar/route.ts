@@ -13,7 +13,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   if (rateLimit) return rateLimit;
 
   return withApiAuth(request, async (auth) => {
-    if (!verifyRole(auth, 'admin')) {
+    // verifyRole() is async — missing await here meant the check always
+    // received a (truthy) Promise, so `!verifyRole(...)` was always false and
+    // the guard never fired for any authenticated user, regardless of role.
+    if (!(await verifyRole(auth, 'admin'))) {
       return forbiddenResponse('Nur Admins dürfen den Saisonkalender einsehen');
     }
 

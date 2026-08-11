@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { NoTrainersBrandedEmptyState } from '@/components/ui/empty-state';
+import { QuickEmailDialog } from '@/components/admin/quick-email-dialog';
 import {
   Table,
   TableBody,
@@ -45,6 +46,10 @@ import TrainerImportDialog from '@/components/admin/trainer-import-dialog';
 import { PageHeader } from '@/components/ui/page-header';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import { buildPaginationMeta, ALL_LIMIT } from '@/lib/pagination';
+
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('trainer-profile-management');
 
 export interface TrainerAvailabilitySlot {
   id: string;
@@ -118,6 +123,7 @@ export interface TrainerProfile {
 
 export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: string }) {
   const [trainers, setTrainers] = useState<TrainerProfile[]>([]);
+  const [emailDialogTrainer, setEmailDialogTrainer] = useState<TrainerProfile | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
@@ -142,7 +148,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
       const data = await response.json();
       setTrainers(data.profiles || []);
     } catch (error) {
-      console.error('Failed to load trainers:', error);
+      log.error('Failed to load trainers:', error);
       toast.error('Fehler beim Laden der Trainer');
     } finally {
       setIsLoading(false);
@@ -493,7 +499,14 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
-                      {trainer.email}
+                      <button
+                        type="button"
+                        onClick={() => setEmailDialogTrainer(trainer)}
+                        className="hover:underline hover:text-foreground"
+                        title="E-Mail senden"
+                      >
+                        {trainer.email}
+                      </button>
                     </TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(trainer.status)} size="sm">
@@ -784,6 +797,16 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
           </Button>
         </div>
       </CenteredModal>
+
+      {emailDialogTrainer && emailDialogTrainer.userId && (
+        <QuickEmailDialog
+          userId={emailDialogTrainer.userId}
+          recipientName={`${emailDialogTrainer.firstName} ${emailDialogTrainer.lastName}`}
+          recipientEmail={emailDialogTrainer.email}
+          open={!!emailDialogTrainer}
+          onOpenChange={(open) => !open && setEmailDialogTrainer(null)}
+        />
+      )}
     </div>
   );
 }

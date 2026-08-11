@@ -18,6 +18,10 @@ import { Plus, Trash2, Search } from 'lucide-react';
 import { addDays } from 'date-fns';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('billing:create-invoice-dialog');
+
 interface InvoiceItem {
   description: string;
   quantity: number;
@@ -146,7 +150,7 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
         toast.error(`Fehler: ${error.error || 'Unbekannter Fehler'}`);
       }
     } catch (err) {
-      console.error('Failed to create invoice:', err);
+      log.error('Failed to create invoice:', err);
       toast.error('Fehler bei der Rechnungserstellung');
     } finally {
       setLoading(false);

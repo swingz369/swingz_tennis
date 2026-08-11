@@ -63,27 +63,52 @@ export async function requireAdminClub(): Promise<AdminContext> {
   const roles = (memberships ?? []).map((m: { role: string }) => m.role);
   const role = getHighestRole(roles);
   const isSuperadmin = role === 'superadmin';
+  const isOwner = role === 'owner';
+  // Owner outranks superadmin (ROLE_HIERARCHY) and gets the same "view any
+  // club as its admin" access — both are platform staff, admitted below.
+  const isPlatformStaff = isSuperadmin || isOwner;
 
-  // Must be admin or superadmin
-  if (!isSuperadmin && role !== 'admin') {
+  // Must be admin or platform staff (owner/superadmin)
+  if (!isPlatformStaff && role !== 'admin') {
     redirect('/dashboard');
   }
 
   // Resolve club context via shared helper. Same algorithm as
   // `app/(protected)/layout.tsx`, `app/(protected)/admin/layout.tsx`,
   // and `app/(protected)/admin/(gated)/layout.tsx` — single source of truth.
+  //
+  // Only owner uses the 'club-exists' strategy (same as lib/api-auth.ts
+  // buildAuthContext): owner never has a club-scoped membership row at all,
+  // so the default 'membership-match' strategy could never resolve a clubId
+  // for them. Superadmin uses the default 'membership-match' — they DO hold
+  // a real user_club_memberships row (role='superadmin') per club their
+  // Tennisschule manages, so this correctly scopes them to only those clubs
+  // instead of every club in the platform.
   const cookieStore = await cookies();
   const { clubId: helperClubId, resolvedRole } = await resolveActiveClub({
     cookieValue: cookieStore.get(ADMIN_CLUB_COOKIE)?.value ?? null,
     memberships: memberships ?? [],
     highestRole: role,
+    ...(isOwner
+      ? {
+          strategy: {
+            type: 'club-exists' as const,
+            clubExists: async (id) =>
+              Boolean((await supabase.from('clubs').select('id').eq('id', id).maybeSingle()).data),
+          },
+        }
+      : {}),
   });
 
   // Caller-side error policy: superadmin without a valid cookie gets sent to
-  // the picker; admin without any club fallback must be sent back to the
-  // dispatcher (/dashboard) which will route them to /member/trainer.
+  // the picker; owner gets sent to their own club list (/owner/clubs is the
+  // owner's selection surface, not the superadmin-only picker); admin
+  // without any club fallback must be sent back to the dispatcher
+  // (/dashboard) which will route them to /member/trainer.
   if (helperClubId === null) {
-    redirect(isSuperadmin ? '/select-admin-club' : '/dashboard');
+    redirect(
+      isSuperadmin ? '/select-admin-club' : role === 'owner' ? '/owner/clubs' : '/dashboard'
+    );
   }
 
   return {

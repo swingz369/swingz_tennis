@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
 import type { Database } from '@/types/supabase';
@@ -49,9 +49,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'clubId required' }, { status: 400 });
     }
 
-    const isOwner = auth.role === 'owner' || auth.role === 'superadmin';
-    const hasAccess = isOwner || auth.clubId === clubId;
-    if (!hasAccess) return forbiddenResponse('No access to this club');
+    if (!verifyClubAccess(auth, clubId)) return forbiddenResponse('No access to this club');
 
     try {
       const { data, error } = await auth.supabase
@@ -127,8 +125,7 @@ export async function PUT(request: NextRequest) {
       updates.updated_at = new Date().toISOString();
 
       // Tenant guard: only owner-of-club may update
-      const isOwner = auth.role === 'owner' || auth.role === 'superadmin';
-      if (!isOwner && auth.clubId !== clubId) {
+      if (!verifyClubAccess(auth, clubId)) {
         return forbiddenResponse('No access to this club');
       }
       // Cast + runtime allowlist: TS2345 fires because the inferred shape of

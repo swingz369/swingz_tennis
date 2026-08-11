@@ -143,14 +143,14 @@ export default function EmailCampaignsClient({ clubId }: { clubId: string }) {
           clubId,
         }),
       });
+      const d = await res.json();
       if (res.ok) {
-        toast.success('Kampagne wird versendet');
+        toast.success(d.message ?? 'Kampagne gesendet');
         setSubject('');
         setBody('');
         setSelectedIds(new Set());
         fetchCampaigns();
       } else {
-        const d = await res.json();
         toast.error(d.error ?? 'Fehler beim Versenden');
       }
     } finally {

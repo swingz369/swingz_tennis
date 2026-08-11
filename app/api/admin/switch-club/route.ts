@@ -10,7 +10,8 @@ const log = createLogger('api:admin:switch-club');
 /**
  * POST /api/admin/switch-club
  *
- * Allows superadmin users to switch their active club context
+ * Allows superadmin users to switch their active club context (dropdown/picker
+ * flow). Owner selects clubs via /owner/clubs → GET /switch-club-redirect instead.
  * Pattern from INTEGRATION_ROADMAP.md Phase 1.3
  *
  * Request body: { clubId: string }
@@ -30,10 +31,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'clubId is required' }, { status: 400 });
     }
 
-    // 3. Verify user is superadmin
+    // 3. Verify user is superadmin AND this club is one they actually manage
+    // (a real user_club_memberships row with role='superadmin' per assigned
+    // club — same shape as an admin's single club membership).
     const { data: memberships } = await supabase
       .from('user_club_memberships')
-      .select('role')
+      .select('role, club_id')
       .eq('user_id', user.id)
       .eq('is_active', true);
 
@@ -42,15 +45,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Only superadmins can switch clubs' }, { status: 403 });
     }
 
-    // 4. Verify club exists (superadmin can manage any club)
-    const { data: club, error: clubError } = await supabase
-      .from('clubs')
-      .select('id, name')
-      .eq('id', clubId)
-      .single();
-
-    if (clubError || !club) {
-      return NextResponse.json({ error: 'Club not found' }, { status: 404 });
+    const managesClub = (memberships ?? []).some(
+      (m: any) => m.role === 'superadmin' && m.club_id === clubId
+    );
+    if (!managesClub) {
+      return NextResponse.json({ error: 'Kein Zugriff auf diesen Verein' }, { status: 403 });
     }
 
     // 4. Set cookie with club selection

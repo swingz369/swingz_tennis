@@ -98,6 +98,20 @@ test.describe('Billing API Access Control', () => {
       process.env.TEST_SUPERADMIN_PASSWORD!
     );
 
+    // Superadmins verwalten mehrere Vereine — ohne aktiven Club landet /admin/*
+    // auf "Verein auswählen" (lib/admin-context.ts requireAdminClub). Club direkt
+    // per Cookie setzen statt den Club-Switcher in der UI durchzuklicken.
+    const clubsRes = await page.request.get('/api/clubs');
+    const { clubs } = await clubsRes.json();
+    test.skip(!clubs?.length, 'Keine Clubs vorhanden, um einen aktiven Verein zu wählen');
+    await page.context().addCookies([
+      {
+        name: 'admin_club_id',
+        value: clubs[0].id,
+        url: process.env.BASE_URL ?? 'http://localhost:3000',
+      },
+    ]);
+
     // Navigate to admin billing (superadmin should see billing)
     await page.goto('/admin/billing', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('h1')).toContainText(/abrechnung/i, { timeout: 8000 });

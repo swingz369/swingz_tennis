@@ -1,6 +1,10 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import type { WaitlistEntry, CreateWaitlistEntry, WaitlistStatus } from '../types/court-booking';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('booking:waitlist.service');
+
 const supabase = createServiceClient();
 
 export class WaitlistService {
@@ -170,7 +174,7 @@ export class WaitlistService {
               action_url: '/my-bookings',
             });
           } catch (notifError) {
-            console.error('[Waitlist] Failed to send notification:', notifError);
+            log.error('[Waitlist] Failed to send notification:', notifError);
           }
 
           processed.push(updated);

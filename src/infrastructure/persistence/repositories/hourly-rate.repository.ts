@@ -16,6 +16,10 @@ import type {
   IRateHistoryRepository,
 } from '../../../domain/repositories/hourly-rate-repository.interface';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('infrastructure:persistence:repositories:hourly-rate.reposito');
+
 /**
  * Hourly Rate Tier Repository
  */
@@ -41,7 +45,7 @@ export class HourlyRateTierRepository implements IHourlyRateTierRepository {
       if (!tier) throw new Error('Failed to create hourly rate tier');
       return this.mapToEntity(tier);
     } catch (error) {
-      console.error('Error creating hourly rate tier:', error);
+      log.error('Error creating hourly rate tier:', error);
       throw new Error(
         `Failed to create hourly rate tier: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -57,7 +61,7 @@ export class HourlyRateTierRepository implements IHourlyRateTierRepository {
         .limit(1);
       return tier ? this.mapToEntity(tier) : null;
     } catch (error) {
-      console.error('Error finding hourly rate tier:', error);
+      log.error('Error finding hourly rate tier:', error);
       throw new Error(
         `Failed to find hourly rate tier: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -72,7 +76,7 @@ export class HourlyRateTierRepository implements IHourlyRateTierRepository {
         .orderBy(desc(hourlyRateTiers.createdAt));
       return tiers.map((t) => this.mapToEntity(t));
     } catch (error) {
-      console.error('Error finding all hourly rate tiers:', error);
+      log.error('Error finding all hourly rate tiers:', error);
       throw new Error(
         `Failed to find hourly rate tiers: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -88,7 +92,7 @@ export class HourlyRateTierRepository implements IHourlyRateTierRepository {
         .orderBy(desc(hourlyRateTiers.createdAt));
       return tiers.map((t) => this.mapToEntity(t));
     } catch (error) {
-      console.error('Error finding active hourly rate tiers:', error);
+      log.error('Error finding active hourly rate tiers:', error);
       throw new Error(
         `Failed to find active tiers: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -104,7 +108,7 @@ export class HourlyRateTierRepository implements IHourlyRateTierRepository {
         .orderBy(desc(hourlyRateTiers.createdAt));
       return tiers.map((t) => this.mapToEntity(t));
     } catch (error) {
-      console.error('Error finding hourly rate tiers by club:', error);
+      log.error('Error finding hourly rate tiers by club:', error);
       throw new Error(
         `Failed to find tiers by club: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -128,7 +132,7 @@ export class HourlyRateTierRepository implements IHourlyRateTierRepository {
         .returning();
       return updated ? this.mapToEntity(updated) : null;
     } catch (error) {
-      console.error('Error updating hourly rate tier:', error);
+      log.error('Error updating hourly rate tier:', error);
       throw new Error(
         `Failed to update tier: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -140,7 +144,7 @@ export class HourlyRateTierRepository implements IHourlyRateTierRepository {
       const result = await db.delete(hourlyRateTiers).where(eq(hourlyRateTiers.id, id)).returning();
       return result.length > 0;
     } catch (error) {
-      console.error('Error deleting hourly rate tier:', error);
+      log.error('Error deleting hourly rate tier:', error);
       throw new Error(
         `Failed to delete tier: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -193,7 +197,7 @@ export class TrainerHourlyRateRepository implements ITrainerHourlyRateRepository
       if (!rate) throw new Error('Failed to create trainer hourly rate');
       return this.mapToEntity(rate);
     } catch (error) {
-      console.error('Error creating trainer hourly rate:', error);
+      log.error('Error creating trainer hourly rate:', error);
       throw new Error(
         `Failed to create trainer rate: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -209,7 +213,7 @@ export class TrainerHourlyRateRepository implements ITrainerHourlyRateRepository
         .limit(1);
       return rate ? this.mapToEntity(rate) : null;
     } catch (error) {
-      console.error('Error finding trainer hourly rate:', error);
+      log.error('Error finding trainer hourly rate:', error);
       throw new Error(
         `Failed to find trainer rate: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -242,7 +246,7 @@ export class TrainerHourlyRateRepository implements ITrainerHourlyRateRepository
 
       return this.mapToEntity(rate);
     } catch (error) {
-      console.error('Error finding trainer rate by trainer ID:', error);
+      log.error('Error finding trainer rate by trainer ID:', error);
       throw new Error(
         `Failed to find trainer rate: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -257,7 +261,7 @@ export class TrainerHourlyRateRepository implements ITrainerHourlyRateRepository
         .orderBy(desc(trainerHourlyRates.createdAt));
       return rates.map((r) => this.mapToEntity(r));
     } catch (error) {
-      console.error('Error finding all trainer hourly rates:', error);
+      log.error('Error finding all trainer hourly rates:', error);
       throw new Error(
         `Failed to find trainer rates: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -273,7 +277,7 @@ export class TrainerHourlyRateRepository implements ITrainerHourlyRateRepository
         .orderBy(desc(trainerHourlyRates.createdAt));
       return rates.map((r) => this.mapToEntity(r));
     } catch (error) {
-      console.error('Error finding trainer rates by club:', error);
+      log.error('Error finding trainer rates by club:', error);
       throw new Error(
         `Failed to find trainer rates: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -317,7 +321,7 @@ export class TrainerHourlyRateRepository implements ITrainerHourlyRateRepository
 
       return this.mapToEntity(updated);
     } catch (error) {
-      console.error('Error updating trainer hourly rate:', error);
+      log.error('Error updating trainer hourly rate:', error);
       throw new Error(
         `Failed to update trainer rate: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -332,7 +336,7 @@ export class TrainerHourlyRateRepository implements ITrainerHourlyRateRepository
         .returning();
       return result.length > 0;
     } catch (error) {
-      console.error('Error deleting trainer hourly rate:', error);
+      log.error('Error deleting trainer hourly rate:', error);
       throw new Error(
         `Failed to delete trainer rate: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -385,7 +389,7 @@ export class RateHistoryRepository implements IRateHistoryRepository {
       if (!historyEntry) throw new Error('Failed to add rate history entry');
       return this.mapToEntity(historyEntry);
     } catch (error) {
-      console.error('Error adding rate history entry:', error);
+      log.error('Error adding rate history entry:', error);
       throw new Error(
         `Failed to add history entry: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -401,7 +405,7 @@ export class RateHistoryRepository implements IRateHistoryRepository {
         .orderBy(desc(rateHistory.changedAt));
       return entries.map((e) => this.mapToEntity(e));
     } catch (error) {
-      console.error('Error finding rate history by trainer:', error);
+      log.error('Error finding rate history by trainer:', error);
       throw new Error(
         `Failed to find rate history: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -413,7 +417,7 @@ export class RateHistoryRepository implements IRateHistoryRepository {
       const entries = await db.select().from(rateHistory).orderBy(desc(rateHistory.changedAt));
       return entries.map((e) => this.mapToEntity(e));
     } catch (error) {
-      console.error('Error finding all rate history:', error);
+      log.error('Error finding all rate history:', error);
       throw new Error(
         `Failed to find rate history: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -429,7 +433,7 @@ export class RateHistoryRepository implements IRateHistoryRepository {
         .orderBy(desc(rateHistory.changedAt));
       return entries.map((e) => this.mapToEntity(e));
     } catch (error) {
-      console.error('Error finding rate history by club:', error);
+      log.error('Error finding rate history by club:', error);
       throw new Error(
         `Failed to find rate history: ${error instanceof Error ? error.message : 'Unknown error'}`
       );

@@ -30,6 +30,10 @@ import {
 import { DrizzleAuditLogRepository } from '@/infrastructure/persistence/repositories/audit-log.repository';
 import { Id } from '@/domain/value-objects/ids';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('application:services:audit-log-service.adapter');
+
 class AuditLogServiceAdapter {
   private repo = new DrizzleAuditLogRepository();
 
@@ -76,7 +80,7 @@ class AuditLogServiceAdapter {
       await this.repo.save(domainLog);
     } catch {
       // Graceful fallback: persist in-memory on DB failure
-      console.error('[AuditLog] DB persist failed, using in-memory fallback');
+      log.error('[AuditLog] DB persist failed, using in-memory fallback');
     }
 
     // Return application-layer AuditLog
@@ -102,7 +106,7 @@ class AuditLogServiceAdapter {
         domainLogs = await this.repo.findAll(500, 0);
       }
     } catch {
-      console.error('[AuditLog] DB query failed, returning empty');
+      log.error('[AuditLog] DB query failed, returning empty');
       return [];
     }
 

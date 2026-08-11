@@ -14,8 +14,7 @@
 #   bash scripts/gen-supabase-types.sh   # Direct invocation
 #
 # Output:
-#   - supabase-types.ts   (generated + cleaned)
-#   - types/supabase.ts   (identical copy)
+#   - types/supabase.ts   (generated + cleaned) — single source of truth
 #   - .supabase-types-backup/  (auto-backup, see backup-supabase-types.sh)
 #
 
@@ -45,11 +44,7 @@ cd "$PROJECT_DIR"
 
 # Generate types from the database
 echo "   Running supabase gen types ..."
-supabase gen types typescript --db-url "$DATABASE_URL" > supabase-types.ts
-
-# Copy to the mirrored location
-cp supabase-types.ts types/supabase.ts
-echo "   ✓ Copied to types/supabase.ts"
+supabase gen types typescript --db-url "$DATABASE_URL" > types/supabase.ts
 
 # Clean up CLI output and auto-backup
 echo ""
@@ -57,5 +52,4 @@ bash "$SCRIPT_DIR/clean-supabase-types.sh"
 
 echo ""
 echo "✅ Type generation complete."
-echo "   supabase-types.ts: $(wc -l < supabase-types.ts) lines"
 echo "   types/supabase.ts:  $(wc -l < types/supabase.ts) lines"

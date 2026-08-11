@@ -10,6 +10,9 @@ export interface CsvMemberRecord {
   postalCode?: string;
   city?: string;
   notes?: string;
+  joinedAt?: string;
+  emergencyContact?: string;
+  emergencyPhone?: string;
 }
 
 function sanitizeCsvField(value: string): string {
@@ -23,6 +26,14 @@ function sanitizeCsvField(value: string): string {
     .replace(/\r?\n/g, ' ');
 }
 
+/** German-locale Excel saves "CSV" as semicolon-delimited (comma is the decimal separator). */
+function detectDelimiter(csvContent: string): string {
+  const firstLine = csvContent.split(/\r?\n/, 1)[0] || '';
+  const semicolons = (firstLine.match(/;/g) || []).length;
+  const commas = (firstLine.match(/,/g) || []).length;
+  return semicolons > commas ? ';' : ',';
+}
+
 export function parseMemberCsv(
   csvContent: string,
   defaultRole?: 'member' | 'trainer'
@@ -31,6 +42,10 @@ export function parseMemberCsv(
     columns: true,
     skip_empty_lines: true,
     trim: true,
+    bom: true,
+    delimiter: detectDelimiter(csvContent),
+    // Excel often omits trailing empty cells — don't fail rows with fewer/more columns.
+    relax_column_count: true,
   });
 
   return (records as Record<string, string>[]).map((record) => ({
@@ -52,6 +67,24 @@ export function parseMemberCsv(
       sanitizeCsvField(record['PLZ'] || record['postal_code'] || record['zip'] || '') || undefined,
     city: sanitizeCsvField(record['Ort'] || record['Stadt'] || record['city'] || '') || undefined,
     notes: sanitizeCsvField(record['Notizen'] || record['notes'] || '') || undefined,
+    joinedAt:
+      sanitizeCsvField(
+        record['Beitrittsdatum'] || record['joined_at'] || record['member_since'] || ''
+      ) || undefined,
+    emergencyContact:
+      sanitizeCsvField(
+        record['Notfallkontakt'] ||
+          record['emergency_contact'] ||
+          record['Notfallkontakt Name'] ||
+          ''
+      ) || undefined,
+    emergencyPhone:
+      sanitizeCsvField(
+        record['Notfalltelefon'] ||
+          record['emergency_phone'] ||
+          record['Notfallkontakt Telefon'] ||
+          ''
+      ) || undefined,
   }));
 }
 
@@ -102,9 +135,12 @@ export function generateMemberCsvTemplate(): string {
     'Rolle',
     'Telefon',
     'Geburtsdatum',
+    'Beitrittsdatum',
     'Straße',
     'PLZ',
     'Ort',
+    'Notfallkontakt',
+    'Notfalltelefon',
     'Notizen',
   ];
 
@@ -115,9 +151,12 @@ export function generateMemberCsvTemplate(): string {
       'member',
       '0170 1234567',
       '15.03.1990',
+      '01.01.2015',
       'Tennisweg 1',
       '50667',
       'Köln',
+      '',
+      '',
       'Erwachsen',
     ],
     [
@@ -126,9 +165,12 @@ export function generateMemberCsvTemplate(): string {
       'trainer',
       '',
       '22.08.1985',
+      '',
       'Sportallee 5',
       '40210',
       'Düsseldorf',
+      '',
+      '',
       'Tennistrainerin B-Lizenz',
     ],
     [
@@ -137,13 +179,18 @@ export function generateMemberCsvTemplate(): string {
       'member',
       '0151 9876543',
       '10.11.2010',
+      '01.09.2023',
       'Am Platz 3',
       '53111',
       'Bonn',
-      'U14, Eltern: 0170...',
+      'Erika Spieler',
+      '0170 1112233',
+      'U14',
     ],
   ];
 
+  // Beitrittsdatum, Notfallkontakt, Notfalltelefon und Notizen dürfen leer bleiben —
+  // nur E-Mail und Name sind Pflichtfelder (siehe validateMemberRecords).
   return [headers.join(','), ...exampleRows.map((r) => r.join(','))].join('\n');
 }
 

@@ -3,7 +3,6 @@ import { DM_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'sonner';
-import { cookies } from 'next/headers';
 import { ServiceWorkerRegistration } from '@/components/sw-registration';
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt';
 import { SkipToContent } from '@/lib/accessibility';
@@ -48,12 +47,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies();
-  const locale = cookieStore.get('NEXT_LOCALE')?.value || 'de';
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
-      lang={locale}
+      lang="de"
       className={`${dmSans.variable} ${jetbrainsMono.variable}`}
       data-scroll-behavior="smooth"
       suppressHydrationWarning
@@ -70,7 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
                   if (isDark) document.documentElement.classList.add('dark');
                   else document.documentElement.classList.remove('dark');
-                } catch (e) {}
+                } catch (e) { /* localStorage blocked (private mode) — keep default theme */ }
               })();
             `,
           }}

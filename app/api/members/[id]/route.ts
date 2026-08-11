@@ -101,7 +101,12 @@ export async function PATCH(
         is_active,
         role,
         include_in_planning,
+        joinedAt,
       } = body;
+
+      if (joinedAt !== undefined && joinedAt !== null && !/^\d{4}-\d{2}-\d{2}$/.test(joinedAt)) {
+        return NextResponse.json({ error: 'Ungültiges Beitrittsdatum' }, { status: 400 });
+      }
 
       // Update in-memory service (backward compatibility)
       const updated = await memberService.updateMember(id, {
@@ -132,9 +137,35 @@ export async function PATCH(
         .eq('id', id)
         .single();
 
+      // E-Mail-Änderung betrifft den Auth-Login — nur Admins dürfen das.
+      if (email !== undefined) {
+        const isAdmin = await verifyRole(auth, 'admin');
+        if (!isAdmin) {
+          return forbiddenResponse('Admin-Zugriff erforderlich für E-Mail-Änderung');
+        }
+        if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          return NextResponse.json({ error: 'Ungültige E-Mail-Adresse' }, { status: 400 });
+        }
+      }
+
       if (membership?.user_id) {
+        if (email !== undefined) {
+          const { error: authEmailError } = await serviceClient.auth.admin.updateUserById(
+            membership.user_id,
+            { email }
+          );
+          if (authEmailError) {
+            log.error('Failed to update auth email:', authEmailError);
+            return NextResponse.json(
+              { error: authEmailError.message || 'E-Mail-Änderung fehlgeschlagen' },
+              { status: 409 }
+            );
+          }
+        }
+
         // Build update payload with only non-undefined fields
         const userUpdate: Record<string, unknown> = {};
+        if (email !== undefined) userUpdate.email = email;
         if (phone !== undefined) userUpdate.phone = phone;
         if (address !== undefined) userUpdate.address = address;
         if (city !== undefined) userUpdate.city = city;
@@ -162,6 +193,7 @@ export async function PATCH(
       if (role !== undefined) membershipUpdate.role = role;
       if (include_in_planning !== undefined)
         membershipUpdate.include_in_planning = include_in_planning;
+      if (joinedAt !== undefined) membershipUpdate.joined_at = joinedAt;
 
       if (Object.keys(membershipUpdate).length > 0) {
         await auth.supabase.from('user_club_memberships').update(membershipUpdate).eq('id', id);

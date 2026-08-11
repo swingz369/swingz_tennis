@@ -7,6 +7,10 @@ import type {
   ReminderData,
 } from '@/domain/services';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('infrastructure:email:email.service');
+
 export interface EmailConfig {
   from: string;
   replyTo?: string | undefined;
@@ -23,7 +27,7 @@ function getResend(): Resend | null {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       if (process.env.NODE_ENV !== 'test') {
-        console.warn('RESEND_API_KEY not set, email sending disabled');
+        log.warn('RESEND_API_KEY not set, email sending disabled');
       }
       return null;
     }
@@ -440,7 +444,7 @@ export class EmailService implements IEmailService {
     const resend = getResend();
     if (!resend) {
       if (process.env.NODE_ENV !== 'test') {
-        console.warn('Email skipped: RESEND_API_KEY not configured', {
+        log.warn('Email skipped: RESEND_API_KEY not configured', {
           to,
           subject: template.subject,
         });
@@ -459,7 +463,7 @@ export class EmailService implements IEmailService {
       });
       // Email sent successfully
     } catch (error) {
-      console.error('Failed to send email:', error);
+      log.error('Failed to send email:', error);
     }
   }
 }

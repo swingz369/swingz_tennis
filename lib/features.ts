@@ -172,6 +172,53 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     sidebarSection: 'ai_analysis',
     order: 14,
   },
+  // Produktaudit 26.07.2026 (P4): Nebenfunktionen eingefroren — kein Support-/
+  // Testbudget, standardmäßig aus. Nicht gelöscht, nur per Flag verborgen.
+  {
+    key: 'gamification',
+    label: 'Gamification',
+    description: 'Punkte, Abzeichen und Ranglisten für Mitglieder.',
+    icon: 'Trophy',
+    category: 'optional',
+    sidebarSection: 'gamification',
+    order: 15,
+  },
+  {
+    key: 'wallet_passes',
+    label: 'Wallet-Pässe',
+    description: 'Apple/Google-Wallet-Mitgliedsausweise.',
+    icon: 'Wallet',
+    category: 'optional',
+    sidebarSection: 'wallet_passes',
+    order: 16,
+  },
+  {
+    key: 'family_accounts',
+    label: 'Familienkonten',
+    description: 'Eltern verwalten mehrere Kinderkonten unter einem Login.',
+    icon: 'Users',
+    category: 'optional',
+    sidebarSection: 'family_accounts',
+    order: 17,
+  },
+  {
+    key: 'zapier_integration',
+    label: 'Zapier-Integration',
+    description: 'Webhooks für externe Automatisierung via Zapier.',
+    icon: 'Zap',
+    category: 'optional',
+    sidebarSection: 'zapier_integration',
+    order: 18,
+  },
+  {
+    key: 'decisions',
+    label: 'Board-Beschlüsse',
+    description: 'Digitale Beschlussfassung und Abstimmungen für den Vorstand.',
+    icon: 'Gavel',
+    category: 'optional',
+    sidebarSection: 'decisions',
+    order: 19,
+  },
 ] as const;
 
 export type FeatureKey = (typeof CLUB_FEATURES)[number]['key'];

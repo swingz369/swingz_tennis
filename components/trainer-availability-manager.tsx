@@ -33,6 +33,10 @@ import { apiFetch } from '@/lib/api-fetch';
 import { format } from 'date-fns';
 import { de } from '@/lib/locale';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('trainer-availability-manager');
+
 interface AvailabilitySlot {
   id: string;
   weekday: number;
@@ -317,7 +321,7 @@ export default function TrainerAvailabilityManager() {
       if (totalSkipped > 0) parts.push(`${totalSkipped} bereits vorhanden`);
       if (errorDates.length > 0) {
         parts.push(`${errorDates.length} Fehler`);
-        console.warn('[Availability] Apply-to-month errors:', errorDates.slice(0, 5));
+        log.warn('[Availability] Apply-to-month errors:', errorDates.slice(0, 5));
       }
 
       if (parts.length === 0) {

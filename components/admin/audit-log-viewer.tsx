@@ -20,6 +20,10 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:audit-log-viewer');
+
 interface AuditLog {
   id: string;
   action: string;
@@ -67,7 +71,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
       setLogs(data.logs || []);
       setPagination(buildPaginationMeta(page, ITEMS_PER_PAGE, data.total ?? 0));
     } catch (_error) {
-      console.error('Error fetching audit logs:', _error);
+      log.error('Error fetching audit logs:', _error);
       toast.error('Failed to load audit logs');
     } finally {
       setIsLoading(false);

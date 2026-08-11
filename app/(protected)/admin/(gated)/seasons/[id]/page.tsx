@@ -433,6 +433,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [quickStarting, setQuickStarting] = useState(false);
@@ -511,7 +512,12 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   };
 
   const confirmPublish = async () => {
-    setPublishConfirmOpen(false);
+    // Don't close the dialog here — ConfirmDialog awaits this handler and
+    // closes itself once it resolves. Closing early hid the LoadingButton
+    // spinner, so for seasons with many members (sequential per-recipient
+    // email sending server-side) the popup just vanished with zero feedback
+    // while the request kept running for tens of seconds in the background.
+    setPublishing(true);
     try {
       const response = await apiFetch(`/api/seasons/${id}/planning/confirm`, {
         method: 'POST',
@@ -528,6 +534,8 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
       await fetchSeason();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Fehler');
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -634,8 +642,25 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
         }
         confirmLabel="Veröffentlichen"
         variant="primary"
+        loading={publishing}
         onConfirm={confirmPublish}
-      />
+      >
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <p>
+            Das Veröffentlichen kann bei großen Vereinen mehrere Minuten dauern (Trainingseinheiten,
+            E-Mails und Rechnungen werden erstellt). Bitte diese Seite währenddessen nicht
+            schließen.
+          </p>
+          {publishing && (
+            <div className="space-y-1">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full w-full animate-pulse rounded-full bg-brand-primary" />
+              </div>
+              <p className="text-xs">Wird veröffentlicht, bitte warten…</p>
+            </div>
+          )}
+        </div>
+      </ConfirmDialog>
 
       <ConfirmDialog
         open={deleteConfirmOpen}

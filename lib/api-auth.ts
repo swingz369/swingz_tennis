@@ -41,6 +41,7 @@ import type { Database } from '@/types/supabase';
 import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
 import { hasRole, getHighestRole } from '@/lib/auth-common';
 import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
+import { isSubscriptionPastDue } from '@/lib/subscription-gate';
 
 export interface AuthContext {
   user: User;
@@ -81,13 +82,16 @@ async function buildAuthContext(
   // fix is implemented AFTER the helper returns, via a per-club lookup.
   const effectiveRole = getHighestRole(memberships.map((m) => m.role));
 
-  // Resolve active club via shared helper. Owner/superadmin path uses the
-  // legacy 'club-exists' strategy (per pre-refactor behavior: any existing
-  // club in `clubs` is selectable, no per-superadmin-membership requirement).
-  // Admin path uses default 'membership-match' so cookie must point at an
-  // admin-managed club — preserves P0-3 boundary semantics.
+  // Resolve active club via shared helper. Owner path uses the 'club-exists'
+  // strategy — owner has no club-scoped membership row at all, sees every
+  // club platform-wide. Superadmin uses the default 'membership-match': a
+  // superadmin holds one real user_club_memberships row (role='superadmin')
+  // per club their Tennisschule actually manages, so cookie-must-match-a-
+  // membership correctly scopes them to only their own assigned clubs.
+  // Admin path also uses default 'membership-match' so cookie must point at
+  // an admin-managed club — preserves P0-3 boundary semantics.
   const cookieValue = request.cookies.get(ADMIN_CLUB_COOKIE)?.value ?? null;
-  const isPlatformStaff = effectiveRole === 'owner' || effectiveRole === 'superadmin';
+  const isOwner = effectiveRole === 'owner';
 
   const {
     clubId: helperClubId,
@@ -97,7 +101,7 @@ async function buildAuthContext(
     cookieValue,
     memberships,
     highestRole: effectiveRole,
-    ...(isPlatformStaff
+    ...(isOwner
       ? {
           strategy: {
             type: 'club-exists' as const,
@@ -123,9 +127,9 @@ async function buildAuthContext(
     }
   }
 
-  // selectedClubId only meaningful for platform-staff.
+  // selectedClubId only meaningful for platform-staff (owner or superadmin).
   const selectedClubId =
-    isPlatformStaff && isValid && helperClubId === cookieValue
+    (isOwner || effectiveRole === 'superadmin') && isValid && helperClubId === cookieValue
       ? (cookieValue ?? undefined)
       : undefined;
 
@@ -187,20 +191,27 @@ export async function verifyRole(
 
 /**
  * Verify user has access to a specific club.
- * Superadmin has access to ALL clubs (even without cookie).
+ * Owner has access to ALL clubs. Superadmin only to clubs their Tennisschule
+ * actually manages — one real user_club_memberships row (role='superadmin')
+ * per assigned club, same shape as an admin's single club membership.
  */
 export function verifyClubAccess(auth: AuthContext, requestedClubId: string): boolean {
-  if (auth.role === 'owner' || auth.role === 'superadmin') return true;
+  if (auth.role === 'owner') return true;
+  if (auth.role === 'superadmin') {
+    return auth.memberships.some((m) => m.club_id === requestedClubId && m.role === 'superadmin');
+  }
   return auth.clubId === requestedClubId;
 }
 
 /**
  * Verify a trainer is active in the admin's club. Used for resources like
  * hours_logs that reference trainer_id but carry no club_id of their own —
- * club membership is looked up via trainer_club. Superadmin/owner bypass.
+ * club membership is looked up via trainer_club. Owner bypasses; superadmin
+ * falls through to the auth.clubId check below, which buildAuthContext
+ * already scopes to one of the superadmin's own managed clubs.
  */
 export async function verifyTrainerInClub(auth: AuthContext, trainerId: string): Promise<boolean> {
-  if (auth.role === 'owner' || auth.role === 'superadmin') return true;
+  if (auth.role === 'owner') return true;
   if (!auth.clubId) return false;
   const { data } = await auth.supabase
     .from('trainer_club')
@@ -240,12 +251,47 @@ export function forbiddenResponse(message = 'Forbidden'): NextResponse {
   return NextResponse.json({ error: message }, { status: 403 });
 }
 
+const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+export interface WithAuthOptions {
+  /**
+   * Skip the subscription-past-due write gate for this route. Only set this
+   * on the routes a blocked admin/superadmin must still be able to reach to
+   * FIX their payment (e.g. POST /api/stripe/subscribe) — never as a general
+   * escape hatch.
+   */
+  allowWhilePastDue?: boolean;
+}
+
 export async function withAuth(
   request: NextRequest,
-  handler: (auth: AuthContext) => Promise<NextResponse>
+  handler: (auth: AuthContext) => Promise<NextResponse>,
+  options: WithAuthOptions = {}
 ): Promise<NextResponse> {
   try {
     const auth = await requireAuth(request);
+
+    // Dunning gate: an admin/superadmin whose OWN SaaS subscription is
+    // past_due/unpaid may keep reading (GET), but not writing, until they fix
+    // payment. Never applies to owner (platform staff, not a paying
+    // customer) or trainer/member (not individually billed — see
+    // lib/plans.ts). Centralized here so every one of the ~300 API routes
+    // gets it automatically instead of each route checking it itself.
+    if (
+      WRITE_METHODS.has(request.method) &&
+      !options.allowWhilePastDue &&
+      (auth.role === 'admin' || auth.role === 'superadmin') &&
+      (await isSubscriptionPastDue(auth.supabase, auth.user.id))
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'Zahlung ausstehend. Bitte aktualisiere deine Zahlungsmethode im Kundenportal, um fortzufahren.',
+        },
+        { status: 402 }
+      );
+    }
+
     const response = await handler(auth);
 
     // Auto-set ADMIN_CLUB_COOKIE for admins who don't have it yet.

@@ -34,6 +34,10 @@ import { ScrollReveal } from '@/components/animations';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { createClient } from '@/lib/supabase/client';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('member-profile');
+
 export default function MemberProfile() {
   const { data: memberData, isLoading } = useUserMember();
   const router = useRouter();
@@ -233,7 +237,7 @@ export default function MemberProfile() {
       toast.success('Profil erfolgreich aktualisiert');
     } catch (error) {
       toast.error('Fehler beim Speichern des Profils');
-      console.error('Profile save error:', error);
+      log.error('Profile save error:', error);
     } finally {
       setIsSaving(false);
     }

@@ -26,10 +26,15 @@ const MEMBER_ROUTES: RouteTest[] = [
   { path: '/scheduler', expectedContent: /stundenplan|scheduler/i },
   { path: '/courts', expectedContent: /platz|court/i },
   { path: '/courts/daily', expectedContent: /platz|täglich/i },
-  { path: '/training-schedule', expectedContent: /training/i },
+  // /training-schedule redirected auf /scheduler — Nav zeigt "Stundenplan", nicht "training"
+  { path: '/training-schedule', expectedContent: /stundenplan|platz/i },
   { path: '/member', expectedContent: /mitglied|member/i },
+  { path: '/member/preferences', expectedContent: /präferenz|einstellung|verfügbar/i },
+  { path: '/member/profile', expectedContent: /profil/i },
   { path: '/member/tournaments', expectedContent: /turnier|tournament/i },
   { path: '/member/trainer-booking', expectedContent: /trainer|buch/i },
+  { path: '/member/trial-training', expectedContent: /probetraining|trial/i },
+  { path: '/member/work-duties', expectedContent: /arbeitsdienst|dienst/i },
   { path: '/search', expectedContent: /suche|search/i },
   { path: '/notifications', expectedContent: /benachrichtigung|notification/i },
   { path: '/news', expectedContent: /news|nachricht/i },
@@ -37,6 +42,17 @@ const MEMBER_ROUTES: RouteTest[] = [
   { path: '/billing', expectedContent: /rechnung|billing|zahlung/i },
   { path: '/attendance-history', expectedContent: /anwesenheit|attendance/i },
   { path: '/trial-training', expectedContent: /probetraining|trial/i },
+  { path: '/decisions', expectedContent: /beschl|abstimm/i },
+  { path: '/documents', expectedContent: /dokument/i },
+  { path: '/gamification', expectedContent: /gamification|punkte|rangliste|erfolg/i },
+  { path: '/matches', expectedContent: /match|spiel/i },
+  // Feature-Flag ai_matchmaking kann pro Verein deaktiviert sein — dann zeigt die Seite
+  // nur den Hinweistext ("KI-Matchmaking ... nicht aktiviert") statt des vollen Panels.
+  { path: '/matchmaking', expectedContent: /matchmaking|partner|gegner|spielpartner/i },
+  { path: '/meine-bestellungen', expectedContent: /bestellung|order/i },
+  { path: '/messages', expectedContent: /nachricht|posteingang|message/i },
+  { path: '/shop', expectedContent: /shop|produkt|artikel/i },
+  { path: '/bookings/payment-success', expectedContent: /erfolg|bestätigt|zahlung|buchung/i },
 ];
 
 // /admin/dashboard, /admin/schedules, /admin/courts/manage, /admin/branding,
@@ -44,9 +60,11 @@ const MEMBER_ROUTES: RouteTest[] = [
 const ADMIN_ROUTES: RouteTest[] = [
   { path: '/admin', expectedContent: /admin|dashboard|mitglied/i },
   { path: '/admin/members', expectedContent: /mitglied|member/i },
+  { path: '/admin/members/family', expectedContent: /familie|mitglied/i },
   { path: '/admin/seasons', expectedContent: /saison|season/i },
   { path: '/admin/seasons/new', expectedContent: /saison|season|erstellen/i },
   { path: '/admin/courts', expectedContent: /platz|court/i },
+  { path: '/admin/court-types', expectedContent: /platztyp|court/i },
   { path: '/admin/trainers', expectedContent: /trainer/i },
   { path: '/admin/approvals', expectedContent: /genehmigung|approval|probetraining/i },
   { path: '/admin/billing', expectedContent: /rechnung|billing|abrechnung/i },
@@ -56,11 +74,29 @@ const ADMIN_ROUTES: RouteTest[] = [
   { path: '/admin/tournaments', expectedContent: /turnier|tournament/i },
   { path: '/admin/tournaments/new', expectedContent: /turnier|tournament|erstellen/i },
   { path: '/admin/onboarding', expectedContent: /Schritt|Verein|onboarding/i },
+  { path: '/admin/ai/matchmaking', expectedContent: /matching|ki|matchmaking/i },
+  { path: '/admin/audit-logs', expectedContent: /audit|protokoll|log/i },
+  { path: '/admin/documents', expectedContent: /dokument/i },
+  { path: '/admin/email-campaigns', expectedContent: /e-mail|kampagne|newsletter/i },
+  { path: '/admin/leagues', expectedContent: /liga|league/i },
+  { path: '/admin/newsletters', expectedContent: /newsletter/i },
+  { path: '/admin/perf-history', expectedContent: /performance|verlauf|historie/i },
+  { path: '/admin/pricing', expectedContent: /preis|pricing|tarif/i },
+  { path: '/admin/shop', expectedContent: /shop|produkt|artikel/i },
+  { path: '/admin/special-events', expectedContent: /veranstaltung|event/i },
+  { path: '/admin/subscription', expectedContent: /abo|subscription|plan/i },
+  { path: '/admin/trial-training', expectedContent: /probetraining|trial/i },
+  { path: '/admin/work-duties', expectedContent: /arbeitsdienst|dienst/i },
+  { path: '/admin/work-duties/assignments', expectedContent: /zuweisung|arbeitsdienst|dienst/i },
 ];
 
 const TRAINER_ROUTES: RouteTest[] = [
   { path: '/trainer', expectedContent: /trainer|dashboard/i },
   { path: '/trainer/availability', expectedContent: /verfügbar|availability/i },
+  { path: '/trainer/absences', expectedContent: /abwesenheit|fehlzeit/i },
+  { path: '/trainer/hours-logs', expectedContent: /stunden|hours/i },
+  { path: '/trainer/planning-preferences', expectedContent: /präferenz|planung/i },
+  { path: '/trainer/profile', expectedContent: /profil/i },
 ];
 
 const SUPERADMIN_ROUTES: RouteTest[] = [
@@ -68,6 +104,21 @@ const SUPERADMIN_ROUTES: RouteTest[] = [
   { path: '/superadmin/dashboard', expectedContent: /statistik|übersicht|verein/i },
   { path: '/superadmin/tenants', expectedContent: /mandant|tenant|verein/i },
   { path: '/superadmin/clubs', expectedContent: /club|verein/i },
+  { path: '/superadmin/admins', expectedContent: /admin/i },
+  { path: '/superadmin/onboarding', expectedContent: /onboarding|schritt|verein/i },
+  { path: '/superadmin/settings', expectedContent: /einstellung/i },
+  { path: '/superadmin/subscription', expectedContent: /abo|subscription|plan/i },
+];
+
+const OWNER_ROUTES: RouteTest[] = [
+  { path: '/owner', expectedContent: /verein|club|dashboard|swingz/i },
+  { path: '/owner/access', expectedContent: /zugriff|access|berechtigung/i },
+  { path: '/owner/admins', expectedContent: /admin/i },
+  { path: '/owner/audit', expectedContent: /audit|protokoll/i },
+  { path: '/owner/billing', expectedContent: /rechnung|billing/i },
+  { path: '/owner/clubs', expectedContent: /verein|club/i },
+  { path: '/owner/settings', expectedContent: /einstellung/i },
+  { path: '/owner/superadmins', expectedContent: /superadmin/i },
 ];
 
 // Routes that the given role should NOT be able to access
@@ -79,9 +130,17 @@ const RESTRICTED_ROUTES: Record<string, string[]> = {
     '/superadmin',
     '/superadmin/dashboard',
     '/trainer',
+    '/owner',
   ],
-  trainer: ['/admin', '/admin/members', '/superadmin', '/superadmin/dashboard'],
-  admin: ['/superadmin', '/superadmin/dashboard', '/superadmin/tenants', '/superadmin/clubs'],
+  trainer: ['/admin', '/admin/members', '/superadmin', '/superadmin/dashboard', '/owner'],
+  admin: [
+    '/superadmin',
+    '/superadmin/dashboard',
+    '/superadmin/tenants',
+    '/superadmin/clubs',
+    '/owner',
+  ],
+  superadmin: ['/owner', '/owner/clubs', '/owner/admins'],
 };
 
 function pageTest(route: RouteTest) {
@@ -189,6 +248,24 @@ test.describe('Superadmin Pages', () => {
   });
 
   for (const route of SUPERADMIN_ROUTES) {
+    test(`page ${route.path} loads without errors`, pageTest(route));
+  }
+
+  test('superadmin CANNOT access owner routes', async ({ page }) => {
+    for (const restricted of RESTRICTED_ROUTES.superadmin) {
+      await page.goto(restricted, { waitUntil: 'domcontentloaded' });
+      await page.waitForURL((url) => !url.pathname.startsWith(restricted), { timeout: 15000 });
+      expect(page.url()).not.toContain(restricted);
+    }
+  });
+});
+
+test.describe('Owner Pages', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsRoleAware(page, process.env.TEST_OWNER_EMAIL!, process.env.TEST_OWNER_PASSWORD!);
+  });
+
+  for (const route of OWNER_ROUTES) {
     test(`page ${route.path} loads without errors`, pageTest(route));
   }
 });

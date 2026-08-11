@@ -41,7 +41,6 @@ function getBackupTables(): string[] {
  */
 const BACKUP_TABLES = [
   'clubs',
-  'club_members',
   'trainers',
   'trainer_club',
   'courts',

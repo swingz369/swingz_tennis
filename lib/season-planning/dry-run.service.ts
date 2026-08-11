@@ -36,6 +36,10 @@ import { normalizeRsvpStatus, type RsvpStatusKey } from '@/lib/rsvp-status';
 import type { GroupAssignment, ConflictDetectionResult } from '@/lib/season-planning/types';
 import type { SeasonBillingPreview } from '@/lib/billing/season-billing.service';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('season-planning:dry-run.service');
+
 // ============================================
 // TYPES
 // ============================================
@@ -689,7 +693,7 @@ async function loadPublishedSessionsForDiff(seasonId: string): Promise<
       };
     });
   } catch (err) {
-    console.warn('[DryRun] loadPublishedSessionsForDiff failed:', err);
+    log.warn('[DryRun] loadPublishedSessionsForDiff failed:', err);
     return [];
   }
 }
@@ -726,7 +730,7 @@ async function loadRsvpDistribution(seasonId: string): Promise<DryRunRsvpDistrib
     };
   } catch (err) {
     // The table might not exist yet, or the join may fail in dev — non-fatal.
-    console.warn('[DryRun] RSVP distribution load failed:', err);
+    log.warn('[DryRun] RSVP distribution load failed:', err);
     return null;
   }
 }
@@ -773,7 +777,7 @@ export async function runSeasonDryRun(seasonId: string): Promise<DryRunReport | 
       }
     } catch (err) {
       // Non-fatal — continue without holiday filter
-      console.warn('[DryRun] Failed to load holidays, proceeding without:', err);
+      log.warn('[DryRun] Failed to load holidays, proceeding without:', err);
     }
 
     // 4. Compute season length
@@ -866,7 +870,7 @@ export async function runSeasonDryRun(seasonId: string): Promise<DryRunReport | 
       );
     } catch (err) {
       // Non-fatal — diff is informational, dry-run continues without it
-      console.warn('[DryRun] Diff computation failed:', err);
+      log.warn('[DryRun] Diff computation failed:', err);
     }
 
     // 8. Communication preview — build recipients list the same way the
@@ -885,7 +889,7 @@ export async function runSeasonDryRun(seasonId: string): Promise<DryRunReport | 
       emailRecipientCount = recipients.length;
     } catch (err) {
       // Non-fatal — log and continue
-      console.warn('[DryRun] Recipient build failed:', err);
+      log.warn('[DryRun] Recipient build failed:', err);
     }
 
     // 9. Trainer hours
@@ -1004,7 +1008,7 @@ export async function runSeasonDryRun(seasonId: string): Promise<DryRunReport | 
       warnings,
     };
   } catch (err) {
-    console.error('[DryRun] Failed:', err);
+    log.error('[DryRun] Failed:', err);
     return {
       ok: false,
       error: err instanceof Error ? err.message : 'Unbekannter Fehler',

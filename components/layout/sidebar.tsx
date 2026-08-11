@@ -389,7 +389,7 @@ export function Sidebar({
 
       <div className="pb-6 pt-4">
         {/* Family Account Switcher — for parents with minor children */}
-        {family.isParent && (
+        {family.isParent && !hiddenSections.has('family_accounts') && (
           <FamilySwitcher
             isParent={family.isParent}
             childMembers={family.children}
@@ -401,8 +401,8 @@ export function Sidebar({
           />
         )}
 
-        {/* Owner / Superadmin Club Switcher */}
-        {(isOwner || isSuperAdmin) && hasMultipleClubs && (
+        {/* Superadmin Club Switcher — owner picks clubs via /owner/clubs instead */}
+        {isSuperAdmin && hasMultipleClubs && (
           <div className="mx-3 mb-4 border border-border rounded-xl overflow-hidden bg-muted/50">
             <button
               onClick={() => setClubSwitcherOpen((prev) => !prev)}

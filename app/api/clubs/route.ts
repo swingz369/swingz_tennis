@@ -33,9 +33,11 @@ export async function GET(req: NextRequest) {
       const offset = (page - 1) * limit;
 
       // CRITICAL: Scope clubs based on user role
-      // - Owner/Superadmin: sees ALL clubs
+      // - Owner: sees ALL clubs
+      // - Superadmin: sees only clubs their Tennisschule manages (real
+      //   user_club_memberships rows with role='superadmin', one per club)
       // - Admin/Trainer/Member: sees only their own club(s)
-      const isSuperadmin = auth.role === 'superadmin' || auth.role === 'owner';
+      const isOwner = auth.role === 'owner';
 
       let clubsQuery = supabase
         .from('clubs')
@@ -44,16 +46,17 @@ export async function GET(req: NextRequest) {
 
       let countQuery = supabase.from('clubs').select('id', { count: 'exact', head: true });
 
-      if (!isSuperadmin) {
-        // Filter to clubs where user has membership
+      if (!isOwner) {
+        // Filter to clubs where user has membership (covers superadmin's
+        // per-club rows, admin's single club, trainer/member's club).
         const userClubIds = auth.memberships
           .map((m) => m.club_id)
           .filter((id): id is string => id !== null);
-        log.info('Non-superadmin user, filtering to clubs', { clubIds: userClubIds });
+        log.info('Non-owner user, filtering to clubs', { clubIds: userClubIds });
         clubsQuery = clubsQuery.in('id', userClubIds);
         countQuery = countQuery.in('id', userClubIds);
       } else {
-        log.info('Superadmin user, returning all clubs');
+        log.info('Owner user, returning all clubs');
       }
 
       const [{ data: clubs, error }, { count }] = await Promise.all([
@@ -160,14 +163,17 @@ export async function POST(req: NextRequest) {
 
       log.info('Club created', { clubId: newClub.id, name: newClub.name });
 
-      // Give superadmin an admin membership so the club appears in their switcher.
+      // Give superadmin a superadmin membership on the new club — same shape as
+      // a club the owner explicitly assigns to them (owner/superadmins page),
+      // so club-scoping checks (verifyClubAccess, resolveActiveClub) treat a
+      // self-created club exactly like an assigned one.
       // Owner skipped — they see all clubs via platform-level access, not club memberships.
       if (auth.role === 'superadmin') {
         const serviceSb = createServiceClient();
         await serviceSb
           .from('user_club_memberships')
           .upsert(
-            { user_id: auth.user.id, club_id: newClub.id, role: 'admin', is_active: true },
+            { user_id: auth.user.id, club_id: newClub.id, role: 'superadmin', is_active: true },
             { onConflict: 'user_id,club_id' }
           );
       }

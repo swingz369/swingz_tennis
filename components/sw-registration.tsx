@@ -2,6 +2,10 @@
 
 import { useEffect } from 'react';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('sw-registration');
+
 /**
  * Registers the PWA service worker for offline caching and installability.
  * Runs once on app startup.
@@ -17,7 +21,7 @@ export function ServiceWorkerRegistration() {
           // Service worker registered successfully
         })
         .catch((error) => {
-          console.error('[SW] Registration failed:', error);
+          log.error('[SW] Registration failed:', error);
         });
     }
   }, []);

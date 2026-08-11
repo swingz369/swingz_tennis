@@ -5,6 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:analytics:error');
+
 export default function Error({
   error,
   reset,
@@ -13,7 +17,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Admin analytics error:', error);
+    log.error('Admin analytics error:', error);
   }, [error]);
 
   return (
@@ -28,7 +32,7 @@ export default function Error({
           <CardTitle className="text-2xl text-center">Fehler in der Analysedaten</CardTitle>
           <CardDescription className="text-center">
             {error.message ||
-              'Die Analyse-Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.'}
+              'Die Analyse-Daten konnten nicht geladen werden. Bitte versuche es erneut.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

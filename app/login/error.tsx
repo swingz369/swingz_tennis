@@ -5,6 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('login:error');
+
 export default function Error({
   error,
   reset,
@@ -13,7 +17,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Login page error:', error);
+    log.error('Login page error:', error);
   }, [error]);
 
   return (
@@ -28,7 +32,7 @@ export default function Error({
           <CardTitle className="text-2xl text-center">Anmeldefehler</CardTitle>
           <CardDescription className="text-center">
             {error.message ||
-              ' Bei der Anmeldung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.'}
+              ' Bei der Anmeldung ist ein Fehler aufgetreten. Bitte versuche es erneut.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

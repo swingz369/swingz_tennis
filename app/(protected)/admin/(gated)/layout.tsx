@@ -4,7 +4,8 @@ import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
 import { getHighestRole } from '@/lib/auth-common';
-import { PortalButton } from './subscription/subscribe-button';
+import { isSubscriptionPastDue } from '@/lib/subscription-gate';
+import { SubscriptionDunningBlock } from '@/components/billing/subscription-dunning-block';
 
 /**
  * Admin "gated" route group — everything except /admin/onboarding.
@@ -40,32 +41,13 @@ export default async function AdminGatedLayout({ children }: { children: React.R
   // Dunning: block access once the SaaS subscription is past_due/unpaid.
   // Rendered inline (not a redirect) so the customer can always reach the
   // billing portal even though the target route itself is also gated.
-  const { data: billingProfile } = await supabase
-    .from('users')
-    .select('subscription_status')
-    .eq('id', user.id)
-    .maybeSingle();
-  if (
-    billingProfile?.subscription_status === 'past_due' ||
-    billingProfile?.subscription_status === 'unpaid'
-  ) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-6">
-        <div className="max-w-md text-center space-y-4">
-          <h1 className="text-xl font-semibold">Zahlung ausstehend</h1>
-          <p className="text-muted-foreground">
-            Die Zahlung für dein SwingZ-Abonnement konnte nicht verarbeitet werden. Bitte
-            aktualisiere deine Zahlungsmethode, um den Zugriff fortzusetzen.
-          </p>
-          <PortalButton />
-        </div>
-      </div>
-    );
+  if (await isSubscriptionPastDue(supabase, user.id)) {
+    return <SubscriptionDunningBlock />;
   }
 
-  // Superadmin always has access regardless of club setup state.
-  const isSuperadmin = roles.includes('superadmin');
-  if (!isSuperadmin && clubId) {
+  // Platform staff (owner/superadmin) always have access regardless of club setup state.
+  const isPlatformStaff = roles.includes('superadmin') || roles.includes('owner');
+  if (!isPlatformStaff && clubId) {
     const { data: clubData } = await supabase
       .from('clubs')
       .select('setup_completed_at')

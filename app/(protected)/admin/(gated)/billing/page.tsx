@@ -8,6 +8,10 @@ import { BillingCategoriesTabs } from './billing-tabs-wrapper';
 import { AlertTriangle } from 'lucide-react';
 import type { Invoice } from './billing-client';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:billing:page');
+
 const BillingClient = dynamicImport(() => import('./billing-client'), {
   loading: () => <Skeleton className="h-96 w-full rounded-xl" />,
 });
@@ -110,8 +114,8 @@ export default async function BillingPage({
       supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('club_id', clubId),
     ]);
 
-  if (invoicesError) console.error('[BillingPage] invoice query error:', invoicesError);
-  if (countError) console.error('[BillingPage] count query error:', countError);
+  if (invoicesError) log.error('[BillingPage] invoice query error:', invoicesError);
+  if (countError) log.error('[BillingPage] count query error:', countError);
 
   const invoicePagination = buildPaginationMeta(page, limit, invoiceCount);
 

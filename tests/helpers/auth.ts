@@ -12,11 +12,12 @@ function statePath(email: string): string {
 }
 
 function targetUrl(email: string): string {
-  return email.includes('superadmin')
-    ? `${BASE_URL}/superadmin`
-    : email.includes('admin')
-      ? `${BASE_URL}/admin`
-      : `${BASE_URL}/member`;
+  // Reihenfolge wichtig: "admin@swingz.com" (owner) enthält "admin" als Substring —
+  // spezifischere Rollen-Checks müssen vor dem generischen admin-Check laufen.
+  if (email === (process.env.TEST_OWNER_EMAIL ?? '__no_owner_email__')) return `${BASE_URL}/owner`;
+  if (email.includes('superadmin')) return `${BASE_URL}/superadmin`;
+  if (email.includes('admin')) return `${BASE_URL}/admin`;
+  return `${BASE_URL}/member`;
 }
 
 /**

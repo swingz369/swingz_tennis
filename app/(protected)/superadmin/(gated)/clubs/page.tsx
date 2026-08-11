@@ -11,6 +11,10 @@ import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/page-header';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('superadmin:clubs:page');
+
 export default function ClubsAdminPage() {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +31,7 @@ export default function ClubsAdminPage() {
       const data = await res.json();
       setClubs(parseClubsResponse(data));
     } catch (err) {
-      console.error('Failed to fetch clubs:', err);
+      log.error('Failed to fetch clubs:', err);
       setClubs([]);
       setError('Fehler beim Laden der Vereine');
     } finally {
@@ -71,7 +75,7 @@ export default function ClubsAdminPage() {
         setError(errorMessage);
       }
     } catch (err) {
-      console.error('Failed to create club:', err);
+      log.error('Failed to create club:', err);
       setError('Netzwerkfehler. Bitte versuchen Sie es erneut.');
     }
   };

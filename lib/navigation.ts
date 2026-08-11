@@ -153,7 +153,9 @@ export function memberSidebarSections(hidden: Hidden, includeMemberOnly: boolean
         { name: 'Matchmaking', href: '/matchmaking' },
         ...(!hidden.has('tournaments') ? [{ name: 'Turniere', href: '/member/tournaments' }] : []),
         ...(!hidden.has('ai_matchmaking') ? [{ name: 'Matchmaking', href: '/matchmaking' }] : []),
-        { name: 'Erfolge & Ranglisten', href: '/gamification' },
+        ...(!hidden.has('gamification')
+          ? [{ name: 'Erfolge & Ranglisten', href: '/gamification' }]
+          : []),
       ],
     },
     {
@@ -186,7 +188,7 @@ export function memberSidebarSections(hidden: Hidden, includeMemberOnly: boolean
               { name: 'Meine Bestellungen', href: '/meine-bestellungen' },
             ]
           : []),
-        { name: 'Board-Beschlüsse', href: '/decisions' },
+        ...(!hidden.has('decisions') ? [{ name: 'Board-Beschlüsse', href: '/decisions' }] : []),
       ],
     },
   ];

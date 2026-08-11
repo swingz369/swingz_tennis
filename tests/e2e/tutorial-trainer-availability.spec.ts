@@ -39,10 +39,7 @@ test.describe('Tutorial: Trainer Availability', () => {
     await screenshotStep(page, 'trainer-availability/step-2-preset-chips');
   });
 
-  test('Step 3: week navigation (prev / next) renders', async ({ page }) => {
-    await page.goto(`${BASE_URL}/trainer/availability`, { waitUntil: 'networkidle' });
-    await expect(page.getByRole('button', { name: /nächste woche/i }).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /vorherige woche/i }).first()).toBeVisible();
-    await screenshotStep(page, 'trainer-availability/step-3-week-nav');
-  });
+  // Step 3 (Vor/Zurück-Wochennavigation) entfernt — components/trainer-availability-manager.tsx
+  // hat keine Kalender-Wochennavigation mehr (kein "Woche"-Text, kein Chevron/prev-next-Handler);
+  // die Komponente arbeitet mit einem festen Wochenraster statt paginierten Wochen.
 });

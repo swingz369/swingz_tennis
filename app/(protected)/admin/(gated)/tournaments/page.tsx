@@ -3,6 +3,10 @@ import { getPagination, buildPaginationMeta } from '@/lib/pagination';
 import { TournamentsClient } from './tournaments-client';
 import type { PaginationMeta } from '@/lib/pagination';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:tournaments:page');
+
 export const dynamic = 'force-dynamic';
 
 export default async function AdminTournamentsPage({
@@ -34,13 +38,13 @@ export default async function AdminTournamentsPage({
       .range(offset, offset + limit - 1);
 
     if (tournamentsError) {
-      console.error('[TournamentsPage] Query error:', tournamentsError);
+      log.error('[TournamentsPage] Query error:', tournamentsError);
     } else {
       tournaments = (tournamentsData || []) as unknown as typeof tournaments;
       pagination = buildPaginationMeta(page, limit, count);
     }
   } catch (err) {
-    console.error('[TournamentsPage] Unexpected error:', err);
+    log.error('[TournamentsPage] Unexpected error:', err);
   }
 
   return <TournamentsClient initialTournaments={tournaments} pagination={pagination} />;

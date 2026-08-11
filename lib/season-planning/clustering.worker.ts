@@ -37,12 +37,16 @@
 import { parentPort } from 'node:worker_threads';
 import { isMainThread, parentPort as parentPortCheck } from 'node:worker_threads';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('season-planning:clustering.worker');
+
 // Re-import the engine from the same package. The worker has its own module
 // instance (no shared state with the main thread) — that's the whole point.
 if (!isMainThread && parentPortCheck) {
   runWorker();
 } else {
-  console.error(
+  log.error(
     '[clustering.worker] This file must be loaded as a worker_threads worker, not the main thread.'
   );
   process.exit(1);
@@ -58,7 +62,7 @@ interface ClusterRequest {
 
 async function runWorker(): Promise<void> {
   if (!parentPort) {
-    console.error('[clustering.worker] No parentPort available — exiting.');
+    log.error('[clustering.worker] No parentPort available — exiting.');
     return;
   }
 

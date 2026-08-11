@@ -28,6 +28,10 @@ import { de } from '@/lib/locale';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:hours-logs:hours-logs-client');
+
 interface HoursLog {
   id: string;
   trainer_id: string;
@@ -71,7 +75,7 @@ export default function HoursLogsClient() {
       const data = await response.json();
       setLogs(data.hoursLogs || []);
     } catch (error) {
-      console.error('Fetch error:', error);
+      log.error('Fetch error:', error);
       toast.error('Fehler beim Laden der Stundennachweise');
     } finally {
       setLoading(false);

@@ -41,6 +41,7 @@ import {
   type DashboardWidget,
   type WidgetSize,
 } from '@/lib/dashboard-widgets';
+import { apiFetch } from '@/lib/api-fetch';
 
 // ─── Sortable Widget Wrapper ───
 
@@ -226,7 +227,7 @@ export function CustomizableDashboard({
     try {
       const params = new URLSearchParams({ dashboardType });
       if (clubId) params.set('clubId', clubId);
-      const res = await fetch(`/api/dashboard/preferences?${params}`);
+      const res = await apiFetch(`/api/dashboard/preferences?${params}`);
       if (res.ok) {
         const data = await res.json();
         setLayout(data.layout ?? getDefaultLayout(dashboardType));
@@ -250,9 +251,8 @@ export function CustomizableDashboard({
       setIsSaving(true);
       setSaveStatus('idle');
       try {
-        const res = await fetch('/api/dashboard/preferences', {
+        const res = await apiFetch('/api/dashboard/preferences', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ dashboardType, clubId, layout: newLayout }),
         });
         if (res.ok) {

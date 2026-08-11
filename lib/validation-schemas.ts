@@ -125,13 +125,17 @@ export const CreateTrialTrainingSchema = z.object({
 });
 
 // Hours Log validation schemas
+const timeSchema = z
+  .string()
+  .regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Invalid time format (expected HH:MM)');
+
 export const CreateHoursLogSchema = z.object({
-  trainerId: uuidSchema,
   date: dateSchema,
-  hours: z.number().min(0.5).max(24, 'Hours must be between 0.5 and 24'),
-  activityType: z.string().max(100),
-  description: z.string().max(1000).optional(),
-  hourlyRate: z.number().min(0).max(1000).optional(),
+  startTime: timeSchema,
+  endTime: timeSchema,
+  type: z.string().min(1).max(50),
+  sessionId: uuidSchema.optional(),
+  notes: z.string().max(1000).optional(),
 });
 
 // Statistics query validation
@@ -144,9 +148,9 @@ export const StatisticsQuerySchema = z.object({
 
 // Booking validation schemas
 export const CreateBookingSchema = z.object({
-  memberId: uuidSchema,
   sessionId: uuidSchema,
-  notes: z.string().max(500).optional(),
+  clubId: uuidSchema,
+  memberId: uuidSchema.optional(),
 });
 
 // Helper function to validate request body

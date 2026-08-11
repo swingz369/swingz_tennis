@@ -24,19 +24,26 @@ function getDb(): Database {
 
     // Create postgres.js client
     // Vercel serverless-compatible configuration:
-    // - max: 1 (single connection per invocation)
+    // - max: 3 — Vercel Fluid Compute reuses one warm instance for concurrent
+    //   requests, so max:1 serializes them behind a single connection; a few
+    //   headroom connections avoid that without exhausting the Supavisor pool.
     // - prepare: false (required for Supabase PgBouncer / Supavisor poolers)
     // - ssl: false — self-hosted Supavisor (supabase.swingz.cloud) does not
     //   terminate TLS on the pooler port; forcing SSL here throws
     //   ERR_SSL_WRONG_VERSION_NUMBER on every query.
     // - connect_timeout: 15s to handle cold starts
+    // - connection.statement_timeout: 10s — a hung query fails instead of
+    //   blocking every other request queued behind it on the same connection.
     const client = postgres(connectionString, {
-      max: 1,
+      max: 3,
       idle_timeout: 30, // 30s — release idle connections to avoid stale socket errors
       connect_timeout: 15,
       max_lifetime: 60 * 5, // 5 minutes — shorter than typical PG server timeout, prevents stale connections on warm starts
       prepare: false,
       ssl: false,
+      connection: {
+        statement_timeout: 10_000,
+      },
     });
 
     instance = drizzle(client, { schema });

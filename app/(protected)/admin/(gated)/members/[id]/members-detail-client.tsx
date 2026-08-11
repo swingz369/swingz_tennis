@@ -109,6 +109,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
   });
   const [cancelLoading, setCancelLoading] = useState(false);
   const [editForm, setEditForm] = useState({
+    email: '',
     phone: '',
     address: '',
     city: '',
@@ -121,6 +122,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
 
   useEffect(() => {
     setEditForm({
+      email: member.email || '',
       phone: member.phone || '',
       address: member.address || '',
       city: member.city || '',
@@ -326,12 +328,37 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
     }
   };
 
+  const handleJoinedAtChange = async (newDate: string) => {
+    if (!newDate || newDate === member.joined_at?.slice(0, 10)) return;
+    try {
+      const res = await apiFetch(`/api/members/${member.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ joinedAt: newDate }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Fehler beim Speichern');
+      }
+      setMember((prev) => ({ ...prev, joined_at: newDate }));
+      toast.success('Beitrittsdatum aktualisiert');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler');
+    }
+  };
+
   const handleSaveProfile = async () => {
+    const emailChanged = editForm.email.trim() !== (member.email || '');
+    if (emailChanged && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email.trim())) {
+      toast.error('Ungültige E-Mail-Adresse');
+      return;
+    }
     try {
       const res = await apiFetch(`/api/members/${member.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          ...(emailChanged ? { email: editForm.email.trim() } : {}),
           phone: editForm.phone || null,
           address: editForm.address || null,
           city: editForm.city || null,
@@ -350,6 +377,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
 
       setMember((prev) => ({
         ...prev,
+        email: emailChanged ? editForm.email.trim() : prev.email,
         phone: editForm.phone || null,
         address: editForm.address || null,
         city: editForm.city || null,
@@ -361,7 +389,11 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
       }));
 
       setIsEditing(false);
-      toast.success('Profil erfolgreich aktualisiert');
+      toast.success(
+        emailChanged
+          ? 'Profil aktualisiert — E-Mail-Adresse geändert (neuer Login ab sofort aktiv)'
+          : 'Profil erfolgreich aktualisiert'
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler';
       toast.error(message);
@@ -504,6 +536,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
               onClick={() => {
                 setIsEditing(false);
                 setEditForm({
+                  email: member.email || '',
                   phone: member.phone || '',
                   address: member.address || '',
                   city: member.city || '',
@@ -632,7 +665,12 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                       <Label className="text-xs text-muted-foreground">Beigetreten</Label>
                       <div className="font-medium flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        {formatDate(member.joined_at)}
+                        <Input
+                          type="date"
+                          className="h-8 w-40"
+                          defaultValue={member.joined_at?.slice(0, 10) || ''}
+                          onBlur={(e) => handleJoinedAtChange(e.target.value)}
+                        />
                       </div>
                     </div>
                   </div>
@@ -653,10 +691,19 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">E-Mail</Label>
-                      <div className="font-medium flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        {member.email}
-                      </div>
+                      {isEditing ? (
+                        <Input
+                          type="email"
+                          value={editForm.email}
+                          onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                          placeholder="email@example.com"
+                        />
+                      ) : (
+                        <div className="font-medium flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          {member.email}
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">Telefon</Label>
@@ -1081,6 +1128,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                 onClick={() => {
                   setIsEditing(false);
                   setEditForm({
+                    email: member.email || '',
                     phone: member.phone || '',
                     address: member.address || '',
                     city: member.city || '',

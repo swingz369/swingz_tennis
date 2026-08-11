@@ -5,6 +5,10 @@ import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('dashboard:error');
+
 export default function DashboardError({
   error,
   reset,
@@ -12,7 +16,7 @@ export default function DashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  console.error('Dashboard page error:', error);
+  log.error('Dashboard page error:', error);
 
   return (
     <div className="flex items-center justify-center min-h-[60vh] p-6">
@@ -52,7 +56,7 @@ export default function DashboardError({
 
           <div className="pt-4 border-t">
             <p className="text-sm text-muted-foreground">
-              <strong>Hinweis:</strong> Wenn das Problem weiterhin besteht, verwenden Sie bitte das{' '}
+              <strong>Hinweis:</strong> Wenn das Problem weiterhin besteht, verwende bitte das{' '}
               <Link href="/superadmin/dashboard" className="underline">
                 Superadmin Dashboard
               </Link>{' '}

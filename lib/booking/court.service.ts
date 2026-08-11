@@ -1,6 +1,10 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import type { Court, CourtType, CreateCourt, CourtStatus } from '../types/court-booking';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('booking:court.service');
+
 const supabase = createServiceClient();
 
 export class CourtService {
@@ -216,7 +220,7 @@ export class CourtService {
       .single();
 
     if (error) {
-      console.error('Failed to update court type:', error);
+      log.error('Failed to update court type:', error);
       return null;
     }
 
@@ -228,7 +232,7 @@ export class CourtService {
     const { error } = await supabase.from('court_types').update({ is_active: false }).eq('id', id);
 
     if (error) {
-      console.error('Failed to delete court type:', error);
+      log.error('Failed to delete court type:', error);
       return { success: false, message: error.message };
     }
 
@@ -263,7 +267,7 @@ export class CourtService {
       .single();
 
     if (error) {
-      console.error('Failed to update court:', error);
+      log.error('Failed to update court:', error);
       return null;
     }
 
@@ -275,7 +279,7 @@ export class CourtService {
     const { error } = await supabase.from('courts').update({ is_active: false }).eq('id', courtId);
 
     if (error) {
-      console.error('Failed to delete court:', error);
+      log.error('Failed to delete court:', error);
       return false;
     }
 

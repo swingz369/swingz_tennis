@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     /** Convert German date (DD.MM.YYYY) or ISO date to YYYY-MM-DD for DB */
-    function normalizeDateOfBirth(raw?: string): string | undefined {
+    function normalizeDate(raw?: string): string | undefined {
       if (!raw) return undefined;
       // Already ISO format
       if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
             continue;
           }
 
-          const dob = normalizeDateOfBirth(record.dateOfBirth);
+          const dob = normalizeDate(record.dateOfBirth);
           // Ensure user is in public.users table (may be missing if found only in auth)
           await adminSupabase.from('users').upsert({
             id: userId,
@@ -197,6 +197,8 @@ export async function POST(request: NextRequest) {
             ...(record.street ? { address: record.street } : {}),
             ...(record.postalCode ? { postal_code: record.postalCode } : {}),
             ...(record.city ? { city: record.city } : {}),
+            ...(record.emergencyContact ? { emergency_contact: record.emergencyContact } : {}),
+            ...(record.emergencyPhone ? { emergency_phone: record.emergencyPhone } : {}),
             updated_at: new Date().toISOString(),
           });
         } else {
@@ -220,7 +222,7 @@ export async function POST(request: NextRequest) {
 
           userId = newUser.user.id;
 
-          const dob = normalizeDateOfBirth(record.dateOfBirth);
+          const dob = normalizeDate(record.dateOfBirth);
           // Ensure user is in public.users table
           await adminSupabase.from('users').upsert({
             id: userId,
@@ -231,6 +233,8 @@ export async function POST(request: NextRequest) {
             ...(record.street ? { address: record.street } : {}),
             ...(record.postalCode ? { postal_code: record.postalCode } : {}),
             ...(record.city ? { city: record.city } : {}),
+            ...(record.emergencyContact ? { emergency_contact: record.emergencyContact } : {}),
+            ...(record.emergencyPhone ? { emergency_phone: record.emergencyPhone } : {}),
             updated_at: new Date().toISOString(),
           });
         }
@@ -244,6 +248,9 @@ export async function POST(request: NextRequest) {
             role: record.role,
             is_active: true,
             status: 'active',
+            ...(normalizeDate(record.joinedAt)
+              ? { joined_at: normalizeDate(record.joinedAt) }
+              : {}),
           });
 
         if (membershipError) {

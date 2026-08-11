@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Building2, Plus, UserPlus, ExternalLink, Search, Pencil } from 'lucide-react';
+import { Building2, Plus, UserPlus, ExternalLink, Search, Pencil, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
 import { ClubDetailSheet } from './_components/club-detail-sheet';
+import { recommendSoloPlan, PLAN_LABELS } from '@/lib/plans';
 
 interface Club {
   id: string;
@@ -46,6 +47,12 @@ export default function OwnerClubsPage() {
   const [activating, setActivating] = useState<string | null>(null);
   const [editingClubId, setEditingClubId] = useState<string | null>(null);
 
+  const [deleteClubId, setDeleteClubId] = useState<string | null>(null);
+  const [deleteClubName, setDeleteClubName] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [restoring, setRestoring] = useState<string | null>(null);
+
   const refreshClubs = useCallback(async () => {
     try {
       const r = await apiFetch('/api/clubs');
@@ -71,6 +78,43 @@ export default function OwnerClubsPage() {
       setClubs((prev) => prev.map((c) => (c.id === clubId ? { ...c, status: 'active' } : c)));
     } finally {
       setActivating(null);
+    }
+  };
+
+  const handleDeleteClub = async () => {
+    if (!deleteClubId || deleteConfirmText !== deleteClubName) return;
+    setDeleting(true);
+    try {
+      const res = await apiFetch(`/api/clubs/${deleteClubId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'Fehler beim Löschen');
+        return;
+      }
+      toast.success('Verein gelöscht — über „Wiederherstellen" rückgängig machbar');
+      setClubs((prev) =>
+        prev.map((c) => (c.id === deleteClubId ? { ...c, status: 'deleted' } : c))
+      );
+      setDeleteClubId(null);
+      setDeleteConfirmText('');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleRestoreClub = async (clubId: string) => {
+    setRestoring(clubId);
+    try {
+      const res = await apiFetch(`/api/clubs/${clubId}/restore`, { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'Fehler beim Wiederherstellen');
+        return;
+      }
+      toast.success('Verein wiederhergestellt');
+      setClubs((prev) => prev.map((c) => (c.id === clubId ? { ...c, status: 'active' } : c)));
+    } finally {
+      setRestoring(null);
     }
   };
 
@@ -166,50 +210,80 @@ export default function OwnerClubsPage() {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{club.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {club.memberCount} / {club.maxMembers} Mitglieder
+                    {club.memberCount} Mitglieder · kein Limit — Tarif:{' '}
+                    {PLAN_LABELS[recommendSoloPlan(club.memberCount)]}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {club.status === 'pending' && (
-                    <Button
-                      size="sm"
-                      variant="default"
-                      className="gap-1 text-xs h-7 bg-warning-500 hover:bg-warning-600"
-                      disabled={activating === club.id}
-                      onClick={() => handleActivateClub(club.id)}
-                    >
-                      {activating === club.id ? '...' : 'Freigeben'}
-                    </Button>
+                  {club.status === 'deleted' ? (
+                    <>
+                      <Badge variant="secondary">Gelöscht</Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 text-xs h-7"
+                        disabled={restoring === club.id}
+                        onClick={() => handleRestoreClub(club.id)}
+                      >
+                        {restoring === club.id ? '...' : 'Wiederherstellen'}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      {club.status === 'pending' && (
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="gap-1 text-xs h-7 bg-warning-500 hover:bg-warning-600"
+                          disabled={activating === club.id}
+                          onClick={() => handleActivateClub(club.id)}
+                        >
+                          {activating === club.id ? '...' : 'Freigeben'}
+                        </Button>
+                      )}
+                      {club.status !== 'active' && club.status !== 'pending' && (
+                        <Badge variant="secondary">{club.status}</Badge>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 text-xs h-7"
+                        onClick={() => {
+                          setInviteClubId(club.id);
+                          setInviteClubName(club.name);
+                          setInviteOpen(true);
+                        }}
+                      >
+                        <UserPlus className="h-3 w-3" /> Admin einladen
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="gap-1 text-xs h-7"
+                        onClick={() => setEditingClubId(club.id)}
+                      >
+                        <Pencil className="h-3 w-3" /> Bearbeiten
+                      </Button>
+                      <Link
+                        href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
+                        className="inline-flex items-center gap-1 text-xs text-info-600 dark:text-info-400 hover:underline"
+                      >
+                        <ExternalLink className="h-3 w-3" /> Als Admin
+                      </Link>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 text-xs h-7 text-error-600 hover:text-error-700 hover:bg-error-50 dark:text-error-400 dark:hover:bg-error-900/20"
+                        onClick={() => {
+                          setDeleteClubId(club.id);
+                          setDeleteClubName(club.name);
+                          setDeleteConfirmText('');
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" /> Löschen
+                      </Button>
+                    </>
                   )}
-                  {club.status !== 'active' && club.status !== 'pending' && (
-                    <Badge variant="secondary">{club.status}</Badge>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1 text-xs h-7"
-                    onClick={() => {
-                      setInviteClubId(club.id);
-                      setInviteClubName(club.name);
-                      setInviteOpen(true);
-                    }}
-                  >
-                    <UserPlus className="h-3 w-3" /> Admin einladen
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="default"
-                    className="gap-1 text-xs h-7"
-                    onClick={() => setEditingClubId(club.id)}
-                  >
-                    <Pencil className="h-3 w-3" /> Bearbeiten
-                  </Button>
-                  <Link
-                    href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
-                    className="inline-flex items-center gap-1 text-xs text-info-600 dark:text-info-400 hover:underline"
-                  >
-                    <ExternalLink className="h-3 w-3" /> Als Admin
-                  </Link>
                 </div>
               </CardContent>
             </Card>
@@ -309,6 +383,60 @@ export default function OwnerClubsPage() {
             </Button>
             <Button onClick={handleInviteAdmin} disabled={inviting || !inviteEmail.trim()}>
               {inviting ? 'Sende...' : 'Einladung senden'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Verein löschen (Soft-Delete) */}
+      <Dialog
+        open={!!deleteClubId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteClubId(null);
+            setDeleteConfirmText('');
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Verein löschen — {deleteClubName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Alle Mitgliedschaften dieses Vereins werden deaktiviert — niemand kann sich mehr
+              anmelden. Der Verein bleibt erhalten und kann jederzeit über „Wiederherstellen"
+              reaktiviert werden.
+            </p>
+            <div>
+              <Label htmlFor="deleteConfirm">
+                Zur Bestätigung Vereinsnamen eingeben: <strong>{deleteClubName}</strong>
+              </Label>
+              <Input
+                id="deleteConfirm"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                className="mt-1.5"
+                autoComplete="off"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteClubId(null);
+                setDeleteConfirmText('');
+              }}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteClub}
+              disabled={deleting || deleteConfirmText !== deleteClubName}
+            >
+              {deleting ? 'Löschen...' : 'Verein löschen'}
             </Button>
           </DialogFooter>
         </DialogContent>

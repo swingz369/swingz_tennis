@@ -1,5 +1,9 @@
 import OpenAI from 'openai';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('infrastructure:ai:ai-client');
+
 export interface AIScheduleRequest {
   clubId: string;
   season: {
@@ -87,7 +91,7 @@ export class AIClient {
       this.validatePlan(parsed);
       return parsed;
     } catch (error) {
-      console.error('AI generation failed:', error);
+      log.error('AI generation failed:', error);
       throw new Error(
         `AI scheduling failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       );

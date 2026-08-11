@@ -7,6 +7,10 @@ import StarRating from './star-rating';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('feedback:feedback-form');
+
 interface FeedbackFormProps {
   trainerId: string;
   sessionId?: string;
@@ -63,7 +67,7 @@ export default function FeedbackForm({
         onSuccess();
       }
     } catch (error) {
-      console.error('Error submitting feedback:', error);
+      log.error('Error submitting feedback:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to submit feedback');
     } finally {
       setIsSubmitting(false);

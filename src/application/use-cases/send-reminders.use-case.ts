@@ -209,7 +209,7 @@ export class ReminderService {
             status: 'sent',
           });
         } catch (error) {
-          console.error(`Error sending reminder for booking ${booking.id}:`, error);
+          log.error(`Error sending reminder for booking ${booking.id}:`, error);
           results.push({
             sessionId: session.id,
             memberId: booking.member_id,

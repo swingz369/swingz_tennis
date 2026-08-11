@@ -12,11 +12,10 @@
 #
 # Usage:
 #   ./scripts/clean-supabase-types.sh [file1] [file2] ...
-#   (defaults to supabase-types.ts and types/supabase.ts if no args)
+#   (defaults to types/supabase.ts if no args)
 #
 # Typically run after:
-#   supabase gen types typescript --db-url "$DB_URL" > supabase-types.ts
-#   cp supabase-types.ts types/supabase.ts
+#   supabase gen types typescript --db-url "$DB_URL" > types/supabase.ts
 #   ./scripts/clean-supabase-types.sh
 #
 
@@ -26,7 +25,7 @@ AUTO_BACKUP="${CLEAN_NO_BACKUP:-}"
 
 FILES=("$@")
 if [ ${#FILES[@]} -eq 0 ]; then
-    FILES=("supabase-types.ts" "types/supabase.ts")
+    FILES=("types/supabase.ts")
 fi
 
 # Auto-backup before cleaning (unless CLEAN_NO_BACKUP is set)

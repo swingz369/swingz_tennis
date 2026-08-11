@@ -5,6 +5,7 @@ import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   Search,
   X,
@@ -462,19 +463,22 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                 </tr>
               ) : bookings.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-muted-foreground">
-                    <CalendarIcon className="h-8 w-8 mx-auto mb-3 opacity-30" />
-                    <p className="text-sm">Keine Einträge gefunden</p>
-                    <p className="text-xs mt-1">
-                      {searchQuery ||
-                      statusFilter !== 'all' ||
-                      sourceFilter !== 'all' ||
-                      courtFilter !== 'all' ||
-                      dateFrom ||
-                      dateTo
-                        ? 'Passe die Filter an, um Ergebnisse zu sehen.'
-                        : 'Es liegen noch keine Einträge vor.'}
-                    </p>
+                  <td colSpan={7}>
+                    <EmptyState
+                      icon={CalendarIcon}
+                      title="Keine Einträge gefunden"
+                      description={
+                        searchQuery ||
+                        statusFilter !== 'all' ||
+                        sourceFilter !== 'all' ||
+                        courtFilter !== 'all' ||
+                        dateFrom ||
+                        dateTo
+                          ? 'Passe die Filter an, um Ergebnisse zu sehen.'
+                          : 'Es liegen noch keine Einträge vor.'
+                      }
+                      size="sm"
+                    />
                   </td>
                 </tr>
               ) : (

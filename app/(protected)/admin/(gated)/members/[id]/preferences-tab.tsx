@@ -17,6 +17,10 @@ import { toast } from 'sonner';
 import { Clock, Target, Users, Save, Loader2, CheckCircle2, Plus } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:members:[id]:preferences-tab');
+
 type DaySchedule = Array<{ start: string; end: string }>;
 
 const PRESET_STARTS = [
@@ -119,7 +123,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
         );
       }
     } catch (err) {
-      console.error('Failed to fetch schedule preferences:', err);
+      log.error('Failed to fetch schedule preferences:', err);
     } finally {
       setLoading(false);
     }

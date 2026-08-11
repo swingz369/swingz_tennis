@@ -113,8 +113,9 @@ export class ScheduleWeek {
 
   public contains(date: Date): boolean {
     const weekStart = this.getMonday();
-    const weekEnd = this.getSunday();
-    return date >= weekStart && date <= weekEnd;
+    const nextWeekStart = new Date(this.monday);
+    nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+    return date >= weekStart && date < nextWeekStart;
   }
 
   public next(): ScheduleWeek {
@@ -146,10 +147,17 @@ export class ScheduleWeek {
   }
 
   public static fromDate(date: Date): ScheduleWeek {
-    const startOfYear = new Date(date.getFullYear(), 0, 1);
-    const days = Math.floor((date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-    const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-    return new ScheduleWeek(date.getFullYear(), weekNumber);
+    const year = date.getFullYear();
+    const startOfYearDow = new Date(year, 0, 1).getDay();
+    const adjustment = (startOfYearDow + 6) % 7;
+    // ponytail: Date.UTC keeps every day exactly 86400000ms so this division
+    // can't skew across a local DST transition; getMondayOfWeek (the anchor
+    // this must match) uses local setDate() math, which is DST-safe already.
+    const mondayWeek1Utc = Date.UTC(year, 0, 1 - adjustment);
+    const dateUtc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+    const days = Math.floor((dateUtc - mondayWeek1Utc) / (24 * 60 * 60 * 1000));
+    const weekNumber = Math.floor(days / 7) + 1;
+    return new ScheduleWeek(year, weekNumber);
   }
 
   public static current(): ScheduleWeek {

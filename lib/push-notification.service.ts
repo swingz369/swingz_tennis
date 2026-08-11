@@ -13,6 +13,10 @@
 import webpush from 'web-push';
 import { createServiceClient } from '@/lib/supabase/service';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('push-notification.service');
+
 // ─── VAPID Configuration ──────────────────────────────────────────────
 
 let vapidConfigured = false;
@@ -135,7 +139,7 @@ export class PushNotificationService {
       if (error) throw error;
       return { success: true, subscriptionId: data.id };
     } catch (err) {
-      console.error('[PushService] Subscribe error:', err);
+      log.error('[PushService] Subscribe error:', err);
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Unknown error',
@@ -157,7 +161,7 @@ export class PushNotificationService {
       if (error) throw error;
       return { success: true };
     } catch (err) {
-      console.error('[PushService] Unsubscribe error:', err);
+      log.error('[PushService] Unsubscribe error:', err);
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Unknown error',
@@ -262,7 +266,7 @@ export class PushNotificationService {
             staleEndpoints.push(sub.endpoint);
           }
           failed++;
-          console.warn(`[PushService] Failed to send to ${sub.id}:`, statusCode || err);
+          log.warn(`[PushService] Failed to send to ${sub.id}:`, statusCode || err);
         }
       })
     );

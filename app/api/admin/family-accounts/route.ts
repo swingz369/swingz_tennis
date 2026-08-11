@@ -4,6 +4,7 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 import { randomUUID } from 'crypto';
+import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
 
 const log = createLogger('api:admin:family-accounts');
 
@@ -19,6 +20,9 @@ export async function GET(request: NextRequest) {
 
     const clubId = auth.clubId;
     if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
+
+    const features = await getClubFeatures(auth.supabase, clubId);
+    if (!features.family_accounts) return featureDisabledResponse('family_accounts');
 
     // Service client: the RLS policy that lets admins read other users' rows
     // relies on a users.role column that no longer exists (see work-duties fix).
@@ -74,6 +78,9 @@ export async function POST(request: NextRequest) {
 
     const clubId = auth.clubId;
     if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
+
+    const features = await getClubFeatures(auth.supabase, clubId);
+    if (!features.family_accounts) return featureDisabledResponse('family_accounts');
 
     const body = await request.json();
     const memberIds: string[] = Array.isArray(body.memberIds) ? body.memberIds : [];

@@ -19,6 +19,10 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/infrastructure/external/supabase/client';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('reset-password:page');
+
 // ─── State machine ───────────────────────────────────────────────────────────
 type PageState = 'loading' | 'ready' | 'submitting' | 'success' | 'error';
 
@@ -40,7 +44,7 @@ export default function ResetPasswordPage() {
     if (code) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) {
-        console.error('[reset-password] exchangeCodeForSession error:', error.message);
+        log.error('[reset-password] exchangeCodeForSession error:', error.message);
         setErrorMsg('Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen an.');
         setState('error');
         return;
@@ -67,7 +71,7 @@ export default function ResetPasswordPage() {
           refresh_token: refreshToken,
         });
         if (error) {
-          console.error('[reset-password] setSession error:', error.message);
+          log.error('[reset-password] setSession error:', error.message);
           setErrorMsg('Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen an.');
           setState('error');
           return;
@@ -118,7 +122,7 @@ export default function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
-      console.error('[reset-password] updateUser error:', error.message);
+      log.error('[reset-password] updateUser error:', error.message);
       setValidationError(
         error.message === 'New password should be different from the old password.'
           ? 'Das neue Passwort muss sich vom alten unterscheiden.'

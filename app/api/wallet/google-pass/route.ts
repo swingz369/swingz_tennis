@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, forbiddenResponse } from '@/lib/api-auth';
 import { generateGoogleWalletUrl, isGoogleWalletConfigured } from '@/lib/wallet/google-pass';
+import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
 
 /** GET /api/wallet/google-pass — Google Wallet Save-URL generieren */
 export async function GET(request: NextRequest) {
@@ -16,6 +17,9 @@ export async function GET(request: NextRequest) {
 
     const clubId = new URL(request.url).searchParams.get('clubId') ?? auth.clubId;
     if (!clubId) return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+
+    const features = await getClubFeatures(auth.supabase, clubId);
+    if (!features.wallet_passes) return featureDisabledResponse('wallet_passes');
 
     const sb = auth.supabase as any;
     const { data: m } = await sb

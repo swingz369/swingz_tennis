@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { IconBox } from '@/components/ui/icon-box';
 import { Textarea } from '@/components/ui/textarea';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { apiFetch } from '@/lib/api-fetch';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -25,9 +26,8 @@ export default function RegisterPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/register-interest', {
+      const res = await apiFetch('/api/auth/register-interest', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, clubName, email, message }),
       });
       if (!res.ok) {

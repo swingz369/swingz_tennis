@@ -4,11 +4,9 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth } from '@/lib/api-auth';
+import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { seasonBillingService } from '@/lib/billing/season-billing.service';
-import { db } from '@/src/infrastructure/persistence/db';
-import { seasons } from '@/src/infrastructure/persistence/schema';
-import { eq } from 'drizzle-orm';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:[id]:billing');
@@ -22,11 +20,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
     try {
       const { id: seasonId } = await context.params;
 
-      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-      if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
-
-      const isAdmin = await verifyRole(auth, 'admin');
-      if (!isAdmin) return forbiddenResponse('Nur Admins');
+      // Tenant isolation: verifyRole() alone checks only the caller's GLOBAL
+      // role, not membership in THIS season's club — an admin of club A could
+      // otherwise read club B's billing preview. authorizeSeasonAccess()
+      // checks the caller's membership against season.club_id.
+      const access = await authorizeSeasonAccess(auth, seasonId, { allowedRoles: ['admin'] });
+      if (!access.ok) return access.response;
 
       const preview = await seasonBillingService.calculatePreview(seasonId);
       return NextResponse.json(preview);
@@ -45,14 +44,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     try {
       const { id: seasonId } = await context.params;
 
-      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-      if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
-
-      const isAdmin = await verifyRole(auth, 'admin');
-      if (!isAdmin) return forbiddenResponse('Nur Admins');
+      const access = await authorizeSeasonAccess(auth, seasonId, { allowedRoles: ['admin'] });
+      if (!access.ok) return access.response;
 
       const body = await request.json();
-      const config = await seasonBillingService.upsertConfig(seasonId, season.club_id, body);
+      const config = await seasonBillingService.upsertConfig(seasonId, access.season.club_id, body);
       return NextResponse.json(config);
     } catch (error) {
       log.error('PUT billing config error:', error);
@@ -69,11 +65,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
     try {
       const { id: seasonId } = await context.params;
 
-      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-      if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
-
-      const isAdmin = await verifyRole(auth, 'admin');
-      if (!isAdmin) return forbiddenResponse('Nur Admins');
+      const access = await authorizeSeasonAccess(auth, seasonId, { allowedRoles: ['admin'] });
+      if (!access.ok) return access.response;
 
       const result = await seasonBillingService.generateInvoices(seasonId);
       return NextResponse.json(result);

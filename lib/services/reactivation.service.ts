@@ -219,7 +219,9 @@ export class ReactivationService {
     // 1. Get all active memberships + user name in one query
     const { data: memberships, error: membershipsError } = await supabase
       .from('user_club_memberships')
-      .select('user_id, club_id, last_reactivation_sent_at, reactivation_count, users(full_name)')
+      .select(
+        'user_id, club_id, last_reactivation_sent_at, reactivation_count, users!user_club_memberships_user_id_fkey(full_name)'
+      )
       .eq('is_active', true)
       .in('role', ['member', 'trainer', 'admin']);
 

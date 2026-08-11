@@ -8,6 +8,10 @@ import type {
   ISEPAMandateRepository,
 } from '../../../domain/repositories/sepa-mandate-repository.interface';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('infrastructure:persistence:repositories:sepa-mandate.reposit');
+
 export class SEPAMandateRepository implements ISEPAMandateRepository {
   async create(input: CreateSEPAMandateInput): Promise<SEPAMandate> {
     try {
@@ -38,7 +42,7 @@ export class SEPAMandateRepository implements ISEPAMandateRepository {
       if (!mandate) throw new Error('Failed to create SEPA mandate');
       return this.mapToEntity(mandate);
     } catch (error) {
-      console.error('Error creating SEPA mandate:', error);
+      log.error('Error creating SEPA mandate:', error);
       throw new Error(
         `Failed to create mandate: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -54,7 +58,7 @@ export class SEPAMandateRepository implements ISEPAMandateRepository {
         .limit(1);
       return mandate ? this.mapToEntity(mandate) : null;
     } catch (error) {
-      console.error('Error finding SEPA mandate:', error);
+      log.error('Error finding SEPA mandate:', error);
       throw new Error(
         `Failed to find mandate: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -70,7 +74,7 @@ export class SEPAMandateRepository implements ISEPAMandateRepository {
         .limit(1);
       return mandate ? this.mapToEntity(mandate) : null;
     } catch (error) {
-      console.error('Error finding active mandate:', error);
+      log.error('Error finding active mandate:', error);
       throw new Error(
         `Failed to find active mandate: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -86,7 +90,7 @@ export class SEPAMandateRepository implements ISEPAMandateRepository {
         .orderBy(desc(sepaMandates.createdAt));
       return mandates.map((m) => this.mapToEntity(m));
     } catch (error) {
-      console.error('Error finding mandates by member:', error);
+      log.error('Error finding mandates by member:', error);
       throw new Error(
         `Failed to find mandates: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -102,7 +106,7 @@ export class SEPAMandateRepository implements ISEPAMandateRepository {
         .orderBy(desc(sepaMandates.createdAt));
       return mandates.map((m) => this.mapToEntity(m));
     } catch (error) {
-      console.error('Error finding mandates by club:', error);
+      log.error('Error finding mandates by club:', error);
       throw new Error(
         `Failed to find mandates: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -138,7 +142,7 @@ export class SEPAMandateRepository implements ISEPAMandateRepository {
 
       return updated ? this.mapToEntity(updated) : null;
     } catch (error) {
-      console.error('Error updating SEPA mandate:', error);
+      log.error('Error updating SEPA mandate:', error);
       throw new Error(
         `Failed to update mandate: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -159,7 +163,7 @@ export class SEPAMandateRepository implements ISEPAMandateRepository {
 
       return revoked ? this.mapToEntity(revoked) : null;
     } catch (error) {
-      console.error('Error revoking SEPA mandate:', error);
+      log.error('Error revoking SEPA mandate:', error);
       throw new Error(
         `Failed to revoke mandate: ${error instanceof Error ? error.message : 'Unknown error'}`
       );

@@ -20,6 +20,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import type * as ApiAuth from '@/lib/api-auth';
 
 // ───────────────────────────────────────────────────────────────────────
 // Mock auth wrapper. The PUT handler reads `auth.supabase` from this
@@ -49,7 +50,12 @@ const ROLE_HIERARCHY: Record<string, number> = {
   member: 1,
 };
 
-vi.mock('@/lib/api-auth', () => ({
+// Partial mock: only the auth *wrapper* is stubbed, every other export stays
+// real. A full replacement rots — the route also calls verifyClubAccess() and
+// forbiddenResponse(), and a missing export makes vitest throw inside the
+// route's try/catch, which surfaces as a bogus 400 instead of a clear failure.
+vi.mock('@/lib/api-auth', async (importOriginal) => ({
+  ...(await importOriginal<typeof ApiAuth>()),
   withApiAuth: async (_req: Request, handler: (auth: AdminCtx) => Promise<Response>) =>
     handler(adminCtx),
   withAuth: async (_req: Request, handler: (auth: AdminCtx) => Promise<Response>) =>

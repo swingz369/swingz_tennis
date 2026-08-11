@@ -357,7 +357,7 @@ Generate the schedule now. Remember: output ONLY valid JSON, no markdown.`;
       } catch (error) {
         if (attempt === maxRetries) throw error;
         const delay = baseDelayMs * Math.pow(2, attempt);
-        console.warn(`[AIScheduleV2] Retry ${attempt + 1}/${maxRetries} after ${delay}ms`);
+        log.warn(`[AIScheduleV2] Retry ${attempt + 1}/${maxRetries} after ${delay}ms`);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }

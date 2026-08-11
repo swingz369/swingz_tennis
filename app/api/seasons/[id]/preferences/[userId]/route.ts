@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { db } from '@/src/infrastructure/persistence/db';
@@ -10,6 +10,19 @@ import type { UpdatePreferencesRequest } from '@/lib/types/season-planning';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:[id]:preferences:[userId]');
+
+// Tenant isolation: verifyRole() checks only the caller's GLOBAL role, not
+// membership in the season's own club — an admin of club A could otherwise
+// read/write club B's member preferences. Own-preference access bypasses
+// this check on purpose (the row already belongs to the caller).
+function hasClubAdminAccess(
+  memberships: { club_id: string | null; role: string }[],
+  clubId: string
+) {
+  return memberships.some(
+    (m) => m.club_id === clubId && (m.role === 'admin' || m.role === 'superadmin')
+  );
+}
 
 interface RouteContext {
   params: Promise<{
@@ -40,11 +53,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
       }
 
       // Check permissions
-      const isAdmin = await verifyRole(auth, 'admin');
-      const isSuperadmin = await verifyRole(auth, 'superadmin');
       const isOwnPreference = userId === auth.user?.id;
-
-      if (!isOwnPreference && !isAdmin && !isSuperadmin) {
+      if (!isOwnPreference && !hasClubAdminAccess(auth.memberships, season.club_id)) {
         return forbiddenResponse('You can only view your own preferences');
       }
 
@@ -101,15 +111,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return withApiAuth(request, async (auth) => {
       const { id: seasonId, userId } = await context.params;
       try {
-        // Check permissions
-        const isAdmin = await verifyRole(auth, 'admin');
-        const isSuperadmin = await verifyRole(auth, 'superadmin');
-        const isOwnPreference = userId === auth.user?.id;
-
-        if (!isOwnPreference && !isAdmin && !isSuperadmin) {
-          return forbiddenResponse('You can only update your own preferences');
-        }
-
         // Verify season exists
         const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
 
@@ -117,8 +118,16 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           return NextResponse.json({ error: 'Season not found' }, { status: 404 });
         }
 
+        // Check permissions
+        const isOwnPreference = userId === auth.user?.id;
+        const isClubAdmin = hasClubAdminAccess(auth.memberships, season.club_id);
+
+        if (!isOwnPreference && !isClubAdmin) {
+          return forbiddenResponse('You can only update your own preferences');
+        }
+
         // Check if preferences are still open
-        if (!season.preferences_open && !isAdmin && !isSuperadmin) {
+        if (!season.preferences_open && !isClubAdmin) {
           return NextResponse.json(
             { error: 'Preferences are not open for this season' },
             { status: 400 }
@@ -212,12 +221,16 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     return withApiAuth(request, async (auth) => {
       const { id: seasonId, userId } = await context.params;
       try {
-        // Check permissions
-        const isAdmin = await verifyRole(auth, 'admin');
-        const isSuperadmin = await verifyRole(auth, 'superadmin');
-        const isOwnPreference = userId === auth.user?.id;
+        // Verify season exists (needed to scope the admin-access check to
+        // THIS season's club, see hasClubAdminAccess above)
+        const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
+        if (!season) {
+          return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+        }
 
-        if (!isOwnPreference && !isAdmin && !isSuperadmin) {
+        // Check permissions
+        const isOwnPreference = userId === auth.user?.id;
+        if (!isOwnPreference && !hasClubAdminAccess(auth.memberships, season.club_id)) {
           return forbiddenResponse('You can only delete your own preferences');
         }
 

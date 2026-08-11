@@ -5,6 +5,10 @@ import { AnalyticsTabsClient } from './analytics-tabs-client';
 import { ClubSelector } from './club-selector';
 import type { AnalyticsData } from './analytics-client';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:analytics:page');
+
 export const dynamic = 'force-dynamic';
 
 export default async function AnalyticsPage({
@@ -178,7 +182,7 @@ export default async function AnalyticsPage({
       capacityUtilization,
     };
   } catch (error) {
-    console.error('Error loading analytics:', error);
+    log.error('Error loading analytics:', error);
     fetchError = true;
   }
 

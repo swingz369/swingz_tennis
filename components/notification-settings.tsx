@@ -27,6 +27,10 @@ import {
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('notification-settings');
+
 export interface Notification {
   id: string;
   type: 'booking' | 'reminder' | 'announcement' | 'system';
@@ -86,7 +90,7 @@ export default function NotificationSettings() {
         }
       } catch (err: unknown) {
         if (err instanceof Error && err.name !== 'AbortError') {
-          console.error('Failed to fetch notifications:', err);
+          log.error('Failed to fetch notifications:', err);
         }
       } finally {
         setIsLoading(false);
@@ -105,7 +109,7 @@ export default function NotificationSettings() {
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
       toast.success('Benachrichtigung als gelesen markiert');
     } catch (err) {
-      console.error('Failed to mark notification as read:', err);
+      log.error('Failed to mark notification as read:', err);
     }
   };
 
@@ -115,7 +119,7 @@ export default function NotificationSettings() {
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       toast.success('Alle Benachrichtigungen als gelesen markiert');
     } catch (err) {
-      console.error('Failed to mark all as read:', err);
+      log.error('Failed to mark all as read:', err);
     }
   };
 
@@ -125,7 +129,7 @@ export default function NotificationSettings() {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
       toast.success('Benachrichtigung gelöscht');
     } catch (err) {
-      console.error('Failed to delete notification:', err);
+      log.error('Failed to delete notification:', err);
     }
   };
 

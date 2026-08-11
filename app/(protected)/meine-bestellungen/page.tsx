@@ -19,6 +19,10 @@ import { IconBox } from '@/components/ui/icon-box';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('meine-bestellungen:page');
+
 interface OrderItem {
   product_id: string;
   product_name: string;
@@ -83,7 +87,7 @@ export default function MeineBestellungenPage() {
       const data = await res.json();
       setOrders(data.orders ?? []);
     } catch (err) {
-      console.error('Failed to fetch orders:', err);
+      log.error('Failed to fetch orders:', err);
     } finally {
       setLoading(false);
     }

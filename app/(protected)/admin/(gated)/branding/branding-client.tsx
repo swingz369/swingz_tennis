@@ -13,6 +13,10 @@ import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
 import { DEFAULT_BRANDING } from '@/lib/branding';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:branding:branding-client');
+
 interface BrandingData {
   primaryColor: string;
   secondaryColor: string;
@@ -52,7 +56,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
         });
       }
     } catch {
-      console.error('Failed to load branding');
+      log.error('Failed to load branding');
     }
   }, [clubId]);
 

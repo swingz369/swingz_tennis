@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Trophy, Star, Medal, Flame } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('gamification-dashboard');
 
 interface Badge_ {
   id: string;
@@ -28,7 +32,7 @@ export default function GamificationDashboard() {
   const [streak, setStreak] = useState(0);
 
   useEffect(() => {
-    fetch('/api/gamification')
+    apiFetch('/api/gamification')
       .then((r) => r.json())
       .then((data) => {
         setPoints(data.points || 0);
@@ -36,7 +40,12 @@ export default function GamificationDashboard() {
         setLeaderboard(data.leaderboard || []);
         setStreak(data.streak || 0);
       })
-      .catch(console.error)
+      .catch((error) =>
+        log.error(
+          'Gamification-Daten konnten nicht geladen werden',
+          error instanceof Error ? error : undefined
+        )
+      )
       .finally(() => setLoading(false));
   }, []);
 

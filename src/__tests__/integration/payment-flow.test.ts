@@ -91,7 +91,7 @@ describeIntegration('Payment Flow Integration Tests', () => {
     if (testClubId) {
       await supabase.from('invoices').delete().eq('club_id', testClubId);
       await supabase.from('sepa_mandates').delete().eq('club_id', testClubId);
-      await supabase.from('club_members').delete().eq('club_id', testClubId);
+      await supabase.from('user_club_memberships').delete().eq('club_id', testClubId);
       await supabase.from('clubs').delete().eq('id', testClubId);
     }
 

@@ -8,7 +8,7 @@ import { navigateToFirstSeason } from '../helpers/navigation';
  * Covers the end-to-end navigation through the season planning flow:
  *   1. /admin/seasons              — seasons list page
  *   2. /admin/seasons/[id]         — season detail page
- *   3. /admin/seasons/[id]/planning — planning wizard (2 steps)
+ *   3. /admin/seasons/[id]/planning — planning wizard (3 Schritte: Konfigurieren/Planen/Abschließen)
  *   4. Step 2 "Plan"               — plan generation / clustering view
  *   5. /admin/seasons/[id]/plan-grid — plan grid view
  *
@@ -81,7 +81,7 @@ test.describe('Season Planning Flow (Plan + Grid routes)', () => {
     await expect(page.locator('body')).toBeVisible();
   });
 
-  test('Planning wizard loads and stepper is visible (2 steps)', async ({ page }) => {
+  test('Planning wizard loads and stepper is visible (3 steps)', async ({ page }) => {
     const seasonId = await navigateToFirstSeason(page);
     test.skip(!seasonId, 'No season found via API to navigate to');
 
@@ -105,21 +105,37 @@ test.describe('Season Planning Flow (Plan + Grid routes)', () => {
     }
 
     await expect(page.locator('body')).toBeVisible();
+    // body existing (domcontentloaded) doesn't mean the wizard's client-fetched
+    // content has rendered yet — under load this route can take a while, and a
+    // failure snapshot showed a completely blank page (no app shell at all).
+    // Wait for the page shell itself before checking stepper-specific content.
+    await page
+      .getByRole('banner')
+      .waitFor({ state: 'visible', timeout: TIMEOUT_NAVIGATION })
+      .catch(() => {});
 
-    // Wizard stepper should show 2 steps: Konfigurieren, Planen & Veröffentlichen
+    // Wizard stepper zeigt 3 Schritte: Konfigurieren, Planen, Abschließen.
+    // These .isVisible() calls need an explicit timeout — the wizard content
+    // loads client-side after mount, so a bare instantaneous check right
+    // after navigation raced the fetch and produced flaky false negatives.
     const hasConfigStep = await page
       .getByText(/konfigurieren/i)
       .first()
-      .isVisible()
+      .isVisible({ timeout: 8000 })
       .catch(() => false);
     const hasPlanStep = await page
       .getByText(/planen|plan.*veröffentlichen/i)
       .first()
-      .isVisible()
+      .isVisible({ timeout: 3000 })
+      .catch(() => false);
+    const hasFinishStep = await page
+      .getByText(/abschließen/i)
+      .first()
+      .isVisible({ timeout: 3000 })
       .catch(() => false);
 
-    // At least 1 of the 2 step labels should be visible
-    expect(hasConfigStep || hasPlanStep).toBe(true);
+    // At least 1 of the 3 step labels should be visible
+    expect(hasConfigStep || hasPlanStep || hasFinishStep).toBe(true);
   });
 
   test('Plan step (Step 2) shows "Plan generieren" or existing plan', async ({ page }) => {

@@ -10,6 +10,10 @@ import type {
 } from '../../../domain/entities/trainer.entity';
 import type { ITrainerProfileRepository } from '../../../domain/repositories/trainer-profile.repository.interface';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('infrastructure:persistence:repositories:trainer-profile.repo');
+
 export class TrainerProfileRepository implements ITrainerProfileRepository {
   /**
    * Create a new trainer profile
@@ -105,12 +109,12 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
       }
       // Handle FK violation (23503) — user doesn't exist in users table (ghost membership)
       if (pgCode === '23503') {
-        console.warn(
+        log.warn(
           `[TrainerProfileRepository] Skipping profile creation for userId=${input.userId}: user does not exist in users table (ghost membership)`
         );
         throw new Error(`User ${input.userId} does not exist in users table`);
       }
-      console.error('Error creating trainer profile:', error);
+      log.error('Error creating trainer profile:', error);
       throw new Error(
         `Failed to create trainer profile: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -130,7 +134,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
 
       return profile ? this.mapToEntity(profile) : null;
     } catch (error) {
-      console.error('Error finding trainer profile by ID:', error);
+      log.error('Error finding trainer profile by ID:', error);
       throw new Error(
         `Failed to find trainer profile: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -150,7 +154,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
 
       return profile ? this.mapToEntity(profile) : null;
     } catch (error) {
-      console.error('Error finding trainer profile by user ID:', error);
+      log.error('Error finding trainer profile by user ID:', error);
       throw new Error(
         `Failed to find trainer profile: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -169,7 +173,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
 
       return profiles.map((p) => this.mapToEntity(p));
     } catch (error) {
-      console.error('Error finding all trainer profiles:', error);
+      log.error('Error finding all trainer profiles:', error);
       throw new Error(
         `Failed to find trainer profiles: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -189,7 +193,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
 
       return profiles.map((p) => this.mapToEntity(p));
     } catch (error) {
-      console.error('Error finding trainer profiles by club ID:', error);
+      log.error('Error finding trainer profiles by club ID:', error);
       throw new Error(
         `Failed to find trainer profiles: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -209,7 +213,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
 
       return profiles.map((p) => this.mapToEntity(p));
     } catch (error) {
-      console.error('Error finding trainer profiles by status:', error);
+      log.error('Error finding trainer profiles by status:', error);
       throw new Error(
         `Failed to find trainer profiles: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -223,7 +227,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
     try {
       return await this.findByStatus('active');
     } catch (error) {
-      console.error('Error finding active trainers:', error);
+      log.error('Error finding active trainers:', error);
       throw new Error(
         `Failed to find active trainers: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -243,7 +247,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
 
       return profiles.map((p) => this.mapToEntity(p));
     } catch (error) {
-      console.error('Error finding active trainers by club ID:', error);
+      log.error('Error finding active trainers by club ID:', error);
       throw new Error(
         `Failed to find active trainers: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -277,7 +281,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
 
       return updated ? this.mapToEntity(updated) : null;
     } catch (error) {
-      console.error('Error updating trainer profile:', error);
+      log.error('Error updating trainer profile:', error);
       throw new Error(
         `Failed to update trainer profile: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -291,7 +295,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
     try {
       return await this.update(id, { status });
     } catch (error) {
-      console.error('Error updating trainer status:', error);
+      log.error('Error updating trainer status:', error);
       throw new Error(
         `Failed to update trainer status: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -321,7 +325,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
         qualifications: [...profile.qualifications, newQualification],
       });
     } catch (error) {
-      console.error('Error adding qualification:', error);
+      log.error('Error adding qualification:', error);
       throw new Error(
         `Failed to add qualification: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -357,7 +361,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
         qualifications: updatedQualifications,
       });
     } catch (error) {
-      console.error('Error verifying qualification:', error);
+      log.error('Error verifying qualification:', error);
       throw new Error(
         `Failed to verify qualification: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -373,7 +377,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
 
       return result.length > 0;
     } catch (error) {
-      console.error('Error deleting trainer profile:', error);
+      log.error('Error deleting trainer profile:', error);
       throw new Error(
         `Failed to delete trainer profile: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -407,7 +411,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
 
       return profiles.map((p) => this.mapToEntity(p));
     } catch (error) {
-      console.error('Error searching trainer profiles:', error);
+      log.error('Error searching trainer profiles:', error);
       throw new Error(
         `Failed to search trainer profiles: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -456,7 +460,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
         // Email uniqueness prevented insert — a different trainers record already has this email.
         // We cannot change its id due to FK constraints on other tables.
         // Return the actual trainers.id so callers can use it for availability queries.
-        console.error(
+        log.error(
           `[ensureTrainersRecord] Email collision: trainers record for "${trainerEmail}" has id ${existingByEmail.id}, ` +
             `but expected ${userId}. Trainer availability queries will use id ${existingByEmail.id}. ` +
             `Run supabase/migrations/20260604_ensure_trainers_records.sql to align records.`
@@ -471,7 +475,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
       return userId;
     } catch (err) {
       // Log but don't block profile creation — availability will work once trainers record exists
-      console.error(
+      log.error(
         `[ensureTrainersRecord] Failed to ensure trainers record for userId=${userId}, email=${email}:`,
         err
       );

@@ -46,6 +46,10 @@ import { PaginationNav } from '@/components/ui/pagination-nav';
 import type { PaginationMeta } from '@/lib/pagination';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:court-types:court-types-client');
+
 export interface CourtType {
   id: string;
   name: string;
@@ -97,7 +101,7 @@ export function CourtTypesClient() {
       setCourtTypes(data.courtTypes ?? []);
       setPagination(data.pagination ?? null);
     } catch (error) {
-      console.error('Failed to load court types:', error);
+      log.error('Failed to load court types:', error);
       toast.error('Fehler beim Laden der Platz-Typen');
     } finally {
       setLoading(false);

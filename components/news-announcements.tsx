@@ -36,6 +36,10 @@ import {
 import { apiFetch } from '@/lib/api-fetch';
 import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('news-announcements');
+
 export interface NewsItem {
   id: string;
   title: string;
@@ -105,7 +109,7 @@ export default function NewsAnnouncements({
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name !== 'AbortError') {
-        console.error('Failed to fetch news:', err);
+        log.error('Failed to fetch news:', err);
       }
     } finally {
       setIsLoading(false);

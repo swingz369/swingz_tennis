@@ -7,6 +7,11 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
+import {
+  CreateHoursLogSchema,
+  validateRequestBody,
+  formatValidationErrors,
+} from '@/lib/validation-schemas';
 
 const log = createLogger('api:hours-logs');
 
@@ -138,14 +143,14 @@ export async function POST(_request: NextRequest) {
 
     try {
       const body = await _request.json();
-      const { date, startTime, endTime, type, sessionId, notes } = body;
-
-      if (!date || !startTime || !endTime || !type) {
+      const validation = validateRequestBody(CreateHoursLogSchema, body);
+      if (!validation.success) {
         return NextResponse.json(
-          { error: 'date, startTime, endTime, type are required' },
+          { error: 'Ungültige Eingabe', details: formatValidationErrors(validation.errors) },
           { status: 400 }
         );
       }
+      const { date, startTime, endTime, type, sessionId, notes } = validation.data;
 
       // Calculate duration in minutes
       const [sh, sm] = startTime.split(':').map(Number);

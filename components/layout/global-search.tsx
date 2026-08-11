@@ -6,6 +6,10 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('layout:global-search');
+
 interface SearchResult {
   id: string;
   type: 'member' | 'booking' | 'trainer' | 'club';
@@ -46,7 +50,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
           setOpen(true);
         }
       } catch (e) {
-        console.error('Search error:', e);
+        log.error('Search error:', e);
       } finally {
         setLoading(false);
       }

@@ -14,6 +14,7 @@ SwingZ ist eine Management-Lösung für Tennisvereine: Mitglieder, Buchungen, Tr
 | [`AGENTS.md`](../AGENTS.md)                                | Regeln für KI-Agenten in diesem Repo (auch Doku-Governance)                          |
 | [`CLAUDE.md`](../CLAUDE.md)                                | Architektur, Rollen, Konventionen, DO-NOT-Liste — Pflichtlektüre vor Code-Änderungen |
 | [`BUSINESS_RULES.md`](BUSINESS_RULES.md)                   | Verbindliche Produkt- und Rollenregeln                                               |
+| [`DATABASE.md`](DATABASE.md)                               | DB-/RLS-Ist-Zustand, Migrations-Realität, bekannte Altlasten                         |
 | [`HANDBOOK.md`](HANDBOOK.md)                               | Nutzerhandbuch                                                                       |
 | [`handbook/`](handbook/)                                   | Ausführliches Dev-/User-Handbuch, inkl. auto-generierter Kapitel (siehe unten)       |
 | [`DESIGN.md`](DESIGN.md)                                   | Design-Konzept (Design-System, Component-Architektur, A11y-Audit)                    |
@@ -23,6 +24,8 @@ SwingZ ist eine Management-Lösung für Tennisvereine: Mitglieder, Buchungen, Tr
 | [`RUNBOOK-BACKUP-ROLLBACK.md`](RUNBOOK-BACKUP-ROLLBACK.md) | Backup & Rollback                                                                    |
 | [`ARCHIV/`](ARCHIV/)                                       | Abgeschlossene Audits/Analysen/Snapshots — historisch, nicht mehr aktuell            |
 | [`tickets/`](tickets/)                                     | Offene Spikes/Tickets                                                                |
+
+Aktuellster Archiv-Snapshot: [`ARCHIV/2026-07-26-produktaudit-verkaufsreife.md`](ARCHIV/2026-07-26-produktaudit-verkaufsreife.md) — Produktaudit zur Verkaufsreife (RLS-Bypass über den Drizzle-Pfad, unverschlüsselter DB-Transport, fehlendes Abo-Enforcement, Wettbewerbs- und Positionierungsanalyse). Umsetzungsstand Phase 1: [`ARCHIV/2026-07-26-produktaudit-phase1-umsetzung.md`](ARCHIV/2026-07-26-produktaudit-phase1-umsetzung.md) — 2 reale Cross-Tenant-Lücken in Season-Routes gefixt, Testsuite grün, P2 (TLS) braucht VPS-Diagnose vor Umsetzung. Umsetzungsstand Phase 3: [`ARCHIV/2026-07-26-produktaudit-phase3-umsetzung.md`](ARCHIV/2026-07-26-produktaudit-phase3-umsetzung.md) — zentrales Abo-Gate jetzt auf API-Ebene für alle Routes, Superadmin-Dunning-Lücke geschlossen, Pflicht-Abo für Neukonten als Folge-Ticket zurückgestellt.
 
 Governance: Ein Thema = eine Datei, Ist-Zustand-Docs werden aktualisiert statt dupliziert. Details in [`AGENTS.md`](../AGENTS.md).
 

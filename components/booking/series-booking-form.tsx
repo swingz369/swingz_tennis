@@ -14,6 +14,10 @@ import { Calendar, Clock, Repeat, AlertCircle, CheckCircle2, Info } from 'lucide
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('booking:series-booking-form');
+
 interface SeriesBookingFormProps {
   clubId: string;
   courtId: string;
@@ -172,7 +176,7 @@ export default function SeriesBookingForm({
       }
     } catch (error) {
       toast.error('Fehler bei der Validierung');
-      console.error('Validation error:', error);
+      log.error('Validation error:', error);
     } finally {
       setIsValidating(false);
     }
@@ -226,7 +230,7 @@ export default function SeriesBookingForm({
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Fehler beim Erstellen');
-      console.error('Create error:', error);
+      log.error('Create error:', error);
     } finally {
       setIsCreating(false);
     }

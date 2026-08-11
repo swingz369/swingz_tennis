@@ -35,6 +35,8 @@ import type { PaginationMeta } from '@/lib/pagination';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
+import { EmptyState } from '@/components/ui/empty-state';
+import { QuickEmailDialog } from '@/components/admin/quick-email-dialog';
 import {
   Table,
   TableBody,
@@ -63,6 +65,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
     router.push(`?${params.toString()}`);
   };
   const [members, setMembers] = useState<Member[]>(initialMembers);
+  const [emailDialogMember, setEmailDialogMember] = useState<Member | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -419,8 +422,13 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
             <TableBody>
               {filteredMembers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                    Keine Mitglieder gefunden
+                  <TableCell colSpan={8}>
+                    <EmptyState
+                      icon={Search}
+                      title="Keine Mitglieder gefunden"
+                      description="Passe deine Filter an oder setze die Suche zurück."
+                      size="sm"
+                    />
                   </TableCell>
                 </TableRow>
               ) : (
@@ -467,7 +475,14 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                       )}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground text-sm">
-                      {member.email}
+                      <button
+                        type="button"
+                        onClick={() => setEmailDialogMember(member)}
+                        className="hover:underline hover:text-foreground"
+                        title="E-Mail senden"
+                      >
+                        {member.email}
+                      </button>
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground text-sm hidden lg:table-cell">
                       {member.phone || '—'}
@@ -524,8 +539,13 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {filteredMembers.length === 0 ? (
-            <div className="col-span-full text-center py-12 text-muted-foreground dark:text-muted-foreground">
-              Keine Mitglieder gefunden
+            <div className="col-span-full">
+              <EmptyState
+                icon={Search}
+                title="Keine Mitglieder gefunden"
+                description="Passe deine Filter an oder setze die Suche zurück."
+                size="sm"
+              />
             </div>
           ) : (
             paginatedMembers.map((member) => {
@@ -545,9 +565,14 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                         <CardTitle className="text-sm font-semibold truncate">
                           {member.full_name}
                         </CardTitle>
-                        <p className="text-xs text-muted-foreground dark:text-muted-foreground truncate mt-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setEmailDialogMember(member)}
+                          className="text-xs text-muted-foreground dark:text-muted-foreground truncate mt-0.5 hover:underline text-left"
+                          title="E-Mail senden"
+                        >
                           {member.email}
-                        </p>
+                        </button>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <Checkbox
@@ -799,6 +824,16 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {emailDialogMember && (
+        <QuickEmailDialog
+          userId={emailDialogMember.user_id}
+          recipientName={emailDialogMember.full_name}
+          recipientEmail={emailDialogMember.email}
+          open={!!emailDialogMember}
+          onOpenChange={(open) => !open && setEmailDialogMember(null)}
+        />
       )}
     </div>
   );

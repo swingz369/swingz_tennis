@@ -9,6 +9,10 @@ import { Upload, Download, FileText, AlertCircle, CheckCircle, Users } from 'luc
 import { generateMemberCsvTemplate } from '@/lib/csv/member-import';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:member-import-dialog');
+
 interface ImportResult {
   success: boolean;
   total: number;
@@ -61,7 +65,7 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
         toast.error(`Fehler: ${data.error || 'Import fehlgeschlagen'}`);
       }
     } catch (err) {
-      console.error('Failed to import members:', err);
+      log.error('Failed to import members:', err);
       toast.error('Fehler beim Import der Mitglieder');
     } finally {
       setLoading(false);
@@ -124,7 +128,9 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
               </p>
               <p>
                 3. Optionale Felder: <strong>Rolle</strong> (member/trainer, Standard: member),{' '}
-                <strong>Telefon</strong>, <strong>Notizen</strong>
+                <strong>Telefon</strong>, <strong>Beitrittsdatum</strong> (für bereits bestehende
+                Vereine bei der Übernahme wichtig), <strong>Notizen</strong> u.&nbsp;a. — leere
+                Felder sind kein Problem
               </p>
               <p>
                 4. Bestehende Nutzer werden automatisch erkannt — nur die Club-Membership wird

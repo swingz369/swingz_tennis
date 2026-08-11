@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { notFound } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -193,6 +194,9 @@ function ColorSwatch({ color }: { color: (typeof brandColors)[0] }) {
 // ── Page ──
 
 export default function DesignPreviewPage() {
+  // Produktaudit 26.07.2026 (P4): Design-Preview eingefroren — nur in Dev sichtbar.
+  if (process.env.NODE_ENV === 'production') notFound();
+
   const [activeTab, setActiveTab] = useState('colors');
 
   const tabs = [

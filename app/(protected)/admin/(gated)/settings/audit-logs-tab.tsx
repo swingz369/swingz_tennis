@@ -17,6 +17,10 @@ import { PaginationNav } from '@/components/ui/pagination-nav';
 import type { PaginationMeta } from '@/lib/pagination';
 import { apiFetch } from '@/lib/api-fetch';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:settings:audit-logs-tab');
+
 const actionIcons: Record<string, React.ReactNode> = {
   user_created: <UserCheck className="h-4 w-4 text-success-500" />,
   user_deleted: <ShieldAlert className="h-4 w-4 text-error-500" />,
@@ -86,7 +90,7 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
           setPagination(data.pagination ?? null);
         }
       } catch {
-        console.error('Failed to fetch audit logs');
+        log.error('Failed to fetch audit logs');
       } finally {
         setLoading(false);
       }

@@ -6,6 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:trainers:error');
+
 export default function TrainersError({
   error,
   reset,
@@ -16,7 +20,7 @@ export default function TrainersError({
   const router = useRouter();
 
   useEffect(() => {
-    console.error('Trainers page error:', error);
+    log.error('Trainers page error:', error);
   }, [error]);
 
   return (

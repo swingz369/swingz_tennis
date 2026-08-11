@@ -6,6 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:members:error');
+
 export default function MembersError({
   error,
   reset,
@@ -16,7 +20,7 @@ export default function MembersError({
   const router = useRouter();
 
   useEffect(() => {
-    console.error('Members page error:', error);
+    log.error('Members page error:', error);
   }, [error]);
 
   return (

@@ -9,6 +9,10 @@ import { Loader2 } from 'lucide-react';
 import { Button, type ButtonProps } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ui:loading-button');
+
 export interface LoadingButtonProps extends ButtonProps {
   /**
    * Whether the button is in loading state
@@ -80,7 +84,7 @@ export function useLoadingButton() {
       const result = await fn();
       return result;
     } catch (error) {
-      console.error('Error in loading button:', error);
+      log.error('Error in loading button:', error);
       return null;
     } finally {
       setIsLoading(false);

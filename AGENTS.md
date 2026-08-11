@@ -45,6 +45,26 @@ Dateien, die ein Build-/CI-Schritt erzeugt (SBOM, Coverage-Reports, Testprotokol
 
 ---
 
+## Migrationen
+
+Grund für diese Regeln: `supabase/migrations/` hatte nie eine `supabase_migrations.schema_migrations`-Tracking-Tabelle — es gibt keinen Mechanismus, der protokolliert, welche Datei tatsächlich auf die Live-DB angewendet wurde. Das führte dazu, dass mehrere Policy-Generationen für dieselbe Tabelle unter verschiedenen Namen gleichzeitig aktiv sind, mehrere Migrationen nie gepusht wurden (siehe `docs/DATABASE.md`) und mindestens eine Tabelle nur manuell im Dashboard angelegt wurde. Diese Regeln verhindern, dass das erneut passiert.
+
+### 1. Live-Zustand vor jeder Migration prüfen
+
+`supabase/migrations/*.sql` ist **kein verlässliches Abbild** des Ist-Zustands. Vor dem Schreiben einer neuen Migration, die eine bestehende RLS-Policy, Funktion oder Tabellenstruktur ändert:
+
+1. Den echten Live-Zustand direkt per SQL prüfen (`pg_policies`, `pg_proc`, `information_schema.tables` — Befehle in `docs/DATABASE.md`), nicht aus Migrationsdateien raten.
+2. Exakte Policy-/Funktionsnamen aus der Live-Abfrage übernehmen, nicht aus einer älteren Migrationsdatei kopieren — sie könnte längst durch eine andere, abweichend benannte Policy überholt sein.
+3. Jede `CREATE POLICY`/`CREATE FUNCTION` in der neuen Migration mit einem passenden `DROP POLICY IF EXISTS <exakter Name>`/`CREATE OR REPLACE FUNCTION` versehen — niemals eine Policy unter neuem Namen anlegen, die eine bestehende nur inhaltlich ersetzen soll (sonst bleiben beide aktiv, RLS verknüpft sie mit OR).
+
+### 2. `docs/DATABASE.md` bei jeder Policy-relevanten Änderung mitpflegen
+
+Wer eine Migration schreibt, die RLS-Policies, Scoping-Helper-Funktionen oder das Rollenmodell betrifft, aktualisiert im selben Zug `docs/DATABASE.md` (Rollen-/Scoping-Modell, bekannte Altlasten) — nicht als separaten Folge-PR.
+
+### 3. Migrationsdateien sind Historie, keine lebenden Dokumente
+
+Einmal gemergte Migrationsdateien werden nicht mehr nachträglich editiert (wie bei ADRs, siehe oben) — eine Korrektur bekommt eine neue Datei mit späterem Zeitstempel. `docs/DATABASE.md` ist der lebende Ist-Zustand; die Migrationsdateien bleiben das Änderungsprotokoll.
+
 ## Konflikte
 
 Widerspricht dieses Dokument `CLAUDE.md` (oder einer äquivalenten Config-Datei eines anderen Tools) in einer nicht-Doku-Frage, gilt `CLAUDE.md`. In Doku-Governance-Fragen gilt dieses Dokument.

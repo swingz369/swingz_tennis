@@ -58,6 +58,10 @@ import type {
 import { useUserRole } from '@/hooks/use-user-role';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('admin:trainers:[id]:trainer-detail-client');
+
 interface WeeklyAvailabilitySlot {
   id?: string;
   day_of_week: number;
@@ -161,7 +165,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
         );
       }
     } catch (err) {
-      console.error('Failed to load availability:', err);
+      log.error('Failed to load availability:', err);
     } finally {
       setAvailLoading(false);
       setWeeklyLoading(false);
@@ -184,7 +188,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
         loadTrialTrainings(data.trainerProfile.userId);
       }
     } catch (err) {
-      console.error('Failed to load trainer:', err);
+      log.error('Failed to load trainer:', err);
       toast.error('Fehler beim Laden des Trainerprofils');
     } finally {
       setIsLoading(false);
@@ -221,7 +225,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
       toast.success('Trainerprofil erfolgreich aktualisiert');
     } catch (error) {
       toast.error('Fehler beim Aktualisieren des Trainerprofils');
-      console.error('Update error:', error);
+      log.error('Update error:', error);
     }
   };
 
@@ -238,7 +242,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
       toast.success('Status aktualisiert');
     } catch (error) {
       toast.error('Fehler beim Aktualisieren des Status');
-      console.error('Status update error:', error);
+      log.error('Status update error:', error);
     }
   };
 
@@ -258,7 +262,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
       toast.success('Qualifikation erfolgreich verifiziert');
     } catch (error) {
       toast.error('Fehler bei der Verifizierung');
-      console.error('Verification error:', error);
+      log.error('Verification error:', error);
     }
   };
 

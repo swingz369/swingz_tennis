@@ -12,7 +12,9 @@ test.describe('Tutorial: Member Bookings & Attendance', () => {
   test('Step 1: /bookings loads with stat row and upcoming list', async ({ page }) => {
     await page.goto(`${BASE_URL}/bookings`, { waitUntil: 'networkidle', timeout: 20_000 });
     await expect(page.locator('body')).toContainText(/buchung|booking/i, { timeout: 10_000 });
-    await expect(page.getByText(/kommende|upcoming|nächste/i).first()).toBeVisible();
+    // Default-Tab ist "Platz-Kalender" (app/(protected)/bookings/page.tsx) — es gibt keinen
+    // separaten "kommende Buchungen"-Text mehr; stattdessen die Tab-Leiste mit "Meine Buchungen".
+    await expect(page.getByText(/meine buchungen/i).first()).toBeVisible();
     await screenshotStep(page, 'member-bookings-and-attendance/step-1-bookings-page');
   });
 

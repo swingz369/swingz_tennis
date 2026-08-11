@@ -5,6 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('scheduler:error');
+
 export default function Error({
   error,
   reset,
@@ -13,7 +17,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Scheduler error:', error);
+    log.error('Scheduler error:', error);
   }, [error]);
 
   return (
@@ -27,8 +31,7 @@ export default function Error({
           </div>
           <CardTitle className="text-2xl text-center">Fehler im Planer</CardTitle>
           <CardDescription className="text-center">
-            {error.message ||
-              'Der Planer konnte nicht geladen werden. Bitte versuchen Sie es erneut.'}
+            {error.message || 'Der Planer konnte nicht geladen werden. Bitte versuche es erneut.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
