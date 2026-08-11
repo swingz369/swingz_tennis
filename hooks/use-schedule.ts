@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { analytics } from '@/lib/analytics';
 import { QUERY_KEYS, STALE_TIMES } from '@/lib/cache';
 
 export interface Session {
@@ -104,43 +103,6 @@ export function useUpdateSchedule() {
     },
     onSuccess: () => {
       toast.success('Termin verschoben');
-    },
-  });
-}
-
-export function useOptimizeSchedule() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ clubId }: { clubId: string }) => {
-      const res = await fetch('/api/schedule/optimize', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clubId }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Optimization failed');
-      }
-
-      return data;
-    },
-    onSuccess: (data, variables) => {
-      if (data.schedule) {
-        queryClient.setQueryData(QUERY_KEYS.schedule(variables.clubId), data.schedule);
-      }
-      toast.success('Stundenplan optimiert');
-      analytics.scheduleOptimized(variables.clubId);
-    },
-    onError: (error, variables) => {
-      const message = error instanceof Error ? error.message : 'Optimierung fehlgeschlagen';
-      toast.error(message);
-      analytics.trackEvent('schedule_optimize_failed', {
-        error: message,
-        clubId: variables.clubId,
-      });
     },
   });
 }
