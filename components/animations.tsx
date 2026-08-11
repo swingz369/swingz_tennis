@@ -143,10 +143,22 @@ export function ScrollReveal({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const prefersReduced = usePrefersReducedMotion();
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+
+    // Bereits sichtbarer Inhalt wird sofort eingeblendet, ohne auf den
+    // Observer zu warten. Ohne das blieb der komplette Dashboard-Inhalt
+    // unsichtbar, bis der Nutzer scrollte — und auf einer scheinbar leeren
+    // Seite scrollt niemand. Der Fehlerfall muss "sichtbar, nur nicht
+    // animiert" sein, nicht "unsichtbar".
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      setIsVisible(true);
+      return;
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -162,11 +174,14 @@ export function ScrollReveal({
     return () => observer.disconnect();
   }, [delay]);
 
+  // Der Doc-Kommentar oben versprach das bereits, implementiert war es nie.
+  const revealed = isVisible || prefersReduced;
+
   return (
     <div
       ref={ref}
       className={`transition-all duration-700 ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        revealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       } ${className}`}
     >
       {children}
