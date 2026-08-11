@@ -33,6 +33,17 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const isSuperadmin = await verifyRole(auth, 'superadmin');
       if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
 
+      // verifyRole() prüft nur die GLOBALE Rolle des Aufrufers, nicht die
+      // Zugehörigkeit zum Verein dieser Saison. Ohne den Check hier konnte
+      // ein Admin eines beliebigen anderen Vereins die Wochenplanung einer
+      // fremden Saison lesen. POST hatte den Check bereits, GET nicht.
+      if (!isSuperadmin) {
+        const hasClubAccess = auth.memberships.some(
+          (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
+        );
+        if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
+      }
+
       const rows = await db
         .select({
           group_id: seasonGroupWeeks.group_id,

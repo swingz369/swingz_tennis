@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-15T08:20:37.901Z",
+  "generatedAt": "2026-08-11T23:31:13.068Z",
   "nodeVersion": "v24.15.0",
   "baseUrl": "http://localhost:3000",
   "runType": "e2e-playwright",
@@ -8,6 +8,31 @@
     "NUM_TRAINERS": 8,
     "NUM_COURTS": 5
   },
-  "runs": {},
-  "speedups": {}
+  "runs": {
+    "(1) baseline greedy": {
+      "label": "(1) baseline greedy",
+      "status": "error",
+      "timestamp": "2026-08-11T23:31:12.905Z",
+      "endToEndMs": 29,
+      "error": "HTTP 403: {\"error\":\"Invalid or missing CSRF token\"}"
+    },
+    "(2) with caching": {
+      "label": "(2) with caching",
+      "status": "error",
+      "timestamp": "2026-08-11T23:31:12.961Z",
+      "endToEndMs": 23,
+      "error": "HTTP 403: {\"error\":\"Invalid or missing CSRF token\"}"
+    },
+    "(3) backtracking": {
+      "label": "(3) backtracking",
+      "status": "error",
+      "timestamp": "2026-08-11T23:31:13.014Z",
+      "endToEndMs": 33,
+      "error": "HTTP 403: {\"error\":\"Invalid or missing CSRF token\"}"
+    }
+  },
+  "speedups": {
+    "(2) with caching": "1.26×",
+    "(3) backtracking": "0.88×"
+  }
 }
