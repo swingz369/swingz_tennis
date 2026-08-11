@@ -28,9 +28,16 @@ function getDb(): Database {
     //   requests, so max:1 serializes them behind a single connection; a few
     //   headroom connections avoid that without exhausting the Supavisor pool.
     // - prepare: false (required for Supabase PgBouncer / Supavisor poolers)
-    // - ssl: false — self-hosted Supavisor (supabase.swingz.cloud) does not
-    //   terminate TLS on the pooler port; forcing SSL here throws
-    //   ERR_SSL_WRONG_VERSION_NUMBER on every query.
+    // - ssl: per DATABASE_SSL steuerbar. Der self-hosted Supavisor auf
+    //   supabase.swingz.cloud terminiert auf dem Pooler-Port (6543) KEIN
+    //   TLS — `sslmode=require` wird dort abgewiesen, erzwungenes SSL
+    //   endet in ERR_SSL_WRONG_VERSION_NUMBER bei jeder Query. Solange das
+    //   so ist, bleibt der Default `false`, und der DB-Verkehr läuft
+    //   unverschlüsselt übers Netz (inkl. Passwort im Startup-Paket).
+    //   Sobald TLS am Pooler aktiv ist: DATABASE_SSL=require setzen — kein
+    //   Deploy nötig, und der Rollback ist dieselbe Variable. Ein fest
+    //   verdrahteter Umschalter hier würde Prod lahmlegen, falls Code und
+    //   Server-Konfiguration in der falschen Reihenfolge live gehen.
     // - connect_timeout: 15s to handle cold starts
     // - connection.statement_timeout: 10s — a hung query fails instead of
     //   blocking every other request queued behind it on the same connection.
@@ -40,7 +47,7 @@ function getDb(): Database {
       connect_timeout: 15,
       max_lifetime: 60 * 5, // 5 minutes — shorter than typical PG server timeout, prevents stale connections on warm starts
       prepare: false,
-      ssl: false,
+      ssl: process.env.DATABASE_SSL === 'require' ? 'require' : false,
       connection: {
         statement_timeout: 10_000,
       },
