@@ -74,8 +74,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Audit dependencies (fail on high/critical, known next.js CVEs suppressed)
-        run: bash scripts/audit-suppress.sh
+      - name: Audit dependencies (fail on high/critical)
+        run: pnpm audit --audit-level=high
 
   e2e-smoke:
     name: E2E Smoke (billing-flow)

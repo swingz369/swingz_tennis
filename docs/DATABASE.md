@@ -71,7 +71,16 @@ Entfernt wurden drei Fehlerklassen, keine pauschale Zusammenfassung:
 
 **Verifikationsmethode** (empfohlen für jede künftige Policy-Konsolidierung): vor dem Anwenden alles in einer Transaktion mit `ROLLBACK` durchspielen und pro Rolle (`set local request.jwt.claims` + `set local role authenticated`) die sichtbaren Zeilen je betroffener Tabelle vorher/nachher zählen. Ergebnis hier: 27 von 28 Zähler-Paaren identisch, einzige Abweichung `users` für Superadmin 446 → 437 — exakt die 9 vereinsfremden User, die nur über den Bypass sichtbar waren.
 
-Nicht angefasst: `trainer_absences` sieht nach Dublette aus, ist keine. `trainers_can_view_own_absences` prüft `trainer_absences.user_id`, und diese Spalte ist in **allen 22 Zeilen NULL** — der einzige funktionierende Trainer-Pfad ist die ältere Policy mit dem E-Mail-Join zwischen `trainers` und `users`. Erst `user_id` befüllen (Datenmigration), dann den E-Mail-Join entfernen.
+`trainer_absences` — **erledigt am 12.08.2026** durch `20260812030000_trainer_absences_user_id_backfill.sql` (angewendet und verifiziert). Vorher sah die Tabelle nach einer Policy-Dublette aus, war aber keine: `trainers_can_view_own_absences` prüft `trainer_absences.user_id`, und die Spalte war in allen Zeilen NULL — der einzige funktionierende Trainer-Pfad war die ältere Policy mit dem E-Mail-Join zwischen `trainers` und `users`.
+
+Umgesetzt:
+
+- Trigger `trg_trainer_absences_set_user_id` leitet `user_id` bei INSERT und bei `UPDATE OF trainer_id` aus `trainers.user_id` ab. Nötig, weil ein Admin beim Anlegen nur `trainer_id` setzt — ohne den Trigger wäre die Zeile für den betroffenen Trainer unsichtbar, sobald der E-Mail-Join weg ist. BEFORE-Trigger laufen vor der RLS-`WITH CHECK`-Prüfung, der Trainer-INSERT funktioniert dadurch auch ohne explizites `user_id`.
+- Backfill: 4 der 24 Zeilen aufgelöst. Die übrigen 20 hängen an 10 Trainer-Datensätzen aus abgebrochenen RLS-Integrationstests (`trainer-rls-<timestamp>@test.com`) plus dem Sentinel `unassigned@placeholder.local` — für keinen davon existiert eine passende `users`-Zeile, sie sind über E-Mail genauso wenig auflösbar. **Offen:** dieses Aufräumen ist ein `DELETE` auf Live-Daten und wurde bewusst nicht mitgemacht.
+- Die vier E-Mail-Join-Policies (`Trainers can view/create/update/delete …`) sind entfernt und durch `user_id`-Varianten ersetzt.
+- Nebenbefund mitgefixt: `trainers_can_manage_own_absences` lag als `FOR ALL` **ohne** Status-Bedingung an — Trainer durften damit auch bereits genehmigte Abwesenheiten ändern und löschen, während die abgelösten E-Mail-Policies dafür ein `status = 'pending'` hatten. Ersetzt durch getrennte INSERT/UPDATE/DELETE-Policies, die das `pending` wieder erzwingen.
+
+Policy-Satz danach: je ein Trainer- und ein Admin-Pfad pro Kommando, keine Generationen mehr nebeneinander.
 
 ## FORCE RLS + anonyme Schreibrechte (Stand 12.08.2026, angewendet)
 
