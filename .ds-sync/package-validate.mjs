@@ -483,7 +483,7 @@ if (!pw) {
       // components/<group>/<Name>/<Name>.html → <group>__<Name>.png
       const [, group, name] = rel.match(/^components\/([^/]+)\/([^/]+)\//) ?? [,'misc', rel.split('/').pop()];
       const shot = join(shotDir, `${group}__${name}.png`);
-      let pngBytes = 0, rootEmpty = true, err = null, caught = 0, firstCaught = null, texts = [], nEls = 0, variantsIdentical = false, hollow = [], maxHeight = 0, nPlaceholder = 0, nFallback = 0, gridOverflow = null, gridOverflowCells = [], storyExports = [];
+      let pngBytes = 0, rootEmpty = true, err = null, caught = 0, firstCaught = null, texts = [], variantsIdentical = false, hollow = [], maxHeight = 0, nPlaceholder = 0, nFallback = 0, gridOverflow = null, gridOverflowCells = [], storyExports = [];
       try {
         await page.goto(`http://127.0.0.1:${port}/${rel}`, { waitUntil: 'networkidle', timeout: 15000 });
         // Per-mount try/catch in the preview writes `⚠ <message>` into the
@@ -492,7 +492,7 @@ if (!pw) {
         // innerHTMLs for the thin / variantsIdentical checks below. Portal
         // roots under document.body are included so a portalled Dialog isn't
         // read as empty.
-        ({ rootEmpty, caught, firstCaught, texts, nEls, variantsIdentical, hollow, maxHeight, nPlaceholder, nFallback, gridOverflow, gridOverflowCells, storyExports } = await page.evaluate(() => {
+        ({ rootEmpty, caught, firstCaught, texts, variantsIdentical, hollow, maxHeight, nPlaceholder, nFallback, gridOverflow, gridOverflowCells, storyExports } = await page.evaluate(() => {
           // A mount "paints something" when it (or any descendant) has a
           // visible replaced element, background, border, or shadow. This
           // discriminates a Divider (1px border, paints) from an empty

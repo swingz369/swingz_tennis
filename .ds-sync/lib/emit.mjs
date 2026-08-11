@@ -8,7 +8,6 @@
 
 import { build } from 'esbuild';
 import {
-  cpSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -336,7 +335,7 @@ function storySnippets(c, visibleStoryIds) {
   return out;
 }
 
-export function emitPerComponent({ src, components, OUT, GLOBAL, PKG, VERSION, OVERRIDES, REPLACES, PROVIDER, hasDecorators, builtPreviews, propsBodyFor, compoundsFor, smartDefaultProps }) {
+export function emitPerComponent({ components, OUT, GLOBAL, PKG, VERSION, OVERRIDES, REPLACES, PROVIDER, hasDecorators, builtPreviews, propsBodyFor, compoundsFor, smartDefaultProps }) {
   // PROVIDER arrives pre-validated by package-build's gate: invalid
   // identifier paths and provably-unexported heads exit the build
   // ([PROVIDER_INVALID]/[PROVIDER_UNEXPORTED]); unprovable heads proceed

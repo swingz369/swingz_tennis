@@ -18,6 +18,9 @@ const eslintConfig = [
       'supabase/**',
       'drizzle/**',
       'public/**',
+      // Vendor: React-Kopie des Design-System-Bundles, kein eigener Code.
+      // Die 71 Fehler daraus verdecken sonst echte Treffer. Auch in .gitignore.
+      'ds-bundle/**',
       // Vercel
       '.vercel/**',
       // Temp & cache
