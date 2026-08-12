@@ -7,9 +7,13 @@ import { withApiAuth } from '@/lib/api-auth';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { db } from '@/src/infrastructure/persistence/db';
-import { users, userTrainingPreferences } from '@/src/infrastructure/persistence/schema';
+import {
+  users,
+  userTrainingPreferences,
+  userClubMemberships,
+} from '@/src/infrastructure/persistence/schema';
 import { seasonStatistics } from '@/src/infrastructure/persistence/season-planning-schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, count } from 'drizzle-orm';
 import type { PreferencesSummary } from '@/lib/season-planning/types';
 import type { SkillLevel } from '@/lib/types/season-planning';
 import { DAY_LABELS } from '@/lib/season-planning/schedule-constants';
@@ -56,8 +60,25 @@ export async function GET(request: NextRequest, context: RouteContext) {
           )
         );
 
-      const totalMembers = prefs.length;
+      // Bezugsgröße sind die planungsrelevanten Mitglieder des Vereins, nicht die
+      // vorhandenen Präferenz-Datensätze: wer das Formular nie geöffnet hat, hat
+      // keine Zeile und fiel damit aus Zähler UND Nenner — die Quote konnte
+      // strukturell nie unter 100 % fallen und verschwieg genau die Mitglieder,
+      // wegen denen man sie liest.
+      const [eligible] = await db
+        .select({ value: count() })
+        .from(userClubMemberships)
+        .where(
+          and(
+            eq(userClubMemberships.club_id, season.club_id),
+            eq(userClubMemberships.role, 'member'),
+            eq(userClubMemberships.is_active, true),
+            eq(userClubMemberships.include_in_planning, true)
+          )
+        );
+
       const submittedPrefs = prefs.filter((p) => p.pref.is_submitted);
+      const totalMembers = Math.max(eligible?.value ?? 0, prefs.length);
       const responseRate = totalMembers > 0 ? (submittedPrefs.length / totalMembers) * 100 : 0;
 
       // Load slot failure rates

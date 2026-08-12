@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Users, Check, X, Loader2, UserCheck } from 'lucide-react';
 import { useSessionRsvps } from '@/hooks/use-rsvp';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
-import { de } from '@/lib/locale';
+import { asUtcIso, formatTime as formatTimeBerlin, formatWeekdayDate } from '@/lib/format';
 import { apiFetch } from '@/lib/api-fetch';
 
 interface TrainerRsvpListProps {
@@ -21,19 +20,34 @@ interface TrainerRsvpListProps {
   }>;
   trainerId?: string;
   trainerName?: string;
+  /** Von außen gesteuerte Auswahl — der "Anwesenheit"-Knopf einer Einheit
+   *  öffnet damit direkt deren Teilnehmerliste. */
+  selectedSessionId?: string | null;
+  onSelectSession?: (sessionId: string) => void;
 }
 
-export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsvpListProps) {
+export function TrainerRsvpList({
+  sessions,
+  trainerId,
+  trainerName,
+  selectedSessionId: controlledSessionId,
+  onSelectSession,
+}: TrainerRsvpListProps) {
   const effectiveTrainerId = trainerId || 'unknown';
   const effectiveTrainerName = trainerName || 'Trainer';
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [ownSessionId, setOwnSessionId] = useState<string | null>(null);
+  const selectedSessionId = controlledSessionId ?? ownSessionId;
+  const setSelectedSessionId = (id: string) => {
+    setOwnSessionId(id);
+    onSelectSession?.(id);
+  };
   const [checkedIn, setCheckedIn] = useState<Set<string>>(new Set());
   const [checkingIn, setCheckingIn] = useState(false);
 
   // Auto-select first upcoming session
   useEffect(() => {
     if (sessions.length > 0 && !selectedSessionId) {
-      setSelectedSessionId(sessions[0].id);
+      setOwnSessionId(sessions[0].id);
     }
   }, [sessions, selectedSessionId]);
 
@@ -46,7 +60,15 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
     if (checkedIn.has(memberId)) return;
     setCheckingIn(true);
     try {
-      const today = new Date().toISOString();
+      // Das Datum des Anwesenheitseintrags ist der Termin der Einheit, nicht der
+      // Zeitpunkt des Klicks. Vorher stand hier `new Date()`: Ein am 12.08.
+      // vorbereiteter Check-in für das Training am 03.11. landete unter dem
+      // 12.08. und verfälschte jede spätere Anwesenheitsauswertung.
+      const selected = sessions.find((s) => s.id === selectedSessionId);
+      const sessionStart = selected?.startTime || selected?.timeslot_start;
+      const today = sessionStart
+        ? new Date(asUtcIso(sessionStart) as string).toISOString()
+        : new Date().toISOString();
       const res = await apiFetch('/api/attendance-records', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -74,21 +96,11 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
     }
   };
 
-  const formatTime = (iso: string) => {
-    try {
-      return format(new Date(iso), 'HH:mm');
-    } catch {
-      return iso;
-    }
-  };
-
-  const formatDate = (iso: string) => {
-    try {
-      return format(new Date(iso), 'EEEE, dd.MM.', { locale: de });
-    } catch {
-      return iso;
-    }
-  };
+  // `timeslot_start` trägt keine Zeitzone (siehe asUtcIso in @/lib/format) —
+  // date-fns hätte den Wert als deutsche Ortszeit gelesen und ein
+  // 18:00-Training als 16:00 angezeigt.
+  const formatTime = (iso: string) => formatTimeBerlin(asUtcIso(iso));
+  const formatDate = (iso: string) => formatWeekdayDate(asUtcIso(iso));
 
   return (
     <Card>

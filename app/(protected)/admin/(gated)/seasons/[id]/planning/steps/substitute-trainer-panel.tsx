@@ -102,7 +102,22 @@ export function SubstituteTrainerPanel() {
         setFormToWeek('26');
         setFormTrainerId('');
         setShowForm(false);
-        toast.success('Vertretung hinzugefügt');
+        // Wochennummern ab Saisonbeginn zählen Ferienwochen mit — welche Termine
+        // wirklich betroffen sind, sieht der Admin sonst nirgends.
+        const dates: string[] = data.affectedDates ?? [];
+        if (dates.length > 0) {
+          toast.success(`Vertretung für ${dates.length} Termine`, {
+            description: dates
+              .map((d) => new Date(d).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' }))
+              .join(', '),
+            duration: 10000,
+          });
+        } else {
+          toast.success('Vertretung hinzugefügt', {
+            description:
+              'Die Saison ist noch nicht veröffentlicht — die konkreten Termine stehen erst danach fest.',
+          });
+        }
       } else {
         const err = await res.json().catch(() => ({}));
         toast.error(err.error || 'Fehler beim Hinzufügen');

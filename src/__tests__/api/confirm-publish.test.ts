@@ -109,6 +109,8 @@ interface MockConfig {
   newScheduleId: string;
   /** Session insert results (one per week) */
   sessions: unknown[];
+  /** Bestehende künftige Sessions, die beim erneuten Veröffentlichen wegfallen */
+  staleSessions: unknown[];
   /** User email query result */
   users: unknown[];
   /** If set, the Nth session insert (0-indexed) throws this error */
@@ -137,6 +139,7 @@ function resetConfig(overrides: Partial<MockConfig> = {}): MockConfig {
     schedule: [DEFAULT_SCHEDULE],
     newScheduleId: DEFAULT_NEW_SCHEDULE_ID,
     sessions: DEFAULT_SESSIONS,
+    staleSessions: [],
     users: DEFAULT_USERS,
     criticalConflicts: [],
     ...overrides,
@@ -154,15 +157,19 @@ function createTx(): any {
   const tx: any = {};
 
   tx.select = (..._args: unknown[]) => {
-    // Inside the transaction, the only SELECT is for finding an existing
-    // schedule (`tx.select().from(schedules).where(...).limit(1)`).
-    // We resolve with config.schedule regardless of the table.
+    // Zwei SELECTs laufen in der Transaktion: die bestehende Schedule
+    // (`from(schedules)`) und beim erneuten Veröffentlichen die künftigen
+    // Sessions (`from(sessions)`), die verworfen werden.
     const c: any = {};
-    c.from = vi.fn((_table?: unknown) => c);
+    let table = '';
+    c.from = vi.fn((t?: unknown) => {
+      table = typeof t === 'object' && t !== null ? ((t as any)._table ?? '') : '';
+      return c;
+    });
     c.where = vi.fn(() => c);
     c.limit = vi.fn(() => c);
     c.then = (resolve: (v: unknown) => unknown) => {
-      resolve(config.schedule);
+      resolve(table === 'sessions' ? config.staleSessions : config.schedule);
       return c;
     };
     return c;
@@ -247,6 +254,7 @@ vi.mock('drizzle-orm', async (importOriginal) => {
     ...(actual as any),
     eq: vi.fn(() => ({})),
     and: vi.fn(() => ({})),
+    gte: vi.fn(() => ({})),
     inArray: vi.fn(() => ({})),
   };
 });
@@ -306,6 +314,7 @@ vi.mock('@/src/infrastructure/persistence/schema', () => ({
   sessions: {
     _table: 'sessions',
     id: 'sessions_table',
+    plan_entry_id: 'plan_entry_id',
     schedule_id: 'schedule_id',
     trainer_id: 'trainer_id',
     group_ids: 'group_ids',
@@ -364,13 +373,18 @@ vi.mock('@/src/infrastructure/persistence/schema', () => ({
 
 // ── Holiday checking (now integrated into the session creation loop) ───
 const mockIsDateInHolidays = vi.fn().mockReturnValue(false);
-const mockGetHolidaysForState = vi.fn().mockReturnValue([]);
+const mockGetHolidaysForState = vi.fn().mockResolvedValue([]);
 const mockResolveBundeslandCode = vi.fn().mockReturnValue('HE');
 
 vi.mock('@/lib/season-planning/holidays', () => ({
   isDateInHolidays: (...args: unknown[]) => mockIsDateInHolidays(...args),
-  getHolidaysForState: (...args: unknown[]) => mockGetHolidaysForState(...args),
   resolveBundeslandCode: (...args: unknown[]) => mockResolveBundeslandCode(...args),
+}));
+
+// Die Ferien stammen seit dem 12.08.2026 aus der Tabelle `school_holidays`,
+// nicht mehr aus einer hartkodierten Liste im Code.
+vi.mock('@/lib/season-planning/holidays.server', () => ({
+  loadHolidaysForState: (...args: unknown[]) => mockGetHolidaysForState(...args),
 }));
 
 const mockMarkHolidaySessions = vi.fn().mockResolvedValue(0);
@@ -432,6 +446,9 @@ vi.mock('@/lib/csrf', () => ({
 
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimitOrFail: vi.fn().mockResolvedValue(null),
+  // Gibt einen verbrauchten Versuch bei Fehlschlag/409 wieder frei — sonst
+  // sperrt ein misslungener Publish den Admin für eine Stunde aus.
+  releaseRateLimitSlot: vi.fn().mockResolvedValue(undefined),
 }));
 
 const mockAuthCtx = {
@@ -649,21 +666,52 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
       expect(body.success).toBe(true);
     });
 
-    it('skips already published entries', async () => {
+    // Ein Eintrag mit status='published' wurde früher übersprungen — damit war
+    // ein einmal veröffentlichter Plan für immer eingefroren. Jetzt wird er
+    // mitveröffentlicht.
+    it('veröffentlicht auch bereits veröffentlichte Einträge erneut', async () => {
       resetConfig({
         entries: [
           { ...DEFAULT_ENTRY, id: 'entry-001', status: 'published' },
           { ...DEFAULT_ENTRY, id: 'entry-002', status: 'draft', expected_participants: [] },
         ],
         schedule: [DEFAULT_SCHEDULE],
-        sessions: Array.from({ length: 16 }, (_, i) => ({ id: `session-e2-w${i + 1}` })),
+        sessions: Array.from({ length: 32 }, (_, i) => ({ id: `session-w${i + 1}` })),
       });
       mockGetDb = vi.fn(() => buildDb());
 
       const res = await POST(buildRequest(), ctx());
       expect(res.status).toBe(200);
       const body = await res.json();
-      // Only entry-002 publishes 16 weeks
+      // Beide Einträge × 16 Wochen
+      expect(body.publishedSessions).toBe(32);
+    });
+
+    // Erneutes Veröffentlichen einer laufenden Saison: künftige Sessions werden
+    // verworfen und neu erzeugt, vergangene bleiben unangetastet.
+    it('ersetzt bei einer veröffentlichten Saison die künftigen Sessions', async () => {
+      const iso = (offsetDays: number) =>
+        new Date(Date.now() + offsetDays * 86400000).toISOString().substring(0, 10);
+      resetConfig({
+        season: [
+          {
+            ...DEFAULT_SEASON,
+            planning_status: 'published',
+            start_date: iso(7),
+            end_date: iso(7 + 16 * 7),
+          },
+        ],
+        entries: [DEFAULT_ENTRY],
+        schedule: [DEFAULT_SCHEDULE],
+        staleSessions: [{ id: 'old-session-1' }, { id: 'old-session-2' }],
+      });
+      mockGetDb = vi.fn(() => buildDb());
+
+      const res = await POST(buildRequest(), ctx());
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.republish).toBe(true);
+      expect(body.removedSessions).toBe(2);
       expect(body.publishedSessions).toBe(16);
     });
 
@@ -683,6 +731,17 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
   // ──────────────────────────────────────────────────────────
 
   describe('transaction rollback', () => {
+    /**
+     * Bis zum 12.08.2026 reichte die Route `err.message` unverändert an den Client
+     * durch — im Fehlerfall das komplette Insert-Statement samt aller Parameter
+     * (~80.000 Zeichen inklusive Mitglieds-UUIDs) mitten in der Oberfläche.
+     * Geprüft wird deshalb beides: verständliche Meldung, keine DB-Interna.
+     */
+    function expectGenericError(message: string) {
+      expect(message).toContain('konnte nicht veröffentlicht werden');
+      expect(message).not.toMatch(/insert into|constraint|planning_conflicts|failed/i);
+    }
+
     it('rolls back sessions if audit trail insert fails', async () => {
       resetConfig({
         entries: [DEFAULT_ENTRY],
@@ -694,7 +753,7 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
       const res = await POST(buildRequest(), ctx());
       expect(res.status).toBe(500);
       const body = await res.json();
-      expect(body.error).toContain('Constraint violation');
+      expectGenericError(body.error);
     });
 
     it('rolls back sessions if season status update fails', async () => {
@@ -708,7 +767,7 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
       const res = await POST(buildRequest(), ctx());
       expect(res.status).toBe(500);
       const body = await res.json();
-      expect(body.error).toContain('Check constraint');
+      expectGenericError(body.error);
     });
 
     it('rolls back sessions if conflict persistence fails', async () => {
@@ -724,7 +783,7 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
       const res = await POST(buildRequest(), ctx());
       expect(res.status).toBe(500);
       const body = await res.json();
-      expect(body.error).toContain('planning_conflicts');
+      expectGenericError(body.error);
     });
 
     it('rolls back sessions if a mid-way session insert fails', async () => {
@@ -738,7 +797,7 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
       const res = await POST(buildRequest(), ctx());
       expect(res.status).toBe(500);
       const body = await res.json();
-      expect(body.error).toContain('Session insert failed');
+      expectGenericError(body.error);
     });
 
     it('rolls back if schedule insert fails (no existing schedule)', async () => {
@@ -752,7 +811,7 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
       const res = await POST(buildRequest(), ctx());
       expect(res.status).toBe(500);
       const body = await res.json();
-      expect(body.error).toContain('Schedule insert failed');
+      expectGenericError(body.error);
     });
   });
 
@@ -1105,7 +1164,7 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
         return true; // ALL sessions are considered on holiday
       });
       mockResolveBundeslandCode.mockReturnValue('HE');
-      mockGetHolidaysForState.mockReturnValue([
+      mockGetHolidaysForState.mockResolvedValue([
         { name: 'Sommerferien', start: '2025-07-07', end: '2025-08-15' },
       ]);
 

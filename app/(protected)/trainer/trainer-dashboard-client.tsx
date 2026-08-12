@@ -1,6 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
+import {
+  asUtcIso,
+  formatDate as formatDateBerlin,
+  formatTime as formatTimeBerlin,
+} from '@/lib/format';
 import {
   Calendar,
   Users,
@@ -41,24 +47,33 @@ export interface TrainerStats {
 interface TrainerDashboardClientProps {
   sessions: TrainerSession[];
   stats: TrainerStats;
+  trainerId?: string;
+  trainerName?: string;
 }
 
+// `sessions.timeslot_start/-end` tragen keine Zeitzone (siehe asUtcIso). Ohne
+// die Korrektur las der Browser sie als deutsche Ortszeit und zeigte ein
+// 18:00-Training als 16:00 an.
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('de-DE', {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-  });
+  return formatDateBerlin(asUtcIso(iso));
 }
 
 function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString('de-DE', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatTimeBerlin(asUtcIso(iso));
 }
 
-export default function TrainerDashboardClient({ sessions, stats }: TrainerDashboardClientProps) {
+export default function TrainerDashboardClient({
+  sessions,
+  stats,
+  trainerId,
+  trainerName,
+}: TrainerDashboardClientProps) {
+  // Die Auswahl liegt hier statt in TrainerRsvpList, damit der
+  // "Anwesenheit"-Knopf einer Einheit direkt die passende Teilnehmerliste
+  // öffnen kann. Vorher verwies er auf /attendance-history — die Ansicht, in
+  // der ein MITGLIED seine eigene Anwesenheit sieht; sie ignoriert den
+  // session-Parameter und zeigte dem Trainer "Keine Einträge gefunden".
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   // Calculate today's sessions
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -253,14 +268,20 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
                         {formatTime(session.endTime)}
                       </p>
                     </div>
-                    <Link
-                      href={`/attendance-history?session=${session.id}`}
+                    <button
+                      type="button"
                       className="flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-xl bg-brand-light/10 hover:bg-brand-light/20 transition-all text-brand-light text-xs font-medium"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedSessionId(session.id);
+                        document
+                          .getElementById('session-teilnehmer')
+                          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
                     >
                       <ClipboardCheck className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">Anwesenheit</span>
-                    </Link>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -271,7 +292,15 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
 
       {/* ── Session RSVPs & Check-in ── */}
       <ScrollReveal delay={350}>
-        <TrainerRsvpList sessions={rsvpSessions} />
+        <div id="session-teilnehmer">
+          <TrainerRsvpList
+            sessions={rsvpSessions}
+            trainerId={trainerId}
+            trainerName={trainerName}
+            selectedSessionId={selectedSessionId}
+            onSelectSession={setSelectedSessionId}
+          />
+        </div>
       </ScrollReveal>
 
       {/* ── Quick Actions ── */}

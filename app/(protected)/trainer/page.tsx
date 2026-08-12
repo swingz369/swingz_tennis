@@ -1,4 +1,5 @@
 import { requireAuth } from '@/lib/auth';
+import { asUtcIso } from '@/lib/format';
 import { redirect } from 'next/navigation';
 import TrainerDashboardClient from './trainer-dashboard-client';
 import type { TrainerSession, TrainerStats } from './trainer-dashboard-client';
@@ -26,8 +27,14 @@ export default async function TrainerPage() {
   const { data: rawSessions } = await supabase
     .from('sessions')
     .select(
-      `id, timeslot_start, timeslot_end, max_participants,
-       courts(name), groups(name),
+      // `groups(name)` stand hier bis zum 12.08.2026 als Einbettung. Zwischen
+      // `sessions` und `groups` gibt es aber keinen Fremdschlüssel — die Gruppen
+      // hängen als jsonb-Array in `group_ids`. PostgREST beantwortete die Abfrage
+      // deshalb mit PGRST200, `data` blieb null, und da der Fehler nicht geprüft
+      // wurde, zeigte das Trainer-Dashboard kommentarlos "0 Sessions" — obwohl
+      // die Trainerin 20 veröffentlichte Einheiten hatte.
+      `id, timeslot_start, timeslot_end, max_participants, group_ids,
+       courts(name),
        bookings(id, status, member_id)`
     )
     .in('trainer_id', [trainerRecord.id, user.id])
@@ -57,11 +64,27 @@ export default async function TrainerPage() {
     );
   }
 
+  // Gruppennamen über group_ids nachladen (siehe Kommentar an der Abfrage oben)
+  const groupIds = new Set<string>();
+  for (const s of rawSessions ?? []) {
+    for (const gid of ((s as Record<string, unknown>).group_ids as string[] | null) ?? []) {
+      if (gid) groupIds.add(gid);
+    }
+  }
+  let groupNames: Record<string, string> = {};
+  if (groupIds.size > 0) {
+    const { data: groupRows } = await supabase
+      .from('groups')
+      .select('id, name')
+      .in('id', [...groupIds]);
+    groupNames = Object.fromEntries((groupRows ?? []).map((g) => [g.id, g.name]));
+  }
+
   // Transform sessions
   const sessions: TrainerSession[] = (rawSessions ?? []).map((s) => {
     const record = s as Record<string, unknown>;
     const court = record.courts as { name: string } | { name: string }[] | null;
-    const group = record.groups as { name: string } | { name: string }[] | null;
+    const firstGroupId = ((record.group_ids as string[] | null) ?? [])[0];
     const bookings = record.bookings as Array<{
       id: string;
       status: string;
@@ -69,7 +92,7 @@ export default async function TrainerPage() {
     }> | null;
 
     const courtName = Array.isArray(court) ? court[0]?.name : court?.name;
-    const groupName = Array.isArray(group) ? group[0]?.name : group?.name;
+    const groupName = firstGroupId ? groupNames[firstGroupId] : undefined;
 
     return {
       id: record.id as string,
@@ -88,10 +111,25 @@ export default async function TrainerPage() {
 
   // Calculate stats
   const now = new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  const upcomingSessions = sessions.filter((s) => new Date(s.startTime) >= now).length;
-  const thisWeekSessions = sessions.filter((s) => new Date(s.startTime) >= weekAgo).length;
+  // Die Kachel heißt "Diese Woche" und zählte bislang alles ab einer Woche in der
+  // Vergangenheit — also faktisch die ganze Saison. Eine Trainerin mit 20 Terminen
+  // von Oktober bis März las dort "20 Einheiten diese Woche".
+  const weekStart = new Date(now);
+  const weekday = (weekStart.getDay() + 6) % 7; // Montag = 0
+  weekStart.setDate(weekStart.getDate() - weekday);
+  weekStart.setHours(0, 0, 0, 0);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+
+  // timeslot_start trägt keine Zeitzone — als UTC lesen, sonst verschiebt sich
+  // die Wochengrenze um den Zonenversatz.
+  const startOf = (s: TrainerSession) => new Date(asUtcIso(s.startTime) as string);
+
+  const upcomingSessions = sessions.filter((s) => startOf(s) >= now).length;
+  const thisWeekSessions = sessions.filter(
+    (s) => startOf(s) >= weekStart && startOf(s) < weekEnd
+  ).length;
 
   const totalAttendees = sessions.reduce((sum, s) => sum + (s.attendees?.length ?? 0), 0);
   const noShowCount = sessions.reduce(
@@ -108,5 +146,14 @@ export default async function TrainerPage() {
     attendanceRate,
   };
 
-  return <TrainerDashboardClient sessions={sessions} stats={stats} />;
+  // trainerId/-Name werden durchgereicht: ohne sie schrieb der Check-in
+  // Anwesenheitseinträge mit trainerId 'unknown'.
+  return (
+    <TrainerDashboardClient
+      sessions={sessions}
+      stats={stats}
+      trainerId={trainerRecord.id}
+      trainerName={trainerRecord.name}
+    />
+  );
 }

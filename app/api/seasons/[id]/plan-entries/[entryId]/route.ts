@@ -13,6 +13,7 @@ import {
 import { and, eq, sql } from 'drizzle-orm';
 import type { UpdatePlanEntryRequest } from '@/lib/types/season-planning';
 import { createLogger } from '@/lib/logger';
+import { promoteFromSeasonWaitlist } from '@/lib/season-planning/waitlist-promotion';
 
 const log = createLogger('api:seasons:[id]:plan-entries:[entryId]');
 
@@ -168,6 +169,21 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         if (body.status !== undefined) updateData.status = body.status;
         if (body.notes !== undefined) updateData.notes = body.notes;
         if (body.admin_notes !== undefined) updateData.admin_notes = body.admin_notes;
+        if (body.substitute_trainer_id !== undefined)
+          updateData.substitute_trainer_id = body.substitute_trainer_id;
+        if (body.substitute_from_week !== undefined)
+          updateData.substitute_from_week = body.substitute_from_week;
+        if (body.substitute_to_week !== undefined)
+          updateData.substitute_to_week = body.substitute_to_week;
+
+        // Enthielt der Request nur unbekannte Felder, blieb updateData leer und
+        // Drizzle warf „No values to set" — ein 500er für einen Eingabefehler.
+        if (Object.keys(updateData).length === 0) {
+          return NextResponse.json(
+            { error: 'Keine bekannten Felder im Request — nichts zu ändern' },
+            { status: 400 }
+          );
+        }
 
         // Validate time changes
         const finalStartTime = updateData.start_time || existingEntry.start_time;
@@ -234,9 +250,23 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           .where(eq(seasonPlanEntries.id, entryId))
           .returning();
 
+        // Wurde die Teilnehmerliste kleiner, ist ein Platz frei geworden — dann
+        // rückt die Saison-Warteliste automatisch nach. Ohne das bliebe der Platz
+        // leer, während jemand nachweislich darauf wartet.
+        let promoted: { memberId: string; position: number }[] = [];
+        const groupId = updatedEntry?.group_id ?? existingEntry.group_id;
+        if (body.expected_participants !== undefined && groupId) {
+          const before = ((existingEntry.expected_participants as string[] | null) ?? []).length;
+          const after = body.expected_participants.length;
+          if (after < before) {
+            promoted = await promoteFromSeasonWaitlist(seasonId, groupId);
+          }
+        }
+
         return NextResponse.json({
           success: true,
           entry: updatedEntry,
+          promoted,
           message: 'Plan entry updated successfully',
         });
       } catch (error) {

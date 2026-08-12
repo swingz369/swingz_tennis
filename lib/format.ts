@@ -52,6 +52,16 @@ const MONTH_YEAR_FORMATTER = new Intl.DateTimeFormat('de-DE', {
   timeZone: TIME_ZONE,
 });
 
+// "Dienstag, 6. Oktober" — für Terminlisten, in denen das Jahr aus dem Kontext
+// hervorgeht. Existiert, damit solche Listen nicht auf date-fns `format()`
+// ausweichen müssen, das in der Zeitzone der Laufzeit rendert (auf Vercel UTC).
+const WEEKDAY_DATE_FORMATTER = new Intl.DateTimeFormat('de-DE', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  timeZone: TIME_ZONE,
+});
+
 // ── Currency & Number Formatters ──────────────────────────────────────────
 
 const CURRENCY_FORMATTER = new Intl.NumberFormat('de-DE', {
@@ -108,6 +118,31 @@ export function formatMonthYear(value: string | Date | null | undefined): string
   if (!value) return '—';
   try {
     return MONTH_YEAR_FORMATTER.format(new Date(value));
+  } catch {
+    return '—';
+  }
+}
+
+/**
+ * Ergänzt ein fehlendes Zeitzonen-Suffix.
+ *
+ * `sessions.timeslot_start/-end` sind `timestamp` OHNE Zeitzone: der Wert ist der
+ * UTC-Zeitpunkt, trägt aber kein `Z`. `new Date()` liest ihn deshalb als Ortszeit —
+ * ein 18:00-Training erschien im Browser eines deutschen Nutzers als 16:00.
+ * Werte, die bereits eine Zone tragen (`bookings.session_start_time` u. a.),
+ * bleiben unangetastet.
+ */
+export function asUtcIso(value: string | Date | null | undefined): string | Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  return /(Z|[+-]\d{2}:?\d{2})$/.test(value) ? value : `${value}Z`;
+}
+
+/** Format weekday + day + month (e.g., "Dienstag, 6. Oktober") */
+export function formatWeekdayDate(value: string | Date | null | undefined): string {
+  if (!value) return '—';
+  try {
+    return WEEKDAY_DATE_FORMATTER.format(new Date(value));
   } catch {
     return '—';
   }

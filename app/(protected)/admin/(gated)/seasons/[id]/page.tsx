@@ -530,7 +530,11 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
       }
 
       const data = await response.json();
-      toast.success(`Saison veröffentlicht: ${data.publishedSessions} Trainingseinheiten erstellt`);
+      toast.success(
+        data.republish
+          ? `Saison aktualisiert: ${data.removedSessions} künftige Trainingseinheiten ersetzt durch ${data.publishedSessions}`
+          : `Saison veröffentlicht: ${data.publishedSessions} Trainingseinheiten erstellt`
+      );
       await fetchSeason();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Fehler');
@@ -616,7 +620,10 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   }
 
   const canOpenPreferences = season.planning_status === 'draft';
-  const canPublish = season.planning_status === 'manual_review';
+  // Ein veröffentlichter Plan bleibt änderbar: erneutes Veröffentlichen ersetzt
+  // alle künftigen Trainingseinheiten durch den aktuellen Planstand.
+  const isRepublish = season.planning_status === 'published';
+  const canPublish = season.planning_status === 'manual_review' || isRepublish;
   const workflowPhase = seasonWorkflowPhase(season.planning_status);
   const nextStepHint = [
     'Nächster Schritt: Präferenzen öffnen — Mitglieder werden per E-Mail gebeten, ihre Wunschzeiten abzugeben.',
@@ -634,13 +641,15 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
       <ConfirmDialog
         open={publishConfirmOpen}
         onOpenChange={setPublishConfirmOpen}
-        title="Saison veröffentlichen"
+        title={isRepublish ? 'Saison erneut veröffentlichen' : 'Saison veröffentlichen'}
         description={
           season.open_conflicts > 0
             ? `Es gibt noch ${season.open_conflicts} offene Konflikte. Empfehlung: zuerst im Wizard unter „Abschließen" prüfen. Trotzdem veröffentlichen?`
-            : 'Möchten Sie diese Saison wirklich veröffentlichen? Für alle geplanten Gruppen werden Trainingseinheiten erstellt.'
+            : isRepublish
+              ? 'Alle künftigen Trainingseinheiten dieser Saison werden gelöscht und aus dem aktuellen Planstand neu erstellt — inklusive der Teilnehmer-Buchungen. Bereits stattgefundene Termine bleiben unverändert.'
+              : 'Möchten Sie diese Saison wirklich veröffentlichen? Für alle geplanten Gruppen werden Trainingseinheiten erstellt.'
         }
-        confirmLabel="Veröffentlichen"
+        confirmLabel={isRepublish ? 'Erneut veröffentlichen' : 'Veröffentlichen'}
         variant="primary"
         loading={publishing}
         onConfirm={confirmPublish}
@@ -732,9 +741,9 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
           )}
 
           {canPublish && (
-            <Button onClick={handlePublish}>
+            <Button onClick={handlePublish} variant={isRepublish ? 'outline' : 'default'}>
               <FileText className="mr-2 h-4 w-4" />
-              Veröffentlichen
+              {isRepublish ? 'Erneut veröffentlichen' : 'Veröffentlichen'}
             </Button>
           )}
 

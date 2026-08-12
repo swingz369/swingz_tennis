@@ -4,8 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Clock, X, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { de } from '@/lib/locale';
+import { formatTime, formatWeekdayDate } from '@/lib/format';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -37,17 +36,31 @@ interface DisplayBooking {
   status: string;
 }
 
+/**
+ * `sessions.timeslot_start/-end` sind `timestamp` OHNE Zeitzone: der Wert ist der
+ * UTC-Zeitpunkt, trägt aber kein `Z`. `new Date()` liest ihn deshalb als Ortszeit
+ * des Browsers — ein 18:00-Training erschien in Deutschland als 16:00. Die Felder
+ * auf `bookings` sind dagegen `timestamptz` und damit eindeutig.
+ */
+const asUtc = (value: string | undefined): string =>
+  value && !/(Z|[+-]\d{2}:?\d{2})$/.test(value) ? `${value}Z` : (value ?? '');
+
 function toDisplay(b: ApiBooking): DisplayBooking {
-  const start = b.sessions?.timeslot_start ?? b.start_time ?? b.session_start_time ?? '';
-  const end = b.sessions?.timeslot_end ?? b.end_time ?? '';
+  // Reihenfolge bewusst: erst die zonenbehafteten Felder der Buchung, erst danach
+  // — und dann als UTC gelesen — die zonenlosen der Session.
+  const start = b.start_time ?? b.session_start_time ?? asUtc(b.sessions?.timeslot_start) ?? '';
+  const end = b.end_time ?? asUtc(b.sessions?.timeslot_end) ?? '';
   const date = start ? new Date(start) : new Date();
   return {
     id: b.id,
     type: b.session_id ? 'session' : 'court',
     title: b.sessions?.courts?.name ? `Training — ${b.sessions.courts.name}` : 'Buchung',
     date,
-    startTime: start ? format(new Date(start), 'HH:mm') : '—',
-    endTime: end ? format(new Date(end), 'HH:mm') : '—',
+    // formatTime/formatWeekdayDate aus @/lib/format legen Europe/Berlin fest.
+    // date-fns `format()` rendert dagegen in der Zeitzone der Laufzeit — auf
+    // Vercel (UTC) erschien ein 18:00-Training deshalb als 16:00.
+    startTime: formatTime(start),
+    endTime: formatTime(end),
     location: b.sessions?.courts?.name ?? '—',
     status: b.status,
   };
@@ -66,7 +79,17 @@ export function MyBookings() {
         const res = await apiFetch('/api/bookings', { credentials: 'include' });
         if (!res.ok) throw new Error('Fetch failed');
         const data = await res.json();
-        setBookings((data.bookings ?? []).map(toDisplay));
+        // ponytail: nur Kommendes, aufsteigend — die API liefert 50 Buchungen
+        // absteigend, was als Trainingsplan mit alten Terminen oben startete.
+        // Verlauf bei Bedarf als eigener Tab.
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        setBookings(
+          (data.bookings ?? [])
+            .map(toDisplay)
+            .filter((b: DisplayBooking) => b.date >= today)
+            .sort((a: DisplayBooking, b: DisplayBooking) => a.date.getTime() - b.date.getTime())
+        );
       } catch {
         toast.error('Buchungen konnten nicht geladen werden');
       } finally {
@@ -91,6 +114,26 @@ export function MyBookings() {
       toast.success('Buchung storniert');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Stornierung fehlgeschlagen');
+    } finally {
+      setCancelling(null);
+    }
+  };
+
+  const handleReactivate = async (id: string) => {
+    setCancelling(id);
+    try {
+      const res = await apiFetch(`/api/bookings/${id}/reactivate`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Anmeldung fehlgeschlagen');
+      }
+      setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status: 'confirmed' } : b)));
+      toast.success('Du bist wieder angemeldet');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Anmeldung fehlgeschlagen');
     } finally {
       setCancelling(null);
     }
@@ -129,11 +172,11 @@ export function MyBookings() {
         <CardContent className="pt-6">
           <EmptyState
             icon={Calendar}
-            title="Keine Buchungen"
-            description="Du hast noch keine aktiven Buchungen. Buche ein Training oder einen Platz, um loszulegen."
+            title="Keine kommenden Buchungen"
+            description="Du hast aktuell keine bevorstehenden Trainings oder Platzbuchungen. Buche eine Einheit, um loszulegen."
             action={{
               label: 'Jetzt buchen',
-              onClick: () => router.push('/bookings-unified'),
+              onClick: () => router.push('/bookings'),
             }}
           />
         </CardContent>
@@ -163,7 +206,7 @@ export function MyBookings() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
-                      <span>{format(booking.date, 'EEEE, d. MMMM', { locale: de })}</span>
+                      <span>{formatWeekdayDate(booking.date)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4" />
@@ -183,9 +226,6 @@ export function MyBookings() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Button variant="outline" size="sm">
-                    Details
-                  </Button>
                   {booking.status !== 'cancelled' && (
                     <Button
                       variant="ghost"
@@ -199,8 +239,24 @@ export function MyBookings() {
                       ) : (
                         <>
                           <X className="h-4 w-4 mr-1" />
-                          Stornieren
+                          {booking.type === 'session' ? 'Abmelden' : 'Stornieren'}
                         </>
+                      )}
+                    </Button>
+                  )}
+                  {/* Eine versehentliche Abmeldung war bis dahin endgültig — das
+                      Mitglied musste beim Admin anrufen. */}
+                  {booking.status === 'cancelled' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={cancelling === booking.id}
+                      onClick={() => handleReactivate(booking.id)}
+                    >
+                      {cancelling === booking.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        'Doch teilnehmen'
                       )}
                     </Button>
                   )}

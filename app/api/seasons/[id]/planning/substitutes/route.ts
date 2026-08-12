@@ -3,8 +3,13 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { db } from '@/src/infrastructure/persistence/db';
-import { seasons, seasonPlanEntries, trainers } from '@/src/infrastructure/persistence/schema';
-import { eq, and, isNotNull } from 'drizzle-orm';
+import {
+  seasons,
+  seasonPlanEntries,
+  trainers,
+  sessions,
+} from '@/src/infrastructure/persistence/schema';
+import { eq, and, isNotNull, inArray, gte, lte, asc } from 'drizzle-orm';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:[id]:planning:substitutes');
@@ -94,7 +99,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
-      await db
+      // `.returning()` statt blindem Update: Traf die Bedingung keine Zeile (etwa
+      // bei einer Gruppen-ID, die es in dieser Saison nicht gibt), meldete die
+      // Route bisher trotzdem Erfolg samt Trainername — grün, ohne geprüft zu haben.
+      const updated = await db
         .update(seasonPlanEntries)
         .set({
           substitute_trainer_id: substituteTrainerId,
@@ -103,7 +111,40 @@ export async function POST(request: NextRequest, context: RouteContext) {
         })
         .where(
           and(eq(seasonPlanEntries.season_id, seasonId), eq(seasonPlanEntries.group_id, groupId))
+        )
+        .returning({ id: seasonPlanEntries.id });
+
+      if (updated.length === 0) {
+        return NextResponse.json(
+          { error: 'Zu dieser Gruppe gibt es in dieser Saison keinen Trainingstermin' },
+          { status: 404 }
         );
+      }
+
+      // Der Admin denkt in Terminen („die nächsten drei Einheiten"), das System
+      // rechnet in Kalenderwochen ab Saisonbeginn — und zählt Ferienwochen mit.
+      // Welche Termine tatsächlich betroffen sind, ist ohne Datum nicht erkennbar.
+      // Ist die Saison veröffentlicht, stehen die echten Termine in `sessions`.
+      const seasonStart = new Date(access.season.start_date as unknown as string);
+      const rangeStart = new Date(seasonStart);
+      rangeStart.setDate(rangeStart.getDate() + ((fromWeek ?? 1) - 1) * 7);
+      const rangeEnd = new Date(seasonStart);
+      rangeEnd.setDate(rangeEnd.getDate() + (toWeek ?? 26) * 7);
+
+      const affected = await db
+        .select({ start: sessions.timeslot_start })
+        .from(sessions)
+        .where(
+          and(
+            inArray(
+              sessions.plan_entry_id,
+              updated.map((u) => u.id)
+            ),
+            gte(sessions.timeslot_start, rangeStart),
+            lte(sessions.timeslot_start, rangeEnd)
+          )
+        )
+        .orderBy(asc(sessions.timeslot_start));
 
       const [trainer] = await db
         .select({ name: trainers.name })
@@ -114,6 +155,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       log.info('Substitute trainer assigned', { seasonId, groupId, substituteTrainerId });
       return NextResponse.json({
         success: true,
+        affectedDates: affected.map((a) => a.start),
         substitute: {
           groupId,
           groupName: groupId,

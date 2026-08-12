@@ -345,6 +345,24 @@ export async function rateLimit(
   return { limited: false };
 }
 
+/**
+ * Gibt einen bereits verbrauchten Versuch wieder frei.
+ *
+ * Für Vorgänge, bei denen nur erfolgreiche Durchläufe aufs Kontingent gehen
+ * sollen: Das Veröffentlichen einer Saison ist auf 3 Versuche pro Stunde
+ * begrenzt, zählte aber auch Fehlschläge mit. Ein Admin, dessen Veröffentlichung
+ * auf einen Fehler lief, war danach eine Stunde ausgesperrt — obwohl die
+ * Transaktion zurückgerollt wurde und nichts entstanden ist.
+ *
+ * Nur für den In-Memory-Pfad (`rateLimit()` mit eigener Config) gedacht.
+ */
+export async function releaseRateLimitSlot(request: NextRequest): Promise<void> {
+  const identifier = await getClientIdentifier(request);
+  const key = `${request.nextUrl.pathname}:${identifier}`;
+  const entry = memoryStore[key];
+  if (entry && entry.count > 0) entry.count--;
+}
+
 // ============================================
 // 8. Predefined rate limit configurations
 // ============================================

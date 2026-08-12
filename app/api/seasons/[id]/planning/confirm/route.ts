@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth } from '@/lib/api-auth';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
-import { checkRateLimitOrFail } from '@/lib/rate-limit';
+import { checkRateLimitOrFail, releaseRateLimitSlot } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { db } from '@/src/infrastructure/persistence/db';
 import {
@@ -18,13 +18,12 @@ import {
   seasonGroupWeeks,
   bookings,
 } from '@/src/infrastructure/persistence/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, gte, inArray } from 'drizzle-orm';
 import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
 import { seasonConfirmationEmailService } from '@/lib/season-planning/season-confirmation-email.service';
 import { env } from '@/lib/env';
 import {
   isDateInHolidays,
-  getHolidaysForState,
   resolveBundeslandCode,
   type Holiday,
 } from '@/lib/season-planning/holidays';
@@ -37,6 +36,7 @@ import type {
   ConfirmPlanResponse,
   GroupAssignment,
 } from '@/lib/season-planning/types';
+import { loadHolidaysForState } from '@/lib/season-planning/holidays.server';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -44,7 +44,12 @@ interface RouteContext {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   return withCSRFProtection(request, async () => {
-    const rateLimitError = await checkRateLimitOrFail(request, { max: 3, windowMs: 3600000 });
+    const rateLimitError = await checkRateLimitOrFail(request, {
+      max: 3,
+      windowMs: 3600000,
+      message:
+        'Zu viele Veröffentlichungsversuche. Bitte warten Sie eine Stunde — Veröffentlichen legt hunderte Trainingseinheiten, E-Mails und Rechnungen an.',
+    });
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
@@ -136,11 +141,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         const conflicts = await detector.detectAll(assignments);
         const criticalConflicts = detector.getCriticalConflicts(conflicts);
+        // `acceptedWarnings` ist optional; fehlt es im Request, lief die Zeile
+        // vorher in "Cannot read properties of undefined" — ein 500 statt des
+        // eigentlich gemeinten 409. Aufgefallen ist das erst, als überhaupt ein
+        // kritischer Konflikt existierte und dieser Pfad zum ersten Mal lief.
+        const acceptedWarnings = body.acceptedWarnings ?? [];
         const unresolvedCritical = criticalConflicts.filter(
-          (c) => !body.acceptedWarnings.includes(c.id)
+          (c) => !acceptedWarnings.includes(c.id)
         );
 
         if (unresolvedCritical.length > 0) {
+          // Abgelehnt, nichts angelegt — der Versuch geht nicht aufs Kontingent.
+          // Sonst kostet gerade der sorgfältige Admin, der Konflikte behebt und
+          // erneut prüft, seine drei Stundenversuche.
+          await releaseRateLimitSlot(request);
           return NextResponse.json(
             {
               success: false,
@@ -168,7 +182,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             .limit(1);
           if (club?.bundesland) {
             const code = resolveBundeslandCode(club.bundesland);
-            holidays = getHolidaysForState(code);
+            holidays = await loadHolidaysForState(code);
             log.info('Club bundesland resolved', {
               bundesland: club.bundesland,
               code,
@@ -203,10 +217,44 @@ export async function POST(request: NextRequest, context: RouteContext) {
         // sessions are created (audit trail, conflict persistence, season
         // status update), the entire publish rolls back automatically.
         // ──────────────────────────────────────────────────────────────────
-        const { publishedCount, publishedIds, bookingsCreated } = await db.transaction(
-          async (tx) => {
+        // Erneutes Veröffentlichen: ein bereits veröffentlichter Plan war bisher
+        // eingefroren (jeder Eintrag mit status='published' wurde übersprungen),
+        // ein Trainerwechsel o. ä. kam also nie bei den Mitgliedern an.
+        // Jetzt gilt: künftige Sessions samt Buchungen werden verworfen und aus
+        // dem aktuellen Plan neu erzeugt, bereits stattgefundene bleiben stehen.
+        const isRepublish = season.planning_status === 'published';
+        const now = new Date();
+
+        const { publishedCount, publishedIds, bookingsCreated, removedSessions } =
+          await db.transaction(async (tx) => {
             let publishedCount = 0;
             const publishedIds: string[] = [];
+            let removedSessions = 0;
+
+            if (isRepublish) {
+              const staleSessions = await tx
+                .select({ id: sessions.id })
+                .from(sessions)
+                .where(
+                  and(
+                    inArray(
+                      sessions.plan_entry_id,
+                      entries.map((e) => e.id)
+                    ),
+                    gte(sessions.timeslot_start, now)
+                  )
+                );
+              const staleIds = staleSessions.map((s) => s.id);
+              // ponytail: 500er-Blöcke wie beim Insert unten, wegen des
+              // Postgres-Parameterlimits.
+              for (let i = 0; i < staleIds.length; i += 500) {
+                const chunk = staleIds.slice(i, i + 500);
+                await tx.delete(bookings).where(inArray(bookings.session_id, chunk));
+                await tx.delete(sessions).where(inArray(sessions.id, chunk));
+              }
+              removedSessions = staleIds.length;
+              log.info('Republish: künftige Sessions verworfen', { removedSessions });
+            }
 
             // Teilnehmer-Buchungen, die am Ende der Transaktion gebündelt
             // geschrieben werden. Ohne sie existiert die Zuteilung nur in
@@ -254,8 +302,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
             // 3. Create recurring weekly sessions for each plan entry
             for (const entry of entries) {
-              if (entry.status === 'published') continue;
-
               // Lazily find or create schedule on first entry to publish
               if (!scheduleId) {
                 const [existingSchedule] = await tx
@@ -338,7 +384,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
                     session_id: sessionId,
                     court_id: entry.court_id,
                     status: 'confirmed',
-                    booking_type: 'lesson',
+                    // 'lesson' stammt aus 20260503_court_booking_system.sql; der
+                    // Check-Constraint der Live-DB kennt nur 'court' und 'session'
+                    // und ließ damit JEDE Veröffentlichung mit Teilnehmern scheitern.
+                    booking_type: 'session',
                     is_recurring: true,
                     session_start_time: start,
                     start_time: start,
@@ -374,6 +423,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
                 // Skip if session would be after season end
                 if (sessionDate > seasonEnd) break;
+
+                // Vergangene Termine beim erneuten Veröffentlichen nicht doppeln —
+                // sie wurden oben bewusst nicht gelöscht.
+                if (isRepublish && sessionDate < now) continue;
 
                 // Skip if session falls on a school holiday / Ferien
                 if (holidays.length > 0) {
@@ -425,6 +478,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
                   dayDate2.setUTCDate(dayDate2.getUTCDate() + (week - 1) * 7);
                   const sessionDate2 = berlinWallClock(dayDate2, startHours, startMinutes);
                   if (sessionDate2 > seasonEnd) break;
+                  if (isRepublish && sessionDate2 < now) continue;
                   if (holidays.length > 0) {
                     const dateStr = sessionDate2.toISOString().substring(0, 10);
                     if (isDateInHolidays(dateStr, holidays)) continue;
@@ -499,6 +553,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
               actor_id: auth.user.id,
               actor_role: 'admin',
               details: {
+                republish: isRepublish,
+                removedSessions,
                 publishedSessions: publishedCount,
                 entriesCount: entries.length,
                 conflictsDetected: conflicts.length,
@@ -508,7 +564,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
               entries_affected: publishedCount,
               conflicts_created: conflicts.length,
               conflicts_resolved: 0,
-              notes: `Plan veröffentlicht: ${publishedCount} Sessions aus ${entries.length} Einträgen`,
+              notes: isRepublish
+                ? `Plan erneut veröffentlicht: ${removedSessions} künftige Sessions ersetzt durch ${publishedCount} neue`
+                : `Plan veröffentlicht: ${publishedCount} Sessions aus ${entries.length} Einträgen`,
             });
 
             return {
@@ -516,9 +574,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
               publishedIds,
               scheduleId,
               bookingsCreated: bookingRows.length,
+              removedSessions,
             };
-          }
-        );
+          });
 
         // ── Post-transaction (non-critical) ───────────────────────────────
         // These run AFTER the transaction commits.
@@ -533,7 +591,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
         if (publishedIds.length > 0) {
           try {
             const { seasonBillingService } = await import('@/lib/billing/season-billing.service');
-            const result = await seasonBillingService.generateInvoices(seasonId);
+            // Beim erneuten Veröffentlichen ändert sich die Zahl der Einheiten —
+            // die noch offenen Rechnungen müssen mitziehen, sonst bleibt der
+            // Betrag des ersten Publish stehen.
+            const result = await seasonBillingService.generateInvoices(seasonId, {
+              replaceDrafts: isRepublish,
+            });
             invoicesCreated = result.created.length;
             log.info('Season invoices created', {
               created: invoicesCreated,
@@ -595,6 +658,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
           invoicesCreated: number;
           emailFailures: number;
           bookingsCreated: number;
+          removedSessions: number;
+          republish: boolean;
         } = {
           success: true,
           publishedSessions: publishedCount,
@@ -603,6 +668,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
           emailFailures,
           invoicesCreated,
           bookingsCreated,
+          removedSessions,
+          republish: isRepublish,
           waitlistNotifications: 0,
           unresolvedCriticalConflicts: [],
         };
@@ -610,8 +677,23 @@ export async function POST(request: NextRequest, context: RouteContext) {
         return NextResponse.json(response);
       } catch (error) {
         log.error('POST confirm error', error instanceof Error ? error : undefined);
+        // Fehlgeschlagener Versuch: die Transaktion ist zurückgerollt, es ist
+        // nichts entstanden — also darf er auch nicht aufs Stundenkontingent gehen.
+        await releaseRateLimitSlot(request);
+        // Die Drizzle-Meldung enthält das komplette Insert-Statement samt aller
+        // Parameter (im Fehlerfall ~80.000 Zeichen inklusive Mitglieds-UUIDs) und
+        // landete bis hierher unverändert in der Oberfläche. Details gehören ins
+        // Server-Log, der Admin bekommt einen verständlichen Satz.
         return NextResponse.json(
-          { error: error instanceof Error ? error.message : 'Confirmation failed' },
+          {
+            error:
+              'Die Saison konnte nicht veröffentlicht werden. Die Planung wurde nicht verändert — bitte erneut versuchen oder den Support kontaktieren.',
+            // Nur außerhalb der Produktion: sonst ist der Fehler beim Entwickeln
+            // nicht mehr greifbar, ohne im Server-Log zu suchen.
+            ...(process.env.NODE_ENV === 'production'
+              ? {}
+              : { detail: error instanceof Error ? error.message.slice(0, 400) : String(error) }),
+          },
           { status: 500 }
         );
       }

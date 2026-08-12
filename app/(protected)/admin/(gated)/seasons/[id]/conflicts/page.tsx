@@ -48,6 +48,9 @@ const CONFLICT_TYPE_LABELS: Record<ConflictTypeCode, string> = {
   high_failure_rate_slot: 'Hohe Ausfallrate (Slot)',
   large_niveau_span: 'Große Niveau-Spanne',
   avoid_partner_conflict: 'Partner-Konflikt',
+  no_court_assigned: 'Gruppe ohne Platz',
+  member_unavailable: 'Mitglied außerhalb der Verfügbarkeit',
+  member_unplanned: 'Mitglied ohne Gruppe',
 };
 
 const SEVERITY_CONFIG: Record<

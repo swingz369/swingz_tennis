@@ -47,8 +47,12 @@ async function main() {
   // `dbUrl` is checked at the top of the file (process.exit(1) if missing),
   // but TS can't narrow it across the function boundary — use non-null assertion.
   const sql = postgres(dbUrl!, {
-    ssl: dbUrl!.includes('localhost') ? false : { rejectUnauthorized: false },
+    // Gleiche Konvention wie src/infrastructure/persistence/db.ts: der
+    // self-hosted Supavisor terminiert auf Port 6543 kein TLS, erzwungenes SSL
+    // endet in ERR_SSL_WRONG_VERSION_NUMBER. Umschalten über DATABASE_SSL.
+    ssl: process.env.DATABASE_SSL === 'require' ? 'require' : false,
     max: 1,
+    prepare: false,
   });
 
   try {

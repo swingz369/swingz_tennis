@@ -95,6 +95,53 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       );
     }
 
+    // Der Trainer erfuhr von einer Abmeldung bisher nur, wenn er zufällig in die
+    // Teilnehmerliste sah — im Verein landet genau das sonst per WhatsApp bei ihm.
+    // Non-fatal: eine fehlgeschlagene Benachrichtigung darf die Abmeldung nicht
+    // rückgängig machen.
+    if (booking.session_id) {
+      try {
+        const svc = createServiceClient() as any;
+        const { data: session } = await svc
+          .from('sessions')
+          .select('trainer_id, timeslot_start')
+          .eq('id', booking.session_id)
+          .maybeSingle();
+
+        if (session?.trainer_id) {
+          const [{ data: trainer }, { data: member }] = await Promise.all([
+            svc.from('trainers').select('user_id').eq('id', session.trainer_id).maybeSingle(),
+            svc.from('users').select('full_name').eq('id', booking.member_id).maybeSingle(),
+          ]);
+
+          if (trainer?.user_id) {
+            // timeslot_start ist eine naive timestamp-Spalte, die den UTC-Zeitpunkt
+            // hält — ohne das angehängte Z läse new Date() sie als Ortszeit.
+            const termin = session.timeslot_start
+              ? new Date(`${session.timeslot_start}Z`).toLocaleString('de-DE', {
+                  timeZone: 'Europe/Berlin',
+                  dateStyle: 'short',
+                  timeStyle: 'short',
+                })
+              : 'einem Training';
+            await svc.from('notifications').insert({
+              user_id: trainer.user_id,
+              club_id: booking.club_id,
+              type: 'booking_cancelled',
+              title: 'Abmeldung vom Training',
+              message: `${member?.full_name ?? 'Ein Mitglied'} hat sich für ${termin} abgemeldet.`,
+              read: false,
+            });
+          }
+        }
+      } catch (notifyErr) {
+        log.error(
+          'Trainer-Benachrichtigung zur Abmeldung fehlgeschlagen',
+          notifyErr instanceof Error ? notifyErr : undefined
+        );
+      }
+    }
+
     // Warteliste: Ersten Eintrag nachrücken lassen (non-fatal)
     // Note: session_waitlist not yet in generated types — using (svc as any)
     if (booking.session_id) {

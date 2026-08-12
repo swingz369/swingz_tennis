@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 
 import { COLORS } from '@/lib/season-planning/schedule-constants';
+import { apiFetch } from '@/lib/api-fetch';
+import { toast } from 'sonner';
 
 /**
  * PlanEditStep (Schritt 3 von 4)
@@ -94,6 +96,52 @@ export function PlanEditStep() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plan]);
+
+  // Die Wartelisten-Einträge der Datenbank tragen die IDs, die zum Nachrücken
+  // gebraucht werden — das Clustering-Ergebnis kennt nur Namen. Deshalb werden sie
+  // hier einmal nachgeladen und über die Mitglieds-ID zugeordnet.
+  const [waitlistIds, setWaitlistIds] = useState<Record<string, string>>({});
+  const [promoting, setPromoting] = useState<string | null>(null);
+
+  const loadWaitlist = useCallback(async () => {
+    if (!state.seasonId) return;
+    const res = await apiFetch(`/api/seasons/${state.seasonId}/planning/waitlist`);
+    if (!res.ok) return;
+    const data = await res.json();
+    setWaitlistIds(
+      Object.fromEntries(
+        (data.waitlist ?? []).map((w: { member_id: string; id: string }) => [w.member_id, w.id])
+      )
+    );
+  }, [state.seasonId]);
+
+  useEffect(() => {
+    void loadWaitlist();
+  }, [loadWaitlist, state.clusteringResult]);
+
+  const handlePromote = useCallback(
+    async (memberId: string) => {
+      const waitlistId = waitlistIds[memberId];
+      if (!waitlistId) return;
+      setPromoting(memberId);
+      try {
+        const res = await apiFetch(`/api/seasons/${state.seasonId}/planning/waitlist`, {
+          method: 'POST',
+          body: JSON.stringify({ waitlistId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          toast.error(data.error ?? 'Nachrücken fehlgeschlagen');
+          return;
+        }
+        toast.success('Mitglied in die Gruppe aufgenommen');
+        await runClustering();
+      } finally {
+        setPromoting(null);
+      }
+    },
+    [waitlistIds, state.seasonId, runClustering]
+  );
 
   const handleGenerate = useCallback(async () => {
     setIsGenerating(true);
@@ -518,6 +566,16 @@ export function PlanEditStep() {
                       <Badge variant="outline" className="text-xs">
                         Alternativ: {w.alternativeGroupName}
                       </Badge>
+                    )}
+                    {waitlistIds[w.memberId] && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={promoting === w.memberId}
+                        onClick={() => void handlePromote(w.memberId)}
+                      >
+                        {promoting === w.memberId ? 'Wird aufgenommen…' : 'In Gruppe aufnehmen'}
+                      </Button>
                     )}
                   </div>
                 </div>

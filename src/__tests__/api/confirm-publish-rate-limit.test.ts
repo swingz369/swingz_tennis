@@ -15,6 +15,9 @@ const mockCheckRateLimitOrFail = vi.fn().mockResolvedValue(null);
 
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimitOrFail: mockCheckRateLimitOrFail,
+  // Gibt einen Versuch bei Fehlschlag oder 409 wieder frei — ein misslungener
+  // Publish soll den Admin nicht für eine Stunde aussperren.
+  releaseRateLimitSlot: vi.fn().mockResolvedValue(undefined),
 }));
 
 // ════════════════════════════════════════════════════════════
@@ -141,6 +144,10 @@ vi.mock('@/lib/season-planning/conflict-detector', () => ({
     this.getCriticalConflicts = vi.fn().mockReturnValue([]);
     this.persistConflicts = vi.fn().mockResolvedValue(0);
   }),
+}));
+
+vi.mock('@/lib/season-planning/holidays.server', () => ({
+  loadHolidaysForState: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('@/lib/services/school-holidays.service', () => ({
@@ -281,7 +288,9 @@ describe('POST /api/seasons/[id]/planning/confirm — 3/h Rate Limit', () => {
       expect(mockedRateLimit).toHaveBeenCalledTimes(1);
       const [requestArg, configArg] = mockedRateLimit.mock.calls[0];
       expect(requestArg).toBeInstanceOf(NextRequest);
-      expect(configArg).toEqual({ max: 3, windowMs: 3_600_000 });
+      expect(configArg).toMatchObject({ max: 3, windowMs: 3_600_000 });
+      // Die 429-Antwort erklärt jetzt auf Deutsch, warum gesperrt wurde.
+      expect(configArg.message).toContain('Veröffentlichungsversuche');
     });
   });
 });
