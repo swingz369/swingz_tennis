@@ -28,7 +28,6 @@ import { seasonBillingService } from '@/lib/billing/season-billing.service';
 import { seasonConfirmationEmailService } from '@/lib/season-planning/season-confirmation-email.service';
 import {
   isDateInHolidays,
-  getHolidaysForState,
   resolveBundeslandCode,
   type Holiday,
 } from '@/lib/season-planning/holidays';
@@ -38,6 +37,7 @@ import type { GroupAssignment, ConflictDetectionResult } from '@/lib/season-plan
 import type { SeasonBillingPreview } from '@/lib/billing/season-billing.service';
 
 import { createLogger } from '@/lib/logger';
+import { loadHolidaysForState } from './holidays.server';
 
 const log = createLogger('season-planning:dry-run.service');
 
@@ -779,7 +779,7 @@ export async function runSeasonDryRun(seasonId: string): Promise<DryRunReport | 
       bundesland = club?.bundesland ?? null;
       if (bundesland) {
         const code = resolveBundeslandCode(bundesland);
-        holidays = getHolidaysForState(code);
+        holidays = await loadHolidaysForState(code);
       }
     } catch (err) {
       // Non-fatal — continue without holiday filter

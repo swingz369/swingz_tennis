@@ -15,6 +15,8 @@ import {
   trainerClubs,
   memberSchedulePreferences,
   clubs,
+  sessions,
+  bookings,
 } from '@/src/infrastructure/persistence/schema';
 import {
   seasonWaitlists,
@@ -23,14 +25,14 @@ import {
   seasonPlanningConfigs,
 } from '@/src/infrastructure/persistence/season-planning-schema';
 import { createLogger } from '@/lib/logger';
+import { DAY_LABELS } from './schedule-constants';
 import { createServiceClient } from '@/lib/supabase/service';
 
 const log = createLogger('season-clustering-engine');
-import { and, eq, asc } from 'drizzle-orm';
+import { and, eq, asc, gte, inArray } from 'drizzle-orm';
 import {
-  BUNDESLAND_NAMES,
-  getHolidaysForState,
   resolveBundeslandCode,
+  tryResolveBundeslandCode,
   isHolidayWeek,
   getMonday,
 } from '@/lib/season-planning/holidays';
@@ -45,6 +47,7 @@ import type {
   ClusteringResult,
   ClusteringMetrics,
 } from '@/lib/season-planning/types';
+import { loadHolidaysForState } from './holidays.server';
 
 // ============================================
 // CONFIG DEFAULTS
@@ -348,10 +351,9 @@ export class SeasonClusteringEngine {
       // unbekannte Eingaben dokumentiert auf 'HE' (Hessen) zurück — Ferien
       // werden dadurch nie «leise» übersprungen. Hier unterscheiden wir die
       // beiden Fallback-Fälle (NULL vs. unbekannter Text) für den Admin.
-      const KNOWN_STATES = Object.keys(BUNDESLAND_NAMES);
       const rawBundesland = clubRow?.bundesland ?? null;
       const code = resolveBundeslandCode(rawBundesland);
-      const holidays = getHolidaysForState(code);
+      const holidays = await loadHolidaysForState(code);
       if (holidays.length > 0) {
         if (!rawBundesland) {
           // Fall 1: clubs.bundesland ist gar nicht gepflegt — wir verwenden
@@ -363,7 +365,7 @@ export class SeasonClusteringEngine {
             clubId: this.clubId,
             seasonId: this.seasonId,
           });
-        } else if (!KNOWN_STATES.includes(rawBundesland)) {
+        } else if (tryResolveBundeslandCode(rawBundesland) === null) {
           // Fall 2: clubs.bundesland ist gesetzt, aber das Kürzel ist nicht
           // in BUNDESLAND_NAMES — resolveBundeslandCode fällt still auf 'HE'
           // zurück. Schließt 'HH', 'BY', Klarnamen und Synonyme ein.
@@ -816,7 +818,32 @@ export class SeasonClusteringEngine {
           eq(courts.usable_for_training, true)
         );
 
-    const courtRows = await db.select().from(courts).where(filter);
+    let courtRows = await db.select().from(courts).where(filter);
+
+    // Ein Verein ohne Halle hätte im Winter sonst gar keinen Platz — die Planung
+    // liefe durch und erzeugte lautlos Gruppen ohne Platz, für die beim
+    // Veröffentlichen keine Buchungen entstehen. Viele Vereine spielen im Winter
+    // auf Freiplätzen weiter; die Außenplätze sind hier die richtige Rückfallebene.
+    if (isWinter && courtRows.length === 0) {
+      courtRows = await db
+        .select()
+        .from(courts)
+        .where(
+          and(
+            eq(courts.club_id, this.clubId),
+            eq(courts.is_active, true),
+            eq(courts.usable_for_training, true)
+          )
+        );
+      if (courtRows.length > 0) {
+        log.warn('Wintersaison ohne Hallenplatz — Planung weicht auf Außenplätze aus', {
+          clubId: this.clubId,
+          seasonId: this.seasonId,
+          courts: courtRows.length,
+        });
+      }
+    }
+
     const result = courtRows.map((c) => ({
       id: c.id,
       name: c.name,
@@ -1745,6 +1772,7 @@ export class SeasonClusteringEngine {
       const existingGroup =
         allMatching.find((g) => filteredSlice.some((m) => m.preferredGroupIds.includes(g.id))) ||
         allMatching[groupIndex % Math.max(1, allMatching.length)];
+      const prefix = ageGroup === 'kids' ? 'Kids' : LEVEL_LABEL[skillLevel];
       let group: GroupInfo;
       if (existingGroup) {
         group = existingGroup;
@@ -1754,7 +1782,6 @@ export class SeasonClusteringEngine {
         // Einzeltraining, kein "Gruppe mit 1 Person". Entsprechend benannt; die
         // eigentliche Klassifizierung passiert in saveToDatabase() über
         // memberIds.length === 1 (deckt auch Second-Pass/Backtracking-Fälle ab).
-        const prefix = ageGroup === 'kids' ? 'Kids' : LEVEL_LABEL[skillLevel];
         const groupName =
           filteredSlice.length === 1
             ? `Einzeltraining ${prefix} — ${filteredSlice[0].name}`
@@ -1798,6 +1825,26 @@ export class SeasonClusteringEngine {
       for (const m of capacityOverflow) {
         if (!assignedMemberIds.has(m.id) && !m._unassignedReason) {
           m._unassignedReason = `Gruppe "${group.name}" hat begrenzte Kapazität (${effectiveMaxSize}) — wird in zweiter Runde neu zugewiesen`;
+        }
+      }
+
+      // Der Zeitslot wurde anhand der Verfügbarkeit eines TEILS der Gruppe gewählt
+      // (findBestTimeSlot filtert dort auf verfügbare Mitglieder). Übrig blieben
+      // bisher trotzdem alle Mitglieder der Slice — wer zu dieser Zeit ausdrücklich
+      // nicht kann, wurde also eingeplant. Die Konfliktprüfung meldet das
+      // anschließend als `member_unavailable`, da steht der Plan aber schon.
+      // Sie gehen denselben Weg wie Kapazitäts- und Avoid-Überhänge: zweite Runde.
+      const slotWindow = { start: bestSlot.startTime, end: bestSlot.endTime };
+      const unavailableForSlot: typeof filteredSlice = [];
+      for (let i = filteredSlice.length - 1; i >= 0; i--) {
+        const m = filteredSlice[i];
+        if (!this.isMemberSlotAvailable(m.id, bestSlot.dayOfWeek, slotWindow)) {
+          unavailableForSlot.push(...filteredSlice.splice(i, 1));
+        }
+      }
+      for (const m of unavailableForSlot) {
+        if (!assignedMemberIds.has(m.id) && !m._unassignedReason) {
+          m._unassignedReason = `Zu ${DAY_LABELS[bestSlot.dayOfWeek]} ${bestSlot.startTime} laut eigener Angabe nicht verfügbar — wird in zweiter Runde neu zugewiesen`;
         }
       }
 
@@ -2311,6 +2358,44 @@ export class SeasonClusteringEngine {
       }
     }
 
+    // Wer nach allen Runden in keiner Gruppe gelandet ist, fiel bisher lautlos aus
+    // der Planung — die Warteliste kannte ausschließlich den Wunschpartner-Fall.
+    // Für den Verein ist genau das der wichtigere Fall: Diese Mitglieder wollen
+    // Training, haben aber keinen Platz bekommen, und jemand muss darüber
+    // entscheiden. Sie kommen auf die Warteliste der fachlich am besten passenden
+    // Gruppe. Nachgerückt wird bewusst nicht automatisch.
+    const groupInfoById = new Map(_groups.map((g) => [g.id, g]));
+    const alreadyWaitlisted = new Set(waitlisted.map((w) => w.memberId));
+
+    for (const member of members) {
+      if (assignments.length === 0) break;
+      if (groupMemberIndex.has(member.id) || alreadyWaitlisted.has(member.id)) continue;
+
+      const level = member.promotedLevel || member.skillLevel;
+      const ageGroup = member.isMinor ? 'kids' : 'adult';
+      const best =
+        assignments.find((a) => {
+          const info = groupInfoById.get(a.groupId);
+          return info?.level === level && info?.ageGroup === ageGroup;
+        }) ??
+        assignments.find((a) => groupInfoById.get(a.groupId)?.ageGroup === ageGroup) ??
+        assignments[0];
+
+      const position = best.waitlistIds.length + 1;
+      best.waitlistIds.push(member.id);
+      best.waitlistDetails.push({ memberId: member.id, memberName: member.name, position });
+      waitlisted.push({ memberId: member.id, groupId: best.groupId, position });
+      summary.push({
+        memberId: member.id,
+        memberName: member.name,
+        groupName: best.groupName,
+        position,
+        // Es gibt keine Ausweichgruppe — das Mitglied ist in gar keiner.
+        alternativeGroupName: null,
+      });
+      alreadyWaitlisted.add(member.id);
+    }
+
     return { waitlisted, summary };
   }
 
@@ -2569,11 +2654,65 @@ export class SeasonClusteringEngine {
   // ============================================
 
   private async saveToDatabase(result: ClusteringResult): Promise<void> {
+    // Eine Neuplanung löscht die Planeinträge. Bereits veröffentlichte Einheiten
+    // hängen per FK daran — aber mit ON DELETE SET NULL: sie verlieren nur ihren
+    // Verweis und bleiben samt Buchungen im Kalender stehen. Beim nächsten
+    // Veröffentlichen kollidieren sie dann mit den neuen Terminen auf demselben
+    // Platz, und der Vorgang scheitert mit einem rohen SQL-Fehler. Künftige
+    // Termine werden deshalb hier mit verworfen; stattgefundene bleiben Historie.
+    const existingEntries = await db
+      .select({ id: seasonPlanEntries.id })
+      .from(seasonPlanEntries)
+      .where(eq(seasonPlanEntries.season_id, this.seasonId));
+
+    if (existingEntries.length > 0) {
+      const staleSessions = await db
+        .select({ id: sessions.id })
+        .from(sessions)
+        .where(
+          and(
+            inArray(
+              sessions.plan_entry_id,
+              existingEntries.map((e) => e.id)
+            ),
+            gte(sessions.timeslot_start, new Date())
+          )
+        );
+      const staleIds = staleSessions.map((s) => s.id);
+      // ponytail: 500er-Blöcke wegen des Postgres-Parameterlimits, wie im
+      // Veröffentlichen-Pfad.
+      for (let i = 0; i < staleIds.length; i += 500) {
+        const chunk = staleIds.slice(i, i + 500);
+        await db.delete(bookings).where(inArray(bookings.session_id, chunk));
+        await db.delete(sessions).where(inArray(sessions.id, chunk));
+      }
+      if (staleIds.length > 0) {
+        log.info('Neuplanung: künftige veröffentlichte Einheiten verworfen', {
+          seasonId: this.seasonId,
+          sessions: staleIds.length,
+        });
+      }
+    }
+
     // Delete existing plan entries for this season (re-planning)
     await db.delete(seasonPlanEntries).where(eq(seasonPlanEntries.season_id, this.seasonId));
 
     // Delete existing waitlists
     await db.delete(seasonWaitlists).where(eq(seasonWaitlists.season_id, this.seasonId));
+
+    // Der "Einzeltraining …"-Name entsteht im Moment der Gruppenanlage, als die
+    // Gruppe noch aus einer Person bestand. Kommen später Teilnehmer dazu (zweite
+    // Runde, Backtracking), stand bisher der Name eines einzelnen Mitglieds über
+    // einer Vierergruppe — sichtbar für Trainer und alle Teilnehmer. Hier steht die
+    // endgültige Belegung fest, also wird der Name hier geradegezogen.
+    for (const [idx, g] of result.groups.entries()) {
+      if (g.memberIds.length > 1 && g.groupName.startsWith('Einzeltraining ')) {
+        const prefix = g.groupName.replace(/^Einzeltraining /, '').split(' — ')[0];
+        const renamed = `${prefix} Gruppe ${idx + 1}`;
+        await db.update(groups).set({ name: renamed }).where(eq(groups.id, g.groupId));
+        g.groupName = renamed;
+      }
+    }
 
     // Insert new plan entries
     const entriesToInsert = result.groups.map((g) => ({

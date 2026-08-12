@@ -2,13 +2,13 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
 import {
   BUNDESLAND_NAMES,
-  getHolidaysForState,
   getMonday,
   getWeeks,
   resolveBundeslandCode,
   type Holiday,
   type WeekInfo,
 } from './holidays';
+import { loadHolidaysForState } from './holidays.server';
 
 export interface CalendarGroup {
   id: string;
@@ -183,7 +183,7 @@ export async function getSeasonCalendarData(
     const raw = (clubRow as { bundesland: string | null } | null)?.bundesland ?? null;
     bundesland = resolveBundeslandCode(raw);
   }
-  const holidays = getHolidaysForState(bundesland);
+  const holidays = await loadHolidaysForState(bundesland);
   const bundeslandName = BUNDESLAND_NAMES[bundesland] ?? bundesland;
 
   // 3. Build Sep→Jul weeks
@@ -414,4 +414,4 @@ export async function bulkToggleGroupWeeks(
 }
 
 /** Export the helper so components can re-render the same Sep→Jul range. */
-export { getMonday, getHolidaysForState, BUNDESLAND_NAMES, resolveBundeslandCode };
+export { getMonday, BUNDESLAND_NAMES, resolveBundeslandCode };

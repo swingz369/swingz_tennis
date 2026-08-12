@@ -256,7 +256,12 @@ export type ConflictTypeCode =
   | 'trainer_over_limit'
   | 'high_failure_rate_slot'
   | 'large_niveau_span'
-  | 'avoid_partner_conflict';
+  | 'avoid_partner_conflict'
+  // Ergänzt 12.08.2026 nach dem QA-Durchlauf: alle drei Fälle traten in einem
+  // Plan auf, den die Prüfung als "konfliktfrei" freigegeben hat.
+  | 'no_court_assigned'
+  | 'member_unavailable'
+  | 'member_unplanned';
 
 export interface ConflictDetectionResult {
   id: string;

@@ -8,6 +8,9 @@ import {
   trainers,
   courts,
   planningConflicts,
+  users,
+  userClubMemberships,
+  userTrainingPreferences,
 } from '@/src/infrastructure/persistence/schema';
 import {
   seasonStatistics,
@@ -36,6 +39,7 @@ import type {
   ConflictTypeCode,
 } from '@/lib/season-planning/types';
 import type { GroupAssignment } from '@/lib/season-planning/types';
+import type { WeeklyAvailability } from '@/lib/types/season-planning';
 import { DAY_LABELS } from '@/lib/season-planning/schedule-constants';
 
 /** Convert app-wide dayOfWeek (0=Mo..6=So, see lib/types/season-planning.ts) to German weekday name */
@@ -69,6 +73,12 @@ interface ConflictCheckParams {
   }>;
   trainers: Array<{ id: string; name: string; max_hours_per_week: number }>;
   courts: Array<{ id: string; name: string }>;
+  /**
+   * Alle planungsrelevanten Mitglieder des Vereins mit ihrer eingereichten
+   * Wochenverfügbarkeit (null = keine Präferenzen abgegeben). Basis für die
+   * Prüfungen "außerhalb der Verfügbarkeit" und "nicht eingeplant".
+   */
+  members: Array<{ id: string; name: string; availability: WeeklyAvailability | null }>;
   slotFailureRates: Record<string, number>;
   config: {
     trainerUtilizationMaxPct: number;
@@ -98,11 +108,199 @@ function timeSlotsOverlap(start1: string, end1: string, start2: string, end2: st
   return s1 < e2 && s2 < e1;
 }
 
+/**
+ * Lesbare Bezeichnung einer Zuweisung. `groupName` ist nicht überall gefüllt —
+ * die Confirm-Route baut die Zuweisungen aus Planeinträgen und setzt dort die
+ * Gruppen-UUID ein. Dann beschreibt der Termin die Gruppe besser als ihr "Name".
+ */
+function assignmentLabel(a: GroupAssignment): string {
+  const termin = `${dayName(a.dayOfWeek)} ${a.startTime.substring(0, 5)} Uhr`;
+  const looksLikeUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(a.groupName ?? '');
+  return a.groupName && !looksLikeUuid ? `${a.groupName} (${termin})` : `Gruppe ${termin}`;
+}
+
+/** dayOfWeek der App (0=Mo..6=So) auf die Tagesschlüssel der Wochenverfügbarkeit. */
+const AVAILABILITY_DAY_KEYS: Array<keyof WeeklyAvailability> = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+];
+
+/**
+ * Deckt ein angegebenes Verfügbarkeitsfenster den Termin vollständig ab?
+ * Ohne abgegebene Präferenzen (`availability == null`) wird nicht gemeckert —
+ * dieser Fall gehört zu `member_unplanned`, nicht hierher.
+ */
+function fitsAvailability(
+  availability: WeeklyAvailability | null,
+  dayOfWeek: number,
+  startTime: string,
+  endTime: string
+): boolean {
+  if (!availability) return true;
+  const key = AVAILABILITY_DAY_KEYS[dayOfWeek];
+  const slots = key ? availability[key] : undefined;
+  if (!slots || slots.length === 0) return false;
+  const start = timeStringToMinutes(startTime);
+  const end = timeStringToMinutes(endTime);
+  return slots.some(
+    (slot) => timeStringToMinutes(slot.start) <= start && end <= timeStringToMinutes(slot.end)
+  );
+}
+
 // ============================================
 // CONFLICT RULES
 // ============================================
 
 const CONFLICT_RULES: ConflictRule[] = [
+  // 0a. Gruppe ohne Platz (KRITISCH)
+  //
+  // Die Platzprüfung weiter unten überspringt Zuweisungen ohne `courtId`
+  // (`if (!assignment.courtId) continue`) — genau der Fall blieb damit ungeprüft.
+  // Er ist teuer: `confirm/route.ts` legt ohne Platz keine Buchungen an, das
+  // Training ist für Mitglied und Trainer unsichtbar, die Abrechnung rechnet
+  // über `expected_participants` aber trotzdem ab.
+  {
+    type: 'no_court_assigned',
+    severity: 'critical',
+    description: 'Gruppe ohne Platz: Der Zuweisung ist kein Platz zugeordnet',
+    check: async (params) => {
+      const conflicts: ConflictDetectionResult[] = [];
+
+      for (const assignment of params.assignments) {
+        if (assignment.courtId) continue;
+
+        conflicts.push({
+          id: `conflict_nca_${assignment.groupId}_${assignment.dayOfWeek}_${assignment.startTime}`,
+          type: 'no_court_assigned',
+          severity: 'critical',
+          description: `${assignmentLabel(assignment)} hat keinen Platz — für die ${assignment.memberIds.length} Teilnehmer entstehen beim Veröffentlichen keine Buchungen, die Abrechnung erfasst sie trotzdem.`,
+          suggestedResolution:
+            'Weisen Sie der Gruppe einen freien Platz zu oder legen Sie sie auf einen Zeitslot, an dem einer frei ist. Zur Winterzeit stehen nur Hallenplätze zur Verfügung.',
+          affectedEntities: {
+            trainerIds: [assignment.trainerId],
+            memberIds: assignment.memberIds,
+            courtIds: [],
+            groupIds: [assignment.groupId],
+            planEntryIds: [],
+          },
+          timeSlot: {
+            dayOfWeek: assignment.dayOfWeek,
+            startTime: assignment.startTime,
+            endTime: assignment.endTime,
+          },
+          status: 'open',
+          resolvedAt: null,
+          resolvedBy: null,
+          resolutionNotes: null,
+        });
+      }
+      return conflicts;
+    },
+  },
+
+  // 0b. Mitglied außerhalb seiner angegebenen Verfügbarkeit (WARNUNG)
+  {
+    type: 'member_unavailable',
+    severity: 'warning',
+    description:
+      'Mitglied außerhalb der Verfügbarkeit: Der Termin liegt außerhalb der eingereichten Wunschzeiten',
+    check: async (params) => {
+      const conflicts: ConflictDetectionResult[] = [];
+      const byId = new Map(params.members.map((m) => [m.id, m]));
+
+      for (const assignment of params.assignments) {
+        const offenders = assignment.memberIds
+          .map((id) => byId.get(id))
+          .filter(
+            (m): m is (typeof params.members)[number] =>
+              !!m &&
+              m.availability !== null &&
+              !fitsAvailability(
+                m.availability,
+                assignment.dayOfWeek,
+                assignment.startTime,
+                assignment.endTime
+              )
+          );
+        if (offenders.length === 0) continue;
+
+        conflicts.push({
+          id: `conflict_mun_${assignment.groupId}_${assignment.dayOfWeek}_${assignment.startTime}`,
+          type: 'member_unavailable',
+          severity: 'warning',
+          description: `${offenders.map((m) => m.name).join(', ')} ${offenders.length === 1 ? 'ist' : 'sind'} in ${assignmentLabel(assignment)} eingeplant, ${offenders.length === 1 ? 'hat' : 'haben'} diese Zeit aber nicht als verfügbar angegeben.`,
+          suggestedResolution:
+            'Verschieben Sie die Gruppe auf einen passenden Slot oder die betroffenen Mitglieder in eine andere Gruppe. Alternativ Rücksprache halten, ob die Zeit doch passt.',
+          affectedEntities: {
+            trainerIds: [assignment.trainerId],
+            memberIds: offenders.map((m) => m.id),
+            courtIds: assignment.courtId ? [assignment.courtId] : [],
+            groupIds: [assignment.groupId],
+            planEntryIds: [],
+          },
+          timeSlot: {
+            dayOfWeek: assignment.dayOfWeek,
+            startTime: assignment.startTime,
+            endTime: assignment.endTime,
+          },
+          status: 'open',
+          resolvedAt: null,
+          resolvedBy: null,
+          resolutionNotes: null,
+        });
+      }
+      return conflicts;
+    },
+  },
+
+  // 0c. Planungsrelevante Mitglieder ohne Gruppe (WARNUNG)
+  {
+    type: 'member_unplanned',
+    severity: 'warning',
+    description: 'Mitglied ohne Gruppe: Für die Planung vorgesehen, aber nirgends eingeteilt',
+    check: async (params) => {
+      const planned = new Set(params.assignments.flatMap((a) => a.memberIds));
+      const unplanned = params.members.filter((m) => !planned.has(m.id));
+      if (unplanned.length === 0) return [];
+
+      const ohnePraeferenz = unplanned.filter((m) => m.availability === null);
+      const grund =
+        ohnePraeferenz.length === unplanned.length
+          ? ' Alle davon haben keine Präferenzen abgegeben.'
+          : ohnePraeferenz.length > 0
+            ? ` ${ohnePraeferenz.length} davon haben keine Präferenzen abgegeben.`
+            : '';
+
+      return [
+        {
+          id: `conflict_mup_${params.seasonId}`,
+          type: 'member_unplanned',
+          severity: 'warning',
+          description: `${unplanned.length} für die Planung vorgesehene Mitglieder sind in keiner Gruppe: ${unplanned.map((m) => m.name).join(', ')}.${grund}`,
+          suggestedResolution:
+            'Mitglieder einer passenden Gruppe zuordnen, auf die Warteliste setzen oder in Schritt 1 aus der Planung nehmen.',
+          affectedEntities: {
+            trainerIds: [],
+            memberIds: unplanned.map((m) => m.id),
+            courtIds: [],
+            groupIds: [],
+            planEntryIds: [],
+          },
+          timeSlot: null,
+          status: 'open',
+          resolvedAt: null,
+          resolvedBy: null,
+          resolutionNotes: null,
+        },
+      ];
+    },
+  },
+
   // 1. Trainer double-booking (KRITISCH)
   {
     type: 'trainer_double_booking',
@@ -679,6 +877,35 @@ export class ConflictDetector {
     // Load courts
     const courtRows = await db.select().from(courts).where(eq(courts.club_id, this.clubId));
 
+    // Load planungsrelevante Mitglieder samt eingereichter Wochenverfügbarkeit.
+    // Left join: wer keine Präferenzen abgegeben hat, muss trotzdem auftauchen —
+    // sonst fällt genau diese Gruppe wieder aus der Prüfung heraus.
+    const memberRows = await db
+      .select({
+        id: users.id,
+        name: users.full_name,
+        availability: userTrainingPreferences.weekly_availability,
+        submitted: userTrainingPreferences.is_submitted,
+      })
+      .from(userClubMemberships)
+      .innerJoin(users, eq(userClubMemberships.user_id, users.id))
+      .leftJoin(
+        userTrainingPreferences,
+        and(
+          eq(userTrainingPreferences.user_id, users.id),
+          eq(userTrainingPreferences.season_id, this.seasonId),
+          eq(userTrainingPreferences.user_role, 'member')
+        )
+      )
+      .where(
+        and(
+          eq(userClubMemberships.club_id, this.clubId),
+          eq(userClubMemberships.role, 'member'),
+          eq(userClubMemberships.is_active, true),
+          eq(userClubMemberships.include_in_planning, true)
+        )
+      );
+
     // Load slot failure rates from statistics
     const stats = await db
       .select()
@@ -732,6 +959,13 @@ export class ConflictDetector {
         max_hours_per_week: t.max_hours_per_week,
       })),
       courts: courtRows.map((c) => ({ id: c.id, name: c.name })),
+      members: memberRows.map((m) => ({
+        id: m.id,
+        name: m.name ?? 'Unbekannt',
+        // Nur eingereichte Präferenzen gelten als Aussage über die Verfügbarkeit;
+        // ein angefangener Entwurf zählt wie "nichts abgegeben".
+        availability: m.submitted ? ((m.availability as WeeklyAvailability | null) ?? null) : null,
+      })),
       slotFailureRates,
       config: {
         trainerUtilizationMaxPct: dbConfig?.trainer_utilization_max_pct || 80,
