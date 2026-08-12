@@ -23,6 +23,7 @@ import {
   SeasonConfirmationEmail,
   formatDateDEDisplay,
 } from '@/lib/season-planning/email-templates/season-confirmation';
+import { appBaseUrl } from '@/lib/app-url';
 
 const log = createLogger('season-confirmation-email');
 
@@ -84,7 +85,7 @@ export async function buildMemberEmailHtml(input: {
   seasonName: string;
   firstSessionTime: string | null;
 }): Promise<string> {
-  const appUrl = env.NEXT_PUBLIC_APP_URL || 'https://swingz.cloud';
+  const appUrl = appBaseUrl();
   const element: ReactElement = createElement(SeasonConfirmationEmail, {
     fullName: input.fullName,
     groupName: input.groupName,

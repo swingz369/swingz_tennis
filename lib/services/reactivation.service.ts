@@ -26,6 +26,7 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import { pushNotificationService, type PushPayload } from '@/lib/push-notification.service';
 import { createLogger } from '@/lib/logger';
+import { appBaseUrl } from '../app-url';
 
 const log = createLogger('service:reactivation');
 
@@ -126,7 +127,7 @@ export class ReactivationService {
 
     const supabase = createServiceClient();
     const now = new Date();
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+    const appUrl = appBaseUrl();
 
     let members: InactiveMember[];
     try {

@@ -9,6 +9,7 @@ import { withApiAuth, forbiddenResponse } from '@/lib/api-auth';
 import { getStripe, STRIPE_CONFIGURED } from '@/lib/stripe/client';
 import { getPriceId, type PlanKey, type BillingInterval, BILLING_INTERVALS } from '@/lib/plans';
 import { createLogger } from '@/lib/logger';
+import { appBaseUrl } from '@/lib/app-url';
 
 const log = createLogger('api:stripe:subscribe');
 
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
         .eq('id', user.id)
         .maybeSingle();
 
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://swingz.vercel.app';
+      const baseUrl = appBaseUrl();
       const returnPath = plan.startsWith('solo')
         ? '/admin/subscription'
         : '/superadmin/subscription';

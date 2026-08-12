@@ -4,6 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 import { createServiceClient } from '@/lib/supabase/service';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
+import { appBaseUrl } from '@/lib/app-url';
 
 const log = createLogger('auth:register');
 
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
       password,
       options: {
         data: { full_name },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/login?verified=1`,
+        emailRedirectTo: `${appBaseUrl()}/login?verified=1`,
       },
     });
 

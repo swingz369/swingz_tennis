@@ -185,10 +185,7 @@ export interface AutoPlanConfig {
 }
 
 export type OptimizationGoal =
-  | 'minimize_conflicts'
-  | 'balance_trainer_load'
-  | 'maximize_preferences'
-  | 'optimize_court_usage';
+  'minimize_conflicts' | 'balance_trainer_load' | 'maximize_preferences' | 'optimize_court_usage';
 
 export interface AlgorithmMetrics {
   iterations: number;
@@ -282,6 +279,12 @@ export interface CreatePlanEntryRequest {
 
 export interface UpdatePlanEntryRequest extends Partial<CreatePlanEntryRequest> {
   status?: EntryStatus;
+  // Die Vertretungsfelder waren in der PATCH-Route nicht vorgesehen, obwohl sie
+  // in der Tabelle stehen — ein Update darauf traf keine bekannte Spalte und
+  // endete in „No values to set" (HTTP 500).
+  substitute_trainer_id?: string | null;
+  substitute_from_week?: number | null;
+  substitute_to_week?: number | null;
 }
 
 export interface PlanEntryWithDetails extends SeasonPlanEntry {

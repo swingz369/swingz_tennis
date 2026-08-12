@@ -273,6 +273,9 @@ export async function POST(request: NextRequest) {
           if (!existingTrainer) {
             await adminSupabase.from('trainers').upsert({
               id: userId,
+              // Siehe app/api/members/invite/route.ts: ohne user_id findet die
+              // Saisonplanung die Präferenzen dieses Trainers nie.
+              user_id: userId,
               email: record.email,
               name: record.fullName,
               specialties: [],

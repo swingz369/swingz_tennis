@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth } from '@/lib/api-auth';
 import { getStripe, STRIPE_CONFIGURED } from '@/lib/stripe/client';
 import { createLogger } from '@/lib/logger';
+import { appBaseUrl } from '@/lib/app-url';
 
 const log = createLogger('api:stripe:portal');
 
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Stripe nicht verfügbar' }, { status: 503 });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://swingz.vercel.app';
+    const baseUrl = appBaseUrl();
     const returnPath = ['admin', 'superadmin'].includes(auth.role)
       ? `/${auth.role}/subscription`
       : '/dashboard';

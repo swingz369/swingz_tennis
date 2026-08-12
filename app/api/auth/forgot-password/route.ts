@@ -18,8 +18,8 @@ import { z } from 'zod';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
 import { sendPasswordResetEmail } from '@/lib/auth/send-password-reset-email';
-import { env } from '@/lib/env';
 import { createLogger } from '@/lib/logger';
+import { appBaseUrl } from '@/lib/app-url';
 
 const log = createLogger('api:auth:forgot-password');
 
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       // The URL the user lands on after clicking the reset link.
       // /reset-password handles both PKCE (?code=) and implicit (#access_token=) flows.
       options: {
-        redirectTo: `${env.NEXT_PUBLIC_APP_URL || 'https://swingz.cloud'}/reset-password`,
+        redirectTo: `${appBaseUrl()}/reset-password`,
       },
     });
 

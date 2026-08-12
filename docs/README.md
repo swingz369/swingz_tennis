@@ -21,6 +21,7 @@ SwingZ ist eine Management-Lösung für Tennisvereine: Mitglieder, Buchungen, Tr
 | [`ROUTING.md`](ROUTING.md)                                 | Route-Groups, Layout-Hierarchie, alle Seiten                                         |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md)                       | Workflow für Beiträge                                                                |
 | [`STRIPE_SETUP.md`](STRIPE_SETUP.md)                       | Stripe-Konfiguration                                                                 |
+| [`EMAIL_SETUP.md`](EMAIL_SETUP.md)                         | Resend-Konfiguration, Absenderdomain, Versandwege — **derzeit blockiert**            |
 | [`RUNBOOK-BACKUP-ROLLBACK.md`](RUNBOOK-BACKUP-ROLLBACK.md) | Backup & Rollback                                                                    |
 | [`ARCHIV/`](ARCHIV/)                                       | Abgeschlossene Audits/Analysen/Snapshots — historisch, nicht mehr aktuell            |
 | [`tickets/`](tickets/)                                     | Offene Spikes/Tickets                                                                |

@@ -63,6 +63,15 @@ Priorität: höchste Rolle gewinnt. Basis: `user_club_memberships.role` mit `is_
 - Nur Vereine mit `status = 'active'` erscheinen in Auswahllisten und der Navigation.
 - Jeder Verein hat `opening_hours` (JSONB) — Pflichtfeld bei der Registrierung.
 - Feature-Flags pro Verein (`clubs.features` JSONB) steuern, welche Module in der Sidebar sichtbar sind.
+- Jeder Verein hat ein **Bundesland** (`clubs.bundesland`) — Pflichtfeld im Onboarding. Es bestimmt
+  die Schulferien, welche die Saisonplanung aussparen soll. Ohne den Wert entstehen Trainingstermine
+  in den Weihnachtsferien.
+- **Keinen Vereinswechsler für Trainer und Mitglieder** (Entscheidung 13.08.2026): Diese beiden
+  Rollen arbeiten immer im Kontext genau eines Vereins; ihr Verein ergibt sich aus der aktiven
+  Mitgliedschaft, nicht aus einer Auswahl. Nur `superadmin` und `owner` wechseln zwischen Vereinen
+  (Cookie `ADMIN_CLUB_COOKIE`). Technisch: `withApiAuth` setzt `auth.clubId` für member/trainer aus
+  der **einzigen** aktiven Mitgliedschaft; bei mehreren bleibt der Wert `null`, weil es ohne
+  Auswahlmöglichkeit keine richtige Antwort gäbe.
 
 ---
 

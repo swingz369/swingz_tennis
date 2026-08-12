@@ -11,6 +11,7 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { getStripe } from '@/lib/stripe/client';
 import { createLogger } from '@/lib/logger';
+import { appBaseUrl } from '@/lib/app-url';
 
 const log = createLogger('api:stripe:checkout');
 
@@ -111,12 +112,9 @@ export async function POST(_request: NextRequest) {
       }
 
       // Build base URL
-      const baseUrl =
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        process.env.NEXT_PUBLIC_APP_URL ||
-        (process.env.VERCEL_URL
-          ? `https://${process.env.VERCEL_URL}`
-          : 'https://swingz.vercel.app');
+      const baseUrl = appBaseUrl(
+        process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined
+      );
 
       const successUrl = `${baseUrl}/bookings?payment=success`;
       const cancelUrl = `${baseUrl}/bookings?payment=cancelled`;

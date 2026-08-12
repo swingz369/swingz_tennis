@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 11. August 2026 (direkter psql-Zugriff auf `supabase.swingz.cloud:6543`)
+> Zuletzt verifiziert: 13. August 2026 (direkter psql-Zugriff auf `supabase.swingz.cloud:6543`)
 
 ## Kernaussage: `supabase/migrations/` ist NICHT die Quelle der Wahrheit
 
@@ -112,6 +112,24 @@ Vollständiger Ordner-Check: 156 Migrationsdateien, alle bis auf zwei folgen dem
 - `fix_booking_rpc_and_overlap.sql` (kein Zeitstempel-Präfix) → umbenannt zu `20260505030000_fix_booking_rpc_and_overlap.sql`. Live-Check bestätigt: die `create_booking_safe`-Signatur in der DB entspricht exakt dieser Datei (kein späteres Migration überschreibt sie) — reine Umbenennung, keine erneute Anwendung nötig.
 - `TEMPLATE_person_user_split.sql` (im eigenen Header als "NOT APPLIED" markiert, Referenz auf das archivierte `docs/ARCHIV/INTEGRATION_ROADMAP.md`) → verschoben nach `docs/ARCHIV/`, da `supabase/migrations/` nur echte Historie enthalten soll.
 - `supabase_migrations.schema_migrations` existiert seit 26.07.2026 live, aber nur mit 8 Zeilen (Details: siehe Kernaussage oben) — Reconciliation-Script (`file-count-vs-claim-reconciliation.sh`, CI: `db-audit.yml`) zeigt entsprechend weiterhin eine große Lücke, per ADR-002 als Soft-Fail/Warning, nicht CI-Blocker.
+
+## Benachrichtigungen: erlaubte Typen (Stand 13.08.2026, angewendet)
+
+`notifications_type_check` ließ nur `info | warning | success | error | booking | invoice | training`
+zu. Der Anwendungscode schrieb an zehn Stellen Benachrichtigungen, davon **neun mit einem Typ,
+den die Constraint verbot** (`waitlist_promoted`, `member_deactivated`, `absence_alert`, `billing`,
+`message_received`, `membership_created`, `booking_cancelled`, `booking_reactivated`, `waitlist`).
+
+Jeder dieser Inserts schlug fehl. Weil alle Aufrufer den Fehler bewusst als nicht-fatal abfangen
+(eine misslungene Benachrichtigung soll die eigentliche Aktion nicht zurückrollen), fiel es
+nirgends auf: Die Tabelle enthielt zum Zeitpunkt des Funds **systemweit 0 Zeilen**.
+
+Migration `20260813090000_notifications_type_values.sql` ersetzt die Constraint unter demselben
+Namen und nimmt die tatsächlich verwendeten Typen auf; die bisher erlaubten bleiben gültig.
+Angewendet und per `pg_constraint` nachgeprüft.
+
+**Regel für neue Benachrichtigungstypen:** Ein neuer `type`-Wert im Code braucht eine Migration,
+die ihn in die Constraint aufnimmt — sonst verschwindet die Benachrichtigung lautlos.
 
 ## Prozess-Regel für künftige Migrationen
 

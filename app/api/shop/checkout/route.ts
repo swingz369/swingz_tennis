@@ -11,6 +11,7 @@ import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { getStripe } from '@/lib/stripe/client';
 import { createLogger } from '@/lib/logger';
 import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
+import { appBaseUrl } from '@/lib/app-url';
 
 const log = createLogger('api:shop:checkout');
 
@@ -131,10 +132,9 @@ export async function POST(_request: NextRequest) {
       }
 
       // Build URLs (use a placeholder order ID for now; we'll create the real order next)
-      const baseUrl =
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        process.env.NEXT_PUBLIC_APP_URL ||
-        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : _request.nextUrl.origin);
+      const baseUrl = appBaseUrl(
+        process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : _request.nextUrl.origin
+      );
 
       // Create pending order
       const { data: order, error: orderError } = await supabase
