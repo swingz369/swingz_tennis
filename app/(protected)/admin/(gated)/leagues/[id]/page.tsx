@@ -10,7 +10,7 @@ export default async function LeagueDetailPage({ params }: { params: Promise<{ i
   // Fetch members for team assignment
   const { data: clubMemberships } = await supabase
     .from('user_club_memberships')
-    .select('user_id, role, users(id, full_name, email)')
+    .select('user_id, role, users!user_club_memberships_user_id_fkey(id, full_name, email)')
     .eq('club_id', clubId)
     .eq('is_active', true)
     .in('role', ['member', 'trainer']);

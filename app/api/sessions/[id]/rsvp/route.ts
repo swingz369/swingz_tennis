@@ -10,6 +10,7 @@ import { createClient } from '@/src/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
+import { getSessionParticipants } from '@/lib/session-participants';
 
 const log = createLogger('api:sessions:[id]:rsvp');
 
@@ -123,26 +124,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const sb = supabase as any;
 
     try {
-      const { data: rsvps, error } = await sb
-        .from('session_rsvps')
-        .select(
-          `
-          id,
-          session_id,
-          member_id,
-          status,
-          responded_at,
-          notes,
-          created_at,
-          users:member_id ( full_name, avatar_url )
-        `
-        )
-        .eq('session_id', sessionId)
-        .order('responded_at', { ascending: false, nullsFirst: false });
-
-      if (error) throw error;
-
-      return NextResponse.json({ rsvps: rsvps || [] });
+      // Herleitung siehe lib/session-participants.ts — dort steht die einzige
+      // Stelle, an der aus einer Einheit eine Teilnehmerliste wird.
+      const rsvps = await getSessionParticipants(sb, sessionId);
+      return NextResponse.json({ rsvps });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('RSVP GET error:', error);

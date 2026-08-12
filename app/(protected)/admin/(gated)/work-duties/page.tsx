@@ -16,7 +16,7 @@ export default async function WorkDutiesPage() {
   const serviceSupabase = createServiceClient();
   const { data: clubMemberships } = await serviceSupabase
     .from('user_club_memberships')
-    .select('user_id, role, users(id, full_name, email)')
+    .select('user_id, role, users!user_club_memberships_user_id_fkey(id, full_name, email)')
     .eq('club_id', clubId)
     .eq('is_active', true)
     .not('role', 'eq', 'superadmin');

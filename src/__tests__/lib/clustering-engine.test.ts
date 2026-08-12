@@ -1359,3 +1359,44 @@ describe('runClustering — end-to-end smoke test', () => {
     expect(h.state.insertedPlanEntries).toHaveLength(0);
   });
 });
+
+describe('applyWaitlistLogic — nicht eingeplante Mitglieder', () => {
+  it('setzt ein Mitglied ohne Gruppe auf die Warteliste der passenden Gruppe', () => {
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
+    const assignments = [
+      makeAssignment({ memberIds: ['m1'], waitlistIds: [], waitlistDetails: [] }),
+    ];
+    const members = [
+      makeMember({ id: 'm1', name: 'Alice' }),
+      makeMember({ id: 'm2', name: 'Bob', skillLevel: 'intermediate' as SkillLevel }),
+    ];
+
+    const { waitlisted, summary } = engine.applyWaitlistLogic(assignments, members, [makeGroup()]);
+
+    expect(waitlisted.map((w: { memberId: string }) => w.memberId)).toEqual(['m2']);
+    expect(summary[0].memberName).toBe('Bob');
+    expect(summary[0].position).toBe(1);
+    expect(assignments[0].waitlistIds).toEqual(['m2']);
+  });
+
+  it('lässt eingeplante Mitglieder in Ruhe', () => {
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
+    const assignments = [
+      makeAssignment({ memberIds: ['m1', 'm2'], waitlistIds: [], waitlistDetails: [] }),
+    ];
+    const members = [makeMember({ id: 'm1' }), makeMember({ id: 'm2' })];
+
+    const { waitlisted } = engine.applyWaitlistLogic(assignments, members, [makeGroup()]);
+
+    expect(waitlisted).toHaveLength(0);
+  });
+
+  it('schreibt niemanden auf die Warteliste, wenn es gar keine Gruppe gibt', () => {
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
+    const members = [makeMember({ id: 'm1' })];
+
+    const { waitlisted } = engine.applyWaitlistLogic([], members, []);
+
+    expect(waitlisted).toHaveLength(0);
+  });
+});

@@ -94,7 +94,7 @@ async function buildAuthContext(
   const isOwner = effectiveRole === 'owner';
 
   const {
-    clubId: helperClubId,
+    clubId: resolvedClubId,
     resolvedRole,
     isValid,
   } = await resolveActiveClub({
@@ -113,6 +113,21 @@ async function buildAuthContext(
         }
       : {}),
   });
+
+  // resolveActiveClub gibt für Trainer und Mitglieder bewusst keinen Verein zurück —
+  // dort ist kein Auswahl-Cookie im Spiel, und die Server-Komponenten nutzen
+  // requireMemberContext/requireTrainerContext. `auth.clubId` blieb für diese beiden
+  // Rollen dadurch immer null, obwohl über 100 API-Routen darauf aufbauen:
+  // /api/user/club antwortete jedem Mitglied mit 404, Feature-Prüfungen liefen ins
+  // Leere. Ihr Verein steht in der Mitgliedschaft — bei genau einer ist er eindeutig.
+  // Bei mehreren bleibt es bei null, weil es ohne Auswahl keine richtige Antwort gibt.
+  let helperClubId = resolvedClubId;
+  if (!helperClubId && (effectiveRole === 'member' || effectiveRole === 'trainer')) {
+    const ownClubs = [
+      ...new Set(memberships.filter((m) => m.club_id !== null).map((m) => m.club_id as string)),
+    ];
+    if (ownClubs.length === 1) helperClubId = ownClubs[0];
+  }
 
   // FIX P0-3: Re-resolve role for the specific club.
   // If user is admin in Club A but trainer in Club B, accessing Club B

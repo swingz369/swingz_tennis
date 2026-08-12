@@ -38,10 +38,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ slots: [], maxHoursPerWeek: null });
     }
 
+    // Auflösung über `trainers.user_id` — wie im POST dieser Datei und wie im
+    // Admin-Pfad (`trainerProfileService.getTrainerProfileByUserId`). Vorher
+    // suchte ausgerechnet dieses GET über `trainers.email` (ilike): Sobald eine
+    // E-Mail-Adresse geändert wird oder zwei Trainerzeilen dieselbe Adresse
+    // tragen, zeigten Selbstansicht und Adminansicht verschiedene Daten für
+    // denselben Trainer.
     const { data: trainerRecord } = await supabase
       .from('trainers')
       .select('max_hours_per_week')
-      .ilike('email', auth.user.email!)
+      .eq('user_id', auth.user.id)
       .maybeSingle();
 
     return NextResponse.json({

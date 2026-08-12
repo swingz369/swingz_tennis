@@ -30,11 +30,14 @@ export async function GET(_req: NextRequest) {
 
     const supabase = await createClient();
 
-    // First, get trainer record from trainers table
+    // Auflösung über `trainers.user_id` — dieselbe Verknüpfung, die auch die
+    // Saisonplanung und der Admin-Pfad nutzen. Eine Suche über die E-Mail-Adresse
+    // bricht, sobald jemand seine Adresse ändert oder zwei Trainerzeilen dieselbe
+    // tragen.
     const { data: trainerRecord, error: trainerError } = await supabase
       .from('trainers')
       .select('id, email, name')
-      .ilike('email', auth.user.email!)
+      .eq('user_id', auth.user.id)
       .eq('is_active', true)
       .maybeSingle();
 
@@ -70,7 +73,6 @@ export async function GET(_req: NextRequest) {
     }
 
     const today = new Date();
-    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
     // For each session, fetch member details for bookings
     const transformedSessions: TransformedSession[] = [];
@@ -101,9 +103,20 @@ export async function GET(_req: NextRequest) {
     const upcomingSessions = transformedSessions.filter(
       (s) => new Date(s.startTime) >= today
     ).length;
-    const sessionsLast7Days = transformedSessions.filter(
-      (s) => new Date(s.startTime) >= new Date(weekAgo)
-    ).length;
+    // „Diese Woche" ist Montag bis Sonntag der laufenden Woche — nicht „alles ab
+    // vor sieben Tagen". Die alte Zählung meldete für eine erst im Oktober
+    // beginnende Saison 60 Einheiten „diese Woche".
+    const weekStart = new Date(today);
+    const weekday = (weekStart.getDay() + 6) % 7; // Montag = 0
+    weekStart.setDate(weekStart.getDate() - weekday);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+
+    const sessionsLast7Days = transformedSessions.filter((s) => {
+      const start = new Date(s.startTime);
+      return start >= weekStart && start < weekEnd;
+    }).length;
     const noShowCount = transformedSessions.reduce(
       (sum, s) => sum + s.attendees.filter((a) => a.status === 'no_show').length,
       0

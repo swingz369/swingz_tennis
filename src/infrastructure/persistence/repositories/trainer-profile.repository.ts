@@ -439,6 +439,10 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
         .insert(trainers)
         .values({
           id: userId,
+          // Dritter Pfad, der Trainer anlegt (neben members/invite und
+          // members/bulk-import). Ohne user_id findet die Saisonplanung die
+          // Präferenzen des Trainers nie — sie joint users.id = trainers.user_id.
+          user_id: userId,
           email: trainerEmail,
           name: trainerName,
           specialties: [],

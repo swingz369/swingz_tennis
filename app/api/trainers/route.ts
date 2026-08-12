@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       .from('user_club_memberships')
       .select(
         `id, user_id,
-         users(id, full_name, email)`
+         users!user_club_memberships_user_id_fkey(id, full_name, email)`
       )
       .eq('club_id', clubId)
       .eq('role', 'trainer')

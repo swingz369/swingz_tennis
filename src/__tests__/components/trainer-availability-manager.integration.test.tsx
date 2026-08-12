@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, within } from '../test-utils';
 import TrainerAvailabilityManager from '@/components/trainer-availability-manager';
 
@@ -82,6 +82,14 @@ function apiSlot(
 describe('TrainerAvailabilityManager (integration)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Die Fixtures leiten ihre Termine aus dem aktuellen Datum ab (Montag der
+    // laufenden Woche). Ohne feste Systemzeit fällt die Datei beim Tageswechsel
+    // um — genau das passierte in der Nacht zum 13.08.2026 mitten im Testlauf.
+    vi.setSystemTime(new Date('2026-08-12T10:00:00Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('renders loading spinner then transitions to empty state', async () => {

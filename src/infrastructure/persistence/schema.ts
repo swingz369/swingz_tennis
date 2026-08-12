@@ -624,14 +624,19 @@ export const seasons = pgTable(
     year: integer('year').notNull(),
 
     // Date ranges
-    start_date: timestamp('start_date', { mode: 'date' }).notNull(),
-    end_date: timestamp('end_date', { mode: 'date' }).notNull(),
+    // Live sind diese Spalten vom Typ `date`, nicht `timestamp` (geprüft über
+    // information_schema). Als timestamp deklariert lieferte Drizzle für beide
+    // `null` — die Veröffentlichung fiel damit auf ihre Notnagel-Werte zurück
+    // (Saisonstart = heute, Ende = heute + 90 Tage) und legte die Trainings-
+    // termine einer Wintersaison auf August bis November.
+    start_date: date('start_date', { mode: 'date' }).notNull(),
+    end_date: date('end_date', { mode: 'date' }).notNull(),
 
     // Planning status
     planning_status: varchar('planning_status', { length: 30 }).notNull().default('draft'),
 
     // Preferences collection
-    preferences_deadline: timestamp('preferences_deadline', { mode: 'date' }),
+    preferences_deadline: date('preferences_deadline', { mode: 'date' }),
     preferences_open: boolean('preferences_open').notNull().default(false),
 
     // Auto-planning configuration
@@ -1403,8 +1408,10 @@ export const trainerAbsences = pgTable(
       .references(() => clubs.id, { onDelete: 'cascade' }),
     trainer_name: varchar('trainer_name', { length: 100 }).notNull(),
     type: varchar('type', { length: 20 }).notNull(),
-    start_date: timestamp('start_date', { withTimezone: true, mode: 'date' }).notNull(),
-    end_date: timestamp('end_date', { withTimezone: true, mode: 'date' }).notNull(),
+    // Wie bei `seasons`: live `date`, nicht `timestamp` — sonst liest jede
+    // Abwesenheitsprüfung (Vertretungsplanung) null statt eines Zeitraums.
+    start_date: date('start_date', { mode: 'date' }).notNull(),
+    end_date: date('end_date', { mode: 'date' }).notNull(),
     status: varchar('status', { length: 20 }).notNull().default('pending'),
     reason: text('reason'),
     notes: text('notes'),

@@ -141,7 +141,7 @@ export default function MemberPreferencesPage() {
     if (!clubId || !userId) return;
     supabase
       .from('user_club_memberships')
-      .select('user_id, age_group, users(full_name)')
+      .select('user_id, age_group, users!user_club_memberships_user_id_fkey(full_name)')
       .eq('club_id', clubId)
       .eq('role', 'member')
       .eq('is_active', true)
