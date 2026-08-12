@@ -83,6 +83,7 @@ export default function MemberBilling() {
             customerName: (inv.customer_name ?? inv.customerName ?? '') as string,
             customerEmail: (inv.customer_email ?? inv.customerEmail ?? '') as string,
             items: (inv.items as Invoice['items']) ?? [],
+            invoiceType: (inv.invoice_type ?? null) as string | null,
             subtotal,
             taxRate: 19,
             taxAmount: subtotal * 0.19,
@@ -330,14 +331,26 @@ export default function MemberBilling() {
                 'membership_fee' ||
               (it as unknown as { itemType?: string; item_type?: string }).item_type ===
                 'membership_fee';
+            // Rechnungen werden nach `invoice_type` einsortiert (membership |
+            // season | adhoc). Vorher entschied allein, ob eine Position vom Typ
+            // `membership_fee` dabei war — eine Saison-Trainingsrechnung landete
+            // dadurch unter „Sonstiges: Shop, Platzgebühren, etc.".
+            const isMembershipInvoice = (inv: (typeof monthInvoices)[number]) =>
+              inv.invoiceType === 'membership' || !!inv.items?.some(isMembershipFee);
+            const isSeasonInvoice = (inv: (typeof monthInvoices)[number]) =>
+              inv.invoiceType === 'season' && !isMembershipInvoice(inv);
+
             const membershipCosts = monthInvoices
-              .filter((inv) => inv.items?.some(isMembershipFee))
+              .filter(isMembershipInvoice)
+              .reduce((sum, inv) => sum + inv.subtotal, 0);
+            const seasonCosts = monthInvoices
+              .filter(isSeasonInvoice)
               .reduce((sum, inv) => sum + inv.subtotal, 0);
             const trainingCosts = monthSessions.length * hourlyRate;
             const otherCosts = monthInvoices
-              .filter((inv) => !inv.items?.some(isMembershipFee))
+              .filter((inv) => !isMembershipInvoice(inv) && !isSeasonInvoice(inv))
               .reduce((sum, inv) => sum + inv.subtotal, 0);
-            const totalBeforeTax = membershipCosts + trainingCosts + otherCosts;
+            const totalBeforeTax = membershipCosts + seasonCosts + trainingCosts + otherCosts;
             const taxAmount = totalBeforeTax * (taxRate / 100);
             const totalWithTax = totalBeforeTax + taxAmount;
 
@@ -380,6 +393,22 @@ export default function MemberBilling() {
                         </div>
                       </div>
                       <div className="text-right font-semibold">€{trainingCosts.toFixed(2)}</div>
+                    </div>
+                  )}
+                  {seasonCosts > 0 && (
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-brand-50 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-800">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-brand-100 dark:bg-brand-900/40">
+                          <Calendar className="h-4 w-4 text-brand-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">Saisontraining</div>
+                          <div className="text-xs text-muted-foreground">
+                            Trainingsgebühr der Saison
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right font-semibold">€{seasonCosts.toFixed(2)}</div>
                     </div>
                   )}
                   {otherCosts > 0 && (

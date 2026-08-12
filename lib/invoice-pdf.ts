@@ -17,6 +17,9 @@ export interface Invoice {
   customerEmail: string;
   customerAddress?: string;
   items: InvoiceItem[];
+  /** `membership` | `season` | `adhoc` — bestimmt, unter welcher Rubrik die
+   *  Rechnung in der Kostenübersicht des Mitglieds erscheint. */
+  invoiceType?: string | null;
   subtotal: number;
   taxRate: number;
   taxAmount: number;

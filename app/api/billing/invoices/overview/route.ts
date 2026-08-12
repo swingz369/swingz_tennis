@@ -5,6 +5,7 @@ import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import type { InvoiceStatus } from '@/lib/types/billing';
 import { createLogger } from '@/lib/logger';
+import { isMemberVisibleInvoiceStatus } from '@/lib/billing/invoice-visibility';
 
 const log = createLogger('api:billing:invoices:overview');
 
@@ -59,6 +60,16 @@ export async function GET(_request: NextRequest) {
 
       // Filter by date range if provided (use created_at)
       let filteredInvoices = invoices || [];
+
+      // Ein Entwurf ist Arbeitsstand des Vereins — er kann sich noch ändern oder
+      // beim erneuten Veröffentlichen einer Saison ganz verschwinden. Mitglieder
+      // und Trainer sahen ihn bisher als „ausstehende Rechnung", obwohl der Verein
+      // ihn nie verschickt hat.
+      if (auth.role === 'member' || auth.role === 'trainer') {
+        filteredInvoices = filteredInvoices.filter((invoice) =>
+          isMemberVisibleInvoiceStatus(invoice.status)
+        );
+      }
 
       if (startDate) {
         const start = new Date(startDate);

@@ -235,6 +235,11 @@ export default function BillingClient({
   }, [page, invoiceTypeFilter, fetchInvoices]);
 
   const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
+  const [bulkSending, setBulkSending] = useState(false);
+
+  // Entwürfe sind für Mitglieder unsichtbar (lib/billing/invoice-visibility.ts) —
+  // sie müssen aktiv versendet werden, sonst sieht niemand eine Forderung.
+  const draftInvoiceIds = invoices.filter((inv) => inv.status === 'draft').map((inv) => inv.id);
   const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
@@ -326,6 +331,51 @@ export default function BillingClient({
     } finally {
       setSendingInvoiceId(null);
     }
+  };
+
+  /**
+   * Versendet mehrere Rechnungen nacheinander über dieselbe Route wie der
+   * Einzelversand. Bewusst seriell: Jeder Versand erzeugt ein PDF und eine Mail,
+   * und bei einem Teilfehler muss erkennbar bleiben, welche Rechnung betroffen ist.
+   */
+  const handleSendMany = async (ids: string[]) => {
+    if (ids.length === 0) return;
+    setBulkSending(true);
+    const sent: string[] = [];
+    const failed: { id: string; error: string }[] = [];
+
+    for (const id of ids) {
+      try {
+        const res = await apiFetch(`/api/billing/invoices/${id}/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) sent.push(id);
+        else failed.push({ id, error: data.error ?? `HTTP ${res.status}` });
+      } catch {
+        failed.push({ id, error: 'Netzwerkfehler' });
+      }
+    }
+
+    if (sent.length > 0) {
+      setInvoices((prev) =>
+        prev.map((inv) => (sent.includes(inv.id) ? { ...inv, status: 'sent' } : inv))
+      );
+      setSelectedIds(new Set());
+    }
+
+    if (failed.length === 0) {
+      toast.success(`${sent.length} Rechnung${sent.length !== 1 ? 'en' : ''} versendet`);
+    } else {
+      // Der häufigste Grund ist eine nicht verifizierte Absenderdomain — dann
+      // scheitern alle. Die erste Fehlermeldung sagt mehr als eine Zahl.
+      toast.error(
+        `${sent.length} versendet, ${failed.length} fehlgeschlagen — ${failed[0].error}`,
+        { duration: 12000 }
+      );
+    }
+    setBulkSending(false);
   };
 
   const handleDeleteInvoice = async () => {
@@ -444,12 +494,41 @@ export default function BillingClient({
                   Auswahl aufheben
                 </Button>
                 <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={bulkSending}
+                  onClick={() => handleSendMany([...selectedIds])}
+                >
+                  <Send className="h-4 w-4 mr-1.5" />
+                  {bulkSending ? 'Versand läuft…' : 'Ausgewählte versenden'}
+                </Button>
+                <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => setBulkDeleteConfirmOpen(true)}
                 >
                   <Trash2 className="h-4 w-4 mr-1.5" />
                   Ausgewählte löschen
+                </Button>
+              </div>
+            )}
+            {/* Ohne Sammelversand wären es bei einem Verein mit 20 Mitgliedern
+                20 Einzelklicks — die Rechnungen bleiben dann als Entwurf liegen
+                und das Mitglied sieht nie eine Forderung. */}
+            {selectedIds.size === 0 && draftInvoiceIds.length > 0 && (
+              <div className="flex items-center gap-3 mt-3 p-3 rounded-xl bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-800">
+                <span className="text-sm">
+                  {draftInvoiceIds.length} Rechnung{draftInvoiceIds.length !== 1 ? 'en' : ''} im
+                  Entwurf — für Mitglieder noch nicht sichtbar
+                </span>
+                <div className="flex-1" />
+                <Button
+                  size="sm"
+                  disabled={bulkSending}
+                  onClick={() => handleSendMany(draftInvoiceIds)}
+                >
+                  <Send className="h-4 w-4 mr-1.5" />
+                  {bulkSending ? 'Versand läuft…' : 'Alle Entwürfe versenden'}
                 </Button>
               </div>
             )}

@@ -1,4 +1,5 @@
 import { requireAuth } from '@/lib/auth';
+import { formatDate, formatTime } from '@/lib/format';
 import Link from 'next/link';
 import {
   Calendar,
@@ -23,6 +24,7 @@ import { StatCard } from '@/components/ui/stat-card';
 import { QuickActions } from '@/components/ui/quick-actions';
 import { MemberHeroActions } from '@/components/member-hero-actions';
 import { TennisBallEmptyState } from '@/components/ui/empty-state';
+import { OUTSTANDING_INVOICE_STATUSES } from '@/lib/billing/invoice-visibility';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,22 +77,50 @@ export default async function MemberPage() {
     user.email?.split('@')[0] ||
     'Mitglied';
 
+  const nowIso = new Date().toISOString();
+
   const { data: upcomingBookings } = await supabase
     .from('bookings')
-    .select('id, session_start_time, status, sessions(id, courts(name))')
+    .select(
+      'id, session_start_time, status, sessions(id, timeslot_start, timeslot_end, courts(name))'
+    )
     .eq('member_id', user.id)
     .eq('status', 'confirmed')
-    .gte('session_start_time', new Date().toISOString())
+    .gte('session_start_time', nowIso)
     .order('session_start_time', { ascending: true })
-    .limit(3);
+    .limit(4);
 
-  const { data: nextSessions } = await supabase
-    .from('sessions')
-    .select('id, timeslot_start, timeslot_end, courts(name), schedules(club_id)')
-    .eq('schedules.club_id', clubId)
-    .gte('timeslot_start', new Date().toISOString())
-    .order('timeslot_start', { ascending: true })
-    .limit(3);
+  // Die Kacheln zeigen Gesamtzahlen, die Listen darunter nur die nächsten
+  // Einträge — deshalb eigene Zählabfragen. Vorher war die Kachel schlicht
+  // `upcomingBookings.length` bei `.limit(3)`: ein Mitglied mit 20 Terminen
+  // las dort dauerhaft "3 bevorstehend".
+  const { count: upcomingBookingCount } = await supabase
+    .from('bookings')
+    .select('id', { count: 'exact', head: true })
+    .eq('member_id', user.id)
+    .eq('status', 'confirmed')
+    .gte('session_start_time', nowIso);
+
+  const { count: upcomingTrainingCount } = await supabase
+    .from('bookings')
+    .select('id', { count: 'exact', head: true })
+    .eq('member_id', user.id)
+    .eq('status', 'confirmed')
+    .not('session_id', 'is', null)
+    .gte('session_start_time', nowIso);
+
+  // Die Trainingseinheiten stammen aus den eigenen Buchungen. Bis hierher fragte
+  // die Seite vereinsweit `sessions` ab — auf dem Mitglieder-Dashboard stand
+  // damit unter "Nächste Session" das nächste Training des VEREINS, oft das
+  // einer fremden Gruppe.
+  const nextSessions = (upcomingBookings ?? [])
+    .map((b: { sessions?: unknown }) => b.sessions)
+    .filter(Boolean) as {
+    id: string;
+    timeslot_start: string;
+    timeslot_end: string;
+    courts?: unknown;
+  }[];
 
   const { count: unreadCount } = await supabase
     .from('notifications')
@@ -98,17 +128,20 @@ export default async function MemberPage() {
     .eq('user_id', user.id)
     .eq('read', false);
 
+  // Nicht nur `status = 'open'`: Eine verschickte, überfällige oder angemahnte
+  // Rechnung ist genauso offen. Vorher zeigte die Kachel einem Mitglied mit
+  // überfälliger Rechnung „0 offen".
   const { count: openInvCount } = await supabase
     .from('invoices')
     .select('id', { count: 'exact', head: true })
     .eq('member_id', user.id)
-    .eq('status', 'open');
+    .in('status', OUTSTANDING_INVOICE_STATUSES);
 
-  const bookingCount = upcomingBookings?.length ?? 0;
+  const bookingCount = upcomingBookingCount ?? 0;
   const notifCount = unreadCount ?? 0;
   const invoiceCount = openInvCount ?? 0;
 
-  const nextSession = (nextSessions ?? []).length > 0 ? nextSessions![0] : null;
+  const nextSession = nextSessions.length > 0 ? nextSessions[0] : null;
   const nextCourt = nextSession
     ? (() => {
         const c = nextSession.courts;
@@ -116,14 +149,10 @@ export default async function MemberPage() {
       })()
     : null;
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('de-DE', {
-      weekday: 'short',
-      day: '2-digit',
-      month: '2-digit',
-    });
-  const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  // formatDate/formatTime kommen aus @/lib/format und legen Europe/Berlin fest.
+  // Die vorherigen lokalen Helfer nutzten toLocale*String ohne timeZone und
+  // rendern damit in der Zeitzone der Laufzeit — auf Vercel (UTC) erschien ein
+  // 18:00-Training als 16:00.
 
   const isToday = (iso: string) => {
     const d = new Date(iso);
@@ -225,10 +254,10 @@ export default async function MemberPage() {
         <StatCard
           icon={BookOpen}
           label="Training"
-          value={(nextSessions ?? []).length}
+          value={upcomingTrainingCount ?? 0}
           sub="kommende Sessions"
           color="green"
-          href="/bookings"
+          href="/training-schedule"
         />
       </div>
 
@@ -333,7 +362,7 @@ export default async function MemberPage() {
       )}
 
       {/* ── Next Training Sessions ── */}
-      {(nextSessions ?? []).length > 1 && (
+      {nextSessions.length > 1 && (
         <Card className="border border-border dark:border-white/10 p-0">
           <CardHeader className="px-5 pt-5 pb-3">
             <CardTitle className="text-sm font-semibold flex items-center justify-between">
@@ -348,7 +377,7 @@ export default async function MemberPage() {
           </CardHeader>
           <CardContent className="px-5 pb-5">
             <div className="divide-y divide-border dark:divide-white/5">
-              {nextSessions!.slice(1, 4).map((s: any) => {
+              {nextSessions.slice(1, 4).map((s: any) => {
                 const court = Array.isArray(s.courts) ? s.courts[0] : s.courts;
                 return (
                   <div

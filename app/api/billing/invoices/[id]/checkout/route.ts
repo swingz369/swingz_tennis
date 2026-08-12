@@ -5,6 +5,7 @@ import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import { createStripeCheckoutSession } from '@/lib/stripe/stripe-client';
 import { createLogger } from '@/lib/logger';
+import { appBaseUrl } from '@/lib/app-url';
 
 const log = createLogger('api:billing:invoices:[id]:checkout');
 
@@ -42,7 +43,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         return NextResponse.json({ error: 'Invoice is already paid' }, { status: 400 });
       }
 
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || _request.nextUrl.origin;
+      const baseUrl = appBaseUrl(_request.nextUrl.origin);
       const successUrl = `${baseUrl}/billing?payment=success`;
       const cancelUrl = `${baseUrl}/billing?payment=cancelled`;
 

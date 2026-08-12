@@ -270,6 +270,32 @@ export class SeasonBillingService {
     // 4b. Load inactive weeks for the season
     const inactiveWeeksByGroup = await this.loadInactiveWeeks(seasonId);
 
+    // 4c. Tatsächlich veröffentlichte Einheiten je Planeintrag zählen. Sie sind
+    // nach der Veröffentlichung die verbindliche Abrechnungsgrundlage, weil sie
+    // Ferien und übersprungene Wochen bereits berücksichtigen.
+    const publishedSessionsByEntry = new Map<string, number>();
+    {
+      const { data: sessionRows, error: sessionError } = await this.supabase
+        .from('sessions')
+        .select('plan_entry_id')
+        .in(
+          'plan_entry_id',
+          entries.map((e) => e.id)
+        );
+      if (sessionError) {
+        log.warn(
+          '[SeasonBilling] Veröffentlichte Einheiten nicht lesbar, rechne mit der Wochenschätzung:',
+          sessionError.message
+        );
+      } else {
+        for (const row of sessionRows ?? []) {
+          const key = (row as { plan_entry_id: string | null }).plan_entry_id;
+          if (!key) continue;
+          publishedSessionsByEntry.set(key, (publishedSessionsByEntry.get(key) ?? 0) + 1);
+        }
+      }
+    }
+
     // 5. Trainer info
     const trainerIds = [...new Set(entries.map((e) => e.trainer_id))];
     const trainerRateMap = new Map<string, number>();
@@ -369,7 +395,17 @@ export class SeasonBillingService {
       // sessions_per_week occurrences that week, not just one)
       const inactiveSet = inactiveWeeksByGroup.get(entry.group_id);
       const inactiveCount = inactiveSet ? inactiveSet.size : 0;
-      const netSessions = Math.max(0, grossSessions - inactiveCount * sessionsPerWeek);
+      const plannedSessions = Math.max(0, grossSessions - inactiveCount * sessionsPerWeek);
+
+      // Sobald die Saison veröffentlicht ist, sind die tatsächlich angelegten
+      // Einheiten die verbindliche Zahl. Die Wochenrechnung oben kennt die
+      // Schulferien nicht: Sie kam für die Wintersaison 2026/27 auf 26 Termine
+      // je Gruppe, während der Plan wegen Herbst- und Weihnachtsferien nur 20–21
+      // erzeugt hatte — über vier Gruppen 1.150 € zu viel, verteilt auf die
+      // Mitglieder. Vor der Veröffentlichung bleibt die Schätzung die einzige
+      // verfügbare Grundlage.
+      const publishedSessions = publishedSessionsByEntry.get(entry.id);
+      const netSessions = publishedSessions ?? plannedSessions;
 
       const durationHours = entry.duration_minutes / 60;
       const totalTrainerCost = effectiveRate * durationHours * netSessions;
@@ -518,7 +554,18 @@ export class SeasonBillingService {
    * between the preview grandTotal and the sum of actually generated invoice
    * totals (should be < 1 cent if no member sits in multiple groups).
    */
-  async generateInvoices(seasonId: string): Promise<GenerateInvoicesResult> {
+  /**
+   * @param options.replaceDrafts  Beim erneuten Veröffentlichen: noch offene
+   *   (draft) Saison-Rechnungen verwerfen und neu erzeugen. Ohne das behält der
+   *   Verein die Rechnungen des ERSTEN Publish — im QA-Durchlauf standen so
+   *   20 Rechnungen über 5.200 € in der Datenbank, während der geänderte Plan
+   *   nur noch 4.050 € rechtfertigte. Bereits versendete oder bezahlte
+   *   Rechnungen bleiben unangetastet; die gehören storniert, nicht überschrieben.
+   */
+  async generateInvoices(
+    seasonId: string,
+    options: { replaceDrafts?: boolean } = {}
+  ): Promise<GenerateInvoicesResult> {
     // membership_included → Training im Jahresbeitrag abgedeckt, keine Einzelrechnungen
     const billingConfig = await this.getConfig(seasonId);
     if ((billingConfig as any)?.billing_model === 'membership_included') {
@@ -544,6 +591,24 @@ export class SeasonBillingService {
     const clubId = await this.getSeasonClubId(seasonId);
     if (!clubId) {
       throw new Error('Season club not found');
+    }
+
+    if (options.replaceDrafts) {
+      const { data: discarded, error: discardErr } = await this.supabase
+        .from('invoices')
+        .delete()
+        .eq('club_id', clubId)
+        .eq('season_id', seasonId)
+        .eq('invoice_type', 'season')
+        .eq('status', 'draft')
+        .select('id');
+      if (discardErr) {
+        log.error('[SeasonBilling] Entwurfs-Rechnungen nicht verworfen:', discardErr);
+      } else {
+        log.info('[SeasonBilling] Entwurfs-Rechnungen vor Neuberechnung verworfen', {
+          count: discarded?.length ?? 0,
+        });
+      }
     }
 
     // Idempotency: filter on `season_id` (the FK column on `invoices`)
