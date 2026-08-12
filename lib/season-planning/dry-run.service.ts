@@ -33,6 +33,7 @@ import {
   type Holiday,
 } from '@/lib/season-planning/holidays';
 import { normalizeRsvpStatus, type RsvpStatusKey } from '@/lib/rsvp-status';
+import { berlinWallClock } from '@/lib/berlin-time';
 import type { GroupAssignment, ConflictDetectionResult } from '@/lib/season-planning/types';
 import type { SeasonBillingPreview } from '@/lib/billing/season-billing.service';
 
@@ -561,11 +562,15 @@ export function simulateSessionBuckets(
 
     const targetDayOfWeek = entry.day_of_week;
     const jsDayOfWeek = targetDayOfWeek === 6 ? 0 : targetDayOfWeek + 1;
+    // Wie in der Confirm-Route: nur das Datum festhalten, die Uhrzeit kommt
+    // pro Woche aus berlinWallClock(). Sonst rechnet die Vorschau in der
+    // Zeitzone des Servers (auf Vercel UTC) und zeigt andere Zeiten an als
+    // der später veröffentlichte Plan.
     const firstDate = new Date(safeStart);
-    let daysUntil = jsDayOfWeek - firstDate.getDay();
+    let daysUntil = jsDayOfWeek - firstDate.getUTCDay();
     if (daysUntil < 0) daysUntil += 7;
-    firstDate.setDate(firstDate.getDate() + daysUntil);
-    firstDate.setHours(startParts.h, startParts.m, 0, 0);
+    firstDate.setUTCDate(firstDate.getUTCDate() + daysUntil);
+    firstDate.setUTCHours(0, 0, 0, 0);
 
     const startWeek = entry.starts_from_week ?? 1;
     const rawEndWeek = entry.ends_at_week;
@@ -579,8 +584,9 @@ export function simulateSessionBuckets(
     if (entry.court_id) activeCourtIds.add(entry.court_id);
 
     for (let week = startWeek; week <= endWeek && week <= opts.totalSeasonWeeks; week++) {
-      const sessionDate = new Date(firstDate);
-      sessionDate.setDate(sessionDate.getDate() + (week - 1) * 7);
+      const dayDate = new Date(firstDate);
+      dayDate.setUTCDate(dayDate.getUTCDate() + (week - 1) * 7);
+      const sessionDate = berlinWallClock(dayDate, startParts.h, startParts.m);
       if (sessionDate > safeEnd) continue;
 
       const dateStr = isoDate(sessionDate);

@@ -264,6 +264,17 @@ vi.mock('@/src/infrastructure/persistence/db', () => {
 });
 
 vi.mock('@/src/infrastructure/persistence/schema', () => ({
+  bookings: {
+    _table: 'bookings',
+    id: 'bookings_table',
+    club_id: 'club_id',
+    member_id: 'member_id',
+    schedule_id: 'schedule_id',
+    session_id: 'session_id',
+    court_id: 'court_id',
+    status: 'status',
+    session_start_time: 'session_start_time',
+  },
   seasons: {
     _table: 'seasons',
     id: 'seasons_table',
@@ -592,6 +603,34 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
       expect(body.success).toBe(true);
       expect(body.publishedSessions).toBe(16);
       expect(body.publishedSessionIds).toHaveLength(16);
+    });
+
+    // Regression: Das Veröffentlichen legte früher nur Sessions an, aber keine
+    // Buchungen. Mitglieder-Dashboard, Trainer-Teilnehmerliste und
+    // Anwesenheitserfassung lesen alle aus `bookings` und blieben deshalb leer,
+    // während die Abrechnung aus derselben Zuteilung bereits Rechnungen erzeugte.
+    it('legt für jeden zugeteilten Teilnehmer je Session eine Buchung an', async () => {
+      const res = await POST(buildRequest(), ctx());
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      // 16 Sessions × 2 zugeteilte Mitglieder
+      expect(body.bookingsCreated).toBe(32);
+    });
+
+    it('legt ohne zugewiesenen Platz keine Buchungen an (bookings.court_id ist NOT NULL)', async () => {
+      resetConfig({
+        entries: [{ ...DEFAULT_ENTRY, court_id: null }],
+        schedule: [DEFAULT_SCHEDULE],
+      });
+      mockGetDb = vi.fn(() => buildDb());
+
+      const res = await POST(buildRequest(), ctx());
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.publishedSessions).toBe(16);
+      expect(body.bookingsCreated).toBe(0);
     });
 
     it('creates new schedule when none exists', async () => {

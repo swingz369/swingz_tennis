@@ -9,21 +9,32 @@
 
 // ── Date & Time Formatters (pre-initialized for performance) ──────────────
 
+// Ohne explizite Zeitzone formatiert Intl in der Zeitzone der Laufzeit — und
+// das sind zwei verschiedene: Server Components rendern auf Vercel in UTC,
+// Client Components im Browser des Nutzers (Europe/Berlin). Dieselbe Session
+// erschien dadurch server- und clientseitig mit unterschiedlicher Uhrzeit
+// (im Sommer 2 h Versatz), inklusive Hydration-Mismatch. Der Verein steht
+// immer in Deutschland, also ist Europe/Berlin die fachlich richtige Zone.
+const TIME_ZONE = 'Europe/Berlin';
+
 const DATE_FORMATTER = new Intl.DateTimeFormat('de-DE', {
   weekday: 'short',
   day: '2-digit',
   month: '2-digit',
   year: 'numeric',
+  timeZone: TIME_ZONE,
 });
 
 const DATE_SHORT_FORMATTER = new Intl.DateTimeFormat('de-DE', {
   day: '2-digit',
   month: '2-digit',
+  timeZone: TIME_ZONE,
 });
 
 const TIME_FORMATTER = new Intl.DateTimeFormat('de-DE', {
   hour: '2-digit',
   minute: '2-digit',
+  timeZone: TIME_ZONE,
 });
 
 const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('de-DE', {
@@ -32,11 +43,13 @@ const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('de-DE', {
   year: 'numeric',
   hour: '2-digit',
   minute: '2-digit',
+  timeZone: TIME_ZONE,
 });
 
 const MONTH_YEAR_FORMATTER = new Intl.DateTimeFormat('de-DE', {
   month: 'long',
   year: 'numeric',
+  timeZone: TIME_ZONE,
 });
 
 // ── Currency & Number Formatters ──────────────────────────────────────────

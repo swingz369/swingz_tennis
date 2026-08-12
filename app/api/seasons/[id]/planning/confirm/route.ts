@@ -16,6 +16,7 @@ import {
   seasonPlanningHistory,
   clubs,
   seasonGroupWeeks,
+  bookings,
 } from '@/src/infrastructure/persistence/schema';
 import { eq, and } from 'drizzle-orm';
 import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
@@ -27,6 +28,7 @@ import {
   resolveBundeslandCode,
   type Holiday,
 } from '@/lib/season-planning/holidays';
+import { berlinWallClock } from '@/lib/berlin-time';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:confirm-plan');
@@ -201,265 +203,322 @@ export async function POST(request: NextRequest, context: RouteContext) {
         // sessions are created (audit trail, conflict persistence, season
         // status update), the entire publish rolls back automatically.
         // ──────────────────────────────────────────────────────────────────
-        const { publishedCount, publishedIds } = await db.transaction(async (tx) => {
-          let publishedCount = 0;
-          const publishedIds: string[] = [];
+        const { publishedCount, publishedIds, bookingsCreated } = await db.transaction(
+          async (tx) => {
+            let publishedCount = 0;
+            const publishedIds: string[] = [];
 
-          // 1. Find or create a schedule for this season (only if we have entries)
-          // Use season.year (integer) which is more reliable than parsing start_date
-          const seasonYear =
-            typeof season.year === 'number' && !Number.isNaN(season.year)
-              ? season.year
-              : new Date().getFullYear();
-          let scheduleId: string | null = null;
+            // Teilnehmer-Buchungen, die am Ende der Transaktion gebündelt
+            // geschrieben werden. Ohne sie existiert die Zuteilung nur in
+            // season_plan_entries.expected_participants — Mitglieder-Dashboard,
+            // Trainer-Teilnehmerliste und Anwesenheitserfassung lesen aber alle
+            // aus `bookings` und blieben deshalb leer, obwohl die Abrechnung
+            // bereits Rechnungen aus derselben Zuteilung erzeugt.
+            const bookingRows: (typeof bookings.$inferInsert)[] = [];
 
-          // 2. Compute season length in weeks with safe date handling
-          let seasonStart = season.start_date ? new Date(season.start_date) : new Date();
-          let seasonEnd = season.end_date
-            ? new Date(season.end_date)
-            : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+            // 1. Find or create a schedule for this season (only if we have entries)
+            // Use season.year (integer) which is more reliable than parsing start_date
+            const seasonYear =
+              typeof season.year === 'number' && !Number.isNaN(season.year)
+                ? season.year
+                : new Date().getFullYear();
+            let scheduleId: string | null = null;
 
-          // If dates are invalid (NaN), replace with sensible defaults
-          if (isNaN(seasonStart.getTime())) {
-            seasonStart = new Date();
-          }
-          if (isNaN(seasonEnd.getTime())) {
-            seasonEnd = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
-          }
+            // 2. Compute season length in weeks with safe date handling
+            let seasonStart = season.start_date ? new Date(season.start_date) : new Date();
+            let seasonEnd = season.end_date
+              ? new Date(season.end_date)
+              : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
 
-          const seasonLengthDays = Math.ceil(
-            (seasonEnd.getTime() - seasonStart.getTime()) / (1000 * 60 * 60 * 24)
-          );
-          const totalSeasonWeeks = Math.max(1, Math.ceil(seasonLengthDays / 7));
-
-          log.info('Publishing season', {
-            seasonId: season.id,
-            name: season.name || 'unnamed',
-            startDate: seasonStart.toISOString().substring(0, 10),
-            endDate: seasonEnd.toISOString().substring(0, 10),
-            weeks: totalSeasonWeeks,
-            entries: entries.length,
-          });
-
-          // 3. Create recurring weekly sessions for each plan entry
-          for (const entry of entries) {
-            if (entry.status === 'published') continue;
-
-            // Lazily find or create schedule on first entry to publish
-            if (!scheduleId) {
-              const [existingSchedule] = await tx
-                .select()
-                .from(schedules)
-                .where(
-                  and(eq(schedules.club_id, season.club_id), eq(schedules.season_year, seasonYear))
-                )
-                .limit(1);
-
-              if (existingSchedule) {
-                scheduleId = existingSchedule.id;
-              } else {
-                const [newSchedule] = await tx
-                  .insert(schedules)
-                  .values({
-                    club_id: season.club_id,
-                    season_type: 'summer',
-                    season_year: seasonYear,
-                    season_start_date: seasonStart,
-                    season_end_date: seasonEnd,
-                    is_active: true,
-                  })
-                  .returning({ id: schedules.id });
-                scheduleId = newSchedule.id;
-              }
+            // If dates are invalid (NaN), replace with sensible defaults
+            if (isNaN(seasonStart.getTime())) {
+              seasonStart = new Date();
+            }
+            if (isNaN(seasonEnd.getTime())) {
+              seasonEnd = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
             }
 
-            // Parse times from entry (HH:MM:SS)
-            const startParts = (entry.start_time || '00:00:00').split(':');
-            const endParts = (entry.end_time || '00:00:00').split(':');
-            const startHours = parseInt(startParts[0], 10);
-            const startMinutes = parseInt(startParts[1], 10);
-            const endHours = parseInt(endParts[0], 10);
-            const endMinutes = parseInt(endParts[1], 10);
-            const durationMs =
-              (endHours * 60 + endMinutes - (startHours * 60 + startMinutes)) * 60 * 1000;
-            const actualDurationMs =
-              durationMs > 0 ? durationMs : entry.duration_minutes * 60 * 1000;
+            const seasonLengthDays = Math.ceil(
+              (seasonEnd.getTime() - seasonStart.getTime()) / (1000 * 60 * 60 * 24)
+            );
+            const totalSeasonWeeks = Math.max(1, Math.ceil(seasonLengthDays / 7));
 
-            // DayOfWeek convention: 0=Monday, 1=Tuesday, ..., 6=Sunday
-            // JavaScript getDay(): 0=Sunday, 1=Monday, ..., 6=Saturday
-            const targetDayOfWeek = entry.day_of_week;
-            const jsDayOfWeek = targetDayOfWeek === 6 ? 0 : targetDayOfWeek + 1;
-
-            // Find the first date matching target day_of_week on or after season start
-            const firstDate = new Date(seasonStart);
-            let daysUntil = jsDayOfWeek - firstDate.getDay();
-            if (daysUntil < 0) daysUntil += 7;
-            firstDate.setDate(firstDate.getDate() + daysUntil);
-            firstDate.setHours(startHours, startMinutes, 0, 0);
-
-            const startWeek = entry.starts_from_week || 1;
-            // Only use entry.ends_at_week if it is explicitly set to a value > 1.
-            // When ends_at_week is null (not set by clustering engine) or 1 (stale default),
-            // fall back to totalSeasonWeeks to ensure sessions span the full season.
-            const endWeek =
-              entry.ends_at_week !== null &&
-              entry.ends_at_week !== undefined &&
-              entry.ends_at_week > 1
-                ? entry.ends_at_week
-                : totalSeasonWeeks;
-
-            log.info('Processing plan entry', {
-              entryId: entry.id,
-              dayOfWeek: entry.day_of_week,
-              startsWeek: startWeek,
-              endsWeek: endWeek,
+            log.info('Publishing season', {
+              seasonId: season.id,
+              name: season.name || 'unnamed',
+              startDate: seasonStart.toISOString().substring(0, 10),
+              endDate: seasonEnd.toISOString().substring(0, 10),
+              weeks: totalSeasonWeeks,
+              entries: entries.length,
             });
-            const createdSessionIds: string[] = [];
 
-            for (let week = startWeek; week <= endWeek && week <= totalSeasonWeeks; week++) {
-              const sessionDate = new Date(firstDate);
-              sessionDate.setDate(sessionDate.getDate() + (week - 1) * 7);
+            // 3. Create recurring weekly sessions for each plan entry
+            for (const entry of entries) {
+              if (entry.status === 'published') continue;
 
-              // Skip if session would be after season end
-              if (sessionDate > seasonEnd) break;
+              // Lazily find or create schedule on first entry to publish
+              if (!scheduleId) {
+                const [existingSchedule] = await tx
+                  .select()
+                  .from(schedules)
+                  .where(
+                    and(
+                      eq(schedules.club_id, season.club_id),
+                      eq(schedules.season_year, seasonYear)
+                    )
+                  )
+                  .limit(1);
 
-              // Skip if session falls on a school holiday / Ferien
-              if (holidays.length > 0) {
-                const dateStr = sessionDate.toISOString().substring(0, 10);
-                if (isDateInHolidays(dateStr, holidays)) continue;
+                if (existingSchedule) {
+                  scheduleId = existingSchedule.id;
+                } else {
+                  const [newSchedule] = await tx
+                    .insert(schedules)
+                    .values({
+                      club_id: season.club_id,
+                      season_type: 'summer',
+                      season_year: seasonYear,
+                      season_start_date: seasonStart,
+                      season_end_date: seasonEnd,
+                      is_active: true,
+                    })
+                    .returning({ id: schedules.id });
+                  scheduleId = newSchedule.id;
+                }
               }
 
-              // Skip if this group/week is explicitly marked inactive
-              if (entry.group_id && inactiveWeekSet.has(`${entry.group_id}|${week}`)) continue;
+              // Parse times from entry (HH:MM:SS)
+              const startParts = (entry.start_time || '00:00:00').split(':');
+              const endParts = (entry.end_time || '00:00:00').split(':');
+              const startHours = parseInt(startParts[0], 10);
+              const startMinutes = parseInt(startParts[1], 10);
+              const endHours = parseInt(endParts[0], 10);
+              const endMinutes = parseInt(endParts[1], 10);
+              const durationMs =
+                (endHours * 60 + endMinutes - (startHours * 60 + startMinutes)) * 60 * 1000;
+              const actualDurationMs =
+                durationMs > 0 ? durationMs : entry.duration_minutes * 60 * 1000;
 
-              const sessionEndDate = new Date(sessionDate.getTime() + actualDurationMs);
+              // DayOfWeek convention: 0=Monday, 1=Tuesday, ..., 6=Sunday
+              // JavaScript getDay(): 0=Sunday, 1=Monday, ..., 6=Saturday
+              const targetDayOfWeek = entry.day_of_week;
+              const jsDayOfWeek = targetDayOfWeek === 6 ? 0 : targetDayOfWeek + 1;
 
-              // Vertretungstrainer falls für diese Woche konfiguriert
+              // Find the first date matching target day_of_week on or after season start.
+              // Bewusst nur das Datum (UTC-Mitternacht) — die Uhrzeit kommt pro Woche
+              // aus berlinWallClock(), damit eine Saison über die Zeitumstellung
+              // hinweg durchgehend z. B. 17:00 Ortszeit bleibt.
+              const firstDate = new Date(seasonStart);
+              let daysUntil = jsDayOfWeek - firstDate.getUTCDay();
+              if (daysUntil < 0) daysUntil += 7;
+              firstDate.setUTCDate(firstDate.getUTCDate() + daysUntil);
+              firstDate.setUTCHours(0, 0, 0, 0);
+
+              // Vertretungstrainer gilt für beide Wochentermine, nicht nur den ersten.
               const substituteId = (entry as any).substitute_trainer_id;
               const subFrom = (entry as any).substitute_from_week;
               const subTo = (entry as any).substitute_to_week;
-              const effectiveTrainerId =
+              const trainerForWeek = (week: number) =>
                 substituteId && subFrom != null && subTo != null && week >= subFrom && week <= subTo
                   ? substituteId
                   : entry.trainer_id;
 
-              const [newSession] = await tx
-                .insert(sessions)
-                .values({
-                  schedule_id: scheduleId,
-                  trainer_id: effectiveTrainerId,
-                  group_ids: entry.group_id ? [entry.group_id] : [],
-                  week_number: week,
-                  timeslot_start: sessionDate,
-                  timeslot_end: sessionEndDate,
-                  court_id: entry.court_id,
-                  max_participants: entry.max_participants || 10,
-                  notes: 'Erstellt durch Saisonplanung',
-                  plan_entry_id: entry.id,
-                })
-                .returning({ id: sessions.id });
+              const participants = (entry.expected_participants as string[]) || [];
 
-              createdSessionIds.push(newSession.id);
-            }
+              // bookings.court_id ist NOT NULL, sessions.court_id nicht — ohne
+              // zugewiesenen Platz entsteht deshalb keine Buchung (die Session
+              // bleibt bestehen und taucht im Konfliktbericht als Warnung auf).
+              const queueBookings = (sessionId: string, start: Date, end: Date) => {
+                if (!entry.court_id) return;
+                for (const memberId of participants) {
+                  bookingRows.push({
+                    club_id: season.club_id,
+                    member_id: memberId,
+                    schedule_id: scheduleId!,
+                    session_id: sessionId,
+                    court_id: entry.court_id,
+                    status: 'confirmed',
+                    booking_type: 'lesson',
+                    is_recurring: true,
+                    session_start_time: start,
+                    start_time: start,
+                    end_time: end,
+                    notes: 'Erstellt durch Saisonplanung',
+                  });
+                }
+              };
 
-            // Zweite wöchentliche Session bei sessions_per_week=2
-            const sessionsPerWeek = (entry as any).sessions_per_week ?? 1;
-            if (sessionsPerWeek >= 2) {
-              const dow2 =
-                (entry as any).day_of_week_2 != null
-                  ? (entry as any).day_of_week_2
-                  : (targetDayOfWeek + 3) % 7;
-              const jsDow2 = dow2 === 6 ? 0 : dow2 + 1;
-              const firstDate2 = new Date(seasonStart);
-              let daysUntil2 = jsDow2 - firstDate2.getDay();
-              if (daysUntil2 < 0) daysUntil2 += 7;
-              firstDate2.setDate(firstDate2.getDate() + daysUntil2);
-              firstDate2.setHours(startHours, startMinutes, 0, 0);
+              const startWeek = entry.starts_from_week || 1;
+              // Only use entry.ends_at_week if it is explicitly set to a value > 1.
+              // When ends_at_week is null (not set by clustering engine) or 1 (stale default),
+              // fall back to totalSeasonWeeks to ensure sessions span the full season.
+              const endWeek =
+                entry.ends_at_week !== null &&
+                entry.ends_at_week !== undefined &&
+                entry.ends_at_week > 1
+                  ? entry.ends_at_week
+                  : totalSeasonWeeks;
+
+              log.info('Processing plan entry', {
+                entryId: entry.id,
+                dayOfWeek: entry.day_of_week,
+                startsWeek: startWeek,
+                endsWeek: endWeek,
+              });
+              const createdSessionIds: string[] = [];
 
               for (let week = startWeek; week <= endWeek && week <= totalSeasonWeeks; week++) {
-                const sessionDate2 = new Date(firstDate2);
-                sessionDate2.setDate(sessionDate2.getDate() + (week - 1) * 7);
-                if (sessionDate2 > seasonEnd) break;
+                const dayDate = new Date(firstDate);
+                dayDate.setUTCDate(dayDate.getUTCDate() + (week - 1) * 7);
+                const sessionDate = berlinWallClock(dayDate, startHours, startMinutes);
+
+                // Skip if session would be after season end
+                if (sessionDate > seasonEnd) break;
+
+                // Skip if session falls on a school holiday / Ferien
                 if (holidays.length > 0) {
-                  const dateStr = sessionDate2.toISOString().substring(0, 10);
+                  const dateStr = sessionDate.toISOString().substring(0, 10);
                   if (isDateInHolidays(dateStr, holidays)) continue;
                 }
+
+                // Skip if this group/week is explicitly marked inactive
                 if (entry.group_id && inactiveWeekSet.has(`${entry.group_id}|${week}`)) continue;
 
-                const sessionEndDate2 = new Date(sessionDate2.getTime() + actualDurationMs);
-                const [s2] = await tx
+                const sessionEndDate = new Date(sessionDate.getTime() + actualDurationMs);
+
+                const [newSession] = await tx
                   .insert(sessions)
                   .values({
                     schedule_id: scheduleId,
-                    trainer_id: entry.trainer_id,
+                    trainer_id: trainerForWeek(week),
                     group_ids: entry.group_id ? [entry.group_id] : [],
                     week_number: week,
-                    timeslot_start: sessionDate2,
-                    timeslot_end: sessionEndDate2,
+                    timeslot_start: sessionDate,
+                    timeslot_end: sessionEndDate,
                     court_id: entry.court_id,
                     max_participants: entry.max_participants || 10,
-                    notes: 'Erstellt durch Saisonplanung (2. Wochentermin)',
+                    notes: 'Erstellt durch Saisonplanung',
                     plan_entry_id: entry.id,
                   })
                   .returning({ id: sessions.id });
-                createdSessionIds.push(s2.id);
+
+                createdSessionIds.push(newSession.id);
+                queueBookings(newSession.id, sessionDate, sessionEndDate);
               }
+
+              // Zweite wöchentliche Session bei sessions_per_week=2
+              const sessionsPerWeek = (entry as any).sessions_per_week ?? 1;
+              if (sessionsPerWeek >= 2) {
+                const dow2 =
+                  (entry as any).day_of_week_2 != null
+                    ? (entry as any).day_of_week_2
+                    : (targetDayOfWeek + 3) % 7;
+                const jsDow2 = dow2 === 6 ? 0 : dow2 + 1;
+                const firstDate2 = new Date(seasonStart);
+                let daysUntil2 = jsDow2 - firstDate2.getUTCDay();
+                if (daysUntil2 < 0) daysUntil2 += 7;
+                firstDate2.setUTCDate(firstDate2.getUTCDate() + daysUntil2);
+                firstDate2.setUTCHours(0, 0, 0, 0);
+
+                for (let week = startWeek; week <= endWeek && week <= totalSeasonWeeks; week++) {
+                  const dayDate2 = new Date(firstDate2);
+                  dayDate2.setUTCDate(dayDate2.getUTCDate() + (week - 1) * 7);
+                  const sessionDate2 = berlinWallClock(dayDate2, startHours, startMinutes);
+                  if (sessionDate2 > seasonEnd) break;
+                  if (holidays.length > 0) {
+                    const dateStr = sessionDate2.toISOString().substring(0, 10);
+                    if (isDateInHolidays(dateStr, holidays)) continue;
+                  }
+                  if (entry.group_id && inactiveWeekSet.has(`${entry.group_id}|${week}`)) continue;
+
+                  const sessionEndDate2 = new Date(sessionDate2.getTime() + actualDurationMs);
+                  const [s2] = await tx
+                    .insert(sessions)
+                    .values({
+                      schedule_id: scheduleId,
+                      trainer_id: trainerForWeek(week),
+                      group_ids: entry.group_id ? [entry.group_id] : [],
+                      week_number: week,
+                      timeslot_start: sessionDate2,
+                      timeslot_end: sessionEndDate2,
+                      court_id: entry.court_id,
+                      max_participants: entry.max_participants || 10,
+                      notes: 'Erstellt durch Saisonplanung (2. Wochentermin)',
+                      plan_entry_id: entry.id,
+                    })
+                    .returning({ id: sessions.id });
+                  createdSessionIds.push(s2.id);
+                  queueBookings(s2.id, sessionDate2, sessionEndDate2);
+                }
+              }
+
+              // Update plan entry with the first session ID as reference
+              if (createdSessionIds.length > 0) {
+                await tx
+                  .update(seasonPlanEntries)
+                  .set({
+                    status: 'published',
+                    published_session_id: createdSessionIds[0],
+                    published_at: new Date(),
+                  })
+                  .where(eq(seasonPlanEntries.id, entry.id));
+              }
+
+              publishedIds.push(...createdSessionIds);
+              publishedCount += createdSessionIds.length;
             }
 
-            // Update plan entry with the first session ID as reference
-            if (createdSessionIds.length > 0) {
-              await tx
-                .update(seasonPlanEntries)
-                .set({
-                  status: 'published',
-                  published_session_id: createdSessionIds[0],
-                  published_at: new Date(),
-                })
-                .where(eq(seasonPlanEntries.id, entry.id));
+            // 3b. Teilnehmer-Buchungen schreiben.
+            // ponytail: 500er-Blöcke gegen das Postgres-Parameterlimit (65535);
+            // bei sehr großen Vereinen ggf. auf COPY umstellen.
+            for (let i = 0; i < bookingRows.length; i += 500) {
+              await tx.insert(bookings).values(bookingRows.slice(i, i + 500));
             }
 
-            publishedIds.push(...createdSessionIds);
-            publishedCount += createdSessionIds.length;
+            // 4. Update season status (inside transaction)
+            // is_active was previously never set anywhere — the "Seasons aktiv"
+            // dashboard stat showed 0 even for a published, in-progress season.
+            // At most one season is active per club at a time.
+            await tx
+              .update(seasons)
+              .set({ is_active: false })
+              .where(and(eq(seasons.club_id, season.club_id), eq(seasons.is_active, true)));
+            await tx
+              .update(seasons)
+              .set({ planning_status: 'published', published_at: new Date(), is_active: true })
+              .where(eq(seasons.id, seasonId));
+
+            // 5. Persist detected conflicts (pass tx so it participates in the transaction)
+            await detector.persistConflicts(conflicts, tx);
+
+            // 6. Write audit trail (inside transaction)
+            await tx.insert(seasonPlanningHistory).values({
+              season_id: seasonId,
+              club_id: season.club_id,
+              action_type: 'plan_published',
+              actor_id: auth.user.id,
+              actor_role: 'admin',
+              details: {
+                publishedSessions: publishedCount,
+                entriesCount: entries.length,
+                conflictsDetected: conflicts.length,
+                criticalConflicts: criticalConflicts.length,
+                acceptedWarnings: body.acceptedWarnings,
+              },
+              entries_affected: publishedCount,
+              conflicts_created: conflicts.length,
+              conflicts_resolved: 0,
+              notes: `Plan veröffentlicht: ${publishedCount} Sessions aus ${entries.length} Einträgen`,
+            });
+
+            return {
+              publishedCount,
+              publishedIds,
+              scheduleId,
+              bookingsCreated: bookingRows.length,
+            };
           }
-
-          // 4. Update season status (inside transaction)
-          // is_active was previously never set anywhere — the "Seasons aktiv"
-          // dashboard stat showed 0 even for a published, in-progress season.
-          // At most one season is active per club at a time.
-          await tx
-            .update(seasons)
-            .set({ is_active: false })
-            .where(and(eq(seasons.club_id, season.club_id), eq(seasons.is_active, true)));
-          await tx
-            .update(seasons)
-            .set({ planning_status: 'published', published_at: new Date(), is_active: true })
-            .where(eq(seasons.id, seasonId));
-
-          // 5. Persist detected conflicts (pass tx so it participates in the transaction)
-          await detector.persistConflicts(conflicts, tx);
-
-          // 6. Write audit trail (inside transaction)
-          await tx.insert(seasonPlanningHistory).values({
-            season_id: seasonId,
-            club_id: season.club_id,
-            action_type: 'plan_published',
-            actor_id: auth.user.id,
-            actor_role: 'admin',
-            details: {
-              publishedSessions: publishedCount,
-              entriesCount: entries.length,
-              conflictsDetected: conflicts.length,
-              criticalConflicts: criticalConflicts.length,
-              acceptedWarnings: body.acceptedWarnings,
-            },
-            entries_affected: publishedCount,
-            conflicts_created: conflicts.length,
-            conflicts_resolved: 0,
-            notes: `Plan veröffentlicht: ${publishedCount} Sessions aus ${entries.length} Einträgen`,
-          });
-
-          return { publishedCount, publishedIds, scheduleId };
-        });
+        );
 
         // ── Post-transaction (non-critical) ───────────────────────────────
         // These run AFTER the transaction commits.
@@ -535,6 +594,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         const response: ConfirmPlanResponse & {
           invoicesCreated: number;
           emailFailures: number;
+          bookingsCreated: number;
         } = {
           success: true,
           publishedSessions: publishedCount,
@@ -542,6 +602,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           notificationsSent,
           emailFailures,
           invoicesCreated,
+          bookingsCreated,
           waitlistNotifications: 0,
           unresolvedCriticalConflicts: [],
         };
