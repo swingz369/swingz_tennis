@@ -86,15 +86,7 @@ export async function POST(req: NextRequest) {
     } = body;
 
     if (!name) {
-      return NextResponse.json({ error: 'name is required' }, { status: 400 });
-    }
-
-    if (!courtTypeId) {
-      return NextResponse.json({ error: 'courtTypeId is required' }, { status: 400 });
-    }
-
-    if (!Number.isInteger(number) || number <= 0) {
-      return NextResponse.json({ error: 'number must be a positive integer' }, { status: 400 });
+      return NextResponse.json({ error: 'Platzname ist erforderlich' }, { status: 400 });
     }
 
     // Determine effective clubId. auth.clubId is the cookie-aware resolved club
@@ -108,13 +100,47 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'clubId required' }, { status: 400 });
     }
 
+    // Platztyp und Platznummer sind interne Angaben — der Onboarding-Wizard kennt
+    // beide nicht und konnte deshalb den ersten Platz eines neuen Vereins gar nicht
+    // anlegen. Fehlt der Typ, gilt der des Vereins, sonst der globale Standard
+    // (court_types.club_id IS NULL); die Spalte ist ohnehin nullable. Fehlt die
+    // Nummer, wird fortlaufend weitergezählt.
+    let effectiveCourtTypeId: string | null = courtTypeId ?? null;
+    if (!effectiveCourtTypeId) {
+      const { data: types } = await auth.supabase
+        .from('court_types')
+        .select('id, club_id')
+        .or(`club_id.eq.${effectiveClubId},club_id.is.null`)
+        .limit(10);
+      effectiveCourtTypeId =
+        types?.find((t) => t.club_id === effectiveClubId)?.id ?? types?.[0]?.id ?? null;
+    }
+
+    let effectiveNumber: number = number;
+    if (effectiveNumber === undefined || effectiveNumber === null) {
+      const { data: highest } = await auth.supabase
+        .from('courts')
+        .select('number')
+        .eq('club_id', effectiveClubId)
+        .order('number', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      effectiveNumber = (highest?.number ?? 0) + 1;
+    }
+    if (!Number.isInteger(effectiveNumber) || effectiveNumber <= 0) {
+      return NextResponse.json(
+        { error: 'Platznummer muss eine positive ganze Zahl sein' },
+        { status: 400 }
+      );
+    }
+
     const { data: court, error } = await auth.supabase
       .from('courts')
       .insert({
         club_id: effectiveClubId,
-        court_type_id: courtTypeId,
+        court_type_id: effectiveCourtTypeId,
         name,
-        number,
+        number: effectiveNumber,
         surface: body.surface ?? 'clay',
         has_indoor: body.hasIndoor ?? false,
         has_lighting: hasLighting ?? false,

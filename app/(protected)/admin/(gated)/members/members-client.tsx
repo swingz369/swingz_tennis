@@ -29,6 +29,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { showInviteResult } from '@/lib/invite-feedback';
 import { exportMembersCSV } from '@/lib/csv-export';
 import type { Member } from './member.types';
 import type { PaginationMeta } from '@/lib/pagination';
@@ -264,7 +265,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
       setMembers((prev) => [...prev, newMember]);
       setShowInviteDialog(false);
       setInviteForm({ email: '', full_name: '', role: 'member' });
-      toast.success(data.message ?? 'Mitglied erfolgreich eingeladen');
+      showInviteResult(data, 'Mitglied erfolgreich eingeladen');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Einladung fehlgeschlagen';
       toast.error(message);

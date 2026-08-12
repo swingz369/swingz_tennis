@@ -62,7 +62,9 @@ export function adminSidebarSections(hidden: Hidden, belongsToTennisschule = fal
       icon: Users,
       items: [
         { name: 'Alle Mitglieder', href: '/admin/members' },
-        { name: 'Familienkonten', href: '/admin/members/family' },
+        ...(!hidden.has('family_accounts')
+          ? [{ name: 'Familienkonten', href: '/admin/members/family' }]
+          : []),
         ...(!hidden.has('trial_training')
           ? [{ name: 'Probetrainings', href: '/admin/trial-training' }]
           : []),

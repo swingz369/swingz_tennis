@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import { appBaseUrl } from '@/lib/app-url';
 
 const log = createLogger('api:owner:invite-admin');
 
@@ -42,31 +43,65 @@ export async function POST(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-    const inviteRes = await fetch(`${supabaseUrl}/auth/v1/invite`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: serviceKey,
-        Authorization: `Bearer ${serviceKey}`,
-      },
-      body: JSON.stringify({
+    const redirectTo = `${appBaseUrl()}/login?invited=1`;
+    const goTrue = async (path: string, payload: Record<string, unknown>) => {
+      const res = await fetch(`${supabaseUrl}/auth/v1/${path}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      return { ok: res.ok, json: await res.json().catch(() => null) };
+    };
+
+    const userData = { full_name: fullName || email.split('@')[0] };
+
+    let invite = await goTrue('invite', { email, data: userData, redirect_to: redirectTo });
+    let inviteLink: string | null = null;
+    let mailSent = true;
+
+    // Ohne Fallback ist eine unzustellbare Adresse eine Sackgasse: GoTrue scheitert
+    // am Versand, bevor es "already registered" meldet — jeder weitere Versuch für
+    // dieselbe Adresse endet wieder in 500, der Verein bekommt nie einen Admin.
+    // generate_link legt den Nutzer ohne Mailversand an und liefert den Link, den
+    // der Owner dann von Hand weitergibt.
+    if (!invite.ok && !invite.json?.msg?.includes('already')) {
+      log.warn('Einladungsmail nicht zustellbar — weiche auf Einladungslink aus', {
         email,
-        data: { full_name: fullName || email.split('@')[0] },
-        redirect_to: `${process.env.NEXT_PUBLIC_APP_URL}/login?invited=1`,
-      }),
-    });
+        reason: invite.json?.msg,
+      });
+      mailSent = false;
+      invite = await goTrue('admin/generate_link', {
+        type: 'invite',
+        email,
+        data: userData,
+        redirect_to: redirectTo,
+      });
+      // Existiert der Nutzer schon (etwa aus einem früheren Fehlversuch), lehnt
+      // generate_link den invite-Typ ab — dann genügt ein Anmeldelink.
+      if (!invite.ok) {
+        invite = await goTrue('admin/generate_link', {
+          type: 'magiclink',
+          email,
+          redirect_to: redirectTo,
+        });
+      }
+      inviteLink = invite.json?.action_link ?? null;
+    }
 
-    const inviteJson = await inviteRes.json().catch(() => null);
-
-    if (!inviteRes.ok && !inviteJson?.msg?.includes('already')) {
-      log.error('Supabase invite failed', inviteJson);
+    if (!invite.ok && !invite.json?.msg?.includes('already')) {
+      log.error('Supabase invite failed', invite.json);
       return NextResponse.json(
-        { error: inviteJson?.msg ?? 'Einladung fehlgeschlagen' },
-        { status: 500 }
+        { error: `Einladung fehlgeschlagen: ${invite.json?.msg ?? 'unbekannter Fehler'}` },
+        { status: 502 }
       );
     }
 
-    const userId: string | undefined = inviteJson?.id;
+    const inviteJson = invite.json;
+    const userId: string | undefined = inviteJson?.id ?? inviteJson?.user?.id;
 
     // Hoist pre-flight-Variablen auf if(userId)-Scope, weil sie UNTERHALB
     // des if(clubId)-Blocks im Audit-Details referenziert werden (Block-Scoping
@@ -157,6 +192,7 @@ export async function POST(request: NextRequest) {
           club_name: club?.name ?? null,
           reactivation: reactivation,
           previous_club_relationship: anyClubMembershipExists,
+          mail_sent: mailSent,
         },
       });
     } catch (auditErr) {
@@ -168,6 +204,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ success: true, clubName: club?.name });
+    return NextResponse.json({ success: true, clubName: club?.name, mailSent, inviteLink });
   });
 }

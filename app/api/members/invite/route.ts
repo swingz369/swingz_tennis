@@ -4,6 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
+import { appBaseUrl } from '@/lib/app-url';
 
 const log = createLogger('api:members:invite');
 
@@ -97,6 +98,8 @@ export async function POST(request: NextRequest) {
     }
 
     let invitedUserId: string;
+    let mailSent = true;
+    let inviteLink: string | null = null;
 
     if (existingUser) {
       // User already has an account — just add/update membership
@@ -134,25 +137,59 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // New user — send invite email via Supabase
+      const inviteMeta = {
+        full_name: full_name || email.split('@')[0],
+        club_id: targetClubId,
+        role,
+      };
+      const redirectTo = `${appBaseUrl()}/dashboard`;
+
       const { data: inviteData, error: inviteError } =
         await adminSupabase.auth.admin.inviteUserByEmail(email, {
-          data: {
-            full_name: full_name || email.split('@')[0],
-            club_id: targetClubId,
-            role,
-          },
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://swingz.vercel.app'}/dashboard`,
+          data: inviteMeta,
+          redirectTo,
         });
 
-      if (inviteError || !inviteData?.user) {
-        log.error('[Invite] Error:', inviteError);
-        return NextResponse.json(
-          { error: inviteError?.message || 'Einladung konnte nicht gesendet werden' },
-          { status: 500 }
-        );
+      let invitedUser = inviteData?.user ?? null;
+
+      // Scheitert der Mailversand (unzustellbare Adresse, SMTP-Ausfall), war die
+      // Einladung bisher endgültig verloren — auch jeder weitere Versuch für
+      // dieselbe Adresse endete in 500. generate_link legt den Nutzer ohne Versand
+      // an und liefert den Link, den der Admin von Hand weitergeben kann.
+      if (inviteError || !invitedUser) {
+        log.warn('[Invite] Mailversand fehlgeschlagen — weiche auf Einladungslink aus', {
+          email,
+          reason: inviteError?.message,
+        });
+        mailSent = false;
+        let link = await adminSupabase.auth.admin.generateLink({
+          type: 'invite',
+          email,
+          options: { data: inviteMeta, redirectTo },
+        });
+        // Existiert der Nutzer bereits (etwa aus einem früheren Fehlversuch),
+        // lehnt generate_link den invite-Typ ab — dann genügt ein Anmeldelink.
+        if (link.error) {
+          link = await adminSupabase.auth.admin.generateLink({
+            type: 'magiclink',
+            email,
+            options: { redirectTo },
+          });
+        }
+        if (link.error || !link.data?.user) {
+          log.error('[Invite] Error:', link.error ?? inviteError);
+          return NextResponse.json(
+            {
+              error: `Einladung fehlgeschlagen: ${link.error?.message ?? inviteError?.message ?? 'unbekannter Fehler'}`,
+            },
+            { status: 502 }
+          );
+        }
+        invitedUser = link.data.user;
+        inviteLink = link.data.properties?.action_link ?? null;
       }
 
-      invitedUserId = inviteData.user.id;
+      invitedUserId = invitedUser.id;
 
       // Ensure user is in public.users table
       await adminSupabase.from('users').upsert({
@@ -184,6 +221,11 @@ export async function POST(request: NextRequest) {
       if (!existingTrainer) {
         await adminSupabase.from('trainers').upsert({
           id: invitedUserId,
+          // Ohne user_id ist der Trainer für die Saisonplanung unsichtbar:
+          // planning/trainers/route.ts joint users.id = trainers.user_id. Fehlt
+          // die Spalte, gilt er dauerhaft als "Präferenzen ausstehend" und wird
+          // über seine echte Verfügbarkeit hinweg verplant.
+          user_id: invitedUserId,
           email,
           name: displayName,
           specialties: [],
@@ -206,9 +248,13 @@ export async function POST(request: NextRequest) {
       success: true,
       message: existingUser
         ? `${email} wurde zum Verein hinzugefügt.`
-        : `Einladung an ${email} wurde gesendet.`,
+        : mailSent
+          ? `Einladung an ${email} wurde gesendet.`
+          : `${email} wurde angelegt, die E-Mail ließ sich aber nicht zustellen — bitte den Einladungslink von Hand weitergeben.`,
       userId: invitedUserId,
       clubName: club?.name,
+      mailSent,
+      inviteLink,
     });
   });
 }

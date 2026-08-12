@@ -40,6 +40,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { showInviteResult } from '@/lib/invite-feedback';
 import { apiFetch } from '@/lib/api-fetch';
 import { Checkbox } from '@/components/ui/checkbox';
 import TrainerImportDialog from '@/components/admin/trainer-import-dialog';
@@ -176,7 +177,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Fehler beim Einladen');
-      toast.success(data.message ?? 'Trainer erfolgreich eingeladen');
+      showInviteResult(data, 'Trainer erfolgreich eingeladen');
       setShowInviteForm(false);
       setInviteEmail('');
       setInviteName('');

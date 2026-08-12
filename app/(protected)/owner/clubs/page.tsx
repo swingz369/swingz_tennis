@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { showInviteResult } from '@/lib/invite-feedback';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
 import { ClubDetailSheet } from './_components/club-detail-sheet';
@@ -171,7 +172,7 @@ export default function OwnerClubsPage() {
         toast.error(data.error ?? 'Fehler');
         return;
       }
-      toast.success(`Einladung an ${inviteEmail} verschickt`);
+      showInviteResult(data, `Einladung an ${inviteEmail} verschickt`);
       setInviteOpen(false);
       setInviteEmail('');
       setInviteName('');

@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { showInviteResult } from '@/lib/invite-feedback';
+import { BUNDESLAND_NAMES } from '@/lib/season-planning/holidays';
 import {
   CheckCircle2,
   ChevronRight,
@@ -46,7 +48,7 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [club, setClub] = useState<ClubData | null>(null);
 
-  const [clubForm, setClubForm] = useState({ name: '', city: '' });
+  const [clubForm, setClubForm] = useState({ name: '', city: '', bundesland: '' });
   const [courtForm, setCourtForm] = useState({
     name: 'Platz 1',
     surface: 'sand',
@@ -63,7 +65,11 @@ export default function OnboardingPage() {
       if (!clubRes.ok) return;
       const data = await clubRes.json();
       setClub({ id: me.clubId, name: data.name ?? '', city: data.city ?? '' });
-      setClubForm({ name: data.name ?? '', city: data.city ?? '' });
+      setClubForm({
+        name: data.name ?? '',
+        city: data.city ?? '',
+        bundesland: data.bundesland ?? '',
+      });
     });
   }, []);
 
@@ -73,11 +79,21 @@ export default function OnboardingPage() {
       toast.error('Vereinsname und Stadt sind erforderlich');
       return false;
     }
+    // Ohne Bundesland kennt die Saisonplanung die Schulferien nicht und legt
+    // Trainingstermine mitten in die Weihnachtsferien.
+    if (!clubForm.bundesland) {
+      toast.error('Bitte das Bundesland wählen — davon hängen die Ferientermine ab');
+      return false;
+    }
     setLoading(true);
     try {
       const res = await apiFetch(`/api/clubs/${club.id}/setup`, {
         method: 'PATCH',
-        body: JSON.stringify({ name: clubForm.name, city: clubForm.city }),
+        body: JSON.stringify({
+          name: clubForm.name,
+          city: clubForm.city,
+          bundesland: clubForm.bundesland,
+        }),
       });
       if (!res.ok) {
         toast.error((await res.json()).error ?? 'Fehler beim Speichern der Vereinsdaten');
@@ -133,7 +149,7 @@ export default function OnboardingPage() {
         toast.error((await res.json()).error ?? 'Fehler beim Einladen des Trainers');
         return false;
       }
-      toast.success('Trainer eingeladen');
+      showInviteResult(await res.json(), 'Trainer eingeladen');
       return true;
     } catch {
       toast.error('Netzwerkfehler');
@@ -282,6 +298,27 @@ export default function OnboardingPage() {
                   placeholder="München"
                   className="mt-1.5"
                 />
+              </div>
+              <div>
+                <Label htmlFor="clubBundesland">Bundesland *</Label>
+                <Select
+                  value={clubForm.bundesland}
+                  onValueChange={(value) => setClubForm((f) => ({ ...f, bundesland: value }))}
+                >
+                  <SelectTrigger id="clubBundesland" className="mt-1.5">
+                    <SelectValue placeholder="Bundesland wählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(BUNDESLAND_NAMES).map((bl) => (
+                      <SelectItem key={bl} value={bl}>
+                        {bl}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-muted-foreground text-xs mt-1.5">
+                  Bestimmt die Schulferien, die die Saisonplanung aussparen soll.
+                </p>
               </div>
             </div>
           </div>
@@ -491,9 +528,13 @@ export default function OnboardingPage() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-muted-foreground text-xs mt-4">
-          Schritt {step} von {TOTAL_STEPS}
-        </p>
+        {/* Der vierte Schritt ist nur die Abschlussmeldung — mitgezählt widerspräche
+            er dem "in 3 Schritten" in der Überschrift. */}
+        {step < TOTAL_STEPS && (
+          <p className="text-center text-muted-foreground text-xs mt-4">
+            Schritt {step} von {TOTAL_STEPS - 1}
+          </p>
+        )}
       </div>
     </div>
   );

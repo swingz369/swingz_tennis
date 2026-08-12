@@ -11,9 +11,13 @@ export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const { supabase, user } = auth;
 
+    // Der Sidebar-Hook fragt diese Route auf JEDER Seite ab. Ein 403 für einen
+    // Verein ohne das Feature erzeugt darum bei jedem Seitenaufruf einen roten
+    // Konsolenfehler, obwohl nichts kaputt ist. "Keine Familienkonten" ist die
+    // ehrliche Antwort — so hält es auch /api/admin/family-accounts.
     if (auth.clubId) {
       const features = await getClubFeatures(supabase, auth.clubId);
-      if (!features.family_accounts) return featureDisabledResponse('family_accounts');
+      if (!features.family_accounts) return NextResponse.json({ familyMembers: [] });
     }
 
     // Get family group for this user
