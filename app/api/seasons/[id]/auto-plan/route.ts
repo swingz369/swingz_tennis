@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth } from '@/lib/api-auth';
+import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
@@ -43,28 +44,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
       try {
         const { id: seasonId } = await context.params;
 
-        // Only admins and superadmins can run auto-planning
-        const isAdmin = await verifyRole(auth, 'admin');
-        const isSuperadmin = await verifyRole(auth, 'superadmin');
-
-        if (!isAdmin && !isSuperadmin) {
-          return forbiddenResponse('Only admins can run auto-planning');
-        }
-
-        // Fetch season
-        const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-
-        if (!season) {
-          return NextResponse.json({ error: 'Season not found' }, { status: 404 });
-        }
-
-        // Verify access
-        if (!isSuperadmin) {
-          const hasClubAccess = auth.memberships.some(
-            (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
-          );
-          if (!hasClubAccess) return forbiddenResponse('You do not have access to this season');
-        }
+        // Zentrale Prüfung statt inline dupliziertem Rollen- und Clubcheck,
+        // siehe lib/season-auth.ts.
+        const access = await authorizeSeasonAccess(auth, seasonId, {
+          allowedRoles: ['admin', 'superadmin'],
+        });
+        if (!access.ok) return access.response;
+        const { season } = access;
+        const isSuperadmin =
+          access.effectiveRole === 'superadmin' || access.effectiveRole === 'owner';
 
         const clubId = season.club_id;
 
@@ -256,20 +244,16 @@ export async function GET(request: NextRequest, context: RouteContext) {
     try {
       const { id: seasonId } = await context.params;
 
-      // Fetch season
-      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-
-      if (!season) {
-        return NextResponse.json({ error: 'Season not found' }, { status: 404 });
-      }
-
-      // Check permissions
-      const isAdmin = await verifyRole(auth, 'admin');
-      const isSuperadmin = await verifyRole(auth, 'superadmin');
-
-      if (!isAdmin && !isSuperadmin && season.club_id !== auth.clubId) {
-        return forbiddenResponse('You do not have access to this season');
-      }
+      // Vorher stand hier:
+      //   if (!isAdmin && !isSuperadmin && season.club_id !== auth.clubId)
+      // Die Bedingung war durch die UND-Verknüpfung faktisch wirkungslos:
+      // sobald der Aufrufer Admin war, wurde sie falsch und der Clubvergleich
+      // nie erreicht — jeder Admin kam damit an jede Saison.
+      const access = await authorizeSeasonAccess(auth, seasonId, {
+        allowedRoles: ['admin', 'superadmin'],
+      });
+      if (!access.ok) return access.response;
+      const { season } = access;
 
       return NextResponse.json({
         success: true,

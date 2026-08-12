@@ -3,11 +3,12 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, forbiddenResponse } from '@/lib/api-auth';
+import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { db } from '@/src/infrastructure/persistence/db';
-import { seasons, users, seasonPlanEntries } from '@/src/infrastructure/persistence/schema';
+import { users, seasonPlanEntries } from '@/src/infrastructure/persistence/schema';
 import { seasonWaitlists } from '@/src/infrastructure/persistence/season-planning-schema';
 import { eq, asc, and } from 'drizzle-orm';
 import { createLogger } from '@/lib/logger';
@@ -25,19 +26,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
   return withApiAuth(request, async (auth) => {
     try {
       const { id: seasonId } = await context.params;
-      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-      if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
-
-      const isAdmin = await verifyRole(auth, 'admin');
-      const isSuperadmin = await verifyRole(auth, 'superadmin');
-      if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
-
-      if (!isSuperadmin) {
-        const hasClubAccess = auth.memberships.some(
-          (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
-        );
-        if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
-      }
+      // Zentrale Prüfung statt inline dupliziertem Rollen- und Clubcheck,
+      // siehe lib/season-auth.ts. Verhalten identisch: Superadmin und Owner
+      // über den Fast-Path, sonst Mitgliedschaft im Club der Saison mit
+      // Rolle admin oder superadmin.
+      const access = await authorizeSeasonAccess(auth, seasonId, {
+        allowedRoles: ['admin', 'superadmin'],
+      });
+      if (!access.ok) return access.response;
 
       const waitlist = await db
         .select({
@@ -74,9 +70,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return withApiAuth(request, async (auth) => {
       try {
         const { id: seasonId } = await context.params;
-        const isAdmin = await verifyRole(auth, 'admin');
-        const isSuperadmin = await verifyRole(auth, 'superadmin');
-        if (!isAdmin) return forbiddenResponse('Nur Admins');
+        // Vorher wurde hier nur `if (!isAdmin)` geprüft — der Clubbezug kam
+        // erst weiter unten und hing am Waitlist-Eintrag statt an der Saison.
+        // Die Saison selbst war damit nie autorisiert. `isSuperadmin` wurde
+        // an dieser Stelle berechnet und nie ausgewertet.
+        const access = await authorizeSeasonAccess(auth, seasonId, {
+          allowedRoles: ['admin', 'superadmin'],
+        });
+        if (!access.ok) return access.response;
 
         const body = await request.json();
         const { waitlistId, promoteToGroupId } = body;
@@ -97,11 +98,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
           return NextResponse.json({ error: 'Waitlist entry not found' }, { status: 404 });
         }
 
-        if (!isSuperadmin) {
-          const hasClubAccess = auth.memberships.some(
-            (m) => m.club_id === entry.club_id && (m.role === 'admin' || m.role === 'superadmin')
-          );
-          if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
+        // Der Zugriff auf die Saison ist oben bereits geprüft, und Zeile 97
+        // stellt sicher, dass der Eintrag zu dieser Saison gehört. Bleibt der
+        // direkte Abgleich, falls Eintrag und Saison auseinanderlaufen —
+        // strenger als die vorherige Rollenprüfung und ohne Rollenlogik.
+        if (entry.club_id !== access.season.club_id) {
+          return forbiddenResponse('Kein Zugriff auf diesen Club');
         }
 
         // Add the member to the target group's plan entries (capacity permitting)

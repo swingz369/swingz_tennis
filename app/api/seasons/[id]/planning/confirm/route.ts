@@ -3,7 +3,8 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth } from '@/lib/api-auth';
+import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { db } from '@/src/infrastructure/persistence/db';
@@ -47,18 +48,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return withApiAuth(request, async (auth) => {
       try {
         const { id: seasonId } = await context.params;
-        const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-        if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
-
-        const isAdmin = await verifyRole(auth, 'admin');
-        const isSuperadmin = await verifyRole(auth, 'superadmin');
-        if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
-        if (!isSuperadmin) {
-          const hasClubAccess = auth.memberships.some(
-            (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
-          );
-          if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
-        }
+        // Zentrale Prüfung statt inline dupliziertem Rollen- und Clubcheck,
+        // siehe lib/season-auth.ts. Verhalten identisch: Superadmin und Owner
+        // über den Fast-Path, sonst Mitgliedschaft im Club der Saison mit
+        // Rolle admin oder superadmin.
+        const access = await authorizeSeasonAccess(auth, seasonId, {
+          allowedRoles: ['admin', 'superadmin'],
+        });
+        if (!access.ok) return access.response;
+        const { season } = access;
 
         const body: ConfirmPlanRequest = await request.json();
 
