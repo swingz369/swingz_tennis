@@ -6,6 +6,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
+import { resolveTrainerRecordId } from '@/lib/trainers/trainer-record';
 
 const log = createLogger('api:trainer:availability');
 
@@ -38,17 +39,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ slots: [], maxHoursPerWeek: null });
     }
 
-    // Auflösung über `trainers.user_id` — wie im POST dieser Datei und wie im
-    // Admin-Pfad (`trainerProfileService.getTrainerProfileByUserId`). Vorher
-    // suchte ausgerechnet dieses GET über `trainers.email` (ilike): Sobald eine
-    // E-Mail-Adresse geändert wird oder zwei Trainerzeilen dieselbe Adresse
-    // tragen, zeigten Selbstansicht und Adminansicht verschiedene Daten für
-    // denselben Trainer.
-    const { data: trainerRecord } = await supabase
-      .from('trainers')
-      .select('max_hours_per_week')
-      .eq('user_id', auth.user.id)
-      .maybeSingle();
+    // Eine Auflösung für alle Pfade — siehe lib/trainers/trainer-record.ts.
+    const recordId = await resolveTrainerRecordId(auth.user.id);
+    const { data: trainerRecord } = recordId
+      ? await supabase
+          .from('trainers')
+          .select('max_hours_per_week')
+          .eq('id', recordId)
+          .maybeSingle()
+      : { data: null };
 
     return NextResponse.json({
       slots: data ?? [],
@@ -75,14 +74,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find trainer record for this user (trainers.id ≠ users.id — join via user_id)
-    const { data: trainerRecord } = await supabase
-      .from('trainers')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (!trainerRecord) {
+    const recordId = await resolveTrainerRecordId(user.id);
+    if (!recordId) {
       return NextResponse.json({ error: 'No trainer profile found' }, { status: 404 });
     }
 
@@ -90,7 +83,7 @@ export async function POST(request: NextRequest) {
     const { data: overlaps } = await supabase
       .from('trainer_availabilities')
       .select('id')
-      .eq('trainer_id', trainerRecord.id)
+      .eq('trainer_id', recordId)
       .eq('date', date)
       .or(`and(start_time.lt.${end_time},end_time.gt.${start_time})`);
 
@@ -101,7 +94,7 @@ export async function POST(request: NextRequest) {
     const { data: slot, error } = await supabase
       .from('trainer_availabilities')
       .insert({
-        trainer_id: trainerRecord.id,
+        trainer_id: recordId,
         date,
         start_time,
         end_time,

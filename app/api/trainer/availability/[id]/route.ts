@@ -5,6 +5,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
+import { resolveTrainerRecordId } from '@/lib/trainers/trainer-record';
 
 const log = createLogger('api:trainer:availability:[id]');
 
@@ -30,8 +31,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Slot nicht gefunden' }, { status: 404 });
     }
 
-    // Only own slots; admins/superadmins can delete any
-    const isOwner = slot.trainer_id === user.id;
+    // slot.trainer_id ist eine trainers.id, user.id eine users.id — beide sind
+    // nur bei Legacy-Zeilen identisch. Ohne Auflösung konnte ein Trainer seinen
+    // eigenen Slot nicht löschen (siehe lib/trainers/trainer-record.ts).
+    const ownRecordId = await resolveTrainerRecordId(user.id);
+    const isOwner = ownRecordId !== null && slot.trainer_id === ownRecordId;
     const isAdminLike = auth.role === 'admin' || auth.role === 'superadmin';
 
     if (!isOwner && !isAdminLike) {

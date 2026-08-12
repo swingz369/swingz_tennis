@@ -4,6 +4,7 @@ import { trainerAvailabilityService } from '@/src/application/services/trainer-a
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
+import { resolveTrainerRecordId } from '@/lib/trainers/trainer-record';
 
 const log = createLogger('api:trainer-availability:[id]');
 
@@ -57,7 +58,8 @@ export async function PATCH(
 
       if (!isAdmin) {
         const availability = await trainerAvailabilityService.getTrainerAvailabilityById(id);
-        if (!availability || availability.trainerId !== auth.user.id) {
+        const ownRecordId = await resolveTrainerRecordId(auth.user.id);
+        if (!availability || !ownRecordId || availability.trainerId !== ownRecordId) {
           return forbiddenResponse('You can only edit your own availability');
         }
       }
@@ -111,7 +113,8 @@ export async function DELETE(
 
       if (!isAdmin) {
         const availability = await trainerAvailabilityService.getTrainerAvailabilityById(id);
-        if (!availability || availability.trainerId !== auth.user.id) {
+        const ownRecordId = await resolveTrainerRecordId(auth.user.id);
+        if (!availability || !ownRecordId || availability.trainerId !== ownRecordId) {
           return forbiddenResponse('You can only delete your own availability');
         }
       }

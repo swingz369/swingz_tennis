@@ -499,6 +499,70 @@ Bestätigt und in `docs/BUSINESS_RULES.md` festgehalten: Trainer und Mitglieder 
 Kontext genau eines Vereins. Nur `superadmin` und `owner` wechseln. `auth.clubId` kommt für die
 beiden Rollen aus der einzigen aktiven Mitgliedschaft; bei mehreren bleibt der Wert `null`.
 
+---
+
+## H — Nachtrag 3: Trainer-Verfügbarkeit, vollständig aufgelöst
+
+Der als „Doppelbau" dokumentierte Punkt war kein Architekturgeschmack, sondern ein Fehler, der
+95 % der Trainer betraf.
+
+### H1. Zwei Vorstellungen davon, was eine Trainer-ID ist
+
+- Alle Fremdschlüssel (`trainer_availabilities`, `trainer_absences`, `sessions`) zeigen auf
+  **`trainers.id`**.
+- Die Domänenschicht nimmt an, dass `trainers.id === users.id`. `ensureTrainersRecord()` legt
+  Trainer bewusst so an, und der gesamte Admin-Pfad rechnet damit: Er fragt Verfügbarkeiten mit
+  `profile.userId` ab und vergleicht Eigentümerrechte gegen `auth.user.id`.
+- Trainer, die über `/api/members/invite`, den CSV-Import oder ein Seed-Skript entstehen, bekommen
+  jedoch eine **eigene** `trainers.id` und lediglich ein gesetztes `user_id`.
+
+Gemessen am 13.08.2026 über alle 65 Trainerzeilen:
+
+| Zustand                                            | Anzahl |
+| -------------------------------------------------- | ------ |
+| `trainers.id === users.id` (die Annahme trifft zu) | **3**  |
+| abweichende `trainers.id` bei gesetztem `user_id`  | **35** |
+| ohne `user_id`                                     | **27** |
+
+Für die 35 abweichenden Trainer lief jede Abfrage ins Leere. Konkret nachgemessen an einem echten
+Trainer mit 29 hinterlegten Verfügbarkeiten:
+
+```
+alte Auflösung über users.id          →  0 Slots
+neue Auflösung über trainers.id       → 29 Slots
+```
+
+Betroffen war nicht nur die Anzeige: `POST` lehnte den eigenen Slot als fremd ab, `DELETE` und
+`PATCH` verweigerten dem Trainer die eigene Zeile — an insgesamt sieben Stellen über vier Routen.
+
+### H2. Die Auflösung liegt jetzt an einer Stelle
+
+`lib/trainers/trainer-record.ts` mit `resolveTrainerRecordId(userId)` und der Mengenvariante
+`resolveTrainerRecordIds(userIds)`. Reihenfolge: `trainers.user_id` (die verlässliche
+Verknüpfung) → `trainers.id` (Legacy-Zeilen) → `null`. Nichts wird geraten; wer keinen
+Trainerdatensatz hat, bekommt `null` statt einer plausiblen falschen ID.
+
+Umgestellt sind alle sieben Stellen in `app/api/trainer-availability/route.ts`,
+`app/api/trainer-availability/[id]/route.ts`, `app/api/trainer/availability/route.ts`,
+`app/api/trainer/availability/[id]/route.ts` und `app/api/trainer/me/route.ts`.
+
+Die **Verträge der Routen bleiben unverändert**: Die Admin-Oberfläche schickt weiterhin die
+User-ID als `trainer_id`, die Auflösung passiert serverseitig. Keine der beiden Oberflächen musste
+angefasst werden.
+
+### H3. Was bewusst bestehen bleibt
+
+Die beiden URLs existieren weiter, weil sie zwei verschiedene Zwecke bedienen: `/api/trainer-availability`
+die vereinsweite Adminansicht, `/api/trainer/availability` die Selbstverwaltung des Trainers samt
+Wochenraster. Sie widersprechen sich jetzt nicht mehr, weil beide dieselbe Identitätsauflösung
+verwenden. Ein Zusammenlegen der HTTP-Oberfläche würde zwei funktionierende UIs anfassen, ohne
+etwas zu reparieren — das wäre Umbau um des Umbaus willen.
+
+Sieben neue Tests sichern die Auflösung ab (`src/__tests__/lib/trainer-record.test.ts`),
+darunter der Fall zweier gleichzeitig passender Zeilen, bei dem `user_id` gewinnt.
+
+**Stand:** `npx tsc --noEmit` fehlerfrei, **1466 Tests grün** (90 Dateien).
+
 ## Reproduktion
 
 ```bash

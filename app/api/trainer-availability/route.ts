@@ -5,6 +5,7 @@ import { trainerProfileService } from '@/src/application/services/trainer-profil
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
+import { resolveTrainerRecordId, resolveTrainerRecordIds } from '@/lib/trainers/trainer-record';
 
 const log = createLogger('api:trainer-availability');
 
@@ -33,13 +34,15 @@ export async function GET(request: NextRequest) {
 
       // For trainer role, they can only see their own availability
       if (auth.role === 'trainer') {
-        const profile = await trainerProfileService.getTrainerProfileByUserId(auth.user.id);
-        if (!profile) {
+        // trainer_availabilities.trainer_id ist ein FK auf trainers.id — nicht auf
+        // users.id. Vorher stand hier profile.userId; für die 35 von 65 Trainern
+        // mit abweichender trainers.id fand die Abfrage nie etwas.
+        const ownTrainerId = await resolveTrainerRecordId(auth.user.id);
+        if (!ownTrainerId) {
           return NextResponse.json({ availabilities: [] });
         }
-        // Override trainer_id with their own
         const availabilities = await trainerAvailabilityService.queryTrainerAvailabilities({
-          trainerId: profile.userId,
+          trainerId: ownTrainerId,
           ...(startDate ? { startDate } : {}),
           ...(endDate ? { endDate } : {}),
           ...(status ? { status: status as any } : {}),
@@ -49,8 +52,11 @@ export async function GET(request: NextRequest) {
 
       // For admin/superadmin: fetch all trainers in club, then their availabilities
       if (trainerId) {
+        // Die Oberfläche schickt die User-ID des Trainers; aufgelöst wird auf die
+        // trainers.id, auf die der Fremdschlüssel zeigt.
+        const recordId = (await resolveTrainerRecordId(trainerId)) ?? trainerId;
         const availabilities = await trainerAvailabilityService.queryTrainerAvailabilities({
-          trainerId,
+          trainerId: recordId,
           ...(startDate ? { startDate } : {}),
           ...(endDate ? { endDate } : {}),
           ...(status ? { status: status as any } : {}),
@@ -70,10 +76,11 @@ export async function GET(request: NextRequest) {
       }
 
       // Collect availabilities for all trainers in the club
+      const recordIds = await resolveTrainerRecordIds(profiles.map((p) => p.userId));
       const allAvailabilities = await Promise.all(
-        profiles.map((p) =>
+        [...recordIds.values()].map((recordId) =>
           trainerAvailabilityService.queryTrainerAvailabilities({
-            trainerId: p.userId,
+            trainerId: recordId,
             startDate: startDate || undefined,
             endDate: endDate || undefined,
             status: (status as any) || undefined,
@@ -121,10 +128,17 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // `trainer_id` kommt als User-ID aus der Oberfläche; gespeichert wird die
+      // trainers.id, auf die der Fremdschlüssel zeigt.
+      const targetRecordId = await resolveTrainerRecordId(trainer_id);
+      if (!targetRecordId) {
+        return NextResponse.json({ error: 'Kein Trainerdatensatz gefunden' }, { status: 404 });
+      }
+
       // Trainer can only create own availability
       if (auth.role === 'trainer') {
-        const profile = await trainerProfileService.getTrainerProfileByUserId(auth.user.id);
-        if (!profile || profile.userId !== trainer_id) {
+        const ownRecordId = await resolveTrainerRecordId(auth.user.id);
+        if (!ownRecordId || ownRecordId !== targetRecordId) {
           return forbiddenResponse('You can only create your own availability');
         }
       }
@@ -134,7 +148,8 @@ export async function POST(request: NextRequest) {
         const clubId = auth.clubId;
         if (clubId) {
           const clubProfiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
-          const isInClub = clubProfiles.some((p) => p.userId === trainer_id);
+          const clubRecordIds = await resolveTrainerRecordIds(clubProfiles.map((p) => p.userId));
+          const isInClub = [...clubRecordIds.values()].includes(targetRecordId);
           if (!isInClub) {
             return NextResponse.json(
               { error: 'Trainer does not belong to your club' },
@@ -145,7 +160,7 @@ export async function POST(request: NextRequest) {
       }
 
       const availability = await trainerAvailabilityService.createTrainerAvailability({
-        trainerId: trainer_id,
+        trainerId: targetRecordId,
         date,
         startTime: start_time,
         endTime: end_time,
@@ -195,10 +210,11 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ error: 'Availability not found' }, { status: 404 });
       }
 
-      // Trainer: can only delete own availability
+      // Trainer: can only delete own availability. availability.trainerId ist eine
+      // trainers.id — verglichen wird deshalb mit der aufgelösten eigenen ID.
       if (auth.role === 'trainer') {
-        const profile = await trainerProfileService.getTrainerProfileByUserId(auth.user.id);
-        if (!profile || profile.userId !== availability.trainerId) {
+        const ownRecordId = await resolveTrainerRecordId(auth.user.id);
+        if (!ownRecordId || ownRecordId !== availability.trainerId) {
           return forbiddenResponse('You can only delete your own availability');
         }
       }
@@ -208,7 +224,8 @@ export async function DELETE(request: NextRequest) {
         const clubId = auth.clubId;
         if (clubId) {
           const clubProfiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
-          const isInClub = clubProfiles.some((p) => p.userId === availability.trainerId);
+          const clubRecordIds = await resolveTrainerRecordIds(clubProfiles.map((p) => p.userId));
+          const isInClub = [...clubRecordIds.values()].includes(availability.trainerId);
           if (!isInClub) {
             return NextResponse.json(
               { error: 'Availability does not belong to your club' },

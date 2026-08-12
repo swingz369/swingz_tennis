@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { resolveTrainerRecordId } from '@/lib/trainers/trainer-record';
 
 interface TransformedSession {
   id: string;
@@ -34,12 +35,15 @@ export async function GET(_req: NextRequest) {
     // Saisonplanung und der Admin-Pfad nutzen. Eine Suche über die E-Mail-Adresse
     // bricht, sobald jemand seine Adresse ändert oder zwei Trainerzeilen dieselbe
     // tragen.
-    const { data: trainerRecord, error: trainerError } = await supabase
-      .from('trainers')
-      .select('id, email, name')
-      .eq('user_id', auth.user.id)
-      .eq('is_active', true)
-      .maybeSingle();
+    const recordId = await resolveTrainerRecordId(auth.user.id);
+    const { data: trainerRecord, error: trainerError } = recordId
+      ? await supabase
+          .from('trainers')
+          .select('id, email, name')
+          .eq('id', recordId)
+          .eq('is_active', true)
+          .maybeSingle()
+      : { data: null, error: null };
 
     if (trainerError || !trainerRecord) {
       return NextResponse.json(
