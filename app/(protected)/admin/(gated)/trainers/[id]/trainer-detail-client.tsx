@@ -8,6 +8,7 @@ import { de } from '@/lib/locale';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -407,35 +408,6 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
     }
   };
 
-  // Design-system conform variant mappers
-  const getStatusVariant = (
-    status: TrainerProfile['status']
-  ): 'success' | 'secondary' | 'warning' | 'error' => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'inactive':
-        return 'secondary';
-      case 'on_leave':
-        return 'warning';
-      case 'terminated':
-        return 'error';
-    }
-  };
-
-  const getStatusLabel = (status: TrainerProfile['status']) => {
-    switch (status) {
-      case 'active':
-        return 'Aktiv';
-      case 'inactive':
-        return 'Inaktiv';
-      case 'on_leave':
-        return 'Urlaub';
-      case 'terminated':
-        return 'Beendet';
-    }
-  };
-
   const getSpecializationVariant = (
     level: string
   ): 'info' | 'success' | 'accent' | 'default' | 'outline' => {
@@ -469,7 +441,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
   // ── Loading Skeleton ──────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="space-y-6">
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-sm">
           <Skeleton className="h-3.5 w-14 rounded" />
@@ -571,7 +543,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in">
+    <div className="animate-in">
       {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
       <nav className="mb-4 flex items-center gap-1.5 text-sm">
         <Link
@@ -602,9 +574,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
-              <Badge variant={getStatusVariant(trainer.status)} size="lg">
-                {getStatusLabel(trainer.status)}
-              </Badge>
+              <StatusBadge status={trainer.status} size="lg" />
               {!isEditing && (
                 <Button onClick={handleEdit} variant="primary" size="sm" className="gap-1.5">
                   <Edit className="h-4 w-4" />

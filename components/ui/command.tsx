@@ -20,11 +20,22 @@ const Command = React.forwardRef<
 ));
 Command.displayName = CommandPrimitive.displayName;
 
-type CommandDialogProps = DialogProps;
+type CommandDialogProps = DialogProps & {
+  /** sr-only title for screen readers (defaults to the command palette label) */
+  title?: string;
+  /** Disable cmdk's built-in filtering — required when results come from a server */
+  shouldFilter?: boolean;
+};
 
-const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
+const CommandDialog = ({
+  children,
+  title = 'Suche oder Befehl',
+  shouldFilter,
+  ...props
+}: CommandDialogProps) => {
   return (
     <CommandPrimitive.Dialog
+      shouldFilter={shouldFilter}
       {...props}
       overlayClassName="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
       contentClassName="fixed left-1/2 top-[14vh] z-50 w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-xl bg-background ring-1 ring-ring/60 dark:ring-white/10 shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
@@ -33,7 +44,7 @@ const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
         '[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5'
       )}
     >
-      <DialogTitle className="sr-only">Suche oder Befehl</DialogTitle>
+      <DialogTitle className="sr-only">{title}</DialogTitle>
       {children}
     </CommandPrimitive.Dialog>
   );

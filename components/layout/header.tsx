@@ -20,7 +20,7 @@ import {
 import { useTenant } from '@/lib/tenant-context';
 import { NotificationBell } from '@/components/layout/notification-bell';
 import { createClient } from '@/infrastructure/external/supabase/client';
-import { useCommandPalette } from '@/components/command-palette-context';
+import { useSearchDialog } from '@/components/command-palette-context';
 
 interface HeaderProps {
   user?: {
@@ -42,7 +42,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   const router = useRouter();
   const { branding } = useTenant();
   const clubLogoUrl = branding.logos.light || branding.logos.dark;
-  const { setOpen: setCommandPaletteOpen } = useCommandPalette();
+  const { setOpen: setSearchOpen } = useSearchDialog();
 
   // Close user menu on outside click
   useEffect(() => {
@@ -139,18 +139,19 @@ export function Header({ user, onMenuClick }: HeaderProps) {
             Suche war früher eine dauerhaft zentrierte Bar — auf allen Rollen (auch
             Member/Trainer ohne echten Bedarf) sichtbar und hat in der Mitte Platz
             gefressen. Jetzt nur noch ein Icon neben dem Theme-Toggle, Klick öffnet
-            weiterhin die Command Palette. `ml-auto` schiebt den Cluster nach rechts,
-            da die zentrierte Bar als Spacer wegfällt. */}
+            die fokussierte Suche (SearchDialog); ⌘K öffnet weiterhin die Command
+            Palette mit Navigation/Aktionen. `ml-auto` schiebt den Cluster nach
+            rechts, da die zentrierte Bar als Spacer wegfällt. */}
         <div className="flex items-center gap-0.5 shrink-0 ml-auto">
           <Button
             variant="ghost"
             size="icon"
             className="h-9 w-9 text-foreground dark:text-white rounded-xl hover:bg-muted dark:hover:bg-background/10"
-            onClick={() => setCommandPaletteOpen(true)}
-            aria-label="Suche oder Befehl öffnen (⌘K)"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Suche öffnen"
           >
             <Search className="h-5 w-5" aria-hidden="true" />
-            <span className="sr-only">Suche oder Befehl öffnen</span>
+            <span className="sr-only">Suche öffnen</span>
           </Button>
 
           {/* Theme Toggle */}

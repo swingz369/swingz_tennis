@@ -159,11 +159,10 @@ export default function EmailCampaignsClient({ clubId }: { clubId: string }) {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-8 max-w-3xl mx-auto">
+    <div className="space-y-6 max-w-3xl mx-auto">
       <PageHeader
         title="E-Mail-Kampagnen"
         description="Versende E-Mails an Mitglieder und Trainer"
-        breadcrumbs={[{ label: 'E-Mail-Kampagnen' }]}
       />
       <Card>
         <CardHeader>

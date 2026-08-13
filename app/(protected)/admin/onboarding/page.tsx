@@ -216,7 +216,7 @@ export default function OnboardingPage() {
             <div>
               <h2 className="text-2xl font-bold text-foreground">Willkommen bei SwingZ!</h2>
               <p className="text-muted-foreground text-sm mt-1">
-                Zwei Angaben, dann geht es los. Plätze, Trainer und Mitglieder legst du danach
+                Drei Angaben, dann geht es los. Plätze, Trainer und Mitglieder legst du danach
                 direkt im Dashboard an — die Einrichtungs-Checkliste führt dich durch.
               </p>
             </div>
@@ -299,18 +299,26 @@ export default function OnboardingPage() {
             <div className="space-y-3">
               <h2 className="text-3xl font-bold text-foreground">Verein angelegt!</h2>
               <p className="text-muted-foreground text-lg max-w-md mx-auto">
-                Auf dem Dashboard wartet die Einrichtungs-Checkliste: Plätze, Trainer, Mitglieder,
-                Beiträge, erste Saison — in dieser Reihenfolge.
+                Weiter geht es mit den Plätzen — danach Trainer und Mitglieder. Erst wenn die drei
+                stehen, lässt sich eine Saison planen. Die Checkliste auf dem Dashboard führt dich
+                durch.
               </p>
             </div>
-            <Button
-              size="lg"
-              className="bg-brand-primary hover:bg-brand-primary/90 text-white px-8 shadow-lg shadow-brand-primary/20"
-              onClick={() => router.push('/admin')}
-            >
-              <CheckCircle2 className="mr-2 h-5 w-5" />
-              Zum Dashboard
-            </Button>
+            {/* Direkt in den ersten Schritt statt auf ein Dashboard, auf dem der
+                Admin die Checkliste erst suchen muss. */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button
+                size="lg"
+                className="bg-brand-primary hover:bg-brand-primary/90 text-white px-8 shadow-lg shadow-brand-primary/20"
+                onClick={() => router.push('/admin/courts')}
+              >
+                <CheckCircle2 className="mr-2 h-5 w-5" />
+                Plätze anlegen
+              </Button>
+              <Button size="lg" variant="ghost" onClick={() => router.push('/admin')}>
+                Zum Dashboard
+              </Button>
+            </div>
           </div>
         );
 

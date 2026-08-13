@@ -23,9 +23,5 @@ export default async function MatchesPage() {
     return <div className="p-6 text-center text-muted-foreground">Kein Verein gefunden.</div>;
   }
 
-  return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      <OpenMatches clubId={clubId} userId={user.id} />
-    </div>
-  );
+  return <OpenMatches clubId={clubId} userId={user.id} />;
 }

@@ -44,7 +44,7 @@ export default async function AdminCourtsPage() {
     vendorRaw === 'nuki' || vendorRaw === 'shelly' || vendorRaw === 'loxone' ? vendorRaw : 'shelly';
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="space-y-6">
       <PageHeader
         title="Platzverwaltung"
         description="Plätze, Wartung, Platzsperren und Smart-Court an einem Ort"

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -23,14 +23,20 @@ import {
   TrendingUp,
   AlertTriangle,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
 import { apiFetch } from '@/lib/api-fetch';
-import { PageHeader } from '@/components/ui/page-header';
 
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('admin:hours-logs:hours-logs-client');
+
+const HOURS_STATUS_ICONS: Record<string, LucideIcon> = {
+  approved: CheckCircle,
+  rejected: XCircle,
+  pending: Hourglass,
+};
 
 interface HoursLog {
   id: string;
@@ -152,31 +158,9 @@ export default function HoursLogsClient() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return (
-          <Badge variant="success" className="gap-1">
-            <CheckCircle className="h-3 w-3" />
-            Genehmigt
-          </Badge>
-        );
-      case 'rejected':
-        return (
-          <Badge variant="error" className="gap-1">
-            <XCircle className="h-3 w-3" />
-            Abgelehnt
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="warning" className="gap-1">
-            <Hourglass className="h-3 w-3" />
-            Ausstehend
-          </Badge>
-        );
-    }
-  };
+  const getStatusBadge = (status: string) => (
+    <StatusBadge status={status} icon={HOURS_STATUS_ICONS[status]} />
+  );
 
   const getTypeLabel = (hours: number, description?: string) => {
     if (description) return description;
@@ -202,29 +186,14 @@ export default function HoursLogsClient() {
 
   if (loading) {
     return (
-      <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
-        <div className="mb-6">
-          <PageHeader
-            title="Stundennachweise"
-            description="Verwalte die Arbeitsstunden deiner Trainer"
-            breadcrumbs={[{ label: 'Stundennachweise' }]}
-          />
-        </div>
-        <div className="flex items-center justify-center min-h-[300px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary" />
-        </div>
+      <div className="flex items-center justify-center min-h-[300px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary" />
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
-      <PageHeader
-        title="Stundennachweise"
-        description="Übersicht und Genehmigung aller Trainerstunden"
-        breadcrumbs={[{ label: 'Stundennachweise' }]}
-      />
-
+    <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Card>

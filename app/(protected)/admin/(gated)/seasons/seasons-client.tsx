@@ -44,7 +44,6 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
       <PageHeader
         title="Saisonplanung"
         description="Verwalte deine Trainingssaisons und Planungen"
-        breadcrumbs={[{ label: 'Saisonplanung' }]}
         actions={[
           { label: 'Neue Saison', icon: Plus, onClick: () => router.push('/admin/seasons/new') },
         ]}

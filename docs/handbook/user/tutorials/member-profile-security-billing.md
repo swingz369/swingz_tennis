@@ -1,5 +1,7 @@
 # Tutorial · Mein Profil, Sicherheit & Zahlungen (Mitglied)
 
+> Zuletzt verifiziert: 13.08.2026
+
 > Komponente: [`components/member-profile.tsx`](../../../../components/member-profile.tsx) (Page: `/profile` o. ä.)
 > Hooks: `useUserMember`, `useRouter`, `createClient()` (Supabase Browser)
 
@@ -7,14 +9,15 @@ Die Profil-Seite hat **3 Tabs**.
 
 ## Tab 1: „Profil"
 
-### Schritt 1 — Header / Hero
+### Schritt 1 — Header
 
-Oben ein Hero-Streifen mit:
+Kein Hero-Banner mehr: Die Seite beginnt mit einem Breadcrumb (Name), gefolgt von
+einer Card mit Detail-Header. Der Detail-Header zeigt:
 
 - Avatar (über `AvatarUpload`-Komponente, klickbar zum Ändern — Upload-Flow via Storage + `router.refresh()`).
 - Voller Name als H1.
 - E-Mail als Subtext.
-- „Aktives Mitglied"-Badge rechts (Cap).
+- „Aktives Mitglied"-Status-Badge (`StatusBadge`, success) + „Bearbeiten"-Button rechts.
 
 ### Schritt 2 — Modus wechseln
 

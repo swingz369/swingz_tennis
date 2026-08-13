@@ -18,11 +18,10 @@ export default async function PerfHistoryPage() {
   await requireAdminClub();
 
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-6">
+    <div className="space-y-6">
       <PageHeader
         title="Performance-Verlauf"
         description="Benchmark-Ergebnisse der Saisonplanung — lokal ausgeführt oder aus GitHub-Actions-Pipelines (nightly perf-bench)."
-        breadcrumbs={[{ label: 'Performance-Verlauf' }]}
       />
 
       <PerfHistoryClient />

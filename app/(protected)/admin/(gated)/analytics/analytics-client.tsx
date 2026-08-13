@@ -53,11 +53,7 @@ export function AnalyticsClient({ data, clubId }: AnalyticsClientProps) {
   const showMatchmaking = !featuresLoading && isFeatureEnabled('ai_matchmaking');
 
   if (!data) {
-    return (
-      <div className="p-6">
-        <div className="text-center py-12 text-muted-foreground">Keine Vereine gefunden.</div>
-      </div>
-    );
+    return <div className="text-center py-12 text-muted-foreground">Keine Vereine gefunden.</div>;
   }
 
   const kpiCards = [
@@ -94,7 +90,7 @@ export function AnalyticsClient({ data, clubId }: AnalyticsClientProps) {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((kpi, i) => (

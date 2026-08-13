@@ -44,7 +44,6 @@ export function TournamentsClient({ initialTournaments, pagination }: Tournament
       <PageHeader
         title="Turniere"
         description="Turnierverwaltung des Vereins"
-        breadcrumbs={[{ label: 'Turniere' }]}
         actions={[{ label: 'Neues Turnier', icon: Plus, href: '/admin/tournaments/new' }]}
       />
 

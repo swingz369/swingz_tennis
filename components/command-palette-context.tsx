@@ -12,20 +12,26 @@ import {
 interface CommandPaletteContextValue {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
+  searchOpen: boolean;
+  setSearchOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 const CommandPaletteContext = createContext<CommandPaletteContextValue | null>(null);
 
 /**
- * Shares open/close state for the global command palette between the
- * header's search trigger button and the <CommandPalette /> dialog itself,
- * so either one (a click on the header button, or the Cmd/Ctrl+K shortcut)
- * can control the same instance.
+ * Shared open/close state for the two global overlays that live in the header:
+ *
+ * - `open` — the ⌘K command palette (navigation, quick actions, theme).
+ * - `searchOpen` — the focused search dialog, opened by the magnifier icon.
+ *
+ * They are deliberately separate: the magnifier opens *search only*, while
+ * ⌘K opens the full command palette.
  */
 export function CommandPaletteProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   return (
-    <CommandPaletteContext.Provider value={{ open, setOpen }}>
+    <CommandPaletteContext.Provider value={{ open, setOpen, searchOpen, setSearchOpen }}>
       {children}
     </CommandPaletteContext.Provider>
   );
@@ -36,5 +42,13 @@ export function useCommandPalette() {
   if (!ctx) {
     throw new Error('useCommandPalette must be used within a CommandPaletteProvider');
   }
-  return ctx;
+  return { open: ctx.open, setOpen: ctx.setOpen };
+}
+
+export function useSearchDialog() {
+  const ctx = useContext(CommandPaletteContext);
+  if (!ctx) {
+    throw new Error('useSearchDialog must be used within a CommandPaletteProvider');
+  }
+  return { open: ctx.searchOpen, setOpen: ctx.setSearchOpen };
 }

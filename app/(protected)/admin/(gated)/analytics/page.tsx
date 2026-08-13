@@ -30,8 +30,8 @@ export default async function AnalyticsPage({
 
   if (clubIds.length === 0) {
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold tracking-tight mb-4">Analytics</h1>
+      <div className="space-y-6">
+        <PageHeader title="Vereinsanalyse" />
         <p className="text-error-500">Keine Club-Daten gefunden.</p>
       </div>
     );
@@ -44,8 +44,8 @@ export default async function AnalyticsPage({
 
   if (clubs.length === 0) {
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold tracking-tight mb-4">Analytics</h1>
+      <div className="space-y-6">
+        <PageHeader title="Vereinsanalyse" />
         <p className="text-error-500">Keine Club-Daten gefunden.</p>
       </div>
     );
@@ -188,8 +188,8 @@ export default async function AnalyticsPage({
 
   if (fetchError || !analyticsData) {
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold tracking-tight mb-4">Analytics</h1>
+      <div className="space-y-6">
+        <PageHeader title="Vereinsanalyse" />
         <p className="text-error-500">
           Fehler beim Laden der Vereinsstatistiken. Bitte versuchen Sie es später erneut.
         </p>
@@ -198,19 +198,18 @@ export default async function AnalyticsPage({
   }
 
   return (
-    <AnalyticsTabsClient>
-      <div className="p-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <PageHeader
-            title="Vereinsanalyse"
-            description={clubs.find((c) => c.id === effectiveClubId)?.name}
-            breadcrumbs={[{ label: 'Auswertungen & Berichte' }]}
-          />
-          {clubs.length > 1 && <ClubSelector clubs={clubs} selectedClubId={effectiveClubId} />}
-        </div>
-
-        <AnalyticsClient data={analyticsData} clubId={effectiveClubId} />
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <PageHeader
+          title="Vereinsanalyse"
+          description={clubs.find((c) => c.id === effectiveClubId)?.name}
+        />
+        {clubs.length > 1 && <ClubSelector clubs={clubs} selectedClubId={effectiveClubId} />}
       </div>
-    </AnalyticsTabsClient>
+
+      <AnalyticsTabsClient>
+        <AnalyticsClient data={analyticsData} clubId={effectiveClubId} />
+      </AnalyticsTabsClient>
+    </div>
   );
 }

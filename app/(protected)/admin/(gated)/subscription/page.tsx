@@ -51,7 +51,6 @@ export default async function AdminSubscriptionPage() {
       <PageHeader
         title="Abonnement"
         description="Gleicher Funktionsumfang in beiden Plänen — der Preis richtet sich nur nach der Mitgliederanzahl."
-        breadcrumbs={[{ label: 'Abonnement' }]}
       />
 
       <div className="flex items-center gap-2.5 rounded-xl bg-muted/50 px-4 py-3 text-sm">

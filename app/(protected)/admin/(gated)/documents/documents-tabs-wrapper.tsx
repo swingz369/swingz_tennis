@@ -41,7 +41,7 @@ export function DocumentsTabsWrapper({
 
   return (
     <div className="space-y-6">
-      <div className="px-6 pt-2">
+      <div>
         <div className="flex gap-1 bg-muted dark:bg-card/5 p-1 rounded-xl w-fit flex-wrap">
           {tabs.map((tab) => (
             <button

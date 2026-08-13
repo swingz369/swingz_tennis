@@ -344,7 +344,7 @@ function MessagesContent() {
           {/* Message List + Detail / News Feed */}
           <div className="flex-1 min-w-0">
             {folder === 'news' ? (
-              <NewsAnnouncements canManage={isAdmin} compact />
+              <NewsAnnouncements canManage={isAdmin} />
             ) : selectedMessage ? (
               <MessageDetail
                 message={selectedMessage}

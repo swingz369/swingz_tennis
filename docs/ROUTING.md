@@ -1,6 +1,6 @@
 # 🗺️ SwingZ Routing-Übersicht
 
-> Zuletzt aktualisiert: 24.07.2026 (Stand der letzten Code-Änderung an diesem Dokument)
+> Zuletzt verifiziert: 13.08.2026 (Abschnitte 4 und 10 gegen `lib/navigation.ts` geprüft)
 
 > **Next.js App Router** – Route Groups, Layout-Hierarchie & alle Seiten
 >
@@ -109,7 +109,12 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 
 > **Layout:** `app/(protected)/admin/layout.tsx`
 > **Guard:** `admin` oder `superadmin` Rolle
-> **Sidebar:** 7 Sektionen (Übersicht, Mitglieder, Training, Plätze, Finanzen, Einstellungen, Service)
+> **Sidebar:** Dashboard + 6 Sektionen aus `lib/navigation.ts` — Mitglieder,
+> Trainer, Saison & Plätze, Finanzen, Verein, Weitere Module. Die ersten vier
+> entsprechen 1:1 den Kernmodulen aus `lib/features.ts` (`members`, `trainers`,
+> `seasons`, `finance`) und stehen in der Reihenfolge des Vereinsjahres.
+> Optionale Module sind gesammelt unter „Weitere Module", damit die Kernsektionen
+> unabhängig von der Modulbuchung immer an derselben Stelle stehen.
 
 ### 4.1 Dashboard & Übersicht
 

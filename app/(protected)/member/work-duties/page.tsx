@@ -21,7 +21,7 @@ export default async function MemberWorkDutiesPage() {
 
   if (!clubId) {
     return (
-      <div className="p-4 md:p-6">
+      <div className="py-6">
         <p className="text-muted-foreground">Kein Verein zugeordnet.</p>
       </div>
     );
@@ -33,7 +33,7 @@ export default async function MemberWorkDutiesPage() {
   const features = (club?.features as Record<string, boolean>) ?? {};
   if (features.work_duty !== true) {
     return (
-      <div className="p-4 md:p-6">
+      <div className="py-6">
         <p className="text-muted-foreground">
           Das Arbeitsdienst-Feature ist für diesen Verein nicht aktiviert.
         </p>
@@ -42,7 +42,7 @@ export default async function MemberWorkDutiesPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="space-y-6">
       <PageHeader title="Arbeitsdienste" description="Deine Dienste und verfügbare Einsätze" />
       <WorkDutiesMemberClient userId={user.id} />
     </div>

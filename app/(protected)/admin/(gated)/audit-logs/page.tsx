@@ -8,8 +8,8 @@ export default async function AuditLogsPage() {
   const { clubId } = await requireAdminClub();
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <PageHeader title="Audit-Logs" breadcrumbs={[{ label: 'Audit-Logs' }]} />
+    <div className="space-y-6">
+      <PageHeader title="Audit-Logs" />
       <AuditLogsTab clubId={clubId} />
     </div>
   );

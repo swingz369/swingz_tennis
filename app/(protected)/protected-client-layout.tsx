@@ -14,9 +14,9 @@ import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { SkipToContent } from '@/lib/accessibility';
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog';
 import { CommandPalette } from '@/components/command-palette';
+import { SearchDialog } from '@/components/search-dialog';
 import { CommandPaletteProvider } from '@/components/command-palette-context';
 import { PageTransition } from '@/components/animations';
-import { RouteProgressBar } from '@/components/route-progress-bar';
 import { useGlobalKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { TenantProvider } from '@/lib/tenant-context';
@@ -81,7 +81,6 @@ export function ProtectedClientLayout({ children, user, branding }: ProtectedCli
   if (pathname?.endsWith('/onboarding')) {
     return (
       <TenantProvider clubId={user.selectedClubId ?? user.club?.id ?? null} branding={branding}>
-        <RouteProgressBar />
         <main id="main-content" role="main">
           <ErrorBoundary>{children}</ErrorBoundary>
           {/* Ohne Header gäbe es sonst keinen Weg mehr aus einem halb
@@ -107,7 +106,6 @@ export function ProtectedClientLayout({ children, user, branding }: ProtectedCli
       <TenantProvider clubId={user.selectedClubId ?? user.club?.id ?? null} branding={branding}>
         <CommandPaletteProvider>
           <div className="flex min-h-screen flex-col">
-            <RouteProgressBar />
             <SkipToContent />
             <Header user={user} onMenuClick={() => setSidebarOpen((prev) => !prev)} />
             <div className="flex flex-1 relative">
@@ -153,6 +151,7 @@ export function ProtectedClientLayout({ children, user, branding }: ProtectedCli
               selectedClubId={user.selectedClubId ?? null}
               clubs={user.clubs ?? (user.club ? [user.club] : [])}
             />
+            <SearchDialog />
             <KeyboardShortcutsDialog />
           </div>
         </CommandPaletteProvider>
@@ -165,7 +164,6 @@ export function ProtectedClientLayout({ children, user, branding }: ProtectedCli
     <TenantProvider clubId={user.selectedClubId ?? user.club?.id ?? null} branding={branding}>
       <CommandPaletteProvider>
         <div className="flex min-h-screen flex-col">
-          <RouteProgressBar />
           <SkipToContent />
           <Header user={user} />
           <main id="main-content" className="flex-1 bg-background p-4 md:p-6 pb-20" role="main">
@@ -179,6 +177,7 @@ export function ProtectedClientLayout({ children, user, branding }: ProtectedCli
           {/* Always-visible bottom tab bar for trainer/member */}
           <MobileBottomNav roles={user.roles ?? []} persistent />
           <CommandPalette />
+          <SearchDialog />
           <KeyboardShortcutsDialog />
         </div>
       </CommandPaletteProvider>

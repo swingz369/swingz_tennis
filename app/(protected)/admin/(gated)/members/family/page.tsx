@@ -163,11 +163,10 @@ export default function AdminFamilyPage() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="space-y-6">
       <PageHeader
         title="Familienkonten"
         description="Familiengruppen im Verein anlegen und verwalten"
-        breadcrumbs={[{ label: 'Familienkonten' }]}
         actions={[
           { label: 'Aktualisieren', icon: RefreshCw, variant: 'outline', onClick: fetchGroups },
           { label: 'Neue Familiengruppe', icon: Plus, onClick: () => openDialog(null) },

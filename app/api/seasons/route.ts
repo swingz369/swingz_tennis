@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
+import { getSetupCounts, missingSeasonPrerequisites } from '@/lib/setup-checklist';
 
 const log = createLogger('api:seasons');
 
@@ -181,6 +182,20 @@ export async function POST(request: NextRequest) {
       }
 
       const supabase = auth.supabase;
+
+      // Ohne Plätze, Trainer und Mitglieder erzeugt die Planung einen leeren
+      // Plan statt einer Fehlermeldung — deshalb hier die Sperre. Die UI
+      // (`/admin/seasons/new`) zeigt dieselben Lücken schon vor dem Formular.
+      const missing = missingSeasonPrerequisites(await getSetupCounts(supabase, body.club_id));
+      if (missing.length > 0) {
+        return NextResponse.json(
+          {
+            error: `Saisonplanung noch nicht möglich — es fehlt: ${missing.map((s) => s.label).join(', ')}.`,
+            missing: missing.map((s) => ({ key: s.key, label: s.label, href: s.href })),
+          },
+          { status: 409 }
+        );
+      }
 
       // Check for duplicate season
       const { data: existing, error: checkError } = await supabase

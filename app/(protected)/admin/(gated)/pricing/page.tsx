@@ -13,7 +13,7 @@ export default async function PricingPage() {
   const features = (club?.features as Record<string, boolean>) ?? {};
   if (features.dynamic_pricing !== true) {
     return (
-      <div className="p-4 md:p-6">
+      <div>
         <p className="text-muted-foreground">
           Das Modul „Dynamische Preisgestaltung" ist für diesen Verein nicht aktiviert.
         </p>

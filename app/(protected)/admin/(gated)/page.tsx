@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/table';
 import { ScrollReveal } from '@/components/animations';
 import { formatAdminTimeHM } from '@/lib/utils/admin-date';
-import { buildSetupChecklist } from '@/lib/setup-checklist';
+import { buildSetupChecklist, getSetupCounts } from '@/lib/setup-checklist';
 
 export const dynamic = 'force-dynamic';
 
@@ -135,29 +135,16 @@ export default async function AdminPage() {
   // position. Both blocks run in parallel because `Promise.all([a,
   // b])` itself awaits them concurrently.
   const [
-    { count: memberCount },
-    { count: trainerCount },
+    setupCounts,
     { count: pendingApprovals },
     { count: activeSessions },
     { data: recentMembers },
     { data: recentBookings },
   ] = await Promise.all([
-    safe(
-      supabase
-        .from('user_club_memberships')
-        .select('id', { count: 'exact', head: true })
-        .eq('club_id', clubId)
-        .eq('is_active', true)
-        .not('role', 'in', '(trainer,superadmin)')
-    ),
-    safe(
-      supabase
-        .from('user_club_memberships')
-        .select('id', { count: 'exact', head: true })
-        .eq('club_id', clubId)
-        .eq('role', 'trainer')
-        .eq('is_active', true)
-    ),
+    // Einrichtungs-Checkliste: Plätze, Trainer, Mitglieder, Beitragskategorien,
+    // Saisons. `members` zählt nur `role = 'member'` — die eigene
+    // Admin-Mitgliedschaft ist kein eingeladenes Mitglied.
+    getSetupCounts(supabase, clubId),
     safe(
       supabase
         .from('registration_requests')
@@ -179,7 +166,7 @@ export default async function AdminPage() {
         .select('id, created_at, user_id')
         .eq('club_id', clubId)
         .eq('is_active', true)
-        .not('role', 'in', '(trainer,superadmin)')
+        .eq('role', 'member')
         .order('created_at', { ascending: false })
         .limit(5)
     ),
@@ -200,11 +187,8 @@ export default async function AdminPage() {
   const [
     { data: paidInvoices },
     { count: totalInvoiceCount },
-    { count: seasonCount },
     { data: priorPaidInvoices },
     { count: priorMemberCount },
-    { count: courtCount },
-    { count: feeCategoryCount },
   ] = await Promise.all([
     safe(
       supabase
@@ -217,9 +201,6 @@ export default async function AdminPage() {
     ),
     safe(
       supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('club_id', clubId)
-    ),
-    safe(
-      supabase.from('seasons').select('id', { count: 'exact', head: true }).eq('club_id', clubId)
     ),
     // NEW for P0-A: prior month paid invoices for honest revenue growth.
     safe(
@@ -239,28 +220,12 @@ export default async function AdminPage() {
         .select('id', { count: 'exact', head: true })
         .eq('club_id', clubId)
         .eq('is_active', true)
-        .not('role', 'in', '(trainer,superadmin)')
+        .eq('role', 'member')
         .lte('created_at', priorMonthEnd.toISOString())
     ),
-    // Einrichtungs-Checkliste: Plätze + Beitragskategorien. Die übrigen
-    // Zähler (Trainer, Mitglieder, Saisons) fallen im ersten Batch ohnehin an.
-    safe(
-      supabase
-        .from('courts')
-        .select('id', { count: 'exact', head: true })
-        .eq('club_id', clubId)
-        .eq('is_active', true)
-    ),
-    // Ohne `is_active`-Filter: die Kategorien-Seite listet inaktive Kategorien
-    // mit Badge weiterhin auf. Zählte die Checkliste nur die aktiven, stünde
-    // dort "noch keine Beitragskategorien", während die Seite vier zeigt.
-    safe(
-      supabase
-        .from('fee_configurations')
-        .select('id', { count: 'exact', head: true })
-        .eq('club_id', clubId)
-    ),
   ]);
+
+  const memberCount = setupCounts.members;
 
   // Monthly revenue (current + prior for honest growth comparison).
   const monthlyRevenue = (paidInvoices ?? []).reduce(
@@ -376,13 +341,7 @@ export default async function AdminPage() {
   // wenn jemand die letzte Beitragskategorie löscht. Kein Zeitfenster mehr:
   // ein Verein, der nach 30 Tagen noch keine Saison hat, braucht den Hinweis
   // dringender als einer am ersten Tag.
-  const setupChecklist = buildSetupChecklist({
-    courts: courtCount ?? 0,
-    trainers: trainerCount ?? 0,
-    members: memberCount ?? 0,
-    feeCategories: feeCategoryCount ?? 0,
-    seasons: seasonCount ?? 0,
-  });
+  const setupChecklist = buildSetupChecklist(setupCounts);
 
   // Smart actions: determine which contextual actions to show
   const needsApprovals = (pendingApprovals ?? 0) > 0;
@@ -565,7 +524,7 @@ export default async function AdminPage() {
   );
 
   return (
-    <div className="space-y-5 sm:space-y-6 max-w-[1400px] mx-auto">
+    <div className="space-y-5 sm:space-y-6">
       {/* ── Hero + Schnellaktionen, one framed unit ──
           Both live inside a single card now instead of a bare text block
           next to boxed action cards — that mismatch used to read as
@@ -653,18 +612,19 @@ export default async function AdminPage() {
               </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {setupChecklist.steps.map((item) => (
-                <Link
-                  key={item.key}
-                  href={item.done ? '#' : item.href}
-                  aria-disabled={item.done}
-                  className={item.done ? 'pointer-events-none' : undefined}
-                >
+              {setupChecklist.steps.map((item) => {
+                // Erledigt oder blockiert: kein Link. Ein blockierter Schritt
+                // führt sonst auf eine Seite, die den Admin gleich wieder
+                // wegschickt — die fehlende Voraussetzung steht hier.
+                const clickable = !item.done && !item.blocked;
+                const body = (
                   <div
                     className={`flex items-start gap-3 rounded-xl px-3 py-2.5 h-full transition-all ${
                       item.done
                         ? 'bg-success-50 dark:bg-success-900/20 cursor-default'
-                        : 'bg-background border border-border hover:border-brand-light/40 cursor-pointer'
+                        : item.blocked
+                          ? 'bg-muted/40 border border-dashed border-border cursor-not-allowed'
+                          : 'bg-background border border-border hover:border-brand-light/40 cursor-pointer'
                     }`}
                   >
                     <div
@@ -672,32 +632,48 @@ export default async function AdminPage() {
                         item.done ? 'bg-success-100 dark:bg-success-800' : 'border-2 border-border'
                       }`}
                     >
-                      {item.done && (
+                      {item.done ? (
                         <span className="text-success-600 dark:text-success-400 text-xs font-bold">
                           ✓
                         </span>
-                      )}
+                      ) : item.blocked ? (
+                        <LockKeyhole className="h-3 w-3 text-muted-foreground" />
+                      ) : null}
                     </div>
                     <div className="min-w-0 flex-1">
                       <span
                         className={`text-sm ${
                           item.done
                             ? 'line-through text-muted-foreground'
-                            : 'text-foreground font-medium'
+                            : item.blocked
+                              ? 'text-muted-foreground font-medium'
+                              : 'text-foreground font-medium'
                         }`}
                       >
                         {item.label}
                       </span>
                       {!item.done && (
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {item.blocked ? `Zuerst: ${item.blockedBy.join(', ')}` : item.hint}
+                          {item.blocked
+                            ? `Erst möglich nach: ${item.blockedBy.join(', ')}`
+                            : item.hint}
                         </p>
                       )}
                     </div>
-                    {!item.done && <span className="text-muted-foreground text-xs mt-0.5">→</span>}
+                    {clickable && <span className="text-muted-foreground text-xs mt-0.5">→</span>}
                   </div>
-                </Link>
-              ))}
+                );
+
+                return clickable ? (
+                  <Link key={item.key} href={item.href}>
+                    {body}
+                  </Link>
+                ) : (
+                  <div key={item.key} aria-disabled="true">
+                    {body}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </ScrollReveal>

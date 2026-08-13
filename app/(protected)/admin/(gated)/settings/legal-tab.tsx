@@ -64,7 +64,7 @@ export function LegalTab({ clubId }: { clubId: string }) {
   );
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-4">
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold">Vereinsregister</CardTitle>

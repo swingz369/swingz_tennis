@@ -1,7 +1,7 @@
 /**
  * Footer — App-Design
  *
- * 4-Spalten-Link-Grid (Brand / Produkt / Unternehmen / Rechtliches)
+ * 5-Spalten-Link-Grid (Brand / Produkt / Unternehmen / Rechtliches / Konto)
  * in normaler App-Typografie. Server Component.
  */
 
@@ -34,13 +34,20 @@ const LINK_GROUPS = [
       { href: '/avv', label: 'AVV' },
     ],
   },
+  {
+    heading: 'Konto',
+    links: [
+      { href: '/login', label: 'Anmelden' },
+      { href: '/register', label: 'Registrieren' },
+    ],
+  },
 ];
 
 export function FooterSection() {
   return (
     <footer className="border-t border-border bg-muted/30">
       <div className="mx-auto max-w-7xl px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="inline-flex items-center gap-2.5">
               <IconBox icon={Trophy} size="sm" variant="gradient-primary" />

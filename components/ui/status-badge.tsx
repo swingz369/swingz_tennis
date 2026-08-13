@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import type { LucideIcon } from 'lucide-react';
 
 /**
  * Centralized StatusBadge — maps semantic status strings to consistent Badge variants.
@@ -38,6 +39,7 @@ const STATUS_CONFIG: Record<
   dunning: { label: 'Mahnung', variant: 'error' },
   void: { label: 'Storniert', variant: 'secondary' },
   uncollectible: { label: 'Uneinbringlich', variant: 'error' },
+  refunded: { label: 'Erstattet', variant: 'info' },
 
   // Order status
   pending: { label: 'Ausstehend', variant: 'warning' },
@@ -45,10 +47,18 @@ const STATUS_CONFIG: Record<
   shipped: { label: 'Versendet', variant: 'success' },
   delivered: { label: 'Zugestellt', variant: 'success' },
 
+  // Approval status (Stundennachweise, Freigaben)
+  approved: { label: 'Genehmigt', variant: 'success' },
+  rejected: { label: 'Abgelehnt', variant: 'error' },
+
   // Season status
   planning: { label: 'Planung', variant: 'info' },
   published: { label: 'Veröffentlicht', variant: 'success' },
   manual_review: { label: 'Prüfung', variant: 'warning' },
+
+  // Trainer status
+  on_leave: { label: 'Urlaub', variant: 'warning' },
+  terminated: { label: 'Beendet', variant: 'error' },
 
   // Booking waitlist — domain-specific. The dashboard's `pending` bookings
   // ARE waitlist entries (pending confirmation / free slot), so we expose
@@ -64,16 +74,25 @@ interface StatusBadgeProps {
   label?: string;
   /** Override size */
   size?: 'sm' | 'md' | 'lg';
+  /** Optional icon rendered before the label (e.g. approval checkmarks) */
+  icon?: LucideIcon;
   className?: string;
 }
 
-export function StatusBadge({ status, label, size = 'md', className }: StatusBadgeProps) {
+export function StatusBadge({
+  status,
+  label,
+  size = 'md',
+  icon: Icon,
+  className,
+}: StatusBadgeProps) {
   const config = STATUS_CONFIG[status];
   const displayLabel = label ?? config?.label ?? status;
   const variant = config?.variant ?? 'default';
 
   return (
-    <Badge variant={variant} size={size} className={cn('capitalize', className)}>
+    <Badge variant={variant} size={size} className={cn(Icon && 'gap-1', 'capitalize', className)}>
+      {Icon && <Icon className="h-3 w-3 shrink-0" aria-hidden="true" />}
       {displayLabel}
     </Badge>
   );

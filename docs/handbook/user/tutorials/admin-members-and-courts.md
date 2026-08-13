@@ -1,8 +1,10 @@
 # Tutorial · Mitglieder & Plätze verwalten (Admin)
 
+> Zuletzt verifiziert: 13.08.2026
+
 ## A) Mitgliederliste `/admin/members`
 
-> Page: [`app/(protected)/admin/(gated)/members/page.tsx`](<../../../../app/(protected)/admin/(gated)/members/page.tsx>) · Client: [`MembersTabs`](<../../../../app/(protected)/admin/(gated)/members/members-tabs.tsx>)
+> Page: [`app/(protected)/admin/(gated)/members/page.tsx`](<../../../../app/(protected)/admin/(gated)/members/page.tsx>) · Client: [`MembersClient`](<../../../../app/(protected)/admin/(gated)/members/members-client.tsx>)
 
 ### Was wird geladen?
 
@@ -20,12 +22,12 @@ Server-Component führt **2 parallele DB-Queries** aus (`Promise.all`, Zeile 58 
 
 ### Tabs
 
-`MembersTabs` enthält typischerweise Tabs:
+`MembersClient` rendert zwei Tabs (shadcn `Tabs`):
 
-- **Aktive** (Default) — `is_active = true`
-- **Ehrenmitglieder** — `is_honorary = true` mit `honorary_since`
-- **Suchergebnis** — falls `?q=...` Aktiv, Drill-Down-Detail
-- Wahrscheinlich pro Tab: Filter/Inkl.-Planning-Toggle
+- **Alle Mitglieder** (Default) — Liste mit Suche, Rollen-/Status-/Planungsfilter und Bulk-Aktionen
+- **Genehmigungen** — Beitrittsanfragen (`AdminApprovals`), mit Badge-Zähler der offenen Anfragen
+
+Der Tab wird über `?tab=approvals` vorausgewählt.
 
 ### Suche
 

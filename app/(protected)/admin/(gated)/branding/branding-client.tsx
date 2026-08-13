@@ -10,7 +10,6 @@ import { Palette, Image as ImageIcon, Globe, ImagePlus } from 'lucide-react';
 import { LogoUpload } from '@/components/ui/logo-upload';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
-import { PageHeader } from '@/components/ui/page-header';
 import { DEFAULT_BRANDING } from '@/lib/branding';
 
 import { createLogger } from '@/lib/logger';
@@ -102,12 +101,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader
-        title="White-Label Einstellungen"
-        description="Passe das Aussehen deines Clubs an und konfiguriere eine eigene Domain."
-      />
-
+    <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="colors">

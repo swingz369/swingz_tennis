@@ -144,7 +144,6 @@ export default function SpecialEventsPage() {
       <PageHeader
         title="Sonderveranstaltungen"
         description="Sommercamp, Intensivkurse, Schnupperstunden & mehr"
-        breadcrumbs={[{ label: 'Sonderveranstaltungen' }]}
         actions={[{ label: 'Event erstellen', icon: Plus, onClick: openCreate }]}
       />
 

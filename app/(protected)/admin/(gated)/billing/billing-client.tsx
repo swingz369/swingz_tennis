@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { NoInvoicesBrandedEmptyState } from '@/components/ui/empty-state';
 
 import {
   Table,
@@ -17,9 +19,10 @@ import {
 import { CenteredModal } from '@/components/ui/centered-modal';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DollarSign, FileText, Loader2, Trash2, Send, Sparkles } from 'lucide-react';
+import { FileText, Loader2, Trash2, Send, Sparkles } from 'lucide-react';
 import CreateInvoiceDialog from '@/components/billing/create-invoice-dialog';
 import PaymentImportDialog from '@/components/billing/payment-import-dialog';
+import { InvoiceTypeBadge } from '@/components/billing/invoice-type-badge';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import type { PaginationMeta } from '@/lib/pagination';
 import { apiFetch } from '@/lib/api-fetch';
@@ -53,73 +56,6 @@ export type Invoice = {
 };
 
 type InvoiceTypeFilter = 'all' | 'season' | 'membership' | 'adhoc';
-
-function InvoiceStatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; className: string }> = {
-    draft: { label: 'Entwurf', className: 'bg-muted text-muted-foreground' },
-    open: {
-      label: 'Offen',
-      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
-    },
-    sent: {
-      label: 'Versendet',
-      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
-    },
-    reminder_sent: {
-      label: 'Erinnerung',
-      className: 'bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-300',
-    },
-    partially_paid: {
-      label: 'Teilbezahlt',
-      className:
-        'bg-brand-accent-100 text-brand-accent-700 dark:bg-brand-accent-900/30 dark:text-brand-accent-300',
-    },
-    paid: {
-      label: 'Bezahlt',
-      className: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300',
-    },
-    overdue: {
-      label: 'Überfällig',
-      className: 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-300',
-    },
-    dunning: {
-      label: 'Mahnung',
-      className: 'bg-error-200 text-error-900 font-bold dark:bg-error-900/50 dark:text-error-200',
-    },
-    cancelled: { label: 'Storniert', className: 'bg-muted text-muted-foreground line-through' },
-    void: { label: 'Ungültig', className: 'bg-muted text-muted-foreground line-through' },
-    uncollectible: {
-      label: 'Uneinbringlich',
-      className: 'bg-error-100 text-error-700 italic dark:bg-error-900/30 dark:text-error-300',
-    },
-    refunded: {
-      label: 'Erstattet',
-      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
-    },
-  };
-  const c = config[status] ?? config.draft;
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>{c.label}</span>
-  );
-}
-
-function InvoiceTypeBadge({ type }: { type: string }) {
-  const config: Record<string, { label: string; className: string }> = {
-    season: {
-      label: 'Saison',
-      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
-    },
-    membership: {
-      label: 'Mitgliedsbeitrag',
-      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
-    },
-    adhoc: { label: 'Zusatz', className: 'bg-muted text-muted-foreground' },
-  };
-  const c = config[type] ?? config.adhoc;
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>{c.label}</span>
-  );
-}
 
 interface BillingClientProps {
   initialInvoices: Invoice[];
@@ -568,10 +504,7 @@ export default function BillingClient({
                 Laden…
               </div>
             ) : invoices.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <DollarSign className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p>Noch keine Rechnungen erstellt</p>
-              </div>
+              <NoInvoicesBrandedEmptyState />
             ) : (
               <Table>
                 <TableHeader>
@@ -645,7 +578,7 @@ export default function BillingClient({
                         )}
                       </TableCell>
                       <TableCell>
-                        <InvoiceStatusBadge status={invoice.status} />
+                        <StatusBadge status={invoice.status} size="sm" />
                       </TableCell>
                       <TableCell>
                         {invoice.dueDate

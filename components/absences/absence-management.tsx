@@ -56,11 +56,14 @@ export function AbsenceManagement({
   adminUserId,
   trainerId,
   trainerName,
+  hideHeader = false,
 }: {
   isAdmin?: boolean;
   adminUserId?: string;
   trainerId?: string;
   trainerName?: string;
+  /** Beim Einbetten in eine Tab-Seite den eigenen PageHeader unterdrücken. */
+  hideHeader?: boolean;
 }) {
   const [absences, setAbsences] = useState<Absence[]>([]);
   const [loading, setLoading] = useState(true);
@@ -171,14 +174,16 @@ export function AbsenceManagement({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Abwesenheiten"
-        description={
-          isAdmin
-            ? 'Abwesenheitsanträge der Trainer prüfen und genehmigen'
-            : 'Urlaub, Krankheit oder andere Abwesenheiten melden'
-        }
-      />
+      {!hideHeader && (
+        <PageHeader
+          title="Abwesenheiten"
+          description={
+            isAdmin
+              ? 'Abwesenheitsanträge der Trainer prüfen und genehmigen'
+              : 'Urlaub, Krankheit oder andere Abwesenheiten melden'
+          }
+        />
+      )}
 
       {!isAdmin && (
         <Card>

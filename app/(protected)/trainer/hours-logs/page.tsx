@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Clock, CheckCircle, XCircle, Plus, Calendar, Filter, Hourglass } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
 import { apiFetch } from '@/lib/api-fetch';
@@ -23,6 +24,12 @@ import { PageHeader } from '@/components/ui/page-header';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('trainer:hours-logs:page');
+
+const HOURS_STATUS_ICONS: Record<string, LucideIcon> = {
+  approved: CheckCircle,
+  rejected: XCircle,
+  pending: Hourglass,
+};
 
 interface HoursLog {
   id: string;
@@ -141,31 +148,9 @@ export default function TrainerHoursLogsPage() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return (
-          <Badge variant="success" className="gap-1">
-            <CheckCircle className="h-3 w-3" />
-            Genehmigt
-          </Badge>
-        );
-      case 'rejected':
-        return (
-          <Badge variant="error" className="gap-1">
-            <XCircle className="h-3 w-3" />
-            Abgelehnt
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="warning" className="gap-1">
-            <Hourglass className="h-3 w-3" />
-            Ausstehend
-          </Badge>
-        );
-    }
-  };
+  const getStatusBadge = (status: string) => (
+    <StatusBadge status={status} icon={HOURS_STATUS_ICONS[status]} />
+  );
 
   const stats = {
     total: logs.length,

@@ -426,3 +426,18 @@ export function NoSeasonsBrandedEmptyState({ onCreate }: { onCreate: () => void 
     />
   );
 }
+
+/** No invoices — Tennis club branded */
+export function NoInvoicesBrandedEmptyState({ onCreate }: { onCreate?: () => void }) {
+  return (
+    <TennisBallEmptyState
+      title="Noch keine Rechnungen"
+      description={
+        onCreate
+          ? 'Erstelle deine erste Rechnung, um mit der Abrechnung zu starten.'
+          : 'Sobald du Rechnungen erstellt hast, erscheinen sie hier.'
+      }
+      {...(onCreate ? { action: { label: 'Rechnung erstellen', onClick: onCreate } } : {})}
+    />
+  );
+}

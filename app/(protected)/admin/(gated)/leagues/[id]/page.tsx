@@ -28,7 +28,7 @@ export default async function LeagueDetailPage({ params }: { params: Promise<{ i
     .filter((m): m is { id: string; name: string; email: string } => m !== null);
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="space-y-6">
       <LeagueDetailClient leagueId={id} members={members} />
     </div>
   );

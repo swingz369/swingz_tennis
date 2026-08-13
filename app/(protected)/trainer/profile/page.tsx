@@ -236,7 +236,7 @@ export default function TrainerProfilePage() {
   // ── Loading ──────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="space-y-6">
         <div className="flex items-center gap-1.5 text-sm">
           <Skeleton className="h-3.5 w-14 rounded" />
           <Skeleton className="h-3.5 w-3.5 rounded" />
@@ -315,7 +315,7 @@ export default function TrainerProfilePage() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in">
+    <div className="animate-in">
       {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
       <nav className="mb-4 flex items-center gap-1.5 text-sm">
         <Link

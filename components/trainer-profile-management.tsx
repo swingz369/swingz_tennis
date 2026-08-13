@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { NoTrainersBrandedEmptyState } from '@/components/ui/empty-state';
 import { QuickEmailDialog } from '@/components/admin/quick-email-dialog';
 import {
@@ -19,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CenteredModal } from '@/components/ui/centered-modal';
+import { BulkActionBar } from '@/components/ui/bulk-action-bar';
 import {
   Select,
   SelectContent,
@@ -30,6 +32,7 @@ import {
   User,
   Award,
   Plus,
+  Upload,
   Search,
   GraduationCap,
   Euro,
@@ -129,6 +132,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [showInviteForm, setShowInviteForm] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
@@ -214,34 +218,6 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Aktion fehlgeschlagen';
       toast.error(message);
-    }
-  };
-
-  const getStatusVariant = (
-    status: TrainerProfile['status']
-  ): 'success' | 'secondary' | 'warning' | 'error' => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'inactive':
-        return 'secondary';
-      case 'on_leave':
-        return 'warning';
-      case 'terminated':
-        return 'error';
-    }
-  };
-
-  const getStatusLabel = (status: TrainerProfile['status']) => {
-    switch (status) {
-      case 'active':
-        return 'Aktiv';
-      case 'inactive':
-        return 'Inaktiv';
-      case 'on_leave':
-        return 'Urlaub';
-      case 'terminated':
-        return 'Beendet';
     }
   };
 
@@ -357,7 +333,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
   // ── Loading Skeleton ──────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+      <div className="space-y-8">
         <div className="flex items-center justify-between">
           <div className="space-y-1.5">
             <Skeleton className="h-8 w-64" />
@@ -379,21 +355,29 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <PageHeader
-          title="Trainer-Verwaltung"
-          description="Übersicht und Management aller Trainerprofile"
-          breadcrumbs={[{ label: 'Trainer-Profile' }]}
-        />
-        <div className="flex items-center gap-3">
-          <TrainerImportDialog onImportComplete={loadTrainers} />
-          <Button size="md" variant="primary" onClick={() => setShowInviteForm(true)}>
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline ml-2">Neuer Trainer</span>
-          </Button>
-        </div>
-      </div>
+    <div className="animate-in space-y-6">
+      <PageHeader
+        title="Trainer-Verwaltung"
+        description="Übersicht und Management aller Trainerprofile"
+        actions={[
+          {
+            label: 'CSV Import',
+            icon: Upload,
+            variant: 'outline',
+            onClick: () => setImportOpen(true),
+          },
+          {
+            label: 'Neuer Trainer',
+            icon: Plus,
+            onClick: () => setShowInviteForm(true),
+          },
+        ]}
+      />
+      <TrainerImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImportComplete={loadTrainers}
+      />
 
       {/* ── Filters ────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -510,9 +494,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                       </button>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusVariant(trainer.status)} size="sm">
-                        {getStatusLabel(trainer.status)}
-                      </Badge>
+                      <StatusBadge status={trainer.status} size="sm" />
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm">
                       {trainer.specializations.length > 0 ? (
@@ -627,38 +609,13 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
 
       {/* ── Floating Bulk-Action Bar ───────────────────────────────────────── */}
       {selectedIds.size > 0 && (
-        <div
-          className="fixed inset-x-0 bottom-6 z-40 mx-auto w-fit max-w-[min(calc(100vw-2rem),640px)] rounded-full border border-border bg-background/95 backdrop-blur shadow-lg px-3 py-2 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4"
-          role="region"
-          aria-label="Massenaktionen"
-        >
-          <span className="px-3 text-sm font-medium tabular-nums">
-            {selectedIds.size} ausgewählt
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedIds(new Set())}
-            disabled={bulkDeactivating}
-          >
-            Auswahl aufheben
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setBulkConfirmOpen(true)}
-            disabled={bulkDeactivating}
-            leftIcon={
-              bulkDeactivating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <UserX className="h-4 w-4" />
-              )
-            }
-          >
-            {bulkDeactivating ? 'Wird deaktiviert…' : 'Ausgewählte deaktivieren'}
-          </Button>
-        </div>
+        <BulkActionBar
+          selectionLabel={`${selectedIds.size} ausgewählt`}
+          onClear={() => setSelectedIds(new Set())}
+          destructiveLabel={bulkDeactivating ? 'Wird deaktiviert…' : 'Ausgewählte deaktivieren'}
+          onDestructive={() => setBulkConfirmOpen(true)}
+          destructiveLoading={bulkDeactivating}
+        />
       )}
 
       {/* ── Bulk-Confirmation Modal ─────────────────────────────────────────── */}

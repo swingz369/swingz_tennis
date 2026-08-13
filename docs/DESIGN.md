@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt aktualisiert: 24.07.2026 (Stand der letzten Code-Änderung an diesem Dokument)
+> Zuletzt verifiziert: 13.08.2026 (Abschnitt 13.2/13.4 gegen `components/search-dialog.tsx` + `components/command-palette.tsx` geprüft)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -335,7 +335,8 @@ Die Design-Preview-Seite (`app/(public)/design-preview/page.tsx`) zeigt 11 Anima
 | **Screen-Reader-Announcements**            | `lib/accessibility.tsx:19` — `announceToScreenReader()` mit `role="status"` + `aria-live`                                                             |
 | **Focus Manager**                          | `lib/accessibility.tsx:61` — `focusManager.trapFocus()`, `focusFirst()`, `saveFocus()`                                                                |
 | **Globale Shortcuts**                      | `hooks/use-keyboard-shortcuts.ts` — ⌘D/B/M/S/K + Shift+? (input-aware, triggert nicht in Textfeldern)                                                 |
-| **Command Palette**                        | `components/command-palette.tsx` — ⌘K, cmdk-basierte Volltextsuche + Navigation + Theme-Toggle                                                        |
+| **Command Palette**                        | `components/command-palette.tsx` — ⌘K, cmdk-basierte Navigation + Aktionen + Theme-Toggle                                                             |
+| **Fokussierte Suche**                      | `components/search-dialog.tsx` — Lupen-Icon im Header, nur Suchergebnisse (Mitglieder/Trainer/Buchungen/Vereine) + Sprung zur erweiterten Suche       |
 | **Shortcuts-Dialog**                       | `components/keyboard-shortcuts-dialog.tsx` — Shift+?, FAB-Button, kategorisierte Shortcuts                                                            |
 | **CenteredModal**                          | `components/ui/centered-modal.tsx` — Escape-Handler, Overlay-Click, `aria-modal="true"`, Body-Scroll-Lock                                             |
 | **`:focus-visible`**                       | `app/globals.css:167` — `ring-2 ring-offset-2` mit `--tw-ring-color: hsl(var(--ring) / 0.8)`                                                          |
@@ -354,7 +355,8 @@ Die Design-Preview-Seite (`app/(public)/design-preview/page.tsx`) zeigt 11 Anima
 | ------------------------------------------ | ------------------------------------------------------------------------------ |
 | `lib/accessibility.tsx`                    | Core-Utilities: SkipLink, ScreenReader, FocusTrap, KeyboardProps               |
 | `hooks/use-keyboard-shortcuts.ts`          | Globale Tastatur-Shortcuts (input-aware)                                       |
-| `components/command-palette.tsx`           | ⌘K Command-Palette mit cmdk                                                    |
+| `components/command-palette.tsx`           | ⌘K Command-Palette (Navigation, Aktionen, Theme) mit cmdk                      |
+| `components/search-dialog.tsx`             | Fokussierte Suche über das Lupen-Icon im Header                                |
 | `components/keyboard-shortcuts-dialog.tsx` | Shift+? Shortcuts-Übersicht                                                    |
 | `components/ui/centered-modal.tsx`         | Kanonischer Modal-Wrapper mit Escape                                           |
 | `components/ui/dialog.tsx`                 | Radix Dialog-Primitive (Focus-Trap integriert)                                 |

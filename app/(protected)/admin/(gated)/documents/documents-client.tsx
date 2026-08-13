@@ -15,7 +15,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
-import { PageHeader } from '@/components/ui/page-header';
 
 const CATEGORIES = ['satzung', 'protokoll', 'beschluss', 'lizenz', 'vertrag', 'sonstige'];
 
@@ -91,7 +90,6 @@ export function DocumentsClient() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Dokumente" breadcrumbs={[{ label: 'Dokumente' }]} />
       <Card className="max-w-lg">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold">Dokument hochladen</CardTitle>

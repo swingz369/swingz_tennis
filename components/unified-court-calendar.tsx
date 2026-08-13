@@ -2403,7 +2403,7 @@ export default function UnifiedCourtCalendar({
       )}
 
       <CourtCalendarHeader
-        title={selectedCourt ? selectedCourt.name : 'Platz-Kalender'}
+        title={selectedCourt ? selectedCourt.name : 'Platzkalender'}
         subtitle={
           selectedCourt
             ? `${getSurfaceLabel(selectedCourt.surface)}${selectedCourt.hasIndoor ? ' · Indoor' : ''} · ${viewMode === 'weekly' ? 'Wochenansicht' : 'Tagesansicht'}`

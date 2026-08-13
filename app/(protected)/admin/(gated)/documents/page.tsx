@@ -72,13 +72,11 @@ export default async function AdminDocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="px-6 pt-6">
-        <PageHeader
-          title="Dokumente & Vereinsführung"
-          description="Vereinsdokumente, Versammlungen und Board-Beschlüsse an einem Ort."
-        />
-      </div>
-      <Suspense fallback={<Skeleton className="h-96 w-full mx-6" />}>
+      <PageHeader
+        title="Dokumente & Vereinsführung"
+        description="Vereinsdokumente, Versammlungen und Board-Beschlüsse an einem Ort."
+      />
+      <Suspense fallback={<Skeleton className="h-96 w-full" />}>
         <DocumentsTabsWrapper
           initialDecisions={decisions}
           initialVotes={votes}

@@ -17,6 +17,7 @@ import {
 } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -36,7 +37,6 @@ import {
   CalendarCheck,
   CheckCircle2,
   Timer,
-  Award,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportBookingsCSV } from '@/lib/csv-export';
@@ -57,7 +57,7 @@ import UnifiedCourtCalendar from '@/components/unified-court-calendar';
 
 export default function BookingsPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-center text-muted-foreground">Laden...</div>}>
+    <Suspense fallback={<div className="py-12 text-center text-muted-foreground">Laden...</div>}>
       <BookingsContent />
     </Suspense>
   );
@@ -237,38 +237,11 @@ function BookingsContent() {
 
   return (
     <div className="space-y-6">
-      {/* ── Hero Header ── */}
-      <ScrollReveal>
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
-          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
-          <div className="relative">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-white/70 mb-1">Buchungen</p>
-                <h1 className="text-2xl font-bold tracking-tight">Kalender & Reservierungen</h1>
-                <p className="text-white/70 mt-2">
-                  Platzverfügbarkeit, Training und Buchungen verwalten
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  asChild
-                  className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25"
-                >
-                  <a href="/dashboard/bookings/new">Neue Platzbuchung</a>
-                </Button>
-                <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">
-                  <Award className="h-5 w-5 text-brand-accent" />
-                  <span className="text-sm font-medium">
-                    <AnimatedCounter value={totalSessions} /> Sessions
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ScrollReveal>
+      <PageHeader
+        title="Kalender & Reservierungen"
+        description="Platzverfügbarkeit, Training und Buchungen verwalten"
+        actions={[{ label: 'Neue Platzbuchung', href: '/dashboard/bookings/new' }]}
+      />
 
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -353,17 +326,17 @@ function BookingsContent() {
       <ScrollReveal delay={300}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full max-w-xl grid-cols-3">
-            <TabsTrigger value="courts" className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              <span>Platz-Kalender</span>
+            <TabsTrigger value="courts" className="flex items-center gap-2 min-w-0">
+              <MapPin className="h-4 w-4 shrink-0" />
+              <span className="truncate">Platz-Kalender</span>
             </TabsTrigger>
-            <TabsTrigger value="bookings" className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4" />
-              <span>Trainerstunden</span>
+            <TabsTrigger value="bookings" className="flex items-center gap-2 min-w-0">
+              <CalendarIcon className="h-4 w-4 shrink-0" />
+              <span className="truncate">Trainerstunden</span>
             </TabsTrigger>
-            <TabsTrigger value="my" className="flex items-center gap-2">
-              <CalendarCheck className="h-4 w-4" />
-              <span>Meine Buchungen</span>
+            <TabsTrigger value="my" className="flex items-center gap-2 min-w-0">
+              <CalendarCheck className="h-4 w-4 shrink-0" />
+              <span className="truncate">Meine Buchungen</span>
             </TabsTrigger>
           </TabsList>
 

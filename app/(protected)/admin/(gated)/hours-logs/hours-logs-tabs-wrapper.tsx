@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PageHeader } from '@/components/ui/page-header';
 import { Clock, CalendarOff } from 'lucide-react';
 
 const AbsenceManagement = dynamic(
@@ -12,16 +13,8 @@ const AbsenceManagement = dynamic(
   { ssr: false }
 );
 
-type HoursLogsTab = 'hours-logs' | 'absences';
-
-const tabs: {
-  id: HoursLogsTab;
-  label: string;
-  icon: React.ComponentType<{ className?: string | undefined }>;
-}[] = [
-  { id: 'hours-logs', label: 'Stundennachweise', icon: Clock },
-  { id: 'absences', label: 'Abwesenheiten', icon: CalendarOff },
-];
+const TRIGGER_CLASS =
+  'gap-2 rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm';
 
 export function HoursLogsTabsWrapper({
   children,
@@ -30,31 +23,31 @@ export function HoursLogsTabsWrapper({
   children: React.ReactNode;
   adminUserId: string;
 }) {
-  const [activeTab, setActiveTab] = useState<HoursLogsTab>('hours-logs');
-
   return (
     <div className="space-y-6">
-      <div className="px-6 pt-2">
-        <div className="flex gap-1 bg-muted dark:bg-card/5 p-1 rounded-xl w-fit flex-wrap">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-background dark:bg-surface-dark text-brand-primary shadow-sm'
-                  : 'text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white'
-              }`}
-            >
-              <tab.icon className="h-4 w-4" />
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <PageHeader
+        title="Stundennachweise & Abwesenheiten"
+        description="Arbeitsstunden der Trainer verwalten und Abwesenheiten genehmigen"
+      />
 
-      {activeTab === 'hours-logs' && children}
-      {activeTab === 'absences' && <AbsenceManagement isAdmin adminUserId={adminUserId} />}
+      <Tabs defaultValue="hours-logs" className="space-y-6">
+        <TabsList className="h-auto w-full max-w-2xl flex-wrap justify-start gap-1 bg-muted dark:bg-card/5 p-1 rounded-xl">
+          <TabsTrigger value="hours-logs" className={TRIGGER_CLASS}>
+            <Clock className="h-4 w-4" />
+            Stundennachweise
+          </TabsTrigger>
+          <TabsTrigger value="absences" className={TRIGGER_CLASS}>
+            <CalendarOff className="h-4 w-4" />
+            Abwesenheiten
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="hours-logs">{children}</TabsContent>
+
+        <TabsContent value="absences">
+          <AbsenceManagement isAdmin adminUserId={adminUserId} hideHeader />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -34,11 +34,10 @@ export default async function WorkDutiesPage() {
     .filter((m): m is { id: string; name: string; email: string } => m !== null);
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="space-y-6">
       <PageHeader
         title="Arbeitsdienst"
         description="Gemeinschaftsdienste verwalten und Mitglieder zuweisen"
-        breadcrumbs={[{ label: 'Arbeitsdienst' }]}
       />
       <WorkDutiesClient members={members} />
     </div>

@@ -419,11 +419,10 @@ export default function AdminShopPage() {
     }).format(new Date(dateStr));
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto">
+    <div className="space-y-6">
       <PageHeader
         title="Shop verwalten"
         description="Produkte, Bestellungen & Vereinsshop"
-        breadcrumbs={[{ label: 'Shop' }]}
         actions={[
           { label: 'Produkt anlegen', icon: Plus, onClick: openCreateForm, disabled: showForm },
         ]}

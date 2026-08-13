@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -446,14 +447,6 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
     });
   };
 
-  const getStatusVariant = (isActive: boolean): 'success' | 'secondary' => {
-    return isActive ? 'success' : 'secondary';
-  };
-
-  const getStatusLabel = (isActive: boolean) => {
-    return isActive ? 'Aktiv' : 'Inaktiv';
-  };
-
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'admin':
@@ -468,7 +461,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in">
+    <div className="animate-in">
       {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
       <nav className="mb-4 flex items-center gap-1.5 text-sm">
         <Link
@@ -500,9 +493,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
-              <Badge variant={getStatusVariant(member.is_active)} size="lg">
-                {getStatusLabel(member.is_active)}
-              </Badge>
+              <StatusBadge status={member.is_active ? 'active' : 'inactive'} size="lg" />
               <Badge variant="secondary" size="lg">
                 {getRoleLabel(member.role)}
               </Badge>

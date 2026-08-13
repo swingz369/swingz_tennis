@@ -82,7 +82,6 @@ export function MeetingsClient() {
       <PageHeader
         title="Mitgliederversammlungen"
         description="Versammlungen planen und dokumentieren."
-        breadcrumbs={[{ label: 'Versammlungen' }]}
         actions={[{ label: 'Versammlung anlegen', icon: Plus, onClick: () => setOpen(true) }]}
       />
 

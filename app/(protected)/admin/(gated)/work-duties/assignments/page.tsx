@@ -63,14 +63,10 @@ export default async function AssignmentsPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="space-y-6">
       <PageHeader
         title="Zuweisungen"
         description="Übersicht aller Arbeitsdienst-Zuweisungen und deren Status"
-        breadcrumbs={[
-          { label: 'Arbeitsdienste', href: '/admin/work-duties' },
-          { label: 'Zuweisungen' },
-        ]}
       />
       <AssignmentsClient duties={enrichedDuties} memberStats={memberStats} />
     </div>

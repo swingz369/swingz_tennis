@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { buildSetupChecklist, type SetupCounts } from '@/lib/setup-checklist';
+import {
+  buildSetupChecklist,
+  missingSeasonPrerequisites,
+  type SetupCounts,
+} from '@/lib/setup-checklist';
 
 const empty: SetupCounts = {
   courts: 0,
@@ -51,5 +55,38 @@ describe('buildSetupChecklist', () => {
     });
     expect(full.allDone).toBe(true);
     expect(full.doneCount).toBe(full.totalCount);
+  });
+});
+
+describe('missingSeasonPrerequisites', () => {
+  it('nennt alle drei Lücken bei leerem Verein', () => {
+    expect(missingSeasonPrerequisites(empty).map((s) => s.key)).toEqual([
+      'courts',
+      'trainers',
+      'members',
+    ]);
+  });
+
+  it('gibt frei, sobald Plätze, Trainer und Mitglieder da sind', () => {
+    expect(missingSeasonPrerequisites({ ...empty, courts: 1, trainers: 1, members: 2 })).toEqual(
+      []
+    );
+  });
+
+  it('sperrt weiterhin, wenn nach der ersten Saison die Plätze wegfallen', () => {
+    // Anders als die Checkliste: dort gilt ein erledigter Schritt nie als blockiert.
+    const missing = missingSeasonPrerequisites({
+      ...empty,
+      trainers: 1,
+      members: 5,
+      seasons: 1,
+    });
+    expect(missing.map((s) => s.key)).toEqual(['courts']);
+  });
+
+  it('liefert Label und Link für die Fehlermeldung mit', () => {
+    const [step] = missingSeasonPrerequisites({ ...empty, trainers: 1, members: 1 });
+    expect(step.label).toBe('Plätze anlegen');
+    expect(step.href).toBe('/admin/courts');
   });
 });

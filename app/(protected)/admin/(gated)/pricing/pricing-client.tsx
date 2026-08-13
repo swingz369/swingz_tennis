@@ -586,12 +586,11 @@ export function PricingClient({ clubId }: PricingClientProps) {
   );
 
   return (
-    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <PageHeader
           title="Dynamische Preisgestaltung"
           description="Zeitbasierte Preise, Saison-Aufschläge und Tagespreise für Plätze"
-          breadcrumbs={[{ label: 'Dynamische Preisgestaltung' }]}
         />
         <div className="flex items-center gap-3">
           {/* Enable/Disable Toggle */}

@@ -1,300 +1,73 @@
-'use client';
-
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft, ArrowRight, LockKeyhole } from 'lucide-react';
+import { requireAdminClub } from '@/lib/admin-context';
+import { getSetupCounts, missingSeasonPrerequisites } from '@/lib/setup-checklist';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { ArrowLeft, Save, Calendar } from 'lucide-react';
-import { toast } from 'sonner';
-import { useUserClub } from '@/hooks/use-user-data';
-import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
+import { NewSeasonForm } from './new-season-form';
 
-export default function NewSeasonPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const { data: clubData, refetch: refetchClub } = useUserClub();
-  const clubId = clubData?.clubId ?? null;
-  const [formData, setFormData] = useState({
-    name: '',
-    season_type: 'summer' as 'summer' | 'winter',
-    year: new Date().getFullYear(),
-    start_date: '',
-    end_date: '',
-    preferences_deadline: '',
-    description: '',
-    notes: '',
-  });
+export const dynamic = 'force-dynamic';
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+/**
+ * Die Saisonplanung verteilt Mitglieder auf Plätze und Trainer. Fehlt eines
+ * davon, entsteht ein leerer Plan — deshalb steht hier die Sperre statt des
+ * Formulars. `POST /api/seasons` prüft dasselbe noch einmal serverseitig.
+ */
+export default async function NewSeasonPage() {
+  const { supabase, clubId } = await requireAdminClub();
+  const missing = missingSeasonPrerequisites(await getSetupCounts(supabase, clubId));
 
-    try {
-      // Validation
-      if (!formData.name || !formData.start_date || !formData.end_date) {
-        toast.error('Bitte fülle alle Pflichtfelder aus');
-        return;
-      }
-
-      // Fehlt der Verein, sind die Vereinsdaten meist nur noch nicht geladen (die
-      // Query kann beim Seitenaufruf abgebrochen sein) — dann hilft ein zweiter
-      // Versuch, keine Aufforderung zum Neu-Anmelden.
-      const effectiveClubId = clubId ?? (await refetchClub()).data?.clubId ?? null;
-      if (!effectiveClubId) {
-        toast.error('Vereinsdaten konnten nicht geladen werden. Bitte Seite neu laden.');
-        return;
-      }
-
-      const response = await apiFetch('/api/seasons', {
-        method: 'POST',
-        body: JSON.stringify({
-          ...formData,
-          club_id: effectiveClubId,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Fehler beim Erstellen der Saison');
-      }
-
-      const data = await response.json();
-      toast.success('Saison erstellt — Planung startet jetzt');
-      // Auto-redirect to planning wizard (preferences are auto-opened by the API)
-      router.push(`/admin/seasons/${data.season.id}/planning`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Fehler beim Erstellen');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  // Auto-generate season name based on type and year
-  const generateSeasonName = () => {
-    const type = formData.season_type === 'summer' ? 'Sommer' : 'Winter';
-    const yearStr =
-      formData.season_type === 'winter'
-        ? `${formData.year}/${formData.year + 1}`
-        : `${formData.year}`;
-    return `${type} ${yearStr}`;
-  };
-
-  const handleAutoFillDates = () => {
-    if (formData.season_type === 'summer') {
-      handleInputChange('start_date', `${formData.year}-04-01`);
-      handleInputChange('end_date', `${formData.year}-09-30`);
-      handleInputChange('preferences_deadline', `${formData.year}-03-15`);
-    } else {
-      handleInputChange('start_date', `${formData.year}-10-01`);
-      handleInputChange('end_date', `${formData.year + 1}-03-31`);
-      handleInputChange('preferences_deadline', `${formData.year}-09-15`);
-    }
-  };
+  if (missing.length === 0) {
+    return <NewSeasonForm />;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/admin/seasons')}>
-          <ArrowLeft className="h-4 w-4" />
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/admin/seasons" aria-label="Zurück zu den Saisons">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
         </Button>
-        <PageHeader title="Neue Saison erstellen" description="Lege eine neue Trainingssaison an" />
+        <PageHeader
+          title="Neue Saison erstellen"
+          description="Noch nicht möglich — der Verein ist dafür nicht eingerichtet"
+        />
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Saison-Details</CardTitle>
-            <CardDescription>Grundlegende Informationen zur Saison</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Season Type & Year */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="season_type">
-                  Saison-Typ <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.season_type}
-                  onValueChange={(value: 'summer' | 'winter') => {
-                    handleInputChange('season_type', value);
-                    // Auto-update name
-                    setTimeout(() => {
-                      if (!formData.name || formData.name === generateSeasonName()) {
-                        handleInputChange('name', generateSeasonName());
-                      }
-                    }, 0);
-                  }}
-                >
-                  <SelectTrigger id="season_type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="summer">☀️ Sommer (April - September)</SelectItem>
-                    <SelectItem value="winter">❄️ Winter (Oktober - März)</SelectItem>
-                  </SelectContent>
-                </Select>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <LockKeyhole className="h-4 w-4 text-muted-foreground" />
+            {missing.length === 1
+              ? 'Ein Schritt fehlt noch'
+              : `${missing.length} Schritte fehlen noch`}
+          </CardTitle>
+          <CardDescription>
+            Die Saisonplanung verteilt Mitglieder auf Plätze und Trainer. Ohne diese Daten würde sie
+            einen leeren Plan erzeugen.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {missing.map((step) => (
+            <Link
+              key={step.key}
+              href={step.href}
+              className="flex items-center gap-3 rounded-xl border border-border p-4 transition-colors hover:border-brand-light/40"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground">{step.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{step.hint}</p>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="year">
-                  Jahr <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="year"
-                  type="number"
-                  min="2024"
-                  max="2030"
-                  value={formData.year}
-                  onChange={(e) => handleInputChange('year', parseInt(e.target.value))}
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Name */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="name">
-                  Saison-Name <span className="text-destructive">*</span>
-                </Label>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleInputChange('name', generateSeasonName())}
-                >
-                  Name generieren
-                </Button>
-              </div>
-              <Input
-                id="name"
-                placeholder="z.B. Sommer 2026"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                required
-              />
-            </div>
-
-            {/* Dates */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label>Zeitraum</Label>
-                <Button type="button" variant="ghost" size="sm" onClick={handleAutoFillDates}>
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Standard-Zeitraum einfügen
-                </Button>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="start_date">
-                    Startdatum <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="start_date"
-                    type="date"
-                    value={formData.start_date}
-                    onChange={(e) => handleInputChange('start_date', e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="end_date">
-                    Enddatum <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="end_date"
-                    type="date"
-                    value={formData.end_date}
-                    onChange={(e) => handleInputChange('end_date', e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Preferences Deadline */}
-            <div className="space-y-2">
-              <Label htmlFor="preferences_deadline">Präferenz-Deadline (optional)</Label>
-              <Input
-                id="preferences_deadline"
-                type="date"
-                value={formData.preferences_deadline}
-                onChange={(e) => handleInputChange('preferences_deadline', e.target.value)}
-              />
-              <p className="text-sm text-muted-foreground">
-                Bis wann können User ihre Verfügbarkeit angeben
-              </p>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Beschreibung (optional)</Label>
-              <Textarea
-                id="description"
-                placeholder="Beschreibe diese Saison…"
-                rows={3}
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-              />
-            </div>
-
-            {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">Interne Notizen (optional)</Label>
-              <Textarea
-                id="notes"
-                placeholder="Interne Notizen für Admins..."
-                rows={3}
-                value={formData.notes}
-                onChange={(e) => handleInputChange('notes', e.target.value)}
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push('/admin/seasons')}
-                disabled={loading}
-              >
-                Abbrechen
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Save className="mr-2 h-4 w-4 animate-spin" />
-                    Wird erstellt...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Saison erstellen
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </form>
+              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </Link>
+          ))}
+          <p className="text-xs text-muted-foreground pt-1">
+            Sobald alles steht, lässt sich die Saison hier anlegen.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

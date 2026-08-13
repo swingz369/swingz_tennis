@@ -19,6 +19,7 @@ test.describe('Sidebar Component - Role-based Navigation', () => {
     expect(navCode).toContain('superadminSidebarSections');
     expect(navCode).toContain('Vereinsübersicht');
     expect(navCode).toContain('Admins verwalten');
+    expect(navCode).toContain('/superadmin/tenants');
     expect(navCode).toContain('/superadmin/clubs');
     expect(navCode).toContain('/superadmin/dashboard');
     // Sektions-Labels
@@ -32,10 +33,11 @@ test.describe('Sidebar Component - Role-based Navigation', () => {
     expect(navCode).toContain('Alle Mitglieder');
     expect(navCode).toContain('/admin/seasons');
     expect(navCode).toContain('/admin/members');
-    // Sektions-Labels
+    // Sektions-Labels — die vier Kernmodule aus lib/features.ts, 1:1
     expect(navCode).toContain("'Mitglieder'");
+    expect(navCode).toContain("'Trainer'");
+    expect(navCode).toContain("'Saison & Plätze'");
     expect(navCode).toContain("'Finanzen'");
-    expect(navCode).toContain("'Vereinsführung'");
   });
 
   test('trainer role shows trainer-specific navigation', async () => {

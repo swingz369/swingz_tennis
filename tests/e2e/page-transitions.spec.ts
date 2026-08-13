@@ -8,14 +8,14 @@ import {
 } from '../helpers/responsive';
 
 /**
- * Page Transitions & Route Progress Bar — E2E Tests
+ * Page Transitions — E2E Tests
  *
  * Validates:
  * 1. PageTransition: Entry animation class applied on route change
  * 2. PageTransition: Exit animation triggers on internal link clicks
- * 3. Route Progress Bar: Appears during navigation
+ * 3. Client-side navigation completes without layout shift
  * 4. prefers-reduced-motion: Animations are suppressed
- * 5. CSS keyframes and classes are defined
+ * 5. CSS keyframes (page-enter / page-exit) are defined
  *
  * NOTE: These tests use mock API auth. The server-side rendering may still
  * redirect to /login if Supabase cookies are missing. Tests that need full
@@ -149,15 +149,15 @@ test.describe('Page Transition — Exit Animation', () => {
 });
 
 /* ================================================================== */
-/*  ROUTE PROGRESS BAR                                                */
+/*  CLIENT-SIDE NAVIGATION                                                */
 /* ================================================================== */
 
-test.describe('Route Progress Bar', () => {
+test.describe('Client-side navigation', () => {
   test.beforeEach(async ({ page }) => {
     await mockAdminAuth(page);
   });
 
-  test('navigation completes successfully with progress bar support', async ({ page }) => {
+  test('navigation completes successfully', async ({ page }) => {
     const rendered = await gotoWithAuth(page, 'http://localhost:3000/admin');
     test.skip(!rendered, 'Page redirected to login');
 
@@ -170,7 +170,7 @@ test.describe('Route Progress Bar', () => {
     expect(page.url()).toContain('/admin/members');
   });
 
-  test('no layout shift from progress bar during navigation', async ({ page }) => {
+  test('no layout shift during navigation', async ({ page }) => {
     const rendered = await gotoWithAuth(page, 'http://localhost:3000/admin');
     test.skip(!rendered, 'Page redirected to login');
 
@@ -271,10 +271,10 @@ test.describe('Page Transitions — prefers-reduced-motion', () => {
 });
 
 /* ================================================================== */
-/*  CSS — Page Transition & Progress Bar Keyframes                    */
+/*  CSS — Page Transition Keyframes                    */
 /* ================================================================== */
 
-test.describe('CSS — Page Transition & Progress Bar', () => {
+test.describe('CSS — Page Transition', () => {
   test('page-enter keyframe is defined', async ({ page }) => {
     await page.goto('http://localhost:3000/login', { waitUntil: 'networkidle', timeout: 20000 });
 
@@ -319,28 +319,5 @@ test.describe('CSS — Page Transition & Progress Bar', () => {
     });
 
     expect(hasKeyframe).toBe(true);
-  });
-
-  test('route-progress-bar CSS class is defined', async ({ page }) => {
-    await page.goto('http://localhost:3000/login', { waitUntil: 'networkidle', timeout: 20000 });
-
-    const hasClass = await page.evaluate(() => {
-      const sheets = Array.from(document.styleSheets);
-      for (const sheet of sheets) {
-        try {
-          const rules = Array.from(sheet.cssRules);
-          for (const rule of rules) {
-            if (rule instanceof CSSStyleRule && rule.selectorText?.includes('route-progress-bar')) {
-              return true;
-            }
-          }
-        } catch {
-          // Cross-origin stylesheets
-        }
-      }
-      return false;
-    });
-
-    expect(hasClass).toBe(true);
   });
 });

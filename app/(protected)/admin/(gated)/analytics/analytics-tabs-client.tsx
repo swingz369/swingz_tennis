@@ -7,7 +7,7 @@ import { BarChart3, FileText } from 'lucide-react';
 export function AnalyticsTabsClient({ children }: { children: React.ReactNode }) {
   return (
     <Tabs defaultValue="analytics" className="space-y-6">
-      <div className="px-6 pt-2">
+      <div>
         <TabsList className="w-fit grid grid-cols-2 bg-muted dark:bg-card/5 p-1 rounded-xl">
           <TabsTrigger
             value="analytics"
@@ -28,9 +28,7 @@ export function AnalyticsTabsClient({ children }: { children: React.ReactNode })
 
       <TabsContent value="analytics">{children}</TabsContent>
       <TabsContent value="reports">
-        <div className="px-6">
-          <ReportsDashboard />
-        </div>
+        <ReportsDashboard />
       </TabsContent>
     </Tabs>
   );

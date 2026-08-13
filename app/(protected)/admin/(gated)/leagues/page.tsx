@@ -7,11 +7,10 @@ export const metadata = {
 
 export default function LeaguesPage() {
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="space-y-6">
       <PageHeader
         title="Liga & Mannschaft"
         description="Mannschaftsaufstellung, Liga-Verwaltung und Spieltag-Planung"
-        breadcrumbs={[{ label: 'Liga & Mannschaft' }]}
       />
       <LeaguesClient />
     </div>

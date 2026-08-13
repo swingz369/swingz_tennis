@@ -72,7 +72,6 @@ export default function SeasonPreferencesPage({ params }: PreferencesPageProps) 
       <PageHeader
         title="Eingereichte Präferenzen"
         description={`${submittedCount} von ${preferences.length} eingereicht`}
-        breadcrumbs={[{ label: 'Saisonplanung', href: '/admin/seasons' }, { label: 'Präferenzen' }]}
         actions={[
           {
             label: 'Zurück zur Saison',

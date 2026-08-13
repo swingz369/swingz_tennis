@@ -23,11 +23,9 @@ export default async function MatchmakingPage() {
     const features = (club?.features as Record<string, boolean>) ?? {};
     if (features.ai_matchmaking !== true) {
       return (
-        <div className="p-4 md:p-6">
-          <p className="text-muted-foreground">
-            Das Modul „KI-Matchmaking" ist für diesen Verein nicht aktiviert.
-          </p>
-        </div>
+        <p className="text-muted-foreground">
+          Das Modul „KI-Matchmaking" ist für diesen Verein nicht aktiviert.
+        </p>
       );
     }
   }

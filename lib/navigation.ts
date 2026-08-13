@@ -10,8 +10,10 @@ import type { ComponentType } from 'react';
 import {
   BarChart3,
   Bell,
+  Blocks,
   Building2,
   Calendar,
+  CalendarDays,
   ClipboardCheck,
   ClipboardList,
   Clock,
@@ -55,6 +57,27 @@ type Hidden = Set<string>;
 
 // ── Sidebar: Admin ───────────────────────────────────────────────────
 
+/**
+ * Sektion → Kernmodul aus `lib/features.ts`. Die vier Core-Module haben je
+ * genau eine Sektion; `features.ts` deklariert dieselben Keys als
+ * `sidebarSection`. Wer hier eine Sektion umbenennt, zieht dort nach.
+ */
+const ADMIN_SECTION_FEATURE: Record<string, string> = {
+  Mitglieder: 'members',
+  Trainer: 'trainers',
+  'Saison & Plätze': 'seasons',
+  Finanzen: 'finance',
+};
+
+/**
+ * Reihenfolge = Arbeitsablauf des Vereinsjahres, nicht Objekt-Taxonomie:
+ * wer ist drin → wer unterrichtet → was läuft → wer zahlt. Sie entspricht
+ * damit exakt der `order` der Core-Features in `lib/features.ts`.
+ *
+ * Optionale Module stehen gesammelt unten statt verstreut in den
+ * Kernsektionen — sonst steht dieselbe Kernfunktion bei jedem Verein an
+ * einer anderen Stelle, je nachdem was gebucht ist.
+ */
 export function adminSidebarSections(hidden: Hidden, belongsToTennisschule = false): NavSection[] {
   const sections: NavSection[] = [
     {
@@ -74,35 +97,27 @@ export function adminSidebarSections(hidden: Hidden, belongsToTennisschule = fal
               { name: 'Arbeitsdienst-Zuweisungen', href: '/admin/work-duties/assignments' },
             ]
           : []),
-        { name: 'Nachrichten', href: '/messages' },
       ],
     },
     {
-      label: 'Training',
+      label: 'Trainer',
       icon: GraduationCap,
       items: [
-        { name: 'Saisonplanung', href: '/admin/seasons' },
-        { name: 'Wochenstundenplan', href: '/scheduler' },
         { name: 'Trainer-Profile', href: '/admin/trainers' },
         { name: 'Stundennachweise', href: '/admin/hours-logs' },
       ],
     },
     {
-      label: 'Spielbetrieb',
-      icon: Trophy,
+      // Plätze stehen hier und nicht unter „Spielbetrieb": sie sind die
+      // Ressource, die die Saisonplanung verplant — ohne angelegte Plätze
+      // läuft der Wizard nicht. Der Admin sucht sie genau hier.
+      label: 'Saison & Plätze',
+      icon: CalendarDays,
       items: [
+        { name: 'Saisonplanung', href: '/admin/seasons' },
+        { name: 'Platzkalender', href: '/scheduler' },
         { name: 'Platzverwaltung', href: '/admin/courts' },
         { name: 'Sonderveranstaltungen', href: '/admin/special-events' },
-        ...(!hidden.has('league_lineup')
-          ? [{ name: 'Ligen & Teams', href: '/admin/leagues' }]
-          : []),
-        ...(!hidden.has('tournaments') ? [{ name: 'Turniere', href: '/admin/tournaments' }] : []),
-        ...(!hidden.has('ai_matchmaking')
-          ? [{ name: 'KI-Matchmaking', href: '/admin/ai/matchmaking' }]
-          : []),
-        ...(!hidden.has('smart_court')
-          ? [{ name: 'Smart Court', href: '/admin/courts?tab=smart-court' }]
-          : []),
       ],
     },
     {
@@ -116,25 +131,41 @@ export function adminSidebarSections(hidden: Hidden, belongsToTennisschule = fal
         // Vereine, die zu einer Tennisschule gehören, verwalten ihr Abo auf
         // Ebene der Tennisschule (Superadmin) — nicht pro Einzelverein.
         ...(!belongsToTennisschule ? [{ name: 'Abonnement', href: '/admin/subscription' }] : []),
-        ...(!hidden.has('shop') ? [{ name: 'Shop', href: '/admin/shop' }] : []),
       ],
     },
     {
-      label: 'Vereinsführung',
+      label: 'Verein',
       icon: Landmark,
       items: [
+        { name: 'Nachrichten', href: '/messages' },
         { name: 'Vereinseinstellungen', href: '/admin/settings' },
         { name: 'Auswertungen & Berichte', href: '/admin/analytics' },
         { name: 'Dokumente', href: '/admin/documents' },
       ],
     },
+    {
+      label: 'Weitere Module',
+      icon: Blocks,
+      items: [
+        ...(!hidden.has('league_lineup')
+          ? [{ name: 'Ligen & Teams', href: '/admin/leagues' }]
+          : []),
+        ...(!hidden.has('tournaments') ? [{ name: 'Turniere', href: '/admin/tournaments' }] : []),
+        ...(!hidden.has('ai_matchmaking')
+          ? [{ name: 'KI-Matchmaking', href: '/admin/ai/matchmaking' }]
+          : []),
+        ...(!hidden.has('shop') ? [{ name: 'Shop', href: '/admin/shop' }] : []),
+        // Smart Court ist bewusst kein eigener Eintrag: die Seite ist ein Tab
+        // von /admin/courts (dort selbst gegated). Ein zweiter Nav-Eintrag mit
+        // ?tab=… zeigte auf dieselbe Route und brach das Active-Highlighting.
+      ],
+    },
   ];
 
   return sections.filter((section) => {
-    if (section.label === 'Mitglieder') return !hidden.has('members');
-    if (section.label === 'Training') return !hidden.has('trainers') || !hidden.has('seasons');
-    if (section.label === 'Finanzen') return !hidden.has('finance');
-    return true;
+    const feature = ADMIN_SECTION_FEATURE[section.label];
+    if (feature && hidden.has(feature)) return false;
+    return section.items.length > 0;
   });
 }
 
@@ -152,9 +183,10 @@ export function memberSidebarSections(hidden: Hidden, includeMemberOnly: boolean
       items: [
         { name: 'Platz buchen', href: '/bookings' },
         { name: 'Offene Spiele', href: '/matches' },
-        { name: 'Matchmaking', href: '/matchmaking' },
-        ...(!hidden.has('tournaments') ? [{ name: 'Turniere', href: '/member/tournaments' }] : []),
+        // Nur ein Matchmaking-Eintrag: der zweite stand ungegated davor und
+        // hebelte damit das `ai_matchmaking`-Flag aus.
         ...(!hidden.has('ai_matchmaking') ? [{ name: 'Matchmaking', href: '/matchmaking' }] : []),
+        ...(!hidden.has('tournaments') ? [{ name: 'Turniere', href: '/member/tournaments' }] : []),
         ...(!hidden.has('gamification')
           ? [{ name: 'Erfolge & Ranglisten', href: '/gamification' }]
           : []),
@@ -164,7 +196,11 @@ export function memberSidebarSections(hidden: Hidden, includeMemberOnly: boolean
       label: 'Training',
       icon: GraduationCap,
       items: [
-        { name: 'Stundenplan', href: '/scheduler' },
+        // Der eigene Trainingsplan war bisher nur über Cmd+K erreichbar —
+        // und ist die einzige Oberfläche, auf der man sich von einer Einheit
+        // abmelden kann. Steht deshalb vor dem allgemeinen Platzkalender.
+        { name: 'Mein Trainingsplan', href: '/training-schedule' },
+        { name: 'Platzkalender', href: '/scheduler' },
         { name: 'Trainerstunde buchen', href: '/member/trainer-booking' },
         ...(includeMemberOnly
           ? [{ name: 'Trainingspräferenzen', href: '/member/preferences' }]
@@ -204,8 +240,13 @@ export function trainerSidebarSections(): NavSection[] {
       label: 'Training',
       icon: GraduationCap,
       items: [
+        // Stand vorher hartcodiert in sidebar.tsx und hieß in der Mobile-Nav
+        // „Einheiten" — jetzt eine Definition, ein Name.
+        { name: 'Platzkalender', href: '/scheduler' },
         { name: 'Verfügbarkeit', href: '/trainer/availability' },
-        { name: 'Trainingspräferenzen', href: '/trainer/planning-preferences' },
+        // Vorher „Trainingspräferenzen" — kollidierte mit der gleichnamigen
+        // Mitglieder-Seite (/member/preferences), die etwas anderes tut.
+        { name: 'Meine Planungswünsche', href: '/trainer/planning-preferences' },
         { name: 'Stundennachweise', href: '/trainer/hours-logs' },
         { name: 'Abwesenheiten', href: '/trainer/absences' },
         { name: 'Trainer-Profil', href: '/trainer/profile' },
@@ -220,7 +261,11 @@ export function superadminSidebarSections(): NavSection[] {
       label: 'Meine Vereine',
       icon: Building2,
       items: [
-        { name: 'Vereinsübersicht', href: '/superadmin/clubs' },
+        // /superadmin/tenants (KPI-Übersicht) war nur über die Mobile-Nav
+        // erreichbar, /superadmin/clubs (anlegen/bearbeiten) nur über die
+        // Sidebar. Beide Seiten existieren — jetzt beide verlinkt.
+        { name: 'Vereinsübersicht', href: '/superadmin/tenants' },
+        { name: 'Vereine verwalten', href: '/superadmin/clubs' },
         { name: 'Admins verwalten', href: '/superadmin/admins' },
       ],
     },
@@ -267,6 +312,14 @@ export function ownerSidebarSections(): NavSection[] {
 
 // ── Mobile-Bottom-Nav (kuratiertes Subset, max. 5 Tabs) ─────────────
 
+/**
+ * Bewusst eine kuratierte Liste und keine Ableitung aus den Sektionen —
+ * ein Bottom-Tab-Bar braucht andere Prioritäten als eine Sidebar.
+ * Damit sie nicht wieder auseinanderläuft (vorher: „Einheiten" vs.
+ * „Stundenplan" für dieselbe Seite, /superadmin/tenants nur hier),
+ * prüft `src/__tests__/lib/navigation.test.ts`, dass jedes Ziel auch in
+ * den Sidebar-Sektionen derselben Rolle vorkommt.
+ */
 export function mobileNavItems(
   role: 'owner' | 'superadmin' | 'admin' | 'trainer' | 'member'
 ): NavItem[] {
@@ -277,13 +330,14 @@ export function mobileNavItems(
         { name: 'Vereine', href: '/owner/clubs', icon: Building2 },
         { name: 'Audit', href: '/owner/audit', icon: ScrollText },
         { name: 'Admins', href: '/owner/admins', icon: Users },
-        { name: 'Billing', href: '/owner/billing', icon: CreditCard },
+        { name: 'Umsatz', href: '/owner/billing', icon: CreditCard },
       ];
     case 'superadmin':
       return [
         { name: 'Dashboard', href: '/superadmin', icon: Home },
         { name: 'Vereine', href: '/superadmin/tenants', icon: Building2 },
-        { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+        // Vorher /admin/analytics — eine Admin-Route in der Superadmin-Nav.
+        { name: 'Statistiken', href: '/superadmin/dashboard', icon: BarChart3 },
         { name: 'Profil', href: '/profile', icon: User },
       ];
     case 'admin':
@@ -297,14 +351,14 @@ export function mobileNavItems(
     case 'trainer':
       return [
         { name: 'Übersicht', href: '/trainer', icon: Home },
-        { name: 'Einheiten', href: '/scheduler', icon: Calendar },
+        { name: 'Kalender', href: '/scheduler', icon: Calendar },
         { name: 'Verfügbarkeit', href: '/trainer/availability', icon: Clock },
-        { name: 'Saisonplanung', href: '/trainer/planning-preferences', icon: ClipboardList },
+        { name: 'Planung', href: '/trainer/planning-preferences', icon: ClipboardList },
       ];
     default:
       return [
-        { name: 'Home', href: '/member', icon: Home },
-        { name: 'Stundenplan', href: '/scheduler', icon: Calendar },
+        { name: 'Start', href: '/member', icon: Home },
+        { name: 'Training', href: '/training-schedule', icon: ClipboardCheck },
         { name: 'Buchen', href: '/bookings', icon: ClipboardList },
         { name: 'Rechnungen', href: '/billing', icon: CreditCard },
       ];
@@ -319,7 +373,8 @@ export function paletteNavItems(hidden: Hidden = new Set()): NavItem[] {
     { name: 'Buchungen', href: '/bookings', icon: Calendar },
     { name: 'Nachrichten', href: '/messages', icon: MessageSquare },
     { name: 'Rechnungen', href: '/billing', icon: CreditCard },
-    { name: 'Trainingsplan', href: '/training-schedule', icon: ClipboardCheck },
+    { name: 'Mein Trainingsplan', href: '/training-schedule', icon: ClipboardCheck },
+    { name: 'Platzkalender', href: '/scheduler', icon: Calendar },
     { name: 'Benachrichtigungen', href: '/notifications', icon: Bell },
     { name: 'News', href: '/news', icon: Newspaper },
     { name: 'Erweiterte Suche', href: '/search', icon: Search },

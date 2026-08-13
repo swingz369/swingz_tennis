@@ -320,15 +320,14 @@ export function Sidebar({
     if (isTrainer) {
       // Trainer: eigene Trainingssektion + „Spielen"/„Mein Verein" des
       // Mitglieds. Die Mitglieder-Trainingssektion wird eingeschmolzen
-      // (Stundenplan nach oben, Spieler-Präferenzen dazu); „Trainerstunde
-      // buchen" entfällt für Trainer.
+      // (Spieler-Präferenzen dazu); „Trainerstunde buchen" entfällt für
+      // Trainer. Der Platzkalender steht in trainerSidebarSections().
       const trainer = trainerSidebarSections()[0]!;
       return [
         {
           label: trainer.label,
           icon: trainer.icon,
           subItems: [
-            { name: 'Stundenplan', href: '/scheduler' },
             ...trainer.items,
             ...(includeMemberOnly
               ? [{ name: 'Trainingspräferenzen (Spieler)', href: '/member/preferences' }]

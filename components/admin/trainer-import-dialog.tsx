@@ -25,10 +25,25 @@ interface ImportResult {
 
 interface TrainerImportDialogProps {
   onImportComplete?: () => void;
+  /** Optionaler kontrollierter Zustand — damit der Aufrufer den Trigger als
+   *  PageHeader-Action rendern kann, statt den eingebauten Button in den
+   *  Header zu legen. Ohne `open` bleibt die Komponente unkontrolliert
+   *  (wie bisher in den Vereinseinstellungen). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export default function TrainerImportDialog({ onImportComplete }: TrainerImportDialogProps) {
-  const [open, setOpen] = useState(false);
+export default function TrainerImportDialog({
+  onImportComplete,
+  open: controlledOpen,
+  onOpenChange,
+}: TrainerImportDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = controlledOpen ?? internalOpen;
+  const setOpen = (next: boolean) => {
+    if (controlledOpen !== undefined) onOpenChange?.(next);
+    else setInternalOpen(next);
+  };
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -96,12 +111,16 @@ export default function TrainerImportDialog({ onImportComplete }: TrainerImportD
 
   return (
     <>
-      <Button variant="outline" onClick={() => setOpen(true)} className="gap-2">
-        <Upload className="h-4 w-4" />
-        CSV Import
-      </Button>
+      {/* Trigger nur im unkontrollierten Modus rendern — kontrolliert kommt
+          der Button als PageHeader-Action vom Aufrufer. */}
+      {controlledOpen === undefined && (
+        <Button variant="outline" onClick={() => setOpen(true)} className="gap-2">
+          <Upload className="h-4 w-4" />
+          CSV Import
+        </Button>
+      )}
       <CenteredModal
-        open={open}
+        open={isOpen}
         onClose={() => !loading && setOpen(false)}
         className="max-w-3xl"
         ariaLabel="Trainer aus CSV importieren"

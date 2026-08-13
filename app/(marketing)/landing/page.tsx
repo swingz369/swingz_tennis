@@ -120,15 +120,16 @@ export default function LandingPage() {
               </Link>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="hidden sm:inline-flex" asChild>
+              <Button variant="ghost" size="sm" asChild>
                 <Link href="/login" onClick={() => analytics.featureUsed('header_login')}>
                   Anmelden
                 </Link>
               </Button>
               <Button size="sm" asChild>
                 <Link href="/register" onClick={() => analytics.signUp('header_cta', 'default')}>
-                  Jetzt registrieren
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  <span className="sm:hidden">Registrieren</span>
+                  <span className="hidden sm:inline">Jetzt registrieren</span>
+                  <ArrowRight className="h-4 w-4 hidden sm:inline" aria-hidden="true" />
                 </Link>
               </Button>
             </div>

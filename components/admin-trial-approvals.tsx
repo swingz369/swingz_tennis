@@ -336,7 +336,6 @@ export default function AdminTrialApprovals() {
       <PageHeader
         title="Probetraining-Genehmigungen"
         description={`${requestedCount} ausstehende${requestedCount !== 1 ? '' : 's'} von ${requests.length} Probetrainings`}
-        breadcrumbs={[{ label: 'Probetrainings' }]}
       />
 
       {/* Filter tabs */}

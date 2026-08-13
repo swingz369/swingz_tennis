@@ -10,6 +10,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { InvoiceTypeBadge } from '@/components/billing/invoice-type-badge';
 import { Loader2, FileText, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
@@ -27,51 +29,6 @@ interface InvoiceData {
   due_date: string;
   invoice_type: string;
   created_at: string;
-}
-
-function InvoiceStatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; className: string }> = {
-    draft: { label: 'Entwurf', className: 'bg-muted text-muted-foreground' },
-    open: {
-      label: 'Offen',
-      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
-    },
-    sent: {
-      label: 'Versendet',
-      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
-    },
-    paid: {
-      label: 'Bezahlt',
-      className: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300',
-    },
-    overdue: {
-      label: 'Überfällig',
-      className: 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-300',
-    },
-    cancelled: { label: 'Storniert', className: 'bg-muted text-muted-foreground line-through' },
-  };
-  const c = config[status] ?? config.draft;
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>{c.label}</span>
-  );
-}
-
-function InvoiceTypeBadge({ type }: { type: string }) {
-  const config: Record<string, { label: string; className: string }> = {
-    season: {
-      label: 'Saison',
-      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
-    },
-    membership: {
-      label: 'Mitgliedsbeitrag',
-      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
-    },
-    adhoc: { label: 'Zusatz', className: 'bg-muted text-muted-foreground' },
-  };
-  const c = config[type] ?? config.adhoc;
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>{c.label}</span>
-  );
 }
 
 interface Props {
@@ -165,7 +122,7 @@ export function InvoicesTab({ userId }: Props) {
                 {(invoice.amount || 0).toFixed(2)} {invoice.currency || 'EUR'}
               </TableCell>
               <TableCell>
-                <InvoiceStatusBadge status={invoice.status} />
+                <StatusBadge status={invoice.status} size="sm" />
               </TableCell>
               <TableCell>
                 {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('de-DE') : '-'}
