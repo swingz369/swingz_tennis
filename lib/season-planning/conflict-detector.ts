@@ -20,6 +20,17 @@ import { and, eq } from 'drizzle-orm';
 
 import { createLogger } from '@/lib/logger';
 
+import {
+  timeStringToMinutes,
+  detectNoCourtAssigned,
+  detectTrainerDoubleBookings,
+  detectMemberDoubleBookings,
+  detectNoTrainerAssignments,
+  detectCourtDoubleBookings,
+  detectTrainerOverLimit,
+  detectLargeNiveauSpan,
+} from './conflict-utils';
+
 const log = createLogger('season-planning:conflict-detector');
 
 /**
@@ -91,22 +102,8 @@ interface ConflictCheckParams {
 }
 
 // ============================================
-// TIME HELPERS
+// TIME HELPERS (pure logic lives in conflict-utils.ts)
 // ============================================
-
-function timeStringToMinutes(time: string): number {
-  // Handles both "HH:MM" and "HH:MM:SS"
-  const parts = time.split(':');
-  return parseInt(parts[0]) * 60 + parseInt(parts[1]);
-}
-
-function timeSlotsOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
-  const s1 = timeStringToMinutes(start1);
-  const e1 = timeStringToMinutes(end1);
-  const s2 = timeStringToMinutes(start2);
-  const e2 = timeStringToMinutes(end2);
-  return s1 < e2 && s2 < e1;
-}
 
 /**
  * Lesbare Bezeichnung einer Zuweisung. `groupName` ist nicht überall gefüllt —
@@ -171,9 +168,7 @@ const CONFLICT_RULES: ConflictRule[] = [
     check: async (params) => {
       const conflicts: ConflictDetectionResult[] = [];
 
-      for (const assignment of params.assignments) {
-        if (assignment.courtId) continue;
-
+      for (const assignment of detectNoCourtAssigned(params.assignments)) {
         conflicts.push({
           id: `conflict_nca_${assignment.groupId}_${assignment.dayOfWeek}_${assignment.startTime}`,
           type: 'no_court_assigned',
@@ -309,63 +304,35 @@ const CONFLICT_RULES: ConflictRule[] = [
       'Trainer-Doppelbelegung: Derselbe Trainer ist zur selben Zeit zwei Gruppen zugewiesen',
     check: async (params) => {
       const conflicts: ConflictDetectionResult[] = [];
-      const seen = new Map<string, GroupAssignment[]>();
 
-      for (const assignment of params.assignments) {
-        const key = `${assignment.trainerId}_${assignment.dayOfWeek}_${assignment.startTime}`;
-        const existing = seen.get(key) || [];
-        existing.push(assignment);
-        seen.set(key, existing);
-      }
-
-      // Also check against existing plan entries
-      for (const entry of params.existingPlanEntries) {
-        for (const assignment of params.assignments) {
-          if (
-            entry.trainer_id === assignment.trainerId &&
-            entry.day_of_week === assignment.dayOfWeek &&
-            timeSlotsOverlap(
-              entry.start_time,
-              entry.end_time,
-              assignment.startTime,
-              assignment.endTime
-            )
-          ) {
-            const key = `${assignment.trainerId}_${assignment.dayOfWeek}_${entry.start_time}`;
-            const existing = seen.get(key) || [];
-            existing.push(assignment);
-            seen.set(key, existing);
-          }
-        }
-      }
-
-      for (const [, groupAssignments] of seen) {
-        if (groupAssignments.length > 1) {
-          conflicts.push({
-            id: `conflict_tdb_${groupAssignments[0].trainerId}_${groupAssignments[0].dayOfWeek}_${groupAssignments[0].startTime}`,
-            type: 'trainer_double_booking',
-            severity: 'critical',
-            description: `Trainer ${groupAssignments[0].trainerName} ist ${groupAssignments.length}-fach belegt am ${dayName(groupAssignments[0].dayOfWeek)} um ${groupAssignments[0].startTime} (Gruppen: ${groupAssignments.map((g) => g.groupName).join(', ')})`,
-            suggestedResolution:
-              'Weisen Sie eine der Gruppen einem anderen Trainer oder Zeitslot zu.',
-            affectedEntities: {
-              trainerIds: [groupAssignments[0].trainerId],
-              memberIds: groupAssignments.flatMap((g) => g.memberIds),
-              courtIds: groupAssignments.map((g) => g.courtId).filter(Boolean) as string[],
-              groupIds: groupAssignments.map((g) => g.groupId),
-              planEntryIds: [],
-            },
-            timeSlot: {
-              dayOfWeek: groupAssignments[0].dayOfWeek,
-              startTime: groupAssignments[0].startTime,
-              endTime: groupAssignments[0].endTime,
-            },
-            status: 'open',
-            resolvedAt: null,
-            resolvedBy: null,
-            resolutionNotes: null,
-          });
-        }
+      for (const groupAssignments of detectTrainerDoubleBookings(
+        params.assignments,
+        params.existingPlanEntries
+      )) {
+        conflicts.push({
+          id: `conflict_tdb_${groupAssignments[0].trainerId}_${groupAssignments[0].dayOfWeek}_${groupAssignments[0].startTime}`,
+          type: 'trainer_double_booking',
+          severity: 'critical',
+          description: `Trainer ${groupAssignments[0].trainerName} ist ${groupAssignments.length}-fach belegt am ${dayName(groupAssignments[0].dayOfWeek)} um ${groupAssignments[0].startTime} (Gruppen: ${groupAssignments.map((g) => g.groupName).join(', ')})`,
+          suggestedResolution:
+            'Weisen Sie eine der Gruppen einem anderen Trainer oder Zeitslot zu.',
+          affectedEntities: {
+            trainerIds: [groupAssignments[0].trainerId],
+            memberIds: groupAssignments.flatMap((g) => g.memberIds),
+            courtIds: groupAssignments.map((g) => g.courtId).filter(Boolean) as string[],
+            groupIds: groupAssignments.map((g) => g.groupId),
+            planEntryIds: [],
+          },
+          timeSlot: {
+            dayOfWeek: groupAssignments[0].dayOfWeek,
+            startTime: groupAssignments[0].startTime,
+            endTime: groupAssignments[0].endTime,
+          },
+          status: 'open',
+          resolvedAt: null,
+          resolvedBy: null,
+          resolutionNotes: null,
+        });
       }
       return conflicts;
     },
@@ -379,57 +346,34 @@ const CONFLICT_RULES: ConflictRule[] = [
       'Mitglied in zwei Gruppen: Ein Mitglied ist in zwei zeitlich überschneidenden Gruppen eingeteilt',
     check: async (params) => {
       const conflicts: ConflictDetectionResult[] = [];
-      const memberGroups = new Map<string, GroupAssignment[]>();
 
-      for (const assignment of params.assignments) {
-        for (const memberId of assignment.memberIds) {
-          const existing = memberGroups.get(memberId) || [];
-          existing.push(assignment);
-          memberGroups.set(memberId, existing);
-        }
-      }
-
-      for (const [memberId, groupAssignments] of memberGroups) {
-        if (groupAssignments.length <= 1) continue;
-
-        // Check for time overlaps
-        for (let i = 0; i < groupAssignments.length; i++) {
-          for (let j = i + 1; j < groupAssignments.length; j++) {
-            const a = groupAssignments[i];
-            const b = groupAssignments[j];
-            if (
-              a.dayOfWeek === b.dayOfWeek &&
-              timeSlotsOverlap(a.startTime, a.endTime, b.startTime, b.endTime)
-            ) {
-              const memberName =
-                a.memberDetails.find((d) => d.memberId === memberId)?.memberName || memberId;
-              conflicts.push({
-                id: `conflict_mdb_${memberId}_${a.dayOfWeek}`,
-                type: 'member_double_booking',
-                severity: 'critical',
-                description: `Mitglied ${memberName} ist in zwei überlappenden Gruppen: ${a.groupName} und ${b.groupName} (${a.startTime}-${a.endTime})`,
-                suggestedResolution:
-                  'Entfernen Sie das Mitglied aus einer der Gruppen oder verschieben Sie eine Gruppe.',
-                affectedEntities: {
-                  trainerIds: [a.trainerId, b.trainerId],
-                  memberIds: [memberId],
-                  courtIds: [a.courtId, b.courtId].filter(Boolean) as string[],
-                  groupIds: [a.groupId, b.groupId],
-                  planEntryIds: [],
-                },
-                timeSlot: {
-                  dayOfWeek: a.dayOfWeek,
-                  startTime: a.startTime,
-                  endTime: a.endTime,
-                },
-                status: 'open',
-                resolvedAt: null,
-                resolvedBy: null,
-                resolutionNotes: null,
-              });
-            }
-          }
-        }
+      for (const { memberId, groupA, groupB } of detectMemberDoubleBookings(params.assignments)) {
+        const memberName =
+          groupA.memberDetails.find((d) => d.memberId === memberId)?.memberName || memberId;
+        conflicts.push({
+          id: `conflict_mdb_${memberId}_${groupA.dayOfWeek}`,
+          type: 'member_double_booking',
+          severity: 'critical',
+          description: `Mitglied ${memberName} ist in zwei überlappenden Gruppen: ${groupA.groupName} und ${groupB.groupName} (${groupA.startTime}-${groupA.endTime})`,
+          suggestedResolution:
+            'Entfernen Sie das Mitglied aus einer der Gruppen oder verschieben Sie eine Gruppe.',
+          affectedEntities: {
+            trainerIds: [groupA.trainerId, groupB.trainerId],
+            memberIds: [memberId],
+            courtIds: [groupA.courtId, groupB.courtId].filter(Boolean) as string[],
+            groupIds: [groupA.groupId, groupB.groupId],
+            planEntryIds: [],
+          },
+          timeSlot: {
+            dayOfWeek: groupA.dayOfWeek,
+            startTime: groupA.startTime,
+            endTime: groupA.endTime,
+          },
+          status: 'open',
+          resolvedAt: null,
+          resolvedBy: null,
+          resolutionNotes: null,
+        });
       }
       return conflicts;
     },
@@ -442,32 +386,30 @@ const CONFLICT_RULES: ConflictRule[] = [
     description: 'Kein Trainer zugewiesen: Eine Gruppe hat einen Zeitslot, aber keinen Trainer',
     check: async (params) => {
       const conflicts: ConflictDetectionResult[] = [];
-      for (const assignment of params.assignments) {
-        if (!assignment.trainerId || assignment.trainerId === '') {
-          conflicts.push({
-            id: `conflict_nta_${assignment.groupId}`,
-            type: 'no_trainer_assigned',
-            severity: 'critical',
-            description: `Gruppe ${assignment.groupName} hat keinen Trainer zugewiesen (Zeitslot: ${assignment.startTime}-${assignment.endTime})`,
-            suggestedResolution: 'Weisen Sie der Gruppe einen verfügbaren Trainer zu.',
-            affectedEntities: {
-              trainerIds: [],
-              memberIds: assignment.memberIds,
-              courtIds: assignment.courtId ? [assignment.courtId] : [],
-              groupIds: [assignment.groupId],
-              planEntryIds: [],
-            },
-            timeSlot: {
-              dayOfWeek: assignment.dayOfWeek,
-              startTime: assignment.startTime,
-              endTime: assignment.endTime,
-            },
-            status: 'open',
-            resolvedAt: null,
-            resolvedBy: null,
-            resolutionNotes: null,
-          });
-        }
+      for (const assignment of detectNoTrainerAssignments(params.assignments)) {
+        conflicts.push({
+          id: `conflict_nta_${assignment.groupId}`,
+          type: 'no_trainer_assigned',
+          severity: 'critical',
+          description: `Gruppe ${assignment.groupName} hat keinen Trainer zugewiesen (Zeitslot: ${assignment.startTime}-${assignment.endTime})`,
+          suggestedResolution: 'Weisen Sie der Gruppe einen verfügbaren Trainer zu.',
+          affectedEntities: {
+            trainerIds: [],
+            memberIds: assignment.memberIds,
+            courtIds: assignment.courtId ? [assignment.courtId] : [],
+            groupIds: [assignment.groupId],
+            planEntryIds: [],
+          },
+          timeSlot: {
+            dayOfWeek: assignment.dayOfWeek,
+            startTime: assignment.startTime,
+            endTime: assignment.endTime,
+          },
+          status: 'open',
+          resolvedAt: null,
+          resolvedBy: null,
+          resolutionNotes: null,
+        });
       }
       return conflicts;
     },
@@ -481,66 +423,35 @@ const CONFLICT_RULES: ConflictRule[] = [
       'Anlage nicht verfügbar: Der gebuchte Court ist zum geplanten Zeitslot nicht verfügbar',
     check: async (params) => {
       const conflicts: ConflictDetectionResult[] = [];
-      const courtDaySlots = new Map<string, GroupAssignment[]>();
 
-      for (const assignment of params.assignments) {
-        if (!assignment.courtId) continue;
-        const key = `${assignment.courtId}_${assignment.dayOfWeek}_${assignment.startTime}`;
-        const existing = courtDaySlots.get(key) || [];
-        existing.push(assignment);
-        courtDaySlots.set(key, existing);
-      }
-
-      // Also check existing plan entries
-      for (const entry of params.existingPlanEntries) {
-        if (!entry.court_id) continue;
-        for (const assignment of params.assignments) {
-          if (
-            assignment.courtId === entry.court_id &&
-            assignment.dayOfWeek === entry.day_of_week &&
-            timeSlotsOverlap(
-              entry.start_time,
-              entry.end_time,
-              assignment.startTime,
-              assignment.endTime
-            )
-          ) {
-            const key = `${entry.court_id}_${entry.day_of_week}_${entry.start_time}`;
-            const existing = courtDaySlots.get(key) || [];
-            existing.push(assignment);
-            courtDaySlots.set(key, existing);
-          }
-        }
-      }
-
-      for (const [, groupAssignments] of courtDaySlots) {
-        if (groupAssignments.length > 1) {
-          const courtName = groupAssignments[0].courtName || 'Unbekannt';
-          conflicts.push({
-            id: `conflict_cu_${groupAssignments[0].courtId}_${groupAssignments[0].dayOfWeek}_${groupAssignments[0].startTime}`,
-            type: 'court_unavailable',
-            severity: 'critical',
-            description: `Court ${courtName} ist ${groupAssignments.length}-fach belegt am ${dayName(groupAssignments[0].dayOfWeek)} um ${groupAssignments[0].startTime}`,
-            suggestedResolution:
-              'Weisen Sie eine der Gruppen einem anderen Court oder Zeitslot zu.',
-            affectedEntities: {
-              trainerIds: groupAssignments.map((g) => g.trainerId),
-              memberIds: groupAssignments.flatMap((g) => g.memberIds),
-              courtIds: [groupAssignments[0].courtId!],
-              groupIds: groupAssignments.map((g) => g.groupId),
-              planEntryIds: [],
-            },
-            timeSlot: {
-              dayOfWeek: groupAssignments[0].dayOfWeek,
-              startTime: groupAssignments[0].startTime,
-              endTime: groupAssignments[0].endTime,
-            },
-            status: 'open',
-            resolvedAt: null,
-            resolvedBy: null,
-            resolutionNotes: null,
-          });
-        }
+      for (const groupAssignments of detectCourtDoubleBookings(
+        params.assignments,
+        params.existingPlanEntries
+      )) {
+        const courtName = groupAssignments[0].courtName || 'Unbekannt';
+        conflicts.push({
+          id: `conflict_cu_${groupAssignments[0].courtId}_${groupAssignments[0].dayOfWeek}_${groupAssignments[0].startTime}`,
+          type: 'court_unavailable',
+          severity: 'critical',
+          description: `Court ${courtName} ist ${groupAssignments.length}-fach belegt am ${dayName(groupAssignments[0].dayOfWeek)} um ${groupAssignments[0].startTime}`,
+          suggestedResolution: 'Weisen Sie eine der Gruppen einem anderen Court oder Zeitslot zu.',
+          affectedEntities: {
+            trainerIds: groupAssignments.map((g) => g.trainerId),
+            memberIds: groupAssignments.flatMap((g) => g.memberIds),
+            courtIds: [groupAssignments[0].courtId!],
+            groupIds: groupAssignments.map((g) => g.groupId),
+            planEntryIds: [],
+          },
+          timeSlot: {
+            dayOfWeek: groupAssignments[0].dayOfWeek,
+            startTime: groupAssignments[0].startTime,
+            endTime: groupAssignments[0].endTime,
+          },
+          status: 'open',
+          resolvedAt: null,
+          resolvedBy: null,
+          resolutionNotes: null,
+        });
       }
       return conflicts;
     },
@@ -554,48 +465,38 @@ const CONFLICT_RULES: ConflictRule[] = [
       'Trainer über Limit: Ein Trainer überschreitet sein konfiguriertes Wochenstunden-Limit',
     check: async (params) => {
       const conflicts: ConflictDetectionResult[] = [];
-      const trainerSessions = new Map<string, number>();
 
-      for (const assignment of params.assignments) {
-        const count = trainerSessions.get(assignment.trainerId) || 0;
-        trainerSessions.set(assignment.trainerId, count + 1);
-      }
-
-      const slotMinutes = Math.max(1, params.config.slotDurationMinutes ?? 90);
-      const hoursPerSession = slotMinutes / 60;
-
-      for (const trainer of params.trainers) {
-        const sessions = trainerSessions.get(trainer.id) || 0;
-        const hoursAssigned = sessions * hoursPerSession;
-        const maxHours =
-          trainer.max_hours_per_week * (params.config.trainerUtilizationMaxPct / 100);
-
-        if (hoursAssigned > maxHours) {
-          conflicts.push({
-            id: `conflict_tol_${trainer.id}`,
-            type: 'trainer_over_limit',
-            severity: 'warning',
-            description: `Trainer ${trainer.name}: ${sessions} Sessions (${hoursAssigned.toFixed(2)}h à ${slotMinutes}min) überschreiten das Limit von ${maxHours.toFixed(2)}h (${params.config.trainerUtilizationMaxPct}% von ${trainer.max_hours_per_week}h)`,
-            suggestedResolution:
-              'Reduzieren Sie die Sessions für diesen Trainer oder erhöhen Sie das Limit.',
-            affectedEntities: {
-              trainerIds: [trainer.id],
-              memberIds: params.assignments
-                .filter((a) => a.trainerId === trainer.id)
-                .flatMap((a) => a.memberIds),
-              courtIds: [],
-              groupIds: params.assignments
-                .filter((a) => a.trainerId === trainer.id)
-                .map((a) => a.groupId),
-              planEntryIds: [],
-            },
-            timeSlot: null,
-            status: 'open',
-            resolvedAt: null,
-            resolvedBy: null,
-            resolutionNotes: null,
-          });
-        }
+      for (const {
+        trainer,
+        sessions,
+        hoursAssigned,
+        maxHours,
+        slotMinutes,
+      } of detectTrainerOverLimit(params.assignments, params.trainers, params.config)) {
+        conflicts.push({
+          id: `conflict_tol_${trainer.id}`,
+          type: 'trainer_over_limit',
+          severity: 'warning',
+          description: `Trainer ${trainer.name}: ${sessions} Sessions (${hoursAssigned.toFixed(2)}h à ${slotMinutes}min) überschreiten das Limit von ${maxHours.toFixed(2)}h (${params.config.trainerUtilizationMaxPct}% von ${trainer.max_hours_per_week}h)`,
+          suggestedResolution:
+            'Reduzieren Sie die Sessions für diesen Trainer oder erhöhen Sie das Limit.',
+          affectedEntities: {
+            trainerIds: [trainer.id],
+            memberIds: params.assignments
+              .filter((a) => a.trainerId === trainer.id)
+              .flatMap((a) => a.memberIds),
+            courtIds: [],
+            groupIds: params.assignments
+              .filter((a) => a.trainerId === trainer.id)
+              .map((a) => a.groupId),
+            planEntryIds: [],
+          },
+          timeSlot: null,
+          status: 'open',
+          resolvedAt: null,
+          resolvedBy: null,
+          resolutionNotes: null,
+        });
       }
       return conflicts;
     },
@@ -654,34 +555,32 @@ const CONFLICT_RULES: ConflictRule[] = [
     check: async (params) => {
       const conflicts: ConflictDetectionResult[] = [];
 
-      for (const assignment of params.assignments) {
-        const warning = assignment.warnings.find((w) => w.includes('Niveau-Spanne'));
-        if (warning) {
-          conflicts.push({
-            id: `conflict_lns_${assignment.groupId}`,
-            type: 'large_niveau_span',
-            severity: 'info',
-            description: warning,
-            suggestedResolution:
-              'Teilen Sie die Gruppe auf oder passen Sie die Niveau-Spanne-Konfiguration an.',
-            affectedEntities: {
-              trainerIds: [assignment.trainerId],
-              memberIds: assignment.memberIds,
-              courtIds: assignment.courtId ? [assignment.courtId] : [],
-              groupIds: [assignment.groupId],
-              planEntryIds: [],
-            },
-            timeSlot: {
-              dayOfWeek: assignment.dayOfWeek,
-              startTime: assignment.startTime,
-              endTime: assignment.endTime,
-            },
-            status: 'open',
-            resolvedAt: null,
-            resolvedBy: null,
-            resolutionNotes: null,
-          });
-        }
+      for (const assignment of detectLargeNiveauSpan(params.assignments)) {
+        const warning = assignment.warnings.find((w) => w.includes('Niveau-Spanne'))!;
+        conflicts.push({
+          id: `conflict_lns_${assignment.groupId}`,
+          type: 'large_niveau_span',
+          severity: 'info',
+          description: warning,
+          suggestedResolution:
+            'Teilen Sie die Gruppe auf oder passen Sie die Niveau-Spanne-Konfiguration an.',
+          affectedEntities: {
+            trainerIds: [assignment.trainerId],
+            memberIds: assignment.memberIds,
+            courtIds: assignment.courtId ? [assignment.courtId] : [],
+            groupIds: [assignment.groupId],
+            planEntryIds: [],
+          },
+          timeSlot: {
+            dayOfWeek: assignment.dayOfWeek,
+            startTime: assignment.startTime,
+            endTime: assignment.endTime,
+          },
+          status: 'open',
+          resolvedAt: null,
+          resolvedBy: null,
+          resolutionNotes: null,
+        });
       }
       return conflicts;
     },

@@ -1,125 +1,43 @@
 /**
  * Unit tests for billing calculation logic.
  *
- * Tests the pure calculation functions that map plan entries to fee
- * configurations and compute invoice totals — independent of Supabase/API.
- *
- * The logic under test mirrors the inlined calculation in the
- * billing-preview route (fee config matching) plus standard
- * invoice total computation (subtotal, tax, amount).
+ * Testet die echten pure Funktionen aus `@/lib/billing/billing-preview`
+ * (Production-Code) — die früher im Test duplizierte Logik wurde dorthin
+ * extrahiert. Konsolidierungs-Hinweis (2026-08-13): Die historische
+ * `billing-preview`-Route wurde unter `app/api/seasons/[id]/billing-preview`
+ * reimplementiert und nutzt `computeBillingPreview` mit dem
+ * `feeConfigurationService` (Drizzle-Adapter) als Datenquelle.
  */
 import { describe, it, expect } from 'vitest';
+import {
+  computeBillingPreview,
+  computeInvoiceTotals,
+  matchFeeConfiguration,
+  roundCurrency,
+} from '@/lib/billing/billing-preview';
+import type {
+  BillingPreviewEntry,
+  BillingPreviewFeeConfig,
+  InvoiceLineItem,
+} from '@/lib/billing/billing-preview';
 
 // ════════════════════════════════════════════════════════════
-// PURE FUNCTIONS — extracted from billing-preview route logic
-// These are tested in isolation to validate the calculation rules.
-// ════════════════════════════════════════════════════════════
-
-interface PlanEntry {
-  member_id: string;
-  group_id: string;
-}
-
-interface FeeCondition {
-  trainingGroup?: string;
-}
-
-interface FeeConfig {
-  id: string;
-  amount: number;
-  billing_cycle: string;
-  installment_count?: number;
-  conditions: FeeCondition | null;
-}
-
-interface BillingPreviewItem {
-  memberId: string;
-  memberName: string;
-  groupId: string;
-  amount: number;
-  feeConfigId: string | null;
-  billingCycle: string;
-  installments: number;
-}
-
-/**
- * Match plan entries to fee configs using the same logic as the
- * billing-preview route.
- */
-function computeBillingPreview(
-  entries: PlanEntry[],
-  feeConfigs: FeeConfig[]
-): BillingPreviewItem[] {
-  return entries.map((entry) => {
-    const fee =
-      feeConfigs.find((f) => {
-        if (!f.conditions) return true;
-        if (f.conditions.trainingGroup && f.conditions.trainingGroup !== entry.group_id)
-          return false;
-        return true;
-      }) ?? null;
-
-    return {
-      memberId: entry.member_id,
-      memberName: '',
-      groupId: entry.group_id,
-      amount: fee?.amount ?? 0,
-      feeConfigId: fee?.id ?? null,
-      billingCycle: fee?.billing_cycle ?? 'season',
-      installments: fee?.billing_cycle === 'installment' ? (fee.installment_count ?? 1) : 1,
-    };
-  });
-}
-
-interface InvoiceItem {
-  description: string;
-  quantity: number;
-  unit_price: number;
-  tax_rate: number;
-}
-
-interface InvoiceTotals {
-  subtotal: number;
-  taxAmount: number;
-  total: number;
-}
-
-/**
- * Compute invoice totals from line items.
- * Each item: lineTotal = quantity × unit_price
- * taxAmount = sum of (lineTotal × tax_rate / 100)
- * total = subtotal + taxAmount
- */
-function computeInvoiceTotals(items: InvoiceItem[]): InvoiceTotals {
-  const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
-  const taxAmount = items.reduce(
-    (sum, item) => sum + item.quantity * item.unit_price * (item.tax_rate / 100),
-    0
-  );
-  return {
-    subtotal: Math.round(subtotal * 100) / 100,
-    taxAmount: Math.round(taxAmount * 100) / 100,
-    total: Math.round((subtotal + taxAmount) * 100) / 100,
-  };
-}
-
-// ════════════════════════════════════════════════════════════
-// TESTS — Fee Config Matching
+// Fee Config Matching
 // ════════════════════════════════════════════════════════════
 
 describe('computeBillingPreview', () => {
-  const feeConfigs: FeeConfig[] = [
+  const feeConfigs: BillingPreviewFeeConfig[] = [
     {
       id: 'fee-beginner',
       amount: 25.0,
       billing_cycle: 'monthly',
-      conditions: { trainingGroup: 'group-beginner' },
+      conditions: { trainingGroup: ['group-beginner'] },
     },
     {
       id: 'fee-advanced',
       amount: 40.0,
       billing_cycle: 'season',
-      conditions: { trainingGroup: 'group-advanced' },
+      conditions: { trainingGroup: ['group-advanced'] },
     },
     {
       id: 'fee-default',
@@ -132,12 +50,12 @@ describe('computeBillingPreview', () => {
       amount: 120.0,
       billing_cycle: 'installment',
       installment_count: 4,
-      conditions: { trainingGroup: 'group-installment' },
+      conditions: { trainingGroup: ['group-installment'] },
     },
   ];
 
   it('matches entry to specific group-configured fee', () => {
-    const entries: PlanEntry[] = [{ member_id: 'm1', group_id: 'group-beginner' }];
+    const entries: BillingPreviewEntry[] = [{ member_id: 'm1', group_id: 'group-beginner' }];
 
     const result = computeBillingPreview(entries, feeConfigs);
 
@@ -148,7 +66,7 @@ describe('computeBillingPreview', () => {
   });
 
   it('falls back to unconditional fee when group does not match', () => {
-    const entries: PlanEntry[] = [{ member_id: 'm1', group_id: 'group-unknown' }];
+    const entries: BillingPreviewEntry[] = [{ member_id: 'm1', group_id: 'group-unknown' }];
 
     const result = computeBillingPreview(entries, feeConfigs);
 
@@ -158,7 +76,7 @@ describe('computeBillingPreview', () => {
   });
 
   it('returns zero when no fee configs at all', () => {
-    const entries: PlanEntry[] = [{ member_id: 'm1', group_id: 'group-beginner' }];
+    const entries: BillingPreviewEntry[] = [{ member_id: 'm1', group_id: 'group-beginner' }];
 
     const result = computeBillingPreview(entries, []);
 
@@ -173,7 +91,7 @@ describe('computeBillingPreview', () => {
   });
 
   it('handles multiple entries with different fee matches', () => {
-    const entries: PlanEntry[] = [
+    const entries: BillingPreviewEntry[] = [
       { member_id: 'm1', group_id: 'group-beginner' },
       { member_id: 'm2', group_id: 'group-advanced' },
       { member_id: 'm3', group_id: 'group-unknown' },
@@ -189,19 +107,19 @@ describe('computeBillingPreview', () => {
 
   it('handles installment billing cycle with installment count', () => {
     // Must place fee-installment BEFORE any unconditional match (fee-default)
-    // because .find() returns the first match.
-    const configs: FeeConfig[] = [
+    // because the matcher returns the FIRST match.
+    const configs: BillingPreviewFeeConfig[] = [
       {
         id: 'fee-installment',
         amount: 120.0,
         billing_cycle: 'installment',
         installment_count: 4,
-        conditions: { trainingGroup: 'group-installment' },
+        conditions: { trainingGroup: ['group-installment'] },
       },
       { id: 'fee-default', amount: 15, billing_cycle: 'season', conditions: null },
     ];
 
-    const entries: PlanEntry[] = [{ member_id: 'm1', group_id: 'group-installment' }];
+    const entries: BillingPreviewEntry[] = [{ member_id: 'm1', group_id: 'group-installment' }];
 
     const result = computeBillingPreview(entries, configs);
 
@@ -210,7 +128,7 @@ describe('computeBillingPreview', () => {
   });
 
   it('defaults to installments=1 for non-installment cycles', () => {
-    const entries: PlanEntry[] = [{ member_id: 'm1', group_id: 'group-beginner' }];
+    const entries: BillingPreviewEntry[] = [{ member_id: 'm1', group_id: 'group-beginner' }];
 
     const result = computeBillingPreview(entries, feeConfigs);
 
@@ -218,36 +136,85 @@ describe('computeBillingPreview', () => {
     expect(result[0].installments).toBe(1);
   });
 
-  it('trainingGroup=undefined in condition acts like no restriction (matches)', () => {
-    const configs: FeeConfig[] = [
-      {
-        id: 'fee-partial',
-        amount: 99.0,
-        billing_cycle: 'season',
-        conditions: { trainingGroup: undefined },
-      },
+  it('first matching fee config wins (not the best)', () => {
+    const configs: BillingPreviewFeeConfig[] = [
+      { id: 'fee-a', amount: 100, billing_cycle: 'season', conditions: null },
+      { id: 'fee-b', amount: 50, billing_cycle: 'season', conditions: null },
     ];
 
-    const entries: PlanEntry[] = [{ member_id: 'm1', group_id: 'any-group' }];
+    const result = computeBillingPreview([{ member_id: 'm1', group_id: 'g1' }], configs);
 
-    const result = computeBillingPreview(entries, configs);
+    // First unconditional match (fee-a) wins
+    expect(result[0].feeConfigId).toBe('fee-a');
+    expect(result[0].amount).toBe(100);
+  });
 
-    // trainingGroup=undefined → !f.conditions.trainingGroup is !undefined = true
-    // but the check is: `f.conditions.trainingGroup && f.conditions.trainingGroup !== ...`
-    // which short-circuits on the undefined → doesn't enter the if → falls through to return true.
-    // So the config MATCHES — undefined trainingGroup means "no group restriction".
-    expect(result[0].feeConfigId).toBe('fee-partial');
-    expect(result[0].amount).toBe(99.0);
+  it('empty conditions object matches any group (no restriction)', () => {
+    const configs: BillingPreviewFeeConfig[] = [
+      { id: 'fee-open', amount: 99, billing_cycle: 'season', conditions: {} },
+    ];
+
+    const result = computeBillingPreview([{ member_id: 'm1', group_id: 'any-group' }], configs);
+
+    expect(result[0].feeConfigId).toBe('fee-open');
+    expect(result[0].amount).toBe(99);
   });
 });
 
 // ════════════════════════════════════════════════════════════
-// TESTS — Invoice Totals Calculation
+// matchFeeConfiguration (First-Match-Semantik)
+// ════════════════════════════════════════════════════════════
+
+describe('matchFeeConfiguration', () => {
+  it('returns null for empty config list', () => {
+    expect(matchFeeConfiguration([], 'g1')).toBeNull();
+  });
+
+  it('matches a config whose trainingGroup contains the group', () => {
+    const configs: BillingPreviewFeeConfig[] = [
+      { id: 'a', amount: 10, billing_cycle: 'season', conditions: { trainingGroup: ['g1', 'g2'] } },
+      { id: 'b', amount: 20, billing_cycle: 'season', conditions: null },
+    ];
+
+    expect(matchFeeConfiguration(configs, 'g2')?.id).toBe('a');
+  });
+
+  it('prefers the first config with matching trainingGroup over a later unconditional one', () => {
+    const configs: BillingPreviewFeeConfig[] = [
+      {
+        id: 'specific',
+        amount: 50,
+        billing_cycle: 'monthly',
+        conditions: { trainingGroup: ['g1'] },
+      },
+      { id: 'fallback', amount: 10, billing_cycle: 'season', conditions: null },
+    ];
+
+    expect(matchFeeConfiguration(configs, 'g1')?.id).toBe('specific');
+  });
+
+  it('uses the unconditional config when no trainingGroup matches', () => {
+    const configs: BillingPreviewFeeConfig[] = [
+      {
+        id: 'specific',
+        amount: 50,
+        billing_cycle: 'monthly',
+        conditions: { trainingGroup: ['g1'] },
+      },
+      { id: 'fallback', amount: 10, billing_cycle: 'season', conditions: null },
+    ];
+
+    expect(matchFeeConfiguration(configs, 'g-other')?.id).toBe('fallback');
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// Invoice Totals Calculation
 // ════════════════════════════════════════════════════════════
 
 describe('computeInvoiceTotals', () => {
   it('calculates correct subtotal, tax, and total for single item', () => {
-    const items: InvoiceItem[] = [
+    const items: InvoiceLineItem[] = [
       { description: 'Mitgliedsbeitrag', quantity: 1, unit_price: 29.99, tax_rate: 19 },
     ];
 
@@ -259,7 +226,7 @@ describe('computeInvoiceTotals', () => {
   });
 
   it('calculates correct totals for multiple items', () => {
-    const items: InvoiceItem[] = [
+    const items: InvoiceLineItem[] = [
       { description: 'Item A', quantity: 2, unit_price: 10.0, tax_rate: 19 },
       { description: 'Item B', quantity: 3, unit_price: 20.0, tax_rate: 7 },
     ];
@@ -274,7 +241,7 @@ describe('computeInvoiceTotals', () => {
   });
 
   it('handles zero tax rate', () => {
-    const items: InvoiceItem[] = [
+    const items: InvoiceLineItem[] = [
       { description: 'Tax-free', quantity: 1, unit_price: 100.0, tax_rate: 0 },
     ];
 
@@ -286,7 +253,7 @@ describe('computeInvoiceTotals', () => {
   });
 
   it('handles fractional unit prices and quantities', () => {
-    const items: InvoiceItem[] = [
+    const items: InvoiceLineItem[] = [
       { description: 'Fractional', quantity: 1.5, unit_price: 9.99, tax_rate: 19 },
     ];
 
@@ -309,7 +276,7 @@ describe('computeInvoiceTotals', () => {
   });
 
   it('handles high-value items without floating-point overflow', () => {
-    const items: InvoiceItem[] = [
+    const items: InvoiceLineItem[] = [
       { description: 'Expensive', quantity: 1000, unit_price: 9999.99, tax_rate: 19 },
     ];
 
@@ -319,48 +286,9 @@ describe('computeInvoiceTotals', () => {
     expect(result.taxAmount).toBeCloseTo(1899998.1, 1);
     expect(result.total).toBeCloseTo(11899988.1, 1);
   });
-});
-
-// ════════════════════════════════════════════════════════════
-// TESTS — Edge Cases
-// ════════════════════════════════════════════════════════════
-
-describe('billing calculation edge cases', () => {
-  it('first matching fee config wins (not the best)', () => {
-    const configs: FeeConfig[] = [
-      { id: 'fee-a', amount: 100, billing_cycle: 'season', conditions: null },
-      { id: 'fee-b', amount: 50, billing_cycle: 'season', conditions: null },
-    ];
-
-    const result = computeBillingPreview([{ member_id: 'm1', group_id: 'g1' }], configs);
-
-    // First unconditional match (fee-a) wins
-    expect(result[0].feeConfigId).toBe('fee-a');
-    expect(result[0].amount).toBe(100);
-  });
-
-  it('specific group match takes priority over unconditional', () => {
-    const configs: FeeConfig[] = [
-      { id: 'fee-default', amount: 10, billing_cycle: 'season', conditions: null },
-      {
-        id: 'fee-specific',
-        amount: 50,
-        billing_cycle: 'monthly',
-        conditions: { trainingGroup: 'group-a' },
-      },
-    ];
-
-    const result = computeBillingPreview([{ member_id: 'm1', group_id: 'group-a' }], configs);
-
-    // fee-specific matches before fee-default because Array.find stops at first match
-    // But fee-default is FIRST (unconditional), so it matches first.
-    // This is correct behavior — the route uses .find() which returns the FIRST match.
-    expect(result[0].feeConfigId).toBe('fee-default');
-    expect(result[0].amount).toBe(10);
-  });
 
   it('invoice item with quantity 0 adds no cost', () => {
-    const items: InvoiceItem[] = [
+    const items: InvoiceLineItem[] = [
       { description: 'Free item', quantity: 0, unit_price: 100.0, tax_rate: 19 },
     ];
 
@@ -369,5 +297,26 @@ describe('billing calculation edge cases', () => {
     expect(result.subtotal).toBe(0);
     expect(result.taxAmount).toBe(0);
     expect(result.total).toBe(0);
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// roundCurrency
+// ════════════════════════════════════════════════════════════
+
+describe('roundCurrency', () => {
+  it('rounds to two decimals', () => {
+    expect(roundCurrency(14.985)).toBe(14.99);
+    expect(roundCurrency(14.984)).toBe(14.98);
+  });
+
+  it('rounds up on the half-cent boundary', () => {
+    expect(roundCurrency(10.005)).toBe(10.01);
+  });
+
+  it('passes through exact values unchanged', () => {
+    expect(roundCurrency(0)).toBe(0);
+    expect(roundCurrency(88.0)).toBe(88);
+    expect(roundCurrency(-1.234)).toBe(-1.23);
   });
 });

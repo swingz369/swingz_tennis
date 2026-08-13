@@ -1,5 +1,6 @@
 /**
- * tests/unit/lib/services/elo.test.ts
+ * src/__tests__/lib/services/elo.test.ts
+ * (konsolidiert aus tests/unit/lib/services/elo.test.ts)
  *
  * Sprint 4 Q2 — Ticket 2.2.1 (ELO DB-Trigger)
  *

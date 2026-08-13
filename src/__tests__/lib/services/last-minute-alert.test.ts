@@ -1,5 +1,6 @@
 /**
- * tests/unit/lib/services/last-minute-alert.test.ts
+ * src/__tests__/lib/services/last-minute-alert.test.ts
+ * (konsolidiert aus tests/unit/lib/services/last-minute-alert.test.ts)
  *
  * Sprint 4 Q2 — Ticket 2.5.1 (Last-Minute-Alerts)
  *

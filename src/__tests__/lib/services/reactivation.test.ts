@@ -1,5 +1,6 @@
 /**
- * tests/unit/lib/services/reactivation.test.ts
+ * src/__tests__/lib/services/reactivation.test.ts
+ * (konsolidiert aus tests/unit/lib/services/reactivation.test.ts)
  *
  * Sprint 4 Q2 — Ticket 2.5.2 (Inaktivitäts-Reaktivierung)
  *

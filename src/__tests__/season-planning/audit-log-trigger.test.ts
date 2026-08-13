@@ -31,9 +31,10 @@ import * as path from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// This file lives at <project-root>/src/__tests__/season-planning, so exactly
+// three hops reach the project root where `supabase/` resides.
 const MIGRATION_PATH = path.join(
   __dirname,
-  '..',
   '..',
   '..',
   '..',

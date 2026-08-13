@@ -1,6 +1,7 @@
 /**
  * ════════════════════════════════════════════════════════════════════════════════
- * tests/unit/app/api/trainer-profiles/route.test.ts
+ * src/__tests__/api/trainer-profiles.route.test.ts
+ * (konsolidiert aus tests/unit/app/api/trainer-profiles/route.test.ts)
  * ════════════════════════════════════════════════════════════════════════════════
  *
  * UNIT-TESTS FOR: app/api/trainer-profiles/route.ts (GET-Handler)
@@ -32,9 +33,9 @@
  *     Drizzle-path test surface.
  *
  * NOTE — RUNTIME EXPECTATION
- *   These tests follow the repo convention (tests/unit/lib/hardware/adapter.test.ts,
- *   tests/unit/app/api/webhooks/booking-completed/route.test.ts). Run on dev-machine:
- *   `npx vitest run tests/unit/app/api/trainer-profiles/route.test.ts`.
+ *   These tests follow the repo convention (src/__tests__/lib/hardware/adapter.test.ts,
+ *   src/__tests__/api/webhooks-booking-completed.route.test.ts). Run on dev-machine:
+ *   `npx vitest run src/__tests__/api/trainer-profiles.route.test.ts`.
  *
  * ════════════════════════════════════════════════════════════════════════════════
  */

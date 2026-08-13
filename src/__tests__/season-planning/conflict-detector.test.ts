@@ -1,20 +1,65 @@
 import { describe, it, expect } from 'vitest';
+import {
+  timeStringToMinutes,
+  timeSlotsOverlap,
+  detectNoCourtAssigned,
+  detectTrainerDoubleBookings,
+  detectMemberDoubleBookings,
+  detectNoTrainerAssignments,
+  detectCourtDoubleBookings,
+  detectTrainerOverLimit,
+  detectLargeNiveauSpan,
+} from '@/lib/season-planning/conflict-utils';
+import type { ExistingPlanEntry } from '@/lib/season-planning/conflict-utils';
+import type { GroupAssignment } from '@/lib/season-planning/types';
 
 // ============================================
-// PURE FUNCTIONS (extracted for testability)
+// FIXTURES
 // ============================================
 
-function timeStringToMinutes(time: string): number {
-  const parts = time.split(':');
-  return parseInt(parts[0]) * 60 + parseInt(parts[1]);
-}
-
-function timeSlotsOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
-  const s1 = timeStringToMinutes(start1);
-  const e1 = timeStringToMinutes(end1);
-  const s2 = timeStringToMinutes(start2);
-  const e2 = timeStringToMinutes(end2);
-  return s1 < e2 && s2 < e1;
+function makeAssignment(overrides: Partial<GroupAssignment> = {}): GroupAssignment {
+  return {
+    groupId: 'g1',
+    groupName: 'Intermediate Gruppe 1',
+    trainerId: 't1',
+    trainerName: 'Trainer A',
+    dayOfWeek: 2,
+    startTime: '17:00',
+    endTime: '18:30',
+    courtId: 'c1',
+    courtName: 'Court 1',
+    maxSize: 6,
+    memberIds: ['m1', 'm2'],
+    memberDetails: [
+      {
+        memberId: 'm1',
+        memberName: 'Alice',
+        niveauMatch: 85,
+        experienceMonths: 6,
+        groupExperienceSpan: '4-8 Monate',
+        wishPartnerFulfilled: false,
+        wishPartnerNames: [],
+        isPromoted: false,
+        assignmentReason: 'Verfügbarkeit passt',
+      },
+      {
+        memberId: 'm2',
+        memberName: 'Bob',
+        niveauMatch: 85,
+        experienceMonths: 8,
+        groupExperienceSpan: '4-8 Monate',
+        wishPartnerFulfilled: false,
+        wishPartnerNames: [],
+        isPromoted: false,
+        assignmentReason: 'Verfügbarkeit passt',
+      },
+    ],
+    waitlistIds: [],
+    waitlistDetails: [],
+    warnings: [],
+    conflictIds: [],
+    ...overrides,
+  };
 }
 
 // ============================================
@@ -75,407 +120,355 @@ describe('timeSlotsOverlap', () => {
 });
 
 // ============================================
-// TESTS: Conflict detection logic with mock data
+// TESTS: no court assigned
 // ============================================
 
-interface MockAssignment {
-  groupId: string;
-  groupName: string;
-  trainerId: string;
-  trainerName: string;
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  courtId: string | null;
-  courtName: string | null;
-  memberIds: string[];
-  memberDetails: Array<{
-    memberId: string;
-    memberName: string;
-    niveauMatch: number;
-    wishPartnerFulfilled: boolean;
-  }>;
-  warnings: string[];
-}
+describe('detectNoCourtAssigned', () => {
+  it('should flag assignments without a court', () => {
+    const assignments = [makeAssignment({ groupId: 'g1', courtId: null, courtName: null })];
+    expect(detectNoCourtAssigned(assignments)).toHaveLength(1);
+  });
 
-describe('trainer double-booking detection', () => {
+  it('should pass when all groups have a court', () => {
+    const assignments = [makeAssignment({ courtId: 'c1', courtName: 'Court 1' })];
+    expect(detectNoCourtAssigned(assignments)).toHaveLength(0);
+  });
+});
+
+// ============================================
+// TESTS: trainer double-booking
+// ============================================
+
+describe('detectTrainerDoubleBookings', () => {
   it('should detect when a trainer is assigned to two groups at the same time', () => {
-    const assignments: MockAssignment[] = [
-      {
-        groupId: 'g1',
-        groupName: 'Intermediate Gruppe 1',
-        trainerId: 't1',
-        trainerName: 'Trainer A',
-        dayOfWeek: 2, // Wednesday
-        startTime: '17:00',
-        endTime: '18:30',
-        courtId: 'c1',
-        courtName: 'Court 1',
-        memberIds: ['m1', 'm2'],
-        memberDetails: [
-          { memberId: 'm1', memberName: 'Alice', niveauMatch: 85, wishPartnerFulfilled: false },
-          { memberId: 'm2', memberName: 'Bob', niveauMatch: 85, wishPartnerFulfilled: false },
-        ],
-        warnings: [],
-      },
-      {
+    const assignments = [
+      makeAssignment({ groupId: 'g1', groupName: 'Intermediate Gruppe 1' }),
+      makeAssignment({
         groupId: 'g2',
         groupName: 'Advanced Gruppe 1',
         trainerId: 't1', // Same trainer!
         trainerName: 'Trainer A',
-        dayOfWeek: 2, // Same day
-        startTime: '17:00', // Same time
-        endTime: '18:30',
         courtId: 'c2',
         courtName: 'Court 2',
         memberIds: ['m3', 'm4'],
-        memberDetails: [
-          { memberId: 'm3', memberName: 'Charlie', niveauMatch: 90, wishPartnerFulfilled: false },
-          { memberId: 'm4', memberName: 'Diana', niveauMatch: 90, wishPartnerFulfilled: false },
-        ],
-        warnings: [],
-      },
+      }),
     ];
 
-    // Simulate the conflict check logic
-    const seen = new Map<string, MockAssignment[]>();
-    for (const a of assignments) {
-      const key = `${a.trainerId}_${a.dayOfWeek}_${a.startTime}`;
-      const existing = seen.get(key) || [];
-      existing.push(a);
-      seen.set(key, existing);
-    }
-
-    const doubleBookings = [...seen.values()].filter((g) => g.length > 1);
-    expect(doubleBookings.length).toBe(1);
+    const doubleBookings = detectTrainerDoubleBookings(assignments);
+    expect(doubleBookings).toHaveLength(1);
+    expect(doubleBookings[0]).toHaveLength(2);
     expect(doubleBookings[0][0].trainerName).toBe('Trainer A');
   });
 
   it('should not flag trainer with different time slots', () => {
-    const assignments: MockAssignment[] = [
-      {
-        groupId: 'g1',
-        groupName: 'Group 1',
-        trainerId: 't1',
-        trainerName: 'Trainer A',
-        dayOfWeek: 2,
-        startTime: '17:00',
-        endTime: '18:30',
-        courtId: 'c1',
-        courtName: 'Court 1',
-        memberIds: ['m1'],
-        memberDetails: [
-          { memberId: 'm1', memberName: 'Alice', niveauMatch: 80, wishPartnerFulfilled: false },
-        ],
-        warnings: [],
-      },
-      {
+    const assignments = [
+      makeAssignment({ groupId: 'g1', startTime: '17:00', endTime: '18:30' }),
+      makeAssignment({
         groupId: 'g2',
-        groupName: 'Group 2',
-        trainerId: 't1',
-        trainerName: 'Trainer A',
-        dayOfWeek: 2,
         startTime: '18:30', // Back-to-back, no overlap
         endTime: '20:00',
         courtId: 'c2',
         courtName: 'Court 2',
         memberIds: ['m2'],
-        memberDetails: [
-          { memberId: 'm2', memberName: 'Bob', niveauMatch: 80, wishPartnerFulfilled: false },
-        ],
-        warnings: [],
+      }),
+    ];
+
+    expect(detectTrainerDoubleBookings(assignments)).toHaveLength(0);
+  });
+
+  it('should not conflate different trainers', () => {
+    const assignments = [
+      makeAssignment({ groupId: 'g1', trainerId: 't1', trainerName: 'Trainer A' }),
+      makeAssignment({
+        groupId: 'g2',
+        trainerId: 't2', // different trainer
+        trainerName: 'Trainer B',
+        courtId: 'c2',
+        courtName: 'Court 2',
+        memberIds: ['m3', 'm4'],
+      }),
+    ];
+
+    expect(detectTrainerDoubleBookings(assignments)).toHaveLength(0);
+  });
+
+  it('should flag two assignments that overlap the same existing plan entry', () => {
+    // Plan entries key by the entry's startTime, so a single overlapping
+    // assignment would only fill a length-1 bucket. Two assignments that both
+    // overlap the same entry land in the same bucket → flagged.
+    const assignments = [
+      makeAssignment({ groupId: 'g1', startTime: '17:00', endTime: '18:30' }),
+      makeAssignment({
+        groupId: 'g2',
+        groupName: 'Group 2',
+        startTime: '17:15',
+        endTime: '18:45',
+        courtId: 'c2',
+        courtName: 'Court 2',
+        memberIds: ['m3', 'm4'],
+      }),
+    ];
+    const existingPlanEntries: ExistingPlanEntry[] = [
+      {
+        trainer_id: 't1', // same trainer
+        court_id: null,
+        day_of_week: 2,
+        start_time: '17:30', // overlaps both assignments
+        end_time: '19:00',
       },
     ];
 
-    const seen = new Map<string, MockAssignment[]>();
-    for (const a of assignments) {
-      const key = `${a.trainerId}_${a.dayOfWeek}_${a.startTime}`;
-      const existing = seen.get(key) || [];
-      existing.push(a);
-      seen.set(key, existing);
-    }
-
-    const doubleBookings = [...seen.values()].filter((g) => g.length > 1);
-    expect(doubleBookings.length).toBe(0);
+    const doubleBookings = detectTrainerDoubleBookings(assignments, existingPlanEntries);
+    expect(doubleBookings).toHaveLength(1);
+    expect(doubleBookings[0]).toHaveLength(2);
   });
 });
 
-describe('member double-booking detection', () => {
+// ============================================
+// TESTS: member double-booking
+// ============================================
+
+describe('detectMemberDoubleBookings', () => {
   it('should detect member in two overlapping groups', () => {
-    const assignments: MockAssignment[] = [
-      {
-        groupId: 'g1',
-        groupName: 'Group 1',
-        trainerId: 't1',
-        trainerName: 'Trainer A',
-        dayOfWeek: 3,
-        startTime: '17:00',
-        endTime: '18:30',
-        courtId: 'c1',
-        courtName: 'Court 1',
-        memberIds: ['m1', 'm2'],
-        memberDetails: [
-          { memberId: 'm1', memberName: 'Alice', niveauMatch: 85, wishPartnerFulfilled: false },
-          { memberId: 'm2', memberName: 'Bob', niveauMatch: 85, wishPartnerFulfilled: false },
-        ],
-        warnings: [],
-      },
-      {
+    const assignments = [
+      makeAssignment({ groupId: 'g1', memberIds: ['m1', 'm2'] }),
+      makeAssignment({
         groupId: 'g2',
         groupName: 'Group 2',
         trainerId: 't2',
         trainerName: 'Trainer B',
-        dayOfWeek: 3,
-        startTime: '17:00',
-        endTime: '18:30',
         courtId: 'c2',
         courtName: 'Court 2',
         memberIds: ['m1', 'm3'], // m1 is in both!
-        memberDetails: [
-          { memberId: 'm1', memberName: 'Alice', niveauMatch: 90, wishPartnerFulfilled: false },
-          { memberId: 'm3', memberName: 'Charlie', niveauMatch: 90, wishPartnerFulfilled: false },
-        ],
-        warnings: [],
-      },
+      }),
     ];
 
-    const memberGroups = new Map<string, MockAssignment[]>();
-    for (const a of assignments) {
-      for (const mid of a.memberIds) {
-        const existing = memberGroups.get(mid) || [];
-        existing.push(a);
-        memberGroups.set(mid, existing);
-      }
-    }
+    const findings = detectMemberDoubleBookings(assignments);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].memberId).toBe('m1');
+  });
 
-    const multiGroupMembers = [...memberGroups.entries()].filter(([, groups]) => groups.length > 1);
+  it('should not flag member in groups on different days', () => {
+    const assignments = [
+      makeAssignment({ groupId: 'g1', dayOfWeek: 2, memberIds: ['m1'] }),
+      makeAssignment({
+        groupId: 'g2',
+        dayOfWeek: 3, // different day
+        trainerId: 't2',
+        trainerName: 'Trainer B',
+        courtId: 'c2',
+        courtName: 'Court 2',
+        memberIds: ['m1'],
+      }),
+    ];
 
-    expect(multiGroupMembers.length).toBe(1);
-    expect(multiGroupMembers[0][0]).toBe('m1');
+    expect(detectMemberDoubleBookings(assignments)).toHaveLength(0);
+  });
 
-    // Check time overlap
-    const [_mid, groups] = multiGroupMembers[0];
-    const overlaps =
-      groups[0].dayOfWeek === groups[1].dayOfWeek &&
-      timeSlotsOverlap(
-        groups[0].startTime,
-        groups[0].endTime,
-        groups[1].startTime,
-        groups[1].endTime
-      );
-    expect(overlaps).toBe(true);
+  it('should not flag member in groups with non-overlapping times on the same day', () => {
+    const assignments = [
+      makeAssignment({
+        groupId: 'g1',
+        dayOfWeek: 2,
+        startTime: '17:00',
+        endTime: '18:30',
+        memberIds: ['m1'],
+      }),
+      makeAssignment({
+        groupId: 'g2',
+        dayOfWeek: 2,
+        startTime: '19:00', // no overlap with 17:00-18:30
+        endTime: '20:30',
+        trainerId: 't2',
+        trainerName: 'Trainer B',
+        courtId: 'c2',
+        courtName: 'Court 2',
+        memberIds: ['m1'],
+      }),
+    ];
+
+    expect(detectMemberDoubleBookings(assignments)).toHaveLength(0);
   });
 });
 
-describe('no trainer assigned detection', () => {
-  it('should detect group without trainer', () => {
-    const assignments: MockAssignment[] = [
-      {
-        groupId: 'g1',
-        groupName: 'Group 1',
-        trainerId: '',
-        trainerName: '',
-        dayOfWeek: 1,
-        startTime: '17:00',
-        endTime: '18:30',
-        courtId: 'c1',
-        courtName: 'Court 1',
-        memberIds: ['m1'],
-        memberDetails: [
-          { memberId: 'm1', memberName: 'Alice', niveauMatch: 80, wishPartnerFulfilled: false },
-        ],
-        warnings: [],
-      },
-    ];
+// ============================================
+// TESTS: no trainer assigned
+// ============================================
 
-    const noTrainer = assignments.filter((a) => !a.trainerId || a.trainerId === '');
-    expect(noTrainer.length).toBe(1);
-    expect(noTrainer[0].groupName).toBe('Group 1');
+describe('detectNoTrainerAssignments', () => {
+  it('should detect group without trainer', () => {
+    const assignments = [makeAssignment({ groupId: 'g1', trainerId: '', trainerName: '' })];
+    const noTrainer = detectNoTrainerAssignments(assignments);
+    expect(noTrainer).toHaveLength(1);
+    expect(noTrainer[0].groupName).toBe('Intermediate Gruppe 1');
   });
 
   it('should pass when all groups have trainers', () => {
-    const assignments: MockAssignment[] = [
-      {
-        groupId: 'g1',
-        groupName: 'Group 1',
-        trainerId: 't1',
-        trainerName: 'Trainer A',
-        dayOfWeek: 1,
-        startTime: '17:00',
-        endTime: '18:30',
-        courtId: 'c1',
-        courtName: null,
-        memberIds: ['m1'],
-        memberDetails: [
-          { memberId: 'm1', memberName: 'Alice', niveauMatch: 80, wishPartnerFulfilled: false },
-        ],
-        warnings: [],
-      },
-    ];
-
-    const noTrainer = assignments.filter((a) => !a.trainerId || a.trainerId === '');
-    expect(noTrainer.length).toBe(0);
+    const assignments = [makeAssignment({ groupId: 'g1' })];
+    expect(detectNoTrainerAssignments(assignments)).toHaveLength(0);
   });
 });
 
-describe('trainer over limit detection', () => {
-  it('should detect trainer exceeding weekly hour limit', () => {
-    const trainerSessions = new Map<string, number>();
-    const assignments: MockAssignment[] = [];
+// ============================================
+// TESTS: trainer over limit
+// ============================================
 
-    // Simulate 15 sessions for one trainer (15 * 1.5h = 22.5h)
-    for (let i = 0; i < 15; i++) {
-      assignments.push({
+describe('detectTrainerOverLimit', () => {
+  const config = { slotDurationMinutes: 90, trainerUtilizationMaxPct: 80 };
+
+  it('should detect trainer exceeding weekly hour limit', () => {
+    // 15 sessions à 1.5h = 22.5h > 20h * 80% = 16h
+    const assignments = Array.from({ length: 15 }, (_, i) =>
+      makeAssignment({
         groupId: `g${i}`,
         groupName: `Group ${i}`,
-        trainerId: 't1',
-        trainerName: 'Trainer A',
         dayOfWeek: i % 7,
-        startTime: '17:00',
-        endTime: '18:30',
-        courtId: null,
-        courtName: null,
         memberIds: [`m${i}`],
-        memberDetails: [
-          {
-            memberId: `m${i}`,
-            memberName: `Member ${i}`,
-            niveauMatch: 80,
-            wishPartnerFulfilled: false,
-          },
-        ],
-        warnings: [],
-      });
-    }
+      })
+    );
+    const trainers = [{ id: 't1', name: 'Trainer A', max_hours_per_week: 20 }];
 
-    for (const a of assignments) {
-      trainerSessions.set(a.trainerId, (trainerSessions.get(a.trainerId) || 0) + 1);
-    }
-
-    const sessions = trainerSessions.get('t1') || 0;
-    const hoursAssigned = sessions * 1.5;
-    const maxHours = 20 * 0.8; // 20h max * 80% = 16h
-
-    expect(sessions).toBe(15);
-    expect(hoursAssigned).toBe(22.5);
-    expect(hoursAssigned > maxHours).toBe(true);
+    const findings = detectTrainerOverLimit(assignments, trainers, config);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].sessions).toBe(15);
+    expect(findings[0].hoursAssigned).toBe(22.5);
+    expect(findings[0].maxHours).toBe(16);
   });
 
   it('should pass when trainer is within limits', () => {
-    const sessions = 10; // 10 sessions * 1.5h = 15h
-    const hoursAssigned = sessions * 1.5;
-    const maxHours = 20 * 0.8; // 16h
+    // 10 sessions à 1.5h = 15h ≤ 16h
+    const assignments = Array.from({ length: 10 }, (_, i) =>
+      makeAssignment({ groupId: `g${i}`, dayOfWeek: i % 7, memberIds: [`m${i}`] })
+    );
+    const trainers = [{ id: 't1', name: 'Trainer A', max_hours_per_week: 20 }];
 
-    expect(hoursAssigned).toBe(15);
-    expect(hoursAssigned <= maxHours).toBe(true);
+    expect(detectTrainerOverLimit(assignments, trainers, config)).toHaveLength(0);
+  });
+
+  it('should respect configured slot duration (60min slots)', () => {
+    // 10 sessions à 1h = 10h > 10h * 80% = 8h
+    const assignments = Array.from({ length: 10 }, (_, i) =>
+      makeAssignment({ groupId: `g${i}`, dayOfWeek: i % 7, memberIds: [`m${i}`] })
+    );
+    const trainers = [{ id: 't1', name: 'Trainer A', max_hours_per_week: 10 }];
+
+    const findings = detectTrainerOverLimit(assignments, trainers, {
+      slotDurationMinutes: 60,
+      trainerUtilizationMaxPct: 80,
+    });
+    expect(findings).toHaveLength(1);
+    expect(findings[0].hoursAssigned).toBe(10);
+    expect(findings[0].maxHours).toBe(8);
+  });
+
+  it('should not flag trainers without sessions', () => {
+    const trainers = [
+      { id: 't1', name: 'Trainer A', max_hours_per_week: 20 },
+      { id: 't2', name: 'Trainer B', max_hours_per_week: 5 },
+    ];
+    expect(detectTrainerOverLimit([], trainers, config)).toHaveLength(0);
   });
 });
 
-describe('court double-booking detection', () => {
+// ============================================
+// TESTS: court double-booking
+// ============================================
+
+describe('detectCourtDoubleBookings', () => {
   it('should detect same court booked twice at same time', () => {
-    const assignments: MockAssignment[] = [
-      {
-        groupId: 'g1',
-        groupName: 'Group 1',
-        trainerId: 't1',
-        trainerName: 'Trainer A',
-        dayOfWeek: 4,
-        startTime: '17:00',
-        endTime: '18:30',
-        courtId: 'c1',
-        courtName: 'Court 1',
-        memberIds: ['m1'],
-        memberDetails: [
-          { memberId: 'm1', memberName: 'Alice', niveauMatch: 80, wishPartnerFulfilled: false },
-        ],
-        warnings: [],
-      },
-      {
+    const assignments = [
+      makeAssignment({ groupId: 'g1', courtId: 'c1', courtName: 'Court 1' }),
+      makeAssignment({
         groupId: 'g2',
         groupName: 'Group 2',
         trainerId: 't2',
         trainerName: 'Trainer B',
-        dayOfWeek: 4,
-        startTime: '17:00',
-        endTime: '18:30',
         courtId: 'c1', // Same court!
         courtName: 'Court 1',
         memberIds: ['m2'],
-        memberDetails: [
-          { memberId: 'm2', memberName: 'Bob', niveauMatch: 80, wishPartnerFulfilled: false },
-        ],
-        warnings: [],
+      }),
+    ];
+
+    const doubleBooked = detectCourtDoubleBookings(assignments);
+    expect(doubleBooked).toHaveLength(1);
+    expect(doubleBooked[0][0].courtName).toBe('Court 1');
+  });
+
+  it('should not flag different courts', () => {
+    const assignments = [
+      makeAssignment({ groupId: 'g1', courtId: 'c1', courtName: 'Court 1' }),
+      makeAssignment({
+        groupId: 'g2',
+        trainerId: 't2',
+        trainerName: 'Trainer B',
+        courtId: 'c2',
+        courtName: 'Court 2',
+        memberIds: ['m2'],
+      }),
+    ];
+
+    expect(detectCourtDoubleBookings(assignments)).toHaveLength(0);
+  });
+
+  it('should flag two assignments that overlap the same existing plan entry', () => {
+    // Plan entries key by the entry's startTime, so a single overlapping
+    // assignment would only fill a length-1 bucket. Two assignments that both
+    // overlap the same entry land in the same bucket → flagged.
+    const assignments = [
+      makeAssignment({
+        groupId: 'g1',
+        courtId: 'c1',
+        courtName: 'Court 1',
+        startTime: '17:00',
+        endTime: '18:30',
+      }),
+      makeAssignment({
+        groupId: 'g2',
+        groupName: 'Group 2',
+        trainerId: 't2',
+        trainerName: 'Trainer B',
+        courtId: 'c1',
+        courtName: 'Court 1',
+        startTime: '17:15',
+        endTime: '18:45',
+        memberIds: ['m2'],
+      }),
+    ];
+    const existingPlanEntries: ExistingPlanEntry[] = [
+      {
+        trainer_id: 't9',
+        court_id: 'c1', // same court
+        day_of_week: 2,
+        start_time: '17:30', // overlaps both assignments
+        end_time: '19:00',
       },
     ];
 
-    const courtSlotMap = new Map<string, MockAssignment[]>();
-    for (const a of assignments) {
-      if (!a.courtId) continue;
-      const key = `${a.courtId}_${a.dayOfWeek}_${a.startTime}`;
-      const existing = courtSlotMap.get(key) || [];
-      existing.push(a);
-      courtSlotMap.set(key, existing);
-    }
-
-    const doubleBooked = [...courtSlotMap.values()].filter((g) => g.length > 1);
-    expect(doubleBooked.length).toBe(1);
-    expect(doubleBooked[0][0].courtName).toBe('Court 1');
+    const doubleBooked = detectCourtDoubleBookings(assignments, existingPlanEntries);
+    expect(doubleBooked).toHaveLength(1);
+    expect(doubleBooked[0]).toHaveLength(2);
   });
 });
 
-describe('large niveau span detection', () => {
+// ============================================
+// TESTS: large niveau span
+// ============================================
+
+describe('detectLargeNiveauSpan', () => {
   it('should detect when warnings contain niveau span violation', () => {
-    const assignments: MockAssignment[] = [
-      {
+    const assignments = [
+      makeAssignment({
         groupId: 'g1',
         groupName: 'Mixed Level Group',
-        trainerId: 't1',
-        trainerName: 'Trainer A',
-        dayOfWeek: 1,
-        startTime: '17:00',
-        endTime: '18:30',
-        courtId: null,
-        courtName: null,
-        memberIds: ['m1', 'm2', 'm3'],
-        memberDetails: [
-          { memberId: 'm1', memberName: 'Alice', niveauMatch: 60, wishPartnerFulfilled: false },
-          { memberId: 'm2', memberName: 'Bob', niveauMatch: 60, wishPartnerFulfilled: false },
-          { memberId: 'm3', memberName: 'Charlie', niveauMatch: 40, wishPartnerFulfilled: false },
-        ],
         warnings: ['Niveau-Spanne (1-48 Monate) überschreitet Maximum (4)'],
-      },
+      }),
     ];
 
-    const niveauViolations = assignments.filter((a) =>
-      a.warnings.some((w) => w.includes('Niveau-Spanne'))
-    );
-    expect(niveauViolations.length).toBe(1);
+    expect(detectLargeNiveauSpan(assignments)).toHaveLength(1);
   });
 
   it('should pass when no niveau warnings', () => {
-    const assignments: MockAssignment[] = [
-      {
-        groupId: 'g1',
-        groupName: 'Homogeneous Group',
-        trainerId: 't1',
-        trainerName: 'Trainer A',
-        dayOfWeek: 1,
-        startTime: '17:00',
-        endTime: '18:30',
-        courtId: null,
-        courtName: null,
-        memberIds: ['m1', 'm2'],
-        memberDetails: [
-          { memberId: 'm1', memberName: 'Alice', niveauMatch: 95, wishPartnerFulfilled: false },
-          { memberId: 'm2', memberName: 'Bob', niveauMatch: 95, wishPartnerFulfilled: false },
-        ],
-        warnings: [],
-      },
-    ];
-
-    const niveauViolations = assignments.filter((a) =>
-      a.warnings.some((w) => w.includes('Niveau-Spanne'))
-    );
-    expect(niveauViolations.length).toBe(0);
+    const assignments = [makeAssignment({ groupId: 'g1', groupName: 'Homogeneous Group' })];
+    expect(detectLargeNiveauSpan(assignments)).toHaveLength(0);
   });
 });

@@ -1,92 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { format } from 'date-fns';
+import {
+  PRESET_STARTS,
+  getMonday,
+  getWeeksInMonth,
+  addCustomSlot,
+  removeSlotById,
+  updateSlotById,
+  togglePresetSlot,
+  groupSlotsByDay,
+  fetchAvailabilitySlots,
+  saveAvailabilitySlots,
+  applyToAllWeeksInMonth,
+} from '@/lib/trainer-availability';
+import type { AvailabilitySlot } from '@/lib/trainer-availability';
 
-/* ── Mock apiFetch ── */
+/* ── Mock apiFetch (injected into the lib functions) ── */
 
 const mockApiFetch = vi.fn();
-vi.mock('@/lib/api-fetch', () => ({
-  apiFetch: (...args: unknown[]) => mockApiFetch(...args),
-}));
-
-/* ── Replicated pure logic from trainer-availability-manager.tsx ── */
-
-interface AvailabilitySlot {
-  id: string;
-  weekday: number;
-  fromTime: string;
-  untilTime: string;
-  isAvailable: boolean;
-}
-
-const PRESET_STARTS = ['08:00', '09:30', '11:00', '13:00', '14:30', '16:00', '17:30', '19:00'];
-
-function addCustomSlot(
-  slots: AvailabilitySlot[],
-  weekday: number,
-  now: number = Date.now()
-): AvailabilitySlot[] {
-  return [
-    ...slots,
-    {
-      id: `custom-${now}`,
-      weekday,
-      fromTime: '08:00',
-      untilTime: '10:00',
-      isAvailable: true,
-    },
-  ];
-}
-
-function removeSlotById(slots: AvailabilitySlot[], id: string): AvailabilitySlot[] {
-  return slots.filter((s) => s.id !== id);
-}
-
-function updateSlotById(
-  slots: AvailabilitySlot[],
-  id: string,
-  field: keyof AvailabilitySlot,
-  value: string | number | boolean
-): AvailabilitySlot[] {
-  return slots.map((s) => (s.id === id ? { ...s, [field]: value } : s));
-}
-
-function togglePresetSlot(
-  slots: AvailabilitySlot[],
-  weekday: number,
-  start: string
-): AvailabilitySlot[] {
-  const [h, m] = start.split(':').map(Number);
-  const end = `${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-
-  const exists = slots.some(
-    (s) => s.weekday === weekday && s.fromTime === start && s.untilTime === end
-  );
-  if (exists) {
-    return slots.filter(
-      (s) => !(s.weekday === weekday && s.fromTime === start && s.untilTime === end)
-    );
-  }
-  return [
-    ...slots,
-    {
-      id: `preset-${weekday}-${start}`,
-      weekday,
-      fromTime: start,
-      untilTime: end,
-      isAvailable: true,
-    },
-  ];
-}
-
-function groupSlotsByDay(slots: AvailabilitySlot[]): Map<number, AvailabilitySlot[]> {
-  const map = new Map<number, AvailabilitySlot[]>();
-  slots.forEach((slot) => {
-    const daySlots = map.get(slot.weekday) || [];
-    daySlots.push(slot);
-    map.set(slot.weekday, daySlots);
-  });
-  return map;
-}
 
 /* ── Test fixtures ── */
 
@@ -355,138 +286,9 @@ function mockResponse(status: number, body: unknown): Response {
   } as Response;
 }
 
-/* ── Replicated async logic (mocked apiFetch) ── */
+/* ── fetchAvailabilitySlots (async, mocked apiFetch) ── */
 
-async function fetchSlots(
-  weekStart: Date,
-  weekEnd: Date
-): Promise<{ slots: AvailabilitySlot[]; message: string | null }> {
-  const fromStr = format(weekStart, 'yyyy-MM-dd');
-  const toStr = format(weekEnd, 'yyyy-MM-dd');
-  const url = `/api/trainer/availability?from=${fromStr}&to=${toStr}`;
-  const res = await mockApiFetch(url);
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({}));
-    if (res.status === 403 || res.status === 404) {
-      return {
-        slots: [],
-        message:
-          errData.error ?? 'Kein Trainer-Profil gefunden. Bitte wende dich an den Administrator.',
-      };
-    }
-    throw new Error(errData.error ?? 'Fehler beim Laden');
-  }
-  const data = await res.json();
-  const apiSlots: any[] = data.slots || [];
-  const converted: AvailabilitySlot[] = apiSlots.map((s: any) => ({
-    id: s.id ?? `api-${s.date}-${s.start_time}`,
-    weekday: new Date(s.date).getDay(),
-    fromTime: s.start_time?.slice(0, 5) ?? '00:00',
-    untilTime: s.end_time?.slice(0, 5) ?? '00:00',
-    isAvailable: s.status === 'available',
-  }));
-  return { slots: converted, message: null };
-}
-
-/**
- * Replicated saveSlots: GET existing → POST new → DELETE removed.
- */
-async function saveSlots(
-  slots: AvailabilitySlot[],
-  weekStart: Date,
-  weekEnd: Date
-): Promise<{ message: string }> {
-  const fromStr = format(weekStart, 'yyyy-MM-dd');
-  const toStr = format(weekEnd, 'yyyy-MM-dd');
-
-  // 1. Fetch existing
-  const existingUrl = `/api/trainer/availability?from=${fromStr}&to=${toStr}`;
-  let existingData: any = { slots: [] };
-  try {
-    const existingRes = await mockApiFetch(existingUrl);
-    existingData = existingRes.ok
-      ? await existingRes.json().catch(() => ({ slots: [] }))
-      : { slots: [] };
-  } catch {
-    /* GET failed → treat as empty */
-  }
-
-  const existingKeys = new Set(
-    (existingData.slots || []).map(
-      (s: any) => `${s.date}|${s.start_time?.slice(0, 5)}|${s.end_time?.slice(0, 5)}`
-    )
-  );
-
-  // 2. Build UI keys
-  const uiKeys = new Set(
-    slots.map((s) => `${slotDate(weekStart, s.weekday)}|${s.fromTime}|${s.untilTime}`)
-  );
-
-  // 3. DELETE API slots not in UI (DELETE before POST to avoid conflicts)
-  let deleted = 0;
-  const deleteErrors: string[] = [];
-  for (const existing of existingData.slots || []) {
-    const ek = `${existing.date}|${existing.start_time?.slice(0, 5)}|${existing.end_time?.slice(0, 5)}`;
-    if (!uiKeys.has(ek)) {
-      const delRes = await mockApiFetch(`/api/trainer/availability/${existing.id}`, {
-        method: 'DELETE',
-      });
-      if (delRes.ok) {
-        deleted++;
-      } else if (delRes.status !== 409) {
-        deleteErrors.push(`${existing.date}: ${delRes.status}`);
-      }
-    }
-  }
-
-  // 4. POST new slots
-  let created = 0;
-  let skipped = 0;
-
-  for (const slot of slots) {
-    const date = slotDate(weekStart, slot.weekday);
-    const key = `${date}|${slot.fromTime}|${slot.untilTime}`;
-    if (existingKeys.has(key)) {
-      skipped++;
-      continue;
-    }
-
-    const postRes = await mockApiFetch('/api/trainer/availability', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        date,
-        start_time: slot.fromTime,
-        end_time: slot.untilTime,
-        notes: null,
-      }),
-    });
-
-    if (postRes.ok) {
-      created++;
-    } else if (postRes.status === 409) {
-      skipped++;
-    } else {
-      throw new Error('Fehler beim Speichern');
-    }
-  }
-
-  // 5. Build message
-  const parts: string[] = [];
-  if (created > 0) parts.push(`${created} gespeichert`);
-  if (skipped > 0) parts.push(`${skipped} bereits vorhanden`);
-  if (deleted > 0) parts.push(`${deleted} gelöscht`);
-
-  if (deleteErrors.length > 0) {
-    return { message: `Fehler: ${deleteErrors.join('; ')}` };
-  }
-  if (created === 0 && skipped === 0 && deleted === 0) return { message: 'Keine Änderungen' };
-  return { message: `${parts.join(', ')} ✓` };
-}
-
-/* ── Fetch tests ── */
-
-describe('fetchSlots (async, mocked apiFetch)', () => {
+describe('fetchAvailabilitySlots', () => {
   const weekStart = new Date(2026, 5, 8);
   const weekEnd = new Date(2026, 5, 14);
 
@@ -510,13 +312,19 @@ describe('fetchSlots (async, mocked apiFetch)', () => {
         ],
       })
     );
-    const result = await fetchSlots(weekStart, weekEnd);
+    const result = await fetchAvailabilitySlots(mockApiFetch, weekStart, weekEnd);
     expect(result.slots).toHaveLength(1);
     expect(result.slots[0].weekday).toBe(1);
     expect(result.slots[0].fromTime).toBe('08:00');
     expect(result.slots[0].untilTime).toBe('09:00');
     expect(result.slots[0].isAvailable).toBe(true);
     expect(result.message).toBeNull();
+  });
+
+  it('passes through maxHoursPerWeek from the API', async () => {
+    mockApiFetch.mockResolvedValueOnce(mockResponse(200, { slots: [], maxHoursPerWeek: 12 }));
+    const result = await fetchAvailabilitySlots(mockApiFetch, weekStart, weekEnd);
+    expect(result.maxHoursPerWeek).toBe(12);
   });
 
   it('maps booked status to isAvailable=false', async () => {
@@ -535,14 +343,14 @@ describe('fetchSlots (async, mocked apiFetch)', () => {
         ],
       })
     );
-    const result = await fetchSlots(weekStart, weekEnd);
+    const result = await fetchAvailabilitySlots(mockApiFetch, weekStart, weekEnd);
     expect(result.slots[0].isAvailable).toBe(false);
     expect(result.slots[0].weekday).toBe(2);
   });
 
   it('includes from/to query params in URL', async () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { slots: [] }));
-    await fetchSlots(weekStart, weekEnd);
+    await fetchAvailabilitySlots(mockApiFetch, weekStart, weekEnd);
     expect(mockApiFetch).toHaveBeenCalledWith(
       '/api/trainer/availability?from=2026-06-08&to=2026-06-14'
     );
@@ -550,54 +358,60 @@ describe('fetchSlots (async, mocked apiFetch)', () => {
 
   it('returns empty slots array when response has no slots key', async () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, {}));
-    const result = await fetchSlots(weekStart, weekEnd);
+    const result = await fetchAvailabilitySlots(mockApiFetch, weekStart, weekEnd);
     expect(result.slots).toEqual([]);
   });
 
   it('returns empty slots array when response has null slots', async () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { slots: null }));
-    const result = await fetchSlots(weekStart, weekEnd);
+    const result = await fetchAvailabilitySlots(mockApiFetch, weekStart, weekEnd);
     expect(result.slots).toEqual([]);
   });
 
   it('returns info message on 403 (trainer profile missing)', async () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(403, { error: 'Kein Trainer-Profil' }));
-    const result = await fetchSlots(weekStart, weekEnd);
+    const result = await fetchAvailabilitySlots(mockApiFetch, weekStart, weekEnd);
     expect(result.slots).toEqual([]);
     expect(result.message).toBe('Kein Trainer-Profil');
   });
 
   it('returns default message on 403 when no error body', async () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(403, {}));
-    const result = await fetchSlots(weekStart, weekEnd);
+    const result = await fetchAvailabilitySlots(mockApiFetch, weekStart, weekEnd);
     expect(result.message).toContain('Kein Trainer-Profil gefunden');
   });
 
   it('returns info message on 404 (trainer not found)', async () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(404, { error: 'Nicht gefunden' }));
-    const result = await fetchSlots(weekStart, weekEnd);
+    const result = await fetchAvailabilitySlots(mockApiFetch, weekStart, weekEnd);
     expect(result.slots).toEqual([]);
     expect(result.message).toBe('Nicht gefunden');
   });
 
   it('throws on 500 error', async () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(500, { error: 'Server-Fehler' }));
-    await expect(fetchSlots(weekStart, weekEnd)).rejects.toThrow('Server-Fehler');
+    await expect(fetchAvailabilitySlots(mockApiFetch, weekStart, weekEnd)).rejects.toThrow(
+      'Server-Fehler'
+    );
   });
 
   it('throws generic error when response has no error body on server error', async () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(500, {}));
-    await expect(fetchSlots(weekStart, weekEnd)).rejects.toThrow('Fehler beim Laden');
+    await expect(fetchAvailabilitySlots(mockApiFetch, weekStart, weekEnd)).rejects.toThrow(
+      'Fehler beim Laden'
+    );
   });
 
   it('throws on network error (apiFetch rejects)', async () => {
     mockApiFetch.mockRejectedValueOnce(new Error('Network Error'));
-    await expect(fetchSlots(weekStart, weekEnd)).rejects.toThrow('Network Error');
+    await expect(fetchAvailabilitySlots(mockApiFetch, weekStart, weekEnd)).rejects.toThrow(
+      'Network Error'
+    );
   });
 
   it('calls apiFetch exactly once', async () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { slots: [] }));
-    await fetchSlots(weekStart, weekEnd);
+    await fetchAvailabilitySlots(mockApiFetch, weekStart, weekEnd);
     expect(mockApiFetch).toHaveBeenCalledTimes(1);
   });
 
@@ -617,14 +431,14 @@ describe('fetchSlots (async, mocked apiFetch)', () => {
         ],
       })
     );
-    const result = await fetchSlots(weekStart, weekEnd);
+    const result = await fetchAvailabilitySlots(mockApiFetch, weekStart, weekEnd);
     expect(result.slots[0].weekday).toBe(0);
   });
 });
 
-/* ── Save tests (with DELETE) ── */
+/* ── saveAvailabilitySlots (async, mocked apiFetch) ── */
 
-describe('saveSlots (async, mocked apiFetch)', () => {
+describe('saveAvailabilitySlots', () => {
   const weekStart = new Date(2026, 5, 8);
   const weekEnd = new Date(2026, 5, 14);
 
@@ -641,7 +455,7 @@ describe('saveSlots (async, mocked apiFetch)', () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { slots: [] }));
     mockApiFetch.mockResolvedValueOnce(mockResponse(201, { slot: { id: 'new-1' } }));
     mockApiFetch.mockResolvedValueOnce(mockResponse(201, { slot: { id: 'new-2' } }));
-    const result = await saveSlots(testSlots, weekStart, weekEnd);
+    const result = await saveAvailabilitySlots(mockApiFetch, testSlots, weekStart, weekEnd);
     expect(result.message).toBe('2 gespeichert ✓');
     expect(mockApiFetch).toHaveBeenCalledTimes(3); // 1 GET + 2 POSTs
   });
@@ -653,7 +467,7 @@ describe('saveSlots (async, mocked apiFetch)', () => {
       })
     );
     mockApiFetch.mockResolvedValueOnce(mockResponse(201, { slot: { id: 'new' } }));
-    const result = await saveSlots(testSlots, weekStart, weekEnd);
+    const result = await saveAvailabilitySlots(mockApiFetch, testSlots, weekStart, weekEnd);
     expect(result.message).toBe('1 gespeichert, 1 bereits vorhanden ✓');
     expect(mockApiFetch).toHaveBeenCalledTimes(2);
   });
@@ -667,21 +481,21 @@ describe('saveSlots (async, mocked apiFetch)', () => {
         ],
       })
     );
-    const result = await saveSlots(testSlots, weekStart, weekEnd);
+    const result = await saveAvailabilitySlots(mockApiFetch, testSlots, weekStart, weekEnd);
     expect(result.message).toBe('2 bereits vorhanden ✓');
     expect(mockApiFetch).toHaveBeenCalledTimes(1);
   });
 
   it('returns "Keine Änderungen" when saving empty with no existing', async () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { slots: [] }));
-    const result = await saveSlots([], weekStart, weekEnd);
+    const result = await saveAvailabilitySlots(mockApiFetch, [], weekStart, weekEnd);
     expect(result.message).toBe('Keine Änderungen');
   });
 
   it('posts individual slots with date computed from weekday', async () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { slots: [] }));
     mockApiFetch.mockResolvedValueOnce(mockResponse(201, {}));
-    await saveSlots([testSlots[0]], weekStart, weekEnd);
+    await saveAvailabilitySlots(mockApiFetch, [testSlots[0]], weekStart, weekEnd);
     expect(mockApiFetch).toHaveBeenNthCalledWith(2, '/api/trainer/availability', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -697,22 +511,22 @@ describe('saveSlots (async, mocked apiFetch)', () => {
   it('handles 409 overlap as skip (not error)', async () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { slots: [] }));
     mockApiFetch.mockResolvedValueOnce(mockResponse(409, { error: 'Zeitkonflikt' }));
-    const result = await saveSlots([testSlots[0]], weekStart, weekEnd);
+    const result = await saveAvailabilitySlots(mockApiFetch, [testSlots[0]], weekStart, weekEnd);
     expect(result.message).toBe('1 bereits vorhanden ✓');
   });
 
-  it('throws on non-409 server error during POST', async () => {
+  it('reports non-409 server error during POST in the message', async () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { slots: [] }));
     mockApiFetch.mockResolvedValueOnce(mockResponse(500, {}));
-    await expect(saveSlots([testSlots[0]], weekStart, weekEnd)).rejects.toThrow(
-      'Fehler beim Speichern'
-    );
+    const result = await saveAvailabilitySlots(mockApiFetch, [testSlots[0]], weekStart, weekEnd);
+    expect(result.message).toContain('Fehler');
+    expect(result.message).toContain('Mo 08:00–09:00');
   });
 
   it('handles GET failure gracefully (treats as empty existing)', async () => {
     mockApiFetch.mockRejectedValueOnce(new Error('GET failed'));
     mockApiFetch.mockResolvedValueOnce(mockResponse(201, { slot: { id: 'new' } }));
-    const result = await saveSlots([testSlots[0]], weekStart, weekEnd);
+    const result = await saveAvailabilitySlots(mockApiFetch, [testSlots[0]], weekStart, weekEnd);
     expect(result.message).toBe('1 gespeichert ✓');
   });
 
@@ -732,7 +546,7 @@ describe('saveSlots (async, mocked apiFetch)', () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { success: true })); // DELETE api-2
 
     const uiSlots = [testSlots[0]]; // only Monday
-    const result = await saveSlots(uiSlots, weekStart, weekEnd);
+    const result = await saveAvailabilitySlots(mockApiFetch, uiSlots, weekStart, weekEnd);
 
     expect(result.message).toContain('1 bereits vorhanden'); // Mon already exists
     expect(result.message).toContain('1 gelöscht'); // Tue deleted
@@ -760,7 +574,7 @@ describe('saveSlots (async, mocked apiFetch)', () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { success: true }));
 
     const uiSlots = [testSlots[0]]; // only Monday
-    const result = await saveSlots(uiSlots, weekStart, weekEnd);
+    const result = await saveAvailabilitySlots(mockApiFetch, uiSlots, weekStart, weekEnd);
 
     expect(result.message).toBe('1 bereits vorhanden, 2 gelöscht ✓');
     expect(mockApiFetch).toHaveBeenCalledTimes(3); // 1 GET + 2 DELETEs
@@ -782,7 +596,7 @@ describe('saveSlots (async, mocked apiFetch)', () => {
     );
 
     const uiSlots = [testSlots[0]];
-    const result = await saveSlots(uiSlots, weekStart, weekEnd);
+    const result = await saveAvailabilitySlots(mockApiFetch, uiSlots, weekStart, weekEnd);
 
     // No "gelöscht" in message — 409 is silently ignored
     expect(result.message).toBe('1 bereits vorhanden ✓');
@@ -801,7 +615,7 @@ describe('saveSlots (async, mocked apiFetch)', () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { success: true }));
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { success: true }));
 
-    const result = await saveSlots([], weekStart, weekEnd);
+    const result = await saveAvailabilitySlots(mockApiFetch, [], weekStart, weekEnd);
     expect(result.message).toBe('2 gelöscht ✓');
     expect(mockApiFetch).toHaveBeenCalledTimes(3);
   });
@@ -820,7 +634,7 @@ describe('saveSlots (async, mocked apiFetch)', () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(500, { error: 'Datenbankfehler' }));
 
     const uiSlots = [testSlots[0]]; // only Monday
-    const result = await saveSlots(uiSlots, weekStart, weekEnd);
+    const result = await saveAvailabilitySlots(mockApiFetch, uiSlots, weekStart, weekEnd);
 
     expect(result.message).toContain('Fehler');
     expect(result.message).toContain('2026-06-09');
@@ -856,7 +670,7 @@ describe('saveSlots (async, mocked apiFetch)', () => {
         isAvailable: true,
       },
     ];
-    const result = await saveSlots(uiSlots, weekStart, weekEnd);
+    const result = await saveAvailabilitySlots(mockApiFetch, uiSlots, weekStart, weekEnd);
 
     expect(result.message).toBe('1 gespeichert, 1 bereits vorhanden, 2 gelöscht ✓');
     expect(mockApiFetch).toHaveBeenCalledTimes(4); // 1 GET + 1 POST + 2 DELETEs
@@ -866,31 +680,6 @@ describe('saveSlots (async, mocked apiFetch)', () => {
 /* ── getWeeksInMonth (pure date math) ── */
 
 describe('getWeeksInMonth', () => {
-  /** Replica: get all Monday dates for weeks overlapping with a month. */
-  function getMonday(date: Date): Date {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + diff);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }
-
-  function getWeeksInMonth(year: number, month: number): Date[] {
-    const weeks: Date[] = [];
-    const firstMonday = getMonday(new Date(year, month, 1));
-    const lastDayOfMonth = new Date(year, month + 1, 0);
-    const monday = new Date(firstMonday);
-    while (
-      format(monday, 'yyyy-MM-dd') <= format(lastDayOfMonth, 'yyyy-MM-dd') &&
-      weeks.length < 6
-    ) {
-      weeks.push(new Date(monday));
-      monday.setDate(monday.getDate() + 7);
-    }
-    return weeks;
-  }
-
   it('returns 5 Mondays for June 2026 (June 1 = Monday)', () => {
     const weeks = getWeeksInMonth(2026, 5); // June 2026
     // June 1 = Monday → weeks: Jun 1, 8, 15, 22, 29
@@ -911,10 +700,11 @@ describe('getWeeksInMonth', () => {
     }
   });
 
-  it('limits to max 6 weeks', () => {
-    // March 2026 spans at most 5 weeks starting Monday
+  it('limits to max 6 weeks (March 2026 spans exactly 6 Mondays)', () => {
+    // March 2026 starts on a Sunday → first Monday is Feb 23; the Mondays
+    // Feb 23, Mar 2, 9, 16, 23, 30 all overlap March = exactly 6 weeks.
     const weeks = getWeeksInMonth(2026, 2);
-    expect(weeks.length).toBeLessThanOrEqual(6);
+    expect(weeks.length).toBe(6);
   });
 
   it('each result is a Monday', () => {
@@ -923,100 +713,18 @@ describe('getWeeksInMonth', () => {
       expect(w.getDay()).toBe(1); // Monday
     }
   });
+
+  it('getMonday returns Monday 00:00 for any input day', () => {
+    const monday = getMonday(new Date(2026, 5, 11)); // Thursday June 11
+    expect(monday.getDay()).toBe(1);
+    expect(monday.getHours()).toBe(0);
+    expect(format(monday, 'yyyy-MM-dd')).toBe('2026-06-08');
+  });
 });
 
 /* ── applyToAllWeeksInMonth (async, mocked apiFetch) ── */
 
-async function fetchExistingKeysReplica(weekStart: Date): Promise<Set<string>> {
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 6);
-  try {
-    const res = await mockApiFetch(
-      `/api/trainer/availability?from=${format(weekStart, 'yyyy-MM-dd')}&to=${format(weekEnd, 'yyyy-MM-dd')}`
-    );
-    const data = res.ok ? await res.json().catch(() => ({ slots: [] })) : { slots: [] };
-    return new Set(
-      (data.slots || []).map(
-        (s: any) => `${s.date}|${s.start_time?.slice(0, 5)}|${s.end_time?.slice(0, 5)}`
-      )
-    );
-  } catch {
-    return new Set();
-  }
-}
-
-async function applyToAllWeeksInMonth(
-  slots: AvailabilitySlot[],
-  month: number,
-  year: number,
-  currentWeekStart: Date
-): Promise<{ message: string; created: number; skipped: number }> {
-  const weeks: Date[] = [];
-  const getMondayLocal = (date: Date): Date => {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + diff);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  };
-  const firstMonday = getMondayLocal(new Date(year, month, 1));
-  const lastDayOfMonth = new Date(year, month + 1, 0);
-  const monday = new Date(firstMonday);
-  while (format(monday, 'yyyy-MM-dd') <= format(lastDayOfMonth, 'yyyy-MM-dd') && weeks.length < 6) {
-    weeks.push(new Date(monday));
-    monday.setDate(monday.getDate() + 7);
-  }
-
-  let totalCreated = 0;
-  let totalSkipped = 0;
-  const errorDates: string[] = [];
-
-  for (const weekStart of weeks) {
-    if (format(weekStart, 'yyyy-MM-dd') === format(currentWeekStart, 'yyyy-MM-dd')) continue;
-
-    const existingKeys = await fetchExistingKeysReplica(weekStart);
-
-    for (const slot of slots) {
-      const date = slotDate(weekStart, slot.weekday);
-      const key = `${date}|${slot.fromTime}|${slot.untilTime}`;
-      if (existingKeys.has(key)) {
-        totalSkipped++;
-        continue;
-      }
-
-      const res = await mockApiFetch('/api/trainer/availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date,
-          start_time: slot.fromTime,
-          end_time: slot.untilTime,
-          notes: null,
-        }),
-      });
-
-      if (res.ok) {
-        totalCreated++;
-      } else if (res.status === 409) {
-        totalSkipped++;
-      } else {
-        errorDates.push(date);
-      }
-    }
-  }
-
-  const parts: string[] = [];
-  if (totalCreated > 0) parts.push(`${totalCreated} Slots erstellt`);
-  if (totalSkipped > 0) parts.push(`${totalSkipped} bereits vorhanden`);
-  if (errorDates.length > 0) parts.push(`${errorDates.length} Fehler`);
-
-  if (parts.length === 0)
-    return { message: 'Alle Wochen im Monat bereits konfiguriert', created: 0, skipped: 0 };
-  return { message: `${parts.join(', ')} ✓`, created: totalCreated, skipped: totalSkipped };
-}
-
-describe('applyToAllWeeksInMonth (async, mocked apiFetch)', () => {
+describe('applyToAllWeeksInMonth', () => {
   const currentWeekStart = new Date(2026, 5, 8); // Monday June 8 2026
 
   beforeEach(() => {
@@ -1035,7 +743,7 @@ describe('applyToAllWeeksInMonth (async, mocked apiFetch)', () => {
       mockApiFetch.mockResolvedValueOnce(mockResponse(201, { slot: { id: `new-${i}` } })); // POST
     }
 
-    const result = await applyToAllWeeksInMonth(testSlots, 5, 2026, currentWeekStart);
+    const result = await applyToAllWeeksInMonth(mockApiFetch, testSlots, 2026, 5, currentWeekStart);
 
     expect(result.created).toBe(4); // 4 weeks × 1 slot
     expect(result.skipped).toBe(0);
@@ -1061,7 +769,7 @@ describe('applyToAllWeeksInMonth (async, mocked apiFetch)', () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { slots: [] }));
     mockApiFetch.mockResolvedValueOnce(mockResponse(201, { slot: { id: 'new-3' } }));
 
-    const result = await applyToAllWeeksInMonth(testSlots, 5, 2026, currentWeekStart);
+    const result = await applyToAllWeeksInMonth(mockApiFetch, testSlots, 2026, 5, currentWeekStart);
 
     expect(result.created).toBe(3);
     expect(result.skipped).toBe(1);
@@ -1086,7 +794,7 @@ describe('applyToAllWeeksInMonth (async, mocked apiFetch)', () => {
       );
     }
 
-    const result = await applyToAllWeeksInMonth(testSlots, 5, 2026, currentWeekStart);
+    const result = await applyToAllWeeksInMonth(mockApiFetch, testSlots, 2026, 5, currentWeekStart);
 
     expect(result.message).toBe('4 bereits vorhanden ✓');
     expect(result.created).toBe(0);
@@ -1103,7 +811,7 @@ describe('applyToAllWeeksInMonth (async, mocked apiFetch)', () => {
       mockApiFetch.mockResolvedValueOnce(mockResponse(201, { slot: { id: `new-${i}` } }));
     }
 
-    const result = await applyToAllWeeksInMonth(testSlots, 5, 2026, currentWeekStart);
+    const result = await applyToAllWeeksInMonth(mockApiFetch, testSlots, 2026, 5, currentWeekStart);
 
     expect(result.created).toBe(4); // GET failure doesn't block creation
   });
@@ -1115,7 +823,7 @@ describe('applyToAllWeeksInMonth (async, mocked apiFetch)', () => {
       mockApiFetch.mockResolvedValueOnce(mockResponse(409, { error: 'Zeitkonflikt' }));
     }
 
-    const result = await applyToAllWeeksInMonth(testSlots, 5, 2026, currentWeekStart);
+    const result = await applyToAllWeeksInMonth(mockApiFetch, testSlots, 2026, 5, currentWeekStart);
 
     expect(result.created).toBe(0);
     expect(result.skipped).toBe(4);
@@ -1143,7 +851,13 @@ describe('applyToAllWeeksInMonth (async, mocked apiFetch)', () => {
     mockApiFetch.mockResolvedValueOnce(mockResponse(201, {})); // POST Mon Jun 29
     mockApiFetch.mockResolvedValueOnce(mockResponse(201, {})); // POST Wed Jul 1
 
-    const result = await applyToAllWeeksInMonth(multiSlots, 5, 2026, currentWeekStart);
+    const result = await applyToAllWeeksInMonth(
+      mockApiFetch,
+      multiSlots,
+      2026,
+      5,
+      currentWeekStart
+    );
 
     expect(result.created).toBe(8); // 4 non-current weeks × 2 slots
     // Verify Monday Jun 1 POST
@@ -1171,7 +885,7 @@ describe('applyToAllWeeksInMonth (async, mocked apiFetch)', () => {
       mockApiFetch.mockResolvedValueOnce(mockResponse(201, { slot: { id: `ok-${i}` } }));
     }
 
-    const result = await applyToAllWeeksInMonth(testSlots, 5, 2026, currentWeekStart);
+    const result = await applyToAllWeeksInMonth(mockApiFetch, testSlots, 2026, 5, currentWeekStart);
 
     expect(result.created).toBe(3); // 3 successful weeks
     expect(result.message).toContain('1 Fehler');

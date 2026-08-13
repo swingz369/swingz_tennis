@@ -1,7 +1,8 @@
 /**
  * Tests for lib/services/anonymize.service.ts (F6.1 service skeleton).
  *
- * Mirrors the existing `tests/unit/lib/dsgvo/anonymize-flow.test.ts` style:
+ * Mirrors the existing `src/__tests__/lib/services/` style (konsolidiert; die
+ * frühere `tests/unit/lib/dsgvo/anonymize-flow.test.ts`-Vorlage existiert nicht mehr):
  * stub the persistence layer via `vi.mock` + an in-memory mock chain so
  * we don't need a live Postgres. Tests focus on:
  *

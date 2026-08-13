@@ -10,8 +10,9 @@ export default defineConfig({
     setupFiles: ['./src/__tests__/setup.ts'],
     globalSetup: './src/__tests__/global-setup.ts',
     include: [
+      // Single canonical unit-test tree (consolidated 2026-08-13: former
+      // `tests/unit/**` was folded into `src/__tests__`).
       'src/**/__tests__/**/*.test.{ts,tsx}',
-      'tests/unit/**/*.test.{ts,tsx}',
       // e2e/**/*.test.ts need a live `npm run dev` server (see each file's header) —
       // only included when explicitly opted into via `npm run test:e2e-browser`,
       // so a plain `vitest run` doesn't falsely report them as broken.

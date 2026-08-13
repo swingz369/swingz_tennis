@@ -1,6 +1,7 @@
 /**
  * ════════════════════════════════════════════════════════════════════════════════
- * tests/unit/app/api/webhooks/booking-completed/route.test.ts
+ * src/__tests__/api/webhooks-booking-completed.route.test.ts
+ * (konsolidiert aus tests/unit/app/api/webhooks/booking-completed/route.test.ts)
  * ════════════════════════════════════════════════════════════════════════════════
  *
  * UNIT-TESTS FOR: app/api/webhooks/booking-completed/route.ts
@@ -25,10 +26,10 @@
  *     return-shape of setLight/unlockCourt/lockCourt per vendor
  *
  * NOTE — RUNTIME EXPECTATION
- *   These tests follow the existing repo convention (tests/unit/lib/hardware/adapter.test.ts).
+ *   These tests follow the existing repo convention (src/__tests__/lib/hardware/adapter.test.ts).
  *   `vitest` deps are NOT installed in the current sandbox session, so this file
  *   is shipped per the same AKZ-deferred disclosure pattern as 3.1.1.
- *   Run on dev-machine: `npx vitest run tests/unit/app/api/webhooks/booking-completed/route.test.ts`.
+ *   Run on dev-machine: `npx vitest run src/__tests__/api/webhooks-booking-completed.route.test.ts`.
  *
  * ════════════════════════════════════════════════════════════════════════════════
  */

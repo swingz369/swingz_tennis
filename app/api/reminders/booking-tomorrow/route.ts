@@ -22,21 +22,21 @@ class TempSessionRepository implements ISessionRepository {
   async findSessionsForDateRange(startDate: Date, endDate: Date): Promise<Session[]> {
     const { createClient } = await import('@/infrastructure/external/supabase/server');
     const supabase = await createClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('sessions')
       .select('*, trainers(*), courts(*), clubs(*)')
       .gte('timeslot_start', startDate.toISOString())
       .lte('timeslot_end', endDate.toISOString());
+    if (error) {
+      throw new Error(`Failed to load sessions: ${error.message}`);
+    }
     return (data || []).map((session): Session => {
       const trainer = (Array.isArray(session.trainers) ? session.trainers[0] : session.trainers) as
-        | { name: string; email?: string }
-        | undefined;
+        { name: string; email?: string } | undefined;
       const court = (Array.isArray(session.courts) ? session.courts[0] : session.courts) as
-        | { name: string }
-        | undefined;
+        { name: string } | undefined;
       const club = (Array.isArray(session.clubs) ? session.clubs[0] : session.clubs) as
-        | { name: string }
-        | undefined;
+        { name: string } | undefined;
       return {
         id: session.id,
         timeslot_start: session.timeslot_start,
@@ -55,19 +55,20 @@ class TempBookingRepository implements IBookingRepository {
   async findConfirmedBookingsForSessions(sessionIds: string[]): Promise<Booking[]> {
     const { createClient } = await import('@/infrastructure/external/supabase/server');
     const supabase = await createClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('bookings')
       .select('id, member_id, session_id, status')
       .in('session_id', sessionIds)
       .eq('status', 'confirmed');
-    return (data || []).map(
-      (booking): Booking => ({
-        id: booking.id,
-        member_id: booking.member_id ?? '',
-        session_id: booking.session_id ?? '',
-        status: booking.status ?? '',
-      })
-    );
+    if (error) {
+      throw new Error(`Failed to load bookings: ${error.message}`);
+    }
+    return (data || []).map((booking): Booking => ({
+      id: booking.id,
+      member_id: booking.member_id ?? '',
+      session_id: booking.session_id ?? '',
+      status: booking.status ?? '',
+    }));
   }
 }
 
@@ -75,11 +76,14 @@ class TempMemberRepository implements IMemberRepository {
   async findMemberById(memberId: string): Promise<{ email: string; full_name: string } | null> {
     const { createClient } = await import('@/infrastructure/external/supabase/server');
     const supabase = await createClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('users')
       .select('email, full_name')
       .eq('id', memberId)
       .single();
+    if (error) {
+      throw new Error(`Failed to load member ${memberId}: ${error.message}`);
+    }
     if (!data) return null;
     return { email: data.email ?? '', full_name: data.full_name ?? '' };
   }

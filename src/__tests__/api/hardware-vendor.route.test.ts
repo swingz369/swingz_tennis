@@ -1,6 +1,7 @@
 /**
  * ════════════════════════════════════════════════════════════════════════════════
- * tests/unit/app/api/clubs/[id]/hardware-vendor/route.test.ts — Q3 ticket 3.1.3
+ * src/__tests__/api/hardware-vendor.route.test.ts — Q3 ticket 3.1.3
+ * (konsolidiert aus tests/unit/app/api/clubs/[id]/hardware-vendor/route.test.ts)
  * ════════════════════════════════════════════════════════════════════════════════
  *
  * Test-Cases
@@ -23,7 +24,7 @@
  * NOTE — RUNTIME EXPECTATION
  *   Same AKZ-deferred disclosure as 3.1.1/3.1.2:
  *   vitest deps nicht im sandbox installiert → run on dev-machine:
- *   `npx vitest run tests/unit/app/api/clubs/[id]/hardware-vendor/route.test.ts`
+ *   `npx vitest run src/__tests__/api/hardware-vendor.route.test.ts`
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';

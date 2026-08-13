@@ -27,6 +27,11 @@ import {
 import { createLogger } from '@/lib/logger';
 import { DAY_LABELS } from './schedule-constants';
 import { createServiceClient } from '@/lib/supabase/service';
+import {
+  timeSlotsOverlap,
+  computeNiveauMatchScore,
+  sortMembersByPriority,
+} from './clustering-utils';
 
 const log = createLogger('season-clustering-engine');
 import { and, eq, asc, gte, inArray } from 'drizzle-orm';
@@ -1079,20 +1084,7 @@ export class SeasonClusteringEngine {
     for (const m of members) membersById.set(m.id, m);
 
     // Sort members: priority to waitlist-carryovers, then high attendance, then by experience
-    const sortedMembers = [...members].sort((a, b) => {
-      // Priorität 1: Wartelisten-Mitglieder aus Vorsaison
-      const aWait = a.attendanceQuote === null ? 1 : 0; // null means was waitlisted
-      const bWait = b.attendanceQuote === null ? 1 : 0;
-      if (aWait !== bWait) return bWait - aWait;
-
-      // Priorität 2: Höhere Anwesenheitsquote
-      const aAtt = a.attendanceQuote || 0;
-      const bAtt = b.attendanceQuote || 0;
-      if (Math.abs(aAtt - bAtt) > 5) return bAtt - aAtt;
-
-      // Priorität 3: Erfahrung (erfahrenere zuerst)
-      return b.experienceMonths - a.experienceMonths;
-    });
+    const sortedMembers = sortMembersByPriority(members);
 
     // Split members into kids and adults, then by skill level
     const kids = sortedMembers.filter((m) => m.isMinor);
@@ -2281,7 +2273,7 @@ export class SeasonClusteringEngine {
   }
 
   private timeSlotsOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
-    return start1 < end2 && start2 < end1;
+    return timeSlotsOverlap(start1, end1, start2, end2);
   }
 
   // ============================================
@@ -2559,17 +2551,10 @@ export class SeasonClusteringEngine {
     member: MemberWithDetails & { _unassignedReason?: string },
     group: (MemberWithDetails & { _unassignedReason?: string })[]
   ): number {
-    const experiences = group.map((m) => m.experienceMonths);
-    const avg = experiences.reduce((a, b) => a + b, 0) / experiences.length;
-    const maxSpan = Math.max(...experiences) - Math.min(...experiences);
-
-    if (maxSpan === 0) return 100;
-
-    // How close is this member to the group average?
-    const distance = Math.abs(member.experienceMonths - avg);
-    const normalizedDistance = maxSpan > 0 ? distance / (maxSpan / 2) : 0;
-
-    return Math.max(0, Math.min(100, Math.round((1 - normalizedDistance) * 100)));
+    return computeNiveauMatchScore(
+      member.experienceMonths,
+      group.map((m) => m.experienceMonths)
+    );
   }
 
   private buildAssignmentReason(

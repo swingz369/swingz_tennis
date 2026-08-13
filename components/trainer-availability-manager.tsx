@@ -1,17 +1,5 @@
 'use client';
 
-/** Raw API shape for availability slots returned by /api/trainer-availability */
-interface ApiAvailabilitySlot {
-  id: string;
-  date: string;
-  start_time?: string;
-  end_time?: string;
-  status?: string;
-  notes?: string | null;
-  trainer_id?: string;
-  recurring_pattern?: unknown;
-}
-
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getErrorMessage } from '@/lib/typed-helpers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,93 +22,24 @@ import { format } from 'date-fns';
 import { de } from '@/lib/locale';
 
 import { createLogger } from '@/lib/logger';
+import {
+  DAYS,
+  PRESET_STARTS,
+  getMonday,
+  getFirstWeekOfMonth,
+  toDateStr,
+  addCustomSlot,
+  removeSlotById,
+  updateSlotById,
+  togglePresetSlot,
+  groupSlotsByDay,
+  fetchAvailabilitySlots,
+  saveAvailabilitySlots,
+  applyToAllWeeksInMonth,
+} from '@/lib/trainer-availability';
+import type { AvailabilitySlot } from '@/lib/trainer-availability';
 
 const log = createLogger('trainer-availability-manager');
-
-interface AvailabilitySlot {
-  id: string;
-  weekday: number;
-  fromTime: string;
-  untilTime: string;
-  isAvailable: boolean;
-}
-
-const DAYS = [
-  { value: 0, label: 'Sonntag', short: 'So' },
-  { value: 1, label: 'Montag', short: 'Mo' },
-  { value: 2, label: 'Dienstag', short: 'Di' },
-  { value: 3, label: 'Mittwoch', short: 'Mi' },
-  { value: 4, label: 'Donnerstag', short: 'Do' },
-  { value: 5, label: 'Freitag', short: 'Fr' },
-  { value: 6, label: 'Samstag', short: 'Sa' },
-];
-
-const PRESET_STARTS = ['08:00', '09:30', '11:00', '13:00', '14:30', '16:00', '17:30', '19:00'];
-
-// ─── Date helpers ────────────────────────────────────────────────────────────
-
-/** Get Monday 00:00 of the week containing `date`. */
-function getMonday(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay(); // 0=Sun … 6=Sat
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-/** Monday of the first week that overlaps with the given month (1st of month). */
-function getFirstWeekOfMonth(year: number, month: number): Date {
-  return getMonday(new Date(year, month, 1));
-}
-
-/** Format a date as YYYY-MM-DD (used for API params). */
-function toDateStr(d: Date): string {
-  return format(d, 'yyyy-MM-dd');
-}
-
-/** Compute the actual date for a weekday within the given week. */
-function slotDate(weekStart: Date, weekday: number): string {
-  const d = new Date(weekStart);
-  // weekday 0=Sun → +6 days, 1=Mon → +0, 2=Tue → +1, …, 6=Sat → +5
-  const offset = weekday === 0 ? 6 : weekday - 1;
-  d.setDate(d.getDate() + offset);
-  return toDateStr(d);
-}
-
-/** Get all Monday dates for weeks that overlap with the given month. */
-function getWeeksInMonth(year: number, month: number): Date[] {
-  const weeks: Date[] = [];
-  const firstMonday = getFirstWeekOfMonth(year, month);
-  const lastDayOfMonth = new Date(year, month + 1, 0);
-  const monday = new Date(firstMonday);
-
-  while (toDateStr(monday) <= toDateStr(lastDayOfMonth) && weeks.length < 6) {
-    weeks.push(new Date(monday));
-    monday.setDate(monday.getDate() + 7);
-  }
-  return weeks;
-}
-
-/** GET existing slot keys for a given week. */
-async function fetchExistingKeys(weekStart: Date): Promise<Set<string>> {
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 6);
-  try {
-    const res = await apiFetch(
-      `/api/trainer/availability?from=${toDateStr(weekStart)}&to=${toDateStr(weekEnd)}`
-    );
-    const data = res.ok ? await res.json().catch(() => ({ slots: [] })) : { slots: [] };
-    return new Set(
-      (data.slots || []).map(
-        (s: ApiAvailabilitySlot) =>
-          `${s.date}|${s.start_time?.slice(0, 5)}|${s.end_time?.slice(0, 5)}`
-      )
-    );
-  } catch {
-    return new Set();
-  }
-}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -217,33 +136,13 @@ export default function TrainerAvailabilityManager() {
       setLoading(true);
       if (!opts?.silent) setMessage(null);
       try {
-        const fromStr = toDateStr(currentWeekStart);
-        const toStr = toDateStr(weekEnd);
-        const res = await apiFetch(`/api/trainer/availability?from=${fromStr}&to=${toStr}`);
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          if (res.status === 403 || res.status === 404) {
-            setMessage(
-              errData.error ??
-                'Kein Trainer-Profil gefunden. Bitte wende dich an den Administrator.'
-            );
-            setLoading(false);
-            return;
-          }
-          throw new Error(errData.error ?? 'Fehler beim Laden');
+        const result = await fetchAvailabilitySlots(apiFetch, currentWeekStart, weekEnd);
+        if (result.message !== null) {
+          setMessage(result.message);
+          return;
         }
-        const data = await res.json();
-        // Convert date-based API slots -> weekday-based internal slots
-        const apiSlots: ApiAvailabilitySlot[] = data.slots || [];
-        const converted: AvailabilitySlot[] = apiSlots.map((s: ApiAvailabilitySlot) => ({
-          id: s.id ?? `api-${s.date}-${s.start_time}`,
-          weekday: new Date(s.date).getDay(), // 0=Sun … 6=Sat
-          fromTime: s.start_time?.slice(0, 5) ?? '00:00',
-          untilTime: s.end_time?.slice(0, 5) ?? '00:00',
-          isAvailable: s.status === 'available',
-        }));
-        setSlots(converted);
-        setMaxHoursPerWeek((data as { maxHoursPerWeek?: number | null }).maxHoursPerWeek ?? null);
+        setSlots(result.slots);
+        setMaxHoursPerWeek(result.maxHoursPerWeek);
       } catch (err: unknown) {
         setMessage(getErrorMessage(err));
       } finally {
@@ -257,7 +156,7 @@ export default function TrainerAvailabilityManager() {
     fetchSlots();
   }, [fetchSlots]);
 
-  const applyToAllWeeksInMonth = useCallback(async () => {
+  const handleApplyToAllWeeksInMonth = useCallback(async () => {
     if (slots.length === 0) {
       setMessage('Keine Slots zum Kopieren vorhanden');
       setTimeout(() => setMessage(null), 4000);
@@ -268,67 +167,18 @@ export default function TrainerAvailabilityManager() {
     setMessage(null);
 
     try {
-      const weeks = getWeeksInMonth(currentMonth.year, currentMonth.month);
-      const nonCurrentWeeks = weeks.filter((w) => toDateStr(w) !== toDateStr(currentWeekStart));
-      let weekIndex = 0;
-      let totalCreated = 0;
-      let totalSkipped = 0;
-      const errorDates: string[] = [];
-
-      for (const weekStart of nonCurrentWeeks) {
-        weekIndex++;
-        setMessage(`Woche ${weekIndex}/${nonCurrentWeeks.length} bearbeitet…`);
-
-        const existingKeys = await fetchExistingKeys(weekStart);
-
-        for (const slot of slots) {
-          const date = slotDate(weekStart, slot.weekday);
-          const key = `${date}|${slot.fromTime}|${slot.untilTime}`;
-          if (existingKeys.has(key)) {
-            totalSkipped++;
-            continue;
-          }
-
-          try {
-            const res = await apiFetch('/api/trainer/availability', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                date,
-                start_time: slot.fromTime,
-                end_time: slot.untilTime,
-                notes: null,
-              }),
-            });
-
-            if (res.ok) {
-              totalCreated++;
-            } else if (res.status === 409) {
-              totalSkipped++;
-            } else {
-              const errData = await res.json().catch(() => ({}));
-              errorDates.push(`${date}: ${errData.error ?? 'Fehler'}`);
-            }
-          } catch (err: unknown) {
-            errorDates.push(`${date}: ${getErrorMessage(err)}`);
-          }
-        }
+      const result = await applyToAllWeeksInMonth(
+        apiFetch,
+        slots,
+        currentMonth.year,
+        currentMonth.month,
+        currentWeekStart,
+        (weekIndex, totalWeeks) => setMessage(`Woche ${weekIndex}/${totalWeeks} bearbeitet…`)
+      );
+      if (result.errorDates.length > 0) {
+        log.warn('[Availability] Apply-to-month errors:', result.errorDates.slice(0, 5));
       }
-
-      // Build result message
-      const parts: string[] = [];
-      if (totalCreated > 0) parts.push(`${totalCreated} Slots erstellt`);
-      if (totalSkipped > 0) parts.push(`${totalSkipped} bereits vorhanden`);
-      if (errorDates.length > 0) {
-        parts.push(`${errorDates.length} Fehler`);
-        log.warn('[Availability] Apply-to-month errors:', errorDates.slice(0, 5));
-      }
-
-      if (parts.length === 0) {
-        setMessage('Alle Wochen im Monat bereits konfiguriert');
-      } else {
-        setMessage(`${parts.join(', ')} ✓`);
-      }
+      setMessage(result.message);
 
       setTimeout(() => setMessage(null), 6000);
     } catch (err: unknown) {
@@ -341,55 +191,24 @@ export default function TrainerAvailabilityManager() {
   // ── Slot mutation helpers ────────────────────────────────────────────────
 
   /** Toggle a preset 1-hour slot for a given weekday (chip toggle). */
-  const togglePresetSlot = useCallback((weekday: number, start: string) => {
-    const [h, m] = start.split(':').map(Number);
-    const end = `${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-
-    setSlots((prev) => {
-      const exists = prev.some(
-        (s) => s.weekday === weekday && s.fromTime === start && s.untilTime === end
-      );
-      if (exists) {
-        return prev.filter(
-          (s) => !(s.weekday === weekday && s.fromTime === start && s.untilTime === end)
-        );
-      }
-      return [
-        ...prev,
-        {
-          id: `preset-${weekday}-${start}`,
-          weekday,
-          fromTime: start,
-          untilTime: end,
-          isAvailable: true,
-        },
-      ];
-    });
+  const handleTogglePresetSlot = useCallback((weekday: number, start: string) => {
+    setSlots((prev) => togglePresetSlot(prev, weekday, start));
   }, []);
 
-  const addCustomSlot = (weekday: number) => {
-    setSlots((prev) => [
-      ...prev,
-      {
-        id: `custom-${Date.now()}`,
-        weekday,
-        fromTime: '08:00',
-        untilTime: '10:00',
-        isAvailable: true,
-      },
-    ]);
+  const handleAddCustomSlot = (weekday: number) => {
+    setSlots((prev) => addCustomSlot(prev, weekday));
   };
 
-  const removeSlotById = (id: string) => {
-    setSlots((prev) => prev.filter((s) => s.id !== id));
+  const handleRemoveSlotById = (id: string) => {
+    setSlots((prev) => removeSlotById(prev, id));
   };
 
-  const updateSlotById = (
+  const handleUpdateSlotById = (
     id: string,
     field: keyof AvailabilitySlot,
     value: string | number | boolean
   ) => {
-    setSlots((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
+    setSlots((prev) => updateSlotById(prev, id, field, value));
   };
 
   // ── Save ─────────────────────────────────────────────────────────────────
@@ -398,106 +217,11 @@ export default function TrainerAvailabilityManager() {
     setMessage(null);
 
     try {
-      // 1. Fetch existing slots for this week to avoid duplicates
-      const fromStr = toDateStr(currentWeekStart);
-      const toStr = toDateStr(weekEnd);
-      const existingRes = await apiFetch(`/api/trainer/availability?from=${fromStr}&to=${toStr}`);
-      const existingData = existingRes.ok
-        ? await existingRes.json().catch(() => ({ slots: [] }))
-        : { slots: [] };
-      const existingKeys = new Set(
-        (existingData.slots || []).map(
-          (s: ApiAvailabilitySlot) =>
-            `${s.date}|${s.start_time?.slice(0, 5)}|${s.end_time?.slice(0, 5)}`
-        )
-      );
-
-      // 2. Build set of keys currently in the UI (after user edits)
-      const uiKeys = new Set(
-        slots.map((s) => `${slotDate(currentWeekStart, s.weekday)}|${s.fromTime}|${s.untilTime}`)
-      );
-
-      // 3. DELETE API slots that no longer exist in the UI (DELETE before POST
-      //    to avoid conflicts where a deleted slot shares time with a new one)
-      let deleted = 0;
-      const deleteErrors: string[] = [];
-      for (const existing of existingData.slots || []) {
-        const existingKey = `${existing.date}|${existing.start_time?.slice(0, 5)}|${existing.end_time?.slice(0, 5)}`;
-        if (!uiKeys.has(existingKey)) {
-          try {
-            const delRes = await apiFetch(`/api/trainer/availability/${existing.id}`, {
-              method: 'DELETE',
-            });
-            if (delRes.ok) {
-              deleted++;
-            } else {
-              const delErr = await delRes.json().catch(() => ({}));
-              // 409 = booked slot can't be deleted → skip silently
-              if (delRes.status !== 409) {
-                deleteErrors.push(`${existing.date}: ${delErr.error ?? 'Löschung fehlgeschlagen'}`);
-              }
-            }
-          } catch (delErr: unknown) {
-            deleteErrors.push(`${existing.date}: ${getErrorMessage(delErr)}`);
-          }
-        }
-      }
-
-      // 4. POST each new slot (convert weekday -> date)
-      let created = 0;
-      let skipped = 0;
-      const errors: string[] = [];
-
-      for (const slot of slots) {
-        const date = slotDate(currentWeekStart, slot.weekday);
-        const key = `${date}|${slot.fromTime}|${slot.untilTime}`;
-        if (existingKeys.has(key)) {
-          skipped++;
-          continue;
-        }
-
-        const res = await apiFetch('/api/trainer/availability', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            date,
-            start_time: slot.fromTime,
-            end_time: slot.untilTime,
-            notes: null,
-          }),
-        });
-
-        if (res.ok) {
-          created++;
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          if (res.status === 409) {
-            skipped++; // overlap = already exists
-          } else {
-            errors.push(
-              `${DAYS[slot.weekday]?.short ?? '?'} ${slot.fromTime}–${slot.untilTime}: ${errData.error ?? 'Unbekannter Fehler'}`
-            );
-          }
-        }
-      }
-
-      // 5. Build result message
-      const parts: string[] = [];
-      if (created > 0) parts.push(`${created} gespeichert`);
-      if (skipped > 0) parts.push(`${skipped} bereits vorhanden`);
-      if (deleted > 0) parts.push(`${deleted} gelöscht`);
-
-      const allErrors = [...errors, ...deleteErrors];
-      if (allErrors.length > 0) {
-        setMessage(`Fehler: ${allErrors.join('; ')}`);
-      } else if (created === 0 && skipped === 0 && deleted === 0) {
-        setMessage('Keine Änderungen');
-      } else {
-        setMessage(`${parts.join(', ')} ✓`);
-      }
+      const result = await saveAvailabilitySlots(apiFetch, slots, currentWeekStart, weekEnd);
+      setMessage(result.message);
 
       // Re-fetch to sync with server state (if any changes were made)
-      if (created > 0 || deleted > 0) {
+      if (result.created > 0 || result.deleted > 0) {
         await fetchSlots({ silent: true });
       }
 
@@ -510,15 +234,7 @@ export default function TrainerAvailabilityManager() {
   };
 
   // Group slots by weekday for the card-per-day layout
-  const groupedByDay = useMemo(() => {
-    const map = new Map<number, AvailabilitySlot[]>();
-    slots.forEach((slot) => {
-      const daySlots = map.get(slot.weekday) || [];
-      daySlots.push(slot);
-      map.set(slot.weekday, daySlots);
-    });
-    return map;
-  }, [slots]);
+  const groupedByDay = useMemo(() => groupSlotsByDay(slots), [slots]);
 
   const activeDays = [...groupedByDay.keys()].length;
   const totalSlots = slots.length;
@@ -545,7 +261,7 @@ export default function TrainerAvailabilityManager() {
           <Button
             size="sm"
             variant="outline"
-            onClick={applyToAllWeeksInMonth}
+            onClick={handleApplyToAllWeeksInMonth}
             disabled={applyingToMonth || saving || slots.length === 0}
             title={`Aktuelle Slots auf alle Wochen im ${monthLabel} kopieren`}
           >
@@ -647,7 +363,7 @@ export default function TrainerAvailabilityManager() {
               {PRESET_STARTS.map((start) => (
                 <button
                   key={start}
-                  onClick={() => togglePresetSlot(1, start)}
+                  onClick={() => handleTogglePresetSlot(1, start)}
                   className="text-xs px-2.5 py-1.5 rounded-xl font-medium transition-colors bg-muted text-muted-foreground hover:bg-brand-primary hover:text-white"
                 >
                   {start}
@@ -697,7 +413,7 @@ export default function TrainerAvailabilityManager() {
                           variant="ghost"
                           size="sm"
                           className="text-xs gap-1"
-                          onClick={() => addCustomSlot(value)}
+                          onClick={() => handleAddCustomSlot(value)}
                         >
                           <Plus className="h-3.5 w-3.5" />
                           Benutzerdefiniert
@@ -719,7 +435,7 @@ export default function TrainerAvailabilityManager() {
                         return (
                           <button
                             key={start}
-                            onClick={() => togglePresetSlot(value, start)}
+                            onClick={() => handleTogglePresetSlot(value, start)}
                             className={`text-xs px-2.5 py-1.5 rounded-xl font-medium transition-colors ${
                               active
                                 ? 'bg-brand-primary text-white shadow-sm'
@@ -757,7 +473,7 @@ export default function TrainerAvailabilityManager() {
                                 type="time"
                                 value={slot.fromTime}
                                 onChange={(e) =>
-                                  updateSlotById(slot.id, 'fromTime', e.target.value)
+                                  handleUpdateSlotById(slot.id, 'fromTime', e.target.value)
                                 }
                                 className="w-[110px] h-9 text-sm"
                               />
@@ -766,7 +482,7 @@ export default function TrainerAvailabilityManager() {
                                 type="time"
                                 value={slot.untilTime}
                                 onChange={(e) =>
-                                  updateSlotById(slot.id, 'untilTime', e.target.value)
+                                  handleUpdateSlotById(slot.id, 'untilTime', e.target.value)
                                 }
                                 className="w-[110px] h-9 text-sm"
                               />
@@ -784,7 +500,7 @@ export default function TrainerAvailabilityManager() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => removeSlotById(slot.id)}
+                              onClick={() => handleRemoveSlotById(slot.id)}
                               className="text-error-500 hover:text-error-700"
                             >
                               <Trash2 className="h-4 w-4" />
