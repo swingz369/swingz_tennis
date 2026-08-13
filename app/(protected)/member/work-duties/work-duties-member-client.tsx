@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   HardHat,
   Wrench,
@@ -218,35 +219,21 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
         </Card>
       </div>
 
-      {/* Tab Switcher */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => setActiveTab('my_duties')}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-            activeTab === 'my_duties'
-              ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          <span className="flex items-center gap-1.5">
-            <HardHat className="h-3.5 w-3.5" />
+      {/* Tab Switcher — shadcn Tabs statt Inline-Pills, identisch zu den
+          Admin-Tab-Leisten (members, settings, documents). Der Inhalt unten
+          bleibt bewusst ein gemeinsames Rendering über `displayDuties`. */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ViewTab)}>
+        <TabsList>
+          <TabsTrigger value="my_duties">
+            <HardHat className="h-4 w-4 mr-2" />
             Meine Dienste ({myDuties.length})
-          </span>
-        </button>
-        <button
-          onClick={() => setActiveTab('available')}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-            activeTab === 'available'
-              ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          <span className="flex items-center gap-1.5">
-            <HandHeart className="h-3.5 w-3.5" />
+          </TabsTrigger>
+          <TabsTrigger value="available">
+            <HandHeart className="h-4 w-4 mr-2" />
             Freiwillig melden ({availableDuties.length})
-          </span>
-        </button>
-      </div>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Duty List */}
       {displayDuties.length === 0 ? (

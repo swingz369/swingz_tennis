@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, CalendarClock, Gavel } from 'lucide-react';
 import type { BoardDecision, DecisionVote, MeetingInvitation } from '@/lib/types/decisions';
 
@@ -14,17 +14,10 @@ const DecisionsClient = dynamic(
   { ssr: false }
 );
 
-type DocumentsTab = 'documents' | 'meetings' | 'decisions';
-
-const tabs: {
-  id: DocumentsTab;
-  label: string;
-  icon: React.ComponentType<{ className?: string | undefined }>;
-}[] = [
-  { id: 'documents', label: 'Dokumente', icon: FileText },
-  { id: 'meetings', label: 'Versammlungen', icon: CalendarClock },
-  { id: 'decisions', label: 'Board-Beschlüsse', icon: Gavel },
-];
+// Dieselbe Trigger-Optik wie die anderen shadcn-Tab-Leisten (settings, analytics),
+// damit alle Admin-Tabs identisch aussehen statt der früheren Inline-Pills.
+const TRIGGER_CLASS =
+  'gap-2 rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm';
 
 export function DocumentsTabsWrapper({
   children,
@@ -37,38 +30,34 @@ export function DocumentsTabsWrapper({
   initialVotes: DecisionVote[];
   initialInvitations: Pick<MeetingInvitation, 'decision_id' | 'status' | 'member_id'>[];
 }) {
-  const [activeTab, setActiveTab] = useState<DocumentsTab>('documents');
-
   return (
-    <div className="space-y-6">
-      <div>
-        <div className="flex gap-1 bg-muted dark:bg-card/5 p-1 rounded-xl w-fit flex-wrap">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-background dark:bg-surface-dark text-brand-primary shadow-sm'
-                  : 'text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white'
-              }`}
-            >
-              <tab.icon className="h-4 w-4" />
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+    <Tabs defaultValue="documents" className="space-y-6">
+      <TabsList className="h-auto w-full max-w-3xl flex-wrap justify-start gap-1 bg-muted dark:bg-card/5 p-1 rounded-xl">
+        <TabsTrigger value="documents" className={TRIGGER_CLASS}>
+          <FileText className="h-4 w-4" />
+          Dokumente
+        </TabsTrigger>
+        <TabsTrigger value="meetings" className={TRIGGER_CLASS}>
+          <CalendarClock className="h-4 w-4" />
+          Versammlungen
+        </TabsTrigger>
+        <TabsTrigger value="decisions" className={TRIGGER_CLASS}>
+          <Gavel className="h-4 w-4" />
+          Board-Beschlüsse
+        </TabsTrigger>
+      </TabsList>
 
-      {activeTab === 'documents' && children}
-      {activeTab === 'meetings' && <MeetingsClient />}
-      {activeTab === 'decisions' && (
+      <TabsContent value="documents">{children}</TabsContent>
+      <TabsContent value="meetings">
+        <MeetingsClient />
+      </TabsContent>
+      <TabsContent value="decisions">
         <DecisionsClient
           initialDecisions={initialDecisions}
           initialVotes={initialVotes}
           initialInvitations={initialInvitations}
         />
-      )}
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 }

@@ -7,6 +7,29 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:contact');
 
+// Feld-Längen deckeln, bevor Daten in DB oder E-Mail landen. Die
+// contact_requests-Spalten sind TEXT ohne DB-Limit — diese Obergrenzen sind
+// die API-seitige Defense-in-Depth (zusätzlich zum STRICT-Rate-Limit oben).
+const MAX_LENGTHS = {
+  firstName: 100,
+  lastName: 100,
+  email: 254, // RFC 5321 Maximal-Länge
+  clubName: 200,
+  message: 5000,
+} as const;
+
+// HTML-Injection im internen Benachrichtigungs-Mail verhindern: alle
+// Nutzereingaben werden vor der Interpolation in das HTML-Template escapet.
+// Die `text:`-Variante bleibt unescapet — sie wird nicht als HTML gerendert.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export async function POST(request: NextRequest) {
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STRICT);
   if (rateLimitError) return rateLimitError;
@@ -31,6 +54,23 @@ export async function POST(request: NextRequest) {
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { error: 'Bitte gib eine gültige E-Mail-Adresse ein.' },
+        { status: 400 }
+      );
+    }
+
+    // Max-Längen deckeln
+    const tooLong = (
+      [
+        { field: 'firstName', value: firstName, max: MAX_LENGTHS.firstName },
+        { field: 'lastName', value: lastName, max: MAX_LENGTHS.lastName },
+        { field: 'email', value: email, max: MAX_LENGTHS.email },
+        { field: 'clubName', value: clubName, max: MAX_LENGTHS.clubName },
+        { field: 'message', value: message, max: MAX_LENGTHS.message },
+      ] as const
+    ).find((f) => (f.value ?? '').length > f.max);
+    if (tooLong) {
+      return NextResponse.json(
+        { error: `Das Feld „${tooLong.field}" ist zu lang (max. ${tooLong.max} Zeichen).` },
         { status: 400 }
       );
     }
@@ -64,6 +104,14 @@ export async function POST(request: NextRequest) {
         const { Resend } = await import('resend');
         const resend = new Resend(env.RESEND_API_KEY);
 
+        // Nutzereingaben vor der HTML-Interpolation escapen — der `text:`-
+        // Fallback bleibt Klartext und wird nicht escapet.
+        const safeFirstName = escapeHtml(firstName.trim());
+        const safeLastName = escapeHtml(lastName.trim());
+        const safeEmail = escapeHtml(email.trim().toLowerCase());
+        const safeClubName = escapeHtml(clubName?.trim() || '—');
+        const safeMessage = escapeHtml(message.trim());
+
         await resend.emails.send({
           from: env.EMAIL_FROM || 'SwingZ <noreply@swingz.cloud>',
           to: 'info@swingz.cloud',
@@ -75,10 +123,10 @@ export async function POST(request: NextRequest) {
               </div>
               <div style="background:#f9f9f9;padding:24px;border-radius:0 0 12px 12px">
                 <table style="width:100%;border-collapse:collapse">
-                  <tr><td style="padding:8px 0;font-weight:600;width:120px">Name</td><td>${firstName} ${lastName}</td></tr>
-                  <tr><td style="padding:8px 0;font-weight:600">E-Mail</td><td><a href="mailto:${email}">${email}</a></td></tr>
-                  <tr><td style="padding:8px 0;font-weight:600">Verein</td><td>${clubName || '—'}</td></tr>
-                  <tr><td style="padding:8px 0;font-weight:600">Nachricht</td><td>${message}</td></tr>
+                  <tr><td style="padding:8px 0;font-weight:600;width:120px">Name</td><td>${safeFirstName} ${safeLastName}</td></tr>
+                  <tr><td style="padding:8px 0;font-weight:600">E-Mail</td><td><a href="mailto:${safeEmail}">${safeEmail}</a></td></tr>
+                  <tr><td style="padding:8px 0;font-weight:600">Verein</td><td>${safeClubName}</td></tr>
+                  <tr><td style="padding:8px 0;font-weight:600">Nachricht</td><td>${safeMessage}</td></tr>
                 </table>
                 <p style="margin-top:16px;font-size:12px;color:#666">
                   ID: ${contactRequest?.id} · Eingegangen: ${new Date().toLocaleString('de-DE')}

@@ -1,20 +1,19 @@
 import { z } from 'zod';
 
+// Einzige Quelle für die Hex-Farbe-Prüfung — vom Schreibpfad (Zod-Schema),
+// vom Konsum-Pfad (`brandingToCSSVars`) und potenziell weiteren Stellen geteilt.
+export const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
+
+export function isHexColor(value: string): boolean {
+  return HEX_COLOR_REGEX.test(value);
+}
+
 export const ClubBrandingSchema = z.object({
   clubId: z.string().uuid('UUID required'),
   brand: z.object({
-    primaryColor: z
-      .string()
-      .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
-      .default('#1B4332'),
-    secondaryColor: z
-      .string()
-      .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
-      .default('#1e3a5f'),
-    accentColor: z
-      .string()
-      .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
-      .default('#FF6B35'),
+    primaryColor: z.string().regex(HEX_COLOR_REGEX, 'Hex color required').default('#1B4332'),
+    secondaryColor: z.string().regex(HEX_COLOR_REGEX, 'Hex color required').default('#1e3a5f'),
+    accentColor: z.string().regex(HEX_COLOR_REGEX, 'Hex color required').default('#FF6B35'),
   }),
   logos: z.object({
     light: z.string().url().optional().nullable(),
@@ -65,9 +64,17 @@ export function hexToHsl(hex: string): string {
 export function brandingToCSSVars(branding: ClubBranding): Record<string, string> {
   const { brand } = branding;
 
+  // Defense-in-Depth: `hexToHsl` kann bei ungültigem Input nur NaN liefern.
+  // Stattdessen wird hier explizit validiert und auf den Marken-Default
+  // zurückgefallen — schützt auch vor Alt-/Korrupt-Daten aus der DB, die den
+  // Zod-Schreibpfad umgangen haben (z. B. vor Einführung der Validierung).
+  const safeColor = (value: string, fallback: string) => (isHexColor(value) ? value : fallback);
+
   return {
-    '--brand-primary': hexToHsl(brand.primaryColor),
-    '--brand-secondary': hexToHsl(brand.secondaryColor),
-    '--brand-accent': hexToHsl(brand.accentColor),
+    '--brand-primary': hexToHsl(safeColor(brand.primaryColor, DEFAULT_BRANDING.brand.primaryColor)),
+    '--brand-secondary': hexToHsl(
+      safeColor(brand.secondaryColor, DEFAULT_BRANDING.brand.secondaryColor)
+    ),
+    '--brand-accent': hexToHsl(safeColor(brand.accentColor, DEFAULT_BRANDING.brand.accentColor)),
   };
 }

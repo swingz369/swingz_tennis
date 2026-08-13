@@ -491,7 +491,7 @@ export default async function AdminPage() {
       <div
         className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
           action.urgent
-            ? 'border-brand-accent-200/70 dark:border-brand-accent-700/40 bg-gradient-to-br from-brand-accent-50 via-warning-50 to-background dark:from-brand-accent-900/20 dark:via-warning-900/10 dark:to-card'
+            ? 'border-brand-accent-200/70 dark:border-brand-accent-700/40 bg-brand-accent-50/40 dark:bg-brand-accent-900/15'
             : 'border-border dark:border-white/10 bg-card'
         }`}
       >
