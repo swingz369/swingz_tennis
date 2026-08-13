@@ -110,7 +110,7 @@ Vollständiger Ordner-Check: 156 Migrationsdateien, alle bis auf zwei folgen dem
 
 - Die 5 jüngsten Migrationen (`20260804000000` bis `20260805010000`, siehe oben) lagen nach der letzten Session nur lokal vor (`git status` zeigte `??`) — jetzt committet. Live-Check per `docker exec supabase-db psql` bestätigt: `get_user_role`/`club_members` existieren nicht mehr, `is_superadmin_of` existiert — Dateien und Live-DB stimmen überein.
 - `fix_booking_rpc_and_overlap.sql` (kein Zeitstempel-Präfix) → umbenannt zu `20260505030000_fix_booking_rpc_and_overlap.sql`. Live-Check bestätigt: die `create_booking_safe`-Signatur in der DB entspricht exakt dieser Datei (kein späteres Migration überschreibt sie) — reine Umbenennung, keine erneute Anwendung nötig.
-- `TEMPLATE_person_user_split.sql` (im eigenen Header als "NOT APPLIED" markiert, Referenz auf das archivierte `docs/ARCHIV/INTEGRATION_ROADMAP.md`) → verschoben nach `docs/ARCHIV/`, da `supabase/migrations/` nur echte Historie enthalten soll.
+- `TEMPLATE_person_user_split.sql` (im eigenen Header als "NOT APPLIED" markiert, Referenz auf das archivierte `docs/ARCHIV/2026-05-06-INTEGRATION_ROADMAP.md`) → verschoben nach `docs/ARCHIV/`, da `supabase/migrations/` nur echte Historie enthalten soll.
 - `supabase_migrations.schema_migrations` existiert seit 26.07.2026 live, aber nur mit 8 Zeilen (Details: siehe Kernaussage oben) — Reconciliation-Script (`file-count-vs-claim-reconciliation.sh`, CI: `db-audit.yml`) zeigt entsprechend weiterhin eine große Lücke, per ADR-002 als Soft-Fail/Warning, nicht CI-Blocker.
 
 ## Benachrichtigungen: erlaubte Typen (Stand 13.08.2026, angewendet)

@@ -150,14 +150,15 @@ const pattern = {
 - ✅ Auto-Slug-Generierung
 
 **Kategorien:**
-| Kategorie | Verwendung |
-|-----------|------------|
-| general | Allgemeine News |
-| event | Veranstaltungen |
+
+| Kategorie    | Verwendung             |
+| ------------ | ---------------------- |
+| general      | Allgemeine News        |
+| event        | Veranstaltungen        |
 | announcement | Wichtige Ankündigungen |
-| tournament | Turniere |
-| training | Trainings-Updates |
-| maintenance | Wartungsarbeiten |
+| tournament   | Turniere               |
+| training     | Trainings-Updates      |
+| maintenance  | Wartungsarbeiten       |
 
 **RLS Security:**
 

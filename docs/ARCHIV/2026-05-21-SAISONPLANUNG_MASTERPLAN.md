@@ -475,7 +475,7 @@ async detectAll(assignments): Promise<ConflictDetectionResult[]> {
 ```typescript
 await db.transaction(async (tx) => {
   await tx.insert(sessions).values(/* ... */);
-  await tx.update(seasonPlanEntries).set({ status: 'published' }) /* ... */;
+  await tx.update(seasonPlanEntries).set({ status: 'published' }); /* ... */
   // Bei Fehler: automatisches Rollback
 });
 ```

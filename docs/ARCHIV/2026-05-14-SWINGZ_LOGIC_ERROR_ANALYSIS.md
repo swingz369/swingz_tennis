@@ -53,12 +53,13 @@ SwingZ ist eine moderne, vollständige Management-Lösung für Tennisclubs, die 
 - Sicherheitslücken durch Demo-Modus wurden vollständig eliminiert
 
 **Metriken nach Phase 1 (aus ARCHITECTURE_REFINEMENT_SUMMARY):**
-| Metric | Vorher | Nachher | Verbesserung |
-|--------|--------|--------|--------------|
-| Error handling consistency | 45% | 85% | +89% |
-| Race condition vulnerabilities | 3 | 0 | -100% |
-| Security vulnerabilities (critical) | 1 | 0 | -100% |
-| Request timeout coverage | 0% | 100% | +100% |
+
+| Metric                              | Vorher | Nachher | Verbesserung |
+| ----------------------------------- | ------ | ------- | ------------ |
+| Error handling consistency          | 45%    | 85%     | +89%         |
+| Race condition vulnerabilities      | 3      | 0       | -100%        |
+| Security vulnerabilities (critical) | 1      | 0       | -100%        |
+| Request timeout coverage            | 0%     | 100%    | +100%        |
 
 ---
 

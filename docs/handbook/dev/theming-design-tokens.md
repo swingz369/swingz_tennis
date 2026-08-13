@@ -1,113 +1,141 @@
 # Theming & Design-Tokens
 
-> Wie das Branding pro Club funktioniert. Quelle: `tailwind.config.ts`, `design-tokens.json`, `components/ui/`.
+> Zuletzt verifiziert: 13.08.2026
 
-## 🎨 Zwei-Schicht-System
+> Wie das Branding pro Club funktioniert und wo die Farben herkommen.
+
+## 🎨 Token-Quellen (Single Source of Truth)
+
+Es gibt **eine** Laufzeit-Quelle und **eine** statische Zuliefer-Quelle:
 
 ```
-1. SwingZ-eigenes Brand-System (fest)
-   tailwind.config.ts → tokens.css → globals.css
-   Dark/Light Mode beide im Standard-Style
+1. app/globals.css          ← EINZIGE Laufzeit-Token-Quelle
+   CSS-Variablen (--background, --brand-*, --success, …) in Light + Dark.
+   `:root` und `.dark` definieren beide Modi.
 
-2. Per-Club Branding (togglebar)
-   clubs.branding JSONB → club_id → CSS custom properties
-   Brand-Color, Secondary, Logo, …
+2. styles/theme.ts          ← statischer Zulieferer für tailwind.config.ts
+   Skalen (colors.gray/success/warning/error/info/accent), typography,
+   shadows (inkl. glow-primary/accent), gradients, radius.
+   Wird nirgendwo sonst importiert — hier KEINE neuen Farben ergänzen,
+   ohne zu prüfen ob ein semantisches Token passt.
+
+3. tailwind.config.ts       ← Verdrahtung
+   mappt CSS-Variablen (hsl(var(--…))) und theme.ts-Skalen zu Utilities.
 ```
 
-## 🎨 SwingZ-Token
+`design-tokens.json` im Repo-Root ist eine **Referenz/Inventur-Datei**, keine
+Laufzeit-Quelle — sie kann veralten; maßgeblich sind `globals.css` + `theme.ts`.
 
-Schlüssel-Token (aus `tailwind.config.ts`):
+## 🎨 Brand-Tokens (Blau/Grün)
 
-| Token     | Hex (Light) | Hex (Dark) | Verwendung                            |
-| --------- | ----------- | ---------- | ------------------------------------- |
-| `brand`   | `#3B82F6`   | `#60A5FA`  | Primary Buttons, Links, Active States |
-| `accent`  | `#10B981`   | `#34D399`  | Erfolgs-States, Headlines-Accent      |
-| `warning` | `#F59E0B`   | `#FBBF24`  | Attention needed, fehlende Pflicht    |
-| `danger`  | `#EF4444`   | `#F87171`  | Errors, Storno                        |
-| `success` | `#10B981`   | `#34D399`  | Erfolgsmeldungen                      |
+Light-Modus (`:root` in `app/globals.css`):
 
-Per-Club-Override (in `club_branding`):
+| Token                      | HSL (Light)    | Hex       | Verwendung                            |
+| -------------------------- | -------------- | --------- | ------------------------------------- |
+| `--brand-primary`          | `206 100% 31%` | `#00599F` | Primär (Blau) — Buttons, Links, Aktiv |
+| `--brand-primary-light`    | `201 68% 59%`  | —         | Helles Blau — Gradient-Endpunkt, Glow |
+| `--brand-dark`             | —              | —         | Dunkles Blau — Hero-Hintergründe      |
+| `--brand-secondary`        | `217 40% 22%`  | `#22334F` | Navy — Tiefe, Flächen                 |
+| `--brand-accent`           | `77 71% 44%`   | `#94C121` | Court Green — CTAs, Akzente           |
+| `--brand-accent-dashboard` | `77 71% 44%`   | `#94C121` | Dashboard-Akzent                      |
 
-- `primary_color` → überschreibt `--brand`
-- `secondary_color` → überschreibt `--accent`
-- `logo_url` → Header-Logo
+Dark-Modus (`.dark`):
+
+| Token                      | HSL (Dark)    |
+| -------------------------- | ------------- |
+| `--brand-primary`          | `201 68% 59%` |
+| `--brand-primary-light`    | `201 68% 70%` |
+| `--brand-secondary`        | `217 40% 35%` |
+| `--brand-accent`           | `77 71% 50%`  |
+| `--brand-accent-dashboard` | `77 71% 50%`  |
+
+> **Default-Palette ist Blau/Grün.** Es gibt kein Grün/Orange- oder
+> Blau/Grün-„#3B82F6/#10B981"-Paralleluniversum mehr. Die frühere
+> Forest-Green/Orange-Palette (`#1B4332`/`#FF6B35`) ist abgelöst.
+
+### Semantische Tokens
+
+shadcn-Basis (`--background`, `--foreground`, `--card`, `--popover`,
+`--primary`, `--secondary`, `--muted`, `--accent`, `--destructive`,
+`--border`, `--input`, `--ring`) kommen aus `globals.css`. Die
+Status-Skalen `success`/`warning`/`error`/`info` kommen als statische
+Skalen aus `styles/theme.ts` (sie entsprechen Tailwinds Default-Skalen).
+
+## 🎨 Per-Club-Branding
+
+Branding liegt als **Spalten auf `clubs`**, nicht als JSONB:
+
+- `primary_color` → überschreibt `--brand-primary`
+- `secondary_color` → überschreibt `--brand-secondary`
+- `accent_color` → überschreibt `--brand-accent`
+- (Logos/Favicon/Domain getrennt, s. `lib/branding.ts` + `app/api/branding`)
+
+Ablauf:
+
+1. `lib/branding.ts` — `ClubBrandingSchema` (Zod) validiert den Schreibpfad;
+   `DEFAULT_BRANDING` = `#00599F` / `#22334F` / `#94C121`.
+2. `brandingToCSSVars()` validiert beim **Konsum** erneut (`isHexColor`,
+   `HEX_COLOR_REGEX`) und fällt bei Alt-/Korrupt-Daten auf den Default zurück.
+3. `app/layout.tsx` injiziert die drei `--brand-*`-Variablen zur Laufzeit —
+   nur wenn der Verein eigene Farben hat; sonst greifen die `:root`-Tokens.
+
+Die DB-Column-Defaults stellt `supabase/migrations/20260813100000_…` auf
+Blau/Grün um (Migration anwenden, damit neue Vereine den neuen Default tragen).
 
 ## 🌗 Dark Mode
 
-`dark`-Class-Strategie. `html.dark` triggert alle `dark:`-Varianten in Tailwind.
-
-Setup in `app/globals.css`:
-
-```css
-:root {
-  --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
-  --brand: 217 91% 60%;
-  /* ... */
-}
-
-.dark {
-  --background: 222 47% 4%;
-  --foreground: 0 0% 98%;
-  --brand: 217 91% 67%;
-  /* ... */
-}
-```
-
-`ThemeProvider` in `components/theme-provider.tsx`. Toggle in `components/theme-toggle.tsx` (Sun/Moon-Icon).
+`dark`-Class-Strategie: `html.dark` triggert alle `dark:`-Varianten.
+`ThemeProvider` in `components/theme-provider.tsx`, Toggle in
+`components/theme-toggle.tsx`.
 
 ## 🧱 shadcn/ui — Base Components
 
-**Regel:** Niemals eigene UI-Primitive bauen, die shadcn duplizieren würden. `CLAUDE.md` (DO NOT §):
-
-> ❌ Eigene UI-Komponenten bauen die shadcn/ui duplizieren
-
-Verwendete shadcn-Pakete: `@/components/ui/*` (Standard-Set: `button`, `card`, `dialog`, `dropdown-menu`, `input`, `popover`, `select`, `tabs`, `toast`, `tooltip`, `badge`, `avatar`, `skeleton`, `alert`, `sheet`, `separator`, `table`, `textarea`, `checkbox`, `radio-group`, `slider`, `command`, `calendar`, `sonner`).
-
-Alle erweitert mit `cn()`-Helper aus `lib/utils`.
+**Regel:** Niemals eigene UI-Primitive bauen, die shadcn duplizieren würden.
+Alle erweitert mit `cn()` aus `lib/utils`. Standard-Set in `components/ui/*`
+(button, card, dialog, dropdown-menu, input, popover, select, tabs, sonner,
+badge, avatar, skeleton, alert, sheet, separator, table, textarea, checkbox,
+radio-group, slider, command, calendar).
 
 ## 🖼 Iconographie
 
-- **lucide-react** für Standard-Icons (alle Tree-shakable)
-- **Calendar-Icon** für Session/Listendarstellung
-- **Tennisplatz-SVG** als statisches Asset in `public/icons/`
+- **lucide-react** für Standard-Icons (tree-shakable).
+- Tennis-/Schläger-Assets als SVG in `public/icons/`.
 
 ## 🧩 Custom-Style-Patterns
 
-Weit verbreitete Custom-Composition:
+| Pattern         | Beispieldatei                      | Verwendung                               |
+| --------------- | ---------------------------------- | ---------------------------------------- |
+| `IconBox`       | `components/ui/icon-box.tsx`       | Lucide-Icon in standardisiertem Behälter |
+| `StatCard`      | `components/ui/stat-card.tsx`      | KPI-Dashboard-Karten                     |
+| `FeatureCard`   | `components/ui/feature-card.tsx`   | Marketing-Tile                           |
+| `EmptyState`    | `components/ui/empty-state.tsx`    | Listen-leer-Zustände                     |
+| `PageLoading`   | `components/ui/page-loading.tsx`   | Seiten-Ladezustand                       |
+| `PageError`     | `components/ui/page-error.tsx`     | Error-Boundary (reset-Prop)              |
+| `Badge`         | `components/ui/badge.tsx`          | Status-Pills                             |
+| `ConfirmDialog` | `components/ui/confirm-dialog.tsx` | Bestätigungsflows                        |
 
-| Pattern              | Beispieldatei                      | Verwendung                               |
-| -------------------- | ---------------------------------- | ---------------------------------------- |
-| `IconBox`            | `components/ui/icon-box.tsx`       | Lucide-Icon in standardisiertem Behälter |
-| `StatCard`           | `components/ui/card-features.tsx`  | KPI-Dashboard-Karten                     |
-| `EmptyState`         | `components/ui/empty-state.tsx`    | Listen-leer-Zustände                     |
-| `DataTable` (eigene) | `components/ui/data-table.tsx`     | Tabellen mit Sort + Pagination           |
-| `Section`-Card       | `components/ui/card.tsx`           | shadcn `Card` als Basis                  |
-| `ConfirmDialog`      | `components/ui/confirm-dialog.tsx` | Bestätigungsflows                        |
-| `Badge`              | `components/ui/badge.tsx`          | Status-Pills (active/draft/error)        |
+## 🏷 Radius (eine Quelle)
+
+`styles/theme.ts` → `radius.base` = `10px` ist die Single Source of Truth;
+`radius.xl` ist der operative Tailwind-Key (`rounded-xl`). Die kanonische
+Skala: `md` (Inputs/Buttons), `xl` (Cards). `sm/lg/2xl/3xl` bleiben definiert,
+werden aber von `scripts/check-design-tokens.sh` blockiert. Es gibt **keine**
+zweite `--radius`-Variable in `globals.css` mehr.
 
 ## 🏷 Light/Dark Mode Test
 
-Vor jedem PR: mit beiden Themes visuell und im Snapshot testen.
+Vor jedem PR mit beiden Themes testen (visuell + Snapshot):
 
 - Light: Standard-Browser ohne OS-Theme-Override
 - Dark: Toggle aktiv + Reload
 
-## 📅 Calendar/Icons
-
-Tennis-Spezifisch:
-
-- **Platz-Icon**: Lucide `MapPin` (Standard) oder Custom-SVG
-- **Trainer-Icon**: Lucide `GraduationCap`
-- **Schläger-Icon**: Custom in `public/icons/racket.svg`
-
 ## 🧪 Visuelle Tests
 
-- **Playwright-Snapshots**: `tests/browser/design-preview-*.test.ts` (mehrere Dateien)
-- **Storybook** (optional, nicht aktiv): Komponenten-Isolierung
+- **Playwright-Snapshots**: `tests/browser/design-preview-*.test.ts`
+- **Guardrail**: `scripts/check-design-tokens.sh` (Radius-Skala, Token-Nutzung)
 
 ## 📚 Verwandte Kapitel
 
 - [`dev/testing-strategy.md`](./testing-strategy.md) — Visuelle-Regression
 - [`user/admin.md`](../user/admin.md) — Admin-UI-Beispiele
-- [`data-model.md`](./data-model.md) — `club_branding` Spalten
+- [`data-model.md`](./data-model.md) — `clubs`-Branding-Spalten

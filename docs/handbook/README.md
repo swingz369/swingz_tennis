@@ -102,7 +102,7 @@ Das Handbuch **integriert**, nicht ersetzt diese Quellen direkt:
 | `ROUTING.md`                                | gehört in `dev/api-reference.md` (auto-gen)               |
 | `STRIPE_SETUP.md`                           | gehört in `dev/stripe-integration.md`                     |
 | `PROJEKT-AUDIT-2026-06-29.md`               | bleibt als historisches Audit                             |
-| `PERFORMANCE_BENCHMARK.md`                  | gehört in `dev/testing-strategy.md` Abschnitt Performance |
+| `2026-07-01-PERFORMANCE_BENCHMARK.md`       | gehört in `dev/testing-strategy.md` Abschnitt Performance |
 
 Verlinkung statt Duplikation: Wenn der Inhalt relevant ist, **referenziere** ihn aus dem Handbuch und behalte das Original für Revisions-History.
 

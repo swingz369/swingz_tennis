@@ -173,14 +173,15 @@ function inMemoryRateLimit(key, max, windowMs) {
 ```
 
 **Rate Limit Types**:
-| Type | Limit | Window | Use Case |
-|------|-------|--------|----------|
-| `auth` | 10 requests | 5 minutes | Login, Password Reset |
-| `api` | 100 requests | 1 minute | Standard API Calls |
-| `strict` | 5 requests | 15 minutes | Payment, Sensitive Operations |
-| `booking` | 20 requests | 5 minutes | Court Bookings |
-| `ai` | 5 requests | 1 minute | AI API (Claude) |
-| `upload` | 10 requests | 1 hour | File Uploads |
+
+| Type      | Limit        | Window     | Use Case                      |
+| --------- | ------------ | ---------- | ----------------------------- |
+| `auth`    | 10 requests  | 5 minutes  | Login, Password Reset         |
+| `api`     | 100 requests | 1 minute   | Standard API Calls            |
+| `strict`  | 5 requests   | 15 minutes | Payment, Sensitive Operations |
+| `booking` | 20 requests  | 5 minutes  | Court Bookings                |
+| `ai`      | 5 requests   | 1 minute   | AI API (Claude)               |
+| `upload`  | 10 requests  | 1 hour     | File Uploads                  |
 
 **Usage**:
 

@@ -1438,9 +1438,7 @@ describe('DrizzleMemberRepository', () => {
   });
 
   it('soft deletes a member', async () => {
-    const member = Member.create({
-      /* ... */
-    });
+    const member = Member.create({/* ... */});
     await repo.save(member);
 
     await repo.delete(member.id);
@@ -2041,9 +2039,7 @@ describe('DrizzleBookingRepository', () => {
     });
 
     it('updates existing booking', async () => {
-      const booking = Booking.create({
-        /* ... */
-      });
+      const booking = Booking.create({/* ... */});
       await repo.save(booking);
 
       booking.cancel();
@@ -2087,9 +2083,7 @@ describe('DrizzleBookingRepository', () => {
     });
 
     it('filters cancelled bookings', async () => {
-      const booking = Booking.create({
-        /* ... */
-      });
+      const booking = Booking.create({/* ... */});
       booking.cancel();
       await repo.save(booking);
 
@@ -2100,9 +2094,7 @@ describe('DrizzleBookingRepository', () => {
 
   describe('delete()', () => {
     it('soft deletes booking', async () => {
-      const booking = Booking.create({
-        /* ... */
-      });
+      const booking = Booking.create({/* ... */});
       await repo.save(booking);
 
       await repo.delete(booking.id);

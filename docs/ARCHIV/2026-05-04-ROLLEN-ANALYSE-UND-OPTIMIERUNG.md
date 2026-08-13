@@ -109,14 +109,15 @@
 - Systemweite Konfiguration
 
 **Exklusive Berechtigungen:**
-| Funktion | Route | Beschreibung |
-|----------|-------|--------------|
-| Clubs erstellen | `POST /api/clubs` | Neue Clubs anlegen |
-| Clubs verwalten | `/admin/clubs` | Alle Studios verwalten |
-| Trainer auszahlen | `POST /api/billing/trainers/[id]/pay` | Payouts bestätigen |
-| SEPA-Export | `POST /api/billing/sepa/pain008` | SEPA-Datei generieren |
-| Standard-Stundensätze | `POST /api/hourly-rates/tiers` | Globale Tarif-Tiers |
-| Audit-Logs (plattform) | `GET /api/audit-logs` | Alle Logs aller Clubs |
+
+| Funktion               | Route                                 | Beschreibung           |
+| ---------------------- | ------------------------------------- | ---------------------- |
+| Clubs erstellen        | `POST /api/clubs`                     | Neue Clubs anlegen     |
+| Clubs verwalten        | `/admin/clubs`                        | Alle Studios verwalten |
+| Trainer auszahlen      | `POST /api/billing/trainers/[id]/pay` | Payouts bestätigen     |
+| SEPA-Export            | `POST /api/billing/sepa/pain008`      | SEPA-Datei generieren  |
+| Standard-Stundensätze  | `POST /api/hourly-rates/tiers`        | Globale Tarif-Tiers    |
+| Audit-Logs (plattform) | `GET /api/audit-logs`                 | Alle Logs aller Clubs  |
 
 **Navigation:**
 
@@ -135,14 +136,15 @@
 - Club-Analytics
 
 **Berechtigungen:**
-| Funktion | Route | Beschreibung |
-|----------|-------|--------------|
-| Stunden genehmigen | `POST /api/hours-logs/[id]/approve` | Trainer-Stunden freigeben |
-| Mitglieder verwalten | `/api/members` | Club-Mitglieder CRUD |
-| Schedules verwalten | `/api/schedule` | Trainingspläne |
-| Qualifikationen verifizieren | `POST /api/trainer-profiles/[id]/qualifications/[qId]/verify` | Trainer-Zertifikate |
-| Payment-Settings | `/api/payment-settings` | Zahlungsanbindung |
-| Club-Settings | `/api/system-settings` | Club-Konfiguration |
+
+| Funktion                     | Route                                                         | Beschreibung              |
+| ---------------------------- | ------------------------------------------------------------- | ------------------------- |
+| Stunden genehmigen           | `POST /api/hours-logs/[id]/approve`                           | Trainer-Stunden freigeben |
+| Mitglieder verwalten         | `/api/members`                                                | Club-Mitglieder CRUD      |
+| Schedules verwalten          | `/api/schedule`                                               | Trainingspläne            |
+| Qualifikationen verifizieren | `POST /api/trainer-profiles/[id]/qualifications/[qId]/verify` | Trainer-Zertifikate       |
+| Payment-Settings             | `/api/payment-settings`                                       | Zahlungsanbindung         |
+| Club-Settings                | `/api/system-settings`                                        | Club-Konfiguration        |
 
 **Einschränkungen:**
 
@@ -169,12 +171,13 @@
 - Qualifikationen pflegen
 
 **Berechtigungen:**
-| Funktion | Route | Beschreibung |
-|----------|-------|--------------|
-| Stunden eintragen | `POST /api/hours-logs` | Eigene Stunden (validiert) |
-| Profile pflegen | `PUT /api/trainer-profiles/[id]` | Eigenes Profil |
-| Verfügbarkeit | `POST /api/trainer-availability` | Verfügbare Zeiten |
-| Qualifikationen | `POST /api/trainer-profiles/[id]/qualifications` | Zertifikate hochladen |
+
+| Funktion          | Route                                            | Beschreibung               |
+| ----------------- | ------------------------------------------------ | -------------------------- |
+| Stunden eintragen | `POST /api/hours-logs`                           | Eigene Stunden (validiert) |
+| Profile pflegen   | `PUT /api/trainer-profiles/[id]`                 | Eigenes Profil             |
+| Verfügbarkeit     | `POST /api/trainer-availability`                 | Verfügbare Zeiten          |
+| Qualifikationen   | `POST /api/trainer-profiles/[id]/qualifications` | Zertifikate hochladen      |
 
 **Einschränkungen:**
 
@@ -198,11 +201,12 @@
 - Rechnungen einsehen
 
 **Berechtigungen:**
-| Funktion | Route | Beschreibung |
-|----------|-------|--------------|
-| Buchen | `POST /api/bookings` | Sessions buchen |
-| Stornieren | `DELETE /api/bookings/[id]` | Eigene Buchungen |
-| Profil | `PUT /api/members/[id]` | Eigenes Profil |
+
+| Funktion   | Route                                | Beschreibung      |
+| ---------- | ------------------------------------ | ----------------- |
+| Buchen     | `POST /api/bookings`                 | Sessions buchen   |
+| Stornieren | `DELETE /api/bookings/[id]`          | Eigene Buchungen  |
+| Profil     | `PUT /api/members/[id]`              | Eigenes Profil    |
 | Rechnungen | `GET /api/billing/invoices/overview` | Eigene Rechnungen |
 
 **Navigation:**

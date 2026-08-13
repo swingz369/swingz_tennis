@@ -213,11 +213,12 @@ Enterprise: 399€/Monat - unbegrenzt, White-Label, Priority Support
 ```
 
 **Revenue Projections (3 Jahre):**
-| Metric | M6 | M12 | M36 |
-|--------|-----|-----|-----|
-| Active Clubs | 25 | 100 | 500 |
-| MRR | 3,000€ | 12,000€ | 60,000€ |
-| ARR | 36,000€ | 144,000€ | 720,000€ |
+
+| Metric       | M6      | M12      | M36      |
+| ------------ | ------- | -------- | -------- |
+| Active Clubs | 25      | 100      | 500      |
+| MRR          | 3,000€  | 12,000€  | 60,000€  |
+| ARR          | 36,000€ | 144,000€ | 720,000€ |
 
 **Cost Structure (100 Clubs):**
 

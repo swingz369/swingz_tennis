@@ -55,15 +55,17 @@
 **295 Tests gesamt, 196 bestanden, 2 fehlgeschlagen, 97 skipped, 2 Suites nicht ausführbar.**
 
 Fehlgeschlagene Tests:
-| Test | Erwartet | Erhalten | Ursache |
-|------|----------|----------|---------|
-| Phase2-5: `returns 401 when not authenticated` | 401 | 500 | Server-Error statt Auth-Error |
-| Phase2-5: `returns 200 with points, badges...` | 200 | 500 | Gamification-Endpoint down |
+
+| Test                                           | Erwartet | Erhalten | Ursache                       |
+| ---------------------------------------------- | -------- | -------- | ----------------------------- |
+| Phase2-5: `returns 401 when not authenticated` | 401      | 500      | Server-Error statt Auth-Error |
+| Phase2-5: `returns 200 with points, badges...` | 200      | 500      | Gamification-Endpoint down    |
 
 Nicht ausführbare Suites:
-| Suite | Fehler |
-|-------|--------|
-| `rls-policies.test.ts` | `Could not find 'slug' column of 'clubs' in schema cache` |
+
+| Suite                       | Fehler                                                                |
+| --------------------------- | --------------------------------------------------------------------- |
+| `rls-policies.test.ts`      | `Could not find 'slug' column of 'clubs' in schema cache`             |
 | `service-migration.test.ts` | `Could not find 'default_session_duration_minutes' column of 'clubs'` |
 
 **97 skipped Tests** – das ist 33% der Test-Suite. Diese Tests sind bewusst deaktiviert, was auf unfertige Features hindeutet.

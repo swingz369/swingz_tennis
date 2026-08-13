@@ -94,13 +94,9 @@ const primaryNav = (() => {
     ];
   }
   if (isTrainer) {
-    return [
-      /* Trainer-spezifische Items */
-    ];
+    return [/* Trainer-spezifische Items */];
   }
-  return [
-    /* Member Items */
-  ];
+  return [/* Member Items */];
 })();
 ```
 
