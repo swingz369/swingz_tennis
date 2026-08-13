@@ -16,13 +16,13 @@ import {
   Sparkles,
   ClipboardCheck,
   HardHat,
+  MessageSquare,
 } from 'lucide-react';
 import { IconBox } from '@/components/ui/icon-box';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StatCard } from '@/components/ui/stat-card';
 import { QuickActions } from '@/components/ui/quick-actions';
-import { MemberHeroActions } from '@/components/member-hero-actions';
 import { TennisBallEmptyState } from '@/components/ui/empty-state';
 import { OUTSTANDING_INVOICE_STATUSES } from '@/lib/billing/invoice-visibility';
 
@@ -167,64 +167,20 @@ export default async function MemberPage() {
   return (
     <div className="space-y-6">
       {/* ── Greeting ── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight font-display text-foreground dark:text-white">
-            Hallo, {firstName}!
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {club?.name ?? 'Mein Verein'} · Mitglied
-          </p>
-          <MemberHeroActions />
-        </div>
-        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-primary to-brand-light flex items-center justify-center text-white font-bold text-sm shadow-sm">
-          {firstName.charAt(0).toUpperCase()}
-        </div>
+      {/* Ohne Avatar-Initiale: das Nutzerbild steht bereits im Header rechts.
+          Ohne Hero-Pills: dieselben Ziele stehen direkt darunter als Kacheln. */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight font-display text-foreground dark:text-white">
+          Hallo, {firstName}!
+        </h1>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          {club?.name ?? 'Mein Verein'} · Mitglied
+        </p>
       </div>
 
-      {/* ── Quick Actions ── */}
-      <QuickActions
-        label="Schnellzugriff"
-        actions={[
-          { label: 'Buchen', href: '/bookings', icon: Calendar, variant: 'light' },
-          { label: 'Training', href: '/training-schedule', icon: BookOpen, variant: 'blue' },
-          {
-            label: 'Trainer',
-            href: '/member/trainer-booking',
-            icon: GraduationCap,
-            variant: 'teal',
-          },
-          ...(features.tournaments === true
-            ? [
-                {
-                  label: 'Turniere',
-                  href: '/member/tournaments',
-                  icon: Trophy,
-                  variant: 'amber' as const,
-                },
-              ]
-            : []),
-          { label: 'Rechnungen', href: '/billing', icon: CreditCard, variant: 'purple' },
-          ...(features.work_duty === true
-            ? [
-                {
-                  label: 'Dienste',
-                  href: '/member/work-duties',
-                  icon: HardHat,
-                  variant: 'amber' as const,
-                },
-              ]
-            : []),
-          {
-            label: 'Präferenzen',
-            href: '/member/preferences',
-            icon: ClipboardCheck,
-            variant: 'green',
-          },
-        ]}
-      />
-
       {/* ── Stat Cards ── */}
+      {/* Stehen vor dem Schnellzugriff: erst der Status („was liegt an?"),
+          dann die Aktionen. */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
           icon={Calendar}
@@ -260,6 +216,59 @@ export default async function MemberPage() {
           href="/training-schedule"
         />
       </div>
+
+      {/* ── Quick Actions ── */}
+      <QuickActions
+        label="Schnellzugriff"
+        actions={[
+          { label: 'Buchen', href: '/bookings', icon: Calendar, variant: 'light' },
+          { label: 'Training', href: '/training-schedule', icon: BookOpen, variant: 'blue' },
+          {
+            label: 'Trainer',
+            href: '/member/trainer-booking',
+            icon: GraduationCap,
+            variant: 'teal',
+          },
+          ...(features.tournaments === true
+            ? [
+                {
+                  label: 'Turniere',
+                  href: '/member/tournaments',
+                  icon: Trophy,
+                  variant: 'amber' as const,
+                },
+              ]
+            : []),
+          { label: 'Rechnungen', href: '/billing', icon: CreditCard, variant: 'purple' },
+          // Member sehen keine Sidebar (siehe protected-client-layout.tsx) —
+          // was hier fehlt, ist für sie faktisch nicht erreichbar. Nachrichten
+          // hingen vorher nur an den entfernten Hero-Pills, die eigene
+          // Anwesenheit war überhaupt nirgends verlinkt.
+          { label: 'Nachrichten', href: '/messages', icon: MessageSquare, variant: 'blue' },
+          {
+            label: 'Anwesenheit',
+            href: '/attendance-history',
+            icon: ClipboardCheck,
+            variant: 'teal',
+          },
+          ...(features.work_duty === true
+            ? [
+                {
+                  label: 'Dienste',
+                  href: '/member/work-duties',
+                  icon: HardHat,
+                  variant: 'amber' as const,
+                },
+              ]
+            : []),
+          {
+            label: 'Präferenzen',
+            href: '/member/preferences',
+            icon: ClipboardCheck,
+            variant: 'green',
+          },
+        ]}
+      />
 
       {/* ── Next Session (Hero Card) ── */}
       {nextSession ? (

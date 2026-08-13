@@ -318,22 +318,23 @@ export function Sidebar({
     const memberSections = memberSidebarSections(hiddenSections, includeMemberOnly);
 
     if (isTrainer) {
-      // Trainer: eigene Trainingssektion + „Spielen"/„Mein Verein" des
-      // Mitglieds. Die Mitglieder-Trainingssektion wird eingeschmolzen
-      // (Spieler-Präferenzen dazu); „Trainerstunde buchen" entfällt für
-      // Trainer. Der Platzkalender steht in trainerSidebarSections().
-      const trainer = trainerSidebarSections()[0]!;
+      // Trainer: eigene Sektionen („Mein Training", „Meine Leistung") +
+      // „Spielen"/„Mein Verein" des Mitglieds. Die Mitglieder-Trainingssektion
+      // wird eingeschmolzen (Spieler-Präferenzen an die erste Trainer-Sektion);
+      // „Trainerstunde buchen" entfällt für Trainer.
+      const trainerSections = trainerSidebarSections();
       return [
-        {
-          label: trainer.label,
-          icon: trainer.icon,
-          subItems: [
-            ...trainer.items,
-            ...(includeMemberOnly
-              ? [{ name: 'Trainingspräferenzen (Spieler)', href: '/member/preferences' }]
-              : []),
-          ],
-        },
+        ...trainerSections.map((s, i) => ({
+          label: s.label,
+          icon: s.icon,
+          subItems:
+            i === 0 && includeMemberOnly
+              ? [
+                  ...s.items,
+                  { name: 'Trainingspräferenzen (Spieler)', href: '/member/preferences' },
+                ]
+              : s.items,
+        })),
         ...memberSections
           .filter((s) => s.label !== 'Training')
           .map((s) => ({ label: s.label, icon: s.icon, subItems: s.items })),

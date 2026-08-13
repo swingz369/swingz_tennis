@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -39,7 +39,6 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
   const { branding } = useTenant();
   const clubLogoUrl = branding.logos.light || branding.logos.dark;
   const { setOpen: setSearchOpen } = useSearchDialog();
@@ -81,8 +80,14 @@ export function Header({ user, onMenuClick }: HeaderProps) {
       // Ignore errors if not logged in via Supabase
     }
     setUserMenuOpen(false);
-    router.push('/login');
-    router.refresh();
+    // Vollständige Navigation auf die Server-Route statt router.push('/login').
+    // Die Session-Cookies setzt der Server-Endpoint /api/auth/login; ein
+    // clientseitiges signOut() räumt sie nicht ab. proxy.ts sah deshalb weiter
+    // einen eingeloggten User, schickte /login per Regel 7 zurück auf
+    // /dashboard und von dort in den Rollenbereich — der Logout endete im
+    // Nirgendwo statt auf der Loginseite. /api/auth/logout löscht zusätzlich
+    // `admin_club_id` und `selected-club-id` und redirectet selbst auf /login.
+    window.location.href = '/api/auth/logout';
   };
 
   // Determine dashboard link by role

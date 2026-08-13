@@ -21,6 +21,10 @@ export default async function AdminCourtsPage() {
     { data: club, error: clubErr },
   ] = await Promise.all([
     supabase.from('courts').select('*').eq('club_id', clubId).order('number', { ascending: true }),
+    // Platztypen sind optional: die Tabelle ist im Normalfall leer und
+    // `courts.court_type_id` überall NULL — der Belag steht direkt in
+    // `courts.surface`. Das Anlege-Formular fragt deshalb den Belag ab und
+    // blendet die Typ-Auswahl nur ein, wenn der Verein welche angelegt hat.
     supabase
       .from('court_types')
       .select('id, name, surface_type')

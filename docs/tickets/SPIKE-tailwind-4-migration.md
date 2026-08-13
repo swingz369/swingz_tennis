@@ -1,7 +1,7 @@
 # Spike: Tailwind 3 → 4 Migration
 
 > **Sprint:** 4+ | **Aufwand:** 3–5 Tage (inklu. Testing) | **Prio:** Niedrig  
-> **Quelle:** [AUDIT-DEPS-2026-07-23.md](./AUDIT-DEPS-2026-07-23.md) — Befund A4  
+> **Quelle:** [AUDIT-DEPS-2026-07-23.md](../ARCHIV/AUDIT-DEPS-2026-07-23.md) — Befund A4  
 > **Status:** 🟡 Backlog
 
 ---
@@ -173,4 +173,4 @@ Manuelle Sichtprüfung:
 
 - [Tailwind CSS v4 Migration Guide](https://tailwindcss.com/docs/upgrade-guide)
 - [@tailwindcss/postcss](https://tailwindcss.com/docs/installation/using-postcss)
-- [AUDIT-DEPS-2026-07-23.md](./AUDIT-DEPS-2026-07-23.md) — Befund A4
+- [AUDIT-DEPS-2026-07-23.md](../ARCHIV/AUDIT-DEPS-2026-07-23.md) — Befund A4

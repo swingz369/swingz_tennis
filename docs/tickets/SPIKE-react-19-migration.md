@@ -1,7 +1,7 @@
 # Spike: React 18 → 19 Migration
 
 > **Sprint:** 4+ | **Aufwand:** 5–8 Tage (inklu. Testing) | **Prio:** Mittel  
-> **Quelle:** [AUDIT-DEPS-2026-07-23.md](./AUDIT-DEPS-2026-07-23.md) — Befund A3  
+> **Quelle:** [AUDIT-DEPS-2026-07-23.md](../ARCHIV/AUDIT-DEPS-2026-07-23.md) — Befund A3  
 > **Status:** 🟡 Backlog
 
 ---
@@ -135,4 +135,4 @@ pnpm install
 
 - [React 19 Upgrade Guide](https://react.dev/blog/2024/04/25/react-19-upgrade-guide)
 - [Next.js 16 + React 19](https://nextjs.org/docs/app/building-your-application/upgrading/version-16)
-- [AUDIT-DEPS-2026-07-23.md](./AUDIT-DEPS-2026-07-23.md) — Befund A3
+- [AUDIT-DEPS-2026-07-23.md](../ARCHIV/AUDIT-DEPS-2026-07-23.md) — Befund A3

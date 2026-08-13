@@ -5,7 +5,7 @@
 > aktuelle, konsolidierte Übersicht offener Punkte liegt in [`docs/OPEN_ITEMS.md`](../OPEN_ITEMS.md).
 > Diese Dateien nur noch als historisches Inventar lesen.
 
-> Quelle: [`docs/UMSETZUNGSPLAN_PROJEKTANALYSE.md`](../UMSETZUNGSPLAN_PROJEKTANALYSE.md) + [`docs/roadmap/IMPLEMENTATION_TICKETS_Q3_2026.md`](../roadmap/IMPLEMENTATION_TICKETS_Q3_2026.md)  
+> Quelle: [`docs/ARCHIV/2026-06-26-UMSETZUNGSPLAN_PROJEKTANALYSE.md`](../ARCHIV/2026-06-26-UMSETZUNGSPLAN_PROJEKTANALYSE.md) + [`docs/roadmap/IMPLEMENTATION_TICKETS_Q3_2026.md`](../roadmap/IMPLEMENTATION_TICKETS_Q3_2026.md)  
 > Stand: 2026-06-26 · Gesamt: 85 Tickets  
 > Status-Legende: ✅ DONE · 🔶 PARTIAL · ❌ TODO · 📅 PLANNED
 

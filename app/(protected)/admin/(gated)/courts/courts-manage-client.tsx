@@ -288,7 +288,9 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
         body: JSON.stringify({
           name: formData.name,
           number: parseInt(formData.number),
-          courtTypeId: formData.courtTypeId,
+          // `|| null` statt des leeren Strings: die API prüft mit `?? null`,
+          // wodurch '' als uuid durchgereicht würde und der Insert scheitert.
+          courtTypeId: formData.courtTypeId || null,
           surface: formData.surface,
           hasLighting: formData.hasLighting,
           lightingHoursStart: formData.lightingHoursStart || null,
@@ -348,7 +350,9 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
         body: JSON.stringify({
           name: formData.name,
           number: parseInt(formData.number),
-          courtTypeId: formData.courtTypeId,
+          // `|| null` statt des leeren Strings: die API prüft mit `?? null`,
+          // wodurch '' als uuid durchgereicht würde und der Insert scheitert.
+          courtTypeId: formData.courtTypeId || null,
           surface: formData.surface,
           hasLighting: formData.hasLighting,
           lightingHoursStart: formData.lightingHoursStart || null,
@@ -471,27 +475,57 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
           />
         </div>
       </div>
+      {/* Belag statt Platztyp: `court_types` ist in der Praxis leer und
+          `courts.court_type_id` überall NULL — der Belag steht direkt in
+          `courts.surface`, und genau den zeigen die Platzkacheln an. Das
+          Pflichtfeld „Platztyp *" bot deshalb eine leere Auswahl an und
+          blockierte das Anlegen. Ein Platztyp bleibt optional zuweisbar,
+          sobald der Verein unter „Platztypen verwalten" welche anlegt. */}
       <div className="space-y-2">
-        <Label htmlFor="form-courtTypeId">Platztyp *</Label>
+        <Label htmlFor="form-surface">Belag *</Label>
         <Select
-          value={formData.courtTypeId}
-          onValueChange={(v) => {
-            const type = courtTypes.find((t) => t.id === v);
-            setFormData({ ...formData, courtTypeId: v, surface: type?.surface || '' });
-          }}
+          value={formData.surface}
+          onValueChange={(v) => setFormData({ ...formData, surface: v })}
         >
-          <SelectTrigger id="form-courtTypeId">
-            <SelectValue placeholder="Typ wählen..." />
+          <SelectTrigger id="form-surface">
+            <SelectValue placeholder="Belag wählen..." />
           </SelectTrigger>
           <SelectContent>
-            {courtTypes.map((type) => (
-              <SelectItem key={type.id} value={type.id}>
-                {type.name} ({getSurfaceLabel(type.surface)})
-              </SelectItem>
-            ))}
+            <SelectItem value="clay">Sand (Clay)</SelectItem>
+            <SelectItem value="hard">Hartplatz (Hard)</SelectItem>
+            <SelectItem value="grass">Rasen (Grass)</SelectItem>
+            <SelectItem value="carpet">Teppich (Carpet)</SelectItem>
+            <SelectItem value="artificial_grass">Kunstrasen</SelectItem>
           </SelectContent>
         </Select>
       </div>
+      {courtTypes.length > 0 && (
+        <div className="space-y-2">
+          <Label htmlFor="form-courtTypeId">Platztyp</Label>
+          <Select
+            value={formData.courtTypeId}
+            onValueChange={(v) => {
+              const type = courtTypes.find((t) => t.id === v);
+              setFormData({
+                ...formData,
+                courtTypeId: v,
+                surface: type?.surface || formData.surface,
+              });
+            }}
+          >
+            <SelectTrigger id="form-courtTypeId">
+              <SelectValue placeholder="Typ wählen..." />
+            </SelectTrigger>
+            <SelectContent>
+              {courtTypes.map((type) => (
+                <SelectItem key={type.id} value={type.id}>
+                  {type.name} ({getSurfaceLabel(type.surface)})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="form-location">Standort</Label>

@@ -12,17 +12,10 @@ import { mobileNavItems } from '@/lib/navigation';
 interface MobileBottomNavProps {
   roles?: string[];
   onMenuClick?: () => void;
-  /** When true, renders without `md:hidden` — always visible (for trainer/member) */
-  persistent?: boolean;
   className?: string;
 }
 
-export function MobileBottomNav({
-  roles,
-  onMenuClick,
-  persistent,
-  className,
-}: MobileBottomNavProps) {
+export function MobileBottomNav({ roles, onMenuClick, className }: MobileBottomNavProps) {
   const pathname = usePathname();
 
   // Centralised role detection via hook
@@ -44,7 +37,7 @@ export function MobileBottomNav({
     <nav
       className={cn(
         'fixed bottom-0 left-0 right-0 z-40 bg-background/80 dark:bg-surface-dark/80 backdrop-blur-xl border-t border-border/60 dark:border-white/[0.06] safe-area-pb',
-        !persistent && 'md:hidden',
+        'md:hidden',
         className
       )}
       role="navigation"

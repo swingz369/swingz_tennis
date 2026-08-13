@@ -201,6 +201,10 @@ export function memberSidebarSections(hidden: Hidden, includeMemberOnly: boolean
         // abmelden kann. Steht deshalb vor dem allgemeinen Platzkalender.
         { name: 'Mein Trainingsplan', href: '/training-schedule' },
         { name: 'Platzkalender', href: '/scheduler' },
+        // Zeigt die eigene Anwesenheit des Mitglieds. War von keiner
+        // Mitglieder-Oberfläche aus erreichbar — nur das Trainer-Dashboard
+        // verlinkte sie, wo sie systematisch leer blieb.
+        { name: 'Meine Anwesenheit', href: '/attendance-history' },
         { name: 'Trainerstunde buchen', href: '/member/trainer-booking' },
         ...(includeMemberOnly
           ? [{ name: 'Trainingspräferenzen', href: '/member/preferences' }]
@@ -234,10 +238,15 @@ export function memberSidebarSections(hidden: Hidden, includeMemberOnly: boolean
 
 // ── Sidebar: Trainer / Superadmin / Owner ────────────────────────────
 
+/**
+ * Zwei Sektionen statt einer: „Was muss ich melden?" und „Was bekomme ich
+ * dafür?" sind für einen Trainer zwei verschiedene Fragen. Vorher lagen
+ * Verfügbarkeit, Stunden und Honorar in einem Topf.
+ */
 export function trainerSidebarSections(): NavSection[] {
   return [
     {
-      label: 'Training',
+      label: 'Mein Training',
       icon: GraduationCap,
       items: [
         // Stand vorher hartcodiert in sidebar.tsx und hieß in der Mobile-Nav
@@ -247,8 +256,15 @@ export function trainerSidebarSections(): NavSection[] {
         // Vorher „Trainingspräferenzen" — kollidierte mit der gleichnamigen
         // Mitglieder-Seite (/member/preferences), die etwas anderes tut.
         { name: 'Meine Planungswünsche', href: '/trainer/planning-preferences' },
-        { name: 'Stundennachweise', href: '/trainer/hours-logs' },
         { name: 'Abwesenheiten', href: '/trainer/absences' },
+      ],
+    },
+    {
+      label: 'Meine Leistung',
+      icon: BarChart3,
+      items: [
+        { name: 'Stundennachweise', href: '/trainer/hours-logs' },
+        { name: 'Meine Abrechnung', href: '/trainer/billing' },
         { name: 'Trainer-Profil', href: '/trainer/profile' },
       ],
     },
@@ -353,7 +369,8 @@ export function mobileNavItems(
         { name: 'Übersicht', href: '/trainer', icon: Home },
         { name: 'Kalender', href: '/scheduler', icon: Calendar },
         { name: 'Verfügbarkeit', href: '/trainer/availability', icon: Clock },
-        { name: 'Planung', href: '/trainer/planning-preferences', icon: ClipboardList },
+        { name: 'Stunden', href: '/trainer/hours-logs', icon: ClipboardList },
+        { name: 'Honorar', href: '/trainer/billing', icon: CreditCard },
       ];
     default:
       return [

@@ -9,10 +9,12 @@ const log = createLogger('api:billing:trainers');
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
-    // Permission check
-    const hasPermission = await verifyRole(auth, 'trainer');
+    // Legt eine Honorarabrechnung für einen frei wählbaren `trainerId` mit
+    // frei wählbarem Betrag an — eine Admin-Operation. Stand vorher auf
+    // 'trainer', womit sich jeder Trainer selbst hätte abrechnen können.
+    const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Admin access required');
     }
 
     // Rate limit
@@ -93,9 +95,14 @@ export async function POST(_request: NextRequest) {
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     // Permission check
-    const hasPermission = await verifyRole(auth, 'trainer');
+    // Alle Varianten dieses Endpoints liefern fremde Honorardaten: ohne
+    // Parameter *alle* Trainer, mit `trainerId` einen frei wählbaren. Mit
+    // `verifyRole(auth, 'trainer')` konnte damit jeder Trainer die Vergütung
+    // aller Kollegen auslesen. Der Endpoint ist ein Admin-Werkzeug —
+    // Trainer nutzen /api/trainer/billing, das über die Session scopt.
+    const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Admin access required');
     }
 
     // Rate limit

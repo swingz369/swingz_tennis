@@ -17,6 +17,7 @@ import {
   ClipboardCheck,
   BarChart3,
   Bell,
+  CreditCard,
   Timer,
   Target,
 } from 'lucide-react';
@@ -308,10 +309,15 @@ export default function TrainerDashboardClient({
         <QuickActions
           label="Schnellzugriff"
           actions={[
-            { label: 'Einheiten', href: '/scheduler', icon: Calendar, variant: 'light' },
+            { label: 'Platzkalender', href: '/scheduler', icon: Calendar, variant: 'light' },
+            // „Anwesenheit" → /attendance-history entfernt: derselbe Fehlgriff,
+            // den der Kommentar oben für den Session-Knopf beschreibt. Die Seite
+            // zeigt die Anwesenheit eines MITGLIEDS und lieferte dem Trainer
+            // „Keine Einträge gefunden". Die Teilnehmerliste öffnet der Trainer
+            // direkt an der Einheit in der Liste darüber.
             {
-              label: 'Anwesenheit',
-              href: '/attendance-history',
+              label: 'Abwesenheiten',
+              href: '/trainer/absences',
               icon: ClipboardCheck,
               variant: 'blue',
             },
@@ -322,14 +328,31 @@ export default function TrainerDashboardClient({
               variant: 'purple',
             },
             {
-              label: 'Planungspräferenzen',
+              label: 'Meine Planungswünsche',
               href: '/trainer/planning-preferences',
               icon: Target,
               variant: 'indigo',
             },
             { label: 'Profil', href: '/trainer/profile', icon: Users, variant: 'green' },
-            { label: 'Abrechnung', href: '/billing', icon: BarChart3, variant: 'amber' },
-            { label: 'Nachrichten', href: '/notifications', icon: Bell, variant: 'blue' },
+            // Hieß „Abrechnung" und zeigte auf /billing — das sind die eigenen
+            // Mitgliedsrechnungen, nicht das Trainerhonorar. Die Stundennachweise
+            // sind die Grundlage der Honorarabrechnung; eine Trainer-Ansicht der
+            // fertigen Abrechnung existiert bisher nicht (nur admin-seitig).
+            {
+              label: 'Meine Stunden',
+              href: '/trainer/hours-logs',
+              icon: BarChart3,
+              variant: 'amber',
+            },
+            {
+              label: 'Meine Abrechnung',
+              href: '/trainer/billing',
+              icon: CreditCard,
+              variant: 'green',
+            },
+            // Zeigte auf /notifications — das sind die Benachrichtigungs-
+            // Einstellungen, nicht die Nachrichten.
+            { label: 'Nachrichten', href: '/messages', icon: Bell, variant: 'blue' },
           ]}
         />
       </ScrollReveal>

@@ -529,12 +529,27 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 
 ## 10. Sidebar-Navigation vs. Bottom-Nav
 
-| Rolle          | Sidebar                                                                                                                | Bottom Nav                                                                               |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| **Superadmin** | ✅ 7 Links (Dashboard, Vereine, Clubs, Analytics + Verwaltung)                                                         | 5 Tabs (Dashboard, Vereine, Analytics, Profil + Menü)                                    |
-| **Admin**      | ✅ 7 Sektionen (Übersicht, Mitglieder, Training, Plätze & Buchungen, Finanzen, Einstellungen, Service & Kommunikation) | 5 Tabs (Dashboard, Mitglieder, Plätze, Trainer, Profil + Menü)                           |
-| **Trainer**    | ⬜ Fallback (Bottom Nav primär)                                                                                        | 7 Tabs (Übersicht, Einheiten, Anwesenheit, Verfügbarkeit, Gamification, Stunden, Profil) |
-| **Member**     | ⬜ Fallback (Bottom Nav primär)                                                                                        | 6 Tabs (Home, Buchen, Training, Gamification, Abrechnung, Profil)                        |
+Beide Oberflächen stammen aus `lib/navigation.ts`. Die Bottom-Nav ist ein
+kuratiertes Subset — `src/__tests__/lib/navigation.test.ts` erzwingt, dass jedes
+mobile Ziel auch in der Sidebar derselben Rolle vorkommt und dass ein Ziel
+rollenübergreifend nur einen Namen trägt.
+
+> ⚠️ **Trainer und Member bekommen keine Sidebar gerendert.**
+> `app/(protected)/protected-client-layout.tsx` zeigt die Sidebar nur für
+> `owner`/`superadmin`/`admin`; Trainer und Member erhalten stattdessen die
+> permanente Bottom-Tab-Bar. Ihre Sektionen in `lib/navigation.ts` versorgen
+> also nur die Bottom-Nav-Prüfung und die Command-Palette. Der reale
+> Navigations-Surface dieser beiden Rollen ist **Bottom-Nav + die
+> Schnellzugriff-Kacheln des jeweiligen Dashboards** — ein Ziel, das dort
+> fehlt, ist für sie faktisch nicht erreichbar.
+
+| Rolle          | Sidebar-Sektionen                                                                       | Bottom Nav                                           |
+| -------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| **Owner**      | Plattform-Konsole, Monetarisierung                                                      | Dashboard, Vereine, Audit, Admins, Umsatz            |
+| **Superadmin** | Meine Vereine, Verwaltung                                                               | Dashboard, Vereine, Statistiken, Profil              |
+| **Admin**      | Mitglieder, Trainer, Saison & Plätze, Finanzen, Verein, Weitere Module                  | Dashboard, Mitglieder, Saison, Finanzen, Profil      |
+| **Trainer**    | Mein Training, Meine Leistung (+ „Spielen"/„Mein Verein" bei zusätzlicher Member-Rolle) | Übersicht, Kalender, Verfügbarkeit, Stunden, Honorar |
+| **Member**     | Spielen, Training, Mein Verein                                                          | Start, Training, Buchen, Rechnungen                  |
 
 ---
 
