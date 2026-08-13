@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/table';
 import { ScrollReveal } from '@/components/animations';
 import { formatAdminTimeHM } from '@/lib/utils/admin-date';
+import { buildSetupChecklist } from '@/lib/setup-checklist';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,6 @@ type ClubRow = {
   id: string;
   name: string;
   status: string | null;
-  setup_completed_at: string | null;
   dashboard_bg_url: string | null;
 };
 
@@ -82,11 +82,10 @@ async function safe<T extends { count: number | null; data: unknown; error: unkn
 export default async function AdminPage() {
   const { supabase, user, clubId, role } = await requireAdminClub();
 
-  // Club info — explicit generic keeps `setup_completed_at` available
-  // without an `any`-cast downstream.
+  // Club info — explizites Generic statt `any`-Cast downstream.
   const { data: club } = await supabase
     .from('clubs')
-    .select('id, name, status, setup_completed_at, dashboard_bg_url')
+    .select('id, name, status, dashboard_bg_url')
     .eq('id', clubId)
     .maybeSingle<ClubRow>();
 
@@ -204,6 +203,8 @@ export default async function AdminPage() {
     { count: seasonCount },
     { data: priorPaidInvoices },
     { count: priorMemberCount },
+    { count: courtCount },
+    { count: feeCategoryCount },
   ] = await Promise.all([
     safe(
       supabase
@@ -240,6 +241,24 @@ export default async function AdminPage() {
         .eq('is_active', true)
         .not('role', 'in', '(trainer,superadmin)')
         .lte('created_at', priorMonthEnd.toISOString())
+    ),
+    // Einrichtungs-Checkliste: Plätze + Beitragskategorien. Die übrigen
+    // Zähler (Trainer, Mitglieder, Saisons) fallen im ersten Batch ohnehin an.
+    safe(
+      supabase
+        .from('courts')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId)
+        .eq('is_active', true)
+    ),
+    // Ohne `is_active`-Filter: die Kategorien-Seite listet inaktive Kategorien
+    // mit Badge weiterhin auf. Zählte die Checkliste nur die aktiven, stünde
+    // dort "noch keine Beitragskategorien", während die Seite vier zeigt.
+    safe(
+      supabase
+        .from('fee_configurations')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId)
     ),
   ]);
 
@@ -352,21 +371,18 @@ export default async function AdminPage() {
     }
   );
 
-  // Onboarding checklist — no `any`-cast: `club.setup_completed_at`
-  // is now properly inferred via `ClubRow` (P0-B).
-  const setupCompletedAt = club.setup_completed_at ?? null;
-  const daysSinceSetup = setupCompletedAt
-    ? // eslint-disable-next-line react-hooks/purity -- Server Component: läuft pro Request, nicht pro Re-Render
-      (Date.now() - new Date(setupCompletedAt).getTime()) / 86400000
-    : null;
-  const showChecklist = daysSinceSetup !== null && daysSinceSetup < 30;
-  const checklistItems = [
-    { label: 'Saison angelegt', done: (seasonCount ?? 0) > 0, href: '/admin/seasons/new' },
-    { label: 'Mitglied eingeladen', done: (memberCount ?? 0) > 0, href: '/admin/members' },
-    { label: 'Trainer zugewiesen', done: (trainerCount ?? 0) > 0, href: '/admin/trainers' },
-    { label: 'Erste Buchung', done: (totalInvoiceCount ?? 0) > 0, href: '/admin/billing' },
-  ];
-  const checklistDone = checklistItems.every((i) => i.done);
+  // Einrichtungs-Checkliste — Status aus den Daten abgeleitet, nicht
+  // gespeichert. Sie verschwindet, sobald alles steht, und kommt zurück,
+  // wenn jemand die letzte Beitragskategorie löscht. Kein Zeitfenster mehr:
+  // ein Verein, der nach 30 Tagen noch keine Saison hat, braucht den Hinweis
+  // dringender als einer am ersten Tag.
+  const setupChecklist = buildSetupChecklist({
+    courts: courtCount ?? 0,
+    trainers: trainerCount ?? 0,
+    members: memberCount ?? 0,
+    feeCategories: feeCategoryCount ?? 0,
+    seasons: seasonCount ?? 0,
+  });
 
   // Smart actions: determine which contextual actions to show
   const needsApprovals = (pendingApprovals ?? 0) > 0;
@@ -625,29 +641,34 @@ export default async function AdminPage() {
         </div>
       </ScrollReveal>
 
-      {/* ── Erste Schritte Checklist — nur kurz nach Onboarding ── */}
-      {showChecklist && !checklistDone && (
+      {/* ── Einrichtung — bleibt sichtbar, bis der Verein einsatzbereit ist ── */}
+      {!setupChecklist.allDone && (
         <ScrollReveal delay={200}>
           <div className="rounded-xl border border-brand-light/20 bg-brand-light/5 p-5 space-y-3">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-brand-light" />
-              <p className="text-sm font-semibold text-foreground">Erste Schritte</p>
+              <p className="text-sm font-semibold text-foreground">Einrichtung</p>
               <span className="ml-auto text-xs text-muted-foreground">
-                {checklistItems.filter((i) => i.done).length}/{checklistItems.length} erledigt
+                {setupChecklist.doneCount}/{setupChecklist.totalCount} erledigt
               </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {checklistItems.map((item) => (
-                <Link key={item.label} href={item.done ? '#' : item.href}>
+              {setupChecklist.steps.map((item) => (
+                <Link
+                  key={item.key}
+                  href={item.done ? '#' : item.href}
+                  aria-disabled={item.done}
+                  className={item.done ? 'pointer-events-none' : undefined}
+                >
                   <div
-                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all ${
+                    className={`flex items-start gap-3 rounded-xl px-3 py-2.5 h-full transition-all ${
                       item.done
                         ? 'bg-success-50 dark:bg-success-900/20 cursor-default'
                         : 'bg-background border border-border hover:border-brand-light/40 cursor-pointer'
                     }`}
                   >
                     <div
-                      className={`flex h-6 w-6 items-center justify-center rounded-full shrink-0 ${
+                      className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full shrink-0 ${
                         item.done ? 'bg-success-100 dark:bg-success-800' : 'border-2 border-border'
                       }`}
                     >
@@ -657,16 +678,23 @@ export default async function AdminPage() {
                         </span>
                       )}
                     </div>
-                    <span
-                      className={`text-sm ${
-                        item.done
-                          ? 'line-through text-muted-foreground'
-                          : 'text-foreground font-medium'
-                      }`}
-                    >
-                      {item.label}
-                    </span>
-                    {!item.done && <span className="text-muted-foreground ml-auto text-xs">→</span>}
+                    <div className="min-w-0 flex-1">
+                      <span
+                        className={`text-sm ${
+                          item.done
+                            ? 'line-through text-muted-foreground'
+                            : 'text-foreground font-medium'
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                      {!item.done && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {item.blocked ? `Zuerst: ${item.blockedBy.join(', ')}` : item.hint}
+                        </p>
+                      )}
+                    </div>
+                    {!item.done && <span className="text-muted-foreground text-xs mt-0.5">→</span>}
                   </div>
                 </Link>
               ))}

@@ -124,7 +124,7 @@ curl -X POST https://swingz.vercel.app/api/cron/backup \
 
 ## Tests
 
-Pfad `e2e/owner-*.test.ts`:
+Pfad `tests/e2e/owner-*.spec.ts`:
 
 - Vereins-Anlage → Admin-Invite → Login → Onboarding
 - Plan-Switch (Starter → Professional) → Quantity-Sync

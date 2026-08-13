@@ -1,5 +1,7 @@
 # 🎾 SwingZ — Design-Konzept
 
+> Zuletzt aktualisiert: 24.07.2026 (Stand der letzten Code-Änderung an diesem Dokument)
+
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
 > **Status:** Lebendes Konzept — vierteljährlich aktualisiert
@@ -344,7 +346,7 @@ Die Design-Preview-Seite (`app/(public)/design-preview/page.tsx`) zeigt 11 Anima
 | #   | Finding                                   | Schwere                                                                                                                                                                  | Beschreibung |
 | --- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
 | F1  | CenteredModal ohne aktives Focus-Trapping | 🟢 **Behoben.** `centered-modal.tsx` ruft jetzt `focusManager.trapFocus(dialogRef)` + `focusFirst(dialogRef)` mit Fallback-Fokus auf den Dialog-Wrapper beim Öffnen auf. |
-| F2  | Keine E2E-Tastaturtests                   | 🟢 **Behoben.** `e2e/design-preview-keyboard-nav.test.ts` testet alle 11 Design-Preview-Tabs via Keyboard (.focus() + Enter).                                            |
+| F2  | Keine E2E-Tastaturtests                   | 🟢 **Behoben.** `tests/browser/design-preview-keyboard-nav.test.ts` testet alle 11 Design-Preview-Tabs via Keyboard (.focus() + Enter).                                  |
 
 ### 13.4 Key Files
 

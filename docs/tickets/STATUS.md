@@ -1,5 +1,10 @@
 # Status-Übersicht
 
+> ⚠️ **Eingefroren (Stand Juni 2026) — nicht mehr gepflegt.** Die Zählmetriken in diesem Dokument
+> sind mehrfach revidiert und widersprechen `INDEX.md` sowie dem Ist-Zustand. Die aktuelle,
+> konsolidierte Übersicht offener Punkte liegt in [`docs/OPEN_ITEMS.md`](../OPEN_ITEMS.md).
+> Diese Datei nur noch als historisches Inventar lesen.
+
 > Aggregiert aus dem vollständigen Ticket-Set.
 > _Stand: 2026-06-28 · Gesamt: 100 Tickets (committed + working-tree + untracked, pre-existing rough-count; Header-Distribution-Summe 97 ≠ 100 wegen 3-Tickets Gap, der seit dem `b1e32fc`-Sync dokumentiert ist und als Forward-Reconciliation im Audit-Note-Block vorgemerkt bleibt)_ (committed + working-tree + untracked)
 

@@ -144,7 +144,7 @@ PATCH /api/trainers/[id] { bio, photo_url, specialization, dtb_license_level }
 
 ## 🧪 Tests
 
-`e2e/trainer-*.test.ts`:
+`tests/e2e/trainer-*.spec.ts`:
 
 - Verfügbarkeit anlegen → Admin nutzt sie im Saison-Plan
 - QR-Checkin → Member sieht Status

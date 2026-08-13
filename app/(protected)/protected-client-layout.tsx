@@ -2,6 +2,8 @@
 
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import { Header } from '@/components/layout/header';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -39,6 +41,27 @@ interface ProtectedClientLayoutProps {
   branding?: ClubBranding;
 }
 
+function SignOutLink() {
+  const router = useRouter();
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        try {
+          await createClient().auth.signOut();
+        } catch {
+          // Ohne gültige Session ist der Logout bereits erledigt.
+        }
+        router.push('/login');
+        router.refresh();
+      }}
+      className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-2"
+    >
+      Abmelden
+    </button>
+  );
+}
+
 /**
  * Role-based layout — matches TSOW pattern:
  *   Admin / Superadmin → Left Sidebar (desktop + mobile overlay)
@@ -46,8 +69,30 @@ interface ProtectedClientLayoutProps {
  */
 export function ProtectedClientLayout({ children, user, branding }: ProtectedClientLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
 
   useGlobalKeyboardShortcuts();
+
+  // Onboarding-Wizards laufen ohne Shell. Sidebar, Header und Command-Palette
+  // eines Vereins, der gerade erst angelegt wird, führen überall ins Leere —
+  // und der Wizard ist die einzige Stelle, an der es keine Alternative zum
+  // Weiterklicken geben soll. TenantProvider bleibt, weil das Branding die
+  // CSS-Variablen der Buttons liefert.
+  if (pathname?.endsWith('/onboarding')) {
+    return (
+      <TenantProvider clubId={user.selectedClubId ?? user.club?.id ?? null} branding={branding}>
+        <RouteProgressBar />
+        <main id="main-content" role="main">
+          <ErrorBoundary>{children}</ErrorBoundary>
+          {/* Ohne Header gäbe es sonst keinen Weg mehr aus einem halb
+              eingerichteten Konto heraus außer Cookies löschen. */}
+          <div className="pb-8 text-center">
+            <SignOutLink />
+          </div>
+        </main>
+      </TenantProvider>
+    );
+  }
 
   const isOwner = user.roles?.includes('owner') ?? false;
   const isSuperAdmin = user.roles?.includes('superadmin') ?? false;

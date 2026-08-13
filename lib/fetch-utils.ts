@@ -90,6 +90,11 @@ export async function fetchWithTimeout(url: string, options: FetchOptions = {}):
 
       // Handle abort/timeout
       if (error instanceof Error && error.name === 'AbortError') {
+        // Abbruch durch den Aufrufer (React Query beim Unmount) ist kein Fehler und
+        // darf nicht wiederholt werden: die Folgeversuche liefen in dasselbe tote
+        // Signal und endeten als vermeintlicher Timeout — die Query blieb danach
+        // dauerhaft ohne Daten (clubId null nach direktem Aufruf einer Seite).
+        if (externalSignal?.aborted) throw error;
         lastError = new Error(`Request timeout after ${timeout}ms`);
       } else {
         lastError = error instanceof Error ? error : new Error(String(error));

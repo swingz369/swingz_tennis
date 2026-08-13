@@ -7,6 +7,11 @@ config({ path: resolve(__dirname, '.env.local'), override: true });
 
 export default defineConfig({
   testDir: './tests/e2e',
+  // Der Produktions-QA-Audit (qa-audit-full.spec.ts) läuft über die eigene
+  // playwright.audit.config.ts (`pnpm test:e2e:audit`) gegen swingz.vercel.app —
+  // nicht als Teil der CI-Regressionssuite. Sonst zählt er hier 58 immer-geskippte
+  // Tests und verfälscht die echte Laufzeit-Zahl (Audit-Follow-up 13.08.2026).
+  testIgnore: '**/qa-audit-full.spec.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1,
@@ -20,6 +25,9 @@ export default defineConfig({
     actionTimeout: 15000,
   },
   projects: [
+    // Standardlauf (`pnpm test:e2e`): nur chromium + mobile-chrome.
+    // Vollmatrix (firefox/webkit/mobile-safari/ipad) läuft über `pnpm test:e2e:full`
+    // (siehe package.json) — hält den CI-Hotpath schlank (Audit P2, 13.08.2026).
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },

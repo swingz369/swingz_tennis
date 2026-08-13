@@ -13,10 +13,10 @@ export default defineConfig({
       // Single canonical unit-test tree (consolidated 2026-08-13: former
       // `tests/unit/**` was folded into `src/__tests__`).
       'src/**/__tests__/**/*.test.{ts,tsx}',
-      // e2e/**/*.test.ts need a live `npm run dev` server (see each file's header) —
-      // only included when explicitly opted into via `npm run test:e2e-browser`,
+      // tests/browser/**/*.test.ts need a live `npm run dev` server (see each file's
+      // header) — only included when explicitly opted into via `npm run test:e2e-browser`,
       // so a plain `vitest run` doesn't falsely report them as broken.
-      ...(process.env.RUN_BROWSER_E2E === 'true' ? ['e2e/**/*.test.ts'] : []),
+      ...(process.env.RUN_BROWSER_E2E === 'true' ? ['tests/browser/**/*.test.ts'] : []),
     ],
     exclude: [
       'node_modules/**',

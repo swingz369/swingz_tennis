@@ -188,7 +188,7 @@ POST /api/stripe/checkout { invoice_id: 'inv-123' }
 
 ## 🧪 Tests
 
-`e2e/member-*.test.ts`:
+`tests/e2e/member-*.spec.ts`:
 
 - RSVP → Stornieren → RSVP erneut
 - Court-Buchung → Konflikt-Test (zwei parallele Buchungen)

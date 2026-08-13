@@ -170,7 +170,10 @@ export async function POST(request: NextRequest) {
       const endDate = new Date(body.end_date);
 
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Ungültiges Datumsformat. Bitte Start- und Enddatum prüfen.' },
+          { status: 400 }
+        );
       }
 
       if (startDate >= endDate) {
@@ -195,7 +198,9 @@ export async function POST(request: NextRequest) {
 
       if (existing) {
         return NextResponse.json(
-          { error: `A ${body.season_type} season for year ${body.year} already exists` },
+          {
+            error: `Für ${body.season_type === 'winter' ? 'die Wintersaison' : 'die Sommersaison'} ${body.year} existiert bereits eine Saison.`,
+          },
           { status: 409 }
         );
       }

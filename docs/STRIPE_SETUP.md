@@ -1,5 +1,7 @@
 # Stripe Setup Guide
 
+> Zuletzt aktualisiert: 16.06.2026 (Stand der letzten Code-Änderung an diesem Dokument)
+
 ## Required Environment Variables
 
 | Variable                             | Description                     | Example                        |

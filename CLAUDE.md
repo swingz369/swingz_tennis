@@ -209,21 +209,40 @@ Component-Tests verwenden `TestProviders` aus `src/__tests__/test-utils.tsx`.
 
 ---
 
-## Test-Accounts (Entwicklung)
+## Test-Accounts & Lanes (Entwicklung)
 
-| E-Mail                           | Rolle      | Details                                  |
-| -------------------------------- | ---------- | ---------------------------------------- |
-| `admin@swingz.com`               | owner      | Plattformbetreiber (Swingz GmbH)         |
-| `superadmin@ts-westfalen.de`     | superadmin | Tennisschule Westfalen (mehrere Vereine) |
-| `admin@tsv-dortmund.de`          | admin      | TSV Dortmund (genau 1 Verein)            |
-| `trainer.1-8@tc-rheinland.de`    | trainer    | TC Rheinland e.V.                        |
-| `mitglied.1-120@tc-rheinland.de` | member     | TC Rheinland e.V.                        |
+> Stand 13.08.2026: Die DB wurde komplett zurückgesetzt. Alle früheren Test-Accounts
+> (`*@tc-rheinland.de`, `*@tsv-dortmund.de`, `*@ts-westfalen.de`) existieren **nicht mehr**.
 
-> ⚠️ `admin@tc-rheinland.de` existiert **nicht** mehr in Supabase-Auth (Stand 16.07.2026).
-> Die vier `TEST_*`-Accounts in `.env.local` (admin/superadmin/trainer/member) sind verifiziert;
-> ihre Passwörter wurden am 16.07.2026 per Admin-API auf die `.env.local`-Werte gesetzt.
+Testvereine gehören genau einer **Lane** — dem Eigentümer der Daten:
 
-Passwörter: `TEST_*_PASSWORD` in `.env.local` (nicht in Git).
+| Lane    | E-Mail-Domain   | Eigentümer | Regel für KI-Agenten                             |
+| ------- | --------------- | ---------- | ------------------------------------------------ |
+| `user`  | `*.swingz.test` | Mensch     | **Nur lesen. Niemals schreiben.**                |
+| `agent` | `*.claude.test` | KI         | Freie Spielwiese — hier testen und kaputtmachen. |
+
+| Verein               | Lane    | Zweck                                                 |
+| -------------------- | ------- | ----------------------------------------------------- |
+| TC Rheinland e.V.    | `user`  | Vollverein, laufende Saison (`published`). Hauptdemo. |
+| TSV Dortmund         | `user`  | Präferenz-Erfassung offen (Wintersaison 2026/27)      |
+| SV Bochum 08         | `user`  | Kein eigener Admin — nur über Superadmin (Switcher)   |
+| TC Grün-Weiß Köln    | `user`  | Saison in `manual_review` — Testfall Publish-Übergang |
+| TC Neuland e.V.      | `user`  | **Komplett leer** — Erstlogin/Onboarding von Hand     |
+| Claude Sandbox Alpha | `agent` | Arbeitsverein der KI, bestückt                        |
+| Claude Sandbox Beta  | `agent` | Leer — Onboarding-/CSV-Import-Tests der KI            |
+
+Owner bleibt `admin@swingz.com` (echter Zugang, vom Seed nie angefasst).
+
+Alle Zugangsdaten: **`docs/TEST-CREDENTIALS.md`** — wird vom Seed generiert, nicht in Git
+(Klartext-Passwörter). Die `TEST_*`-Variablen in `.env.local` zeigen bewusst auf die
+Agent-Lane, weil E2E-Tests schreiben.
+
+```bash
+npm run seed              # Ist-Zustand zeigen, nichts ändern
+npm run seed:docs         # Zugangsdaten-Doku neu schreiben (ändert keine Daten)
+npm run seed:agent        # nur die Claude-Sandboxen neu aufbauen
+npm run seed:reset        # DB komplett platt + alle 7 Vereine neu
+```
 
 ---
 

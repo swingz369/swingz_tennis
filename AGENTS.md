@@ -11,23 +11,37 @@ Dieses Dokument ist die einzige Quelle für Doku-Governance-Regeln. Andere Agent
 
 Grund für diese Regeln: In `docs/` haben mehrere KI-Agenten unkoordiniert neue Dateien statt Updates an bestehenden erzeugt (`ROUTING.md`/`ROUTING2.md`, `DESIGN.md`/`DESIGN_KONZEPT.md`, sechs verschiedene `PROJEKTANALYSE*`-Varianten). Diese Regeln verhindern, dass das erneut passiert.
 
-### 1. Zwei Kategorien, keine Mischformen
+### 1. Vier Kategorien, keine Mischformen
 
-| Kategorie  | Beispiele                                                                                                             | Regel                                                                                                                    |
-| ---------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Lebend** | `docs/README.md`, `BUSINESS_RULES.md`, `CONTRIBUTING.md`, `HANDBOOK.md`, `ROUTING.md`, `DESIGN.md`, `STRIPE_SETUP.md` | Beschreibt den **Ist-Zustand**. Bei jeder relevanten Code-Änderung aktualisieren — nie eine Parallel-Datei danebenlegen. |
-| **Archiv** | Audits, Analysen, Reports, Prompts an andere KIs                                                                      | Snapshot zu einem Zeitpunkt. Landet direkt in `docs/ARCHIV/`, danach **nie wieder editiert**.                            |
+Jede `.md` gehört genau einer Kategorie. Die Kategorie bestimmt den Ort, den Namen und ob die Datei später noch angefasst wird:
+
+| Kategorie        | Ort                | Beispiele                                                     | Lebensdauer                                                                              |
+| ---------------- | ------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Lebend**       | `docs/*.md`        | `README.md`, `BUSINESS_RULES.md`, `HANDBOOK.md`, `ROUTING.md` | Beschreibt den **Ist-Zustand**. Bei Code-Änderungen mitziehen — nie eine Parallel-Datei. |
+| **Archiv**       | `docs/ARCHIV/`     | Audits, Analysen, Reports, Testläufe, Prompts an andere KIs   | Snapshot. Nach dem Anlegen **nie wieder editiert**. Datum im Namen.                      |
+| **Entscheidung** | `docs/decisions/`  | `adr-001-testdaten-lanes.md`                                  | Begründung einer Festlegung. Unveränderlich; Revision = neue ADR mit Verweis.            |
+| **Generiert**    | egal, `.gitignore` | `TEST-CREDENTIALS.md`, SBOM, Coverage-Reports                 | Von einem Skript geschrieben. **Nicht von Hand editieren**, nicht pflegen.               |
+
+Faustregel für die Zuordnung: _Beschreibt es, wie es **ist**?_ → lebend. _Beschreibt es, was zu einem Zeitpunkt **war**?_ → Archiv. _Begründet es, **warum** etwas so festgelegt wurde?_ → ADR. _Schreibt es ein Skript?_ → generiert.
 
 ### 2. Vor dem Anlegen einer neuen `.md`
 
-1. `docs/README.md` (Index) prüfen — gibt es zum Thema schon ein lebendes Dokument?
+1. `docs/README.md` (Index) prüfen — gibt es zum Thema schon ein lebendes Dokument? Der Index ist die **einzige** Stelle, an der man das zuverlässig sieht; `ls docs/` reicht nicht, weil 134 Archiv-Dateien dazwischenliegen.
 2. Wenn ja: **das bestehende Dokument updaten.** Kein `_v2`, `_KONZEPT`, `_NEU`, `2026-07-xx`-Suffix an einem sonst identischen Dateinamen.
-3. Wenn nein und es sich um einen Ist-Zustand handelt: neues lebendes Dokument anlegen und in `docs/README.md` verlinken.
+3. Wenn nein und es sich um einen Ist-Zustand handelt: neues lebendes Dokument anlegen **und in `docs/README.md` verlinken** — unverlinkt findet es der nächste Agent nicht und legt es doppelt an.
 4. Wenn es ein einmaliges Ergebnis ist (Audit, Analyse, Testlauf, Deep-Dive): direkt nach `docs/ARCHIV/` mit Datum im Namen (`YYYY-MM-DD-thema.md`).
 
 ### 3. Architektur-Entscheidungen
 
-ADRs kommen nach `docs/decisions/`, Namensschema `adr-NNN-slug.md` (fortlaufend, siehe `adr-007-schema-migrations-composite-pk.md`). Einmal gemergte ADRs werden nicht mehr geändert — Revisionen bekommen eine neue ADR, die auf die alte verweist.
+ADRs kommen nach `docs/decisions/`, Namensschema `adr-NNN-slug.md` (fortlaufend, siehe `adr-001-testdaten-lanes.md`). Einmal gemergte ADRs werden nicht mehr geändert — Revisionen bekommen eine neue ADR, die auf die alte verweist.
+
+Eine ADR schreibt, wer eine Entscheidung trifft, die spätere Arbeit einschränkt: eine Konvention, die andere einhalten müssen; eine verworfene Alternative, die sonst jemand erneut vorschlägt; eine Trennung, die ohne Begründung willkürlich wirkt. Reine Bugfixes und Umsetzungen brauchen keine.
+
+### 3a. Die Regeln werden geprüft, nicht geglaubt
+
+`npm run docs:check` prüft die Regeln 1–4 maschinell (Dubletten-Namen, fehlende Index-Einträge, tote Links, ADR-Schema, Archiv-Datumspräfix) und läuft im `pre-commit`-Hook, sobald `.md`-Dateien im Commit sind.
+
+Grund: Die Regeln standen monatelang genau so hier und wurden trotzdem dreimal gebrochen — zuletzt entstand `docs/TESTZUGAENGE.md` neben dem bereits existierenden `docs/TEST-CREDENTIALS.md`. Prosa ohne Prüfung ist keine Regel, sondern eine Bitte. Wer eine Regel ergänzt, ergänzt den Check in `scripts/check-docs.ts` mit — sonst verfällt sie wie die vorherigen.
 
 ### 4. Pflichtfelder in lebenden Dokumenten
 
@@ -64,6 +78,40 @@ Wer eine Migration schreibt, die RLS-Policies, Scoping-Helper-Funktionen oder da
 ### 3. Migrationsdateien sind Historie, keine lebenden Dokumente
 
 Einmal gemergte Migrationsdateien werden nicht mehr nachträglich editiert (wie bei ADRs, siehe oben) — eine Korrektur bekommt eine neue Datei mit späterem Zeitstempel. `docs/DATABASE.md` ist der lebende Ist-Zustand; die Migrationsdateien bleiben das Änderungsprotokoll.
+
+## Testdaten
+
+Grund für diese Regeln: Die Datenbank enthielt 85 Vereine, 537 Profile und 1912 Rechnungen — fast alles Rückstände aus Testläufen verschiedener Agenten (`Billing Test Club <timestamp>` × 40). Parallel existierten 14 verschiedene `seed-*.ts`-Skripte mit je eigener Vorstellung davon, was „Testdaten" sind. Niemand konnte einem Befund noch ansehen, ob er echt oder Müll war. Am 13.08.2026 wurde die DB deshalb komplett zurückgesetzt.
+
+### 1. Lanes — wem gehören die Daten
+
+Jeder Testverein gehört genau einer Lane, erkennbar an der E-Mail-Domain seiner Accounts:
+
+| Lane    | Domain          | Eigentümer | Regel                                                        |
+| ------- | --------------- | ---------- | ------------------------------------------------------------ |
+| `user`  | `*.swingz.test` | Mensch     | Ein Agent liest hier höchstens. **Schreiben ist untersagt.** |
+| `agent` | `*.claude.test` | KI         | Freie Spielwiese. Hier testen, kaputtmachen, zurücksetzen.   |
+
+Wer als Agent Daten anlegen, ändern oder löschen will, tut das in **Claude Sandbox Alpha** oder **Beta**. Muss ein Testfall zwingend in einem Nutzer-Verein laufen, vorher fragen — nicht einfach machen.
+
+`TC Neuland e.V.` bleibt leer. Kein Mitglied, kein Trainer, kein Platz, `setup_completed_at = NULL`. Das ist der Erstlogin-Testfall des Menschen und wird von keinem Agenten bestückt.
+
+### 2. Ein Seed-Skript, keine Sammlung
+
+`scripts/seed-testdata.ts` ist die einzige Quelle für Testdaten. Neue Testdaten kommen als Änderung an dessen `CLUBS`-Konstante dazu — **kein zweites Seed-Skript daneben** (siehe die Doku-Regeln oben, gleiches Muster, gleicher Grund).
+
+```bash
+npm run seed          # Ist-Zustand, ändert nichts
+npm run seed:docs     # Zugangsdaten-Doku aus dem Ist-Zustand neu schreiben
+npm run seed:agent    # nur die Agent-Lane neu — Nutzer-Vereine bleiben unberührt
+npm run seed:reset    # komplett platt + alles neu (löscht auch die Nutzer-Lane!)
+```
+
+`npm run seed:reset` ist destruktiv für **beide** Lanes und wird ohne Rückfrage des Menschen nicht ausgeführt. Für Agenten-Arbeit reicht `npm run seed:agent`.
+
+### 3. Zugangsdaten sind generiert, nicht gepflegt
+
+`docs/TEST-CREDENTIALS.md` schreibt das Seed-Skript bei jedem Vollauf neu und ist per `.gitignore` ausgeschlossen (Klartext-Passwörter). Es ist damit ein generiertes Artefakt im Sinne der Regel oben — nicht von Hand editieren, nicht als lebendes Dokument pflegen. Wer Accounts wissen will, liest die Datei oder führt `npm run seed` aus.
 
 ## Konflikte
 

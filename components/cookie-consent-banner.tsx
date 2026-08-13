@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 const CONSENT_KEY = 'swingz-cookie-consent';
@@ -15,10 +15,31 @@ export function getCookieConsent(): CookieConsent | null {
 
 export function CookieConsentBanner() {
   const [consent, setConsent] = useState<CookieConsent | null>('accepted');
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setConsent(getCookieConsent());
   }, []);
+
+  // Das Banner liegt `fixed` über dem Seitenende und verdeckte dort alles,
+  // was unten steht — zuletzt den Weiter-Button des Onboarding-Wizards.
+  // Solange es sichtbar ist, bekommt der Body seine gemessene Höhe als
+  // Innenabstand; ein fester Wert wäre auf Mobil zu klein, weil das Banner
+  // dort umbricht.
+  useEffect(() => {
+    const banner = bannerRef.current;
+    if (consent !== null || !banner) return;
+    const apply = () => {
+      document.body.style.paddingBottom = `${banner.offsetHeight}px`;
+    };
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(banner);
+    return () => {
+      observer.disconnect();
+      document.body.style.paddingBottom = '';
+    };
+  }, [consent]);
 
   if (consent !== null) return null;
 
@@ -30,7 +51,10 @@ export function CookieConsentBanner() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background p-4 shadow-lg">
+    <div
+      ref={bannerRef}
+      className="fixed inset-x-0 bottom-0 z-50 border-t bg-background p-4 shadow-lg"
+    >
       <div className="mx-auto flex max-w-4xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Wir nutzen Cookies für Analyse-Zwecke (Google Analytics), um SwingZ zu verbessern. Mehr

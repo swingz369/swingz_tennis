@@ -1,6 +1,6 @@
 # SwingZ — Tennis Club Management SaaS
 
-> Zuletzt verifiziert: 24. Juli 2026
+> Zuletzt verifiziert: 13. August 2026
 > Vollständiger Projektkontext für KI-Agenten: [`AGENTS.md`](../AGENTS.md) / [`CLAUDE.md`](../CLAUDE.md) im Repo-Root.
 
 SwingZ ist eine Management-Lösung für Tennisvereine: Mitglieder, Buchungen, Trainingssessions, Plätze, Saisonplanung und Analytics in einer Weboberfläche. UI-Texte sind durchgängig Deutsch. Produktion: https://swingz.vercel.app
@@ -9,22 +9,25 @@ SwingZ ist eine Management-Lösung für Tennisvereine: Mitglieder, Buchungen, Tr
 
 ## Doku-Index
 
-| Dokument                                                   | Inhalt                                                                               |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [`AGENTS.md`](../AGENTS.md)                                | Regeln für KI-Agenten in diesem Repo (auch Doku-Governance)                          |
-| [`CLAUDE.md`](../CLAUDE.md)                                | Architektur, Rollen, Konventionen, DO-NOT-Liste — Pflichtlektüre vor Code-Änderungen |
-| [`BUSINESS_RULES.md`](BUSINESS_RULES.md)                   | Verbindliche Produkt- und Rollenregeln                                               |
-| [`DATABASE.md`](DATABASE.md)                               | DB-/RLS-Ist-Zustand, Migrations-Realität, bekannte Altlasten                         |
-| [`HANDBOOK.md`](HANDBOOK.md)                               | Nutzerhandbuch                                                                       |
-| [`handbook/`](handbook/)                                   | Ausführliches Dev-/User-Handbuch, inkl. auto-generierter Kapitel (siehe unten)       |
-| [`DESIGN.md`](DESIGN.md)                                   | Design-Konzept (Design-System, Component-Architektur, A11y-Audit)                    |
-| [`ROUTING.md`](ROUTING.md)                                 | Route-Groups, Layout-Hierarchie, alle Seiten                                         |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md)                       | Workflow für Beiträge                                                                |
-| [`STRIPE_SETUP.md`](STRIPE_SETUP.md)                       | Stripe-Konfiguration                                                                 |
-| [`EMAIL_SETUP.md`](EMAIL_SETUP.md)                         | Resend-Konfiguration, Absenderdomain, Versandwege — **derzeit blockiert**            |
-| [`RUNBOOK-BACKUP-ROLLBACK.md`](RUNBOOK-BACKUP-ROLLBACK.md) | Backup & Rollback                                                                    |
-| [`ARCHIV/`](ARCHIV/)                                       | Abgeschlossene Audits/Analysen/Snapshots — historisch, nicht mehr aktuell            |
-| [`tickets/`](tickets/)                                     | Offene Spikes/Tickets                                                                |
+| Dokument                                                   | Inhalt                                                                                         |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| [`AGENTS.md`](../AGENTS.md)                                | Regeln für KI-Agenten in diesem Repo (auch Doku-Governance)                                    |
+| [`CLAUDE.md`](../CLAUDE.md)                                | Architektur, Rollen, Konventionen, DO-NOT-Liste — Pflichtlektüre vor Code-Änderungen           |
+| [`BUSINESS_RULES.md`](BUSINESS_RULES.md)                   | Verbindliche Produkt- und Rollenregeln                                                         |
+| [`DATABASE.md`](DATABASE.md)                               | DB-/RLS-Ist-Zustand, Migrations-Realität, bekannte Altlasten                                   |
+| [`OPEN_ITEMS.md`](OPEN_ITEMS.md)                           | **Konsolidierte offene Punkte & nächste Schritte** (P0–P3 + Roadmap) — hier zuerst lesen       |
+| [`HANDBOOK.md`](HANDBOOK.md)                               | Nutzerhandbuch                                                                                 |
+| [`handbook/`](handbook/)                                   | Ausführliches Dev-/User-Handbuch, inkl. auto-generierter Kapitel (siehe unten)                 |
+| [`DESIGN.md`](DESIGN.md)                                   | Design-Konzept (Design-System, Component-Architektur, A11y-Audit)                              |
+| [`ROUTING.md`](ROUTING.md)                                 | Route-Groups, Layout-Hierarchie, alle Seiten                                                   |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md)                       | Workflow für Beiträge                                                                          |
+| [`STRIPE_SETUP.md`](STRIPE_SETUP.md)                       | Stripe-Konfiguration                                                                           |
+| [`EMAIL_SETUP.md`](EMAIL_SETUP.md)                         | Resend-Konfiguration, Absenderdomain, Versandwege — **derzeit blockiert**                      |
+| [`RUNBOOK-BACKUP-ROLLBACK.md`](RUNBOOK-BACKUP-ROLLBACK.md) | Backup & Rollback                                                                              |
+| `TEST-CREDENTIALS.md`                                      | Testvereine, Lanes & Zugangsdaten — **generiert** von `scripts/seed-testdata.ts`, nicht in Git |
+| [`decisions/`](decisions/)                                 | Architektur-Entscheidungen (ADRs) — einmal gemergt unveränderlich                              |
+| [`ARCHIV/`](ARCHIV/)                                       | Abgeschlossene Audits/Analysen/Snapshots — historisch, nicht mehr aktuell                      |
+| [`tickets/`](tickets/)                                     | Ticket-System — **eingefroren (Stand Juni 2026)**, siehe `OPEN_ITEMS.md`                       |
 
 Aktuellster Archiv-Snapshot: [`ARCHIV/2026-07-26-produktaudit-verkaufsreife.md`](ARCHIV/2026-07-26-produktaudit-verkaufsreife.md) — Produktaudit zur Verkaufsreife (RLS-Bypass über den Drizzle-Pfad, unverschlüsselter DB-Transport, fehlendes Abo-Enforcement, Wettbewerbs- und Positionierungsanalyse). Umsetzungsstand Phase 1: [`ARCHIV/2026-07-26-produktaudit-phase1-umsetzung.md`](ARCHIV/2026-07-26-produktaudit-phase1-umsetzung.md) — 2 reale Cross-Tenant-Lücken in Season-Routes gefixt, Testsuite grün, P2 (TLS) braucht VPS-Diagnose vor Umsetzung. Umsetzungsstand Phase 3: [`ARCHIV/2026-07-26-produktaudit-phase3-umsetzung.md`](ARCHIV/2026-07-26-produktaudit-phase3-umsetzung.md) — zentrales Abo-Gate jetzt auf API-Ebene für alle Routes, Superadmin-Dunning-Lücke geschlossen, Pflicht-Abo für Neukonten als Folge-Ticket zurückgestellt.
 

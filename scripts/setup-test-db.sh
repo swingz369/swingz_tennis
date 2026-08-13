@@ -187,7 +187,7 @@ ${GREEN}Next steps:${NC}
        TEST_MEMBER_EMAIL / TEST_MEMBER_PASSWORD
        TEST_TRAINER_EMAIL / TEST_TRAINER_PASSWORD
      Get them from your Supabase Studio (http://localhost:54323)
-     or seed:  npx tsx scripts/seed-test-billing-user.ts
+     or seed:  npm run seed:reset
 
   2. Run the E2E tests:
        npx playwright test

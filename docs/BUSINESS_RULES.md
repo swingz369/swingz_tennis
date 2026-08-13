@@ -1,5 +1,7 @@
 # SwingZ — Business Rules
 
+> Zuletzt aktualisiert: 13.08.2026 (Stand der letzten Code-Änderung an diesem Dokument)
+
 > Verbindliche Produktregeln. Bei Widersprüchen zwischen Code und diesem Dokument gilt dieses Dokument als Referenz.
 > Letzte Aktualisierung: 17. Juni 2026
 

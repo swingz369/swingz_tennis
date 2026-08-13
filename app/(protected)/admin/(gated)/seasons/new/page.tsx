@@ -23,7 +23,7 @@ import { PageHeader } from '@/components/ui/page-header';
 export default function NewSeasonPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const { data: clubData } = useUserClub();
+  const { data: clubData, refetch: refetchClub } = useUserClub();
   const clubId = clubData?.clubId ?? null;
   const [formData, setFormData] = useState({
     name: '',
@@ -43,12 +43,16 @@ export default function NewSeasonPage() {
     try {
       // Validation
       if (!formData.name || !formData.start_date || !formData.end_date) {
-        toast.error('Bitte füllen Sie alle Pflichtfelder aus');
+        toast.error('Bitte fülle alle Pflichtfelder aus');
         return;
       }
 
-      if (!clubId) {
-        toast.error('Kein Vereinszugang gefunden. Bitte neu anmelden.');
+      // Fehlt der Verein, sind die Vereinsdaten meist nur noch nicht geladen (die
+      // Query kann beim Seitenaufruf abgebrochen sein) — dann hilft ein zweiter
+      // Versuch, keine Aufforderung zum Neu-Anmelden.
+      const effectiveClubId = clubId ?? (await refetchClub()).data?.clubId ?? null;
+      if (!effectiveClubId) {
+        toast.error('Vereinsdaten konnten nicht geladen werden. Bitte Seite neu laden.');
         return;
       }
 
@@ -56,13 +60,13 @@ export default function NewSeasonPage() {
         method: 'POST',
         body: JSON.stringify({
           ...formData,
-          club_id: clubId,
+          club_id: effectiveClubId,
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Fehler beim Erstellen der Season');
+        throw new Error(error.error || 'Fehler beim Erstellen der Saison');
       }
 
       const data = await response.json();
@@ -109,17 +113,14 @@ export default function NewSeasonPage() {
         <Button variant="ghost" size="icon" onClick={() => router.push('/admin/seasons')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <PageHeader
-          title="Neue Season erstellen"
-          description="Erstellen Sie eine neue Trainings-Season"
-        />
+        <PageHeader title="Neue Saison erstellen" description="Lege eine neue Trainingssaison an" />
       </div>
 
       <form onSubmit={handleSubmit}>
         <Card>
           <CardHeader>
-            <CardTitle>Season Details</CardTitle>
-            <CardDescription>Grundlegende Informationen über die Season</CardDescription>
+            <CardTitle>Saison-Details</CardTitle>
+            <CardDescription>Grundlegende Informationen zur Saison</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Season Type & Year */}
@@ -170,7 +171,7 @@ export default function NewSeasonPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="name">
-                  Season Name <span className="text-destructive">*</span>
+                  Saison-Name <span className="text-destructive">*</span>
                 </Label>
                 <Button
                   type="button"
@@ -248,7 +249,7 @@ export default function NewSeasonPage() {
               <Label htmlFor="description">Beschreibung (optional)</Label>
               <Textarea
                 id="description"
-                placeholder="Beschreiben Sie diese Season..."
+                placeholder="Beschreibe diese Saison…"
                 rows={3}
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
@@ -286,7 +287,7 @@ export default function NewSeasonPage() {
                 ) : (
                   <>
                     <Save className="mr-2 h-4 w-4" />
-                    Season erstellen
+                    Saison erstellen
                   </>
                 )}
               </Button>

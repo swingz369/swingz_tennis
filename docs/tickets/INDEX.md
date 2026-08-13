@@ -1,5 +1,10 @@
 # Ticket-Tracking Index
 
+> ⚠️ **Eingefroren (Stand Juni 2026) — nicht mehr gepflegt.** Dieses Ticket-System bildet den
+> Ist-Zustand nicht mehr ab und `INDEX.md`/`STATUS.md` widersprechen sich gegenseitig. Die
+> aktuelle, konsolidierte Übersicht offener Punkte liegt in [`docs/OPEN_ITEMS.md`](../OPEN_ITEMS.md).
+> Diese Dateien nur noch als historisches Inventar lesen.
+
 > Quelle: [`docs/UMSETZUNGSPLAN_PROJEKTANALYSE.md`](../UMSETZUNGSPLAN_PROJEKTANALYSE.md) + [`docs/roadmap/IMPLEMENTATION_TICKETS_Q3_2026.md`](../roadmap/IMPLEMENTATION_TICKETS_Q3_2026.md)  
 > Stand: 2026-06-26 · Gesamt: 85 Tickets  
 > Status-Legende: ✅ DONE · 🔶 PARTIAL · ❌ TODO · 📅 PLANNED

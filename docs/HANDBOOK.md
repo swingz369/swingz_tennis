@@ -1,5 +1,7 @@
 # SwingZ — Master-Handbuch
 
+> Zuletzt aktualisiert: 21.07.2026 (Stand der letzten Code-Änderung an diesem Dokument)
+
 > **Zentrale Doku für alle Rollen, alle Features, alle Schichten.** Lies hier, wenn du nicht weißt wo anfangen.
 
 Willkommen im SwingZ-Handbuch. Dieses Dokument ist **single entry point** für End-User, Product Owner und Entwickler. Es verlinkt auf themenspezifische Kapitel, in denen Tiefe und Code-Referenzen liegen.
@@ -66,7 +68,7 @@ Vereine aktivieren Module auf zwei Ebenen: beim **Onboarding-Wizard** und späte
 | 12  | Smart Court (Add-On €79/M.) | optional  | smart_court         | Hardware-Vendor-Integration (Nuki/Shelly/Loxone) |
 | 13  | Dynamische Preisgestaltung  | optional  | pricing             | Peak/Off-Peak Pricing                            |
 
-Details: [`dev/feature-flags.md`](./handbook/dev/feature-flags.md). Master-Registry: [`lib/features.ts`](../../lib/features.ts).
+Details: [`dev/feature-flags.md`](./handbook/dev/feature-flags.md). Master-Registry: [`lib/features.ts`](../lib/features.ts).
 
 ---
 
@@ -189,7 +191,7 @@ Nicht widersprechen — diese Dateien haben Vorrang vor dem Handbuch bei Konflik
 
 1. [`BUSINESS_RULES.md`](./BUSINESS_RULES.md) — verbindliche Produkt- und Rollenregeln
 2. [`CLAUDE.md`](./../CLAUDE.md) — Projekt-Konventionen für AI-Agents und neue Devs
-3. [`ADR-013-source-of-truth-declaration.md`](./ADR-013-source-of-truth-declaration.md)
+3. [`AGENTS.md`](./../AGENTS.md) — Doku-Governance, Migrations- und Testdaten-Regeln
 4. [`lib/features.ts`](../lib/features.ts) — Feature-Registry (Master)
 5. [`lib/auth-common.ts`](../lib/auth-common.ts) — Rollen-Hierarchie (Master)
 

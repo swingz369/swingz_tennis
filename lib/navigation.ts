@@ -313,7 +313,7 @@ export function mobileNavItems(
 
 // ── Command-Palette (Cmd+K) ──────────────────────────────────────────
 
-export function paletteNavItems(): NavItem[] {
+export function paletteNavItems(hidden: Hidden = new Set()): NavItem[] {
   return [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Buchungen', href: '/bookings', icon: Calendar },
@@ -323,7 +323,11 @@ export function paletteNavItems(): NavItem[] {
     { name: 'Benachrichtigungen', href: '/notifications', icon: Bell },
     { name: 'News', href: '/news', icon: Newspaper },
     { name: 'Erweiterte Suche', href: '/search', icon: Search },
-    { name: 'Erfolge & Ranglisten', href: '/gamification', icon: Trophy },
+    // Ohne dieses Gate bot die Palette Gamification auch Vereinen an, die das
+    // Modul nicht gebucht haben — dort antwortet die Seite mit 403.
+    ...(!hidden.has('gamification')
+      ? [{ name: 'Erfolge & Ranglisten', href: '/gamification', icon: Trophy }]
+      : []),
     { name: 'Profil', href: '/profile', icon: User },
   ];
 }

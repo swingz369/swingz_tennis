@@ -1,5 +1,7 @@
 # Contributing Operational Rules
 
+> Zuletzt aktualisiert: 21.07.2026 (Stand der letzten Code-Änderung an diesem Dokument)
+
 > **Supplement to `docs/README.md` § Contributing.** Where the README covers
 > workflow and code-style, this file documents **operational rules** that
 > Sprint-4 (TS-Baseline Pass) discovered the hard way.
@@ -267,7 +269,7 @@ emerges in a sprint, add a Rule here with the Sprint reference.
 ## 🟢 Rule 10: Handbuch-Pflege bei Code-Änderungen
 
 **Verbindlich:** SwingZ führt ein fortlaufendes Master-Handbuch unter
-[`docs/HANDBOOK.md`](docs/HANDBOOK.md). Es integriert Rollen-Walkthroughs
+[`docs/HANDBOOK.md`](HANDBOOK.md). Es integriert Rollen-Walkthroughs
 (User-Sicht) und Implementierungs-Details (Dev-Sicht) pro Thema.
 
 ### Wenn muss ich das Handbuch anfassen?

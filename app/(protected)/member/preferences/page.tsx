@@ -30,9 +30,29 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/page-header';
+import { apiFetch } from '@/lib/api-fetch';
 
 const MAX_TIME_PREFS = 4;
 const MAX_WISH_PARTNERS = 3;
+
+/**
+ * Altersgruppe aus dem Geburtsdatum. `user_club_memberships` hat keine
+ * `age_group`-Spalte — die einzige Quelle ist `users.date_of_birth`.
+ *
+ * Der Wert landet als `preferred_age_group` in den Trainingspräferenzen; die
+ * Clustering-Engine erkennt daran Minderjährige und weist ihnen nur Slots ab
+ * 14:00 zu (siehe `lib/season-planning/clustering-engine.ts:662`).
+ */
+export function ageGroupFromDateOfBirth(dob: string | null | undefined): 'kids' | 'senior' {
+  if (!dob) return 'senior';
+  const birth = new Date(dob);
+  if (Number.isNaN(birth.getTime())) return 'senior';
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const monthDiff = now.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age--;
+  return age < 18 ? 'kids' : 'senior';
+}
 
 const DAYS = [
   { key: 'monday', label: 'Montag' },
@@ -108,7 +128,7 @@ export default function MemberPreferencesPage() {
     if (!userId) return;
     supabase
       .from('user_club_memberships')
-      .select('club_id, age_group')
+      .select('club_id, users!user_club_memberships_user_id_fkey(date_of_birth)')
       .eq('user_id', userId)
       .eq('is_active', true)
       .eq('role', 'member')
@@ -120,7 +140,10 @@ export default function MemberPreferencesPage() {
         }
         const cid = m[0].club_id;
         setClubId(cid);
-        setCurrentAgeGroup(m[0].age_group || 'senior');
+        const joined = m[0].users as
+          { date_of_birth: string | null }[] | { date_of_birth: string | null } | null;
+        const dob = (Array.isArray(joined) ? joined[0] : joined)?.date_of_birth;
+        setCurrentAgeGroup(ageGroupFromDateOfBirth(dob));
         supabase
           .from('seasons')
           .select('id, name, preferences_open')
@@ -136,33 +159,29 @@ export default function MemberPreferencesPage() {
       });
   }, [userId, supabase]);
 
-  // Load eligible wish-partner members (same club, same age group, not self)
+  // Load eligible wish-partner members (same club, not self)
+  //
+  // Über `/api/members/directory`, nicht per Supabase-Client: die RLS-Policy auf
+  // `user_club_memberships` gibt einem Mitglied nur die eigene Zeile frei, ein
+  // Client-Query lieferte daher immer eine leere Liste — ohne Fehlermeldung.
+  //
+  // ponytail: kein Altersgruppen-Filter. Er lief früher über eine
+  // `age_group`-Spalte, die es auf der Tabelle nicht gibt. Ihn über
+  // `users.date_of_birth` nachzubauen hieße, Geburtsdaten aller Mitglieder
+  // auszuliefern; die Clustering-Engine trennt Alt und Jung ohnehin selbst.
   useEffect(() => {
     if (!clubId || !userId) return;
-    supabase
-      .from('user_club_memberships')
-      .select('user_id, age_group, users!user_club_memberships_user_id_fkey(full_name)')
-      .eq('club_id', clubId)
-      .eq('role', 'member')
-      .eq('is_active', true)
-      .eq('age_group', currentAgeGroup)
-      .neq('user_id', userId)
-      .then(({ data }) => {
-        if (!data) return;
-        setAllMembers(
-          data
-            .map((d) => ({
-              id: d.user_id,
-              name:
-                (Array.isArray(d.users)
-                  ? (d.users as { full_name: string }[])[0]?.full_name
-                  : (d.users as { full_name: string } | null)?.full_name) || 'Unbekannt',
-            }))
-            .filter((m) => m.name !== 'Unbekannt')
-            .sort((a, b) => a.name.localeCompare(b.name, 'de'))
-        );
+    const ac = new AbortController();
+    apiFetch(`/api/members/directory?clubId=${encodeURIComponent(clubId)}`, {
+      signal: ac.signal,
+    })
+      .then((res) => (res.ok ? res.json() : { members: [] }))
+      .then((json: { members?: Member[] }) => setAllMembers(json.members ?? []))
+      .catch(() => {
+        /* Abbruch beim Unmount oder Netzwerkfehler — Liste bleibt leer */
       });
-  }, [clubId, userId, currentAgeGroup, supabase]);
+    return () => ac.abort();
+  }, [clubId, userId]);
 
   // Load existing preferences
   useEffect(() => {
@@ -480,7 +499,7 @@ export default function MemberPreferencesPage() {
             </span>
           </div>
           <CardDescription>
-            Optional — bis zu {MAX_WISH_PARTNERS} Wunschpartner aus deiner Altersgruppe.
+            Optional — bis zu {MAX_WISH_PARTNERS} Wunschpartner aus deinem Verein.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -552,7 +571,7 @@ export default function MemberPreferencesPage() {
 
           {allMembers.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-2">
-              Keine weiteren Mitglieder in deiner Altersgruppe gefunden.
+              Keine weiteren Mitglieder in deinem Verein gefunden.
             </p>
           )}
         </CardContent>

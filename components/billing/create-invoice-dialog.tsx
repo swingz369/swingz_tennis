@@ -174,7 +174,7 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
             Neue Rechnung erstellen
           </h2>
           <p className="text-sm text-muted-foreground">
-            Erstellen Sie eine neue Rechnung für ein Mitglied
+            Erstelle eine neue Rechnung für ein Mitglied
           </p>
         </div>
 

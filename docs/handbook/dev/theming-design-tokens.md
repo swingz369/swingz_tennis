@@ -103,7 +103,7 @@ Tennis-Spezifisch:
 
 ## 🧪 Visuelle Tests
 
-- **Playwright-Snapshots**: `e2e/design-preview-*.test.ts` (mehrere Dateien)
+- **Playwright-Snapshots**: `tests/browser/design-preview-*.test.ts` (mehrere Dateien)
 - **Storybook** (optional, nicht aktiv): Komponenten-Isolierung
 
 ## 📚 Verwandte Kapitel

@@ -312,7 +312,7 @@ Jede neue Route hat mindestens:
 
 - **Unit-Test** für Use-Case-Business-Logik
 - **Integration-Test** für Route-Handler mit gemocktem Supabase
-- **E2E-Test** für den User-Flow (Playwright, in `e2e/`)
+- **E2E-Test** für den User-Flow (Playwright, in `tests/e2e/`)
 
 ```ts
 // src/__tests__/api/widget.test.ts

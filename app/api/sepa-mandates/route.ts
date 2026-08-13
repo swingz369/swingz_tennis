@@ -73,16 +73,21 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     try {
-      // Only admin and trainers can view SEPA mandates
-      const hasPermission = await verifyRole(auth, 'trainer');
-      if (!hasPermission) {
-        return forbiddenResponse('Insufficient permissions to view SEPA mandates');
-      }
-
       const { searchParams } = new URL(request.url);
       const memberId = searchParams.get('memberId');
       const mandateId = searchParams.get('mandateId');
       const active = searchParams.get('active');
+
+      // Trainer and above may look up any member's mandates. A member may read
+      // exactly one thing: their own active mandate — the counterpart to POST,
+      // which already lets them sign it. Without this, /profile → Zahlungen
+      // answered 403 for every member.
+      const isPrivileged = await verifyRole(auth, 'trainer');
+      const readsOwnActiveMandate =
+        active === 'true' && !mandateId && (!memberId || memberId === auth.user.id);
+      if (!isPrivileged && !readsOwnActiveMandate) {
+        return forbiddenResponse('Insufficient permissions to view SEPA mandates');
+      }
 
       if (mandateId) {
         const mandate = await SEPAMandateService.getMandateById(mandateId);

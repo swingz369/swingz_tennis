@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +16,7 @@ import { Pencil, Trash2, Plus, X, Check, Loader2 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/page-header';
+import { TennisBallEmptyState } from '@/components/ui/empty-state';
 
 interface FeeConfig {
   id: string;
@@ -32,6 +34,7 @@ export default function FeeCategoriesClient({
   clubId: string;
   initialCategories: FeeConfig[];
 }) {
+  const router = useRouter();
   const [categories, setCategories] = useState<FeeConfig[]>(initialCategories);
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -81,6 +84,9 @@ export default function FeeCategoriesClient({
         setCreating(false);
         setForm({ name: '', type: 'training', amount: 0 });
         toast.success('Kategorie erstellt');
+        // Der Hinweis "Keine aktive Mitgliedsgebühr konfiguriert" auf der
+        // Rechnungsseite kommt vom Server — ohne Refresh bleibt er stehen.
+        router.refresh();
       } else {
         const err = await res.json().catch(() => ({}));
         toast.error(err.error || 'Erstellung fehlgeschlagen');
@@ -138,6 +144,7 @@ export default function FeeCategoriesClient({
         );
         setEditingId(null);
         toast.success('Kategorie aktualisiert');
+        router.refresh();
       } else {
         const err = await res.json().catch(() => ({}));
         toast.error(err.error || 'Aktualisierung fehlgeschlagen');
@@ -157,6 +164,7 @@ export default function FeeCategoriesClient({
       if (res.ok) {
         setCategories((prev) => prev.filter((c) => c.id !== id));
         toast.success('Kategorie gelöscht');
+        router.refresh();
       } else {
         const err = await res.json().catch(() => ({}));
         toast.error(err.error || 'Löschen fehlgeschlagen');
@@ -241,7 +249,11 @@ export default function FeeCategoriesClient({
         </CardHeader>
         <CardContent>
           {categories.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Noch keine Kategorien angelegt.</p>
+            <TennisBallEmptyState
+              title="Noch keine Beitragskategorien"
+              description="Eine Kategorie legt fest, wer wie viel in welchem Rhythmus zahlt. Ohne mindestens eine lässt sich keine Rechnung erzeugen."
+              action={{ label: 'Kategorie anlegen', onClick: () => setCreating(true) }}
+            />
           ) : (
             <div className="divide-y">
               {categories.map((cat) => (

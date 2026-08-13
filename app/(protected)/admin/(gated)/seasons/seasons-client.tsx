@@ -43,10 +43,10 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
     <div className="space-y-6">
       <PageHeader
         title="Saisonplanung"
-        description="Verwalten Sie Ihre Trainings-Seasons und Planungen"
+        description="Verwalte deine Trainingssaisons und Planungen"
         breadcrumbs={[{ label: 'Saisonplanung' }]}
         actions={[
-          { label: 'Neue Season', icon: Plus, onClick: () => router.push('/admin/seasons/new') },
+          { label: 'Neue Saison', icon: Plus, onClick: () => router.push('/admin/seasons/new') },
         ]}
       />
 
@@ -55,7 +55,7 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
         <div className="grid gap-4 md:grid-cols-4">
           <StatCard
             icon={Calendar}
-            label="Seasons Gesamt"
+            label="Saisons gesamt"
             value={seasons.length}
             sub={`${seasons.filter((s) => s.is_active).length} aktiv`}
             color="brand"

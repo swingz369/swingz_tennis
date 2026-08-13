@@ -148,6 +148,25 @@ if [ $LINT_EXIT -ne 0 ]; then
   exit $LINT_EXIT
 fi
 
+# ═══ Schritt 3: Doku-Regeln (nur wenn .md-Dateien betroffen sind) ══════
+# Purpose: AGENTS.md → Dokumentations-Regeln maschinell durchsetzen. Die
+# Regeln standen monatelang als Prosa da und wurden trotzdem mehrfach
+# gebrochen (ROUTING.md/ROUTING2.md, DESIGN.md/DESIGN_KONZEPT.md,
+# TEST-CREDENTIALS.md/TESTZUGAENGE.md). Prüft Dubletten-Namen, fehlende
+# Index-Einträge, tote Links und das ADR-Schema.
+MD_CHANGES=$(echo "$STAGED_FILES" | grep -E '\.md$' || true)
+if [ -n "$MD_CHANGES" ]; then
+  echo ""
+  echo "${BLUE}📚 Prüfe Doku-Regeln (AGENTS.md)...${NC}"
+  npx tsx scripts/check-docs.ts
+  DOCS_EXIT=$?
+  if [ $DOCS_EXIT -ne 0 ]; then
+    echo "${RED}❌ Doku-Regeln verletzt — Commit abgebrochen${NC}"
+    echo "${YELLOW}   Details oben. Regeln: AGENTS.md → Dokumentations-Regeln${NC}"
+    exit $DOCS_EXIT
+  fi
+fi
+
 echo ""
 echo "${GREEN}✅ Pre-commit Hook erfolgreich abgeschlossen${NC}"
 exit 0

@@ -118,7 +118,7 @@ export function CommandPalette({ roles, selectedClubId, clubs }: CommandPaletteP
     icon: React.ElementType;
     shortcut?: string;
     roles?: string[];
-  }> = paletteNavItems().map((item) => ({
+  }> = paletteNavItems(hiddenSections).map((item) => ({
     label: item.name,
     href: item.href,
     icon: item.icon ?? Search,

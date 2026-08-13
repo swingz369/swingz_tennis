@@ -175,8 +175,11 @@ ds-bundle/
 graphify-out/
 tests/e2e/screenshots/
 
+# Generierte Benchmark-/Perf-Ergebnisse (werden bei Bedarf neu erzeugt)
+tests/bench/.scaling-results.json
+tests/e2e/.clustering-perf-results.json
 
-\n# Build artifacts\n*.tsbuildinfo
+
 
 # Auto-generated
 next-env.d.ts
@@ -189,3 +192,4 @@ test-results/
 tests/e2e/.auth/
 .tokensave
 .env*
+

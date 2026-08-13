@@ -1,5 +1,7 @@
 # Runbook: Backup & Rollback
 
+> Zuletzt aktualisiert: 02.07.2026 (Stand der letzten Code-Änderung an diesem Dokument)
+
 > Ausgeführt/verifiziert am 2. Juli 2026. Beantwortet den Audit-Fund "Keine
 > Rollback-/Backup-Dokumentation" aus `docs/MARKET_READINESS_AUDIT-2026-07-02.md`.
 > Die Mechanismen existieren bereits im Code — dieses Dokument bündelt sie an

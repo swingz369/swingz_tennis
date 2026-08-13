@@ -27,6 +27,8 @@ interface ModuleSelectionStepProps {
   onSaved?: (features: Record<string, boolean>) => void;
   /** If true, shows a save button. If false, the parent wizard handles save. */
   showContinue?: boolean;
+  /** Beschriftung des Save-Buttons — im Wizard ist er zugleich der Weiter-Button. */
+  continueLabel?: string;
   /** Optional initial values (for settings tab re-render). */
   initialFeatures?: Record<string, boolean>;
 }
@@ -52,6 +54,7 @@ export function ModuleSelectionStep({
   clubId,
   onSaved,
   showContinue = true,
+  continueLabel = 'Auswahl speichern',
   initialFeatures,
 }: ModuleSelectionStepProps) {
   const [features, setFeatures] = useState<Record<string, boolean>>(
@@ -153,8 +156,13 @@ export function ModuleSelectionStep({
               <Icon className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-foreground">{feature.label}</h3>
+              {/* flex-wrap: in der schmalen Zwei-Spalten-Kachel passen lange
+                  Labels wie "Mitgliederverwaltung" nicht neben das Badge —
+                  ohne Umbruch schob es sich über den Toggle. */}
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                {/* break-words: "Mitgliederverwaltung" ist ein einzelnes Wort
+                    und wurde in der schmalen Kachel sonst abgeschnitten. */}
+                <h3 className="font-semibold text-foreground break-words">{feature.label}</h3>
                 {isCore && (
                   <span className="inline-flex items-center gap-1 text-2xs font-medium uppercase tracking-wider text-brand-primary bg-brand-primary/10 px-1.5 py-0.5 rounded">
                     <Lock className="h-2.5 w-2.5" />
@@ -228,7 +236,7 @@ export function ModuleSelectionStep({
             ) : (
               <CheckCircle2 className="mr-2 h-4 w-4" />
             )}
-            Auswahl speichern
+            {continueLabel}
           </Button>
         </div>
       )}

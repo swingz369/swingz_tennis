@@ -721,10 +721,15 @@ export class AutoPlanningService {
     }
 
     // Log to history
+    //
+    // `action_type` unterliegt dem CHECK `season_planning_history_action_type_check`.
+    // 'auto_plan_completed' steht dort live NICHT drin — der Insert warf 23514 und
+    // riss die komplette Auto-Planung mit (500 pro Aufruf, in jedem Verein).
+    // 'plan_created' ist erlaubt, produktiv sonst unbenutzt und trifft die Semantik.
     await db.insert(seasonPlanningHistory).values({
       season_id: seasonId,
       club_id: clubId,
-      action_type: 'auto_plan_completed',
+      action_type: 'plan_created',
       details: {
         entries_created: slots.length,
         conflicts_detected: conflicts.length,
