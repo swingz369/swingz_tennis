@@ -20,6 +20,11 @@ export async function GET(req: NextRequest) {
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
+    // Platztypen sind vereinsgebunden; ohne Club-Kontext gibt es nichts zu zeigen.
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Club-Kontext ausgewählt' }, { status: 400 });
+    }
+
     const { searchParams } = new URL(req.url);
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10) || 20));
@@ -28,8 +33,8 @@ export async function GET(req: NextRequest) {
       // Admins see all (active + inactive), members see only active
       const result =
         auth.role === 'admin' || auth.role === 'superadmin'
-          ? await courtService.getAllCourtTypesPaginated(page, limit)
-          : await courtService.getCourtTypesPaginated(page, limit);
+          ? await courtService.getAllCourtTypesPaginated(auth.clubId, page, limit)
+          : await courtService.getCourtTypesPaginated(auth.clubId, page, limit);
 
       const pagination = buildPaginationMeta(page, limit, result.count);
 
@@ -53,6 +58,10 @@ export async function POST(req: NextRequest) {
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Club-Kontext ausgewählt' }, { status: 400 });
+    }
+
     try {
       const body = await req.json();
 
@@ -66,7 +75,8 @@ export async function POST(req: NextRequest) {
       }
 
       const courtType = await courtService.createCourtType(
-        validation.data as Parameters<typeof courtService.createCourtType>[0]
+        auth.clubId,
+        validation.data as Parameters<typeof courtService.createCourtType>[1]
       );
       return NextResponse.json({ success: true, courtType }, { status: 201 });
     } catch (error) {

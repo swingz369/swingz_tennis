@@ -108,9 +108,10 @@ Felder:
 
 Submit → POST/PATCH/DELETE an `court`-Endpunkt.
 
-## C) Court-Types `/admin/court-types`
+## C) Platztypen — in `/admin/courts`
 
-Separate Sub-Route für **Platztypen** (z. B. „Halle", „Freiluft", „Tennis-Halle"):
+Aufklappbarer Bereich in der Platz-Liste für **Platztypen** (z. B. „Halle", „Freiluft",
+„Tennis-Halle"). Die frühere eigene Route `/admin/court-types` leitet dorthin um:
 
 - Eigene Tabelle `court_types` (`name`, `surface_type`, `is_active`)
 - Wird in `courts.court_type_id` referenziert.

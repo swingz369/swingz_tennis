@@ -1,5 +1,7 @@
 # 🗺️ SwingZ Routing-Übersicht
 
+> Zuletzt aktualisiert: 24.07.2026 (Stand der letzten Code-Änderung an diesem Dokument)
+
 > **Next.js App Router** – Route Groups, Layout-Hierarchie & alle Seiten
 >
 > Stand: 2026-05-22 | **79 Pages** | **9 Layouts** | **170+ API Routes**
@@ -167,7 +169,6 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 /admin/settings                  ← Vereinseinstellungen
 /admin/branding                  ← Branding
 /admin/onboarding                ← Onboarding-Wizard
-/admin/court-types               ← Platz-Typen
 /admin/audit-logs                ← Audit-Logs
 /admin/tenants                   ← Mandanten (nur superadmin-sichtbar)
 ```

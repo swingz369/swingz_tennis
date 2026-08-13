@@ -103,35 +103,12 @@ export class CourtService {
     return data;
   }
 
-  async getCourtTypes(): Promise<CourtType[]> {
-    const { data, error } = await supabase
-      .from('court_types')
-      .select('*')
-      .eq('is_active', true)
-      .order('name', { ascending: true });
-
-    if (error) {
-      throw new Error(`Failed to get court types: ${error.message}`);
-    }
-
-    return data || [];
-  }
-
-  async getAllCourtTypes(): Promise<CourtType[]> {
-    const { data, error } = await supabase
-      .from('court_types')
-      .select('*')
-      .order('name', { ascending: true });
-
-    if (error) {
-      throw new Error(`Failed to get court types: ${error.message}`);
-    }
-
-    return data || [];
-  }
-
+  // Alle court_types-Queries filtern auf club_id: die Tabelle ist mandantengetrennt,
+  // dieser Service läuft aber über den Service-Client und umgeht RLS — der Filter im
+  // Code ist hier die einzige Trennung zwischen den Vereinen.
   /** Paginated: active court types only (for members) */
   async getCourtTypesPaginated(
+    clubId: string,
     page: number,
     limit: number
   ): Promise<{ data: CourtType[]; count: number }> {
@@ -140,12 +117,14 @@ export class CourtService {
       supabase
         .from('court_types')
         .select('*')
+        .eq('club_id', clubId)
         .eq('is_active', true)
         .order('name', { ascending: true })
         .range(offset, offset + limit - 1),
       supabase
         .from('court_types')
         .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId)
         .eq('is_active', true),
     ]);
 
@@ -158,6 +137,7 @@ export class CourtService {
 
   /** Paginated: all court types including inactive (for admins) */
   async getAllCourtTypesPaginated(
+    clubId: string,
     page: number,
     limit: number
   ): Promise<{ data: CourtType[]; count: number }> {
@@ -166,9 +146,13 @@ export class CourtService {
       supabase
         .from('court_types')
         .select('*')
+        .eq('club_id', clubId)
         .order('name', { ascending: true })
         .range(offset, offset + limit - 1),
-      supabase.from('court_types').select('id', { count: 'exact', head: true }),
+      supabase
+        .from('court_types')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId),
     ]);
 
     if (error) {
@@ -178,19 +162,23 @@ export class CourtService {
     return { data: data || [], count: count ?? 0 };
   }
 
-  async createCourtType(data: {
-    name: string;
-    description?: string;
-    surface_type: 'clay' | 'hard' | 'grass' | 'carpet' | 'artificial_grass';
-    is_indoor: boolean;
-    is_outdoor: boolean;
-    requires_lighting: boolean;
-    max_players?: number;
-    hourly_rate?: number;
-  }): Promise<CourtType> {
+  async createCourtType(
+    clubId: string,
+    data: {
+      name: string;
+      description?: string;
+      surface_type: 'clay' | 'hard' | 'grass' | 'carpet' | 'artificial_grass';
+      is_indoor: boolean;
+      is_outdoor: boolean;
+      requires_lighting: boolean;
+      max_players?: number;
+      hourly_rate?: number;
+    }
+  ): Promise<CourtType> {
     const { data: courtType, error } = await supabase
       .from('court_types')
       .insert({
+        club_id: clubId,
         name: data.name,
         description: data.description || null,
         surface_type: data.surface_type,
@@ -211,11 +199,16 @@ export class CourtService {
     return courtType;
   }
 
-  async updateCourtType(id: string, updates: Partial<CourtType>): Promise<CourtType | null> {
+  async updateCourtType(
+    id: string,
+    clubId: string,
+    updates: Partial<CourtType>
+  ): Promise<CourtType | null> {
     const { data: courtType, error } = await supabase
       .from('court_types')
       .update(updates as Record<string, unknown>)
       .eq('id', id)
+      .eq('club_id', clubId)
       .select()
       .single();
 
@@ -227,9 +220,16 @@ export class CourtService {
     return courtType;
   }
 
-  async deleteCourtType(id: string): Promise<{ success: boolean; message?: string }> {
+  async deleteCourtType(
+    id: string,
+    clubId: string
+  ): Promise<{ success: boolean; message?: string }> {
     // Soft delete: set is_active = false
-    const { error } = await supabase.from('court_types').update({ is_active: false }).eq('id', id);
+    const { error } = await supabase
+      .from('court_types')
+      .update({ is_active: false })
+      .eq('id', id)
+      .eq('club_id', clubId);
 
     if (error) {
       log.error('Failed to delete court type:', error);

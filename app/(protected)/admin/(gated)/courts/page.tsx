@@ -24,6 +24,7 @@ export default async function AdminCourtsPage() {
     supabase
       .from('court_types')
       .select('id, name, surface_type')
+      .eq('club_id', clubId)
       .eq('is_active', true)
       .order('name', { ascending: true }),
     supabase.from('clubs').select('features').eq('id', clubId).maybeSingle(),

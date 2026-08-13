@@ -1,6 +1,5 @@
 import type {
   Court,
-  CourtType,
   CourtAvailability,
   Booking,
   BookingRule,
@@ -57,10 +56,6 @@ export class CourtBookingEngine {
 
   async updateCourtStatus(courtId: string, status: CourtStatus): Promise<Court> {
     return this.courtService.updateCourtStatus(courtId, status);
-  }
-
-  async getCourtTypes(): Promise<CourtType[]> {
-    return this.courtService.getCourtTypes();
   }
 
   async getBookingById(bookingId: string): Promise<Booking | null> {

@@ -43,6 +43,8 @@ vi.mock('@/lib/supabase/service', () => ({
 // Import AFTER mock is set up
 const { CourtService } = await import('@/lib/booking/court.service');
 
+const CLUB = '11111111-1111-1111-1111-111111111111';
+
 describe('CourtService – Pagination Methods', () => {
   // `typeof CourtService` in InstanceType<> is invalid syntax for an abstract
   // class. `any` is fine here: the test only cares about behaviour, not types.
@@ -70,7 +72,7 @@ describe('CourtService – Pagination Methods', () => {
       mockRangeData = fakeTypes;
       mockRangeCount = 15;
 
-      const result = await service.getCourtTypesPaginated(2, 10);
+      const result = await service.getCourtTypesPaginated(CLUB, 2, 10);
 
       expect(result.data).toEqual(fakeTypes);
       expect(result.count).toBe(15);
@@ -88,7 +90,7 @@ describe('CourtService – Pagination Methods', () => {
       mockRangeData = [{ id: '1', name: 'Rasen', is_active: true }];
       mockRangeCount = 1;
 
-      const result = await service.getCourtTypesPaginated(1, 20);
+      const result = await service.getCourtTypesPaginated(CLUB, 1, 20);
 
       expect(mockChain.range).toHaveBeenCalledWith(0, 19);
       expect(result.count).toBe(1);
@@ -98,16 +100,28 @@ describe('CourtService – Pagination Methods', () => {
       mockRangeData = [];
       mockRangeCount = 0;
 
-      await service.getCourtTypesPaginated(1, 10);
+      await service.getCourtTypesPaginated(CLUB, 1, 10);
 
       expect(mockChain.eq).toHaveBeenCalledWith('is_active', true);
+    });
+
+    // Der Service läuft über den Service-Client und umgeht RLS — ohne diesen
+    // Filter sieht jeder Verein die Platztypen aller anderen.
+    it('scopes both queries to the club', async () => {
+      mockRangeData = [];
+      mockRangeCount = 0;
+
+      await service.getCourtTypesPaginated(CLUB, 1, 10);
+
+      expect(mockChain.eq).toHaveBeenCalledWith('club_id', CLUB);
+      expect(mockChain.eq.mock.calls.filter((c: unknown[]) => c[0] === 'club_id')).toHaveLength(2);
     });
 
     it('returns empty data and count 0 when no results', async () => {
       mockRangeData = [];
       mockRangeCount = 0;
 
-      const result = await service.getCourtTypesPaginated(1, 10);
+      const result = await service.getCourtTypesPaginated(CLUB, 1, 10);
 
       expect(result.data).toEqual([]);
       expect(result.count).toBe(0);
@@ -117,7 +131,7 @@ describe('CourtService – Pagination Methods', () => {
       mockRangeData = [];
       mockRangeCount = null;
 
-      const result = await service.getCourtTypesPaginated(1, 10);
+      const result = await service.getCourtTypesPaginated(CLUB, 1, 10);
 
       expect(result.count).toBe(0);
     });
@@ -127,7 +141,7 @@ describe('CourtService – Pagination Methods', () => {
       mockRangeData = [];
       mockRangeCount = 0;
 
-      await expect(service.getCourtTypesPaginated(1, 10)).rejects.toThrow(
+      await expect(service.getCourtTypesPaginated(CLUB, 1, 10)).rejects.toThrow(
         'Failed to get court types: connection refused'
       );
     });
@@ -145,13 +159,15 @@ describe('CourtService – Pagination Methods', () => {
       mockRangeData = fakeTypes;
       mockRangeCount = 42;
 
-      const result = await service.getAllCourtTypesPaginated(3, 15);
+      const result = await service.getAllCourtTypesPaginated(CLUB, 3, 15);
 
       expect(result.data).toEqual(fakeTypes);
       expect(result.count).toBe(42);
 
-      // No is_active filter — should NOT call .eq('is_active', ...)
-      expect(mockChain.eq).not.toHaveBeenCalled();
+      // Kein is_active-Filter (Admins sehen auch inaktive) — der club_id-Filter
+      // muss trotzdem auf beiden Queries liegen.
+      expect(mockChain.eq).not.toHaveBeenCalledWith('is_active', expect.anything());
+      expect(mockChain.eq.mock.calls.filter((c: unknown[]) => c[0] === 'club_id')).toHaveLength(2);
       expect(mockChain.order).toHaveBeenCalledWith('name', { ascending: true });
       // offset = (3 - 1) * 15 = 30
       expect(mockChain.range).toHaveBeenCalledOnce();
@@ -162,7 +178,7 @@ describe('CourtService – Pagination Methods', () => {
       mockRangeData = [];
       mockRangeCount = 0;
 
-      await service.getAllCourtTypesPaginated(1, 10);
+      await service.getAllCourtTypesPaginated(CLUB, 1, 10);
 
       // eq should NOT be called with 'is_active'
       const eqCalls = (mockChain.eq as ReturnType<typeof vi.fn>).mock.calls;
@@ -174,7 +190,7 @@ describe('CourtService – Pagination Methods', () => {
       mockRangeData = [];
       mockRangeCount = 0;
 
-      const result = await service.getAllCourtTypesPaginated(1, 25);
+      const result = await service.getAllCourtTypesPaginated(CLUB, 1, 25);
 
       expect(mockChain.range).toHaveBeenCalledWith(0, 24);
       expect(result.count).toBe(0);
@@ -184,7 +200,7 @@ describe('CourtService – Pagination Methods', () => {
       mockRangeData = [];
       mockRangeCount = null;
 
-      const result = await service.getAllCourtTypesPaginated(1, 10);
+      const result = await service.getAllCourtTypesPaginated(CLUB, 1, 10);
 
       expect(result.count).toBe(0);
     });
@@ -194,7 +210,7 @@ describe('CourtService – Pagination Methods', () => {
       mockRangeData = [];
       mockRangeCount = 0;
 
-      await expect(service.getAllCourtTypesPaginated(1, 10)).rejects.toThrow(
+      await expect(service.getAllCourtTypesPaginated(CLUB, 1, 10)).rejects.toThrow(
         'Failed to get court types: timeout'
       );
     });

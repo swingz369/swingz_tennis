@@ -2,8 +2,16 @@ import fs from 'fs';
 import path from 'path';
 import type { Page } from '@playwright/test';
 
-const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000';
-const AUTH_DIR = path.resolve(__dirname, '../e2e/.auth');
+// APP_BASE_URL zuerst: Vite (Vitest) ersetzt `process.env.BASE_URL` beim Transform
+// durch '/' (den Vite-Base-Pfad); der Playwright-Runner setzt BASE_URL gar nicht.
+const BASE_URL =
+  process.env.APP_BASE_URL ||
+  (process.env.BASE_URL && process.env.BASE_URL.startsWith('http')
+    ? process.env.BASE_URL
+    : 'http://localhost:3000');
+// process.cwd() statt __dirname: der Helper läuft unter Playwright (CommonJS) UND
+// unter Vitest (ESM, wo __dirname nicht definiert ist). Beide starten im Repo-Root.
+const AUTH_DIR = path.resolve(process.cwd(), 'tests/e2e/.auth');
 // Supabase-Access-Token läuft nach 1h ab — Cache deutlich früher verwerfen
 const STATE_MAX_AGE_MS = 30 * 60 * 1000;
 
@@ -57,7 +65,10 @@ async function doLogin(page: Page, email: string, password: string): Promise<str
  */
 export async function loginAs(page: Page, email: string, password: string): Promise<void> {
   const targetUrl = await doLogin(page, email, password);
-  await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+  // Kein eigener Timeout: der Dev-Server kompiliert die Zielroute beim Erstbesuch
+  // on-demand (>20s möglich). 15s hier haben genau den ersten Admin-Test pro Lauf
+  // rot gemacht, während er beim Retry — Route dann kompiliert — grün war.
+  await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
 }
 
 /**
@@ -66,7 +77,7 @@ export async function loginAs(page: Page, email: string, password: string): Prom
  */
 export async function loginAsRoleAware(page: Page, email: string, password: string): Promise<void> {
   const targetUrl = await doLogin(page, email, password);
-  await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+  await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
 }
 
 export async function mockAuthSession(page: Page, roles: string[]) {

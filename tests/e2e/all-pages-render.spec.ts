@@ -57,6 +57,8 @@ const MEMBER_ROUTES: RouteTest[] = [
 
 // /admin/dashboard, /admin/schedules, /admin/courts/manage, /admin/branding,
 // /admin/clubs wurden entfernt — nicht mehr testen.
+// /admin/court-types und /admin/newsletters sind reine Redirect-Stubs auf
+// /admin/courts bzw. /admin/email-campaigns — beide Ziele stehen unten drin.
 const ADMIN_ROUTES: RouteTest[] = [
   { path: '/admin', expectedContent: /admin|dashboard|mitglied/i },
   { path: '/admin/members', expectedContent: /mitglied|member/i },
@@ -64,7 +66,6 @@ const ADMIN_ROUTES: RouteTest[] = [
   { path: '/admin/seasons', expectedContent: /saison|season/i },
   { path: '/admin/seasons/new', expectedContent: /saison|season|erstellen/i },
   { path: '/admin/courts', expectedContent: /platz|court/i },
-  { path: '/admin/court-types', expectedContent: /platztyp|court/i },
   { path: '/admin/trainers', expectedContent: /trainer/i },
   { path: '/admin/approvals', expectedContent: /genehmigung|approval|probetraining/i },
   { path: '/admin/billing', expectedContent: /rechnung|billing|abrechnung/i },
@@ -79,7 +80,6 @@ const ADMIN_ROUTES: RouteTest[] = [
   { path: '/admin/documents', expectedContent: /dokument/i },
   { path: '/admin/email-campaigns', expectedContent: /e-mail|kampagne|newsletter/i },
   { path: '/admin/leagues', expectedContent: /liga|league/i },
-  { path: '/admin/newsletters', expectedContent: /newsletter/i },
   { path: '/admin/perf-history', expectedContent: /performance|verlauf|historie/i },
   { path: '/admin/pricing', expectedContent: /preis|pricing|tarif/i },
   { path: '/admin/shop', expectedContent: /shop|produkt|artikel/i },
@@ -151,7 +151,9 @@ function pageTest(route: RouteTest) {
     // domcontentloaded statt networkidle — Seiten mit Polling/Realtime werden nie "idle"
     await page.goto(route.path, {
       waitUntil: 'domcontentloaded',
-      timeout: route.timeout || 20000,
+      // ohne route.timeout gilt navigationTimeout aus playwright.config.ts (45s) —
+      // Kaltkompilierung einer Route im Dev-Server sprengt 20s regelmäßig
+      timeout: route.timeout,
     });
     await expect(page.locator('body')).toBeVisible();
     await expect(page.locator('body')).toContainText(route.expectedContent, {

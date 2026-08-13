@@ -131,6 +131,34 @@ Angewendet und per `pg_constraint` nachgeprüft.
 **Regel für neue Benachrichtigungstypen:** Ein neuer `type`-Wert im Code braucht eine Migration,
 die ihn in die Constraint aufnimmt — sonst verschwindet die Benachrichtigung lautlos.
 
+## `court_types`: Live-Tabelle ≠ Migrationsdatei (Stand 13.08.2026, geprüft)
+
+`supabase/migrations/20260503_court_booking_system.sql` legt `court_types` **ohne `club_id`** an,
+mit global eindeutigem `name` und der Policy `authenticated_users_can_view_court_types`
+(`USING (auth.uid() IS NOT NULL)` — jeder Angemeldete sieht alles). Die Live-Tabelle sieht anders
+aus; die Migrationsdatei ist an dieser Stelle Historie, nicht Ist-Zustand:
+
+| Merkmal              | Migrationsdatei | Live (13.08.2026 gemessen)                           |
+| -------------------- | --------------- | ---------------------------------------------------- |
+| `club_id`            | existiert nicht | vorhanden                                            |
+| `name`               | global `UNIQUE` | pro Verein — zwei Clubs dürfen denselben Namen haben |
+| RLS-Sicht (Mitglied) | alle Zeilen     | nur der eigene Verein                                |
+
+Verifiziert ohne SQL-Zugang, rein über PostgREST: zwei Zeilen gleichen Namens für zwei
+verschiedene Clubs anlegen (beide `201` → kein globaler UNIQUE), dann dieselbe Tabelle mit dem
+JWT eines Mitglieds von Club A lesen (nur Club-A-Zeile sichtbar → RLS ist club-scoped).
+Beide Testzeilen wurden sofort wieder gelöscht.
+
+**Die RLS-Trennung greift also — sie greift nur dort nicht, wo sie umgangen wird.**
+`lib/booking/court.service.ts` arbeitet über `createServiceClient()` (RLS aus) und filterte bis
+13.08.2026 in keiner einzigen `court_types`-Query auf `club_id`. `GET /api/court-types` lieferte
+dadurch jedem angemeldeten Mitglied die Platztypen samt `hourly_rate` **aller** Vereine, `PATCH`
+und `DELETE` trafen fremde Zeilen allein über die ID. Gefixt durch `club_id`-Filter in allen fünf
+Service-Methoden plus Durchreichen von `auth.clubId` in beiden Routen.
+
+**Regel:** Jede Query über den Service-Client trägt ihren Mandantenfilter selbst. RLS als
+Sicherheitsnetz zu unterstellen ist dort falsch — es ist per Definition abgeschaltet.
+
 ## Prozess-Regel für künftige Migrationen
 
 Siehe `AGENTS.md` → Abschnitt "Migrationen" für die verbindliche Regel (Live-Zustand vor Schreiben prüfen, exakte Policy-Namen aus `pg_policies` übernehmen statt aus alten Migrationsdateien zu raten, diese Datei bei jeder Policy-relevanten Änderung aktualisieren).

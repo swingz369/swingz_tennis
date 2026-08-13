@@ -26,6 +26,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
     }
 
+    // 404 statt 400: ein fremder Platztyp soll sich nicht von einem nicht
+    // existierenden unterscheiden lassen.
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Court type not found' }, { status: 404 });
+    }
+
     try {
       const body = await req.json();
       const {
@@ -51,7 +57,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (hourly_rate !== undefined) updates.hourly_rate = hourly_rate;
       if (is_active !== undefined) updates.is_active = is_active;
 
-      const courtType = await courtService.updateCourtType(id, updates);
+      const courtType = await courtService.updateCourtType(id, auth.clubId, updates);
       if (!courtType) {
         return NextResponse.json(
           { error: 'Court type not found or update failed' },
@@ -86,6 +92,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
     }
 
+    // 404 statt 400: ein fremder Platztyp soll sich nicht von einem nicht
+    // existierenden unterscheiden lassen.
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Court type not found' }, { status: 404 });
+    }
+
     try {
       // Check if any courts reference this type
       const supabase = await createClient();
@@ -103,7 +115,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         );
       }
 
-      const result = await courtService.deleteCourtType(id);
+      const result = await courtService.deleteCourtType(id, auth.clubId);
       if (!result.success) {
         return NextResponse.json(
           { error: result.message || 'Failed to delete court type' },

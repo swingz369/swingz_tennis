@@ -209,10 +209,15 @@ const nextConfig = {
         destination: '/admin/settings',
         permanent: true,
       },
+      // Platztypen werden in /admin/courts verwaltet (courts-manage-client ruft
+      // /api/court-types), nicht in den Vereinseinstellungen — der frühere
+      // Redirect auf /admin/settings führte auf eine Seite ohne Platztypen.
+      // permanent:false (307), weil das alte 308 auf /admin/settings in Browsern
+      // gecacht ist — ein erneutes 308 würde dieselbe Falle nochmal stellen.
       {
         source: '/admin/court-types',
-        destination: '/admin/settings',
-        permanent: true,
+        destination: '/admin/courts',
+        permanent: false,
       },
       // Abwesenheiten wurde als Tab in Stundennachweise integriert (gehört fachlich
       // zusammen: beides Trainer-Zeiterfassung). permanent:false (307), nicht 308 —

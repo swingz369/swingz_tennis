@@ -93,12 +93,14 @@ Sessions sind die Eintrittskarte für jeden Trainingstag:
 
 ### Plätze (`/admin/courts*`)
 
-| Page                   | Zweck                                       |
-| ---------------------- | ------------------------------------------- |
-| `/admin/courts`        | Platz-Liste                                 |
-| `/admin/courts/[id]`   | Platz-Details, Wartung                      |
-| `/admin/courts/manage` | Bulk-Edit (Typ, Beleuchtung, Belag)         |
-| `/admin/court-types`   | Court-Types (Sandplatz, Halle, …) verwalten |
+| Page                   | Zweck                               |
+| ---------------------- | ----------------------------------- |
+| `/admin/courts`        | Platz-Liste                         |
+| `/admin/courts/[id]`   | Platz-Details, Wartung              |
+| `/admin/courts/manage` | Bulk-Edit (Typ, Beleuchtung, Belag) |
+
+Platztypen (Sandplatz, Halle, …) werden in `/admin/courts` verwaltet — aufklappbarer
+Bereich in der Platz-Liste. `/admin/court-types` existiert nicht mehr und leitet dorthin.
 
 Plätze sind auch Smart-Court-relevant → IoT-Integration via `/admin/hardware/*` (wenn Modul aktiv).
 
@@ -225,7 +227,7 @@ Stufe 3: Inkasso (45 Tage) → ggf. Member-Account-Sperre
 
 ## 🧪 Tests
 
-`e2e/admin-*.test.ts`:
+`tests/e2e/admin-*.spec.ts`:
 
 - Member-Einladung → Login → Onboarding
 - Saison-Planung Wizard
