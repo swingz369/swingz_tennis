@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
-import { DM_Sans, JetBrains_Mono } from 'next/font/google';
+import { JetBrains_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'sonner';
@@ -9,12 +10,14 @@ import { SkipToContent } from '@/lib/accessibility';
 import { AriaLiveProvider } from '@/components/aria-live-region';
 import { SonnerAriaBridge } from '@/components/sonner-aria-bridge';
 
-const dmSans = DM_Sans({
-  subsets: ['latin'],
+// ponytail: selbst gehostet statt next/font/google — Google lieferte im Vercel-Build
+// eine CSS mit 404-woff2-URLs, was den Turbopack-Build killte. Latin-Subset reicht für DE.
+const dmSans = localFont({
+  src: './fonts/dm-sans.woff2',
   variable: '--font-sans',
-  weight: ['400', '500', '600', '700'],
+  weight: '400 700', // Variable-Achse
   display: 'swap',
-  preload: false, // Avoid preload warnings for fonts not used immediately
+  preload: false,
 });
 
 const jetbrainsMono = JetBrains_Mono({
