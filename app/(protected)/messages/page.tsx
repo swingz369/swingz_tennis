@@ -54,6 +54,9 @@ const EmailCampaignsClient = dynamic(
   { ssr: false }
 );
 
+const TRIGGER_CLASS =
+  'gap-2 rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm';
+
 /* ─────────────────── Types ─────────────────── */
 
 interface MessageUser {
@@ -212,19 +215,20 @@ function MessagesContent() {
   const totalMessages = messages.length;
   const readMessages = messages.filter((m) => m.is_read).length;
 
+  const pageHeader = (
+    <ScrollReveal>
+      <PageHeader
+        title="Nachrichten"
+        description="Verwalte deine Nachrichten und Kommunikation"
+        actions={[
+          { label: 'Neue Nachricht', icon: PenSquare, onClick: () => setComposeOpen(true) },
+        ]}
+      />
+    </ScrollReveal>
+  );
+
   const messagesView = (
     <div className="space-y-6">
-      {/* ── Header ── */}
-      <ScrollReveal>
-        <PageHeader
-          title="Nachrichten"
-          description="Verwalte deine Nachrichten und Kommunikation"
-          actions={[
-            { label: 'Neue Nachricht', icon: PenSquare, onClick: () => setComposeOpen(true) },
-          ]}
-        />
-      </ScrollReveal>
-
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <ScrollReveal delay={0}>
@@ -388,29 +392,39 @@ function MessagesContent() {
     </div>
   );
 
-  if (!isAdmin) return messagesView;
+  if (!isAdmin) {
+    return (
+      <div className="space-y-6">
+        {pageHeader}
+        {messagesView}
+      </div>
+    );
+  }
 
   return (
-    <Tabs defaultValue="messages" className="space-y-4">
-      <TabsList>
-        <TabsTrigger value="messages" className="gap-1.5">
-          <MessageSquare className="h-4 w-4" /> Nachrichten
-        </TabsTrigger>
-        <TabsTrigger value="campaigns" className="gap-1.5">
-          <Mail className="h-4 w-4" /> E-Mail-Kampagnen
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="messages">{messagesView}</TabsContent>
-      <TabsContent value="campaigns">
-        {clubId ? (
-          <EmailCampaignsClient clubId={clubId} />
-        ) : (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        )}
-      </TabsContent>
-    </Tabs>
+    <div className="space-y-6">
+      {pageHeader}
+      <Tabs defaultValue="messages" className="space-y-6">
+        <TabsList className="h-auto w-full max-w-2xl flex-wrap justify-start gap-1 bg-muted dark:bg-card/5 p-1 rounded-xl">
+          <TabsTrigger value="messages" className={TRIGGER_CLASS}>
+            <MessageSquare className="h-4 w-4" /> Nachrichten
+          </TabsTrigger>
+          <TabsTrigger value="campaigns" className={TRIGGER_CLASS}>
+            <Mail className="h-4 w-4" /> E-Mail-Kampagnen
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="messages">{messagesView}</TabsContent>
+        <TabsContent value="campaigns">
+          {clubId ? (
+            <EmailCampaignsClient clubId={clubId} showHeader={false} />
+          ) : (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
 

@@ -56,7 +56,13 @@ const CAMPAIGN_TARGET_LABEL: Record<string, string> = {
   custom: 'Ausgewählt',
 };
 
-export default function EmailCampaignsClient({ clubId }: { clubId: string }) {
+export default function EmailCampaignsClient({
+  clubId,
+  showHeader = true,
+}: {
+  clubId: string;
+  showHeader?: boolean;
+}) {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [targetGroup, setTargetGroup] = useState<'all' | 'members' | 'trainers' | 'individual'>(
@@ -160,10 +166,12 @@ export default function EmailCampaignsClient({ clubId }: { clubId: string }) {
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
-      <PageHeader
-        title="E-Mail-Kampagnen"
-        description="Versende E-Mails an Mitglieder und Trainer"
-      />
+      {showHeader && (
+        <PageHeader
+          title="E-Mail-Kampagnen"
+          description="Versende E-Mails an Mitglieder und Trainer"
+        />
+      )}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

@@ -82,7 +82,7 @@ export function QrCodeDisplay({ sessionId, courtName, startTime, endTime }: QrDi
                 level="M"
                 includeMargin
                 bgColor="#ffffff"
-                fgColor="#1B4332"
+                fgColor="#00599F"
               />
             </div>
             <p className="text-xs text-muted-foreground text-center">

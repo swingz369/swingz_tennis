@@ -95,7 +95,7 @@ function generatePDFExport(
   <title>Revenue Report</title>
   <style>
     body { font-family: system-ui, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-    h1 { color: #1B4332; }
+    h1 { color: #00599F; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
     th { background: #f5f5f5; font-weight: 600; }

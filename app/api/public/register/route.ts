@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
           subject: `📋 Neue Registrierung von ${firstName} ${lastName}`,
           html: `
             <div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;padding:20px">
-              <div style="background:#1B4332;color:white;padding:24px;border-radius:12px 12px 0 0">
+              <div style="background:#00599F;color:white;padding:24px;border-radius:12px 12px 0 0">
                 <h1 style="margin:0;font-size:20px">📋 Neue Registrierung</h1>
               </div>
               <div style="background:#f9f9f9;padding:24px;border-radius:0 0 12px 12px">

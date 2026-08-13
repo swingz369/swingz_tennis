@@ -148,13 +148,11 @@ export const typography = {
 export const radius = {
   none: '0',
   /** Single Source of Truth for the dashboard design system (10 px).
-   *  Mirrored exactly to `app/globals.css` `--radius: 10px` (literal
-   *  pixel, was 0.625rem so the contract is root-font-independent and
-   *  self-documenting). Use this when building new components or when
-   *  the CSS variable isn't reachable (e.g. inline styles in email
-   *  templates, SVG geometry). */
+   *  Root-font-independent literal; `xl` below ist der operative
+   *  Tailwind-Key (rounded-xl). Nur für Inline-Styles (E-Mail, SVG),
+   *  wo eine CSS-Variable nicht erreichbar ist. */
   base: '10px',
-  // Kanonische 3er-Skala: md (Inputs/Buttons), xl (Cards, = --radius SSOT), full.
+  // Kanonische 3er-Skala: md (Inputs/Buttons), xl (Cards, = base SSOT), full.
   // sm/lg/2xl/3xl bleiben definiert (dynamische Klassen), sind aber im Code migriert
   // und werden vom Guardrail (scripts/check-design-tokens.sh) blockiert.
   sm: '0.375rem',

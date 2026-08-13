@@ -53,7 +53,7 @@ const templates = {
           <style>
             body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #1B4332; color: white; padding: 20px; text-align: center; }
+            .header { background: #00599F; color: white; padding: 20px; text-align: center; }
             .content { background: #f9f9f9; padding: 20px; margin-top: 20px; }
             .details { margin: 20px 0; }
             .details table { width: 100%; border-collapse: collapse; }
@@ -159,7 +159,7 @@ const templates = {
             <style>
               body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: ${data.newStatus === 'confirmed' ? '#1B4332' : data.newStatus === 'cancelled' ? '#dc2626' : '#6b7280'}; color: white; padding: 20px; text-align: center; }
+              .header { background: ${data.newStatus === 'confirmed' ? '#00599F' : data.newStatus === 'cancelled' ? '#dc2626' : '#6b7280'}; color: white; padding: 20px; text-align: center; }
               .content { background: #f9f9f9; padding: 20px; margin-top: 20px; }
               .details { margin: 20px 0; }
               .details table { width: 100%; border-collapse: collapse; }
@@ -247,7 +247,7 @@ const templates = {
           <style>
             body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: ${data.isActive ? '#1B4332' : '#6b7280'}; color: white; padding: 20px; text-align: center; }
+            .header { background: ${data.isActive ? '#00599F' : '#6b7280'}; color: white; padding: 20px; text-align: center; }
             .content { background: #f9f9f9; padding: 20px; margin-top: 20px; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
           </style>
@@ -299,7 +299,7 @@ const templates = {
             <style>
               body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: #1B4332; color: white; padding: 20px; text-align: center; }
+              .header { background: #00599F; color: white; padding: 20px; text-align: center; }
               .content { background: #f9f9f9; padding: 20px; margin-top: 20px; }
               .details { margin: 20px 0; }
               .details table { width: 100%; border-collapse: collapse; }
@@ -345,9 +345,9 @@ const templates = {
           <style>
             body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #1B4332; color: white; padding: 20px; text-align: center; }
+            .header { background: #00599F; color: white; padding: 20px; text-align: center; }
             .content { background: #f9f9f9; padding: 20px; margin-top: 20px; }
-            .cta { display: inline-block; background: #1B4332; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+            .cta { display: inline-block; background: #00599F; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
           </style>
         </head>

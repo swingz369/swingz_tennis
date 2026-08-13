@@ -2,8 +2,8 @@
   <!-- Background circle -->
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1B4332"/>
-      <stop offset="100%" style="stop-color:#2D6A4F"/>
+      <stop offset="0%" style="stop-color:#00599F"/>
+      <stop offset="100%" style="stop-color:#94C121"/>
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="80" fill="url(#bg)"/>

@@ -105,22 +105,6 @@
   --z-popover: 1060;
   --z-tooltip: 1070;
   --z-toast: 1080;
-
-  /* ── Corner Radius — Single Source of Truth (10 px base) ─────────────
-     The dashboard design system reference base. Exposed as a CSS custom
-     property so future shadcn-style component overrides can read it via
-     `hsl(var(--radius))` or `calc(var(--radius) - 2px)` for sm/md variants.
-
-     Hard-coded pixel value (was 0.625rem) so the contract is
-     root-font-independent and self-documenting. CALC math still works
-     because every consumer reads `var(--radius)` and combines with
-     explicit `--radius: 10px` literals (e.g. `calc(10px - 2px)`).
-
-     Existing Tailwind utilities (`rounded-2xl`, `rounded-xl`, …) keep
-     their current pixel values from `styles/theme.ts`. This token is for
-     new utilities and inline styles. Matches `styles/theme.ts` radius.base.
-     Dark mode reuses the same token (corner geometry is theme-agnostic). */
-  --radius: 10px;
 }
 
 .dark {
@@ -294,24 +278,6 @@ body {
     opacity: var(--noise-opacity);
     pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-
-  /* ── Glow Shadows ── */
-  .shadow-glow-primary {
-    box-shadow:
-      0 0 60px -12px rgba(27, 67, 50, 0.35),
-      0 0 24px -8px rgba(27, 67, 50, 0.25);
-  }
-  .shadow-glow-accent {
-    box-shadow:
-      0 0 60px -12px rgba(255, 107, 53, 0.35),
-      0 0 24px -8px rgba(255, 107, 53, 0.25);
-  }
-  .shadow-glow-premium {
-    box-shadow:
-      0 0 80px -16px rgba(27, 67, 50, 0.4),
-      0 0 40px -12px rgba(27, 67, 50, 0.3),
-      0 0 0 1px rgba(255, 255, 255, 0.1) inset;
   }
 
   /* ── Entry Animations ── */

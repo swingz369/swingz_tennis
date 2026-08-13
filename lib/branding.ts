@@ -11,9 +11,9 @@ export function isHexColor(value: string): boolean {
 export const ClubBrandingSchema = z.object({
   clubId: z.string().uuid('UUID required'),
   brand: z.object({
-    primaryColor: z.string().regex(HEX_COLOR_REGEX, 'Hex color required').default('#1B4332'),
-    secondaryColor: z.string().regex(HEX_COLOR_REGEX, 'Hex color required').default('#1e3a5f'),
-    accentColor: z.string().regex(HEX_COLOR_REGEX, 'Hex color required').default('#FF6B35'),
+    primaryColor: z.string().regex(HEX_COLOR_REGEX, 'Hex color required').default('#00599F'),
+    secondaryColor: z.string().regex(HEX_COLOR_REGEX, 'Hex color required').default('#22334F'),
+    accentColor: z.string().regex(HEX_COLOR_REGEX, 'Hex color required').default('#94C121'),
   }),
   logos: z.object({
     light: z.string().url().optional().nullable(),
@@ -29,9 +29,9 @@ export type ClubBranding = z.infer<typeof ClubBrandingSchema>;
 export const DEFAULT_BRANDING: ClubBranding = {
   clubId: '',
   brand: {
-    primaryColor: '#1B4332',
-    secondaryColor: '#1e3a5f',
-    accentColor: '#FF6B35',
+    primaryColor: '#00599F',
+    secondaryColor: '#22334F',
+    accentColor: '#94C121',
   },
   logos: { light: null, dark: null, favicon: null },
   customDomain: null,

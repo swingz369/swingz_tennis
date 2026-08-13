@@ -179,7 +179,7 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@verein.de"
                     required
-                    className="h-12 rounded-xl border-border focus:border-brand-light focus:ring-brand-light/20 pl-4 pr-4 transition-shadow focus:shadow-glow-green-sm"
+                    className="h-12 rounded-xl border-border focus:border-brand-light focus:ring-brand-light/20 pl-4 pr-4 transition-shadow focus:shadow-glow-primary-sm"
                     autoComplete="email"
                   />
                 </div>
@@ -205,7 +205,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="h-12 rounded-xl border-border focus:border-brand-light focus:ring-brand-light/20 pr-12 transition-shadow focus:shadow-glow-green-sm"
+                    className="h-12 rounded-xl border-border focus:border-brand-light focus:ring-brand-light/20 pr-12 transition-shadow focus:shadow-glow-primary-sm"
                     autoComplete="current-password"
                   />
                   <button
@@ -228,7 +228,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-light text-white font-semibold shadow-glow-green-sm hover:shadow-glow-green transition-all duration-300 hover:brightness-105 active:scale-[0.98]"
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-light text-white font-semibold shadow-glow-primary-sm hover:shadow-glow-primary transition-all duration-300 hover:brightness-105 active:scale-[0.98]"
                 disabled={loading}
               >
                 {loading ? (

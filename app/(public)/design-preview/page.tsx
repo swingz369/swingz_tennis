@@ -11,15 +11,15 @@ import { Sparkles, Zap, Star, Heart, Shield, Trophy, Brain, Calendar } from 'luc
 // ── Token Data ──
 
 const brandColors = [
-  { name: 'Brand Primary', var: '--brand-primary', light: '#1B4332', dark: '#2D6A4F' },
-  { name: 'Brand Light', var: '--brand-primary-light', light: '#40916C', dark: '#52B788' },
-  { name: 'Brand Secondary', var: '--brand-secondary', light: '#1e3a5f', dark: '#3e5c76' },
-  { name: 'Brand Accent', var: '--brand-accent', light: '#FF6B35', dark: '#FF8C5A' },
-  { name: 'Surface', var: '--surface', light: '#FFFFFF', dark: '#0d1a12' },
-  { name: 'Surface Elevated', var: '--surface-elevated', light: '#FCFCFD', dark: '#1a2e22' },
-  { name: 'Border Subtle', var: '--border-subtle', light: '#e8ece9', dark: '#263b2e' },
-  { name: 'Text Primary', var: '--text-primary', light: '#141a17', dark: '#FAFAF9' },
-  { name: 'Text Secondary', var: '--text-secondary', light: '#6b726e', dark: '#949a96' },
+  { name: 'Brand Primary', var: '--brand-primary', light: '#00599F', dark: '#4FACDE' },
+  { name: 'Brand Light', var: '--brand-primary-light', light: '#4FACDE', dark: '#7EC2E7' },
+  { name: 'Brand Secondary', var: '--brand-secondary', light: '#22334F', dark: '#36517D' },
+  { name: 'Brand Accent', var: '--brand-accent', light: '#94C121', dark: '#A7DA25' },
+  { name: 'Surface', var: '--surface', light: '#FFFFFF', dark: '#1C2631' },
+  { name: 'Surface Elevated', var: '--surface-elevated', light: '#FBFCFD', dark: '#232E39' },
+  { name: 'Border Subtle', var: '--border-subtle', light: '#E4EBF1', dark: '#2D3843' },
+  { name: 'Text Primary', var: '--text-primary', light: '#1D283A', dark: '#F5F7FA' },
+  { name: 'Text Secondary', var: '--text-secondary', light: '#65758B', dark: '#97A3B4' },
 ];
 
 const typographySizes = [
@@ -65,8 +65,8 @@ const shadows = [
   { name: 'Glass Shadow', class: 'shadow-glass' },
   { name: 'Elegant Shadow', class: 'shadow-elegant' },
   { name: 'Premium Shadow', class: 'shadow-premium' },
-  { name: 'Glow Green', class: 'shadow-glow-green-sm' },
-  { name: 'Glow Orange', class: 'shadow-glow-orange-sm' },
+  { name: 'Glow Primary', class: 'shadow-glow-primary-sm' },
+  { name: 'Glow Accent', class: 'shadow-glow-accent-sm' },
 ];
 
 const radii = [
@@ -218,7 +218,7 @@ export default function DesignPreviewPage() {
   return (
     <div className="min-h-screen bg-muted/50 dark:bg-[#0a120e]">
       {/* ── Hero ── */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#0A3D2E] via-[#1B4332] to-[#2D6A4F]">
+      <div className="relative overflow-hidden bg-gradient-hero">
         <div className="absolute inset-0 bg-grid opacity-[0.04]" />
         <div className="relative mx-auto max-w-7xl px-6 py-24 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-background/5 px-4 py-1.5 mb-8">
@@ -796,7 +796,7 @@ export default function DesignPreviewPage() {
                   <button className="px-5 py-2.5 rounded-xl bg-brand-primary text-white text-sm font-medium hover:bg-brand-dark transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2">
                     Button Default
                   </button>
-                  <button className="px-5 py-2.5 rounded-xl bg-brand-primary text-white text-sm font-medium hover:bg-brand-dark transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2 shadow-glow-green-sm">
+                  <button className="px-5 py-2.5 rounded-xl bg-brand-primary text-white text-sm font-medium hover:bg-brand-dark transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2 shadow-glow-primary-sm">
                     Button Glow
                   </button>
                   <button className="px-5 py-2.5 rounded-xl border border-border dark:border-white/[0.08] text-foreground dark:text-foreground text-sm font-medium hover:bg-muted dark:hover:bg-background/[0.04] transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2">

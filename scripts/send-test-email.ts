@@ -29,11 +29,11 @@ resend.emails
   <head><meta charset="utf-8" /></head>
   <body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:#333;margin:0;padding:0;">
     <div style="max-width:600px;margin:0 auto;padding:20px;">
-      <div style="background:#1B4332;color:white;padding:24px;text-align:center;border-radius:12px 12px 0 0;">
+      <div style="background:#00599F;color:white;padding:24px;text-align:center;border-radius:12px 12px 0 0;">
         <h1 style="margin:0;font-size:24px;">🎾 SwingZ</h1>
       </div>
       <div style="background:#f9f9f9;padding:32px 24px;">
-        <h2 style="margin-top:0;color:#1B4332;">Domain-Verifizierung erfolgreich!</h2>
+        <h2 style="margin-top:0;color:#00599F;">Domain-Verifizierung erfolgreich!</h2>
         <p>Diese Test-E-Mail bestätigt, dass <strong>noreply@mail.swingz.cloud</strong> korrekt konfiguriert ist.</p>
         <div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:20px 0;">
           <p style="margin:0;"><strong>✅ Von:</strong> ${from}</p>

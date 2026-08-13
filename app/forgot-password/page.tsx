@@ -165,7 +165,7 @@ export default function ForgotPasswordPage() {
 
                   <Button
                     type="submit"
-                    className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-light text-white font-semibold shadow-glow-green-sm hover:shadow-glow-green transition-all duration-300"
+                    className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-light text-white font-semibold shadow-glow-primary-sm hover:shadow-glow-primary transition-all duration-300"
                     disabled={loading}
                   >
                     {loading ? 'Sende…' : 'Reset-Link anfordern'}

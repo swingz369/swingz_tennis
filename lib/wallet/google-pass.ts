@@ -50,7 +50,7 @@ export function generateGoogleWalletUrl(data: {
             },
           ],
           barcode: { type: 'QR_CODE', value: data.memberId },
-          hexBackgroundColor: '#1B4332',
+          hexBackgroundColor: '#00599F',
         },
       ],
     },

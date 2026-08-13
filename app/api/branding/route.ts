@@ -67,9 +67,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         clubId,
         brand: {
-          primaryColor: data.primary_color || '#1B4332',
-          secondaryColor: data.secondary_color || '#1e3a5f',
-          accentColor: data.accent_color || '#FF6B35',
+          primaryColor: data.primary_color || '#00599F',
+          secondaryColor: data.secondary_color || '#22334F',
+          accentColor: data.accent_color || '#94C121',
         },
         logos: {
           light: data.logo_light_url || null,

@@ -53,7 +53,7 @@ export function MobileBottomNav({
       <div className="relative flex justify-around items-center h-16 px-2">
         {/* Theme Toggle — absolutely positioned so it doesn't affect justify-around distribution */}
         <div className="absolute left-2 top-1/2 -translate-y-1/2 z-10">
-          <ThemeToggle iconSize={16} className="h-8 w-8 rounded-xl" />
+          <ThemeToggle iconSize={18} className="h-11 w-11 rounded-xl" />
         </div>
         {/* Active indicator background */}
         {navItems.map((item) => {
@@ -77,7 +77,7 @@ export function MobileBottomNav({
               key={item.name}
               href={item.href}
               className={cn(
-                'group relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px] flex-1',
+                'group relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px] flex-1 active:scale-[0.97]',
                 isActive
                   ? 'text-brand-light dark:text-brand-light bg-brand-light/10 dark:bg-brand-light/20'
                   : 'text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:bg-muted/50 dark:hover:bg-background/[0.03]'
@@ -109,7 +109,7 @@ export function MobileBottomNav({
         {(isSuperAdmin || isAdmin) && onMenuClick && (
           <button
             onClick={onMenuClick}
-            className="group relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px] flex-1 text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:bg-muted/50 dark:hover:bg-background/[0.03]"
+            className="group relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px] flex-1 active:scale-[0.97] text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:bg-muted/50 dark:hover:bg-background/[0.03]"
             aria-label="Hauptmenü öffnen"
           >
             <Menu

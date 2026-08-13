@@ -138,16 +138,7 @@ export function EmptyState({
  */
 
 import React from 'react';
-import {
-  Users,
-  Calendar,
-  FileText,
-  Inbox,
-  Search,
-  AlertCircle,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react';
+import { Users, Calendar, Inbox, Search, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 
 /**
  * No members empty state
@@ -196,24 +187,6 @@ export function NoBookingsEmptyState({ onBrowse }: { onBrowse: () => void }) {
         label: 'Sessions ansehen',
         onClick: onBrowse,
       }}
-    />
-  );
-}
-
-/**
- * No invoices empty state
- */
-export function NoInvoicesEmptyState({ onCreate }: { onCreate?: () => void }) {
-  return (
-    <EmptyState
-      icon={FileText}
-      title="Keine Rechnungen"
-      description={
-        onCreate
-          ? 'Es gibt noch keine Rechnungen. Erstelle deine erste Rechnung.'
-          : 'Du hast aktuell keine offenen Rechnungen.'
-      }
-      {...(onCreate ? { action: { label: 'Rechnung erstellen', onClick: onCreate } } : {})}
     />
   );
 }

@@ -96,15 +96,7 @@ export { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './
 export { Slider } from './slider';
 export { ScrollArea } from './scroll-area';
 export { QueryError, EmptyState, NotFound, AccessDenied } from './error-states';
-export {
-  PageHeaderSkeleton,
-  KPICardSkeleton,
-  KPISkeletonGrid,
-  TableSkeleton,
-  CardGridSkeleton,
-  FormSkeleton,
-  FullPageLoading,
-} from './loading-skeletons';
+export { KPICardSkeleton, KPISkeletonGrid, TableSkeleton } from './loading-skeletons';
 
 export { IconBox } from './icon-box';
 export type { IconBoxVariant, IconBoxSize } from './icon-box';
