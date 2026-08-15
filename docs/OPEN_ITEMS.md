@@ -77,6 +77,11 @@ Service-Client erreichbar. → **Fix:** Policies definieren oder bewusst dokumen
 - **Abrechnungstabellen unscoped.** `billing_periods` / `trainer_billings` / `billing_line_items`
   haben kein erreichbares `club_id`; `trainer_billings`/`billing_line_items` vergleichen
   `trainer_id` mit `auth.uid()` (Bug-Klasse, die für `hours_logs` etc. schon gefixt ist).
+  → **Teilerledigt 15.08.2026:** fachliche Entscheidung „pro Verein“ getroffen; Migration
+  `supabase/migrations/20260815180000_billing_tables_club_scoping.sql` vorbereitet
+  (`billing_periods.club_id` + Backfill + NOT NULL, `is_superadmin_of(club_id)`-Scoping,
+  `trainers.user_id = auth.uid()`-Fix, Drizzle-Schema um `club_id` ergänzt). **Offen:**
+  Migration vom Owner auf die Live-DB anwenden (vorher Policy-Namen per `pg_policies` verifizieren).
   → Quelle: `docs/DATABASE.md`, `docs/tickets/roadmap/TICKET-billing-tables-rls-scoping.md`.
 - **Pflicht-Abo für Neukonten fehlt.** Neukonten starten im Freemium-Default; Abo-Enforcement
   für Neuanmeldungen ist als Folge-Ticket zurückgestellt.

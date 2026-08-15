@@ -1,7 +1,7 @@
 # TICKET-billing-tables-rls-scoping — Abrechnungstabellen: Superadmin-Scoping + auth.uid()-Bug
 
 > **Epic:** RLS-Cleanup (Folge von `20260805000000`/`20260805010000`) · **Quartal:** Roadmap · **Aufwand:** 0,5-1 Tag
-> **Status:** ❌ TODO · _zuletzt geprüft: 2026-08-05_
+> **Status:** ✅ Erledigt (Migration `20260815180000`) · _zuletzt geprüft: 2026-08-15_
 
 ## Ziel
 
@@ -21,10 +21,10 @@
 
 ## Akzeptanzkriterien
 
-- [ ] Fachliche Klärung: `billing_periods` plattformweit oder pro Verein?
-- [ ] `trainer_billings`/`billing_line_items`-Policies auf `trainers.user_id = auth.uid()`-Join umgestellt (analog `20260801010000_fix_hours_logs_attendance_rls.sql`)
-- [ ] Falls pro Verein: Superadmin-Scoping via `is_superadmin_of(club_id)` (siehe `supabase/migrations/20260805000000_scope_superadmin_to_managed_clubs.sql` für das Muster)
-- [ ] `docs/DATABASE.md` aktualisiert (Abschnitt "Bewusst zurückgestellt" → erledigt verschieben)
+- [x] Fachliche Klärung: `billing_periods` plattformweit oder pro Verein? → **pro Verein** (Owner, 2026-08-15).
+- [x] `trainer_billings`/`billing_line_items`-Policies auf `trainers.user_id = auth.uid()`-Join umgestellt (analog `20260801010000_fix_hours_logs_attendance_rls.sql`)
+- [x] Superadmin-Scoping via `is_superadmin_of(club_id)` (Muster aus `20260805000000_scope_superadmin_to_managed_clubs.sql`); `billing_periods` bekommt `club_id`.
+- [x] `docs/DATABASE.md` aktualisiert (Abschnitt "Bewusst zurückgestellt" → erledigt verschoben)
 
 ## Out-of-Scope
 
@@ -32,4 +32,6 @@
 
 ## Nächste Aktion
 
-Fachliche Klärung zu `billing_periods`-Scoping mit dem Owner, dann Migration analog zu `20260805000000`/`20260805010000` schreiben.
+Erledigt. Migration: `supabase/migrations/20260815180000_billing_tables_club_scoping.sql`.
+Noch vom Owner anzuwenden — vorher die Live-Policy-Namen per `pg_policies` verifizieren
+(siehe Header-Kommentar der Migration).

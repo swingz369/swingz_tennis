@@ -96,7 +96,7 @@ Weitere Befunde desselben Audits, **noch offen**:
 
 - **`season_planning_configs` und `season_statistics`**: RLS an, aber **0 Policies** — nur über den Service-Client erreichbar.
 - **`20260812020000_scope_remaining_superadmin_policies.sql` — Datei liegt, noch NICHT angewendet** (Tool-Blockade in der Session, nicht DB-seitig). Behandelt die letzten drei echten Kandidaten mit unscoped `is_superadmin()`: `audit_logs` SELECT (zwei Policies zu einer auf `is_club_admin(club_id)` zusammengeführt), `trainers` ALL (ersetzt durch SELECT/UPDATE/DELETE club-scoped über `trainer_club`; kein INSERT-Pendant, weil Trainer per Service-Client angelegt werden) und `users` UPDATE (club-scoped über `user_club_memberships`). Trockenlauf mit `ROLLBACK` bestätigt: `audit_logs` 2 → 1 sichtbare Zeile für Admin und Superadmin (die zweite gehörte einem anderen Verein — beabsichtigte Verschärfung), `trainers` für Admin 0 → 12 (Admins hatten auf `trainers` bisher überhaupt keine RLS-Policy, nur `trainers_own` und den Superadmin-Bypass), alles andere unverändert.
-- **Verbleibende unscoped `is_superadmin()`-Policies nach diesem Durchgang, alle bewusst so**: `billing_periods`, `billing_line_items`, `trainer_billings` (per Ticket zurückgestellt, siehe unten), `background_jobs`, `base_interest_rates`, `school_holidays` (plattformweite Konzepte ohne Vereinsbezug).
+- **Verbleibende unscoped `is_superadmin()`-Policies nach diesem Durchgang, alle bewusst so**: `background_jobs`, `base_interest_rates`, `school_holidays` (plattformweite Konzepte ohne Vereinsbezug). Die Abrechnungstabellen sind seit 15.08.2026 club-scoped (siehe unten).
 - **Der Pooler auf `supabase.swingz.cloud:6543` akzeptiert Klartext-Verbindungen** (Verbindung mit `ssl: false` erfolgreich, mit TLS „wrong version number"). DB-Credentials und Nutzdaten gehen unverschlüsselt über die Leitung. VPS-Thema, keine Migration.
 
 ## `season_planning_configs` / `season_statistics` — RLS nachgerüstet (Stand 15.08.2026)
@@ -113,9 +113,23 @@ bisher fehlenden (0) Policies auf den beiden Tabellen, die beide `club_id` trage
 Defense-in-Depth: Wirksam werden die Policies erst, sobald die App auf eine Rolle ohne
 BYPASSRLS umgestellt wird (siehe „FORCE RLS“ oben) — bis dahin greift allein der App-Code.
 
+## Abrechnungstabellen — pro Verein gescoped (Stand 15.08.2026)
+
+`supabase/migrations/20260815180000_billing_tables_club_scoping.sql` löst das zurückgestellte
+Ticket `docs/tickets/roadmap/TICKET-billing-tables-rls-scoping.md`:
+
+- Fachliche Entscheidung (Owner, 2026-08-15): `billing_periods` ist **pro Verein**, nicht
+  plattformweit. Die Tabelle bekommt deshalb eine `club_id` (Backfill aus
+  `trainer_billings` → `trainers` → `trainer_club`, danach `NOT NULL`).
+- `billing_periods`-Policies: `is_superadmin()` → `is_superadmin_of(club_id)`.
+- `trainer_billings`/`billing_line_items`: `trainer_id = auth.uid()`-Bug gefixt auf
+  `trainers.user_id = auth.uid()` (gleiche Bug-Klasse wie `hours_logs`/`attendance_records`),
+  Superadmin-Scoping über `billing_periods.club_id`.
+- Zugriffsmuster: weiterhin ausschließlich Service-Client (BYPASSRLS) — die Policies sind
+  Defense-in-depth, wirksam erst nach Umstellung auf eine Rolle ohne BYPASSRLS.
+
 ## Bewusst zurückgestellt (siehe `docs/tickets/`)
 
-- **`billing_periods` / `trainer_billings` / `billing_line_items`**: kein `club_id` in der Tabelle erreichbar — vermutlich ein plattformweites Konzept, nicht pro Verein. `trainer_billings`/`billing_line_items` vergleichen zudem `trainer_id` direkt mit `auth.uid()` (derselbe Bug, der für `hours_logs`/`attendance_records`/`trainer_availabilities` bereits gefixt wurde). Ticket: `docs/tickets/TICKET-billing-tables-rls-scoping.md`.
 - **`background_jobs`**: `club_id` steckt nur optional in einem JSONB-Payload-Feld, nicht jeder Job ist vereinsbezogen — bewusst unscoped gelassen, kein Ticket nötig.
 
 ## Dateihygiene `supabase/migrations/` (Stand 25.07.2026)
