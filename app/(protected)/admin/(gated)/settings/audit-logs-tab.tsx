@@ -16,7 +16,7 @@ import {
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import type { PaginationMeta } from '@/lib/pagination';
 import { apiFetch } from '@/lib/api-fetch';
-import { auditActionLabel } from '@/lib/audit-labels';
+import { auditActionLabel, auditSubject, auditDetailLines } from '@/lib/audit-labels';
 
 import { createLogger } from '@/lib/logger';
 
@@ -118,11 +118,27 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
                     <span className="text-sm font-medium text-foreground dark:text-white">
                       {auditActionLabel(log.action)}
                     </span>
-                    <Badge variant="secondary" className="text-2xs font-mono">
-                      {log.action}
-                    </Badge>
+                    <span className="text-sm text-muted-foreground truncate">
+                      {auditSubject(log)}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3 mt-1">
+
+                  {/* Ohne die Details steht in jeder Zeile nur „Geändert" — erst
+                      hier wird sichtbar, WAS geändert wurde. */}
+                  {auditDetailLines(log.details).length > 0 && (
+                    <dl className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
+                      {auditDetailLines(log.details).map((d) => (
+                        <div key={d.label} className="flex gap-1 text-2xs min-w-0">
+                          <dt className="text-muted-foreground shrink-0">{d.label}:</dt>
+                          <dd className="truncate text-foreground/80 dark:text-white/70">
+                            {d.value}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+
+                  <div className="flex items-center gap-3 mt-1 flex-wrap">
                     <span className="text-2xs text-muted-foreground flex items-center gap-1">
                       <UserCheck className="h-3 w-3" />
                       {log.performed_by_name ?? log.performed_by ?? 'System'}
@@ -136,6 +152,14 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
                         minute: '2-digit',
                       })}
                     </span>
+                    {log.ip_address && (
+                      <span className="text-2xs text-muted-foreground font-mono">
+                        {log.ip_address}
+                      </span>
+                    )}
+                    <Badge variant="secondary" className="text-2xs font-mono">
+                      {log.action}
+                    </Badge>
                   </div>
                 </div>
               </div>

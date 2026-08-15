@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
 import { createLogger } from '@/lib/logger';
+import { logAudit } from '@/lib/audit';
 
 const log = createLogger('api:admin:switch-club');
 
@@ -64,6 +65,18 @@ export async function POST(req: NextRequest) {
       sameSite: 'lax',
       maxAge: ADMIN_CLUB_COOKIE_MAX_AGE,
       path: '/',
+    });
+
+    // Der Vereinswechsel ist der Punkt, an dem ein Superadmin den Datenkontext
+    // verlässt, in dem er gerade gearbeitet hat. Die Oberfläche warnt dauerhaft
+    // davor — im Protokoll fehlte er bisher komplett.
+    await logAudit({
+      actorId: user.id,
+      action: 'club_switched',
+      resourceType: 'club',
+      resourceId: clubId,
+      clubId,
+      request: req,
     });
 
     return NextResponse.json({ success: true });

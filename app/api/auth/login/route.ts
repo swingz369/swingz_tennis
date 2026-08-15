@@ -4,8 +4,44 @@ import { errorResponse, internalErrorResponse } from '@/lib/api-error';
 import { createServerClient } from '@supabase/ssr';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
+import { logAudit } from '@/lib/audit';
+import { createServiceClient } from '@/lib/supabase/service';
 
 const log = createLogger('auth:login');
+
+/**
+ * Fehlgeschlagene Anmeldungen protokollieren.
+ *
+ * `audit_logs.actor_id` ist FK auf `users.id` — bei einem Fehlversuch haben wir
+ * keine Session, also muss die ID über die E-Mail nachgeschlagen werden. Für
+ * eine unbekannte E-Mail gibt es niemanden, dem der Versuch zuzuordnen wäre;
+ * der Eintrag entfällt dann. (Die Anzahl der Versuche pro IP begrenzt bereits
+ * das Rate-Limit oben — hier geht es um die Zuordnung zum Konto, nicht um die
+ * Abwehr.)
+ */
+async function logFailedLogin(email: string, request: NextRequest, reason: string) {
+  try {
+    const { data } = await createServiceClient()
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+    if (!data?.id) return;
+    await logAudit({
+      actorId: data.id,
+      action: 'login_failed',
+      resourceType: 'user',
+      resourceId: data.id,
+      details: { email, reason },
+      request,
+    });
+  } catch (err) {
+    log.error(
+      'login_failed konnte nicht protokolliert werden',
+      err instanceof Error ? err : undefined
+    );
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -60,6 +96,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       log.error('Login error:', error.message);
+      await logFailedLogin(email, request, error.message);
       return errorResponse('UNAUTHORIZED', 'E-Mail oder Passwort ist falsch');
     }
 
@@ -70,6 +107,17 @@ export async function POST(request: NextRequest) {
     log.info('Login successful', {
       userId: data.user.id,
       email: data.user.email,
+    });
+
+    // Anmeldungen waren bislang nirgends protokolliert — ohne sie lässt sich
+    // einem Zugriff im Protokoll keine Sitzung zuordnen.
+    await logAudit({
+      actorId: data.user.id,
+      action: 'login',
+      resourceType: 'user',
+      resourceId: data.user.id,
+      details: { email: data.user.email },
+      request,
     });
 
     return response;

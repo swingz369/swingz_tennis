@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollText, Filter, Download, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
+import { auditSubject, auditDetailLines } from '@/lib/audit-labels';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 interface ClubOption {
@@ -394,14 +395,21 @@ export function OwnerAuditClient({ clubOptions }: { clubOptions: ClubOption[] })
                       <td className="px-2 py-2 text-xs">
                         <ActionBadge action={logEntry.action} />
                       </td>
+                      {/* Vorher stand hier `resource_type · <erste 8 Zeichen der
+                          UUID>` — eine Kennung, mit der niemand etwas anfangen
+                          kann. Jetzt: benanntes Objekt plus die erklärenden
+                          Felder aus `details`. */}
                       <td className="px-2 py-2 text-xs">
-                        <span className="font-mono text-[11px] text-muted-foreground">
-                          {logEntry.resource_type}
-                        </span>
-                        <span className="text-foreground"> · </span>
-                        <span className="font-mono text-[11px] text-muted-foreground">
-                          {logEntry.resource_id.slice(0, 8)}
-                        </span>
+                        <div className="font-medium text-foreground truncate max-w-[280px]">
+                          {auditSubject(logEntry)}
+                        </div>
+                        {auditDetailLines(logEntry.details).length > 0 && (
+                          <div className="text-muted-foreground truncate max-w-[280px]">
+                            {auditDetailLines(logEntry.details)
+                              .map((d) => `${d.label}: ${d.value}`)
+                              .join(' · ')}
+                          </div>
+                        )}
                       </td>
                       <td className="px-2 py-2 text-xs font-mono text-muted-foreground hidden 2xl:table-cell">
                         {logEntry.ip_address ?? '—'}

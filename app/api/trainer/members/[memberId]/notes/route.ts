@@ -11,6 +11,7 @@ import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import { logAudit } from '@/lib/audit';
 
 const log = createLogger('api:trainer:members:notes');
 
@@ -154,6 +155,21 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ memb
     }
 
     log.info('Trainer-Notiz gespeichert', { trainerId: trainer.id, memberId, clubId });
+
+    // Eine Trainer-Notiz ist eine Beurteilung einer Person durch eine andere.
+    // Dass sie existiert und wer sie geschrieben hat, gehört ins Protokoll —
+    // der Text selbst bewusst nicht, sonst stünde die Beurteilung doppelt in
+    // der Datenbank und wäre auch für Admins ohne Notizzugriff lesbar.
+    await logAudit({
+      actorId: auth.user.id,
+      action: 'update',
+      resourceType: 'trainer_note',
+      resourceId: upserted.id,
+      clubId,
+      details: { target_member_id: memberId, length: noteText.length },
+      request: req,
+    });
+
     return NextResponse.json({ note: upserted });
   });
 }
@@ -199,6 +215,17 @@ export async function DELETE(
     }
 
     log.info('Trainer-Notiz gelöscht', { trainerId: trainer.id, memberId, clubId });
+
+    await logAudit({
+      actorId: auth.user.id,
+      action: 'delete',
+      resourceType: 'trainer_note',
+      resourceId: memberId,
+      clubId,
+      details: { target_member_id: memberId },
+      request: req,
+    });
+
     return NextResponse.json({ success: true });
   });
 }

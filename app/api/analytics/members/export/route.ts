@@ -6,6 +6,7 @@ import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories
 import { DrizzleMemberRepository } from '@/infrastructure/persistence/repositories/member.repository';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { logPiiRead } from '@/lib/db/audit-logger';
 
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -31,6 +32,18 @@ export async function GET(_request: NextRequest) {
       const clubRepository = new DrizzleClubRepository();
       const useCase = getClubMembersUseCase(memberRepository, clubRepository);
       const members = await useCase.execute(clubId);
+
+      // Ein Export trägt die Mitgliederdaten aus dem System heraus — das ist
+      // der Vorgang, den ein Protokoll festhalten muss (anders als das bloße
+      // Öffnen der Liste, siehe /api/members).
+      await logPiiRead(
+        auth.user.id,
+        'member',
+        `export:${clubId}`,
+        _request,
+        { format: 'csv', count: members.length },
+        clubId
+      );
 
       const csv = convertToCSV(members);
       return new NextResponse(csv, {

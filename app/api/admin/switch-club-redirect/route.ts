@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
+import { logAudit } from '@/lib/audit';
 
 /**
  * GET /api/admin/switch-club-redirect?clubId=xxx
@@ -42,6 +43,19 @@ export async function GET(request: NextRequest) {
       new URL(isOwner ? '/owner/clubs' : '/select-admin-club', request.url)
     );
   }
+
+  // Dies ist der Weg, über den der Owner in einen fremden Verein wechselt —
+  // die weitreichendste Kontextänderung der Plattform und bis hierher
+  // unprotokolliert.
+  await logAudit({
+    actorId: user.id,
+    action: 'club_switched',
+    resourceType: 'club',
+    resourceId: clubId,
+    clubId,
+    details: { via: isOwner ? 'owner' : 'superadmin' },
+    request,
+  });
 
   const response = NextResponse.redirect(new URL('/admin', request.url));
   response.cookies.set(ADMIN_CLUB_COOKIE, clubId, {
