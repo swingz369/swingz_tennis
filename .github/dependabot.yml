@@ -1,0 +1,28 @@
+# Wöchentliche Update-PRs. `pnpm audit` in der CI meldet Lücken nur — behoben
+# werden sie hier. Patch- und Minor-Updates laufen gebündelt in einem PR, damit
+# nicht jede Woche zwanzig einzelne PRs offen stehen; Major-Updates kommen
+# einzeln, weil sie einzeln gelesen werden müssen.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    groups:
+      minor-und-patch:
+        update-types: ['minor', 'patch']
+    commit-message:
+      prefix: 'chore(deps)'
+
+  # Die Actions in .github/workflows/ veralten genauso — und eine veraltete
+  # Action ist ein Fremdskript mit Schreibzugriff auf das Repository.
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: 'chore(ci)'

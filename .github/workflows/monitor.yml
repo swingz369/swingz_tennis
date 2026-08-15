@@ -1,0 +1,64 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# .github/workflows/monitor.yml
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Erreichbarkeit + Totmannschalter fürs Backup, ohne zusätzlichen Anbieter.
+#
+# Bisher erfuhr man einen Ausfall dadurch, dass jemand anruft, und ein
+# stillstehendes Backup gar nicht. Der Lauf prüft alle 30 Minuten die App, die
+# Datenbank-Schicht und das Alter des letzten Backups; schlägt er fehl,
+# verschickt GitHub eine Mail an den Repository-Besitzer.
+#
+# ACHTUNG: `schedule` läuft ausschliesslich auf dem Standard-Branch. Dieser
+# Workflow tut also erst etwas, wenn er auf `main` liegt.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+name: monitor
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # zum Ausprobieren von Hand
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monitor
+  cancel-in-progress: true
+
+jobs:
+  erreichbarkeit:
+    name: App, Datenbank & Backup-Alter
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: App und Datenbank
+        id: health
+        run: |
+          # --fail-with-body: bei 5xx trotzdem den Text sehen, statt nur einen Exit-Code
+          body=$(curl --fail-with-body --silent --show-error --max-time 20 \
+                   https://swingz.vercel.app/api/health) || {
+            echo "::error::/api/health nicht erreichbar oder 5xx"
+            echo "$body"
+            exit 1
+          }
+          echo "$body"
+          echo "$body" | jq -e '.checks.supabase == "ok"' > /dev/null || {
+            echo "::error::Datenbank-Prüfung meldet Fehler"
+            exit 1
+          }
+          echo "$body" | jq -e '.checks.backup == "ok"' > /dev/null || {
+            age=$(echo "$body" | jq -r '.backupAgeHours')
+            echo "::error::Backup überfällig oder unbekannt (Alter: ${age}h) — siehe docs/RUNBOOK-BACKUP-ROLLBACK.md § 3"
+            exit 1
+          }
+
+      - name: Supabase-Gateway auf dem VPS
+        # Eigener Schritt, weil ein Ausfall hier eine andere Ursache hat als ein
+        # Ausfall der App: Vercel ist fremdbetrieben, der VPS nicht.
+        run: |
+          code=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+                   --max-time 20 https://supabase.swingz.cloud/auth/v1/health)
+          echo "auth/v1/health → HTTP $code"
+          [ "$code" = "200" ] || { echo "::error::Supabase auf dem VPS antwortet mit $code"; exit 1; }

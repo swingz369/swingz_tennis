@@ -46,15 +46,26 @@ class Logger {
       console.log(`[${level.toUpperCase()}]`, message, context);
     }
 
-    // Sentry integration
+    // Sentry integration.
+    //
+    // Der Kontext ging hier bisher verloren: `createLogger('api:nuliga')` legt
+    // den Modulnamen als `context.context` ab und jeder Aufruf hängt seine
+    // Daten daran — in Sentry kam davon nichts an, dort stand nur die nackte
+    // Meldung. Da Vercels Laufzeit-Logs kurzlebig sind, ist der Sentry-Eintrag
+    // aber oft das Einzige, was von einem Vorfall übrig bleibt. Modulname als
+    // Tag (danach lässt sich filtern), der Rest als `extra`.
+    const { context: moduleName, ...rest } = context ?? {};
+    const scope = context
+      ? {
+          extra: rest,
+          ...(typeof moduleName === 'string' ? { tags: { module: moduleName } } : {}),
+        }
+      : undefined;
+
     if (level === LogLevel.ERROR || level === LogLevel.FATAL) {
-      if (originalError) {
-        Sentry.captureException(originalError);
-      } else {
-        Sentry.captureException(new Error(message));
-      }
+      Sentry.captureException(originalError ?? new Error(message), scope);
     } else if (level === LogLevel.WARN) {
-      Sentry.captureMessage(message, { level: 'warning' });
+      Sentry.captureMessage(message, { level: 'warning', ...scope });
     }
   }
 

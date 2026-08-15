@@ -107,6 +107,7 @@ const PUBLIC_ROUTES = [
   '/sitemap.xml', // SEO — dito
   '/trial-training', // Public trial booking — no auth required
   '/demo', // Public sales demo — no auth required
+  '/status', // Systemstatus — muss gerade dann erreichbar sein, wenn der Login klemmt
   '/join', // Member self-registration via club link
   '/api/auth/login',
   '/api/auth/logout',

@@ -34,6 +34,8 @@ npm run db:studio        # Drizzle Studio, alternative Sicht auf dieselbe DB
 | Adresse                               | Was das ist                                                                                                                                                          | Zugang                                       |
 | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | https://swingz.vercel.app             | Die produktive App. Deployt automatisch aus `main`.                                                                                                                  | Owner: `admin@swingz.com`, PW s. u.          |
+| https://swingz.vercel.app/status      | Öffentliche Statusseite: App, Datenbank, Alter der letzten Datensicherung. Ohne Login erreichbar, damit sie gerade dann hilft, wenn die Anmeldung klemmt.            | kein Login                                   |
+| https://swingz.vercel.app/api/health  | Dieselben Prüfungen als JSON. Quelle der Überwachung in `.github/workflows/monitor.yml`.                                                                             | kein Login                                   |
 | https://supabase.swingz.cloud         | Produktions-Supabase (self-hosted auf dem VPS, Kong-Gateway hinter Caddy). Auth + REST + Storage der Live-App. Keine Oberfläche — Aufrufe im Browser liefern JSON.   | Service-Key in `.env.prod.local`             |
 | `supabase.swingz.cloud:6543`          | Supavisor-Pooler (Transaction-Mode), Ziel von `DATABASE_URL`. Port 5432 daneben ist der Session-Mode.                                                                | `.env.prod.local`                            |
 | `ssh deploy@178.254.37.110`           | Der VPS bei manitu. Beherbergt den Supabase-Stack (`/home/deploy/swingz-supabase/`), die Backups (`/home/deploy/backups/`) und einen fremden zweiten Stack (`tsow`). | Key `~/.ssh/manitu_vps`, passphrasegeschützt |
@@ -88,20 +90,23 @@ Solange die App von Vercel aus verbindet, braucht es die öffentliche Bindung; V
 
 ---
 
-## 6. Was ein Projekt dieser Art sonst noch braucht
+## 6. Betriebsüberwachung
 
-Nach Nutzen sortiert, nicht nach Aufwand. Nichts davon ist eingerichtet.
+Eingerichtet am 16.08.2026, bewusst ohne zusätzlichen Anbieter — GitHub Actions und die eigene Datenbank reichen dafür.
 
-**1. Totmannschalter für die Backups (30 Minuten).** Das Backup läuft täglich, aber niemand erfährt es, wenn es aufhört. Ein kostenloser Dienst wie healthchecks.io bekommt am Ende des Backup-Skripts einen Ping; bleibt er aus, kommt eine Mail. Das ist die einzige Maßnahme hier, die einen stillen Totalverlust verhindert — ein Backup, das seit sechs Wochen nicht mehr läuft, sieht von außen aus wie eines, das läuft.
+| Baustein                 | Wo                                          | Was es tut                                                                                                                                                                                       |
+| ------------------------ | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Backup-Lebenszeichen** | `public.ops_heartbeats`, Zeile `vps-backup` | Das VPS-Backup schreibt nach jedem erfolgreichen Lauf einen Zeitstempel in die Produktions-DB. Ein Backup, das aufhört, wird dadurch sichtbar statt still.                                       |
+| **`/api/health`**        | App                                         | Prüft Datenbank und Alter des letzten Backups (überfällig ab 36 h). Datenbankausfall → HTTP 503; überfälliges Backup → HTTP 200 mit `status: error`, weil Vereine dann ungestört weiterarbeiten. |
+| **`monitor`-Workflow**   | `.github/workflows/monitor.yml`             | Alle 30 Minuten: App, Datenbank, Backup-Alter, Supabase-Gateway auf dem VPS. Schlägt einer fehl, verschickt GitHub eine Mail. Läuft nur vom `main`-Branch.                                       |
+| **Statusseite**          | https://swingz.vercel.app/status            | Öffentlich, ohne Login. Beantwortet die Frage „liegt es an euch oder an mir?" ohne Rückruf.                                                                                                      |
+| **Abhängigkeiten**       | `.github/dependabot.yml`                    | Wöchentliche Update-PRs (Patch/Minor gebündelt, Major einzeln), monatlich für die Actions selbst.                                                                                                |
+| **Fehler mit Kontext**   | Sentry                                      | `createLogger` hängt Modulname als Tag und die übergebenen Daten als `extra` an jedes Sentry-Ereignis — vorher kam dort nur die nackte Meldung an.                                               |
 
-**2. Erreichbarkeitsüberwachung (20 Minuten).** Ein Ping auf `https://swingz.vercel.app` alle fünf Minuten (UptimeRobot, Betterstack — beide mit ausreichendem Gratis-Kontingent). Aktuell erfährt man einen Ausfall dadurch, dass ein Verein anruft. Sinnvollerweise zusätzlich auf `https://supabase.swingz.cloud`, denn der VPS ist der Teil ohne Betreiber-SLA.
+### Noch offen
 
-**3. Abhängigkeiten aktuell halten (15 Minuten).** Renovate oder Dependabot legt wöchentlich Update-PRs an, die CI prüft sie automatisch. `pnpm audit` in der CI meldet heute nur Lücken, es behebt sie nicht — und bei 100+ Paketen wächst der Rückstand schneller, als man ihn von Hand aufholt.
+**Rechtliches vor dem ersten zahlenden Verein (Halbtag, nicht technisch).** Impressum, Datenschutzerklärung, AGB und Auftragsverarbeitungsverträge mit Vercel, Resend, Stripe, Upstash und Google. Wer Vereinsdaten verarbeitet, braucht die AV-Verträge und ein Verarbeitungsverzeichnis, bevor der erste Vertrag unterschrieben wird — nicht danach.
 
-**4. Rechtliches vor dem ersten zahlenden Verein (Halbtag, nicht technisch).** Impressum, Datenschutzerklärung, AGB und Auftragsverarbeitungsverträge mit Vercel, Resend, Stripe, Upstash und Google. Wer Vereinsdaten verarbeitet, braucht die AV-Verträge und ein Verarbeitungsverzeichnis, bevor der erste Vertrag unterschrieben wird — nicht danach.
-
-**5. Logs, die einen Tag überleben (1–2 Stunden).** Vercels Laufzeit-Logs sind kurzlebig, `docker logs` auf dem VPS ebenso. Für die Fehlersuche nach einem Vorfall reicht das nicht. Sentry deckt Ausnahmen bereits ab; für alles darunter (langsame Anfragen, Cron-Ergebnisse) fehlt eine Ablage — Betterstack Logs oder Axiom haben Gratis-Kontingente, die für diese Größe reichen.
-
-**6. Statusseite (später).** Erst sinnvoll, wenn mehrere Vereine produktiv sind und man Störungen einmal statt fünfmal erklären will.
+**Durchsuchbare Logs.** Sentry hält Ausnahmen und Warnungen samt Kontext. Was darunter liegt — Cron-Ergebnisse, langsame Anfragen, Zugriffsmuster — lebt weiterhin nur in Vercels kurzlebigen Laufzeit-Logs. Ein Anbieter mit Gratis-Kontingent (Betterstack, Axiom) schliesst das, sobald jemand rückblickend eine Frage stellt, die Sentry nicht beantwortet.
 
 Bewusst **nicht** empfohlen, weil es für ein Ein-Personen-Projekt mehr Pflege kostet als es einbringt: eigenes Grafana/Prometheus, Kubernetes, ein zweiter VPS zur Ausfallsicherheit, Feature-Flag-Dienste (die `clubs.features`-Spalte reicht), Session-Recording-Werkzeuge.
