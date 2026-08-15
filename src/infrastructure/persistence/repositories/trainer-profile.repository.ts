@@ -14,6 +14,55 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('infrastructure:persistence:repositories:trainer-profile.repo');
 
+/**
+ * Qualifikationen aus der JSONB-Spalte in die Entity-Form bringen.
+ *
+ * Die Spalte enthält historisch drei Formen: den erwarteten Objekt-Array
+ * (`addQualification` schreibt ihn mit `id`), einen Array einfacher Strings
+ * (`["DTB C-Lizenz"]`, so legt der Seed sie an) und bei älteren Zeilen einen
+ * JSON-String, der einen solchen Array enthält. Der frühere Cast behauptete für
+ * alle drei den Objekt-Array: im Trainer-Detail fehlte dadurch `id` (React
+ * meldete „unique key prop"), `name` blieb leer, und bei der String-Form hätte
+ * `.map()` die Seite ganz abgeräumt.
+ *
+ * Die Ersatz-ID ist aus Position und Name gebildet und damit über Renders
+ * stabil — ein reiner Index würde beim Löschen einer Zeile die Karten darunter
+ * neu mounten.
+ */
+export function normalizeQualifications(raw: unknown): TrainerProfile['qualifications'] {
+  let value: unknown = raw;
+  if (typeof raw === 'string') {
+    try {
+      value = JSON.parse(raw);
+    } catch {
+      // Kein JSON, sondern ein einzelner Klartext-Eintrag.
+      value = raw.trim() ? [raw] : [];
+    }
+  }
+  if (!Array.isArray(value)) return [];
+
+  return value.map((entry, i) => {
+    if (typeof entry === 'string') {
+      return {
+        id: `legacy-${i}-${entry}`,
+        name: entry,
+        issuer: '',
+        issuedDate: '',
+        verified: false,
+      };
+    }
+    const q = (entry ?? {}) as Partial<TrainerProfile['qualifications'][number]>;
+    return {
+      ...q,
+      id: q.id ?? `legacy-${i}-${q.name ?? ''}`,
+      name: q.name ?? '',
+      issuer: q.issuer ?? '',
+      issuedDate: q.issuedDate ?? '',
+      verified: q.verified ?? false,
+    };
+  });
+}
+
 export class TrainerProfileRepository implements ITrainerProfileRepository {
   /**
    * Create a new trainer profile
@@ -531,7 +580,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
       dateOfBirth: row.dateOfBirth,
       bio: row.bio ?? undefined,
       profileImageUrl: row.profileImageUrl ?? undefined,
-      qualifications: (row.qualifications as TrainerProfile['qualifications']) || [],
+      qualifications: normalizeQualifications(row.qualifications),
       specializations: (row.specializations as TrainerProfile['specializations']) || [],
       experience: (row.experience as TrainerProfile['experience']) || {
         years: 0,
