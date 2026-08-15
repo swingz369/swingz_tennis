@@ -99,6 +99,20 @@ Weitere Befunde desselben Audits, **noch offen**:
 - **Verbleibende unscoped `is_superadmin()`-Policies nach diesem Durchgang, alle bewusst so**: `billing_periods`, `billing_line_items`, `trainer_billings` (per Ticket zurückgestellt, siehe unten), `background_jobs`, `base_interest_rates`, `school_holidays` (plattformweite Konzepte ohne Vereinsbezug).
 - **Der Pooler auf `supabase.swingz.cloud:6543` akzeptiert Klartext-Verbindungen** (Verbindung mit `ssl: false` erfolgreich, mit TLS „wrong version number"). DB-Credentials und Nutzdaten gehen unverschlüsselt über die Leitung. VPS-Thema, keine Migration.
 
+## `season_planning_configs` / `season_statistics` — RLS nachgerüstet (Stand 15.08.2026)
+
+`supabase/migrations/20260815170000_season_planning_configs_statistics_rls.sql` ergänzt die
+bisher fehlenden (0) Policies auf den beiden Tabellen, die beide `club_id` tragen:
+
+- `season_planning_configs` — SELECT/INSERT/UPDATE/DELETE für `is_club_admin(club_id)`.
+  Zugriff erfolgt nur über Admin-Routen (`seasons/[id]/config`, `planning/config`,
+  `planning/trainers`), allesamt über den Drizzle-/Service-Client.
+- `season_statistics` — nur SELECT für `is_club_admin(club_id)`. Die Tabelle wird
+  serverseitig berechnet, es gibt keinen Client-Schreibpfad.
+
+Defense-in-Depth: Wirksam werden die Policies erst, sobald die App auf eine Rolle ohne
+BYPASSRLS umgestellt wird (siehe „FORCE RLS“ oben) — bis dahin greift allein der App-Code.
+
 ## Bewusst zurückgestellt (siehe `docs/tickets/`)
 
 - **`billing_periods` / `trainer_billings` / `billing_line_items`**: kein `club_id` in der Tabelle erreichbar — vermutlich ein plattformweites Konzept, nicht pro Verein. `trainer_billings`/`billing_line_items` vergleichen zudem `trainer_id` direkt mit `auth.uid()` (derselbe Bug, der für `hours_logs`/`attendance_records`/`trainer_availabilities` bereits gefixt wurde). Ticket: `docs/tickets/TICKET-billing-tables-rls-scoping.md`.
