@@ -2,6 +2,32 @@
 
 > Zuletzt verifiziert: 16. August 2026 (Migrations-Tracking ersetzt, Owner-UPDATE-Policy auf `clubs`, Audit-Trigger auf den Finanztabellen; Live-Prüfung per postgres-js auf `supabase.swingz.cloud:6543`)
 
+## Baseline-Konsolidierung (Stand 16.08.2026)
+
+`supabase/migrations/` enthält jetzt **eine** Datei: `00000000000000_baseline_2026-08-16.sql`,
+ein `supabase db dump` des Produktionsschemas (117 Tabellen, 372 Policies). Die 177 vorherigen
+Dateien liegen unverändert in `supabase/migrations/archive/` und werden von der CLI nicht mehr
+angewendet — als Historie bleiben sie lesbar (AGENTS.md § Migrationen, Regel 3).
+
+**Anlass:** Der Bestand konnte eine leere Datenbank nie aufbauen. Die alphabetisch erste Datei
+`001_rls_policies.sql` beginnt mit `ALTER TABLE clubs ENABLE ROW LEVEL SECURITY` — eine Tabelle,
+die keine einzige Migration anlegt. Das Basis-Schema entstand außerhalb der Migrationen und
+existierte nur noch auf der Live-DB. Ein `supabase start` bricht damit sofort ab
+(`ERROR: relation "clubs" does not exist`), also war eine lokale Entwicklungsdatenbank
+schlicht nicht herstellbar — der eigentliche Grund, warum jahrelang gegen Produktion
+entwickelt wurde (siehe `docs/ENVIRONMENTS.md`).
+
+**Verifiziert:** `supabase start` baut aus der Baseline lokal 118 Tabellen und 372 Policies
+auf (Prod: 117/372; die zusätzliche lokale Tabelle ist `schema_migrations` selbst),
+`npm run seed:reset` bestückt anschließend alle 7 Testvereine.
+
+Auf Produktion ist die Baseline als `baselined` markiert (16.08.2026,
+`MIGRATE_ENV=prod npx tsx scripts/migrate.ts baseline` — nur die Tracking-Zeile, kein DDL).
+`npm run db:status:prod` meldet seitdem 178 angewendet, 0 offen.
+
+Ein PR-Job in `.github/workflows/ci.yml` prüft ab jetzt bei jeder Änderung an
+`supabase/migrations/`, dass eine leere DB daraus aufgebaut werden kann.
+
 ## Migrations-Tracking (Stand 16.08.2026, angewendet)
 
 **Die Tracking-Frage unten ist gelöst.** Maßgeblich ist ab sofort

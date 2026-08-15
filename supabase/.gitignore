@@ -1,2 +1,6 @@
 .vercel
 .env*.local
+
+# lokaler Zustand des Docker-Stacks (supabase start), keine Projektdatei
+.branches
+.temp

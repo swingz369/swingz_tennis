@@ -63,6 +63,18 @@ Dateien, die ein Build-/CI-Schritt erzeugt (SBOM, Coverage-Reports, Testprotokol
 
 Grund für diese Regeln: `supabase/migrations/` hatte nie eine `supabase_migrations.schema_migrations`-Tracking-Tabelle — es gibt keinen Mechanismus, der protokolliert, welche Datei tatsächlich auf die Live-DB angewendet wurde. Das führte dazu, dass mehrere Policy-Generationen für dieselbe Tabelle unter verschiedenen Namen gleichzeitig aktiv sind, mehrere Migrationen nie gepusht wurden (siehe `docs/DATABASE.md`) und mindestens eine Tabelle nur manuell im Dashboard angelegt wurde. Diese Regeln verhindern, dass das erneut passiert.
 
+### 0. Eine Baseline, ein Archiv (seit 16.08.2026)
+
+`supabase/migrations/` enthält die Baseline `00000000000000_baseline_2026-08-16.sql` (Abbild des
+Produktionsschemas) plus alles, was danach dazukam. Die 177 Dateien davor liegen in
+`supabase/migrations/archive/` — Historie, werden nicht mehr angewendet, nicht mehr editiert.
+Grund und Verifikation: `docs/DATABASE.md` § Baseline-Konsolidierung.
+
+Daraus folgt für neue Migrationen: **jede muss auf einer leeren DB durchlaufen.** Prüfen mit
+`supabase db reset`, bevor der PR aufgemacht wird — CI prüft dasselbe. Wer eine Migration
+schreibt, die eine vorhandene Tabelle voraussetzt, ohne dass eine Migration sie anlegt,
+reißt genau die Lücke wieder auf, die die Baseline geschlossen hat.
+
 ### 1. Live-Zustand vor jeder Migration prüfen
 
 `supabase/migrations/*.sql` ist **kein verlässliches Abbild** des Ist-Zustands. Vor dem Schreiben einer neuen Migration, die eine bestehende RLS-Policy, Funktion oder Tabellenstruktur ändert:

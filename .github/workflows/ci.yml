@@ -77,6 +77,28 @@ jobs:
       - name: Audit dependencies (fail on high/critical)
         run: pnpm audit --audit-level=high
 
+  migrations-from-scratch:
+    # Beweist, dass supabase/migrations/ eine leere DB in den erwarteten Zustand
+    # bringt — die Voraussetzung dafür, dass `supabase db reset` lokal überhaupt
+    # eine brauchbare Entwicklungs-DB liefert (docs/ENVIRONMENTS.md).
+    # Genau das war bis zur Baseline vom 16.08.2026 nicht der Fall: die erste
+    # Migration setzte Tabellen voraus, die keine Migration anlegt.
+    name: Migrationen gegen leere DB
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Alle Migrationen von null anwenden
+        run: supabase db start && supabase db reset --no-seed
+
   e2e-smoke:
     name: E2E Smoke (billing-flow)
     runs-on: ubuntu-latest
