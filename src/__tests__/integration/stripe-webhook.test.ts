@@ -9,10 +9,10 @@
  * - Tests are skipped if credentials are missing
  */
 import { describe, it, expect } from 'vitest';
+import { hasIntegrationEnv } from '../helpers/integration';
 
-// Guard: skip if Supabase service role key is not available
-const HAS_SERVICE_ROLE_KEY = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
-const describeIf = HAS_SERVICE_ROLE_KEY ? describe : describe.skip;
+// Guard: skip ohne Service-Key ODER wenn die URL auf Produktion zeigt.
+const describeIf = hasIntegrationEnv() ? describe : describe.skip;
 
 describeIf('Stripe Webhook Handler Logic', () => {
   it('constructStripeEvent throws when webhook secret is not configured', async () => {

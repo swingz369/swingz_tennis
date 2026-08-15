@@ -2,11 +2,12 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 import { BillingEngine } from '@/lib/billing-engine';
 import type { CreateInvoice, CreateSepaMandate } from '@/lib/types/billing';
+import { hasIntegrationEnv } from '../helpers/integration';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-const hasSupabase = !!SUPABASE_SERVICE_KEY;
+const hasSupabase = hasIntegrationEnv();
 const hasSepaCreditorId = !!process.env.SEPA_CREDITOR_ID;
 const describeIntegration = hasSupabase ? describe : describe.skip;
 const describeSepa = hasSupabase && hasSepaCreditorId ? describe : describe.skip;

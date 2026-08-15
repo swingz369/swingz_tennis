@@ -10,11 +10,12 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
+import { hasIntegrationEnv } from '../helpers/integration';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-const hasSupabase = !!SUPABASE_SERVICE_KEY;
+const hasSupabase = hasIntegrationEnv();
 const describeIntegration = hasSupabase ? describe : describe.skip;
 
 describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
