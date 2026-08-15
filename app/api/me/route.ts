@@ -8,7 +8,7 @@ import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
-    if (!auth.user) return forbiddenResponse('Not authenticated');
+    if (!auth.user) return forbiddenResponse('Nicht angemeldet');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;

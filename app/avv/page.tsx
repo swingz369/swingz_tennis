@@ -184,8 +184,7 @@ export default function AVVPage() {
               </li>
               <li>
                 CSRF-Schutz, Rate-Limiting auf sensiblen Endpunkten (Login, Registrierung,
-                Kontaktformular) sowie signaturbasierte Validierung eingehender Webhooks (Stripe,
-                Zapier).
+                Kontaktformular) sowie signaturbasierte Validierung eingehender Webhooks (Stripe).
               </li>
               <li>
                 Strukturiertes Error-Monitoring (Sentry) ohne Ausgabe von Klartext-Stacktraces an

@@ -13,6 +13,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
+import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:members:cancel');
@@ -23,7 +24,7 @@ interface RouteContext {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   return withApiAuth(request, async (auth) => {
-    if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse('Admin required');
+    if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse('Admin erforderlich');
 
     const { id: membershipId } = await context.params;
     const body = await request.json().catch(() => ({}));
@@ -77,26 +78,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // Persist cancellation details as audit log
-    try {
-      await serviceSb.from('audit_logs').insert({
-        actor_id: auth.user.id,
-        action: 'membership_cancelled',
-        resource_type: 'membership',
-        resource_id: membershipId,
-        details: {
-          user_id: membership.user_id,
-          club_id: membership.club_id,
-          cancellation_date,
-          cancellation_reason: reason ?? null,
-          deactivated_immediately: deactivateNow,
-        },
-      } as any);
-    } catch (auditErr) {
-      log.error(
-        'Audit log failed (non-blocking)',
-        auditErr instanceof Error ? auditErr : undefined
-      );
-    }
+    await logAudit({
+      actorId: auth.user.id,
+      action: 'membership_cancelled',
+      resourceType: 'membership',
+      resourceId: membershipId,
+      clubId: membership.club_id,
+      details: {
+        user_id: membership.user_id,
+        cancellation_date,
+        cancellation_reason: reason ?? null,
+        deactivated_immediately: deactivateNow,
+      },
+      request,
+    });
 
     // Bestätigungs-E-Mail via Resend (fire-and-forget)
     if (send_confirmation && user?.email) {

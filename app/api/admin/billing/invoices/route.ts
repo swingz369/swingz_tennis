@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     // Permission check
     const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Admin access required');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
 
     try {
       const supabase = auth.supabase;

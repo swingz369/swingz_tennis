@@ -1,12 +1,16 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth } from '@/lib/api-auth';
+import { withApiAuth, verifyRole } from '@/lib/api-auth';
 
 // GET /api/admin/approvals/count — returns count of pending registrations
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
-    if (auth.role !== 'admin' && auth.role !== 'superadmin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // `verifyRole` statt eines Rollen-Vergleichs von Hand: Der direkte
+    // Vergleich schloss den Owner aus, der über „Als Admin" in einem Verein
+    // arbeitet — im Browser-Log schlug diese Route deshalb dauerhaft mit 403
+    // fehl, während der Rest der Admin-Oberfläche lief.
+    if (!(await verifyRole(auth, 'admin'))) {
+      return NextResponse.json({ error: 'Zugriff nur für Admins' }, { status: 403 });
     }
 
     let query = (auth.supabase as any)

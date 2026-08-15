@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
   if (rateLimitError) return rateLimitError;
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Admin access required');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
     const { data, error } = await (auth.supabase.from('training_groups') as any)
       .select('*')
       .eq('club_id', auth.clubId)
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   if (rateLimitError) return rateLimitError;
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Admin access required');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
     const body = await request.json();
     const { name, level, age_group, season_id } = body;
     if (!name || !level)

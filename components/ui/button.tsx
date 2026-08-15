@@ -28,9 +28,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-[hsl(var(--brand-accent-dashboard))] text-white shadow-sm hover:brightness-110 focus-visible:ring-[hsl(var(--brand-accent-dashboard)/0.5)]',
+          'bg-primary text-primary-foreground shadow-sm hover:brightness-110 focus-visible:ring-primary/50',
         primary:
-          'bg-[hsl(var(--brand-accent-dashboard))] text-white shadow-sm hover:brightness-110 focus-visible:ring-[hsl(var(--brand-accent-dashboard)/0.5)]',
+          'bg-primary text-primary-foreground shadow-sm hover:brightness-110 focus-visible:ring-primary/50',
         secondary:
           'bg-brand-secondary text-white shadow-md hover:bg-brand-secondary/90 hover:shadow-lg focus-visible:ring-brand-secondary/50',
         outline:

@@ -11,7 +11,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
@@ -42,7 +42,7 @@ export async function PATCH(
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
@@ -86,7 +86,7 @@ export async function DELETE(
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);

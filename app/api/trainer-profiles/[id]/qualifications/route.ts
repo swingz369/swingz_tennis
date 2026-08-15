@@ -11,7 +11,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'trainer');
     if (!hasPermission) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
@@ -41,7 +41,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     const isTrainer = await verifyRole(auth, 'trainer');
 
     if (!isAdmin && !isTrainer) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
@@ -55,7 +55,9 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       if (!isAdmin) {
         const profile = await trainerProfileService.getTrainerProfileById(id);
         if (!profile || profile.userId !== auth.user.id) {
-          return forbiddenResponse('You can only add qualifications to your own profile');
+          return forbiddenResponse(
+            'Du kannst nur Qualifikationen zu deinem eigenen Profil hinzufügen'
+          );
         }
       }
 

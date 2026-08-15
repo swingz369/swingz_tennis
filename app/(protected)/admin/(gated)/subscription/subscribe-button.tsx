@@ -151,16 +151,11 @@ export function PlanCards({
           return (
             <Card
               key={key}
-              className={cn(
-                'relative flex flex-col',
-                isRecommended && 'ring-2 ring-brand-primary/40'
-              )}
+              className={cn('relative flex flex-col', isRecommended && 'ring-2 ring-primary/40')}
             >
               {isRecommended && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-brand-primary text-white border-0 px-3 text-xs">
-                    Empfohlen
-                  </Badge>
+                  <Badge className="bg-primary text-white border-0 px-3 text-xs">Empfohlen</Badge>
                 </div>
               )}
               <CardHeader className="pb-3 pt-6">
@@ -182,7 +177,7 @@ export function PlanCards({
                 <ul className="space-y-2 text-sm text-muted-foreground flex-1">
                   {features.map((f) => (
                     <li key={f} className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-brand-primary" />
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
                       {f}
                     </li>
                   ))}

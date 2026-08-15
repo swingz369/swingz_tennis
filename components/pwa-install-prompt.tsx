@@ -89,8 +89,8 @@ export function PwaInstallPrompt() {
 
         <div className="flex items-start gap-3">
           {/* Icon */}
-          <div className="flex-shrink-0 rounded-xl bg-brand-primary/10 p-2.5">
-            <Smartphone className="h-6 w-6 text-brand-primary" />
+          <div className="flex-shrink-0 rounded-xl bg-primary/10 p-2.5">
+            <Smartphone className="h-6 w-6 text-primary" />
           </div>
 
           {/* Content */}
@@ -107,7 +107,7 @@ export function PwaInstallPrompt() {
           <Button
             size="sm"
             onClick={handleInstall}
-            className="gap-1.5 rounded-xl bg-brand-primary hover:bg-brand-primary/90"
+            className="gap-1.5 rounded-xl bg-primary hover:bg-primary/90"
           >
             <Download className="h-3.5 w-3.5" />
             Installieren

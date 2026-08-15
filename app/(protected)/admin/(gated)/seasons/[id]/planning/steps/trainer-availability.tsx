@@ -101,7 +101,7 @@ export function TrainerAvailabilityPanel() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <Users className="h-4 w-4 text-brand-primary" />
+            <Users className="h-4 w-4 text-primary" />
             Trainer-Verfügbarkeiten
           </CardTitle>
         </CardHeader>
@@ -162,7 +162,7 @@ export function TrainerAvailabilityPanel() {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <Users className="h-4 w-4 text-brand-primary" />
+            <Users className="h-4 w-4 text-primary" />
             Trainer-Verfügbarkeiten ({trainers.length})
           </CardTitle>
           <div className="flex items-center gap-2">
@@ -285,7 +285,7 @@ export function TrainerAvailabilityPanel() {
         <div className="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-border dark:border-border">
           <div className="text-center">
             <p className="text-xs text-muted-foreground">Trainer gesamt</p>
-            <p className="text-lg font-bold text-brand-primary">{trainers.length}</p>
+            <p className="text-lg font-bold text-primary">{trainers.length}</p>
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-foreground">Eingereicht</p>
@@ -297,9 +297,7 @@ export function TrainerAvailabilityPanel() {
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-foreground">Ø Auslastung</p>
-            <p className="text-lg font-bold text-brand-primary">
-              {Math.round(overallUtilization)}%
-            </p>
+            <p className="text-lg font-bold text-primary">{Math.round(overallUtilization)}%</p>
           </div>
         </div>
       </CardContent>

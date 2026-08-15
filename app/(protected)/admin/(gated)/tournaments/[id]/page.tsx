@@ -231,9 +231,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
           </Button>
           <div>
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl font-bold tracking-tight text-brand-primary">
-                {tournament.name}
-              </h1>
+              <h1 className="text-2xl font-bold tracking-tight text-primary">{tournament.name}</h1>
               <Badge variant={SHARED_STATUS_VARIANTS[tournament.status ?? 'draft'] ?? 'secondary'}>
                 {STATUS_LABELS[tournament.status ?? 'draft'] ?? tournament.status}
               </Badge>
@@ -292,8 +290,8 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-brand-primary/10 shrink-0">
-              <Users className="h-5 w-5 text-brand-primary" />
+            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-primary/10 shrink-0">
+              <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Teilnehmer</p>
@@ -470,7 +468,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
           <Card>
             <CardHeader className="px-5 pt-5 pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Users className="h-4 w-4 text-brand-primary" />
+                <Users className="h-4 w-4 text-primary" />
                 Teilnehmer ({registrations.length})
               </CardTitle>
               {tournament.status === 'registration' && (
@@ -501,7 +499,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                       className="flex items-center gap-3 p-3 rounded-xl bg-muted dark:bg-card/5 border border-border dark:border-white/10 hover:border-brand-light/30 transition-colors"
                     >
                       {/* Avatar */}
-                      <div className="flex items-center justify-center h-9 w-9 rounded-full bg-brand-primary/10 text-brand-primary text-sm font-semibold shrink-0">
+                      <div className="flex items-center justify-center h-9 w-9 rounded-full bg-primary/10 text-primary text-sm font-semibold shrink-0">
                         {(reg.users?.full_name ?? '??')
                           .split(' ')
                           .map((n) => n[0])

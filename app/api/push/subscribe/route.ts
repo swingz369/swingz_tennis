@@ -16,7 +16,7 @@ import { pushNotificationService } from '@/lib/push-notification.service';
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
-    if (!hasPermission) return forbiddenResponse('Authentication required');
+    if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
-    if (!hasPermission) return forbiddenResponse('Authentication required');
+    if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
     const body = await req.json().catch(() => null);
     if (!body?.endpoint) {

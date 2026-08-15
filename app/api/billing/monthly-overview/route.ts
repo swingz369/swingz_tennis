@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const { searchParams } = new URL(request.url);

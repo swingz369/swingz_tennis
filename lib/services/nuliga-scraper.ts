@@ -101,7 +101,7 @@ function parseGroupPageHtml(html: string, sourceUrl: string): NuligaGroupPage {
   const standings = parseStandingsTable($);
 
   // ── Parse Match Schedule (Spielplan) ─────────────────────────────────
-  const matches = parseMatchSchedule($);
+  const matches = parseMatchSchedule($, sourceUrl);
 
   return {
     championship: decodeURIComponent(championship),
@@ -206,12 +206,15 @@ function extractStandingsFromTable($: cheerio.CheerioAPI, table: any): NuligaSta
  * Structure:
  * Headers: Datum | Heimmannschaft | Gastmannschaft | Matchpunkte | Sätze | Spiele | Spielbericht
  */
-function parseMatchSchedule($: cheerio.CheerioAPI): NuligaMatch[] {
+function parseMatchSchedule($: cheerio.CheerioAPI, sourceUrl: string): NuligaMatch[] {
   const matches: NuligaMatch[] = [];
 
-  // Find the Spielplan heading
+  // Find the Spielplan heading. Die Gruppenseite nennt den Abschnitt "Spielplan",
+  // das Mannschaftsportrait "Spieltermine - <Liga> <Jahr>" — gleiche Tabelle,
+  // gleiche Spalten, nur eine andere Überschrift.
   const scheduleHeaders = ($('h2, h3, h4, b, strong') as any).filter((_: number, el: any) => {
     const text = $(el).text().trim().toLowerCase();
+    if (text.startsWith('spieltermine')) return true;
     return text === 'spielplan' || (text.startsWith('spielplan') && !text.includes('tabelle'));
   });
 
@@ -274,10 +277,11 @@ function parseMatchSchedule($: cheerio.CheerioAPI): NuligaMatch[] {
       // Status is in the last column
       statusText = cellTexts[8] || cellTexts[cellTexts.length - 1] || '';
 
-      // Check for Spielbericht link in last column
+      // Check for Spielbericht link in last column. nuLiga liefert relative
+      // hrefs — absolut machen, sonst ist der Link außerhalb von nuLiga tot.
       const lastCell = $(cells[cells.length - 1]);
       const reportLink = lastCell.find('a').attr('href');
-      reportUrl = reportLink || null;
+      reportUrl = reportLink ? absolutize(reportLink, sourceUrl) : null;
     } else {
       // Compact layout: Home | Away | results...
       homeTeam = col0;
@@ -326,11 +330,195 @@ function parseMatchSchedule($: cheerio.CheerioAPI): NuligaMatch[] {
   return matches;
 }
 
+// ── Mannschaftsmeldung (Meldeliste / Kader) ──────────────────────────────
+
+export interface NuligaRosterPlayer {
+  /** Meldeposition (Spalte "Rang"), 1 = erste Position. */
+  position: number;
+  /** Klarname in der Form "Vorname Nachname", ohne Jahrgangs-Klammer. */
+  name: string;
+  /** Leistungsklasse wie angezeigt, z. B. "LK4,6" — null wenn keine gemeldet. */
+  lk: string | null;
+  /** DTB-ID aus der Spalte "ID-Nummer" — stabiler Schlüssel zum Vereinsmitglied. */
+  dtbId: string | null;
+}
+
+/**
+ * Ergebnis einer Mannschaftsportrait-Seite (`/wa/teamPortrait`).
+ *
+ * Diese Seite ist die, die ein Sportwart tatsächlich im Browser offen hat, und
+ * sie enthält alles Wichtige auf einmal: den eigenen Mannschaftsnamen, NUR die
+ * eigenen Spieltermine (kein Filtern nötig) und die Meldeliste mit LK und
+ * DTB-ID. Für die Tabelle verlinkt sie zusätzlich auf die Gruppenseite.
+ */
+export interface NuligaTeamPortrait {
+  teamName: string;
+  /** z. B. "Damen 30 Südwest-Liga Gr. 005 NO" */
+  leagueName: string | null;
+  /** Absolute URL der Gruppenseite (für die Tabelle), falls verlinkt. */
+  groupPageUrl: string | null;
+  matches: NuligaMatch[];
+  players: NuligaRosterPlayer[];
+  fetchedAt: string;
+}
+
+/** Erkennt eine Mannschaftsportrait-URL (im Gegensatz zur Gruppenseite). */
+export function isNuligaTeamPortraitUrl(url: string): boolean {
+  return /\/wa\/teamPortrait/i.test(url);
+}
+
+/**
+ * Mannschaftsportrait abrufen und auswerten.
+ *
+ * Gespeichert wird ausschließlich die Meldeliste der EIGENEN Mannschaft — die
+ * Seite enthält keine fremden Spielernamen (siehe Migration 20260815130000).
+ */
+export async function fetchNuligaTeamPortrait(url: string): Promise<NuligaTeamPortrait> {
+  const parsed = new URL(url);
+  if (!parsed.hostname.endsWith('.liga.nu')) {
+    throw new Error(
+      `Ungültige nuLiga URL: Domain muss *.liga.nu sein (erhalten: ${parsed.hostname})`
+    );
+  }
+
+  const response = await fetchWithRetry(url);
+  if (!response.ok) throw new Error(`nuLiga antwortete mit HTTP ${response.status}`);
+
+  const html = await response.text();
+  const portrait = parseTeamPortraitHtml(html, url);
+
+  // Weder Spiele noch Spieler ⇒ Layout hat sich vermutlich geändert.
+  if (portrait.matches.length === 0 && portrait.players.length === 0) {
+    triggerLayoutAlarm(url, html);
+  }
+  return portrait;
+}
+
+function parseTeamPortraitHtml(html: string, sourceUrl: string): NuligaTeamPortrait {
+  const $ = cheerio.load(html);
+
+  // Kopf-Tabelle: zweispaltige Label/Wert-Zeilen (Verein | Mannschaft | Liga | Tabelle).
+  let teamName = '';
+  let leagueName: string | null = null;
+  $('table.result-set tr').each((_: number, row: any) => {
+    const cells = $(row).find('th, td');
+    if (cells.length !== 2) return;
+    const label = $(cells[0]).text().trim().toLowerCase();
+    const value = $(cells[1]).text().trim().replace(/\s+/g, ' ');
+    if (label === 'mannschaft' && !teamName) teamName = value;
+    if (label === 'liga' && !leagueName) leagueName = value;
+  });
+
+  if (!teamName) {
+    teamName = $('title')
+      .text()
+      .trim()
+      .replace(/^nuLiga\s*[-–]\s*/i, '')
+      .trim();
+  }
+
+  // Link auf die Gruppenseite — dort steht die Tabelle.
+  let groupPageUrl: string | null = null;
+  $('a').each((_: number, a: any) => {
+    if (groupPageUrl) return;
+    const href = $(a).attr('href');
+    if (href && /\/wa\/groupPage\?/i.test(href)) groupPageUrl = absolutize(href, sourceUrl);
+  });
+
+  return {
+    teamName,
+    leagueName,
+    groupPageUrl,
+    matches: parseMatchSchedule($, sourceUrl),
+    players: parseRosterTable($),
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Meldeliste parsen.
+ *
+ * Beobachtete Kopfzeile (RLSW, Sommer 2026):
+ *   Rang | LK | ID-Nummer | Name, Vorname | Nation | Info | SG | Einzel | Doppel | gesamt
+ *
+ * Die Spalten werden über die Kopfzeile gesucht statt über feste Indizes, weil
+ * die Reihenfolge zwischen den Verbänden schwankt.
+ */
+function parseRosterTable($: cheerio.CheerioAPI): NuligaRosterPlayer[] {
+  const players: NuligaRosterPlayer[] = [];
+
+  ($('table.result-set') as any).each((_: number, tbl: any) => {
+    if (players.length > 0) return; // erste passende Tabelle gewinnt
+
+    const table = $(tbl);
+    const headers = table
+      .find('tr')
+      .first()
+      .find('th, td')
+      .map((_i: number, c: any) => $(c).text().trim().toLowerCase())
+      .get() as string[];
+
+    // "Name, Vorname" trifft, "Heimmannschaft" (Spielplan) bewusst nicht.
+    const nameIdx = headers.findIndex((h) => h.includes('name') && !h.includes('mannschaft'));
+    if (nameIdx < 0) return;
+    const lkIdx = headers.findIndex((h) => h === 'lk' || h.includes('leistungsklasse'));
+    const idIdx = headers.findIndex((h) => h.includes('id-nummer') || h === 'id');
+    const rankIdx = headers.findIndex((h) => h === 'rang' || h === 'nr.' || h === 'pos');
+
+    table.find('tr').each((i: number, row: any) => {
+      if (i === 0) return; // Kopfzeile
+      const cells = $(row).find('td');
+      if (cells.length <= nameIdx) return;
+
+      const cellTexts = cells.map((_i: number, c: any) => $(c).text().trim()).get() as string[];
+      const rawName = cellTexts[nameIdx] ?? '';
+      if (!rawName) return;
+
+      const rank = parseInt(cellTexts[rankIdx >= 0 ? rankIdx : 0] ?? '', 10);
+
+      players.push({
+        position: isNaN(rank) ? players.length + 1 : rank,
+        name: normalizePlayerName(rawName),
+        lk: lkIdx >= 0 ? cellTexts[lkIdx] || null : null,
+        dtbId: idIdx >= 0 ? cellTexts[idIdx] || null : null,
+      });
+    });
+  });
+
+  return players;
+}
+
+/**
+ * "Mustermann, Max (1989)" → "Max Mustermann".
+ * Der Jahrgang in Klammern gehört nicht zum Namen — bliebe er stehen, landete
+ * er mitten im Vornamen und jeder Abgleich mit einem Mitglied schlüge fehl.
+ */
+export function normalizePlayerName(raw: string): string {
+  const cleaned = raw
+    .replace(/\(\s*\d{4}\s*\)/g, '') // Jahrgang
+    .replace(/\s+/g, ' ')
+    .trim();
+  const comma = cleaned.indexOf(',');
+  if (comma < 0) return cleaned;
+  const last = cleaned.slice(0, comma).trim();
+  const first = cleaned.slice(comma + 1).trim();
+  return first ? `${first} ${last}` : last;
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────
 
 function parseIntSafe(value: string): number {
   const parsed = parseInt(value?.trim() || '0', 10);
   return isNaN(parsed) ? 0 : parsed;
+}
+
+/** Relativen nuLiga-href gegen die Quell-URL auflösen. */
+function absolutize(href: string, sourceUrl: string): string | null {
+  try {
+    return new URL(href, sourceUrl).toString();
+  } catch {
+    return null;
+  }
 }
 
 // ── Retry-Layer (Q1 · 1.3.1) ──────────────────────────────────────────────
@@ -358,15 +546,32 @@ interface FetchWithRetryOptions {
  */
 async function fetchWithRetry(
   url: string,
-  { retries = 3, baseDelayMs = 500, perAttemptTimeoutMs = 15_000 }: FetchWithRetryOptions = {}
+  {
+    retries = 3,
+    baseDelayMs = 500,
+    perAttemptTimeoutMs = 15_000,
+    // Die Vereinssuche ist ein WebObjects-Formular und braucht POST; alles
+    // andere holt GET. Deshalb hier optional durchgereicht statt einer
+    // zweiten fetch-Implementierung daneben.
+    method,
+    headers: extraHeaders,
+    body,
+  }: FetchWithRetryOptions & {
+    method?: string;
+    headers?: Record<string, string>;
+    body?: string;
+  } = {}
 ): Promise<Response> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const response = await fetch(url, {
+        ...(method ? { method } : {}),
+        ...(body !== undefined ? { body } : {}),
         headers: {
           'User-Agent': 'SwingZ/1.0 (Vereinsmanagement; Kontakt: admin@swingz.de)',
           Accept: 'text/html,application/xhtml+xml',
           'Accept-Language': 'de-DE,de;q=0.9',
+          ...(extraHeaders ?? {}),
         },
         signal: AbortSignal.timeout(perAttemptTimeoutMs),
       });
@@ -438,6 +643,255 @@ function triggerLayoutAlarm(url: string, html: string): void {
   });
 }
 
+// ── Vereinsseite: alle Mannschaften auf einmal ───────────────────────
+
+/**
+ * Eine Mannschaft, wie sie auf der Vereinsseite (`/wa/clubTeams`) steht.
+ *
+ * Diese Seite ist der Schlüssel zur Automatisierung: Sie listet für einen
+ * Verein sämtliche gemeldeten Mannschaften mit Liga, Gruppenseite und
+ * Mannschaftsportrait — der Admin muss also keine einzige URL mehr von Hand
+ * heraussuchen und eintippen.
+ *
+ * Beobachtete Kopfzeile (HTV, Sommer 2026):
+ *   Mannschaft | Mannschaftsführer | Gruppe | Tab.-Rang | Punkte | Downloads
+ *
+ * Die Spalte „Mannschaftsführer" enthält Name und Telefonnummer. Sie wird
+ * bewusst NICHT übernommen — für den Ligabetrieb in SwingZ ist sie unnötig,
+ * und ungenutzte personenbezogene Daten haben in der Datenbank nichts verloren.
+ */
+export interface NuligaClubTeam {
+  /** Mannschaftsname wie gemeldet, z. B. „Herren 40 II". */
+  teamName: string;
+  /** Volle Ligabezeichnung, z. B. „Herren 40 - Bezirksliga Gr. 042". */
+  leagueName: string | null;
+  /** Wettbewerb, z. B. „Medenrunde 2026". */
+  championship: string | null;
+  /** Saisonjahr aus dem Wettbewerb, z. B. 2026. */
+  seasonYear: number | null;
+  /** Mannschaftsportrait — Spielplan der eigenen Mannschaft + Meldeliste. */
+  portraitUrl: string | null;
+  /** Gruppenseite — Tabelle und alle Begegnungen der Gruppe. */
+  groupUrl: string | null;
+}
+
+export interface NuligaClubTeams {
+  /** Vereinsnummer aus dem `club`-Parameter. */
+  clubNumber: string | null;
+  /** Quell-URL, wie sie gespeichert wird. */
+  sourceUrl: string;
+  teams: NuligaClubTeam[];
+  fetchedAt: string;
+}
+
+/** Erkennt eine Vereinsseite (Mannschaftsübersicht eines Vereins). */
+export function isNuligaClubUrl(url: string): boolean {
+  return /\/wa\/(clubTeams|clubPools|clubInfoDisplay|clubMeetings)/i.test(url);
+}
+
+/** Vereinsnummer aus einer beliebigen nuLiga-Vereins-URL. */
+export function getNuligaClubNumber(url: string): string | null {
+  try {
+    return new URL(url).searchParams.get('club');
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Normalisiert jede Vereins-URL auf die Mannschaftsübersicht.
+ *
+ * Ein Admin kopiert typischerweise das, was gerade im Browser steht — das kann
+ * `clubInfoDisplay`, `clubMeetings` oder `clubPools` sein. Alle tragen dieselbe
+ * Vereinsnummer, nur `clubTeams` listet die Mannschaften.
+ */
+export function toNuligaClubTeamsUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const club = parsed.searchParams.get('club');
+    if (!club) return null;
+    const base = parsed.pathname.replace(/\/wa\/[A-Za-z]+$/, '/wa/clubTeams');
+    return `${parsed.origin}${base}?club=${encodeURIComponent(club)}`;
+  } catch {
+    return null;
+  }
+}
+
+/** „Medenrunde 2026" / „Sommer 2026" → 2026. */
+function seasonYearFrom(text: string | null | undefined): number | null {
+  const match = text?.match(/(20\d{2})/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+/**
+ * Alle Mannschaften eines Vereins abrufen.
+ *
+ * @param url - Beliebige Vereins-URL (`…/wa/clubTeams?club=24949` oder eine
+ *              andere Vereinsseite mit `club`-Parameter).
+ */
+export async function fetchNuligaClubTeams(url: string): Promise<NuligaClubTeams> {
+  const teamsUrl = toNuligaClubTeamsUrl(url);
+  if (!teamsUrl) {
+    throw new Error(
+      'Die URL enthält keine Vereinsnummer. Erwartet wird eine nuLiga-Vereinsseite mit „?club=…".'
+    );
+  }
+  const parsed = new URL(teamsUrl);
+  if (!parsed.hostname.endsWith('.liga.nu')) {
+    throw new Error(
+      `Ungültige nuLiga URL: Domain muss *.liga.nu sein (erhalten: ${parsed.hostname})`
+    );
+  }
+
+  const response = await fetchWithRetry(teamsUrl);
+  if (!response.ok) throw new Error(`nuLiga antwortete mit HTTP ${response.status}`);
+
+  const teams = parseClubTeamsHtml(await response.text(), teamsUrl);
+  return {
+    clubNumber: getNuligaClubNumber(teamsUrl),
+    sourceUrl: teamsUrl,
+    teams,
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
+function parseClubTeamsHtml(html: string, sourceUrl: string): NuligaClubTeam[] {
+  const $ = cheerio.load(html);
+  const teams: NuligaClubTeam[] = [];
+
+  ($('table.result-set') as any).each((_: number, tbl: any) => {
+    const table = $(tbl);
+    let championship: string | null = null;
+
+    table.find('tr').each((_i: number, row: any) => {
+      const $row = $(row);
+      const cells = $row.find('td');
+
+      // Zwischenüberschrift („Medenrunde 2026") — eine einzelne Zelle über die
+      // ganze Breite. Sie gilt für alle folgenden Zeilen bis zur nächsten.
+      if (cells.length === 1) {
+        const text = $(cells[0]).text().trim();
+        if (text) championship = text.replace(/\s+/g, ' ');
+        return;
+      }
+      if (cells.length < 3) return; // Kopfzeile
+
+      const teamName = $(cells[0]).text().replace(/\s+/g, ' ').trim();
+      if (!teamName) return;
+
+      // Die Links tragen die eigentliche Information — der Zellentext nicht.
+      let portraitUrl: string | null = null;
+      let groupUrl: string | null = null;
+      $row.find('a').each((_j: number, a: any) => {
+        const href = $(a).attr('href');
+        if (!href) return;
+        if (!portraitUrl && /\/wa\/teamPortrait\?/i.test(href)) {
+          portraitUrl = absolutize(href, sourceUrl);
+        }
+        if (!groupUrl && /\/wa\/groupPage\?/i.test(href)) {
+          groupUrl = absolutize(href, sourceUrl);
+        }
+      });
+
+      // Ohne Portrait- und ohne Gruppenlink ist die Zeile für uns wertlos
+      // (z. B. eine reine Hinweiszeile).
+      if (!portraitUrl && !groupUrl) return;
+
+      const leagueName = $(cells[2]).text().replace(/\s+/g, ' ').trim() || null;
+      teams.push({
+        teamName,
+        leagueName,
+        championship,
+        seasonYear: seasonYearFrom(championship) ?? seasonYearFrom(leagueName),
+        portraitUrl,
+        groupUrl,
+      });
+    });
+  });
+
+  return teams;
+}
+
+/**
+ * Vereinssuche im Verbandsportal.
+ *
+ * Damit muss ein Admin nicht einmal die Vereins-URL heraussuchen: Er tippt den
+ * Vereinsnamen, wir liefern die Treffer samt Vereinsnummer.
+ *
+ * `clubSearch` ist ein WebObjects-Formular (POST). Die Trefferliste verlinkt
+ * pro Verein auf `clubTeams?club=<nr>`.
+ */
+export async function searchNuligaClubs(
+  federationHost: string,
+  federation: string,
+  searchTerm: string
+): Promise<Array<{ name: string; city: string | null; clubNumber: string; teamsUrl: string }>> {
+  const origin = federationHost.startsWith('http') ? federationHost : `https://${federationHost}`;
+  const parsed = new URL(origin);
+  if (!parsed.hostname.endsWith('.liga.nu')) {
+    throw new Error(
+      `Ungültiger Verband: Domain muss *.liga.nu sein (erhalten: ${parsed.hostname})`
+    );
+  }
+
+  const url = `${parsed.origin}/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/clubSearch`;
+  const response = await fetchWithRetry(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      federation,
+      searchFor: searchTerm,
+      region: '',
+      WOSubmitAction: 'search',
+    }).toString(),
+  });
+  if (!response.ok) throw new Error(`nuLiga antwortete mit HTTP ${response.status}`);
+
+  const $ = cheerio.load(await response.text());
+  const teamsUrlFor = (clubNumber: string) =>
+    `${parsed.origin}/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/clubTeams?club=${encodeURIComponent(clubNumber)}`;
+
+  // Fall 1 — mehrere Treffer: Ergebnistabelle mit je einer Zeile pro Verein.
+  //   Zellen: „Tennisclub Limeshain 1974 e.V. (05111)" | „Limeshain"
+  const results = new Map<
+    string,
+    { name: string; city: string | null; clubNumber: string; teamsUrl: string }
+  >();
+
+  ($('a') as any).each((_: number, a: any) => {
+    const href = $(a).attr('href');
+    if (!href || !/\/wa\/clubInfoDisplay\?/i.test(href)) return;
+    const absolute = absolutize(href, url);
+    if (!absolute) return;
+    const clubNumber = getNuligaClubNumber(absolute);
+    if (!clubNumber || results.has(clubNumber)) return;
+
+    const $row = $(a).closest('tr');
+    if ($row.length === 0) return; // Tab-Navigation, keine Ergebniszeile
+    const cells = $row.find('td');
+    const name = $(cells[0]).text().replace(/\s+/g, ' ').trim();
+    if (!name) return;
+    const city = cells.length > 1 ? $(cells[1]).text().replace(/\s+/g, ' ').trim() || null : null;
+    results.set(clubNumber, { name, city, clubNumber, teamsUrl: teamsUrlFor(clubNumber) });
+  });
+
+  if (results.size > 0) return Array.from(results.values());
+
+  // Fall 2 — genau ein Treffer: nuLiga springt direkt auf die Vereinsseite.
+  // Dann gibt es keine Ergebnistabelle; der Vereinsname steht in der
+  // Überschrift („TC Bad Homburg\n Vereinsinfo"), die Nummer im Tab-Link.
+  const directLink = ($('a') as any)
+    .toArray()
+    .map((a: any) => $(a).attr('href'))
+    .find((href: string | undefined) => href && /\/wa\/club(Teams|InfoDisplay)\?/i.test(href));
+  const directNumber = directLink ? getNuligaClubNumber(absolutize(directLink, url) ?? '') : null;
+  if (!directNumber) return [];
+
+  const heading = $('h1').first().text().replace(/\s+/g, ' ').trim();
+  const name = heading.replace(/\s*Vereinsinfo\s*$/i, '').trim() || searchTerm;
+  return [{ name, city: null, clubNumber: directNumber, teamsUrl: teamsUrlFor(directNumber) }];
+}
+
 /**
  * Validate that a URL looks like a valid nuLiga group page URL.
  */
@@ -479,6 +933,22 @@ export function parseNuligaDate(dateStr: string): string | null {
   if (!match) return null;
   const [, day, month, year] = match;
   return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+}
+
+/**
+ * Wie `parseNuligaDate`, behält aber die Uhrzeit.
+ * Input: "Sa. 27.06.2026 10:00" → "2026-06-27T10:00" (lokale Wandzeit, ohne Zone)
+ * Ohne Uhrzeit → "2026-06-27". Ohne Datum → null.
+ *
+ * Getrennt von `parseNuligaDate`, weil dessen date-only-Rückgabe an anderen
+ * Stellen erwartet wird. Die Uhrzeit brauchen wir für die Platzsperre.
+ */
+export function parseNuligaDateTime(dateStr: string): string | null {
+  const date = parseNuligaDate(dateStr);
+  if (!date) return null;
+  const time = dateStr.match(/(\d{1,2}):(\d{2})/);
+  if (!time) return date;
+  return `${date}T${time[1].padStart(2, '0')}:${time[2]}`;
 }
 
 /**

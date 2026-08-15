@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth } from '@/lib/api-auth';
+import { withApiAuth, verifyRole } from '@/lib/api-auth';
 
 // GET /api/news — returns news for the current user's club
 export async function GET(req: NextRequest) {
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 // POST /api/news — create a news item (admin only)
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
-    if (auth.role !== 'admin' && auth.role !== 'superadmin') {
+    if (!(await verifyRole(auth, 'admin'))) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

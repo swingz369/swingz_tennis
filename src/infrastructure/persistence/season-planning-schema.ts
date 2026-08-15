@@ -371,3 +371,39 @@ export const seasonPlanningConfigsRelations = relations(seasonPlanningConfigs, (
     references: [seasons.id],
   }),
 }));
+
+// ============================================
+// SEASON PLAN VERSIONS (gespeicherte Planstände)
+// ============================================
+
+/**
+ * Snapshot des Wochenstundenplans. `season_plan_entries` wird bei jedem
+ * Clustering-Lauf gelöscht und neu geschrieben — hierüber kommt ein Admin an eine
+ * frühere, von Hand nachgezogene Fassung zurück.
+ * Siehe supabase/migrations/20260814100000_season_plan_versions.sql
+ */
+export const seasonPlanVersions = pgTable(
+  'season_plan_versions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    season_id: uuid('season_id')
+      .notNull()
+      .references(() => seasons.id, { onDelete: 'cascade' }),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    created_by: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+
+    label: varchar('label', { length: 100 }).notNull(),
+    // ScheduleSlot[] wie im Wizard-Grid — als Ganzes geschrieben und gelesen.
+    slots: jsonb('slots').notNull().default([]),
+
+    created_at: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    season_created_idx: index('season_plan_versions_season_idx').on(
+      table.season_id,
+      table.created_at
+    ),
+  })
+);

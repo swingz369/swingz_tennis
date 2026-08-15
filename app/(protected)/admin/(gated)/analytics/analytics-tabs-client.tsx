@@ -11,14 +11,14 @@ export function AnalyticsTabsClient({ children }: { children: React.ReactNode })
         <TabsList className="w-fit grid grid-cols-2 bg-muted dark:bg-card/5 p-1 rounded-xl">
           <TabsTrigger
             value="analytics"
-            className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+            className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-primary data-[state=active]:shadow-sm"
           >
             <BarChart3 className="h-4 w-4 mr-2" />
             Analytics
           </TabsTrigger>
           <TabsTrigger
             value="reports"
-            className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+            className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-primary data-[state=active]:shadow-sm"
           >
             <FileText className="h-4 w-4 mr-2" />
             Berichte & Exporte

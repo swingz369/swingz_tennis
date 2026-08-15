@@ -19,7 +19,7 @@ export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) {
-      return forbiddenResponse('Authentication required');
+      return forbiddenResponse('Anmeldung erforderlich');
     }
 
     // Feature-Guard: Shop-Modul muss für den Verein aktiviert sein.

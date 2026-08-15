@@ -1,6 +1,6 @@
 # Theming & Design-Tokens
 
-> Zuletzt verifiziert: 13.08.2026
+> Zuletzt verifiziert: 14.08.2026
 
 > Wie das Branding pro Club funktioniert und wo die Farben herkommen.
 
@@ -26,32 +26,53 @@ Es gibt **eine** Laufzeit-Quelle und **eine** statische Zuliefer-Quelle:
 `design-tokens.json` im Repo-Root ist eine **Referenz/Inventur-Datei**, keine
 Laufzeit-Quelle — sie kann veralten; maßgeblich sind `globals.css` + `theme.ts`.
 
-## 🎨 Brand-Tokens (Blau/Grün)
+## 🎨 Brand-Tokens (Clay / Nocturne)
 
-Light-Modus (`:root` in `app/globals.css`):
+Light-Modus (`:root` in `app/globals.css`) — Palette **„Clay"**: warmes Neutral
+als Grund, tiefes Tennisgrün als einzige Aktionsfarbe.
 
-| Token                      | HSL (Light)    | Hex       | Verwendung                            |
-| -------------------------- | -------------- | --------- | ------------------------------------- |
-| `--brand-primary`          | `206 100% 31%` | `#00599F` | Primär (Blau) — Buttons, Links, Aktiv |
-| `--brand-primary-light`    | `201 68% 59%`  | —         | Helles Blau — Gradient-Endpunkt, Glow |
-| `--brand-dark`             | —              | —         | Dunkles Blau — Hero-Hintergründe      |
-| `--brand-secondary`        | `217 40% 22%`  | `#22334F` | Navy — Tiefe, Flächen                 |
-| `--brand-accent`           | `77 71% 44%`   | `#94C121` | Court Green — CTAs, Akzente           |
-| `--brand-accent-dashboard` | `77 71% 44%`   | `#94C121` | Dashboard-Akzent                      |
+| Token                   | HSL (Light)   | Hex       | Verwendung                             |
+| ----------------------- | ------------- | --------- | -------------------------------------- |
+| `--brand-primary`       | `152 56% 28%` | `#1F784A` | Forest — Buttons, Links, Aktiv         |
+| `--brand-primary-light` | `152 40% 42%` | —         | Helles Grün — Gradient-Endpunkt, Glow  |
+| `--brand-dark`          | `162 33% 20%` | —         | Tannen — Sidebar, dunkle Karten        |
+| `--brand-secondary`     | `162 33% 20%` | —         | Tannen — Tiefe, Flächen                |
+| `--brand-accent`        | `44 70% 36%`  | —         | Ocker — Signal (Fortschritt, Eyebrow)  |
+| `--brand-accent-2`      | `17 51% 44%`  | —         | Terrakotta — Warteliste, wartet-auf-OK |
 
-Dark-Modus (`.dark`):
+Dark-Modus (`.dark`) — Palette **„Nocturne"**: kühle blaugraue Neutrale,
+Aktionsfarbe aber dasselbe Grün wie im Light, nur aufgehellt.
 
-| Token                      | HSL (Dark)    |
-| -------------------------- | ------------- |
-| `--brand-primary`          | `201 68% 59%` |
-| `--brand-primary-light`    | `201 68% 70%` |
-| `--brand-secondary`        | `217 40% 35%` |
-| `--brand-accent`           | `77 71% 50%`  |
-| `--brand-accent-dashboard` | `77 71% 50%`  |
+| Token                   | HSL (Dark)    |
+| ----------------------- | ------------- |
+| `--brand-primary`       | `152 50% 48%` |
+| `--brand-primary-light` | `152 45% 62%` |
+| `--brand-secondary`     | `209 35% 16%` |
+| `--brand-accent`        | `77 71% 50%`  |
+| `--brand-accent-2`      | `22 62% 62%`  |
 
-> **Default-Palette ist Blau/Grün.** Es gibt kein Grün/Orange- oder
-> Blau/Grün-„#3B82F6/#10B981"-Paralleluniversum mehr. Die frühere
-> Forest-Green/Orange-Palette (`#1B4332`/`#FF6B35`) ist abgelöst.
+> **Die Aktionsfarbe ist in beiden Themes Grün.** Ein Haupt-Knopf, der beim
+> Theme-Wechsel die Farbfamilie tauscht, ist kein wiedererkennbares
+> Bedienelement. Das Brand-Blau (`#00599F`/`#50ACDE`) ist seit der
+> Clay/Nocturne-Umstellung nur noch Logo- und Marketing-Farbe, nicht mehr
+> App-Chrome. Die früheren Paletten (Blau/Lime, davor Forest/Orange) sind
+> abgelöst.
+
+> `--brand-accent-dashboard` existiert nicht mehr: es war in beiden Themes
+> wertgleich mit `--brand-accent` und damit reine Dopplung. Wer es in altem
+> Code findet, ersetzt es durch `--brand-accent` — oder, wenn es ein
+> Bedienelement einfärbt, durch `--primary`.
+
+### Dunkle Inseln im hellen Theme
+
+Zwei Flächen bleiben in beiden Themes dunkel und definieren ihre Tokens lokal
+um, statt an jeder Utility-Klasse eine Sondervariante zu führen:
+
+- `.sidebar-surface` — die komplette Sidebar-Farbwelt (`components/layout/sidebar.tsx`)
+- `.brand-dark-surface` — hebt `--brand-accent` auf den helleren Entwurfs-Ocker
+  (`44 64% 57%`). Grund: der abgedunkelte Ocker kommt auf `--brand-dark` nur
+  auf 2,7:1 und reißt damit WCAG 1.4.11 (3:1 für Grafik). Genutzt von
+  `components/admin/season-progress-card.tsx`.
 
 ### Semantische Tokens
 

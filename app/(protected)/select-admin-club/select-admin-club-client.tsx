@@ -121,7 +121,7 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
                   selecting !== null && selecting !== club.id && 'opacity-40'
                 )}
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-primary/60 to-brand-light/40 shrink-0">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/60 to-brand-light/40 shrink-0">
                   <Building2 className="h-6 w-6 text-brand-light dark:text-brand-light" />
                 </div>
                 <div className="flex-1 min-w-0">

@@ -187,7 +187,7 @@ export default function HoursLogsClient() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
@@ -240,7 +240,7 @@ export default function HoursLogsClient() {
                 <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                   Stunden gesamt
                 </p>
-                <p className="text-xl font-bold mt-0.5 text-brand-primary dark:text-brand-light">
+                <p className="text-xl font-bold mt-0.5 text-primary dark:text-brand-light">
                   {stats.totalHours.toFixed(1)}h
                 </p>
               </div>
@@ -392,7 +392,7 @@ export default function HoursLogsClient() {
                       >
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-brand-primary/10 text-brand-primary text-xs font-semibold shrink-0">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary text-xs font-semibold shrink-0">
                               {log.trainer_name.charAt(0).toUpperCase()}
                             </div>
                             <span className="font-medium text-sm text-foreground dark:text-white truncate max-w-[150px]">

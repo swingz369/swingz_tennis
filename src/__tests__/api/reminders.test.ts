@@ -170,7 +170,7 @@ describe('POST /api/reminders/booking-tomorrow', () => {
 
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toContain('Admin access required');
+    expect(body.error).toContain('Zugriff nur für Admins');
     // verifyRole muss wirklich mit der Rolle 'admin' befragt werden
     expect(mockVerifyRole).toHaveBeenCalledWith(mockAuthCtx, 'admin');
   });

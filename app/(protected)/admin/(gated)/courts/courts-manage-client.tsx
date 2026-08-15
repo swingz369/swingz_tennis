@@ -579,7 +579,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
             className="h-4 w-4 rounded border-border"
           />
           <span className="flex items-center gap-2 text-sm font-medium">
-            <GraduationCap className="h-4 w-4 text-brand-primary" />
+            <GraduationCap className="h-4 w-4 text-primary" />
             Für Trainingsplanung nutzen
           </span>
         </label>
@@ -871,7 +871,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                     <CardHeader className="pb-2 pt-4 px-4">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold text-sm">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
                             {court.number}
                           </div>
                           <CardTitle className="text-base font-semibold truncate">
@@ -1103,8 +1103,8 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
             className="w-full flex items-center justify-between px-4 md:px-6 py-4 text-left hover:bg-muted/50 transition-colors rounded-t-xl"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/10">
-                <MapPin className="h-5 w-5 text-brand-primary" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+                <MapPin className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <h2 className="text-base font-semibold text-foreground">Platztypen verwalten</h2>

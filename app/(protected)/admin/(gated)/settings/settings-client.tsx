@@ -13,8 +13,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Download, Loader2 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
+import { exportMembersCSV, exportTrainersCSV } from '@/lib/csv-export';
+import { ALL_LIMIT } from '@/lib/pagination';
 import { ModuleSelectionStep } from '@/components/onboarding/module-selection-step';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import MemberImportDialog from '@/components/admin/member-import-dialog';
@@ -23,6 +25,57 @@ import { SOLO_THRESHOLD } from '@/lib/plans';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('settings-client');
+
+/**
+ * Lädt den vollständigen Bestand und schreibt ihn als CSV.
+ *
+ * Der Export saß vorher in der Mitgliederliste und exportierte nur die gerade
+ * angezeigte, server-seitig paginierte Seite — wer 300 Mitglieder hatte, bekam die
+ * ersten 50. Hier wird bewusst ohne Seitengrenze geladen.
+ */
+function CsvExportButton({ kind }: { kind: 'members' | 'trainers' }) {
+  const [busy, setBusy] = useState(false);
+
+  const handleExport = async () => {
+    setBusy(true);
+    try {
+      if (kind === 'members') {
+        const res = await apiFetch(`/api/members?limit=${ALL_LIMIT}`);
+        if (!res.ok) throw new Error('load failed');
+        const data = await res.json();
+        const members = data.members ?? [];
+        if (members.length === 0) {
+          toast.info('Keine Mitglieder zum Exportieren');
+          return;
+        }
+        exportMembersCSV(members);
+      } else {
+        const res = await apiFetch('/api/trainer-profiles');
+        if (!res.ok) throw new Error('load failed');
+        const data = await res.json();
+        const trainers = data.profiles ?? [];
+        if (!Array.isArray(trainers) || trainers.length === 0) {
+          toast.info('Keine Trainer zum Exportieren');
+          return;
+        }
+        exportTrainersCSV(trainers);
+      }
+      toast.success('Export gestartet');
+    } catch (error) {
+      log.error('CSV-Export fehlgeschlagen', error instanceof Error ? error : undefined);
+      toast.error('Export fehlgeschlagen');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Button variant="outline" size="sm" onClick={handleExport} disabled={busy} className="gap-2">
+      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+      Export
+    </Button>
+  );
+}
 
 type OpeningHours = {
   monday: { open: string; close: string };
@@ -204,7 +257,7 @@ export function ClubSettingsContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -435,23 +488,30 @@ export function ClubSettingsContent() {
         </CardContent>
       </Card>
 
-      {/* CSV-Import (einmaliger Bulk-Import, gehört nicht in die tägliche Mitglieder-/Trainerverwaltung) */}
+      {/* CSV-Import und -Export (Massenvorgänge, gehören nicht in die tägliche
+          Mitglieder-/Trainerverwaltung — dort standen sie vorher verstreut). */}
       <Card>
         <CardHeader>
-          <CardTitle>CSV-Import</CardTitle>
+          <CardTitle>CSV-Import &amp; -Export</CardTitle>
           <CardDescription>
-            Mehrere Mitglieder oder Trainer auf einmal aus einer CSV-Datei importieren —
-            typischerweise nur einmalig beim Einrichten des Vereins nötig
+            Mehrere Mitglieder oder Trainer auf einmal aus einer CSV-Datei importieren oder den
+            aktuellen Bestand als CSV herunterladen
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
             <span className="text-sm font-medium">Mitglieder</span>
-            <MemberImportDialog />
+            <div className="flex items-center gap-2">
+              <MemberImportDialog />
+              <CsvExportButton kind="members" />
+            </div>
           </div>
           <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
             <span className="text-sm font-medium">Trainer</span>
-            <TrainerImportDialog />
+            <div className="flex items-center gap-2">
+              <TrainerImportDialog />
+              <CsvExportButton kind="trainers" />
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { isExactActive } from '@/lib/navigation-utils';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useClubFeatures } from '@/hooks/use-club-features';
+import { useOwnerClubContext } from '@/hooks/use-owner-club-context';
 
 import { AdminSection } from './admin-section';
 import { FamilySwitcher } from './family-switcher';
@@ -85,6 +86,15 @@ export function Sidebar({
   const [clubSwitcherOpen, setClubSwitcherOpen] = useState(false);
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
   const [approvalCount, setApprovalCount] = useState(0);
+  // Kennzahlen der Navigation (Mitglieder, offene Rechnungen, Präferenz-Stand).
+  // `null` heisst „nicht ermittelbar" und wird ausgeblendet — nicht als 0
+  // dargestellt, sonst behauptet die Navigation bei einem Abfragefehler, der
+  // Verein habe keine Mitglieder.
+  const [navCounts, setNavCounts] = useState<{
+    members: number | null;
+    openInvoices: number | null;
+    preferencesPct: number | null;
+  }>({ members: null, openInvoices: null, preferencesPct: null });
 
   // Detect mobile to apply aria-hidden correctly on desktop vs mobile
   useEffect(() => {
@@ -135,6 +145,35 @@ export function Sidebar({
   const { currentRole, isOwner, isSuperAdmin, isAdmin, isTrainer } = useUserRole(roles);
   const colors = roleColors[currentRole];
 
+  // Rollen-Unterzeile — stand früher im Header unter dem Vereinsnamen und ist
+  // mit dem Marken-Cluster dorthin gewandert, wo der Vereinsname jetzt steht.
+  // Für Owner und Superadmin ist sie die eigentliche Ortsangabe: beide sehen
+  // fremde Vereine, und ohne die Zeile ist nicht ersichtlich, in welcher
+  // Verwaltungsebene man gerade arbeitet.
+  /**
+   * Kennzahl für eine Navigationsgruppe. Nur dort, wo die Zahl eine Frage
+   * beantwortet, die man beim Blick auf die Navigation stellt: wie viele
+   * Mitglieder, wie viel liegt offen, wie weit ist die Saison. Gruppen ohne
+   * solche Frage (Trainer, Verein) bekommen bewusst keine — eine Zahl an jedem
+   * Eintrag wäre Dekoration und würde die drei echten entwerten.
+   *
+   * Offene Rechnungen zeigen nur, wenn es welche gibt: eine „0" ist keine
+   * Kennzahl, sondern eine Entwarnung, die niemand sucht.
+   */
+  const sectionBadge = (sectionLabel: string): string | null => {
+    if (!isAdmin && !isSuperAdmin) return null;
+    switch (sectionLabel) {
+      case 'Mitglieder':
+        return navCounts.members !== null ? String(navCounts.members) : null;
+      case 'Finanzen':
+        return navCounts.openInvoices ? String(navCounts.openInvoices) : null;
+      case 'Saison & Plätze':
+        return navCounts.preferencesPct !== null ? `${navCounts.preferencesPct} %` : null;
+      default:
+        return null;
+    }
+  };
+
   // Pending member registrations — surfaced as a nav badge instead of only inside the Mitglieder tab.
   //
   // Refresh strategy: mount-fetch + 45 s polling + refetch on tab-focus
@@ -183,14 +222,37 @@ export function Sidebar({
       );
     };
 
+    // Kennzahlen laufen im selben Takt wie der Genehmigungs-Zähler mit —
+    // eigener Poll-Timer wäre ein zweiter Wecker für dieselbe Anzeige.
+    const fetchNavCounts = () =>
+      apiFetch('/api/admin/nav-counts', { signal: controller.signal })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && typeof data === 'object' && !('error' in data)) {
+            setNavCounts({
+              members: typeof data.members === 'number' ? data.members : null,
+              openInvoices: typeof data.openInvoices === 'number' ? data.openInvoices : null,
+              preferencesPct: typeof data.preferencesPct === 'number' ? data.preferencesPct : null,
+            });
+          }
+        })
+        .catch(() => {});
+
     // 1) Initial fetch on mount.
     fetchCount();
+    fetchNavCounts();
     // 2) Poll every 45 s while the sidebar stays mounted.
-    const interval = window.setInterval(fetchCount, 45_000);
+    const interval = window.setInterval(() => {
+      fetchCount();
+      fetchNavCounts();
+    }, 45_000);
     // 3) Refetch when the tab regains visibility (e.g. user switched
     //    back from another app or another tab).
     const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') fetchCount();
+      if (document.visibilityState === 'visible') {
+        fetchCount();
+        fetchNavCounts();
+      }
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
 
@@ -209,6 +271,28 @@ export function Sidebar({
   // for that we piggy-back on the same useEffect with `pathname` in
   // the dependency array above. Splitting into two effects would
   // double-fetch on mount; the merged dependency is intentional.
+
+  /**
+   * Owner, der über „Als Admin" in einen Verein gewechselt ist — er bekommt die
+   * Admin-Navigation, sonst stünde er im Verein ohne Navigation da. Den Hinweis
+   * darauf und den Rückweg liefert die Leiste über dem Inhalt
+   * (components/layout/owner-club-banner), die denselben Hook nutzt.
+   */
+  const actsAsClubAdmin = useOwnerClubContext(isOwner);
+
+  // Steht unter dem Logo. Für den Owner im Vereinskontext wäre
+  // "Plattform-Konsole" irreführend — er sieht dann die Vereinsverwaltung.
+  const roleLabel = actsAsClubAdmin
+    ? 'Vereinsverwaltung (als Owner)'
+    : isOwner
+      ? 'Plattform-Konsole'
+      : isSuperAdmin
+        ? 'Tennisschule-Verwaltung'
+        : isAdmin
+          ? 'Vereinsverwaltung'
+          : isTrainer
+            ? 'Mein Training'
+            : 'Mein Verein';
 
   // Feature flags — hide sidebar sections for disabled modules
   const activeClubId = selectedClubId ?? clubs?.[0]?.id;
@@ -271,8 +355,8 @@ export function Sidebar({
   const includeMemberOnly = !isTrainer || (roles?.includes('member') ?? false);
 
   const roleSections: SectionDef[] = (() => {
-    if (isAdmin) {
-      return adminSidebarSections(hiddenSections, isSuperAdmin).map((section) => ({
+    if (isAdmin || actsAsClubAdmin) {
+      const sections = adminSidebarSections(hiddenSections, isSuperAdmin).map((section) => ({
         label: section.label,
         icon: section.icon,
         subItems: section.items.map((item) =>
@@ -293,6 +377,12 @@ export function Sidebar({
             }
           : {}),
       }));
+
+      // Der Weg zurück zur Owner-Konsole steht bewusst NICHT hier, sondern in
+      // der Hinweisleiste über dem Inhalt (components/layout/owner-club-banner):
+      // Wer im falschen Verein arbeitet, soll das permanent sehen und nicht
+      // erst beim Aufklappen einer Navigationsgruppe bemerken.
+      return sections;
     }
 
     if (isOwner) {
@@ -345,15 +435,17 @@ export function Sidebar({
     return memberSections.map((s) => ({ label: s.label, icon: s.icon, subItems: s.items }));
   })();
 
-  const dashboardHref = isOwner
-    ? '/owner'
-    : isSuperAdmin
-      ? '/superadmin'
-      : isAdmin
-        ? '/admin'
-        : isTrainer
-          ? '/trainer'
-          : '/member';
+  const dashboardHref = actsAsClubAdmin
+    ? '/admin' // Owner im Vereinskontext: „Dashboard" meint das des Vereins
+    : isOwner
+      ? '/owner'
+      : isSuperAdmin
+        ? '/superadmin'
+        : isAdmin
+          ? '/admin'
+          : isTrainer
+            ? '/trainer'
+            : '/member';
 
   // ────────────────────────────────────────────────────────────────────
   // Render
@@ -363,13 +455,15 @@ export function Sidebar({
     <aside
       ref={sidebarRef}
       className={cn(
-        // border-r entfernt — weiches bg-tone-shift zur Trennung statt harter Linie.
-        // Mobile-overlay behält die volle shadow-2xl als modalen Lift.
-        'h-[calc(100vh-4rem)] w-64 overflow-y-auto bg-muted/40 dark:bg-white/[0.035] transition-transform duration-300 ease-out will-change-transform',
+        // `sidebar-surface` (app/globals.css) setzt den eigenen dunklen
+        // Farbraum + die Court-Linien-Textur. Volle Höhe statt
+        // `100vh-4rem`/`top-16`, weil der Header seit dem Layout-Umbau
+        // nicht mehr über der Sidebar sitzt, sondern neben ihr beginnt.
+        'sidebar-surface w-64 shrink-0 overflow-y-auto transition-transform duration-300 ease-out will-change-transform',
         'md:translate-x-0',
         open
-          ? 'fixed inset-y-0 left-0 z-50 translate-x-0 shadow-2xl shadow-black/10'
-          : 'fixed inset-y-0 left-0 z-50 -translate-x-full md:sticky md:top-16 md:translate-x-0 md:shadow-none'
+          ? 'fixed inset-y-0 left-0 z-50 h-screen translate-x-0 shadow-2xl shadow-black/10'
+          : 'fixed inset-y-0 left-0 z-50 h-screen -translate-x-full md:sticky md:top-0 md:translate-x-0 md:shadow-none'
       )}
       role="navigation"
       aria-label="Seitennavigation"
@@ -387,7 +481,24 @@ export function Sidebar({
         </button>
       )}
 
-      <div className="pb-6 pt-4">
+      {/* Markenblock — exakt `h-16` wie die Header-Leiste daneben, damit die
+          Oberkante der Navigation mit der Oberkante des Inhalts fluchtet.
+          Ohne ihn begann die Navigation ganz oben und die aktive Pille las
+          sich wie eine zweite Kopfzeile. */}
+      <div className="flex h-16 items-center gap-2.5 border-b border-border px-5">
+        <span
+          aria-hidden="true"
+          className="relative block h-6 w-6 shrink-0 rounded-full bg-brand-accent"
+        >
+          <span className="absolute inset-[3px] rounded-full border border-y-transparent border-background" />
+        </span>
+        <span className="text-[17px] font-bold tracking-[-0.025em] text-foreground">SwingZ</span>
+      </div>
+
+      {/* Kompaktere Navigation: 12 px oben statt 16, Gruppen dichter. Die
+          Sidebar hatte bei acht Gruppen mehr Weissraum als Inhalt und der
+          untere Teil blieb trotzdem leer. */}
+      <div className="pb-6 pt-3">
         {/* Family Account Switcher — for parents with minor children */}
         {family.isParent && !hiddenSections.has('family_accounts') && (
           <FamilySwitcher
@@ -401,23 +512,45 @@ export function Sidebar({
           />
         )}
 
+        {/* Vereinsblock — steht jetzt für JEDE Rolle hier, nicht nur für
+            Superadmins mit mehreren Vereinen. Grund: der Vereinsname ist aus
+            dem Header in die Sidebar gezogen, und ein Admin muss weiterhin
+            sehen, in wessen Verein er gerade arbeitet. Aufklappbar bleibt er
+            nur, wenn es überhaupt etwas zu wechseln gibt — sonst ist es eine
+            reine Beschriftung ohne Klickversprechen. */}
+        {activeClub && !(isSuperAdmin && hasMultipleClubs) && (
+          <div className="mx-3 mb-3 rounded-xl border border-border bg-muted/40 px-3 py-2">
+            <p className="truncate text-[13.5px] font-semibold leading-tight">{activeClub.name}</p>
+            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.13em] text-muted-foreground">
+              {roleLabel}
+            </p>
+          </div>
+        )}
+
         {/* Superadmin Club Switcher — owner picks clubs via /owner/clubs instead */}
         {isSuperAdmin && hasMultipleClubs && (
-          <div className="mx-3 mb-4 border border-border rounded-xl overflow-hidden bg-muted/50">
+          <div className="mx-3 mb-4 border border-border rounded-xl overflow-hidden bg-muted/40">
             <button
               onClick={() => setClubSwitcherOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+              className="w-full flex flex-col items-stretch px-3 py-2 text-left hover:bg-muted transition-colors"
             >
-              <div className="flex items-center gap-2 min-w-0">
-                <Building2 className="h-4 w-4 shrink-0 text-info-500" />
-                <span className="truncate">{activeClub?.name ?? 'Club auswählen'}</span>
-              </div>
-              <ChevronDown
-                className={cn(
-                  'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
-                  clubSwitcherOpen && 'rotate-180'
-                )}
-              />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                Verein
+              </span>
+              <span className="mt-0.5 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate text-[13.5px] font-semibold">
+                    {activeClub?.name ?? 'Club auswählen'}
+                  </span>
+                </div>
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                    clubSwitcherOpen && 'rotate-180'
+                  )}
+                />
+              </span>
             </button>
             {clubSwitcherOpen && (
               <div className="border-t border-border overflow-hidden animate-slide-down">
@@ -449,33 +582,33 @@ export function Sidebar({
         )}
 
         {/* ── Unified Navigation ── */}
-        <nav className="flex flex-col gap-1 px-3" role="navigation" aria-label="Hauptnavigation">
+        <nav
+          className="flex flex-col gap-0.5 px-2.5"
+          role="navigation"
+          aria-label="Hauptnavigation"
+        >
           {/* Dashboard — prominent first link, consistent for both roles */}
           <Link
             href={dashboardHref}
             onClick={() => onClose?.()}
             className={cn(
-              'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200',
+              'flex items-center gap-3 rounded-xl px-3 py-2 text-[13.5px] font-medium transition-all duration-200',
               isExactActive(pathname, dashboardHref)
                 ? `${colors.bg} ${colors.text}`
                 : 'text-muted-foreground hover:bg-muted/70 dark:hover:bg-white/[0.06] hover:text-foreground'
             )}
             aria-current={isExactActive(pathname, dashboardHref) ? 'page' : undefined}
           >
-            <Home
-              className={cn(
-                'h-5 w-5 shrink-0 transition-transform duration-200',
-                isExactActive(pathname, dashboardHref) && 'scale-110'
-              )}
-              aria-hidden="true"
-            />
+            {/* 16 px statt 20 px: neben 13,5-px-Text war das Icon vorher
+                grösser als die Versalhöhe und zog den Blick auf sich. */}
+            <Home className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>Dashboard</span>
           </Link>
 
           {/* Role-specific sections — einheitlich collapsible für alle Rollen
               inkl. Owner (war vorher flatMap, jetzt konsistent mit Admin/Superadmin). */}
           {roleSections.length > 0 && (
-            <div className="mt-2 space-y-0.5">
+            <div className="mt-1.5 space-y-px">
               {roleSections.map((section) => (
                 <AdminSection
                   key={section.label}
@@ -486,6 +619,7 @@ export function Sidebar({
                   onClose={onClose}
                   colors={colors}
                   extraAction={section.extraAction}
+                  badge={sectionBadge(section.label)}
                   defaultOpen={
                     section.label === 'Mitglieder' ||
                     section.label === 'Spielbetrieb' ||

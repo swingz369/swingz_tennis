@@ -51,7 +51,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Admin access required');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
 
     const { supabase } = auth;
     const { id } = await params;
@@ -108,7 +108,7 @@ export async function DELETE(
 ) {
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Admin access required');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
 
     const { supabase } = auth;
     const { id } = await params;

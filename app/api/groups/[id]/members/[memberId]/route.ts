@@ -18,7 +18,7 @@ export async function DELETE(
   return withApiAuth(req, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
     if (!hasRole) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);

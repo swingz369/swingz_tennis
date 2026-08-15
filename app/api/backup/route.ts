@@ -21,7 +21,7 @@ const BACKUP_PREFIX = 'backups';
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Admin access required');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
 
     try {
       const serviceClient = createServiceClient();
@@ -74,7 +74,7 @@ export async function GET(_request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Admin access required');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
 
     const response = await withCSRFProtection(request, async () => {
       const startedAt = Date.now();
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Admin access required');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
 
     const response = await withCSRFProtection(request, async () => {
       const { searchParams } = new URL(request.url);

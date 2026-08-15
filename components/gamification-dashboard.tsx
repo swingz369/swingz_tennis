@@ -60,7 +60,7 @@ export default function GamificationDashboard() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-brand-primary">Dein Fortschritt</h1>
+        <h1 className="text-2xl font-bold text-primary">Dein Fortschritt</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Punkte, Badges & Rangliste</p>
       </div>
 

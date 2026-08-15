@@ -6,7 +6,7 @@
 
 ### Audit-Log
 
-Tabelle `audit_logs`. Jede kritische Schreib-Aktion (Buchung, Storno, Rollenwechsel, Rechnung) wird mit `actor_id`, `resource_type`, `action`, `details` (JSONB) und `metadata` (JSONB) geloggt. Pflichtfelder für DSGVO-Compliance (siehe P0-Finding "DSGVO-Wipe unvollständig" in `docs/PROJEKTANALYSE-KONSOLIDIERT-2026-07-01.md`).
+Tabelle `audit_logs`. Jede kritische Schreib-Aktion (Buchung, Storno, Rollenwechsel, Rechnung) wird mit `actor_id`, `resource_type`, `resource_id`, `action`, `club_id` und `details` (JSONB) geloggt — geschrieben ausschließlich über `logAudit()` aus `lib/audit.ts` (siehe [`dev/api-conventions.md`](./dev/api-conventions.md#audit-logging)). Pflichtfelder für DSGVO-Compliance (siehe P0-Finding "DSGVO-Wipe unvollständig" in `docs/PROJEKTANALYSE-KONSOLIDIERT-2026-07-01.md`). Die Spalte `metadata` existiert noch, wird aber nicht mehr beschrieben — alles landet in `details`.
 
 ### Auto-Gen (Handbuch)
 

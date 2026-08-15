@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { QUERY_KEYS, STALE_TIMES } from '@/lib/cache';
+import { apiFetch } from '@/lib/api-fetch';
 
 export interface Session {
   id: string;
@@ -43,13 +44,13 @@ export function useSessions(
       if (dateRange?.dateFrom) params.set('dateFrom', dateRange.dateFrom);
       if (dateRange?.dateTo) params.set('dateTo', dateRange.dateTo);
 
-      const res = await fetch(`/api/sessions?${params}`, {
+      const res = await apiFetch(`/api/sessions?${params}`, {
         credentials: 'include',
         signal, // Support cancellation
       });
 
       if (!res.ok) {
-        throw new Error('Failed to fetch sessions');
+        throw new Error('Sessions konnten nicht geladen werden');
       }
 
       const data = await res.json();
@@ -87,15 +88,14 @@ export function useCreateBooking() {
       sessionId: string;
       clubId: string;
     }) => {
-      const res = await fetch('/api/bookings', {
+      const res = await apiFetch('/api/bookings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ memberId, sessionId, clubId }),
       });
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Booking failed');
+        throw new Error(err.error || 'Buchung fehlgeschlagen');
       }
 
       return res.json();
@@ -136,9 +136,8 @@ export function useCreateBooking() {
       // If the booking requires payment, initiate Stripe checkout
       if (data.bookingId && data.payment_status === 'pending' && data.requiresPayment) {
         toast.loading('Weiterleitung zur Zahlung…', { id: 'payment-redirect' });
-        fetch('/api/stripe/checkout', {
+        apiFetch('/api/stripe/checkout', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             type: 'booking',
             bookingId: data.bookingId,
@@ -192,15 +191,14 @@ export function useCancelBooking() {
       sessionId: string;
       clubId: string;
     }) => {
-      const res = await fetch(`/api/bookings/${bookingId}/cancel`, {
+      const res = await apiFetch(`/api/bookings/${bookingId}/cancel`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: 'member_request' }),
       });
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Cancellation failed');
+        throw new Error(err.error || 'Stornierung fehlgeschlagen');
       }
 
       return res.json();
@@ -249,7 +247,7 @@ export function useWaitlistPosition(sessionId: string | null) {
     queryKey: ['waitlist', sessionId],
     queryFn: async () => {
       if (!sessionId) return null;
-      const res = await fetch(`/api/sessions/${sessionId}/waitlist`, {
+      const res = await apiFetch(`/api/sessions/${sessionId}/waitlist`, {
         credentials: 'include',
       });
       if (!res.ok) return null;
@@ -265,9 +263,8 @@ export function useJoinWaitlist() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ sessionId, clubId }: { sessionId: string; clubId: string }) => {
-      const res = await fetch(`/api/sessions/${sessionId}/waitlist`, {
+      const res = await apiFetch(`/api/sessions/${sessionId}/waitlist`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clubId }),
         credentials: 'include',
       });
@@ -289,7 +286,7 @@ export function useLeaveWaitlist() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ sessionId }: { sessionId: string }) => {
-      const res = await fetch(`/api/sessions/${sessionId}/waitlist`, {
+      const res = await apiFetch(`/api/sessions/${sessionId}/waitlist`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -322,15 +319,14 @@ export function useUpdateBookingStatus() {
       status: 'pending' | 'confirmed' | 'cancelled' | 'no_show';
       clubId: string;
     }) => {
-      const res = await fetch(`/api/bookings/${bookingId}/status`, {
+      const res = await apiFetch(`/api/bookings/${bookingId}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Status update failed');
+        throw new Error(err.error || 'Statusaktualisierung fehlgeschlagen');
       }
 
       return res.json();

@@ -240,7 +240,7 @@ export function DecisionsClient({ initialDecisions, initialVotes, initialInvitat
       </Tabs>
 
       {showNew && (
-        <Card className="border-2 border-brand-primary/20">
+        <Card className="border-2 border-primary/20">
           <CardHeader>
             <CardTitle className="text-base">Neuer Beschluss</CardTitle>
           </CardHeader>
@@ -359,7 +359,7 @@ function DecisionRow({
   const tally = countByChoice(votes);
 
   return (
-    <Card className="hover:border-brand-primary/30 transition-colors">
+    <Card className="hover:border-primary/30 transition-colors">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">

@@ -36,6 +36,8 @@ import {
   XCircle,
   AlertTriangle,
   UtensilsCrossed,
+  Lock,
+  LockOpen,
 } from 'lucide-react';
 import { CateringTab } from '@/components/league/catering-tab';
 import { NuligaImport } from '@/components/admin/nuliga-import';
@@ -79,6 +81,18 @@ interface MatchDay {
   score_away: number | null;
   status: string;
   notes: string | null;
+  nuliga_report_url: string | null;
+  /** Anzahl der für diesen Spieltag gesperrten Plätze (0 = nicht gesperrt). */
+  blocked_courts: number;
+}
+
+interface LeaguePlayer {
+  id: string;
+  name: string;
+  lk: string | null;
+  position_number: number | null;
+  member_id: string | null;
+  synced_at: string;
 }
 
 interface League {
@@ -92,9 +106,12 @@ interface League {
   status: string;
   notes: string | null;
   nuliga_url: string | null;
+  own_team_name: string | null;
+  nuliga_roster_url: string | null;
   last_synced_at: string | null;
   teams: Team[];
   match_days: MatchDay[];
+  players: LeaguePlayer[];
 }
 
 const sportLabels: Record<string, string> = {
@@ -147,6 +164,11 @@ export default function LeagueDetailClient({
   const [importCsv, setImportCsv] = useState('');
   const [importing, setImporting] = useState(false);
 
+  // Kader (Meldeliste) + Platzsperre
+  const [rosterUrl, setRosterUrl] = useState('');
+  const [rosterSyncing, setRosterSyncing] = useState(false);
+  const [blockingMatchday, setBlockingMatchday] = useState<string | null>(null);
+
   // Result recording
   const [editingResultId, setEditingResultId] = useState<string | null>(null);
   const [resultForm, setResultForm] = useState({ result: 'win', score_home: 0, score_away: 0 });
@@ -160,6 +182,7 @@ export default function LeagueDetailClient({
     age_group: '',
     notes: '',
     nuliga_url: '',
+    own_team_name: '',
   });
 
   const fetchLeague = useCallback(async () => {
@@ -206,11 +229,12 @@ export default function LeagueDetailClient({
     if (!confirm('Team wirklich löschen? Alle Zuordnungen gehen verloren.')) return;
     try {
       const res = await apiFetch(`/api/leagues/${leagueId}/teams/${teamId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Löschen fehlgeschlagen');
       toast.success('Team gelöscht');
       fetchLeague();
-    } catch {
-      toast.error('Fehler beim Löschen');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Löschen');
     }
   };
 
@@ -307,11 +331,12 @@ export default function LeagueDetailClient({
       const res = await apiFetch(`/api/leagues/${leagueId}/matchdays/${matchdayId}`, {
         method: 'DELETE',
       });
-      if (!res.ok) throw new Error('Failed');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Löschen fehlgeschlagen');
       toast.success('Spieltag gelöscht');
       fetchLeague();
-    } catch {
-      toast.error('Fehler beim Löschen');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Löschen');
     }
   };
 
@@ -342,12 +367,84 @@ export default function LeagueDetailClient({
       if (data.teamsUpdated > 0) parts.push(`${data.teamsUpdated} Teams aktualisiert`);
       if (data.matchesCreated > 0) parts.push(`${data.matchesCreated} Spieltage erstellt`);
       if (data.matchesUpdated > 0) parts.push(`${data.matchesUpdated} Spieltage aktualisiert`);
+      if (data.playersImported > 0) {
+        parts.push(`${data.playersImported} Spieler im Kader (${data.playersLinked} verknüpft)`);
+      }
+      if (data.skippedForeign > 0) {
+        parts.push(`${data.skippedForeign} fremde Begegnungen übersprungen`);
+      }
       toast.success(`Sync erfolgreich: ${parts.join(', ') || 'Alles aktuell'}`);
+      if (data.warning) toast.warning(data.warning, { duration: 10000 });
       fetchLeague();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Fehler beim Sync');
     } finally {
       setSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (league?.nuliga_roster_url) setRosterUrl(league.nuliga_roster_url);
+  }, [league?.nuliga_roster_url]);
+
+  const handleRosterSync = async () => {
+    if (!rosterUrl.trim()) {
+      toast.error('Bitte URL der Mannschaftsmeldung eingeben');
+      return;
+    }
+    setRosterSyncing(true);
+    try {
+      const res = await apiFetch(`/api/leagues/${leagueId}/roster`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nuliga_roster_url: rosterUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Abruf fehlgeschlagen');
+      toast.success(
+        `${data.imported} Spieler übernommen, ${data.linked} davon einem Mitglied zugeordnet`
+      );
+      fetchLeague();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Abruf der Meldeliste');
+    } finally {
+      setRosterSyncing(false);
+    }
+  };
+
+  const handleAssignPlayer = async (playerId: string, memberId: string | null) => {
+    try {
+      const res = await apiFetch(`/api/leagues/${leagueId}/roster`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player_id: playerId, member_id: memberId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Zuordnung fehlgeschlagen');
+      toast.success(memberId ? 'Mitglied zugeordnet' : 'Zuordnung entfernt');
+      fetchLeague();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Zuordnung fehlgeschlagen');
+    }
+  };
+
+  const handleToggleCourtBlock = async (matchDay: MatchDay) => {
+    setBlockingMatchday(matchDay.id);
+    const blocked = matchDay.blocked_courts > 0;
+    try {
+      const res = await apiFetch(`/api/leagues/${leagueId}/matchdays/${matchDay.id}/courts`, {
+        method: blocked ? 'DELETE' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: blocked ? undefined : JSON.stringify({ notify_members: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Fehlgeschlagen');
+      toast.success(blocked ? 'Platzsperre aufgehoben' : `${data.created} Plätze gesperrt`);
+      fetchLeague();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler bei der Platzsperre');
+    } finally {
+      setBlockingMatchday(null);
     }
   };
 
@@ -442,6 +539,7 @@ export default function LeagueDetailClient({
           age_group: leagueForm.age_group || null,
           notes: leagueForm.notes || null,
           nuliga_url: leagueForm.nuliga_url || null,
+          own_team_name: leagueForm.own_team_name || null,
         }),
       });
       if (!res.ok) throw new Error('Failed');
@@ -482,7 +580,7 @@ export default function LeagueDetailClient({
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-brand-primary">{league.name}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-primary">{league.name}</h1>
             <div className="flex gap-2 mt-2 flex-wrap">
               {league.nuliga_url && (
                 <Badge
@@ -560,6 +658,7 @@ export default function LeagueDetailClient({
                 age_group: league.age_group ?? '',
                 notes: league.notes ?? '',
                 nuliga_url: league.nuliga_url ?? '',
+                own_team_name: league.own_team_name ?? '',
               });
               setEditingLeague(true);
             }}
@@ -580,7 +679,7 @@ export default function LeagueDetailClient({
 
       {/* Inline Liga Edit Form */}
       {editingLeague && (
-        <Card className="border-2 border-brand-primary/20">
+        <Card className="border-2 border-primary/20">
           <CardHeader>
             <CardTitle className="text-base">Liga bearbeiten</CardTitle>
           </CardHeader>
@@ -664,6 +763,23 @@ export default function LeagueDetailClient({
                 className="mt-1 font-mono text-xs"
               />
             </div>
+            <div>
+              <label htmlFor="ld-edit-own-team" className="text-xs font-medium">
+                Eigene Mannschaft
+              </label>
+              <Input
+                id="ld-edit-own-team"
+                value={leagueForm.own_team_name}
+                onChange={(e) => setLeagueForm({ ...leagueForm, own_team_name: e.target.value })}
+                placeholder="z.B. TC Rheinland II"
+                className="mt-1"
+              />
+              <p className="text-2xs text-muted-foreground mt-1">
+                Nur nötig, wenn oben eine <em>Gruppenseite</em> steht — dann exakt wie in der
+                nuLiga-Tabelle, sonst übernimmt der Sync nur die Tabelle und nicht den Spielplan.
+                Bei einer Mannschaftsseite bleibt das Feld leer.
+              </p>
+            </div>
             <div className="flex gap-2 justify-end">
               <Button variant="outline" size="sm" onClick={() => setEditingLeague(false)}>
                 Abbrechen
@@ -684,6 +800,9 @@ export default function LeagueDetailClient({
           </TabsTrigger>
           <TabsTrigger value="matchdays" className="gap-1.5">
             <Calendar className="h-3.5 w-3.5" /> Spieltage ({league.match_days.length})
+          </TabsTrigger>
+          <TabsTrigger value="roster" className="gap-1.5">
+            <Users className="h-3.5 w-3.5" /> Kader ({league.players?.length ?? 0})
           </TabsTrigger>
           <TabsTrigger value="standings" className="gap-1.5">
             <Trophy className="h-3.5 w-3.5" /> Tabelle
@@ -775,7 +894,7 @@ export default function LeagueDetailClient({
                                 href={`https://www.tennis.de/vereinsspielbetrieb/spieler/${m.dtb_id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-brand-primary hover:text-brand-primary/80 transition-colors"
+                                className="text-primary hover:text-primary/80 transition-colors"
                                 title={`DTB: ${m.dtb_id} auf tennis.de anzeigen`}
                               >
                                 <ExternalLink className="h-3 w-3" />
@@ -858,7 +977,7 @@ export default function LeagueDetailClient({
 
           {/* New Team Form */}
           {showNewTeam && (
-            <Card className="border-2 border-brand-primary/20">
+            <Card className="border-2 border-primary/20">
               <CardHeader>
                 <CardTitle className="text-base">Neues Team anlegen</CardTitle>
               </CardHeader>
@@ -929,9 +1048,7 @@ export default function LeagueDetailClient({
                           <div className="text-2xs text-muted-foreground uppercase tracking-wider">
                             Spieltag
                           </div>
-                          <div className="text-xl font-bold text-brand-primary">
-                            {md.matchday_number}
-                          </div>
+                          <div className="text-xl font-bold text-primary">{md.matchday_number}</div>
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
@@ -990,6 +1107,39 @@ export default function LeagueDetailClient({
                         </div>
                       </div>
                       <div className="flex gap-1">
+                        {md.nuliga_report_url && (
+                          <Button variant="outline" size="sm" asChild className="gap-1.5">
+                            <a
+                              href={md.nuliga_report_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              Spielbericht
+                            </a>
+                          </Button>
+                        )}
+                        {md.is_home && (
+                          <Button
+                            variant={md.blocked_courts > 0 ? 'secondary' : 'outline'}
+                            size="sm"
+                            disabled={blockingMatchday === md.id}
+                            onClick={() => handleToggleCourtBlock(md)}
+                            className="gap-1.5"
+                            title={
+                              md.blocked_courts > 0
+                                ? `${md.blocked_courts} Plätze gesperrt — klicken zum Aufheben`
+                                : 'Alle aktiven Plätze für dieses Heimspiel sperren'
+                            }
+                          >
+                            {md.blocked_courts > 0 ? (
+                              <Lock className="h-3.5 w-3.5" />
+                            ) : (
+                              <LockOpen className="h-3.5 w-3.5" />
+                            )}
+                            {md.blocked_courts > 0 ? `${md.blocked_courts} Plätze` : 'Plätze'}
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -1329,7 +1479,7 @@ export default function LeagueDetailClient({
 
           {/* New Match Day Form */}
           {showNewMatchDay && (
-            <Card className="border-2 border-brand-primary/20">
+            <Card className="border-2 border-primary/20">
               <CardHeader>
                 <CardTitle className="text-base">Neuen Spieltag anlegen</CardTitle>
               </CardHeader>
@@ -1420,6 +1570,99 @@ export default function LeagueDetailClient({
                 </div>
               </CardContent>
             </Card>
+          )}
+        </TabsContent>
+
+        {/* Kader Tab — Meldeliste aus nuLiga */}
+        <TabsContent value="roster" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold">Kader (Meldeliste)</h2>
+            {league.players?.[0]?.synced_at && (
+              <span className="text-xs text-muted-foreground">
+                Stand: {new Date(league.players[0].synced_at).toLocaleDateString('de-DE')}
+              </span>
+            )}
+          </div>
+
+          <Card>
+            <CardContent className="p-4 space-y-2">
+              <label htmlFor="ld-roster-url" className="text-xs font-medium">
+                URL der Mannschaftsseite
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  id="ld-roster-url"
+                  value={rosterUrl}
+                  onChange={(e) => setRosterUrl(e.target.value)}
+                  placeholder="https://htv.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/teamPortrait?teamtable=..."
+                  className="font-mono text-xs"
+                />
+                <Button size="sm" onClick={handleRosterSync} disabled={rosterSyncing}>
+                  {rosterSyncing ? 'Lade…' : 'Abrufen'}
+                </Button>
+              </div>
+              <p className="text-2xs text-muted-foreground">
+                Übernimmt Meldeposition, LK und Namen der eigenen Mannschaft und verknüpft sie über
+                die DTB-ID mit den Mitgliedern. Leer lassen nutzt die oben hinterlegte Liga-URL.
+                Spieler anderer Vereine werden nicht gespeichert — deren Aufstellungen stehen im
+                verlinkten Spielbericht.
+              </p>
+            </CardContent>
+          </Card>
+
+          {(league.players?.length ?? 0) === 0 ? (
+            <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">
+              Noch kein Kader übernommen.
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              {league.players.map((p) => (
+                <Card key={p.id}>
+                  <CardContent className="p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-mono tabular-nums text-muted-foreground w-6">
+                        {p.position_number ?? '–'}
+                      </span>
+                      <span className="text-sm font-medium">{p.name}</span>
+                      {p.lk && (
+                        <Badge variant="outline" className="text-xs">
+                          {p.lk}
+                        </Badge>
+                      )}
+                    </div>
+                    {/* Verknüpfte Zeilen zeigen nur ein Abzeichen. Das Auswahlfeld
+                        steht nur dort, wo wirklich etwas zuzuordnen ist — sonst
+                        rendert ein 300er-Verein pro Kaderzeile 300 Optionen. */}
+                    {p.member_id ? (
+                      <button
+                        type="button"
+                        aria-label={`Zuordnung von ${p.name} lösen`}
+                        onClick={() => handleAssignPlayer(p.id, null)}
+                        className="text-2xs"
+                      >
+                        <Badge variant="secondary" className="text-2xs cursor-pointer">
+                          Mitglied verknüpft ✕
+                        </Badge>
+                      </button>
+                    ) : (
+                      <select
+                        aria-label={`Mitglied für ${p.name} zuordnen`}
+                        value=""
+                        onChange={(e) => handleAssignPlayer(p.id, e.target.value || null)}
+                        className="text-xs p-1.5 rounded border bg-background max-w-[14rem]"
+                      >
+                        <option value="">— Mitglied zuordnen —</option>
+                        {members.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </TabsContent>
 

@@ -5,7 +5,6 @@ import {
   Calendar,
   BookOpen,
   CreditCard,
-  Bell,
   MapPin,
   Trophy,
   ChevronRight,
@@ -21,8 +20,9 @@ import {
 import { IconBox } from '@/components/ui/icon-box';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { StatCard } from '@/components/ui/stat-card';
+import { KpiBand } from '@/components/ui/kpi-band';
 import { QuickActions } from '@/components/ui/quick-actions';
+import { MyTeamsCard } from '@/components/league/my-teams-card';
 import { TennisBallEmptyState } from '@/components/ui/empty-state';
 import { OUTSTANDING_INVOICE_STATUSES } from '@/lib/billing/invoice-visibility';
 
@@ -70,6 +70,17 @@ export default async function MemberPage() {
     .select('full_name, email')
     .eq('id', user.id)
     .maybeSingle();
+
+  // Steht dieses Mitglied in einer Mannschaftsmeldung? Nur dann bekommt es den
+  // Schnellzugriff auf "Mannschaften" — für alle anderen wäre das ein Link ins
+  // Leere, und der Schnellzugriff ist die einzige Navigation, die Mitglieder
+  // haben (sie sehen keine Sidebar).
+  const { count: rosterCount } = await supabase
+    .from('league_players')
+    .select('id', { count: 'exact', head: true })
+    .eq('member_id', user.id)
+    .eq('club_id', clubId);
+  const isInSquad = (rosterCount ?? 0) > 0;
 
   const firstName =
     profile?.full_name?.split(' ')[0] ||
@@ -181,41 +192,31 @@ export default async function MemberPage() {
       {/* ── Stat Cards ── */}
       {/* Stehen vor dem Schnellzugriff: erst der Status („was liegt an?"),
           dann die Aktionen. */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard
-          icon={Calendar}
-          label="Buchungen"
-          value={bookingCount}
-          sub="bevorstehend"
-          color="brand"
-          href="/bookings"
-          {...(bookingCount > 0 ? { badge: bookingCount } : {})}
-        />
-        <StatCard
-          icon={CreditCard}
-          label="Rechnungen"
-          value={invoiceCount}
-          sub={invoiceCount > 0 ? 'zu bezahlen' : 'offen'}
-          color={invoiceCount > 0 ? 'red' : 'gray'}
-          href="/billing"
-        />
-        <StatCard
-          icon={Bell}
-          label="Benachrichtigungen"
-          value={notifCount}
-          sub={notifCount > 0 ? 'ungelesen' : 'keine neuen'}
-          color={notifCount > 0 ? 'blue' : 'gray'}
-          href="/notifications"
-        />
-        <StatCard
-          icon={BookOpen}
-          label="Training"
-          value={upcomingTrainingCount ?? 0}
-          sub="kommende Sessions"
-          color="green"
-          href="/training-schedule"
-        />
-      </div>
+      <KpiBand
+        items={[
+          { label: 'Buchungen', value: bookingCount, sub: 'bevorstehend', href: '/bookings' },
+          {
+            label: 'Rechnungen',
+            value: invoiceCount,
+            sub: invoiceCount > 0 ? 'zu bezahlen' : 'nichts offen',
+            // Nur offene Rechnungen sind ein Signal; 0 ist der Normalfall.
+            tone: invoiceCount > 0 ? 'down' : 'flat',
+            href: '/billing',
+          },
+          {
+            label: 'Benachrichtigungen',
+            value: notifCount,
+            sub: notifCount > 0 ? 'ungelesen' : 'keine neuen',
+            href: '/notifications',
+          },
+          {
+            label: 'Training',
+            value: upcomingTrainingCount ?? 0,
+            sub: 'kommende Sessions',
+            href: '/training-schedule',
+          },
+        ]}
+      />
 
       {/* ── Quick Actions ── */}
       <QuickActions
@@ -236,6 +237,16 @@ export default async function MemberPage() {
                   href: '/member/tournaments',
                   icon: Trophy,
                   variant: 'amber' as const,
+                },
+              ]
+            : []),
+          ...(isInSquad
+            ? [
+                {
+                  label: 'Mannschaften',
+                  href: '/member/leagues',
+                  icon: Trophy,
+                  variant: 'green' as const,
                 },
               ]
             : []),
@@ -269,6 +280,9 @@ export default async function MemberPage() {
           },
         ]}
       />
+
+      {/* ── Meine Mannschaften (nur für Spieler in einer Meldeliste) ── */}
+      <MyTeamsCard />
 
       {/* ── Next Session (Hero Card) ── */}
       {nextSession ? (

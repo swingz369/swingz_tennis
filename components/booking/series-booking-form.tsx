@@ -254,7 +254,7 @@ export default function SeriesBookingForm({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Repeat className="h-5 w-5 text-brand-primary" />
+          <Repeat className="h-5 w-5 text-primary" />
           Serienbuchung erstellen
         </CardTitle>
       </CardHeader>

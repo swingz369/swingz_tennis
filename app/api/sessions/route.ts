@@ -30,7 +30,7 @@ type SessionWithJoins = SessionRow & {
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
-    if (!hasPermission) return forbiddenResponse('Authentication required');
+    if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
@@ -263,7 +263,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const isAdmin = await verifyRole(auth, 'admin');
-    if (!isAdmin) return forbiddenResponse('Admin access required');
+    if (!isAdmin) return forbiddenResponse('Zugriff nur für Admins');
 
     const body = await req.json().catch(() => null);
     if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });

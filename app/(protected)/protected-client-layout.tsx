@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Header } from '@/components/layout/header';
+import { OwnerClubBanner } from '@/components/layout/owner-club-banner';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const Sidebar = dynamic(() => import('@/components/layout/sidebar').then((m) => m.Sidebar), {
@@ -12,7 +13,6 @@ const Sidebar = dynamic(() => import('@/components/layout/sidebar').then((m) => 
 });
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { SkipToContent } from '@/lib/accessibility';
-import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog';
 import { CommandPalette } from '@/components/command-palette';
 import { SearchDialog } from '@/components/search-dialog';
 import { CommandPaletteProvider } from '@/components/command-palette-context';
@@ -102,35 +102,57 @@ export function ProtectedClientLayout({ children, user, branding }: ProtectedCli
   return (
     <TenantProvider clubId={user.selectedClubId ?? user.club?.id ?? null} branding={branding}>
       <CommandPaletteProvider>
-        <div className="flex min-h-screen flex-col">
+        {/* Sidebar läuft über die volle Höhe, der Header sitzt nur über der
+            Inhaltsspalte. Vorher spannte sich der Header über beides und
+            schnitt die Sidebar oben ab — mit der dunklen Sidebar wäre daraus
+            eine sichtbare Stufe geworden. */}
+        <div className="flex min-h-screen">
           <SkipToContent />
-          <Header user={user} onMenuClick={() => setSidebarOpen((prev) => !prev)} />
-          <div className="flex flex-1 relative">
-            <Sidebar
-              roles={user.roles ?? []}
-              selectedClubId={user.selectedClubId ?? null}
-              clubs={user.clubs ?? (user.club ? [user.club] : [])}
-              open={sidebarOpen}
-              onClose={() => setSidebarOpen(false)}
+          <Sidebar
+            roles={user.roles ?? []}
+            selectedClubId={user.selectedClubId ?? null}
+            clubs={user.clubs ?? (user.club ? [user.club] : [])}
+            open={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+          />
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 z-40 bg-black/50 md:hidden"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Menü schließen"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') setSidebarOpen(false);
+              }}
             />
-            {sidebarOpen && (
-              <div
-                className="fixed inset-0 z-40 bg-black/50 md:hidden"
-                onClick={() => setSidebarOpen(false)}
-                aria-label="Menü schließen"
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') setSidebarOpen(false);
-                }}
-              />
-            )}
+          )}
+          <div className="flex min-w-0 flex-1 flex-col">
+            {/* Über dem Header: solange ein Owner einen fremden Verein
+                verwaltet, muss das ständig sichtbar sein — nicht in der
+                Navigation versteckt. */}
+            <OwnerClubBanner
+              roles={user.roles ?? []}
+              clubName={
+                (user.clubs ?? []).find((c) => c.id === user.selectedClubId)?.name ??
+                user.club?.name ??
+                null
+              }
+            />
+            <Header user={user} onMenuClick={() => setSidebarOpen((prev) => !prev)} />
             <main
               id="main-content"
               className="flex-1 bg-background p-4 md:p-6 lg:p-8 pb-20 md:pb-6"
               role="main"
             >
-              <div className="mx-auto max-w-7xl">
+              {/* `max-w-7xl` (1280 px) stammt aus der Zeit vor der festen
+                  Sidebar. Mit 256 px Navigation blieben auf einem 1920er
+                  Schirm links und rechts je ~190 px ungenutzt, und die Seite
+                  wirkte nach rechts abgeschnitten. 1600 px entspricht genau
+                  der nutzbaren Breite bei 1920 (1920 − 256 Sidebar − 64
+                  Innenabstand) und deckelt weiterhin auf Ultrawide, wo sonst
+                  die Zeilenlänge der Tabellen unlesbar würde. */}
+              <div className="mx-auto max-w-[1600px]">
                 <ErrorBoundary>
                   <PageTransition>{children}</PageTransition>
                 </ErrorBoundary>
@@ -149,7 +171,6 @@ export function ProtectedClientLayout({ children, user, branding }: ProtectedCli
             clubs={user.clubs ?? (user.club ? [user.club] : [])}
           />
           <SearchDialog />
-          <KeyboardShortcutsDialog />
         </div>
       </CommandPaletteProvider>
     </TenantProvider>

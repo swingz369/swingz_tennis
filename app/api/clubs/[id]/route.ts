@@ -47,7 +47,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   return withApiAuth(req, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
     if (!hasRole) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
@@ -168,7 +168,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     // ohne explizite Rollen-Anpassung patchen.
     const hasRole = await verifyRole(auth, 'admin');
     if (!hasRole) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
@@ -298,7 +298,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     if (!(await verifyRole(auth, 'superadmin'))) {
-      return forbiddenResponse('Superadmin access required');
+      return forbiddenResponse('Zugriff nur für Superadmins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);

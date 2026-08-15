@@ -395,6 +395,10 @@ vi.mock('@/lib/services/school-holidays.service', () => ({
 const mockPersistConflicts = vi.fn().mockResolvedValue(0);
 const mockDetectAll = vi.fn().mockResolvedValue([]);
 const mockGetCriticalConflicts = vi.fn().mockReturnValue([]);
+const emptySummary = { critical: 0, warnings: 0, info: 0, total: 0 };
+const mockDetectConflictsForSeason = vi
+  .fn()
+  .mockResolvedValue({ conflicts: [], summary: emptySummary });
 
 vi.mock('@/lib/season-planning/conflict-detector', () => ({
   ConflictDetector: vi.fn(function (this: any) {
@@ -402,6 +406,7 @@ vi.mock('@/lib/season-planning/conflict-detector', () => ({
     this.getCriticalConflicts = (...args: unknown[]) => mockGetCriticalConflicts(...args);
     this.persistConflicts = (...args: unknown[]) => mockPersistConflicts(...args);
   }),
+  detectConflictsForSeason: (...args: unknown[]) => mockDetectConflictsForSeason(...args),
 }));
 
 const mockResendSend = vi.fn().mockResolvedValue({ id: 'email-001' });
@@ -561,6 +566,9 @@ beforeEach(() => {
   mockPersistConflicts.mockReset().mockResolvedValue(0);
   mockDetectAll.mockReset().mockResolvedValue([]);
   mockGetCriticalConflicts.mockReset().mockReturnValue([]);
+  mockDetectConflictsForSeason
+    .mockReset()
+    .mockResolvedValue({ conflicts: [], summary: emptySummary });
   mockResendSend.mockReset().mockResolvedValue({ id: 'email-001' });
   mockBuildRecipients.mockReset().mockResolvedValue([
     {
@@ -697,6 +705,10 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
           {
             ...DEFAULT_SEASON,
             planning_status: 'published',
+            // Re-Publish wird seit dem Saison-Refactor über `published_at`
+            // erkannt, nicht über den Status (ein Re-Plan setzt den Status
+            // auf 'manual_review' zurück).
+            published_at: new Date().toISOString(),
             start_date: iso(7),
             end_date: iso(7 + 16 * 7),
           },
@@ -915,17 +927,22 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
         resolutionNotes: null,
       };
 
-      mockDetectAll.mockResolvedValueOnce([criticalConflict]);
-      mockGetCriticalConflicts.mockReturnValueOnce([criticalConflict]);
+      mockDetectConflictsForSeason.mockResolvedValueOnce({
+        conflicts: [criticalConflict],
+        summary: { critical: 1, warnings: 0, info: 0, total: 1 },
+      });
 
-      const res = await POST(buildRequest({ acceptedWarnings: [] }), ctx());
+      const res = await POST(buildRequest(), ctx());
       expect(res.status).toBe(409);
       const body = await res.json();
       expect(body.error).toContain('Kritische Konflikte');
       expect(body.unresolvedCriticalConflicts).toHaveLength(1);
     });
 
-    it('allows publish when critical conflicts are accepted by ID', async () => {
+    // Die Freigabe hängt jetzt an der persistierten Entscheidung des Admins
+    // (PATCH /planning/conflicts → status resolved/ignored), nicht mehr an einer
+    // vom Client mitgeschickten ID-Liste.
+    it('allows publish when the critical conflict is marked resolved', async () => {
       resetConfig({
         entries: [DEFAULT_ENTRY],
         schedule: [DEFAULT_SCHEDULE],
@@ -946,16 +963,18 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
           planEntryIds: [],
         },
         timeSlot: { dayOfWeek: 2, startTime: '17:00', endTime: '18:30' },
-        status: 'open',
-        resolvedAt: null,
-        resolvedBy: null,
-        resolutionNotes: null,
+        status: 'resolved',
+        resolvedAt: new Date().toISOString(),
+        resolvedBy: 'admin-001',
+        resolutionNotes: 'Manuell gelöst',
       };
 
-      mockDetectAll.mockResolvedValueOnce([criticalConflict]);
-      mockGetCriticalConflicts.mockReturnValueOnce([criticalConflict]);
+      mockDetectConflictsForSeason.mockResolvedValueOnce({
+        conflicts: [criticalConflict],
+        summary: { critical: 0, warnings: 0, info: 0, total: 0 },
+      });
 
-      const res = await POST(buildRequest({ acceptedWarnings: [criticalConflict.id] }), ctx());
+      const res = await POST(buildRequest(), ctx());
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body.success).toBe(true);

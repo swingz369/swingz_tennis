@@ -52,7 +52,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       if (!isAdmin && !isSuperadmin) {
         const hasClubAccess = auth.memberships.some((m) => m.club_id === season.club_id);
         if (!hasClubAccess) {
-          return forbiddenResponse('You do not have access to this season');
+          return forbiddenResponse('Kein Zugriff auf diese Saison');
         }
       }
 
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         // Verify user has access to this club
         const hasClubAccess = auth.memberships.some((m) => m.club_id === season.club_id);
         if (!hasClubAccess) {
-          return forbiddenResponse('You do not have access to this season');
+          return forbiddenResponse('Kein Zugriff auf diese Saison');
         }
 
         // Check if preferences are open

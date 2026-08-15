@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
+import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 import { randomUUID } from 'crypto';
 import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
@@ -16,7 +17,7 @@ const log = createLogger('api:admin:family-accounts');
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) return forbiddenResponse('Admin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const clubId = auth.clubId;
     if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) return forbiddenResponse('Admin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const clubId = auth.clubId;
     if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
@@ -143,18 +144,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'DB error' }, { status: 500 });
     }
 
-    try {
-      await db.from('audit_logs').insert({
-        actor_id: auth.user.id,
-        action: familyGroupId ? 'family_account_member_added' : 'family_account_created',
-        resource_type: 'family_group',
-        resource_id: groupId,
-        club_id: clubId,
-        details: { memberIds: toInsert, relationship },
-      });
-    } catch (auditError) {
-      log.error('Audit logging failed:', auditError);
-    }
+    await logAudit({
+      actorId: auth.user.id,
+      action: familyGroupId ? 'family_account_member_added' : 'family_account_created',
+      resourceType: 'family_group',
+      resourceId: groupId,
+      clubId,
+      details: { memberIds: toInsert, relationship },
+      request,
+    });
 
     return NextResponse.json({ familyGroupId: groupId, added: toInsert.length });
   });
@@ -163,7 +161,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) return forbiddenResponse('Admin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { familyGroupId, userId } = await request.json();
     if (!familyGroupId || !userId) {
@@ -182,18 +180,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'DB error' }, { status: 500 });
     }
 
-    try {
-      await db.from('audit_logs').insert({
-        actor_id: auth.user.id,
-        action: 'family_account_member_removed',
-        resource_type: 'family_group',
-        resource_id: familyGroupId,
-        club_id: auth.clubId,
-        details: { removedUserId: userId },
-      });
-    } catch (auditError) {
-      log.error('Audit logging failed:', auditError);
-    }
+    await logAudit({
+      actorId: auth.user.id,
+      action: 'family_account_member_removed',
+      resourceType: 'family_group',
+      resourceId: familyGroupId,
+      clubId: auth.clubId,
+      details: { removedUserId: userId },
+      request,
+    });
 
     return NextResponse.json({ success: true });
   });

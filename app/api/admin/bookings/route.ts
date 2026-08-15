@@ -84,7 +84,7 @@ type AdminBookingEntry = {
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const isAdmin = await verifyRole(auth, 'admin');
-    if (!isAdmin) return forbiddenResponse('Admin access required');
+    if (!isAdmin) return forbiddenResponse('Zugriff nur für Admins');
 
     const { searchParams } = new URL(req.url);
     const clubId = searchParams.get('clubId');
@@ -368,7 +368,7 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const isAdmin = await verifyRole(auth, 'admin');
-    if (!isAdmin) return forbiddenResponse('Admin access required');
+    if (!isAdmin) return forbiddenResponse('Zugriff nur für Admins');
 
     const body = (await req.json().catch(() => null)) as {
       bookingId?: string;

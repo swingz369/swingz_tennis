@@ -85,13 +85,13 @@ export class DrizzlePricingRuleRepository {
     if (existing) {
       await db
         .update(pricing_rules)
-        .set(values as any)
+        .set(values as Partial<typeof pricing_rules.$inferInsert>)
         .where(eq(pricing_rules.id, rule.id));
     } else {
       await db.insert(pricing_rules).values({
         ...values,
         created_at: now,
-      } as any);
+      } as typeof pricing_rules.$inferInsert);
     }
   }
 

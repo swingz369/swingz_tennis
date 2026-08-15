@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       try {
         const isSuperadmin = await verifyRole(auth, 'superadmin');
         if (!isSuperadmin) {
-          return forbiddenResponse('Only superadmins can complete superadmin setup');
+          return forbiddenResponse('Nur Superadmins können das Superadmin-Setup abschließen');
         }
 
         const { data: user, error: fetchError } = await auth.supabase

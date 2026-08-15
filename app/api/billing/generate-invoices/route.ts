@@ -218,7 +218,7 @@ async function getInvoicePreviewData(
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const isAdmin = await verifyRole(auth, 'admin');
-    if (!isAdmin) return forbiddenResponse('Admin access required');
+    if (!isAdmin) return forbiddenResponse('Zugriff nur für Admins');
 
     const url = new URL(req.url);
     const clubId = resolveClubId(auth, url.searchParams.get('clubId'));
@@ -260,7 +260,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const isAdmin = await verifyRole(auth, 'admin');
-    if (!isAdmin) return forbiddenResponse('Admin access required');
+    if (!isAdmin) return forbiddenResponse('Zugriff nur für Admins');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STRICT);
     if (rateLimitError) return rateLimitError;

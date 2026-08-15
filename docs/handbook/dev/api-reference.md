@@ -118,8 +118,19 @@ Beispiele (vollständige Liste wird beim Auto-Gen erzeugt):
 - `POST /api/tournaments/[id]/register`
 - `GET /api/leagues`
 - `POST /api/leagues`
-- `POST /api/leagues/[id]/lineup` — Mannschaftsaufstellung
-- `POST /api/leagues/[id]/matchday/[matchdayId]/results` — Match-Ergebnisse
+- `GET|PATCH|DELETE /api/leagues/[id]`
+- `POST /api/leagues/[id]/sync` — nuLiga-Abgleich. Erkennt am URL-Pfad, ob eine
+  Mannschaftsseite (`/wa/teamPortrait`) oder eine Gruppenseite (`/wa/groupPage`)
+  hinterlegt ist. Mannschaftsseite liefert eigene Spieltermine + Kader + (über den
+  verlinkten Gruppenlink) die Tabelle; Gruppenseite liefert die Tabelle und
+  filtert den Spielplan über `leagues.own_team_name`.
+- `GET|POST /api/leagues/[id]/roster` — Meldeliste (Kader mit LK), Zuordnung zum
+  Mitglied über DTB-ID, ersatzweise über den Namen
+- `POST|DELETE /api/leagues/[id]/matchdays/[matchdayId]/courts` — Plätze für ein
+  Heimspiel sperren bzw. freigeben (`court_closures.match_day_id`)
+- `POST /api/leagues/[id]/matchdays/[matchdayId]/lineup` — Mannschaftsaufstellung
+- `GET|PATCH /api/leagues/[id]/matchdays/[matchdayId]/result` — Match-Ergebnisse
+- `GET /api/leagues/[id]/export/verband` — Medenspiel-CSV für den Verband
 
 ### Analytics & Dashboard
 

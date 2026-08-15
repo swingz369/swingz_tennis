@@ -21,7 +21,7 @@ const log = createLogger('api:open-matches');
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
-    if (!hasPermission) return forbiddenResponse('Authentication required');
+    if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
@@ -136,7 +136,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
-    if (!hasPermission) return forbiddenResponse('Authentication required');
+    if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
@@ -217,7 +217,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
-    if (!hasPermission) return forbiddenResponse('Authentication required');
+    if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
     const body = await req.json().catch(() => null);
     if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
@@ -325,7 +325,7 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
-    if (!hasPermission) return forbiddenResponse('Authentication required');
+    if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
     const matchId = new URL(req.url).searchParams.get('id');
     if (!matchId) return NextResponse.json({ error: 'id required' }, { status: 400 });

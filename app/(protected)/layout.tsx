@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/components/layout/protected-route';
 import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
+import { createServiceClient } from '@/lib/supabase/service';
 import { DEFAULT_BRANDING, brandingToCSSVars, type ClubBranding } from '@/lib/branding';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
@@ -24,13 +25,14 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     .eq('user_id', user.id)
     .eq('is_active', true);
 
-  const roles: string[] = (memberships ?? []).map((m: any) => m.role);
+  const roles: string[] = (memberships ?? []).map((m) => m.role);
   const isSuperAdmin = roles.includes('superadmin');
   const isAdmin = roles.includes('admin');
+  const isOwner = roles.includes('owner');
 
   // Collect all clubs (non-null club_ids)
   const allClubs: { id: string; name: string }[] = (memberships ?? [])
-    .map((m: any) => {
+    .map((m) => {
       const clubRaw = m.clubs;
       const club = Array.isArray(clubRaw) ? clubRaw[0] : clubRaw;
       return club ? { id: club.id as string, name: club.name as string } : null;
@@ -63,13 +65,20 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   } else if (isAdmin) {
     const { clubId } = await resolveActiveClub({
       cookieValue,
-      memberships: (memberships ?? []).map((m: any) => ({
+      memberships: (memberships ?? []).map((m) => ({
         role: m.role,
         club_id: m.club_id,
       })),
       highestRole: 'admin',
     });
     selectedClubId = clubId;
+  } else if (isOwner) {
+    // Owner, der über „Als Admin" in einen Verein gewechselt ist. Ohne diesen
+    // Zweig blieb der Vereinskontext leer: die Sidebar fiel auf die Standard-
+    // Features zurück (alle optionalen Module aus — Ligen, Turniere, Shop,
+    // Preisregeln verschwanden aus der Navigation), und die Hinweisleiste
+    // konnte den Verein nicht benennen.
+    selectedClubId = cookieValue || null;
   }
 
   // Cookie-Set im Server Component ist nicht möglich (Next.js 13+).
@@ -77,8 +86,8 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   // Find primary club: prefer selectedClubId, fallback to first membership with a club
   const primaryMembership = selectedClubId
-    ? (memberships ?? []).find((m: any) => m.club_id === selectedClubId)
-    : (memberships ?? []).find((m: any) => m.club_id);
+    ? (memberships ?? []).find((m) => m.club_id === selectedClubId)
+    : (memberships ?? []).find((m) => m.club_id);
   const primaryClubRaw = primaryMembership?.clubs ?? null;
   const primaryClub = primaryClubRaw
     ? Array.isArray(primaryClubRaw)
@@ -86,14 +95,29 @@ export default async function ProtectedLayout({ children }: { children: React.Re
       : primaryClubRaw
     : null;
 
+  // Der Owner hat keine Mitgliedschaft im Verein, also findet ihn die Suche
+  // über `memberships` oben nicht. Für Namen und Feature-Flags brauchen
+  // Hinweisleiste und Sidebar den Verein trotzdem — direkt nachschlagen.
+  let contextClub: { id: string; name: string } | null = null;
+  if (isOwner && selectedClubId && !primaryClub) {
+    const { data: clubRow } = await createServiceClient()
+      .from('clubs')
+      .select('id, name')
+      .eq('id', selectedClubId)
+      .maybeSingle();
+    if (clubRow) contextClub = { id: clubRow.id as string, name: clubRow.name as string };
+  }
+
   const userData = {
     id: user.id,
     name: memberData?.full_name || user.user_metadata?.full_name || 'User',
     email: user.email || '',
     avatarUrl: memberData?.avatar_url || null,
     memberId: memberData?.id || null,
-    club: primaryClub ? { id: primaryClub.id as string, name: primaryClub.name as string } : null,
-    clubs: uniqueClubs,
+    club: primaryClub
+      ? { id: primaryClub.id as string, name: primaryClub.name as string }
+      : contextClub,
+    clubs: contextClub ? [...uniqueClubs, contextClub] : uniqueClubs,
     roles,
     selectedClubId,
   };

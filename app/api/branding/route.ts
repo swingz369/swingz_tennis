@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'clubId required' }, { status: 400 });
     }
 
-    if (!verifyClubAccess(auth, clubId)) return forbiddenResponse('No access to this club');
+    if (!verifyClubAccess(auth, clubId)) return forbiddenResponse('Kein Zugriff auf diesen Verein');
 
     try {
       const { data, error } = await auth.supabase
@@ -90,7 +90,7 @@ export async function PUT(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STRICT);
@@ -126,7 +126,7 @@ export async function PUT(request: NextRequest) {
 
       // Tenant guard: only owner-of-club may update
       if (!verifyClubAccess(auth, clubId)) {
-        return forbiddenResponse('No access to this club');
+        return forbiddenResponse('Kein Zugriff auf diesen Verein');
       }
       // Cast + runtime allowlist: TS2345 fires because the inferred shape of
       // `updates` doesn't match Supabase's `ClubsUpdate` exactly. The Zod

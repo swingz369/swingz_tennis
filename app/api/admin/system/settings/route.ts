@@ -36,7 +36,7 @@ export async function GET(_request: NextRequest) {
 
     // Permission check
     const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Admin access required');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
 
     try {
       const supabase = await createClient();
@@ -89,7 +89,7 @@ export async function PUT(_request: NextRequest) {
 
     // Permission check
     const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Admin access required');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
 
     try {
       const supabase = await createClient();

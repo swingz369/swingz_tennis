@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
-    if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse('Admin access required');
+    if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse('Zugriff nur für Admins');
     const clubId = auth.clubId;
     if (!clubId) return NextResponse.json({ error: 'Kein Verein' }, { status: 400 });
 

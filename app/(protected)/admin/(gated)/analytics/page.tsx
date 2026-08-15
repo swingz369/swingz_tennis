@@ -208,7 +208,7 @@ export default async function AnalyticsPage({
       </div>
 
       <AnalyticsTabsClient>
-        <AnalyticsClient data={analyticsData} clubId={effectiveClubId} />
+        <AnalyticsClient data={analyticsData} />
       </AnalyticsTabsClient>
     </div>
   );

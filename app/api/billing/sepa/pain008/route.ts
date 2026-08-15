@@ -15,7 +15,7 @@ export async function POST(_request: NextRequest) {
 
       const hasPermission = await verifyRole(auth, 'admin');
       if (!hasPermission) {
-        return forbiddenResponse('Admin access required');
+        return forbiddenResponse('Zugriff nur für Admins');
       }
 
       const body = await _request.json();

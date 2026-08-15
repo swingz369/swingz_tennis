@@ -300,7 +300,29 @@ In `proxy.ts` ist eine globale Rate-Limit-Konfiguration. Spezielle Routes (z. B.
 
 ### Audit-Logging
 
-Pflicht für: Buchung, Storno, Rechnung, Membership-Change. `lib/audit-logger.ts` (manche Routen prüfen Existenz dieses Helpers — aktuell **nur 2 Aufrufer**, Lücke → P2-Finding).
+Pflicht für: Buchung, Storno, Rechnung, Membership-Change.
+
+**Einziger Schreibpfad: `logAudit()` aus `lib/audit.ts`.** Niemals direkt in
+`audit_logs` inserten — auf der Tabelle existiert nur eine SELECT-Policy, jeder
+Insert über den User-Client wird von RLS verworfen (genau daran sind bis
+15.08.2026 alle Schreiber gescheitert, die Tabelle war leer).
+
+```ts
+await logAudit({
+  actorId: auth.user.id, // muss in users existieren (FK), 'system' o. ä. wird verworfen
+  action: 'member_deactivated', // UI-Label ergänzen: admin/(gated)/settings/audit-logs-tab.tsx
+  resourceType: 'membership',
+  resourceId: id, // uuid NOT NULL
+  clubId: membership.club_id, // ohne club_id für Admins unsichtbar, nur Owner sieht die Zeile
+  details: { role: membership.role },
+  request,
+});
+```
+
+`logAudit()` wirft nie und braucht kein try/catch. Ausnahme mit Absicht:
+`lib/services/anonymize.service.ts` schreibt seine DSGVO-Zeilen weiter per
+Drizzle, weil dort ein verschluckter Fehler die Idempotenz-Sentinel-Logik
+(Intent-vor-Mutation) aushebeln würde.
 
 ### Notifications
 

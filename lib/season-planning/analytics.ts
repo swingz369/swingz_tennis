@@ -131,7 +131,7 @@ export function computeRoiStats(input: RoiInput): RoiStats {
 /**
  * Cheap `isStarterTier` predicate.
  *
- * The club's feature flags expose `ai_matchmaking` (defined in {@link CLUB_FEATURES});
+ * The club's feature flags expose `partner_finder` (defined in {@link CLUB_FEATURES});
  * if it is *off*, the club is on the Starter tier (Pro includes the AI features).
  * Accepts the raw DB row OR a `Record<string, boolean>` shape — both are tolerated.
  *
@@ -144,5 +144,5 @@ export function computeRoiStats(input: RoiInput): RoiStats {
 export function isStarterTier(features: Record<string, boolean> | null | undefined): boolean {
   if (!features) return true;
   // Pro tier implies the AI matchmaking feature is enabled. Off → Starter.
-  return features.ai_matchmaking !== true;
+  return features.partner_finder !== true;
 }

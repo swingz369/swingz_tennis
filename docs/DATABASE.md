@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 13. August 2026 (direkter psql-Zugriff auf `supabase.swingz.cloud:6543`)
+> Zuletzt verifiziert: 15. August 2026 (Abschnitt `league_players` ergänzt; Live-Prüfung zuletzt 13.08.2026 per psql auf `supabase.swingz.cloud:6543`)
 
 ## Kernaussage: `supabase/migrations/` ist NICHT die Quelle der Wahrheit
 
@@ -158,6 +158,29 @@ Service-Methoden plus Durchreichen von `auth.clubId` in beiden Routen.
 
 **Regel:** Jede Query über den Service-Client trägt ihren Mandantenfilter selbst. RLS als
 Sicherheitsnetz zu unterstellen ist dort falsch — es ist per Definition abgeschaltet.
+
+## `league_players` — neue Tabelle (Stand 15.08.2026, angewendet und verifiziert)
+
+`supabase/migrations/20260815130000_league_own_team_roster_court_block.sql` legt die Kader-/
+Meldelisten-Tabelle `league_players` an (Name, LK, Meldeposition, optionale `member_id` auf
+`users`) und ergänzt vier Spalten: `leagues.own_team_name`, `leagues.nuliga_roster_url`,
+`match_days.nuliga_report_url`, `court_closures.match_day_id`.
+
+- **Policies:** `league_players_select|insert|update|delete`, wortgleich zum `teams_*`-Muster —
+  SELECT für jedes aktive Mitglied des Vereins, Schreiben nur `admin`/`superadmin`. `ENABLE` +
+  `FORCE ROW LEVEL SECURITY` direkt bei der Anlage, damit die Tabelle nicht wie die 114 Bestands-
+  tabellen nachträglich eingesammelt werden muss.
+- **`court_closures.match_day_id`** hat `ON DELETE CASCADE`: ein gelöschter Spieltag gibt die
+  gesperrten Plätze von selbst frei. Es gibt bewusst keine Gegenrichtung — Platzsperren ohne
+  Spieltag (Wetter, Wartung) bleiben unberührt.
+- **Personenbezug:** In `league_players` stehen Klarnamen und LK. Importiert wird ausschließlich
+  die Meldeliste der **eigenen** Mannschaft (Vereinsmitglieder). Fremde Spieler werden nicht
+  gespeichert; für deren Aufstellung steht nur der Link in `match_days.nuliga_report_url`.
+
+**Live-Verifikation nach dem Einspielen (15.08.2026, `docker exec supabase-db psql`):** alle vier
+Spalten vorhanden, vier Policies aktiv, `relrowsecurity = true` **und** `relforcerowsecurity = true`,
+FK `court_closures.match_day_id` mit `confdeltype = 'c'`. Ausgangszustand vorher war sauber —
+weder Tabelle noch Spalten noch gleichnamige Policies existierten.
 
 ## Prozess-Regel für künftige Migrationen
 

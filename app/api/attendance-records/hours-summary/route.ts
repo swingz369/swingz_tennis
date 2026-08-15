@@ -15,7 +15,7 @@ const log = createLogger('api:attendance-records:hours-summary');
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
-    if (!hasPermission) return forbiddenResponse('Authentication required');
+    if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         const isOwnData = memberId === auth.user.id;
         const isTrainerOrAdmin = await verifyRole(auth, 'trainer');
         if (!isOwnData && !isTrainerOrAdmin) {
-          return forbiddenResponse('Not authorized to view this summary');
+          return forbiddenResponse('Keine Berechtigung für diese Übersicht');
         }
 
         const summary = await hoursLogService.getAttendanceHoursSummaryForMember(memberId);
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
       if (clubId) {
         const isAdmin = await verifyRole(auth, 'admin');
-        if (!isAdmin) return forbiddenResponse('Admin access required');
+        if (!isAdmin) return forbiddenResponse('Zugriff nur für Admins');
 
         const summaries = await hoursLogService.getAttendanceHoursSummaryForClub(clubId);
         return NextResponse.json({ summaries });

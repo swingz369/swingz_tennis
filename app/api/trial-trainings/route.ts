@@ -31,7 +31,7 @@ export async function POST(_request: NextRequest) {
     // Trainers and admins can create trial trainings
     const hasRole = await verifyRole(auth, 'trainer');
     if (!hasRole) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
@@ -81,7 +81,7 @@ export async function GET(_request: NextRequest) {
     // Members can view trial trainings
     const hasRole = await verifyRole(auth, 'member');
     if (!hasRole) {
-      return forbiddenResponse('Authentication required');
+      return forbiddenResponse('Anmeldung erforderlich');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);

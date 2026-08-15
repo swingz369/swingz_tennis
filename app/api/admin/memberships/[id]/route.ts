@@ -6,6 +6,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse, type AuthContext } from '@/lib/api-auth';
+import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:admin:memberships:[id]');
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   return withApiAuth(request, async (auth: AuthContext) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const { data: membership, error } = await auth.supabase
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
     // Verify club access (superadmin can access any club)
     if (auth.role !== 'superadmin' && membership.club_id !== auth.clubId) {
-      return forbiddenResponse('Cannot access memberships from other clubs');
+      return forbiddenResponse('Kein Zugriff auf Mitgliedschaften anderer Vereine');
     }
 
     return NextResponse.json({ data: membership });
@@ -62,7 +63,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   return withApiAuth(request, async (auth: AuthContext) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     try {
@@ -91,13 +92,13 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
       // Security: Verify club access (non-superadmin can only modify own club)
       if (auth.role !== 'superadmin' && currentMembership.club_id !== auth.clubId) {
-        return forbiddenResponse('Cannot modify memberships from other clubs');
+        return forbiddenResponse('Mitgliedschaften anderer Vereine können nicht geändert werden');
       }
 
       // Security: Prevent privilege escalation
       // Only superadmin can assign superadmin role
       if (role === 'superadmin' && auth.role !== 'superadmin') {
-        return forbiddenResponse('Only superadmin can assign superadmin role');
+        return forbiddenResponse('Nur ein Superadmin kann die Superadmin-Rolle vergeben');
       }
 
       // Security: Cannot demote higher-ranking users
@@ -106,12 +107,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         ROLE_HIERARCHY[currentMembership.role as keyof typeof ROLE_HIERARCHY] >
           ROLE_HIERARCHY[auth.role]
       ) {
-        return forbiddenResponse('Cannot modify users with higher privileges');
+        return forbiddenResponse('Benutzer mit höheren Rechten können nicht geändert werden');
       }
 
       // Security: Cannot promote to higher than your own role
       if (role && ROLE_HIERARCHY[role as keyof typeof ROLE_HIERARCHY] > ROLE_HIERARCHY[auth.role]) {
-        return forbiddenResponse('Cannot promote users to higher privilege than yourself');
+        return forbiddenResponse(
+          'Benutzer können nicht auf ein höheres Recht als das eigene befördert werden'
+        );
       }
 
       // Build update object
@@ -158,7 +161,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       }
 
       // Audit log the change
-      try {
+      {
         const memberUser = Array.isArray(currentMembership.users)
           ? currentMembership.users[0]
           : currentMembership.users;
@@ -183,19 +186,15 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           };
         }
 
-        // Log to audit_logs table
-        await auth.supabase.from('audit_logs').insert({
-          user_id: auth.user.id,
+        await logAudit({
+          actorId: auth.user.id,
           action: role ? 'role_changed' : 'member_status_changed',
-          resource_type: 'membership',
-          resource_id: id,
+          resourceType: 'membership',
+          resourceId: id,
+          clubId: currentMembership.club_id,
           details: auditDetails,
-          ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
-          user_agent: request.headers.get('user-agent'),
-        } as any);
-      } catch (auditError) {
-        // Don't fail the request if audit logging fails
-        log.error('Audit logging failed:', auditError);
+          request,
+        });
       }
 
       return NextResponse.json({
@@ -228,7 +227,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
   return withApiAuth(request, async (auth: AuthContext) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     try {
@@ -245,7 +244,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 
       // Security: Verify club access
       if (auth.role !== 'superadmin' && currentMembership.club_id !== auth.clubId) {
-        return forbiddenResponse('Cannot delete memberships from other clubs');
+        return forbiddenResponse('Mitgliedschaften anderer Vereine können nicht gelöscht werden');
       }
 
       // Security: Cannot delete higher-ranking users
@@ -253,7 +252,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
         ROLE_HIERARCHY[currentMembership.role as keyof typeof ROLE_HIERARCHY] >
         ROLE_HIERARCHY[auth.role]
       ) {
-        return forbiddenResponse('Cannot delete users with higher privileges');
+        return forbiddenResponse('Benutzer mit höheren Rechten können nicht gelöscht werden');
       }
 
       // Soft delete via is_active flag
@@ -275,24 +274,19 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       }
 
       // Audit log
-      try {
-        await auth.supabase.from('audit_logs').insert({
-          actor_id: auth.user.id,
-          action: 'member_deactivated',
-          resource_type: 'membership',
-          resource_id: id,
-          club_id: currentMembership.club_id,
-          details: {
-            membership_id: id,
-            user_id: currentMembership.user_id,
-            role: currentMembership.role,
-          },
-          ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
-          user_agent: request.headers.get('user-agent'),
-        } as any);
-      } catch (auditError) {
-        log.error('Audit logging failed:', auditError);
-      }
+      await logAudit({
+        actorId: auth.user.id,
+        action: 'member_deactivated',
+        resourceType: 'membership',
+        resourceId: id,
+        clubId: currentMembership.club_id,
+        details: {
+          membership_id: id,
+          user_id: currentMembership.user_id,
+          role: currentMembership.role,
+        },
+        request,
+      });
 
       return NextResponse.json({
         success: true,

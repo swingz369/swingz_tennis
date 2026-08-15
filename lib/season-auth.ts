@@ -169,7 +169,7 @@ export async function authorizeSeasonAccess(
     if (roleOk) {
       return { ok: true, season, effectiveRole: pickEffectiveRole(auth, allowed) };
     }
-    return { ok: false, response: forbiddenResponse('Insufficient role for this season') };
+    return { ok: false, response: forbiddenResponse('Keine ausreichende Rolle für diese Saison') };
   }
 
   const clubMembership = auth.memberships.find((m) => m.club_id === season.club_id) ?? null;
@@ -177,7 +177,7 @@ export async function authorizeSeasonAccess(
   if (!clubMembership) {
     return {
       ok: false,
-      response: forbiddenResponse('You do not have access to this season'),
+      response: forbiddenResponse('Kein Zugriff auf diese Saison'),
     };
   }
 

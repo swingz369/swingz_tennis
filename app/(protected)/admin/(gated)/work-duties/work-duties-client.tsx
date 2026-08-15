@@ -722,7 +722,7 @@ export default function WorkDutiesClient({
 
       {/* Edit Duty Form */}
       {editingId && (
-        <Card className="border-2 border-brand-primary/20">
+        <Card className="border-2 border-primary/20">
           <CardHeader>
             <CardTitle className="text-base">Arbeitsdienst bearbeiten</CardTitle>
           </CardHeader>
@@ -844,11 +844,11 @@ export default function WorkDutiesClient({
 
       {/* Bulk Create Dialog */}
       {showBulk && (
-        <Card className="border-2 border-brand-primary/20">
+        <Card className="border-2 border-primary/20">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <Repeat className="h-4 w-4 text-brand-primary" />
+                <Repeat className="h-4 w-4 text-primary" />
                 Mehrere Dienste erstellen
               </CardTitle>
               <Button
@@ -1055,7 +1055,7 @@ export default function WorkDutiesClient({
                         onClick={() => toggleWeekday(wd.value)}
                         className={`w-10 h-10 rounded-xl text-xs font-bold transition-colors ${
                           bulkWeekdays.includes(wd.value)
-                            ? 'bg-brand-primary text-white'
+                            ? 'bg-primary text-white'
                             : 'bg-muted text-muted-foreground hover:bg-muted'
                         }`}
                       >
@@ -1117,7 +1117,7 @@ export default function WorkDutiesClient({
 
       {/* New Duty Form */}
       {showNew && (
-        <Card className="border-2 border-brand-primary/20">
+        <Card className="border-2 border-primary/20">
           <CardHeader>
             <CardTitle className="text-base">Neuen Arbeitsdienst anlegen</CardTitle>
           </CardHeader>

@@ -17,7 +17,12 @@ const dmSans = localFont({
   variable: '--font-sans',
   weight: '400 700', // Variable-Achse
   display: 'swap',
-  preload: false,
+  // Die Textschrift der ganzen App wird vorgeladen. Ohne das kam sie erst
+  // nach dem ersten Paint, und die Sidebar sprang sichtbar von system-ui auf
+  // DM Sans um — genau der Schriftwechsel, der beim Vergleich mit dem Entwurf
+  // auffiel. Kostet eine Preload-Anweisung für eine Datei, die ohnehin auf
+  // jeder Seite gebraucht wird.
+  preload: true,
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -31,9 +36,11 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
+  // Muss dem --background aus app/globals.css entsprechen (Clay / Nocturne),
+  // sonst klafft auf Mobile eine Kante zwischen Browser-Chrome und Seite.
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#00599F' },
-    { media: '(prefers-color-scheme: dark)', color: '#00345C' },
+    { media: '(prefers-color-scheme: light)', color: '#F3F2EE' },
+    { media: '(prefers-color-scheme: dark)', color: '#0C1116' },
   ],
 };
 

@@ -92,7 +92,7 @@ import { SeasonClusteringEngine } from '@/lib/season-planning/clustering-engine'
 // These match `DEFAULT_CONFIG` in clustering-engine.ts. If you change the
 // defaults there, update these here.
 const DEFAULT_TREAT_HIGH_FAILURE_AS_HARD = false;
-const DEFAULT_BACKTRACK_DEPTH = 0;
+const DEFAULT_BACKTRACK_DEPTH = 3;
 // Sprint 4 P0 #3 (Adaptive Backtrack): see migration
 // supabase/migrations/20260610_add_unassigned_rate_threshold.sql
 const DEFAULT_UNASSIGNED_RATE_THRESHOLD = 0.05;
@@ -149,7 +149,7 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
     expect(engine.config.backtrackDepth).toBe(2);
   });
 
-  it('uses default `0` when backtrack_depth is NULL in DB', async () => {
+  it('uses default `3` when backtrack_depth is NULL in DB', async () => {
     h.setDbRow({
       club_id: 'c1',
       season_id: 's1',
@@ -162,7 +162,7 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
     await engine.loadConfig();
 
     expect(engine.config.backtrackDepth).toBe(DEFAULT_BACKTRACK_DEPTH);
-    expect(engine.config.backtrackDepth).toBe(0);
+    expect(engine.config.backtrackDepth).toBe(3);
     // The other field is still read correctly
     expect(engine.config.treatHighFailureAsHard).toBe(true);
   });
@@ -179,7 +179,7 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
     await engine.loadConfig();
 
     expect(engine.config.treatHighFailureAsHard).toBe(false);
-    expect(engine.config.backtrackDepth).toBe(0);
+    expect(engine.config.backtrackDepth).toBe(3);
   });
 
   it('keeps constructor config when DB returns no row at all', async () => {
@@ -233,7 +233,7 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
 
     // The ?? operator treats undefined as a missing value → default
     expect(engine.config.treatHighFailureAsHard).toBe(false);
-    expect(engine.config.backtrackDepth).toBe(0);
+    expect(engine.config.backtrackDepth).toBe(3);
   });
 
   it('Sprint 4 P0 #3: reads unassigned_rate_threshold from DB and overrides default 0.05', async () => {

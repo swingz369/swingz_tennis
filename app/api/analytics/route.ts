@@ -14,7 +14,7 @@ export async function GET(_request: NextRequest) {
     const isAdmin = await verifyRole(auth, 'admin');
     const hasPermission = isTrainer || isAdmin;
     if (!hasPermission) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);

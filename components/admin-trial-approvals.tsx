@@ -394,7 +394,7 @@ export default function AdminTrialApprovals() {
                   <div className="flex-1 min-w-0 space-y-3">
                     {/* Header */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-lg text-brand-primary">
+                      <span className="font-semibold text-lg text-primary">
                         {r.participant.firstName} {r.participant.lastName}
                       </span>
                       {statusBadge(r.status)}
@@ -568,9 +568,7 @@ export default function AdminTrialApprovals() {
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-border dark:border-white/5 flex items-center justify-between">
                   <div>
-                    <h2 className="text-lg font-semibold text-brand-primary">
-                      Probetraining bestätigen
-                    </h2>
+                    <h2 className="text-lg font-semibold text-primary">Probetraining bestätigen</h2>
                     {trial && (
                       <p className="text-sm text-muted-foreground mt-0.5">
                         {trial.participant.firstName} {trial.participant.lastName} &middot;{' '}
@@ -702,9 +700,7 @@ export default function AdminTrialApprovals() {
               <div className="bg-background dark:bg-card rounded-xl shadow-2xl border border-border dark:border-white/10 w-full max-w-md mx-4 overflow-hidden">
                 <div className="px-6 py-4 border-b border-border dark:border-white/5 flex items-center justify-between">
                   <div>
-                    <h2 className="text-lg font-semibold text-brand-primary">
-                      Zu Mitglied konvertieren
-                    </h2>
+                    <h2 className="text-lg font-semibold text-primary">Zu Mitglied konvertieren</h2>
                     <p className="text-sm text-muted-foreground mt-0.5">
                       Erstellt einen Vereins-Account und Mitgliedschaft
                     </p>

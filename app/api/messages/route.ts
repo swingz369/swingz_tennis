@@ -32,13 +32,29 @@ export async function GET(request: NextRequest) {
 
     const column = folder === 'sent' ? 'sender_id' : 'receiver_id';
 
+    /**
+     * Ordner-Sichten (Migration 20260815160000):
+     *   inbox   — an mich, nicht gelöscht, nicht archiviert
+     *   archive — an mich, nicht gelöscht, archiviert
+     *   sent    — von mir, nicht aus „Gesendet" entfernt
+     * Ohne diese Filter tauchte jede archivierte oder gelöschte Nachricht
+     * weiter im Posteingang auf.
+     */
+    const applyFolderFilter = (q: any) => {
+      if (folder === 'sent') return q.is('sender_deleted_at', null);
+      q = q.is('deleted_at', null);
+      return folder === 'archive' ? q.not('archived_at', 'is', null) : q.is('archived_at', null);
+    };
+
     // Lightweight count-only mode for notification bell polling
     if (countOnly && folder === 'inbox') {
-      const { count, error } = await sb
-        .from('messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('receiver_id', user.id)
-        .eq('is_read', false);
+      const { count, error } = await applyFolderFilter(
+        sb
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('receiver_id', user.id)
+          .eq('is_read', false)
+      );
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -48,10 +64,9 @@ export async function GET(request: NextRequest) {
 
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '10', 10) || 10));
 
-    const { data: messages, error } = await sb
-      .from('messages')
-      .select('*')
-      .eq(column, user.id)
+    const { data: messages, error } = await applyFolderFilter(
+      sb.from('messages').select('*').eq(column, user.id)
+    )
       .order('created_at', { ascending: false })
       .limit(limit);
 

@@ -16,7 +16,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       // die Trainer-Abrechnung seines Vereins — superadmin war hier ein Ausreißer.
       const hasPermission = await verifyRole(auth, 'admin');
       if (!hasPermission) {
-        return forbiddenResponse('Admin access required');
+        return forbiddenResponse('Zugriff nur für Admins');
       }
 
       const { id } = await params;

@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth } from '@/lib/api-auth';
+import { withApiAuth, verifyRole } from '@/lib/api-auth';
 
 // GET /api/news/[id] — returns a single news item
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
 
   return withApiAuth(req, async (auth) => {
-    if (auth.role !== 'admin' && auth.role !== 'superadmin') {
+    if (!(await verifyRole(auth, 'admin'))) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -51,7 +51,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { id } = await params;
 
   return withApiAuth(req, async (auth) => {
-    if (auth.role !== 'admin' && auth.role !== 'superadmin') {
+    if (!(await verifyRole(auth, 'admin'))) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

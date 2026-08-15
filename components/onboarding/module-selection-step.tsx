@@ -31,6 +31,11 @@ interface ModuleSelectionStepProps {
   continueLabel?: string;
   /** Optional initial values (for settings tab re-render). */
   initialFeatures?: Record<string, boolean>;
+  /**
+   * Jeder Klick schreibt sofort. Default an — nur der Onboarding-Wizard
+   * schaltet das ab, weil er die Auswahl zusammen mit dem Schritt speichert.
+   */
+  autoSave?: boolean;
 }
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -56,6 +61,7 @@ export function ModuleSelectionStep({
   showContinue = true,
   continueLabel = 'Auswahl speichern',
   initialFeatures,
+  autoSave = true,
 }: ModuleSelectionStepProps) {
   const [features, setFeatures] = useState<Record<string, boolean>>(
     () => initialFeatures ?? getDefaultFeatures()
@@ -76,13 +82,53 @@ export function ModuleSelectionStep({
     return () => controller.abort();
   }, [clubId, initialFeatures]);
 
-  const handleToggle = (key: FeatureKey) => {
+  /**
+   * Umschalten speichert sofort (außer im Onboarding-Wizard, der die Auswahl
+   * am Ende gebündelt schreibt).
+   *
+   * Vorher änderte ein Klick nur den lokalen State: Das Modul sah aktiviert
+   * aus, in `clubs.features` stand aber weiter nichts — und die Navigation
+   * blendete den Bereich aus. Wer den „Speichern"-Knopf übersah (im
+   * Einstellungen-Tab steht er unter der Kachelliste), hatte ein Modul, das
+   * angeblich an ist und nirgends auftaucht.
+   */
+  const handleToggle = async (key: FeatureKey) => {
     const feature = CLUB_FEATURES.find((f) => f.key === key);
     if (feature?.category === 'core') {
       toast.info('Grundfunktionen sind immer aktiv.');
       return;
     }
-    setFeatures((prev) => ({ ...prev, [key]: !prev[key] }));
+
+    const next = { ...features, [key]: !features[key] };
+    setFeatures(next);
+    if (!autoSave) return;
+
+    setSaving(true);
+    try {
+      const res = await apiFetch(`/api/clubs/${clubId}/features`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setFeatures(features); // zurückdrehen — sonst lügt die Oberfläche
+        toast.error(err?.error ?? 'Modul konnte nicht gespeichert werden');
+        return;
+      }
+      const data = await res.json();
+      const saved = sanitizeFeatureFlags(data?.features);
+      setFeatures(saved);
+      toast.success(
+        `${feature?.label ?? 'Modul'} ${saved[key] ? 'aktiviert' : 'deaktiviert'} — die Navigation aktualisiert sich beim nächsten Seitenwechsel.`
+      );
+      onSaved?.(saved);
+    } catch {
+      setFeatures(features);
+      toast.error('Netzwerkfehler — Modul nicht gespeichert');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSave = async () => {
@@ -113,7 +159,7 @@ export function ModuleSelectionStep({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-brand-primary" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -131,8 +177,8 @@ export function ModuleSelectionStep({
         key={feature.key}
         className={`relative cursor-pointer transition-all duration-200 ${
           enabled
-            ? 'border-brand-primary bg-brand-primary/5 shadow-sm'
-            : 'border-border hover:border-brand-primary/40 hover:shadow-sm'
+            ? 'border-primary bg-primary/5 shadow-sm'
+            : 'border-border hover:border-primary/40 hover:shadow-sm'
         }`}
         onClick={() => handleToggle(feature.key as FeatureKey)}
         role="button"
@@ -150,7 +196,7 @@ export function ModuleSelectionStep({
           <div className="flex items-start gap-3">
             <div
               className={`p-2.5 rounded-xl shrink-0 ${
-                enabled ? 'bg-brand-primary text-white' : 'bg-muted text-muted-foreground'
+                enabled ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
               }`}
             >
               <Icon className="h-5 w-5" />
@@ -164,7 +210,7 @@ export function ModuleSelectionStep({
                     und wurde in der schmalen Kachel sonst abgeschnitten. */}
                 <h3 className="font-semibold text-foreground break-words">{feature.label}</h3>
                 {isCore && (
-                  <span className="inline-flex items-center gap-1 text-2xs font-medium uppercase tracking-wider text-brand-primary bg-brand-primary/10 px-1.5 py-0.5 rounded">
+                  <span className="inline-flex items-center gap-1 text-2xs font-medium uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded">
                     <Lock className="h-2.5 w-2.5" />
                     Pflicht
                   </span>
@@ -176,7 +222,7 @@ export function ModuleSelectionStep({
             </div>
             <div
               className={`shrink-0 w-10 h-5 rounded-full transition-colors ${
-                enabled ? 'bg-brand-primary' : 'bg-muted'
+                enabled ? 'bg-primary' : 'bg-muted'
               } relative`}
             >
               <div
@@ -229,7 +275,7 @@ export function ModuleSelectionStep({
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="bg-brand-primary hover:bg-brand-primary/90 text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
           >
             {saving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

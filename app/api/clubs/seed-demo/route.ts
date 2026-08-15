@@ -25,7 +25,7 @@ const OPENING_HOURS = {
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'superadmin');
-    if (!hasRole) return forbiddenResponse('Superadmin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Superadmins');
 
     const sb = createServiceClient();
 
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
           shop: true,
           tournaments: true,
           trial_training: true,
-          ai_matchmaking: true,
+          partner_finder: true,
           weather_integration: true,
           league_lineup: false,
           work_duty: false,

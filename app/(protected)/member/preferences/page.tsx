@@ -371,7 +371,7 @@ export default function MemberPreferencesPage() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-brand-primary" />
+              <Calendar className="h-4 w-4 text-primary" />
               Wann kannst du trainieren?
             </CardTitle>
             <span className="text-xs text-muted-foreground tabular-nums">
@@ -459,7 +459,7 @@ export default function MemberPreferencesPage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Target className="h-4 w-4 text-brand-primary" />
+            <Target className="h-4 w-4 text-primary" />
             Mein Spielniveau
           </CardTitle>
           <CardDescription>
@@ -475,7 +475,7 @@ export default function MemberPreferencesPage() {
                 disabled={isSubmitted}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors border ${
                   level === key
-                    ? 'bg-brand-primary text-white border-brand-primary shadow-sm'
+                    ? 'bg-primary text-white border-primary shadow-sm'
                     : 'border-border bg-background text-foreground hover:bg-muted'
                 } disabled:opacity-50`}
               >
@@ -491,7 +491,7 @@ export default function MemberPreferencesPage() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <Users className="h-4 w-4 text-brand-primary" />
+              <Users className="h-4 w-4 text-primary" />
               Mit wem möchtest du trainieren?
             </CardTitle>
             <span className="text-xs text-muted-foreground tabular-nums">
@@ -553,7 +553,7 @@ export default function MemberPreferencesPage() {
                         disabled={!selected && maxReached}
                         className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left transition-colors ${
                           selected
-                            ? 'bg-brand-primary/10 text-brand-primary font-medium'
+                            ? 'bg-primary/10 text-primary font-medium'
                             : maxReached
                               ? 'opacity-40 cursor-not-allowed'
                               : 'hover:bg-muted'
@@ -581,7 +581,7 @@ export default function MemberPreferencesPage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <MessageSquare className="h-4 w-4 text-brand-primary" />
+            <MessageSquare className="h-4 w-4 text-primary" />
             Anmerkungen
           </CardTitle>
           <CardDescription>
@@ -594,7 +594,7 @@ export default function MemberPreferencesPage() {
             onChange={(e) => setSpecialRequests(e.target.value)}
             disabled={isSubmitted}
             placeholder="Optionale Hinweise an den Trainer / Admin..."
-            className="w-full min-h-[80px] rounded-xl border border-border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:opacity-50"
+            className="w-full min-h-[80px] rounded-xl border border-border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
           />
         </CardContent>
       </Card>

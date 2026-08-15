@@ -39,6 +39,13 @@ export interface AdminSectionProps {
    * for the groups an admin reaches for constantly (members, court ops), so
    * the dashboard doesn't hide its own main features behind an extra click. */
   defaultOpen?: boolean;
+  /**
+   * Kennzahl rechts in der Gruppenzeile (z. B. `248`, `68 %`).
+   * Bewusst `string`, nicht `number`: die Saisonplanung zeigt einen
+   * Prozentwert, die Mitglieder eine Anzahl — die Formatierung gehört zum
+   * Aufrufer, nicht hierher.
+   */
+  badge?: string | null;
 }
 
 // Pre-defined colour themes (mirrors roleColors in sidebar)
@@ -51,7 +58,7 @@ export const adminSectionColors: Record<string, AdminSectionColors> = {
     ring: 'ring-info-300/40',
   },
   admin: {
-    gradient: 'from-brand-light to-brand-primary',
+    gradient: 'from-brand-light to-primary',
     bg: 'bg-brand-light/10 dark:bg-brand-light/15',
     text: 'text-brand-light dark:text-success-300',
     light: 'brand-light',
@@ -90,6 +97,7 @@ export function AdminSection({
   onClose,
   colors,
   extraAction,
+  badge,
   defaultOpen = false,
 }: AdminSectionProps) {
   const hasActiveChild = subItems.some((item) => isActivePath(pathname, item.href));
@@ -146,7 +154,9 @@ export function AdminSection({
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          'w-full flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider transition-colors duration-200',
+          // Abschnittsüberschrift ist eine Beschriftung, kein Menüpunkt: enger
+          // gesperrt, kleiner, ohne eigene Hover-Fläche über die volle Breite.
+          'w-full flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] transition-colors duration-200',
           hasActiveChild
             ? `${colors.bg} ${colors.text}`
             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -156,6 +166,14 @@ export function AdminSection({
       >
         <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <span className="flex-1 text-left">{label}</span>
+        {badge && (
+          // Mono und ohne Sperrung — die Kennzahl soll sich von der gesperrten
+          // Versalschrift der Beschriftung absetzen und beim Wechsel der Zahl
+          // nicht die Breite springen lassen.
+          <span className="shrink-0 rounded bg-muted px-1.5 font-mono text-[10px] font-semibold tracking-normal text-foreground/70 tabular-nums">
+            {badge}
+          </span>
+        )}
         <ChevronDown
           className={cn(
             'h-3.5 w-3.5 shrink-0 transition-transform duration-200',
@@ -172,7 +190,7 @@ export function AdminSection({
           isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         )}
       >
-        <div className="ml-2 pl-2 border-l border-border space-y-0.5 pb-0.5">
+        <div className="ml-3.5 border-l border-border pl-1.5 space-y-px pb-0.5">
           {subItems.map((item) => {
             const isActive = isActivePath(pathname, item.href);
             return (
@@ -181,7 +199,7 @@ export function AdminSection({
                 href={item.href}
                 onClick={() => onClose?.()}
                 className={cn(
-                  'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-all duration-150',
+                  'flex items-center justify-between rounded-xl px-3 py-1.5 text-[13.5px] font-medium transition-all duration-150',
                   isActive
                     ? `${colors.bg} ${colors.text}`
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'

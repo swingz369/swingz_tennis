@@ -26,14 +26,14 @@ export async function POST(request: NextRequest) {
         const isAdmin = await verifyRole(auth, 'admin');
         const isMember = await verifyRole(auth, 'member');
         if (!isAdmin && !isMember) {
-          return forbiddenResponse('Insufficient permissions to create SEPA mandates');
+          return forbiddenResponse('Keine Berechtigung zum Anlegen von SEPA-Mandaten');
         }
 
         const body = await request.json();
 
         // Members can only create mandates for themselves
         if (!isAdmin && body.memberId && body.memberId !== auth.user.id) {
-          return forbiddenResponse('Members can only create mandates for themselves');
+          return forbiddenResponse('Mitglieder können nur Mandate für sich selbst anlegen');
         }
         if (!isAdmin) {
           body.memberId = auth.user.id;
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
       const readsOwnActiveMandate =
         active === 'true' && !mandateId && (!memberId || memberId === auth.user.id);
       if (!isPrivileged && !readsOwnActiveMandate) {
-        return forbiddenResponse('Insufficient permissions to view SEPA mandates');
+        return forbiddenResponse('Keine Berechtigung zum Anzeigen von SEPA-Mandaten');
       }
 
       if (mandateId) {

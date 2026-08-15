@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     // Only trainers and admins can create absences
     const hasPermission = await verifyRole(auth, 'trainer');
     if (!hasPermission) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     // Members can view absences
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) {
-      return forbiddenResponse('Authentication required');
+      return forbiddenResponse('Anmeldung erforderlich');
     }
 
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);

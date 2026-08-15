@@ -285,7 +285,7 @@ async function main() {
             shop: false,
             tournaments: false,
             trial_trainings: false,
-            ai_matchmaking: false,
+            partner_finder: false,
           }),
         ]
       );

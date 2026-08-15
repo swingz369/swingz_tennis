@@ -151,3 +151,41 @@ export function exportMembersCSV(
   const csv = convertToCSV(data, headers);
   downloadCSV(csv, 'mitglieder');
 }
+
+/**
+ * Export trainers to CSV.
+ * Felder bewusst flach gehalten — Qualifikationen und Verfügbarkeiten sind
+ * verschachtelte Listen und gehören nicht in eine Tabellenspalte.
+ */
+export function exportTrainersCSV(
+  trainers: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string | null;
+    status: string;
+    specializations?: { name: string }[];
+    contractedHourlyRate?: number | null;
+  }[]
+): void {
+  const headers: Record<string, string> = {
+    name: 'Name',
+    email: 'E-Mail',
+    phone: 'Telefon',
+    status: 'Status',
+    specializations: 'Schwerpunkte',
+    rate: 'Stundensatz (EUR)',
+  };
+
+  const data = trainers.map((t) => ({
+    name: `${t.firstName} ${t.lastName}`.trim(),
+    email: t.email,
+    phone: t.phone || '',
+    status: t.status,
+    specializations: (t.specializations ?? []).map((s) => s.name).join(', '),
+    rate: t.contractedHourlyRate != null ? String(t.contractedHourlyRate) : '',
+  }));
+
+  const csv = convertToCSV(data, headers);
+  downloadCSV(csv, 'trainer');
+}

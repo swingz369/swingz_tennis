@@ -142,9 +142,12 @@ describe('TrainerAvailabilityManager (integration)', () => {
       expect(screen.getByText('1 Fenster')).toBeInTheDocument();
     });
 
-    // Find the Monday "11:00" chip — should be active (brand-primary)
+    // Find the Monday "11:00" chip — should be active (primary).
+    // Auf `bg-primary text-white` prüfen, nicht nur auf `bg-primary`: die
+    // Hinzufügen-Chips tragen `hover:bg-primary` und würden bei einem reinen
+    // Teilstring-Vergleich mit anschlagen.
     const allChips = screen.getAllByText('11:00');
-    const mondayChip = allChips.find((el) => el.className.includes('bg-brand-primary'));
+    const mondayChip = allChips.find((el) => el.className.includes('bg-primary text-white'));
     expect(mondayChip).toBeTruthy();
 
     // Click again → toggle off

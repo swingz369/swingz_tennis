@@ -1,6 +1,8 @@
 // Shared scheduling constants — single source of truth
 // Adapted from TSOWAPP with SwingZ-specific extensions
 
+import type { SkillLevel } from '@/lib/types/season-planning';
+
 export const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'] as const;
 export const DAY_LABELS = [
   'Montag',
@@ -11,6 +13,26 @@ export const DAY_LABELS = [
   'Samstag',
   'Sonntag',
 ] as const;
+
+/**
+ * Niveau-Stufen: Rangfolge und deutsche Beschriftung. Gemeinsame Quelle für die
+ * Clustering-Engine und die Konflikterkennung — vorher lagen beide Tabellen
+ * privat in `clustering-engine.ts`, weshalb die Konfliktregel zur Niveau-Spanne
+ * die Spanne nicht selbst berechnen konnte und stattdessen Warntexte durchsuchte.
+ */
+export const LEVEL_RANK: Record<SkillLevel, number> = {
+  beginner: 0,
+  intermediate: 1,
+  advanced: 2,
+  professional: 3,
+};
+
+export const LEVEL_LABEL: Record<SkillLevel, string> = {
+  beginner: 'Anfänger',
+  intermediate: 'Mittel',
+  advanced: 'Fortgeschritten',
+  professional: 'Profi',
+};
 
 export const HOURS = Array.from(
   { length: 14 },

@@ -147,11 +147,18 @@ export function StatCard({
   const content = (
     <div
       className={cn(
-        'bg-card dark:bg-card border border-border dark:border-white/10 rounded-xl shadow-sm cursor-pointer group transition-colors',
+        // `h-full`: Karten mit Sparkline oder zweiter Zeile sind höher als die
+        // übrigen. Ohne das blieben die kürzeren oben kleben statt die Zeilenhöhe
+        // mitzugehen — die KPI-Reihe wirkte dadurch ausgefranst.
+        'h-full bg-card dark:bg-card border border-border dark:border-white/10 rounded-xl shadow-sm cursor-pointer group transition-colors',
         colors.border,
+        // Hervorgehobene Karte trägt die Aktionsfarbe, nicht den Signal-Ocker:
+        // eine ockerne Oberkante neben einem grünen Kennzahlenband las sich wie
+        // eine Warnung, gemeint war „das hier zuerst".
         featured &&
-          'border-t-[3px] border-t-[hsl(var(--brand-accent-dashboard))] bg-gradient-to-b from-[hsl(var(--brand-accent-dashboard)/0.06)] to-transparent',
-        className
+          'border-t-[3px] border-t-primary bg-gradient-to-b from-primary/[0.06] to-transparent',
+        // Ohne `href` ist dieses div selbst das Grid-Kind und trägt die Layout-Klassen.
+        !href && className
       )}
     >
       <div className="p-5">
@@ -209,8 +216,12 @@ export function StatCard({
   );
 
   if (href) {
+    // `className` gehört hier auf den Link, nicht auf die Karte darin: mit `href`
+    // ist der Link das Grid-Kind. Layout-Klassen wie `lg:col-span-2` landeten
+    // vorher eine Ebene zu tief und wirkten nicht — im Admin-Dashboard blieb
+    // dadurch die fünfte Spalte der KPI-Zeile leer.
     return (
-      <Link href={href} className="block">
+      <Link href={href} className={cn('block h-full', className)}>
         {content}
       </Link>
     );

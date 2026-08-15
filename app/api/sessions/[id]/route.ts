@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const isAdmin = await verifyRole(auth, 'admin');
     const isTrainer = await verifyRole(auth, 'trainer');
     if (!isAdmin && !isTrainer) {
-      return forbiddenResponse('Admin or trainer access required');
+      return forbiddenResponse('Zugriff nur für Admins oder Trainer');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
@@ -71,13 +71,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
       // Authorization: trainer can only update own sessions; admin can update any in their club
       if (isTrainer && session.trainer_id !== auth.user.id) {
-        return forbiddenResponse('Trainers can only update their own sessions');
+        return forbiddenResponse('Trainer können nur ihre eigenen Sessions ändern');
       }
 
       // For admin, ensure session belongs to admin's club (unless superadmin)
       if (isAdmin && auth.role !== 'superadmin') {
         if (session.club_id !== auth.clubId) {
-          return forbiddenResponse('Cannot update session from different club');
+          return forbiddenResponse('Session eines anderen Vereins kann nicht geändert werden');
         }
       }
 
@@ -172,7 +172,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const isAdmin = await verifyRole(auth, 'admin');
     const isTrainer = await verifyRole(auth, 'trainer');
     if (!isAdmin && !isTrainer) {
-      return forbiddenResponse('Admin or trainer access required');
+      return forbiddenResponse('Zugriff nur für Admins oder Trainer');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
@@ -203,13 +203,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
       // Authorization: trainer can only delete own sessions; admin can delete any in their club
       if (isTrainer && session.trainer_id !== auth.user.id) {
-        return forbiddenResponse('Trainers can only delete their own sessions');
+        return forbiddenResponse('Trainer können nur ihre eigenen Sessions löschen');
       }
 
       // For admin, ensure session belongs to admin's club (unless superadmin)
       if (isAdmin && auth.role !== 'superadmin') {
         if (session.club_id !== auth.clubId) {
-          return forbiddenResponse('Cannot delete session from different club');
+          return forbiddenResponse('Session eines anderen Vereins kann nicht gelöscht werden');
         }
       }
 

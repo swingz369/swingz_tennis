@@ -1,21 +1,29 @@
 import { requireAdminClub } from '@/lib/admin-context';
 import Link from 'next/link';
 import {
-  Users,
-  CreditCard,
   UserPlus,
   Receipt,
   LockKeyhole,
   Calendar,
   Sparkles,
+  LayoutGrid,
+  ArrowRight,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { PremiumAdminHero } from '@/components/admin/premium-admin-hero';
-import { StatCard } from '@/components/ui/stat-card';
+import { KpiBand, type KpiBandItem } from '@/components/ui/kpi-band';
+import { CourtOccupancyHeatmap } from '@/components/admin/court-occupancy-heatmap';
+import { SeasonProgressCard, type SeasonProgress } from '@/components/admin/season-progress-card';
+import {
+  buildOccupancyGrid,
+  currentWeekRange,
+  OCCUPANCY_FIRST_HOUR,
+  OCCUPANCY_LAST_HOUR,
+} from '@/lib/court-occupancy';
 import {
   ActivityFeedCompact,
   type TimelineActivityItem,
 } from '@/components/admin/activity-feed-compact';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { IconBox } from '@/components/ui/icon-box';
 import {
@@ -50,8 +58,11 @@ type SmartAction = {
   description: string;
   href: string;
   icon: typeof UserPlus;
-  variant: 'blue' | 'orange' | 'purple' | 'light';
-  urgent?: boolean;
+  /** Rechts stehende Kennzahl („3 offen", „4 fällig"). Trägt die Zahl, damit
+   *  das Label die Handlung benennen kann statt sie mit ihr zu vermischen —
+   *  „Rechnungen erstellen · 4 fällig" liest sich als eine Aktion mit einem
+   *  Grund, „4 Rechnungen erstellen" als eine Aktion mit einer Menge. */
+  badge?: string;
 };
 
 /**
@@ -189,6 +200,7 @@ export default async function AdminPage() {
     { count: totalInvoiceCount },
     { data: priorPaidInvoices },
     { count: priorMemberCount },
+    { data: outstandingInvoices },
   ] = await Promise.all([
     safe(
       supabase
@@ -223,7 +235,96 @@ export default async function AdminPage() {
         .eq('role', 'member')
         .lte('created_at', priorMonthEnd.toISOString())
     ),
+    // Offene Forderungen: gestellte, aber unbezahlte Rechnungen. `draft` zählt
+    // nicht mit (noch nicht verschickt), `cancelled` und `paid` erst recht nicht.
+    safe(
+      supabase
+        .from('invoices')
+        // `due_date` für die Begrüssungszeile: „4 Rechnungen fällig zum 01.09."
+        // — die nächste Frist ist das, was den Satz handlungsrelevant macht.
+        .select('amount, status, due_date')
+        .eq('club_id', clubId)
+        .in('status', ['open', 'overdue'])
+    ),
   ]);
+
+  // Dritter Block: Platzbelegung der laufenden Woche. Eigener Block, weil
+  // die beiden oberen bereits an der 10er-Tuple-Grenze von `Promise.all`
+  // kleben (Begründung im Kommentar darüber).
+  //
+  // Zwei Quellen, weil der Verein zwei Wege kennt, einen Platz zu belegen:
+  // geplante `sessions` aus der Saisonplanung und `bookings` einzelner
+  // Mitglieder. Nur eine davon zu zeigen würde die Karte systematisch
+  // untertreiben. Doppelzählung schliesst `buildOccupancyGrid` aus.
+  const week = currentWeekRange();
+  const [{ data: weekSessions }, { data: weekBookings }] = await Promise.all([
+    safe(
+      supabase
+        .from('sessions')
+        .select('timeslot_start, court_id, schedules!inner(club_id)')
+        .eq('schedules.club_id', clubId)
+        .is('cancelled_at', null)
+        .gte('timeslot_start', week.from)
+        .lt('timeslot_start', week.to)
+    ),
+    safe(
+      supabase
+        .from('bookings')
+        .select('session_start_time, court_id')
+        .eq('club_id', clubId)
+        .eq('status', 'confirmed')
+        .gte('session_start_time', week.from)
+        .lt('session_start_time', week.to)
+    ),
+  ]);
+
+  const occupancyGrid = buildOccupancyGrid(
+    [
+      ...(weekSessions ?? []).map((s: Record<string, unknown>) => ({
+        start: s.timeslot_start as string,
+        courtId: (s.court_id as string | null) ?? null,
+      })),
+      ...(weekBookings ?? []).map((b: Record<string, unknown>) => ({
+        start: b.session_start_time as string,
+        courtId: (b.court_id as string | null) ?? null,
+      })),
+    ],
+    setupCounts.courts ?? 0
+  );
+
+  // ── Saison-Fortschritt ──────────────────────────────────────────────
+  // Die aktuellste Saison des Vereins plus die Zahl der bereits abgegebenen
+  // Präferenzen. `head: true` mit `count` statt die Zeilen zu laden — gezählt
+  // wird, nicht gelesen.
+  const { data: currentSeason } = await safe(
+    supabase
+      .from('seasons')
+      .select('id, name, planning_status, preferences_deadline, start_date, end_date')
+      .eq('club_id', clubId)
+      .order('year', { ascending: false })
+      .order('start_date', { ascending: false })
+      .limit(1)
+  );
+  const season = (currentSeason ?? [])[0] as
+    | {
+        id: string;
+        name: string;
+        planning_status: string;
+        preferences_deadline: string | null;
+        start_date: string | null;
+        end_date: string | null;
+      }
+    | undefined;
+
+  const { count: preferenceCount } = season
+    ? await safe(
+        supabase
+          .from('user_training_preferences')
+          .select('id', { count: 'exact', head: true })
+          .eq('season_id', season.id)
+          .eq('user_role', 'member')
+      )
+    : { count: null };
 
   const memberCount = setupCounts.members;
 
@@ -232,6 +333,21 @@ export default async function AdminPage() {
     (sum: number, inv: { amount?: number | null }) => sum + (inv.amount ?? 0),
     0
   );
+
+  // Offene Forderungen — der Betrag, bei dem ein Vorstand tatsächlich handeln muss.
+  const outstandingRows = (outstandingInvoices ?? []) as {
+    amount?: number | null;
+    status?: string | null;
+    due_date?: string | null;
+  }[];
+  const outstandingAmount = outstandingRows.reduce((sum, inv) => sum + (inv.amount ?? 0), 0);
+  const overdueCount = outstandingRows.filter((inv) => inv.status === 'overdue').length;
+  // Nächste Frist über alle offenen Rechnungen — die Zahl in der Begrüssung
+  // ohne Datum wäre eine Meldung, mit Datum eine Aufgabe.
+  const nextInvoiceDue = outstandingRows
+    .map((inv) => inv.due_date)
+    .filter((d): d is string => typeof d === 'string' && !Number.isNaN(Date.parse(d)))
+    .sort()[0];
   const priorMonthRevenue = (priorPaidInvoices ?? []).reduce(
     (sum: number, inv: { amount?: number | null }) => sum + (inv.amount ?? 0),
     0
@@ -352,12 +468,20 @@ export default async function AdminPage() {
 
   if (needsApprovals) {
     smartActions.push({
-      label: `${pendingApprovals} Anfrage${(pendingApprovals ?? 0) > 1 ? 'n' : ''} genehmigen`,
+      label: 'Anfragen genehmigen',
       description: 'Neue Mitgliedsanfragen warten auf dich',
       href: '/admin/members?tab=approvals',
       icon: UserPlus,
-      variant: 'orange',
-      urgent: true,
+      badge: `${pendingApprovals} offen`,
+    });
+  }
+  if (overdueCount > 0) {
+    smartActions.push({
+      label: 'Rechnungen mahnen',
+      description: 'Überfällige Rechnungen anschreiben',
+      href: '/admin/billing',
+      icon: Receipt,
+      badge: `${overdueCount} fällig`,
     });
   }
   if (needsBilling) {
@@ -366,18 +490,16 @@ export default async function AdminPage() {
       description: `Monatsabrechnung für ${memberCount ?? 0} Mitglieder`,
       href: '/admin/billing',
       icon: Receipt,
-      variant: 'blue',
-      urgent: true,
     });
   }
   if (hasSessions) {
     // P0-C fix: singularize when activeSessions === 1.
     smartActions.push({
-      label: `${activeSessions === 1 ? '1 Session' : `${activeSessions} Sessions`} überprüfen`,
+      label: 'Sessions überprüfen',
       description: `${activeSessions === 1 ? '1 Session' : `${activeSessions} Sessions`} heute aktiv`,
       href: '/admin/seasons',
       icon: Calendar,
-      variant: 'light',
+      badge: `${activeSessions} heute`,
     });
   }
 
@@ -386,14 +508,12 @@ export default async function AdminPage() {
     description: 'Neues Mitglied zum Verein hinzufügen',
     href: '/admin/members',
     icon: UserPlus,
-    variant: 'blue',
   });
   smartActions.push({
     label: 'Platz verwalten',
     description: 'Plätze sperren oder Kalender einsehen',
     href: '/admin/courts',
     icon: LockKeyhole,
-    variant: 'purple',
   });
 
   // ─── Derived data for new premium components ───
@@ -415,111 +535,106 @@ export default async function AdminPage() {
         ? '/admin/billing'
         : '/admin/members';
 
-  /**
-   * Builds a short 5-point ramp ending at `value`, anchored at a starting
-   * point derived from the honest growth percentage (P0-A). Falls back to
-   * a flat line (all points = value) when no growth signal exists, so
-   * the card height stays stable across the four KPIs.
-   */
-  function buildTrend(value: number, growthPct: number | null = 0): number[] {
-    if (!value || value <= 0) return [0, 0, 0, 0, 0];
-    const growth = typeof growthPct === 'number' && Number.isFinite(growthPct) ? growthPct : 0;
-    const start = value / (1 + growth / 100);
-    return [0.25, 0.5, 0.7, 0.9, 1].map((t) => Math.round(start + (value - start) * t));
-  }
+  // Tage bis zum Präferenz-Stichtag. Auf Tagesgrenzen normalisiert, damit
+  // „endet in 9 Tagen" nicht je nach Uhrzeit zwischen 8 und 9 springt.
+  const seasonDaysLeft = (() => {
+    if (!season?.preferences_deadline) return null;
+    const deadline = new Date(season.preferences_deadline);
+    deadline.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.round((deadline.getTime() - today.getTime()) / 86_400_000);
+  })();
 
-  const kpiItems = [
+  const seasonProgress: SeasonProgress | null = season
+    ? {
+        name: season.name,
+        planningStatus: season.planning_status,
+        submitted: preferenceCount ?? 0,
+        total: memberCount ?? 0,
+        daysLeft: seasonDaysLeft,
+        startDate: season.start_date,
+        endDate: season.end_date,
+        href: `/admin/seasons/${season.id}/planning`,
+      }
+    : null;
+
+  // KPI-Band statt vier Karten. Die Sparklines sind mit den Karten
+  // weggefallen: sie ramp­ten aus *einer* Wachstumszahl fünf interpolierte
+  // Punkte hoch — eine gezeichnete Kurve, für die es nie fünf Messwerte gab.
+  // Die Wachstumszahl selbst steht weiterhin darunter, die war echt.
+  const kpiItems: KpiBandItem[] = [
     {
       label: 'Mitglieder',
       value: memberCount ?? 0,
-      icon: Users,
-      color: 'brand' as const,
-      // P0-A: honest growth percentage, not hardcoded.
       sub:
         memberGrowthPct === null
           ? 'noch keine Vergleichsdaten'
-          : `${memberGrowthPct >= 0 ? '+' : ''}${memberGrowthPct}% zum Vormonat`,
+          : `${memberGrowthPct >= 0 ? '+' : ''}${memberGrowthPct} % zum Vormonat`,
+      tone: memberGrowthPct === null ? 'flat' : memberGrowthPct >= 0 ? 'up' : 'down',
       href: '/admin/members',
-      trend: buildTrend(memberCount ?? 0, memberGrowthPct),
     },
     {
-      label: 'Heute Sessions',
+      label: 'Sessions heute',
       value: activeSessions ?? 0,
-      icon: Calendar,
-      color: hasSessions ? ('orange' as const) : ('gray' as const),
-      sub: activeSessions && activeSessions > 0 ? 'live' : 'keine Sessions heute',
+      sub: hasSessions ? 'live' : 'keine Sessions heute',
+      tone: 'flat',
       href: '/admin/seasons',
-      trend: buildTrend(activeSessions ?? 0),
     },
     {
       label: 'Umsatz ' + new Date().toLocaleDateString('de-DE', { month: 'short' }),
-      value: monthlyRevenue > 0 ? `€${monthlyRevenue.toLocaleString('de-DE')}` : '€0',
-      icon: CreditCard,
-      color: monthlyRevenue > 0 ? ('green' as const) : ('gray' as const),
-      // P0-A: honest revenue growth percentage, not hardcoded.
+      value: monthlyRevenue > 0 ? `${monthlyRevenue.toLocaleString('de-DE')} €` : '0 €',
       sub:
         revenueGrowthPct === null
           ? monthlyRevenue > 0
             ? 'noch keine Vergleichsdaten'
             : 'noch keine Zahlung diesen Monat'
-          : `${revenueGrowthPct >= 0 ? '+' : ''}${revenueGrowthPct}% zum Vormonat`,
+          : `${revenueGrowthPct >= 0 ? '+' : ''}${revenueGrowthPct} % zum Vormonat`,
+      tone: revenueGrowthPct === null ? 'flat' : revenueGrowthPct >= 0 ? 'up' : 'down',
       href: '/admin/billing',
-      trend: buildTrend(monthlyRevenue, revenueGrowthPct),
     },
     {
-      label: 'Anfragen offen',
-      value: pendingApprovals ?? 0,
-      icon: UserPlus,
-      color: needsApprovals ? ('orange' as const) : ('gray' as const),
-      sub: needsApprovals ? 'wartet auf Prüfung' : 'alles bearbeitet',
-      href: '/admin/members?tab=approvals',
-      trend: buildTrend(pendingApprovals ?? 0),
+      // Ersetzt „Anfragen offen": das stand meistens auf 0, und eine 0 ist keine
+      // Kennzahl, sondern eine Benachrichtigung — offene Beitrittsanfragen melden
+      // sich weiterhin über die Aktionskarten und den Tab-Badge unter Mitglieder.
+      // Der ausstehende Betrag ist dagegen der Wert, bei dem ein Vorstand handelt.
+      label: 'Offene Forderungen',
+      value: outstandingAmount > 0 ? `${outstandingAmount.toLocaleString('de-DE')} €` : '0 €',
+      sub:
+        overdueCount > 0
+          ? `${overdueCount} überfällig`
+          : outstandingAmount > 0
+            ? `${outstandingRows.length} offene Rechnung${outstandingRows.length !== 1 ? 'en' : ''}`
+            : 'nichts ausstehend',
+      tone: overdueCount > 0 ? 'down' : 'flat',
+      href: '/admin/billing',
     },
   ];
-
-  // Featured KPI — Umsatz (`index 2`) always spans 2 columns of the
-  // lg:grid-cols-5 layout, but only gets the accent-border treatment when
-  // there's actually revenue to highlight — at €0 the warm accent read
-  // as a false alarm next to the neutral "alles erledigt" banner above.
-  const FEATURED_KPI_INDEX = 2;
 
   // Smart-action card markup — extracted as a closure so the Side-Column
   // layout (P0-D) can render the same cards inside the right Hero column
   // without duplicating the whole JSX block.
+  // Schmale Listenzeile statt breiter Karte. Drei Karten quer über die Seite
+  // beanspruchten die prominenteste Fläche des Dashboards für Navigation —
+  // dort stehen jetzt die Kennzahlen. Als Liste in der Nebenspalte bleiben die
+  // Aktionen erreichbar, ohne den Blick zuerst auf sich zu ziehen.
   const renderSmartAction = (action: SmartAction) => (
-    <Link key={action.href + action.label} href={action.href}>
-      <div
-        className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
-          action.urgent
-            ? 'border-brand-accent-200/70 dark:border-brand-accent-700/40 bg-brand-accent-50/40 dark:bg-brand-accent-900/15'
-            : 'border-border dark:border-white/10 bg-card'
-        }`}
-      >
-        <div className="flex items-start gap-3 h-full relative">
-          <IconBox
-            icon={action.icon}
-            size="sm"
-            variant={action.variant}
-            className="group-hover:scale-110 transition-transform shrink-0"
-          />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-foreground dark:text-white truncate">
-                {action.label}
-              </p>
-              {action.urgent && (
-                <span className="shrink-0 h-2 w-2 rounded-full bg-brand-accent-500 animate-pulse" />
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-              {action.description}
-            </p>
-          </div>
-          <span className="text-muted-foreground/40 group-hover:text-brand-light group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5 text-base leading-none">
-            →
-          </span>
-        </div>
-      </div>
+    <Link
+      key={action.href + action.label}
+      href={action.href}
+      className="group flex items-center gap-3 rounded-xl border border-border bg-background px-3 py-2.5 transition-colors hover:border-ring/40 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <IconBox icon={action.icon} size="xs" className="shrink-0" />
+      <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{action.label}</span>
+      {action.badge && (
+        <span className="shrink-0 rounded px-1.5 font-mono text-[10.5px] font-semibold text-destructive">
+          {action.badge}
+        </span>
+      )}
+      <ArrowRight
+        className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5"
+        aria-hidden="true"
+      />
     </Link>
   );
 
@@ -539,21 +654,20 @@ export default async function AdminPage() {
               : ''
           }
         >
-          <div className="rounded-xl border border-border dark:border-white/10 bg-card p-5 sm:p-6 space-y-5">
+          {/* Kein Kartenrahmen mehr um die Begrüssung: eine Karte verspricht
+              „hier ist ein abgegrenzter Inhalt", die Begrüssung ist aber der
+              Seitenkopf. Der Rahmen liess sie wie ein Widget aussehen und
+              erzeugte zusammen mit dem KPI-Band darunter zwei konkurrierende
+              Kanten direkt untereinander. */}
+          <div className="space-y-5">
             <PremiumAdminHero
               firstName={firstName}
-              clubName={club.name}
               role={role as 'owner' | 'superadmin' | 'admin'}
               todaySessionCount={activeSessions ?? 0}
+              openInvoiceCount={outstandingRows.length}
+              overdueInvoiceCount={overdueCount}
+              nextInvoiceDue={nextInvoiceDue}
             />
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                Schnellaktionen
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {smartActions.map(renderSmartAction)}
-              </div>
-            </div>
           </div>
 
           {club.dashboard_bg_url && (
@@ -575,29 +689,9 @@ export default async function AdminPage() {
         </div>
       </ScrollReveal>
 
-      {/* ── KPI Grid — leads with the numbers, right after the hero ──
-          (5-col asymmetric: featured spans 2, others span 1). Layout reads
-          as 2 + 1 + 1 + 1 = 5 cols on lg+, 2x2 on mobile/tablet. The
-          featured card carries the dashboard's lead metric (Umsatz) and
-          receives a top accent stripe + tinted gradient via StatCard. */}
+      {/* ── KPI-Band — trägt die Zahlen ohne Kartenrahmen ── */}
       <ScrollReveal delay={100}>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          {kpiItems.map((item, idx) => (
-            <StatCard
-              key={item.label}
-              icon={item.icon}
-              label={item.label}
-              value={item.value}
-              sub={item.sub}
-              color={item.color}
-              href={item.href}
-              trend={item.trend}
-              animate
-              featured={idx === FEATURED_KPI_INDEX && monthlyRevenue > 0}
-              className={idx === FEATURED_KPI_INDEX ? 'lg:col-span-2' : undefined}
-            />
-          ))}
-        </div>
+        <KpiBand items={kpiItems} />
       </ScrollReveal>
 
       {/* ── Einrichtung — bleibt sichtbar, bis der Verein einsatzbereit ist ── */}
@@ -679,76 +773,170 @@ export default async function AdminPage() {
         </ScrollReveal>
       )}
 
-      {/* ── Letzte Buchungen + Aktivität (zweispaltig) ── */}
+      {/* ── Bento: Buchungen + Aktivität, darunter Belegung ──
+          12-Spalten-Raster statt zwei Reihen à eigenem Grid. Buchungen (8)
+          und Aktivität (4) stehen oben, die Heatmap (8) mit der Aktivität
+          daneben — so füllt die Wochenbelegung die Fläche, die vorher unter
+          der kurzen Aktivitätsliste leer blieb. */}
       <ScrollReveal delay={300}>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
-          <Card className="lg:col-span-3 border border-border dark:border-white/10 shadow-sm p-0">
-            <CardHeader className="px-5 pt-5 pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
-                <IconBox icon={Calendar} size="xs" variant="light" />
-                Letzte Buchungen
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
-              {latestBookings.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Mitglied</TableHead>
-                      <TableHead>Platz</TableHead>
-                      <TableHead>Zeit</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {latestBookings.map((b) => (
-                      <TableRow key={b.id}>
-                        <TableCell className="font-medium">{b.memberName}</TableCell>
-                        <TableCell className="text-muted-foreground">{b.courtName}</TableCell>
-                        <TableCell className="text-muted-foreground font-mono text-sm">
-                          {b.time}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={b.statusTone} size="sm">
-                            {b.statusLabel}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <p className="text-sm text-muted-foreground px-5 pb-5">
-                  Noch keine Buchungen vorhanden.
-                </p>
-              )}
-              <div className="px-5 pt-3 pb-5 flex justify-end">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          {/* Beide Spalten stapeln ihre Karten selbst (`space-y`), statt
+              Grid-Zeilen zu teilen. Mit geteilten Zeilen richtete sich die
+              Zeilenhöhe an der höheren Spalte aus und riss unter der kurzen
+              Buchungstabelle eine Lücke von mehreren hundert Pixeln auf. */}
+          <div className="lg:col-span-8 space-y-4">
+            <Card className="border border-border dark:border-white/10 shadow-sm p-0">
+              {/* Kopfzeile trägt Titel, Umfang und Ausgang — der Link stand
+                  vorher allein unter der Tabelle und war dort eine eigene
+                  Zeile Leerraum für einen Klick, den kaum jemand macht. */}
+              <CardHeader className="px-5 pt-5 pb-3 flex-row items-start justify-between space-y-0">
+                <div>
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
+                    <IconBox icon={Calendar} size="xs" variant="light" />
+                    Letzte Buchungen
+                  </CardTitle>
+                  <p className="mt-1 text-[11.5px] text-muted-foreground">
+                    {latestBookings.length === 1
+                      ? '1 Vorgang'
+                      : `${latestBookings.length} Vorgänge`}
+                  </p>
+                </div>
                 <Link
-                  href="/bookings"
-                  className="text-xs font-medium text-muted-foreground hover:text-brand-light transition-colors px-1 py-0.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  href="/scheduler"
+                  className="shrink-0 text-[12.5px] font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
                 >
-                  Alle Buchungen anzeigen
+                  Alle Buchungen →
                 </Link>
-              </div>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="px-0 pb-0">
+                {latestBookings.length > 0 ? (
+                  // Kein `Badge` mehr für den Status: fünf gefüllte Pillen
+                  // untereinander waren das Lauteste in der Tabelle, obwohl
+                  // „Bestätigt" der Normalfall ist und niemanden interessiert.
+                  // Ein Punkt plus Wort trägt dieselbe Information leiser — und
+                  // lässt „Warteliste" tatsächlich herausstechen.
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-[10px] uppercase tracking-[0.09em]">
+                          Mitglied
+                        </TableHead>
+                        {/* Feste Breiten für die schmalen Spalten, damit die
+                            Restbreite dem Namen zufällt. Ohne sie verteilte
+                            der Browser die 1060 px der Karte gleichmässig auf
+                            drei Spalten — zwischen Uhrzeit und Status stand
+                            dann ein Handbreit Nichts. Status rechtsbündig,
+                            damit die Zeile eine saubere Aussenkante bekommt. */}
+                        <TableHead className="w-[30%] text-[10px] uppercase tracking-[0.09em]">
+                          Platz / Zeit
+                        </TableHead>
+                        <TableHead className="w-[1%] whitespace-nowrap text-right text-[10px] uppercase tracking-[0.09em]">
+                          Status
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {latestBookings.map((b) => (
+                        <TableRow key={b.id}>
+                          {/* `truncate` wirkt nur in einer begrenzten Zelle,
+                              sonst wächst die Tabelle statt zu kürzen — daher
+                              max-w auf Mobile plus `whitespace-nowrap` bei
+                              Platz/Zeit. Auf 390 px brachen Name und Uhrzeit
+                              sonst jeweils zweizeilig um. */}
+                          <TableCell className="max-w-[8.5rem] truncate font-semibold sm:max-w-none">
+                            {b.memberName}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap font-mono text-xs text-muted-foreground">
+                            {b.courtName} · {b.time}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap text-right">
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1.5 text-[11.5px] font-semibold',
+                                b.statusTone === 'success' && 'text-primary',
+                                b.statusTone === 'warning' && 'text-brand-accent-2',
+                                b.statusTone === 'error' && 'text-destructive',
+                                b.statusTone === 'default' && 'text-muted-foreground'
+                              )}
+                            >
+                              <span
+                                aria-hidden="true"
+                                className="h-1.5 w-1.5 rounded-full bg-current"
+                              />
+                              {b.statusLabel}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <p className="text-sm text-muted-foreground px-5 pb-5">
+                    Noch keine Buchungen vorhanden.
+                  </p>
+                )}
+                <div className="pb-5" />
+              </CardContent>
+            </Card>
 
-          <Card className="lg:col-span-2 border border-border dark:border-white/10 shadow-sm p-0">
-            <CardHeader className="px-5 pt-5 pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
-                <IconBox icon={Sparkles} size="xs" variant="light" />
-                Aktivität
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-5 pb-5">
-              <ActivityFeedCompact
-                items={timelineActivity}
-                emptyMessage="Heute ist noch nichts passiert."
-                footerHref={activityFooterHref}
-                footerLabel="Alle Aktivitäten anzeigen"
-              />
-            </CardContent>
-          </Card>
+            <Card className="border border-border dark:border-white/10 shadow-sm p-0">
+              <CardHeader className="px-5 pt-5 pb-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
+                  <IconBox icon={LayoutGrid} size="xs" variant="light" />
+                  Platzbelegung diese Woche
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Geplante Sessions und bestätigte Buchungen, {OCCUPANCY_FIRST_HOUR}:00 –{' '}
+                  {OCCUPANCY_LAST_HOUR}:00 Uhr
+                </p>
+              </CardHeader>
+              <CardContent className="px-5 pb-5">
+                <CourtOccupancyHeatmap grid={occupancyGrid} />
+                <div className="pt-3 flex justify-end">
+                  <Link
+                    href="/scheduler"
+                    className="text-xs font-medium text-muted-foreground hover:text-brand-light transition-colors px-1 py-0.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    Kalender öffnen
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Nebenspalte: erst was drängt (Saison mit Frist), dann was man tut
+              (Schnellzugriff), dann was passiert ist (Aktivität). */}
+          <div className="lg:col-span-4 space-y-4">
+            {seasonProgress && <SeasonProgressCard season={seasonProgress} />}
+
+            <Card className="border border-border dark:border-white/10 shadow-sm p-0">
+              <CardHeader className="px-5 pt-5 pb-3">
+                <CardTitle className="text-sm font-semibold text-foreground dark:text-white">
+                  Schnellzugriff
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-5 pb-5">
+                <div className="grid gap-2">{smartActions.map(renderSmartAction)}</div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border dark:border-white/10 shadow-sm p-0">
+              <CardHeader className="px-5 pt-5 pb-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
+                  <IconBox icon={Sparkles} size="xs" variant="light" />
+                  Aktivität
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-5 pb-5">
+                <ActivityFeedCompact
+                  items={timelineActivity}
+                  emptyMessage="Heute ist noch nichts passiert."
+                  footerHref={activityFooterHref}
+                  footerLabel="Alle Aktivitäten anzeigen"
+                />
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </ScrollReveal>
     </div>

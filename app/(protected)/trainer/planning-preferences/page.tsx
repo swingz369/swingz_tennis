@@ -133,8 +133,8 @@ export default function TrainerPlanningPreferencesPage() {
         if (data) {
           setPrefId(data.id);
           setTimePrefs(availabilityToPrefs(data.weekly_availability as WeeklyAvailability));
-          setNotes((data as any).special_requests ?? '');
-          setIsSubmitted((data as any).is_submitted ?? false);
+          setNotes(data.special_requests ?? '');
+          setIsSubmitted(data.is_submitted ?? false);
         } else {
           setPrefId(null);
           setTimePrefs([]);
@@ -288,7 +288,7 @@ export default function TrainerPlanningPreferencesPage() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-brand-primary" />
+              <Calendar className="h-4 w-4 text-primary" />
               Wann bist du verfügbar?
             </CardTitle>
             <span className="text-xs text-muted-foreground tabular-nums">
@@ -377,7 +377,7 @@ export default function TrainerPlanningPreferencesPage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <MessageSquare className="h-4 w-4 text-brand-primary" />
+            <MessageSquare className="h-4 w-4 text-primary" />
             Anmerkungen
           </CardTitle>
           <CardDescription>
@@ -390,7 +390,7 @@ export default function TrainerPlanningPreferencesPage() {
             onChange={(e) => setNotes(e.target.value)}
             disabled={isSubmitted}
             placeholder="Optionale Hinweise zur Saisonplanung..."
-            className="w-full min-h-[80px] rounded-xl border border-border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:opacity-50"
+            className="w-full min-h-[80px] rounded-xl border border-border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
           />
         </CardContent>
       </Card>

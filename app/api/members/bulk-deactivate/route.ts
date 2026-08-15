@@ -1,8 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth } from '@/lib/api-auth';
+import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createClient } from '@/infrastructure/external/supabase/server';
+import { logAudit } from '@/lib/audit';
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 
@@ -16,7 +17,7 @@ const bulkDeactivateSchema = z.object({
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     // Only admins can bulk deactivate
-    if (auth.role !== 'admin' && auth.role !== 'superadmin') {
+    if (!(await verifyRole(auth, 'admin'))) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
@@ -65,19 +66,17 @@ export async function POST(request: NextRequest) {
 
       // Audit log each deactivation
       if (deactivated && deactivated.length > 0) {
-        const auditEntries = deactivated.map((entry) => ({
-          actor_id: auth.user.id,
-          action: 'member_bulk_deactivated',
-          resource_type: 'member',
-          resource_id: entry.user_id,
-          club_id: clubId,
-          metadata: { reason, bulk: true, count: deactivated.length },
-          ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
-          user_agent: request.headers.get('user-agent'),
-          created_at: new Date().toISOString(),
-        }));
-
-        await supabase.from('audit_logs').insert(auditEntries as any);
+        await logAudit(
+          deactivated.map((entry) => ({
+            actorId: auth.user.id,
+            action: 'member_bulk_deactivated',
+            resourceType: 'member',
+            resourceId: entry.user_id,
+            clubId,
+            details: { reason, bulk: true, count: deactivated.length },
+            request,
+          }))
+        );
       }
 
       return NextResponse.json({

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) {
-      return forbiddenResponse('Authentication required');
+      return forbiddenResponse('Anmeldung erforderlich');
     }
 
     const supabase = auth.supabase;

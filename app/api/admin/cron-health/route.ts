@@ -15,7 +15,7 @@ const log = createLogger('api:admin:cron-health');
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const isSuperadmin = await verifyRole(auth, 'superadmin');
-    if (!isSuperadmin) return forbiddenResponse('Superadmin access required');
+    if (!isSuperadmin) return forbiddenResponse('Zugriff nur für Superadmins');
 
     try {
       const hours = Math.max(

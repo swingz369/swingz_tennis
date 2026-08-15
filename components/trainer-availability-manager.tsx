@@ -252,7 +252,7 @@ export default function TrainerAvailabilityManager() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Verfügbarkeit</h1>
+          <h1 className="text-2xl font-bold text-primary">Verfügbarkeit</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Deine wöchentlichen Trainingszeiten
           </p>
@@ -364,7 +364,7 @@ export default function TrainerAvailabilityManager() {
                 <button
                   key={start}
                   onClick={() => handleTogglePresetSlot(1, start)}
-                  className="text-xs px-2.5 py-1.5 rounded-xl font-medium transition-colors bg-muted text-muted-foreground hover:bg-brand-primary hover:text-white"
+                  className="text-xs px-2.5 py-1.5 rounded-xl font-medium transition-colors bg-muted text-muted-foreground hover:bg-primary hover:text-white"
                 >
                   {start}
                 </button>
@@ -391,7 +391,7 @@ export default function TrainerAvailabilityManager() {
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
                             count > 0
-                              ? 'bg-brand-primary text-white'
+                              ? 'bg-primary text-white'
                               : 'bg-muted-foreground/20 text-muted-foreground'
                           }`}
                         >
@@ -438,7 +438,7 @@ export default function TrainerAvailabilityManager() {
                             onClick={() => handleTogglePresetSlot(value, start)}
                             className={`text-xs px-2.5 py-1.5 rounded-xl font-medium transition-colors ${
                               active
-                                ? 'bg-brand-primary text-white shadow-sm'
+                                ? 'bg-primary text-white shadow-sm'
                                 : 'bg-muted text-muted-foreground hover:bg-muted-foreground/20'
                             }`}
                           >

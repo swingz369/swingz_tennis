@@ -106,7 +106,7 @@ export function TrainerRsvpList({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-brand-primary" />
+          <Users className="h-5 w-5 text-primary" />
           Session-Teilnehmer & RSVPs
         </CardTitle>
       </CardHeader>
@@ -128,7 +128,7 @@ export function TrainerRsvpList({
                     onClick={() => setSelectedSessionId(session.id)}
                     className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                       isSelected
-                        ? 'bg-brand-primary text-white shadow-md'
+                        ? 'bg-primary text-white shadow-md'
                         : 'bg-muted text-muted-foreground hover:bg-muted'
                     }`}
                   >

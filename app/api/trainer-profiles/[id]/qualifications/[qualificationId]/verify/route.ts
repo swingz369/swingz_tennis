@@ -14,7 +14,7 @@ export async function POST(
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasRole = await verifyRole(auth, 'member');
     if (!hasRole) {
-      return forbiddenResponse('Member access required');
+      return forbiddenResponse('Zugriff nur für Mitglieder');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasRole = (await verifyRole(auth, 'superadmin')) || (await verifyRole(auth, 'owner'));
     if (!hasRole) {
-      return forbiddenResponse('Superadmin access required');
+      return forbiddenResponse('Zugriff nur für Superadmins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);

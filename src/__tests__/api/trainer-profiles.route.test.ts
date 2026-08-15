@@ -608,7 +608,7 @@ describe('GET /api/trainer-profiles — auth + rate-limit smoke', () => {
     const res = await GET(makeGetReq());
     expect(res.status).toBe(403);
     const json = await res.json();
-    expect(json.error).toMatch(/Trainer or admin/i);
+    expect(json.error).toMatch(/Trainer oder Admin/i);
   });
 
   it('returns 200 + empty profiles array on happy path (no trainers configured)', async () => {

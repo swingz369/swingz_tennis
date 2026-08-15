@@ -224,7 +224,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Target className="h-4 w-4 text-brand-primary" />
+            <Target className="h-4 w-4 text-primary" />
             Trainingslevel & Altersgruppe
           </CardTitle>
         </CardHeader>
@@ -300,7 +300,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
                         onClick={() => togglePresetSlot(key, start)}
                         className={`text-xs px-2.5 py-1.5 rounded-xl font-medium transition-colors ${
                           active
-                            ? 'bg-brand-primary text-white shadow-sm'
+                            ? 'bg-primary text-white shadow-sm'
                             : 'bg-muted text-muted-foreground hover:bg-muted/80'
                         }`}
                       >
@@ -423,7 +423,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Users className="h-4 w-4 text-brand-primary" />
+            <Users className="h-4 w-4 text-primary" />
             Trainingspensum
           </CardTitle>
         </CardHeader>

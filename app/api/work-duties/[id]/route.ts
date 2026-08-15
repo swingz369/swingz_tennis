@@ -10,7 +10,7 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'member');
-    if (!hasRole) return forbiddenResponse('Authentication required');
+    if (!hasRole) return forbiddenResponse('Anmeldung erforderlich');
 
     const { id } = await params;
 
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) return forbiddenResponse('Admin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id } = await params;
     const body = await request.json();
@@ -84,7 +84,7 @@ export async function DELETE(
 ) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) return forbiddenResponse('Admin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id } = await params;
 

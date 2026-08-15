@@ -67,6 +67,11 @@ interface ClubSpec {
   finance: boolean;
   /** Zusätzlich aktivierte optionale Module (Core-Module sind immer an). */
   extraFeatures: string[];
+  /**
+   * Optionales Mitglied mit echter DTB-ID aus einer öffentlichen nuLiga-
+   * Meldeliste — Fixture für den Liga-Kader-Import (nur Agent-Lane).
+   */
+  leagueTester?: { email: string; name: string; dtbId: string };
 }
 
 const CLUBS: ClubSpec[] = [
@@ -86,7 +91,7 @@ const CLUBS: ClubSpec[] = [
     season: 'published',
     preferences: true,
     finance: true,
-    extraFeatures: ['trial_training', 'ai_matchmaking', 'ai_analysis', 'league_lineup'],
+    extraFeatures: ['trial_training', 'partner_finder', 'league_lineup'],
   },
   {
     key: 'dortmund',
@@ -170,16 +175,28 @@ const CLUBS: ClubSpec[] = [
     bundesland: 'Nordrhein-Westfalen',
     domain: 'alpha.claude.test',
     lane: 'agent',
-    purpose: 'Arbeitsverein der KI — bestückt. Hier testet und ändert ausschließlich Claude.',
+    purpose:
+      'Arbeitsverein der KI — bestückt, laufende Saison mit Sessions und Buchungen. Hier testet und ändert ausschließlich Claude.',
     adminLocal: 'admin',
     courts: 4,
     trainers: 3,
     members: 20,
     memberLogins: 2,
-    season: 'manual_review',
+    // Von `manual_review` auf `published` gewechselt: den Review-Übergang
+    // deckt TC Grün-Weiß Köln in der Nutzer-Lane bereits ab. Ein Arbeitsverein
+    // mit laufender Saison ist als Agenten-Sandkasten nützlicher — nur so
+    // entstehen überhaupt Sessions und Buchungen zum Anschauen.
+    season: 'published',
     preferences: true,
     finance: true,
-    extraFeatures: ['trial_training', 'ai_analysis'],
+    extraFeatures: ['trial_training', 'league_lineup'],
+    // DTB-ID aus einer öffentlichen RLSW-Meldeliste — Fixture für
+    // tests/e2e/league-real-sync.spec.ts (Kader-Import mit echten Daten).
+    leagueTester: {
+      email: 'ann-katrin.fries@alpha.claude.test',
+      name: 'Ann-Katrin Fries',
+      dtbId: '29100829',
+    },
   },
   {
     key: 'claude-beta',
@@ -681,6 +698,19 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
     log(`  ${spec.members} Mitglieder (${spec.memberLogins} mit Login, Rest nur Profil)`);
   }
 
+  // ── Liga-Testspielerin ──────────────────────────────────────────────
+  // Ein Mitglied, dessen DTB-ID exakt einem Eintrag in einer ÖFFENTLICHEN
+  // nuLiga-Meldeliste entspricht. Nur damit lässt sich der Kader-Import samt
+  // Zuordnung gegen echte Verbandsdaten prüfen (tests/e2e/league-real-sync).
+  if (spec.leagueTester) {
+    const t = spec.leagueTester;
+    const uid = await createLogin(t.email, t.name, { dtb_id: t.dtbId, city: spec.city });
+    await addMembership(uid, clubId, 'member', { include_in_planning: true });
+    memberIds.push(uid);
+    accounts.push({ role: 'member', email: t.email, name: t.name });
+    log(`  Liga-Testspielerin ${t.name} (DTB-ID ${t.dtbId})`);
+  }
+
   // ── Gruppen ─────────────────────────────────────────────────────────
   const groupIds: string[] = [];
   if (spec.members >= 8) {
@@ -805,6 +835,92 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
         n++;
       }
       log(`  Saison "${spec.season}" mit ${n} Stundenplan-Einträgen`);
+
+      // ── Sessions + Buchungen ────────────────────────────────────────
+      // Eine veröffentlichte Saison hatte bisher Plan-Einträge, aber keine
+      // einzige `sessions`-Zeile — der Publish-Übergang, der aus dem Plan
+      // konkrete Termine macht, fehlte im Seed komplett. Dashboard-Kacheln
+      // („Sessions heute", „Letzte Buchungen", Platzbelegung) standen dadurch
+      // in JEDEM Testverein dauerhaft auf 0, obwohl die Saison „läuft".
+      //
+      // Es werden drei Wochen erzeugt — Vorwoche, laufende Woche, Folgewoche.
+      // Die laufende Woche ist die, auf die das Dashboard schaut; die beiden
+      // anderen sorgen dafür, dass Wochen-Navigation nicht ins Leere läuft.
+      if (spec.season === 'published') {
+        const [schedule] = await sql<{ id: string }[]>`
+          insert into schedules ${sql({
+            club_id: clubId,
+            season_type: seasonDef.season_type,
+            season_year: seasonDef.year,
+            season_start_date: seasonDef.start_date,
+            season_end_date: seasonDef.end_date,
+            is_active: true,
+          })} returning id`;
+
+        // Montag der laufenden Woche als Anker.
+        const monday = new Date();
+        monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+        monday.setHours(0, 0, 0, 0);
+
+        const entries = await sql<
+          {
+            trainer_id: string;
+            court_id: string;
+            group_id: string;
+            day_of_week: number;
+            start_time: string;
+          }[]
+        >`select trainer_id, court_id, group_id, day_of_week, start_time
+            from season_plan_entries where season_id = ${season.id}`;
+
+        const sessionIds: { id: string; courtId: string; startsAt: Date }[] = [];
+        for (let weekOffset = -1; weekOffset <= 1; weekOffset++) {
+          for (const e of entries) {
+            const start = new Date(monday);
+            start.setDate(start.getDate() + weekOffset * 7 + e.day_of_week);
+            const [h, m] = e.start_time.split(':').map(Number);
+            start.setHours(h, m, 0, 0);
+            const end = new Date(start.getTime() + 90 * 60 * 1000);
+
+            const [s] = await sql<{ id: string }[]>`
+              insert into sessions ${sql({
+                schedule_id: schedule.id,
+                trainer_id: e.trainer_id,
+                court_id: e.court_id,
+                group_ids: JSON.stringify([e.group_id]),
+                week_number: weekOffset + 2,
+                timeslot_start: start.toISOString(),
+                timeslot_end: end.toISOString(),
+                max_participants: 10,
+              })} returning id`;
+            sessionIds.push({ id: s.id, courtId: e.court_id, startsAt: start });
+          }
+        }
+
+        // Buchungen nur auf die laufende Woche — die Vorwoche als „gebucht"
+        // zu zeigen wäre irreführend, die liegt in der Vergangenheit.
+        let bookingCount = 0;
+        const thisWeek = sessionIds.filter((s) => {
+          const diff = (s.startsAt.getTime() - monday.getTime()) / 86_400_000;
+          return diff >= 0 && diff < 7;
+        });
+        for (const [i, s] of thisWeek.entries()) {
+          if (!memberIds.length) break;
+          await sql`insert into bookings ${sql({
+            club_id: clubId,
+            member_id: memberIds[i % memberIds.length],
+            schedule_id: schedule.id,
+            session_id: s.id,
+            court_id: s.courtId,
+            status: 'confirmed',
+            session_start_time: s.startsAt.toISOString(),
+            booked_at: new Date(s.startsAt.getTime() - 3 * 86_400_000).toISOString(),
+          })}`;
+          bookingCount++;
+        }
+
+        log(`  ${sessionIds.length} Sessions (3 Wochen), ${bookingCount} Buchungen`);
+      }
     } else {
       log(`  Saison "${spec.season}" (ohne Stundenplan)`);
     }

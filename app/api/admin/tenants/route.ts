@@ -9,7 +9,7 @@ const log = createLogger('api:admin:tenants');
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'superadmin');
-    if (!hasPermission) return forbiddenResponse('Superadmin access required');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für Superadmins');
 
     const supabase = createClient();
 

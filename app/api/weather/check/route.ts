@@ -3,14 +3,23 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 
 /**
- * GET /api/weather/check — Check weather and auto-close outdoor courts
- * Requires admin role. Uses OpenWeatherMap API (if configured) or returns mock data.
+ * GET /api/weather/check — aktuelles Wetter am Vereinsort.
+ *
+ * Bewusst nur der Ist-Zustand (OpenWeatherMap `/data/2.5/weather`), keine Vorhersage:
+ * eine Prognose für „übermorgen 18 Uhr" ist zu ungenau, um darauf einen Platz zu
+ * sperren, erzeugt aber genau diesen Eindruck. Gesperrt wird von Hand im
+ * Platzsperren-Tab — diese Route entscheidet nichts, sie zeigt nur an.
+ *
+ * Ohne `OPENWEATHER_API_KEY` liefert die Route `weather: null` samt Grund. Früher
+ * kamen hier erfundene Werte (18 °C, bewölkt, „Spielbetrieb möglich") zurück, nur
+ * intern als `source: 'mock'` markiert — die Oberfläche las das Feld nie und zeigte
+ * dem Admin eine Wetterlage, die es nicht gab.
  */
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
     if (!hasRole) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const clubId = auth.clubId;
@@ -73,8 +82,10 @@ export async function GET(request: NextRequest) {
         let lon = 13.405;
 
         if (clubCity) {
+          // Die Koordinaten einer Stadt ändern sich nie — einmal am Tag reicht.
           const geoRes = await fetch(
-            `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(clubCity)}&limit=1&appid=${weatherApiKey}`
+            `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(clubCity)}&limit=1&appid=${weatherApiKey}`,
+            { next: { revalidate: 86400 } }
           );
           if (geoRes.ok) {
             const geoData = await geoRes.json();
@@ -85,8 +96,11 @@ export async function GET(request: NextRequest) {
           }
         }
 
+        // 10 Minuten Cache: OpenWeatherMap aktualisiert nicht häufiger, und jeder
+        // Aufruf des Platzsperren-Tabs löste vorher einen eigenen Fremdaufruf aus.
         const weatherRes = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${weatherApiKey}&units=metric&lang=de`
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${weatherApiKey}&units=metric&lang=de`,
+          { next: { revalidate: 600 } }
         );
 
         if (weatherRes.ok) {
@@ -129,31 +143,28 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const isMock = !weatherData;
-
-    // Fallback mock weather data
+    // Kein Ersatzwert: lieber keine Angabe als eine falsche.
+    let unavailableReason: string | null = null;
     if (!weatherData) {
-      weatherData = {
-        temperature: 18,
-        condition: 'Clouds',
-        description: 'Bewölkt',
-        windSpeed: 5,
-        precipitation: 0,
-        recommendation: 'green',
-        affectedCourts: [],
-      };
+      if (!weatherApiKey) {
+        unavailableReason = 'Wetterdienst ist nicht konfiguriert (OPENWEATHER_API_KEY fehlt).';
+      } else if (!outdoorCourts || outdoorCourts.length === 0) {
+        unavailableReason = 'Der Verein hat keine Außenplätze — Wetter ist hier ohne Belang.';
+      } else if (!clubCity) {
+        unavailableReason =
+          'Kein Vereinsort hinterlegt — bitte unter Vereinseinstellungen die Stadt eintragen.';
+      } else {
+        unavailableReason = 'Wetterdaten sind derzeit nicht abrufbar.';
+      }
     }
 
     return NextResponse.json({
-      weather: { ...weatherData, source: isMock ? 'mock' : 'live' },
+      weather: weatherData,
+      unavailableReason,
       outdoorCourts: outdoorCourts ?? [],
       activeClosures: activeClosures ?? [],
       club: club?.name ?? 'Verein',
-      city: clubCity ?? 'Berlin',
-      ...(isMock && {
-        warning:
-          'Wetterdaten nicht verfügbar (kein OPENWEATHER_API_KEY). Es werden Demo-Daten angezeigt.',
-      }),
+      city: clubCity,
     });
   });
 }

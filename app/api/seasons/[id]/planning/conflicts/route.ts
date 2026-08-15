@@ -8,8 +8,7 @@ import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { db } from '@/src/infrastructure/persistence/db';
 import { planningConflicts } from '@/src/infrastructure/persistence/schema';
-import { eq } from 'drizzle-orm';
-import { detectConflictsForSeason } from '@/lib/season-planning/conflict-detector';
+import { detectConflictsForSeason, conflictRowId } from '@/lib/season-planning/conflict-detector';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:[id]:planning:conflicts');
@@ -82,24 +81,43 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
       const newStatus = body.action === 'resolve' ? 'resolved' : 'ignored';
 
-      // Update in planning_conflicts table if it exists
-      const [existing] = await db
-        .select()
-        .from(planningConflicts)
-        .where(eq(planningConflicts.id, body.conflictId));
-
-      if (existing) {
-        await db
-          .update(planningConflicts)
-          .set({
-            status: newStatus,
-            resolution_action: body.action,
-            resolution_notes: body.notes || null,
-            resolved_at: new Date(),
-            resolved_by: auth.user.id,
-          })
-          .where(eq(planningConflicts.id, body.conflictId));
+      // Konflikte werden live erkannt und tragen synthetische IDs — sie stehen
+      // nicht als Zeile in planning_conflicts. Wir suchen den Konflikt in der
+      // aktuellen Erkennung und schreiben die Entscheidung unter einer aus der
+      // ID abgeleiteten, stabilen UUID fest (siehe conflictRowId).
+      const { conflicts } = await detectConflictsForSeason(seasonId, access.season.club_id);
+      const conflict = conflicts.find((c) => c.id === body.conflictId);
+      if (!conflict) {
+        return NextResponse.json({ error: 'Conflict not found' }, { status: 404 });
       }
+
+      const rowId = conflictRowId(seasonId, conflict.id);
+      const decision = {
+        status: newStatus,
+        resolution_action: body.action,
+        resolution_notes: body.notes || null,
+        resolved_at: new Date(),
+        resolved_by: auth.user.id,
+      };
+
+      await db
+        .insert(planningConflicts)
+        .values({
+          id: rowId,
+          season_id: seasonId,
+          club_id: access.season.club_id,
+          conflict_type: conflict.type,
+          severity: conflict.severity,
+          affected_plan_entry_ids: conflict.affectedEntities?.planEntryIds || [],
+          affected_user_ids: conflict.affectedEntities?.memberIds || [],
+          affected_group_ids: conflict.affectedEntities?.groupIds || [],
+          description: conflict.description,
+          suggested_resolution: conflict.suggestedResolution,
+          // Check-Constraint erlaubt nur auto_planner|manual_check|user_report|system
+          detection_source: 'manual_check',
+          ...decision,
+        })
+        .onConflictDoUpdate({ target: planningConflicts.id, set: decision });
 
       return NextResponse.json({
         success: true,

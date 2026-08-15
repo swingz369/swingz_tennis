@@ -141,12 +141,12 @@ describe('isStarterTier', () => {
     expect(isStarterTier(undefined)).toBe(true);
   });
 
-  it('is Starter when ai_matchmaking is false', () => {
-    expect(isStarterTier({ ai_matchmaking: false })).toBe(true);
+  it('is Starter when partner_finder is false', () => {
+    expect(isStarterTier({ partner_finder: false })).toBe(true);
     expect(isStarterTier({})).toBe(true);
   });
 
-  it('is Pro when ai_matchmaking is true', () => {
-    expect(isStarterTier({ ai_matchmaking: true })).toBe(false);
+  it('is Pro when partner_finder is true', () => {
+    expect(isStarterTier({ partner_finder: true })).toBe(false);
   });
 });

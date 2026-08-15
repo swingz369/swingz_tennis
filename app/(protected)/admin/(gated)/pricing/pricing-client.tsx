@@ -482,8 +482,8 @@ export function PricingClient({ clubId }: PricingClientProps) {
               className={cn(
                 'px-3 py-1.5 rounded-xl text-sm font-medium border transition-colors',
                 (form.daysOfWeek || []).includes(day)
-                  ? 'bg-brand-primary text-white border-brand-primary'
-                  : 'bg-muted text-muted-foreground border-border hover:border-brand-primary/30'
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-muted text-muted-foreground border-border hover:border-primary/30'
               )}
             >
               {DAY_LABELS[day]}
@@ -735,7 +735,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
                             <Badge key={i} variant="secondary" className="text-xs gap-1">
                               {tr.start}–{tr.end}
                               {tr.priceMultiplier !== 1 && (
-                                <span className="text-brand-primary font-semibold">
+                                <span className="text-primary font-semibold">
                                   ×{tr.priceMultiplier}
                                 </span>
                               )}

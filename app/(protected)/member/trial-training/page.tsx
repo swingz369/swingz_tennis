@@ -131,7 +131,7 @@ export default async function MemberTrialTrainingPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-white flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-brand-primary" />
+            <Sparkles className="h-6 w-6 text-primary" />
             Probetrainings
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -175,7 +175,7 @@ export default async function MemberTrialTrainingPage() {
           return (
             <Card
               key={t.id}
-              className={`hover:shadow-md transition-shadow ${isUpcoming ? 'border-brand-primary/30' : ''}`}
+              className={`hover:shadow-md transition-shadow ${isUpcoming ? 'border-primary/30' : ''}`}
             >
               <CardContent className="p-5">
                 {/* Status + Date Header */}
@@ -196,7 +196,7 @@ export default async function MemberTrialTrainingPage() {
                 {t.scheduled_date && (
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-muted/50">
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-brand-primary shrink-0" />
+                      <Calendar className="h-4 w-4 text-primary shrink-0" />
                       <div>
                         <p className="text-xs text-muted-foreground">Datum</p>
                         <p className="text-sm font-medium">{formatDate(t.scheduled_date)}</p>
@@ -204,7 +204,7 @@ export default async function MemberTrialTrainingPage() {
                     </div>
                     {t.scheduled_time && (
                       <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-brand-primary shrink-0" />
+                        <Clock className="h-4 w-4 text-primary shrink-0" />
                         <div>
                           <p className="text-xs text-muted-foreground">Uhrzeit</p>
                           <p className="text-sm font-medium">
@@ -216,7 +216,7 @@ export default async function MemberTrialTrainingPage() {
                     )}
                     {t.court_name && (
                       <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-brand-primary shrink-0" />
+                        <MapPin className="h-4 w-4 text-primary shrink-0" />
                         <div>
                           <p className="text-xs text-muted-foreground">Platz</p>
                           <p className="text-sm font-medium">{t.court_name}</p>

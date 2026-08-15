@@ -663,7 +663,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
           {publishing && (
             <div className="space-y-1">
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div className="h-full w-full animate-pulse rounded-full bg-brand-primary" />
+                <div className="h-full w-full animate-pulse rounded-full bg-primary" />
               </div>
               <p className="text-xs">Wird veröffentlicht, bitte warten…</p>
             </div>

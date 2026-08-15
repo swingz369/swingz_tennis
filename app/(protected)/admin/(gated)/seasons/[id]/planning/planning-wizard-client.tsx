@@ -192,7 +192,7 @@ function WizardContent({
                 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all
                 ${
                   isActive
-                    ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/20'
+                    ? 'bg-primary text-white shadow-md shadow-primary/20'
                     : isCompleted
                       ? 'bg-success-50 text-success-700 dark:bg-success-900/20 dark:text-success-400'
                       : isClickable
@@ -215,7 +215,7 @@ function WizardContent({
       {/* Step Progress Bar */}
       <div className="h-1.5 w-full rounded-full bg-muted dark:bg-muted overflow-hidden">
         <div
-          className="h-full rounded-full bg-brand-primary transition-all duration-500"
+          className="h-full rounded-full bg-primary transition-all duration-500"
           style={{ width: `${(currentStep / 4) * 100}%` }}
         />
       </div>
@@ -237,7 +237,7 @@ function WizardContent({
       <div className="min-h-[400px]">
         {isProcessing ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <Loader2 className="h-10 w-10 animate-spin text-brand-primary" />
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Berechnung läuft...</p>
           </div>
         ) : (

@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -37,8 +36,6 @@ import {
   Save,
   Loader2,
   Mail,
-  History,
-  Target,
   Copy,
   ChevronDown,
 } from 'lucide-react';
@@ -82,7 +79,7 @@ function PreferencesStatusCard({
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <Users className="h-4 w-4 text-brand-primary" />
+          <Users className="h-4 w-4 text-primary" />
           Präferenzen-Status
         </CardTitle>
         <CardDescription>
@@ -148,183 +145,6 @@ function RemindButton({ seasonId }: { seasonId: string }) {
         Erinnerung senden
       </Button>
     </div>
-  );
-}
-
-type AdvancedPlanningConfig = {
-  treat_high_failure_as_hard?: boolean;
-  backtrack_depth?: number;
-  unassigned_rate_threshold?: number;
-};
-
-const ADVANCED_CONFIG_DEFAULTS: Required<AdvancedPlanningConfig> = {
-  treat_high_failure_as_hard: false,
-  backtrack_depth: 0,
-  unassigned_rate_threshold: 0.05,
-};
-
-function AdvancedClusteringSettings({ seasonId }: { seasonId: string }) {
-  const [config, setConfig] = useState<AdvancedPlanningConfig>(ADVANCED_CONFIG_DEFAULTS);
-  const [loaded, setLoaded] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    apiFetch(`/api/seasons/${seasonId}/planning/config`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (cancelled || !data?.config) return;
-        setConfig({ ...ADVANCED_CONFIG_DEFAULTS, ...data.config });
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoaded(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [seasonId]);
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const depth = Math.max(0, Math.min(10, Number(config.backtrack_depth ?? 0)));
-      const threshold = Math.max(0, Math.min(1, Number(config.unassigned_rate_threshold ?? 0.05)));
-      const res = await apiFetch(`/api/seasons/${seasonId}/planning/config`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          treat_high_failure_as_hard: !!config.treat_high_failure_as_hard,
-          backtrack_depth: depth,
-          unassigned_rate_threshold: threshold,
-        }),
-      });
-      if (res.ok) {
-        toast.success('Erweiterte Einstellungen gespeichert');
-      } else {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.error ?? 'Fehler beim Speichern');
-      }
-    } catch {
-      toast.error('Netzwerkfehler');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-brand-primary" />
-          Erweiterte Clustering-Einstellungen
-        </CardTitle>
-        <CardDescription>
-          Backtracking-Verhalten und Behandlung hochriskanter Zeitslots
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <fieldset disabled={!loaded} className="space-y-4 not-disabled:cursor-auto">
-          <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
-            <div className="flex-1 min-w-0 space-y-1">
-              <Label
-                htmlFor="treat-high-failure-as-hard"
-                className="text-sm font-medium text-foreground cursor-pointer"
-              >
-                Hochrisiko-Zeitslots als harte Constraint
-              </Label>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Zeitslots mit einer Ausfallrate über dem Schwellwert werden komplett übersprungen
-                (statt nur mit -50 Score bestraft). Standard: aus.
-              </p>
-            </div>
-            <Switch
-              id="treat-high-failure-as-hard"
-              checked={!!config.treat_high_failure_as_hard}
-              onCheckedChange={(checked) =>
-                setConfig((c) => ({ ...c, treat_high_failure_as_hard: checked }))
-              }
-              aria-label="Hochrisiko-Zeitslots als harte Constraint behandeln"
-            />
-          </div>
-
-          <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
-            <div className="flex-1 min-w-0 space-y-1">
-              <Label
-                htmlFor="backtrack-depth"
-                className="text-sm font-medium text-foreground cursor-pointer"
-              >
-                Backtracking-Tiefe
-              </Label>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Anzahl der Retries, um unzugewiesene Mitglieder doch noch zu platzieren. Standard: 0
-                (deaktiviert), max. 3 Retries intern.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Input
-                id="backtrack-depth"
-                type="number"
-                min={0}
-                max={10}
-                value={config.backtrack_depth ?? 0}
-                onChange={(e) => {
-                  const val = Math.max(0, Math.min(10, parseInt(e.target.value) || 0));
-                  setConfig((c) => ({ ...c, backtrack_depth: val }));
-                }}
-                className="w-20 text-center"
-                aria-label="Backtracking-Tiefe (0 = deaktiviert, max 3 Retries intern)"
-              />
-              <History className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </div>
-
-          <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
-            <div className="flex-1 min-w-0 space-y-1">
-              <Label
-                htmlFor="unassigned-rate-threshold"
-                className="text-sm font-medium text-foreground cursor-pointer"
-              >
-                Schwellwert für unzugewiesene Mitglieder
-              </Label>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Liegt die Rate unzugewiesener Mitglieder nach dem ersten Backtrack-Pass darüber,
-                läuft ein zweiter Pass mit Tiefe 5. Standard: 0.05 (5%).
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Input
-                id="unassigned-rate-threshold"
-                type="number"
-                min={0}
-                max={1}
-                step={0.01}
-                value={config.unassigned_rate_threshold ?? 0.05}
-                onChange={(e) => {
-                  const raw = parseFloat(e.target.value);
-                  const val = Number.isFinite(raw) ? Math.max(0, Math.min(1, raw)) : 0.05;
-                  setConfig((c) => ({ ...c, unassigned_rate_threshold: val }));
-                }}
-                className="w-20 text-center"
-                aria-label="Schwellwert für unzugewiesene Mitglieder (0–1, z.B. 0.05 = 5%)"
-              />
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={saving || !loaded} size="sm" className="gap-2">
-              {saving ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Save className="h-3.5 w-3.5" />
-              )}
-              Speichern
-            </Button>
-          </div>
-        </fieldset>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -397,7 +217,7 @@ function CopyGroupsPanel({ seasonId, clubId }: { seasonId: string; clubId: strin
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <Copy className="h-4 w-4 text-brand-primary" />
+          <Copy className="h-4 w-4 text-primary" />
           Gruppen aus vorheriger Saison übernehmen
         </CardTitle>
         <CardDescription>
@@ -554,7 +374,7 @@ export function ConfigStep({ aiAvailable = true }: { aiAvailable?: boolean }) {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Settings className="h-4 w-4 text-brand-primary" />
+            <Settings className="h-4 w-4 text-primary" />
             Planungseinstellungen
           </CardTitle>
           <CardDescription>Diese Einstellungen steuern den Clustering-Algorithmus</CardDescription>
@@ -836,10 +656,9 @@ export function ConfigStep({ aiAvailable = true }: { aiAvailable?: boolean }) {
       <details className="group rounded-xl border border-border bg-muted/20">
         <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium text-foreground flex items-center gap-2">
           <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
-          Erweiterte Einstellungen (Backtracking, Gruppen aus Vorsaison übernehmen)
+          Erweiterte Einstellungen (Gruppen aus Vorsaison übernehmen)
         </summary>
         <div className="px-4 pb-4 space-y-6">
-          <AdvancedClusteringSettings seasonId={state.seasonId} />
           <CopyGroupsPanel seasonId={state.seasonId} clubId={state.clubId} />
         </div>
       </details>
@@ -849,7 +668,7 @@ export function ConfigStep({ aiAvailable = true }: { aiAvailable?: boolean }) {
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-brand-primary" />
+              <Users className="h-4 w-4 text-primary" />
               <p className="text-xs text-muted-foreground">Ausgewählte Mitglieder</p>
             </div>
             <p className="text-xl font-bold mt-1">{state.selectedMemberIds.length}</p>
@@ -895,7 +714,7 @@ export function ConfigStep({ aiAvailable = true }: { aiAvailable?: boolean }) {
       <details className="group rounded-xl border border-border bg-muted/20">
         <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium text-foreground flex items-center gap-2">
           <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
-          <Receipt className="h-4 w-4 text-brand-primary" />
+          <Receipt className="h-4 w-4 text-primary" />
           Abrechnungseinstellungen (Stundensatz, Mitgliedsbeitrag, Zahlungsziel)
         </summary>
         <div className="px-4 pb-4">

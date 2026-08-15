@@ -131,7 +131,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         const isAdmin = await verifyRole(auth, 'admin');
         const isSuperadmin = await verifyRole(auth, 'superadmin');
         if (!isAdmin && !isSuperadmin) {
-          return forbiddenResponse('Only admins can update seasons');
+          return forbiddenResponse('Nur Admins können Saisons ändern');
         }
 
         const { data: existing, error: fetchError } = await supabase
@@ -147,7 +147,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           const hasClubAccess = auth.memberships.some(
             (m) => m.club_id === existing.club_id && (m.role === 'admin' || m.role === 'superadmin')
           );
-          if (!hasClubAccess) return forbiddenResponse('You do not have access to this season');
+          if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diese Saison');
         }
 
         const body = await request.json();
@@ -240,7 +240,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         const isAdmin = await verifyRole(auth, 'admin');
         const isSuperadmin = await verifyRole(auth, 'superadmin');
         if (!isAdmin && !isSuperadmin) {
-          return forbiddenResponse('Only admins can delete seasons');
+          return forbiddenResponse('Nur Admins können Saisons löschen');
         }
 
         const { data: existing, error: fetchError } = await supabase
@@ -256,7 +256,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
           const hasClubAccess = auth.memberships.some(
             (m) => m.club_id === existing.club_id && (m.role === 'admin' || m.role === 'superadmin')
           );
-          if (!hasClubAccess) return forbiddenResponse('You do not have access to this season');
+          if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diese Saison');
         }
         const { error: deleteError } = await supabase.from('seasons').delete().eq('id', id);
         if (deleteError) throw deleteError;

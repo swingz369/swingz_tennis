@@ -39,7 +39,7 @@ export class HourlyRateTierRepository implements IHourlyRateTierRepository {
           isActive: true,
           createdAt: now,
           updatedAt: now,
-        } as any)
+        } as typeof hourlyRateTiers.$inferInsert)
         .returning();
 
       if (!tier) throw new Error('Failed to create hourly rate tier');
@@ -191,7 +191,7 @@ export class TrainerHourlyRateRepository implements ITrainerHourlyRateRepository
           reason: input.reason,
           createdAt: now,
           updatedAt: now,
-        } as any)
+        } as typeof trainerHourlyRates.$inferInsert)
         .returning();
 
       if (!rate) throw new Error('Failed to create trainer hourly rate');
@@ -383,7 +383,7 @@ export class RateHistoryRepository implements IRateHistoryRepository {
           changedAt: now,
           changedBy: entry.changedBy,
           reason: entry.reason,
-        } as any)
+        } as typeof rateHistory.$inferInsert)
         .returning();
 
       if (!historyEntry) throw new Error('Failed to add rate history entry');

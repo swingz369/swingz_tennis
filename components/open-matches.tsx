@@ -295,7 +295,7 @@ export default function OpenMatches({ clubId, userId }: Props) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Users className="h-6 w-6 text-brand-primary" />
+            <Users className="h-6 w-6 text-primary" />
             Offene Spiele
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -465,7 +465,7 @@ export default function OpenMatches({ clubId, userId }: Props) {
               <Card
                 key={match.id}
                 className={`group transition-all hover:shadow-lg hover:-translate-y-0.5 ${
-                  match.joinedByUser ? 'border-brand-primary/40 bg-brand-primary/5' : ''
+                  match.joinedByUser ? 'border-primary/40 bg-primary/5' : ''
                 }`}
               >
                 <CardHeader className="pb-3">
@@ -475,9 +475,7 @@ export default function OpenMatches({ clubId, userId }: Props) {
                       <Badge variant="outline" className={`text-xs ${skill.className}`}>
                         {skill.label}
                       </Badge>
-                      {match.joinedByUser && (
-                        <Badge className="text-xs bg-brand-primary">Dabei</Badge>
-                      )}
+                      {match.joinedByUser && <Badge className="text-xs bg-primary">Dabei</Badge>}
                     </div>
                   </div>
                   {match.description && (
@@ -525,7 +523,7 @@ export default function OpenMatches({ clubId, userId }: Props) {
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all ${
-                          isFull ? 'bg-success-500' : 'bg-brand-primary'
+                          isFull ? 'bg-success-500' : 'bg-primary'
                         }`}
                         style={{ width: `${(match.current_players / match.max_players) * 100}%` }}
                       />

@@ -42,6 +42,21 @@ import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
 import { hasRole, getHighestRole } from '@/lib/auth-common';
 import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
 import { isSubscriptionPastDue } from '@/lib/subscription-gate';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api-auth');
+
+/**
+ * Fehler der Auth-Schicht (fehlende Credentials, keine Session, keine
+ * aktive Membership). Wird von `withAuth` als 401 beantwortet; alle anderen
+ * Fehler aus dem Handler sind Serverfehler (500).
+ */
+export class AuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuthError';
+  }
+}
 
 export interface AuthContext {
   user: User;
@@ -75,7 +90,7 @@ async function buildAuthContext(
   const memberships: Array<{ club_id: string | null; role: string }> = membershipsData ?? [];
 
   if (memberships.length === 0) {
-    throw new Error('User has no active membership');
+    throw new AuthError('Keine aktive Vereinsmitgliedschaft vorhanden.');
   }
 
   // Highest role wins — used to branch the helper. The FIX P0-3 role-bleed
@@ -168,7 +183,7 @@ export async function requireAuth(request: NextRequest): Promise<AuthContext> {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Supabase credentials not configured');
+    throw new AuthError('Supabase-Zugangsdaten nicht konfiguriert.');
   }
 
   const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
@@ -188,7 +203,7 @@ export async function requireAuth(request: NextRequest): Promise<AuthContext> {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    throw new Error('No valid session found. Please log in.');
+    throw new AuthError('Keine gültige Sitzung gefunden. Bitte melde dich an.');
   }
 
   return await buildAuthContext(supabase, user, request);
@@ -258,11 +273,11 @@ export async function verifyOffice(
   return flags[office] === true;
 }
 
-export function unauthorizedResponse(message = 'Unauthorized'): NextResponse {
+export function unauthorizedResponse(message = 'Nicht autorisiert'): NextResponse {
   return NextResponse.json({ error: message }, { status: 401 });
 }
 
-export function forbiddenResponse(message = 'Forbidden'): NextResponse {
+export function forbiddenResponse(message = 'Zugriff verweigert'): NextResponse {
   return NextResponse.json({ error: message }, { status: 403 });
 }
 
@@ -329,7 +344,15 @@ export async function withAuth(
     return response;
   } catch (error) {
     if (error instanceof NextResponse) return error;
-    return unauthorizedResponse(error instanceof Error ? error.message : 'Authentication failed');
+    // Auth-Fehler (Session/Membership/Credentials) → 401. Alles andere stammt
+    // aus dem Handler und ist ein Serverfehler — vorher wurde jeder Fehler
+    // pauschal als 401 mit der rohen `error.message` beantwortet (Statuscode-
+    // Bug + Message-Leak).
+    if (error instanceof AuthError) {
+      return unauthorizedResponse(error.message);
+    }
+    log.error('Unhandled API error', error instanceof Error ? error : undefined);
+    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }
 

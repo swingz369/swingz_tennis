@@ -1,5 +1,6 @@
 import { requireAuth } from '@/lib/auth';
 import { createServiceClient } from '@/lib/supabase/service';
+import { logAudit } from '@/lib/audit';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { Badge } from '@/components/ui/badge';
@@ -66,34 +67,23 @@ async function updateStatus(id: string, status: 'approved' | 'rejected') {
   // IP / User-Agent werden aus den aktuellen Request-Headern entnommen, damit
   // Compliance-Audits Forensik-Daten haben.
   const headerList = await headers();
-  const ip =
-    headerList.get('x-forwarded-for')?.split(',')[0]?.trim() || headerList.get('x-real-ip') || null;
-  const userAgent = headerList.get('user-agent') ?? null;
 
-  try {
-    await sb.from('audit_logs').insert({
-      actor_id: user.id,
-      action: status === 'approved' ? 'approve' : 'reject',
-      resource_type: 'club_access_request',
-      resource_id: id,
-      club_id: null,
-      ip_address: ip,
-      user_agent: userAgent,
-      details: {
-        requester_name: request.name,
-        requester_email: request.email,
-        target_club_name: request.club_name,
-        previous_status: request.status,
-        new_status: status,
-      },
-    });
-  } catch (auditErr) {
-    // Audit-Failure darf die approve/reject-Hauptaktion nicht rollbacken.
-    log.warn('AuditLog insert failed for access decision (non-fatal)', {
-      id,
-      auditErr: auditErr instanceof Error ? auditErr.message : String(auditErr),
-    });
-  }
+  await logAudit({
+    actorId: user.id,
+    action: status === 'approved' ? 'approve' : 'reject',
+    resourceType: 'club_access_request',
+    resourceId: id,
+    // Anfrage auf einen noch nicht zugeordneten Verein — plattformweit.
+    clubId: null,
+    details: {
+      requester_name: request.name,
+      requester_email: request.email,
+      target_club_name: request.club_name,
+      previous_status: request.status,
+      new_status: status,
+    },
+    request: { headers: headerList },
+  });
 
   revalidatePath('/owner/access');
 }

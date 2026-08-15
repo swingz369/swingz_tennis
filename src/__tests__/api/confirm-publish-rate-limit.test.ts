@@ -144,6 +144,9 @@ vi.mock('@/lib/season-planning/conflict-detector', () => ({
     this.getCriticalConflicts = vi.fn().mockReturnValue([]);
     this.persistConflicts = vi.fn().mockResolvedValue(0);
   }),
+  detectConflictsForSeason: vi
+    .fn()
+    .mockResolvedValue({ conflicts: [], summary: { critical: 0, warnings: 0, info: 0, total: 0 } }),
 }));
 
 vi.mock('@/lib/season-planning/holidays.server', () => ({

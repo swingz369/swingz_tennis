@@ -34,7 +34,7 @@ const variantStyles: Record<ConfirmVariant, { icon: React.ElementType; buttonCla
   default: { icon: XCircle, buttonClass: '' },
   primary: {
     icon: CheckCircle,
-    buttonClass: 'bg-brand-primary hover:bg-brand-primary/90 text-white',
+    buttonClass: 'bg-primary hover:bg-primary/90 text-white',
   },
 };
 
@@ -73,7 +73,7 @@ export function ConfirmDialog({
                 : variant === 'warning'
                   ? 'bg-warning-100'
                   : variant === 'primary'
-                    ? 'bg-brand-primary/10'
+                    ? 'bg-primary/10'
                     : 'bg-muted'
             }`}
           >
@@ -84,7 +84,7 @@ export function ConfirmDialog({
                   : variant === 'warning'
                     ? 'text-warning-600'
                     : variant === 'primary'
-                      ? 'text-brand-primary'
+                      ? 'text-primary'
                       : 'text-muted-foreground'
               }`}
             />

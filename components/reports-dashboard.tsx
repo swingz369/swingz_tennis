@@ -94,7 +94,7 @@ export default function ReportsDashboard() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Reports & Exporte</h1>
+          <h1 className="text-2xl font-bold text-primary">Reports & Exporte</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Vereins-Kennzahlen und Datenexport</p>
         </div>
       </div>

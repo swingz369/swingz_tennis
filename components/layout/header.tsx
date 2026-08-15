@@ -21,6 +21,7 @@ import { useTenant } from '@/lib/tenant-context';
 import { NotificationBell } from '@/components/layout/notification-bell';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import { useSearchDialog } from '@/components/command-palette-context';
+import { GlobalSearch } from '@/components/layout/global-search';
 
 interface HeaderProps {
   user?: {
@@ -57,19 +58,12 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
   // Rollen-basierter Header-Subtitle (analog zur Sidebar, damit Owner/Superadmin
   // nicht das falsche Label sehen).
-  // Phase 3: Owner wird jetzt klar als „Plattform-Konsole“ markiert,
-  // Superadmin als „Tennisschule-Verwaltung“ — vorher stand dort beim
-  // Owner einfach „Swingz“, was leicht mit dem Login-Screen verwechselt wurde.
-  const { isOwner, isSuperAdmin, isAdmin, isTrainer } = useUserRole(user?.roles);
-  const headerSectionLabel = isOwner
-    ? 'Plattform-Konsole'
-    : isSuperAdmin
-      ? 'Tennisschule-Verwaltung'
-      : isAdmin
-        ? 'Vereinsverwaltung'
-        : isTrainer
-          ? 'Mein Training'
-          : 'Mein Verein';
+  // Die Rollen-Beschriftung („Vereinsverwaltung“, „Plattform-Konsole“ …) ist
+  // mit dem Marken-Cluster entfallen. Sie war die Unterzeile des Vereinsnamens
+  // im Header; die Rolle steht weiterhin als Pille im Seitenkopf des
+  // Dashboards. `isOwner`/`isSuperAdmin` werden unten noch für das Ziel des
+  // Logo-Links gebraucht.
+  const { isOwner, isSuperAdmin, isAdmin } = useUserRole(user?.roles);
 
   const handleSignOut = async () => {
     setIsLoggingOut(true);
@@ -103,41 +97,42 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full bg-background/80 dark:bg-brand-dark/80 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/70 supports-[backdrop-filter]:dark:bg-brand-dark/70"
+      // Ruhige, deckende Leiste über der Inhaltsspalte statt der früheren
+      // durchscheinenden Brand-Dark-Bar. Der Verlauf gegen den Inhalt kam
+      // vorher über Transparenz, jetzt über eine Kante — das bleibt beim
+      // Scrollen stabil und funktioniert in beiden Themes gleich.
+      className="sticky top-0 z-50 w-full border-b border-border bg-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/75"
       role="banner"
     >
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
-        {/* Brand cluster — Logo + Marke als geschlossene Einheit.
-            Tintierter Gradient-Ring gibt dem Logo visuell Gewicht,
-            damit es nicht in der 16-px-Bar „verloren“ wirkt. */}
+        {/* Marke und Vereinsname sind in die Sidebar gewandert (SwingZ-Logo
+            oben, Verein direkt darunter im Switcher). Sie standen hier
+            doppelt: die Sidebar nennt ohnehin den Kontext, in dem man sich
+            bewegt, und der Header verlor dadurch links ein Drittel seiner
+            Breite an eine Information, die sich nie ändert.
+            Auf Mobile ist die Sidebar zugeklappt — dort bleibt das Logo als
+            Rückweg zum Dashboard sichtbar. */}
         <Link
           href={dashboardLink}
-          className="flex items-center gap-3 shrink-0 group"
+          className="flex shrink-0 items-center gap-2 md:hidden"
           aria-label="SwingZ Home"
         >
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-light/15 via-brand-light/10 to-brand-primary/15 ring-1 ring-brand-light/25 group-hover:ring-brand-light/50 transition-all overflow-hidden">
+          <span className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl bg-primary/10">
             {clubLogoUrl && !imgFailed ? (
               // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/no-noninteractive-element-interactions
               <img
                 key={clubLogoUrl}
                 src={clubLogoUrl}
                 alt="Club Logo"
-                className="h-6 w-6 object-contain"
+                className="h-5 w-5 object-contain"
                 onError={() => setImgFailed(true)}
                 onLoad={() => setImgFailed(false)}
               />
             ) : (
-              <Trophy className="h-5 w-5 text-brand-light" aria-hidden="true" />
+              <Trophy className="h-4 w-4 text-primary" aria-hidden="true" />
             )}
-          </div>
-          <div className="hidden sm:flex flex-col leading-tight">
-            <span className="text-base font-bold tracking-tight text-foreground dark:text-white">
-              {user?.club?.name || 'SWINGZ'}
-            </span>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70 -mt-0.5">
-              {headerSectionLabel}
-            </span>
-          </div>
+          </span>
+          <span className="text-[15px] font-bold tracking-[-0.02em]">SwingZ</span>
         </Link>
 
         {/* Right actions — Utility-Cluster (Suche / Theme / Notifications / User / Mobile).
@@ -147,11 +142,18 @@ export function Header({ user, onMenuClick }: HeaderProps) {
             die fokussierte Suche (SearchDialog); ⌘K öffnet weiterhin die Command
             Palette mit Navigation/Aktionen. `ml-auto` schiebt den Cluster nach
             rechts, da die zentrierte Bar als Spacer wegfällt. */}
+        {/* Echtes Suchfeld mit Ergebnis-Dropdown — ab sm. Vorher war das hier nur
+            ein Knopf in Feld-Optik, der einen modalen Dialog über die Seite legte,
+            aus der man gerade heraus sucht. Auf Mobile bleibt es beim Icon rechts
+            (SearchDialog): dort ist die Breite nicht übrig und ein Overlay ist die
+            richtige Form. */}
+        <GlobalSearch className="ml-6 hidden sm:block w-64 lg:w-80" />
+
         <div className="flex items-center gap-0.5 shrink-0 ml-auto">
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 text-foreground dark:text-white rounded-xl hover:bg-muted dark:hover:bg-background/10"
+            className="sm:hidden h-9 w-9 text-foreground rounded-xl hover:bg-muted"
             onClick={() => setSearchOpen(true)}
             aria-label="Suche öffnen"
           >
@@ -177,7 +179,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
             >
               <Avatar className="h-7 w-7 ring-2 ring-brand-light/20 ring-offset-1 ring-offset-transparent transition-shadow duration-300 group-hover:ring-brand-light/40">
                 <AvatarImage src={user?.avatarUrl || undefined} alt={user?.name || 'User'} />
-                <AvatarFallback className="bg-gradient-to-br from-brand-light to-brand-primary text-white text-xs font-semibold">
+                <AvatarFallback className="bg-gradient-to-br from-brand-light to-primary text-white text-xs font-semibold">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>

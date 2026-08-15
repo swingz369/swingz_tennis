@@ -257,7 +257,7 @@ export default function MemberBilling() {
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Rechnungen & Zahlungen</h1>
+          <h1 className="text-2xl font-bold text-primary">Rechnungen & Zahlungen</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Verwalte deine Rechnungen und Zahlungen
           </p>
@@ -471,8 +471,8 @@ export default function MemberBilling() {
                     className="flex items-center justify-between p-4 bg-muted rounded-xl hover:bg-muted transition-colors"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="p-3 bg-brand-primary/10 rounded-xl">
-                        <FileText className="h-5 w-5 text-brand-primary" />
+                      <div className="p-3 bg-primary/10 rounded-xl">
+                        <FileText className="h-5 w-5 text-primary" />
                       </div>
                       <div>
                         <div className="font-semibold">{invoice.invoiceNumber}</div>
@@ -540,7 +540,7 @@ export default function MemberBilling() {
             </p>
             <p className="mt-4 text-muted-foreground">
               Bei Fragen zu deinen Rechnungen kontaktiere bitte unsere Buchhaltung unter{' '}
-              <a href="mailto:billing@swingz.cloud" className="text-brand-primary hover:underline">
+              <a href="mailto:billing@swingz.cloud" className="text-primary hover:underline">
                 billing@swingz.cloud
               </a>
             </p>

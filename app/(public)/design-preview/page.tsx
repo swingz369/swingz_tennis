@@ -10,16 +10,18 @@ import { Sparkles, Zap, Star, Heart, Shield, Trophy, Brain, Calendar } from 'luc
 
 // ── Token Data ──
 
+// Light = Palette "Clay", Dark = Palette "Nocturne" (siehe app/globals.css).
+// Die Hex-Werte hier sind nur Beschriftung — gerendert wird immer die CSS-Variable.
 const brandColors = [
-  { name: 'Brand Primary', var: '--brand-primary', light: '#00599F', dark: '#4FACDE' },
-  { name: 'Brand Light', var: '--brand-primary-light', light: '#4FACDE', dark: '#7EC2E7' },
-  { name: 'Brand Secondary', var: '--brand-secondary', light: '#22334F', dark: '#36517D' },
-  { name: 'Brand Accent', var: '--brand-accent', light: '#94C121', dark: '#A7DA25' },
-  { name: 'Surface', var: '--surface', light: '#FFFFFF', dark: '#1C2631' },
-  { name: 'Surface Elevated', var: '--surface-elevated', light: '#FBFCFD', dark: '#232E39' },
-  { name: 'Border Subtle', var: '--border-subtle', light: '#E4EBF1', dark: '#2D3843' },
-  { name: 'Text Primary', var: '--text-primary', light: '#1D283A', dark: '#F5F7FA' },
-  { name: 'Text Secondary', var: '--text-secondary', light: '#65758B', dark: '#97A3B4' },
+  { name: 'Brand Primary', var: '--brand-primary', light: '#1F6F4A', dark: '#50ACDE' },
+  { name: 'Brand Light', var: '--brand-primary-light', light: '#41946B', dark: '#84C6E8' },
+  { name: 'Brand Secondary', var: '--brand-secondary', light: '#22443A', dark: '#1B2A38' },
+  { name: 'Brand Accent', var: '--brand-accent', light: '#D8B34A', dark: '#A7DA25' },
+  { name: 'Surface', var: '--surface', light: '#FBFAF8', dark: '#141B22' },
+  { name: 'Surface Elevated', var: '--surface-elevated', light: '#FFFFFF', dark: '#1B2A38' },
+  { name: 'Border Subtle', var: '--border-subtle', light: '#ECEAE5', dark: '#1B2734' },
+  { name: 'Text Primary', var: '--text-primary', light: '#14201C', dark: '#E8EEF4' },
+  { name: 'Text Secondary', var: '--text-secondary', light: '#606C67', dark: '#8497A8' },
 ];
 
 const typographySizes = [

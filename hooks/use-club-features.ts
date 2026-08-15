@@ -23,6 +23,22 @@ interface UseClubFeaturesResult {
 }
 
 /**
+ * Jede Komponente, die diesen Hook aufruft, hält ihren eigenen State — Sidebar
+ * und Einstellungsseite sind zwei getrennte Instanzen. Ohne Benachrichtigung
+ * merkte die Sidebar deshalb nichts davon, dass der Admin gerade ein Modul
+ * ein- oder ausgeschaltet hat; die Navigation stimmte erst nach einem Reload.
+ *
+ * Statt einer Zustandsbibliothek genügt ein Fenster-Event: wer speichert,
+ * ruft es aus, alle Instanzen desselben Vereins übernehmen den neuen Stand.
+ */
+const FEATURES_UPDATED_EVENT = 'swingz:club-features-updated';
+
+function broadcastFeatures(clubId: string, features: Record<string, boolean>): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(FEATURES_UPDATED_EVENT, { detail: { clubId, features } }));
+}
+
+/**
  * Fetch and mutate the active club's feature flags.
  * Pass the active clubId; if omitted, the hook is a no-op.
  */
@@ -60,6 +76,19 @@ export function useClubFeatures(clubId?: string | null): UseClubFeaturesResult {
     return () => controller.abort();
   }, [clubId]);
 
+  // Änderungen einer anderen Instanz übernehmen (siehe FEATURES_UPDATED_EVENT).
+  useEffect(() => {
+    if (!clubId || typeof window === 'undefined') return;
+    const onUpdate = (event: Event) => {
+      const detail = (event as CustomEvent).detail as
+        { clubId?: string; features?: Record<string, boolean> } | undefined;
+      if (detail?.clubId !== clubId) return;
+      setFeatures(sanitizeFeatureFlags(detail.features));
+    };
+    window.addEventListener(FEATURES_UPDATED_EVENT, onUpdate);
+    return () => window.removeEventListener(FEATURES_UPDATED_EVENT, onUpdate);
+  }, [clubId]);
+
   const isEnabled = useCallback((key: FeatureKey) => Boolean(features[key]), [features]);
 
   const toggle = useCallback(
@@ -90,11 +119,13 @@ export function useClubFeatures(clubId?: string | null): UseClubFeaturesResult {
           return false;
         }
         const data = await res.json();
-        setFeatures(sanitizeFeatureFlags(data?.features));
+        const persisted = sanitizeFeatureFlags(data?.features);
+        setFeatures(persisted);
+        broadcastFeatures(clubId, persisted);
         return true;
-      } catch (err: any) {
+      } catch (err) {
         setFeatures(features);
-        setError(err?.message ?? 'Network error');
+        setError(err instanceof Error ? err.message : 'Netzwerkfehler');
         return false;
       } finally {
         setSaving(false);
@@ -123,11 +154,14 @@ export function useClubFeatures(clubId?: string | null): UseClubFeaturesResult {
           return false;
         }
         const data = await res.json();
-        setFeatures(sanitizeFeatureFlags(data?.features));
+        const persisted = sanitizeFeatureFlags(data?.features);
+        setFeatures(persisted);
+        // Sidebar & Co. sofort mitziehen — ohne das bräuchte es ein F5.
+        broadcastFeatures(clubId, persisted);
         return true;
-      } catch (err: any) {
+      } catch (err) {
         setFeatures(features);
-        setError(err?.message ?? 'Network error');
+        setError(err instanceof Error ? err.message : 'Netzwerkfehler');
         return false;
       } finally {
         setSaving(false);

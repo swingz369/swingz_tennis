@@ -37,7 +37,7 @@ export async function GET(
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) {
-      return forbiddenResponse('Authentication required');
+      return forbiddenResponse('Anmeldung erforderlich');
     }
 
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
@@ -55,7 +55,7 @@ export async function GET(
 
       // Check if user has access to this feedback
       if (feedback.club_id !== auth.clubId) {
-        return forbiddenResponse('Access denied');
+        return forbiddenResponse('Zugriff verweigert');
       }
 
       return NextResponse.json(feedback);
@@ -109,7 +109,7 @@ export async function PATCH(
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Only admins can update feedback status');
+      return forbiddenResponse('Nur Admins können den Feedback-Status ändern');
     }
 
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
@@ -129,7 +129,7 @@ export async function PATCH(
       }
 
       if (existing.club_id !== auth.clubId) {
-        return forbiddenResponse('Access denied');
+        return forbiddenResponse('Zugriff verweigert');
       }
 
       let updated: Feedback;
@@ -183,7 +183,7 @@ export async function DELETE(
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Only admins can delete feedback');
+      return forbiddenResponse('Nur Admins können Feedback löschen');
     }
 
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
@@ -200,7 +200,7 @@ export async function DELETE(
       }
 
       if (existing.club_id !== auth.clubId) {
-        return forbiddenResponse('Access denied');
+        return forbiddenResponse('Zugriff verweigert');
       }
 
       await feedbackRepository.delete(feedbackId);

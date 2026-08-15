@@ -32,13 +32,14 @@ import {
   ChevronsUpDown,
   MailOpen,
   MessageSquare,
-  CheckCircle2,
+  Archive,
+  ArchiveRestore,
+  Trash2,
   Newspaper,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { ScrollReveal } from '@/components/animations';
 import { PageHeader } from '@/components/ui/page-header';
-import { StatCard } from '@/components/ui/stat-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RichTextEditor } from '@/components/messages/RichTextEditor';
 import { toast } from 'sonner';
@@ -55,7 +56,7 @@ const EmailCampaignsClient = dynamic(
 );
 
 const TRIGGER_CLASS =
-  'gap-2 rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm';
+  'gap-2 rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-primary data-[state=active]:shadow-sm';
 
 /* ─────────────────── Types ─────────────────── */
 
@@ -76,6 +77,7 @@ interface Message {
   created_at: string;
   replied_to_id: string | null;
   broadcast_type: string | null;
+  archived_at: string | null;
   sender: MessageUser;
   receiver: MessageUser;
 }
@@ -87,7 +89,7 @@ interface ClubMember {
   role: string;
 }
 
-type Folder = 'inbox' | 'sent' | 'news';
+type Folder = 'inbox' | 'archive' | 'sent' | 'news';
 
 /** Strip HTML tags from a string for plain-text display. */
 function stripHtml(html: string): string {
@@ -132,7 +134,7 @@ function MessagesContent() {
   }, [searchParams]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: userRoles } = useUserRoles();
+  const { data: userRoles, isLoading: rolesLoading } = useUserRoles();
   const { isAdmin } = useUserRole(userRoles);
   const { data: clubData } = useUserClub();
   const clubId = clubData?.clubId ?? null;
@@ -191,6 +193,67 @@ function MessagesContent() {
     }
   }, []);
 
+  // ── Archivieren / Löschen / Lesestatus ──
+  // Alle drei entfernen die Zeile aus der aktuellen Sicht, deshalb wird sie
+  // lokal sofort ausgeblendet statt auf das Neuladen zu warten — sonst bleibt
+  // die Nachricht nach dem Klick noch sichtbar und der Klick wirkt folgenlos.
+  const dropFromView = useCallback((messageId: string) => {
+    setMessages((prev) => prev.filter((m) => m.id !== messageId));
+    setSelectedMessage((prev) => (prev?.id === messageId ? null : prev));
+  }, []);
+
+  const handleArchive = useCallback(
+    async (msg: Message, archived: boolean) => {
+      dropFromView(msg.id);
+      try {
+        const res = await apiFetch(`/api/messages/${msg.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ archived }),
+        });
+        if (!res.ok) throw new Error();
+        toast.success(archived ? 'Ins Archiv verschoben' : 'Zurück in den Posteingang');
+      } catch {
+        toast.error('Aktion fehlgeschlagen');
+        fetchMessages();
+      }
+    },
+    [dropFromView, fetchMessages]
+  );
+
+  const handleDelete = useCallback(
+    async (msg: Message) => {
+      dropFromView(msg.id);
+      try {
+        const res = await apiFetch(`/api/messages/${msg.id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error();
+        toast.success('Nachricht gelöscht');
+      } catch {
+        toast.error('Löschen fehlgeschlagen');
+        fetchMessages();
+      }
+    },
+    [dropFromView, fetchMessages]
+  );
+
+  const handleToggleRead = useCallback(
+    async (msg: Message) => {
+      const next = !msg.is_read;
+      setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, is_read: next } : m)));
+      setUnreadCount((prev) => Math.max(0, next ? prev - 1 : prev + 1));
+      try {
+        await apiFetch(`/api/messages/${msg.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_read: next }),
+        });
+      } catch {
+        fetchMessages();
+      }
+    },
+    [fetchMessages]
+  );
+
   // ── Filter messages by search ──
   const filteredMessages = useMemo(() => {
     if (!searchQuery.trim()) return messages;
@@ -211,10 +274,6 @@ function MessagesContent() {
     }
   };
 
-  // ── Stat calculations ──
-  const totalMessages = messages.length;
-  const readMessages = messages.filter((m) => m.is_read).length;
-
   const pageHeader = (
     <ScrollReveal>
       <PageHeader
@@ -229,56 +288,8 @@ function MessagesContent() {
 
   const messagesView = (
     <div className="space-y-6">
-      {/* ── Stat Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <ScrollReveal delay={0}>
-          <StatCard
-            icon={Mail}
-            label="Ungelesen"
-            value={unreadCount}
-            sub="im Posteingang"
-            color="red"
-            animate
-          />
-        </ScrollReveal>
-
-        <ScrollReveal delay={80}>
-          <StatCard
-            icon={MessageSquare}
-            label={folder === 'inbox' ? 'Posteingang' : 'Gesendet'}
-            value={totalMessages}
-            sub="Nachrichten"
-            color="blue"
-            animate
-          />
-        </ScrollReveal>
-
-        <ScrollReveal delay={160}>
-          <StatCard
-            icon={CheckCircle2}
-            label="Gelesen"
-            value={readMessages}
-            sub="Nachrichten"
-            color="green"
-            animate
-          />
-        </ScrollReveal>
-
-        <ScrollReveal delay={240}>
-          <StatCard
-            icon={MailOpen}
-            label="Leserate"
-            value={totalMessages > 0 ? Math.round((readMessages / totalMessages) * 100) : 0}
-            sub="gelesen"
-            color="orange"
-            suffix="%"
-            animate
-          />
-        </ScrollReveal>
-      </div>
-
       {/* ── Folder Tabs + Message Content ── */}
-      <ScrollReveal delay={300}>
+      <ScrollReveal>
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Sidebar: Folders + Search */}
           <div className="lg:w-56 shrink-0 space-y-3">
@@ -302,6 +313,20 @@ function MessagesContent() {
                     {unreadCount}
                   </span>
                 )}
+              </button>
+              <button
+                onClick={() => {
+                  setFolder('archive');
+                  setSelectedMessage(null);
+                }}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors flex-1 lg:flex-none ${
+                  folder === 'archive'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                <Archive className="h-4 w-4" />
+                Archiv
               </button>
               <button
                 onClick={() => {
@@ -357,6 +382,8 @@ function MessagesContent() {
                   setComposeOpen(true);
                 }}
                 folder={folder}
+                onArchive={handleArchive}
+                onDelete={handleDelete}
               />
             ) : (
               <MessageList
@@ -364,6 +391,9 @@ function MessagesContent() {
                 loading={loading}
                 folder={folder}
                 onSelect={handleMessageClick}
+                onArchive={handleArchive}
+                onDelete={handleDelete}
+                onToggleRead={handleToggleRead}
               />
             )}
           </div>
@@ -391,6 +421,21 @@ function MessagesContent() {
       )}
     </div>
   );
+
+  // Die Rollen kommen per Query nach. Wurde vorher schon gerendert, zeigte die Seite
+  // erst die Mitglieder-Ansicht ohne Tabs und tauschte beim Eintreffen der Rollen das
+  // gesamte Layout aus — das sah aus wie ein selbsttätiger Reload. Bis die Rolle
+  // feststeht, steht hier derselbe Ladezustand wie im Suspense-Fallback.
+  if (rolesLoading) {
+    return (
+      <div className="space-y-6">
+        {pageHeader}
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
 
   if (!isAdmin) {
     return (
@@ -435,11 +480,17 @@ function MessageList({
   loading,
   folder,
   onSelect,
+  onArchive,
+  onDelete,
+  onToggleRead,
 }: {
   messages: Message[];
   loading: boolean;
   folder: Folder;
   onSelect: (msg: Message) => void;
+  onArchive: (msg: Message, archived: boolean) => void;
+  onDelete: (msg: Message) => void;
+  onToggleRead: (msg: Message) => void;
 }) {
   if (loading) {
     return (
@@ -454,7 +505,11 @@ function MessageList({
       <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
         <Mail className="h-10 w-10 mb-3 opacity-40" />
         <p className="text-sm font-medium">
-          {folder === 'inbox' ? 'Posteingang ist leer' : 'Keine gesendeten Nachrichten'}
+          {folder === 'inbox'
+            ? 'Posteingang ist leer'
+            : folder === 'archive'
+              ? 'Das Archiv ist leer'
+              : 'Keine gesendeten Nachrichten'}
         </p>
       </div>
     );
@@ -466,11 +521,16 @@ function MessageList({
         const person = folder === 'sent' ? msg.receiver : msg.sender;
         const isBroadcast = !!msg.broadcast_type;
         return (
-          <button
+          <div
             key={msg.id}
-            onClick={() => onSelect(msg)}
-            className="w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+            className="group relative flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
           >
+            <button
+              type="button"
+              onClick={() => onSelect(msg)}
+              className="absolute inset-0"
+              aria-label={`Nachricht öffnen: ${msg.subject}`}
+            />
             {/* Unread indicator */}
             <div className="pt-1.5 shrink-0">
               {folder === 'inbox' && !msg.is_read ? (
@@ -506,7 +566,54 @@ function MessageList({
                 {stripHtml(msg.content).substring(0, 80)}
               </p>
             </div>
-          </button>
+
+            {/* Aktionen: auf Touch immer sichtbar, auf Zeigegeräten beim Hover.
+                Sie liegen über der Klickfläche der Zeile (relative + z-10). */}
+            <div className="relative z-10 flex items-center gap-0.5 self-center opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity">
+              {folder !== 'sent' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  title={msg.is_read ? 'Als ungelesen markieren' : 'Als gelesen markieren'}
+                  aria-label={msg.is_read ? 'Als ungelesen markieren' : 'Als gelesen markieren'}
+                  onClick={() => onToggleRead(msg)}
+                >
+                  {msg.is_read ? (
+                    <Mail className="h-3.5 w-3.5" />
+                  ) : (
+                    <MailOpen className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              )}
+              {folder !== 'sent' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  title={folder === 'archive' ? 'Zurück in den Posteingang' : 'Archivieren'}
+                  aria-label={folder === 'archive' ? 'Zurück in den Posteingang' : 'Archivieren'}
+                  onClick={() => onArchive(msg, folder !== 'archive')}
+                >
+                  {folder === 'archive' ? (
+                    <ArchiveRestore className="h-3.5 w-3.5" />
+                  ) : (
+                    <Archive className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-error-600"
+                title="Löschen"
+                aria-label="Nachricht löschen"
+                onClick={() => onDelete(msg)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
         );
       })}
     </div>
@@ -520,11 +627,15 @@ function MessageDetail({
   onBack,
   onReply,
   folder,
+  onArchive,
+  onDelete,
 }: {
   message: Message;
   onBack: () => void;
   onReply: () => void;
   folder: Folder;
+  onArchive: (msg: Message, archived: boolean) => void;
+  onDelete: (msg: Message) => void;
 }) {
   const person = folder === 'sent' ? message.receiver : message.sender;
 
@@ -542,10 +653,38 @@ function MessageDetail({
             {format(new Date(message.created_at), 'dd. MMMM yyyy, HH:mm', { locale: de })}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={onReply} className="gap-1.5 shrink-0">
-          <Reply className="h-3.5 w-3.5" />
-          Antworten
-        </Button>
+        <div className="flex items-center gap-1 shrink-0">
+          <Button variant="outline" size="sm" onClick={onReply} className="gap-1.5">
+            <Reply className="h-3.5 w-3.5" />
+            Antworten
+          </Button>
+          {folder !== 'sent' && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              title={folder === 'archive' ? 'Zurück in den Posteingang' : 'Archivieren'}
+              aria-label={folder === 'archive' ? 'Zurück in den Posteingang' : 'Archivieren'}
+              onClick={() => onArchive(message, folder !== 'archive')}
+            >
+              {folder === 'archive' ? (
+                <ArchiveRestore className="h-4 w-4" />
+              ) : (
+                <Archive className="h-4 w-4" />
+              )}
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-error-600"
+            title="Löschen"
+            aria-label="Nachricht löschen"
+            onClick={() => onDelete(message)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Content — render HTML from TipTap, fall back to plain text */}

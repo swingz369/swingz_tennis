@@ -4,6 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { parseMemberCsv, validateMemberRecords } from '@/lib/csv/member-import';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
+import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:members:bulk-import');
@@ -299,21 +300,19 @@ export async function POST(request: NextRequest) {
 
     // Audit log
     if (result.imported > 0) {
-      await adminSupabase.from('audit_logs').insert({
-        actor_id: auth.user.id,
+      await logAudit({
+        actorId: auth.user.id,
         action: 'members_bulk_imported',
-        resource_type: 'member',
-        resource_id: targetClubId,
-        club_id: targetClubId,
-        metadata: {
+        resourceType: 'member',
+        resourceId: targetClubId,
+        clubId: targetClubId,
+        details: {
           total: result.total,
           imported: result.imported,
           skipped: result.skipped,
           failed: result.failed,
         },
-        ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
-        user_agent: request.headers.get('user-agent'),
-        created_at: new Date().toISOString(),
+        request,
       });
     }
 

@@ -12,7 +12,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'trainer');
     if (!hasPermission) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
@@ -45,7 +45,7 @@ export async function PATCH(
     const isTrainer = await verifyRole(auth, 'trainer');
 
     if (!isAdmin && !isTrainer) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
@@ -60,7 +60,7 @@ export async function PATCH(
         const availability = await trainerAvailabilityService.getTrainerAvailabilityById(id);
         const ownRecordId = await resolveTrainerRecordId(auth.user.id);
         if (!availability || !ownRecordId || availability.trainerId !== ownRecordId) {
-          return forbiddenResponse('You can only edit your own availability');
+          return forbiddenResponse('Du kannst nur deine eigene Verfügbarkeit bearbeiten');
         }
       }
 
@@ -100,7 +100,7 @@ export async function DELETE(
     const isTrainer = await verifyRole(auth, 'trainer');
 
     if (!isAdmin && !isTrainer) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
@@ -115,7 +115,7 @@ export async function DELETE(
         const availability = await trainerAvailabilityService.getTrainerAvailabilityById(id);
         const ownRecordId = await resolveTrainerRecordId(auth.user.id);
         if (!availability || !ownRecordId || availability.trainerId !== ownRecordId) {
-          return forbiddenResponse('You can only delete your own availability');
+          return forbiddenResponse('Du kannst nur deine eigene Verfügbarkeit löschen');
         }
       }
 

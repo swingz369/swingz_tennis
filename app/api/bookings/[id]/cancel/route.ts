@@ -17,7 +17,7 @@ const log = createLogger('api:bookings:cancel');
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
-    if (!hasPermission) return forbiddenResponse('Authentication required');
+    if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
     const { id: bookingId } = await params;
     const supabase = auth.supabase;

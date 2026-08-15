@@ -95,6 +95,7 @@ export type Database = {
         Row: {
           action: string;
           actor_id: string | null;
+          club_id: string | null;
           created_at: string;
           details: Json | null;
           id: string;
@@ -107,6 +108,7 @@ export type Database = {
         Insert: {
           action: string;
           actor_id?: string | null;
+          club_id?: string | null;
           created_at?: string;
           details?: Json | null;
           id?: string;
@@ -119,6 +121,7 @@ export type Database = {
         Update: {
           action?: string;
           actor_id?: string | null;
+          club_id?: string | null;
           created_at?: string;
           details?: Json | null;
           id?: string;
@@ -134,6 +137,13 @@ export type Database = {
             columns: ['actor_id'];
             isOneToOne: false;
             referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'audit_logs_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
             referencedColumns: ['id'];
           },
         ];

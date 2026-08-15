@@ -60,7 +60,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       if (!isAdmin && !isSuperadmin) {
         const hasClubAccess = auth.memberships.some((m) => m.club_id === result.entry.club_id);
         if (!hasClubAccess) {
-          return forbiddenResponse('You do not have access to this plan entry');
+          return forbiddenResponse('Kein Zugriff auf diesen Plan-Eintrag');
         }
       }
 
@@ -105,7 +105,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         const isSuperadmin = await verifyRole(auth, 'superadmin');
 
         if (!isAdmin && !isSuperadmin) {
-          return forbiddenResponse('Only admins can update plan entries');
+          return forbiddenResponse('Nur Admins können Plan-Einträge ändern');
         }
 
         // Fetch existing entry
@@ -124,7 +124,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
             (m) =>
               m.club_id === existingEntry.club_id && (m.role === 'admin' || m.role === 'superadmin')
           );
-          if (!hasClubAccess) return forbiddenResponse('You do not have access to this plan entry');
+          if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Plan-Eintrag');
         }
 
         const body: UpdatePlanEntryRequest = await request.json();
@@ -297,7 +297,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         const isSuperadmin = await verifyRole(auth, 'superadmin');
 
         if (!isAdmin && !isSuperadmin) {
-          return forbiddenResponse('Only admins can delete plan entries');
+          return forbiddenResponse('Nur Admins können Plan-Einträge löschen');
         }
 
         // Fetch existing entry
@@ -316,7 +316,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
             (m) =>
               m.club_id === existingEntry.club_id && (m.role === 'admin' || m.role === 'superadmin')
           );
-          if (!hasClubAccess) return forbiddenResponse('You do not have access to this plan entry');
+          if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Plan-Eintrag');
         }
 
         // Cannot delete published entries

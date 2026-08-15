@@ -17,7 +17,7 @@ const log = createLogger('api:clubs:[id]:features');
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     const { id } = await params;
-    if (!verifyClubAccess(auth, id)) return forbiddenResponse('No access to this club');
+    if (!verifyClubAccess(auth, id)) return forbiddenResponse('Kein Zugriff auf diesen Verein');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
@@ -50,7 +50,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   return withApiAuth(req, async (auth) => {
     const { id } = await params;
     const isAdmin = await verifyRole(auth, 'admin');
-    if (!isAdmin || !verifyClubAccess(auth, id)) return forbiddenResponse('Admin access required');
+    if (!isAdmin || !verifyClubAccess(auth, id)) return forbiddenResponse('Zugriff nur für Admins');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;

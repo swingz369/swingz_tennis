@@ -26,7 +26,7 @@ const log = createLogger('api:sessions:block');
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const isAdmin = await verifyRole(auth, 'admin');
-    if (!isAdmin) return forbiddenResponse('Admin access required');
+    if (!isAdmin) return forbiddenResponse('Zugriff nur für Admins');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;

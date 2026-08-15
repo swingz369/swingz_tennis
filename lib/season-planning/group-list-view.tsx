@@ -72,7 +72,7 @@ export default function GroupListView({
                     </span>
                     <button
                       onClick={() => onToggleExpand(slot.id === expandedSlot ? '' : slot.id)}
-                      className="ml-auto text-xs text-brand-primary hover:text-brand-primary-light flex-shrink-0"
+                      className="ml-auto text-xs text-primary hover:text-primary-light flex-shrink-0"
                     >
                       {expandedSlot === slot.id ? 'Schließen' : 'Mitglieder verschieben'}
                     </button>

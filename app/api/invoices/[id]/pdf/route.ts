@@ -28,7 +28,9 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const isOwner = invoice.member_id === auth.user.id;
 
       if (!isAdminOrTrainer && !isOwner) {
-        return forbiddenResponse('Access denied - you can only view your own invoices');
+        return forbiddenResponse(
+          'Zugriff verweigert — du kannst nur deine eigenen Rechnungen einsehen'
+        );
       }
 
       // Fetch club info for PDF header

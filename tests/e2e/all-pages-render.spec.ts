@@ -46,9 +46,9 @@ const MEMBER_ROUTES: RouteTest[] = [
   { path: '/documents', expectedContent: /dokument/i },
   { path: '/gamification', expectedContent: /gamification|punkte|rangliste|erfolg/i },
   { path: '/matches', expectedContent: /match|spiel/i },
-  // Feature-Flag ai_matchmaking kann pro Verein deaktiviert sein — dann zeigt die Seite
-  // nur den Hinweistext ("KI-Matchmaking ... nicht aktiviert") statt des vollen Panels.
-  { path: '/matchmaking', expectedContent: /matchmaking|partner|gegner|spielpartner/i },
+  // Feature-Flag partner_finder kann pro Verein deaktiviert sein — dann zeigt die Seite
+  // nur den Hinweistext ("Spielpartner-Suche ... nicht aktiviert") statt des vollen Panels.
+  { path: '/partner-finder', expectedContent: /matchmaking|partner|gegner|spielpartner/i },
   { path: '/meine-bestellungen', expectedContent: /bestellung|order/i },
   { path: '/messages', expectedContent: /nachricht|posteingang|message/i },
   { path: '/shop', expectedContent: /shop|produkt|artikel/i },
@@ -75,7 +75,7 @@ const ADMIN_ROUTES: RouteTest[] = [
   { path: '/admin/tournaments', expectedContent: /turnier|tournament/i },
   { path: '/admin/tournaments/new', expectedContent: /turnier|tournament|erstellen/i },
   { path: '/admin/onboarding', expectedContent: /Schritt|Verein|onboarding/i },
-  { path: '/admin/ai/matchmaking', expectedContent: /matching|ki|matchmaking/i },
+  { path: '/admin/partner-finder', expectedContent: /matching|ki|matchmaking/i },
   { path: '/admin/audit-logs', expectedContent: /audit|protokoll|log/i },
   { path: '/admin/documents', expectedContent: /dokument/i },
   { path: '/admin/email-campaigns', expectedContent: /e-mail|kampagne|newsletter/i },

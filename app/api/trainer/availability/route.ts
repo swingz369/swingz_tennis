@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'trainer');
-    if (!hasPermission) return forbiddenResponse('Only trainers can set availability');
+    if (!hasPermission) return forbiddenResponse('Nur Trainer können Verfügbarkeiten festlegen');
 
     const { supabase, user } = auth;
 

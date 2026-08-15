@@ -11,7 +11,7 @@ const log = createLogger('api:leagues:[id]:sync-history');
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'member');
-    if (!hasRole) return forbiddenResponse('Authentication required');
+    if (!hasRole) return forbiddenResponse('Anmeldung erforderlich');
 
     const { id } = await params;
 

@@ -51,6 +51,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { stripe } from '@/lib/stripe/stripe-client';
 import { withApiAuth, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
+import { logAudit } from '@/lib/audit';
 import {
   syncSubscriptionItemQuantity,
   type SyncQuantityResult,
@@ -168,24 +169,20 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
     }
 
     // Audit log row (best-effort; Stripe-sync failures are still auditable).
-    try {
-      await supabase.from('audit_logs').insert({
-        actor_id: auth.user.id,
-        action: 'STRIPE_QUANTITY_SYNC',
-        resource_type: 'club',
-        resource_id: clubId,
-        details: {
-          targetQuantity,
-          activeMemberCount,
-          stripeSubscriptionId: ownerUser.stripe_subscription_id,
-          syncResult,
-        },
-      });
-    } catch (auditErr) {
-      log.warn('Audit-Log schreiben fehlgeschlagen', {
-        error: auditErr instanceof Error ? auditErr.message : String(auditErr),
-      });
-    }
+    await logAudit({
+      actorId: auth.user.id,
+      action: 'STRIPE_QUANTITY_SYNC',
+      resourceType: 'club',
+      resourceId: clubId,
+      clubId,
+      details: {
+        targetQuantity,
+        activeMemberCount,
+        stripeSubscriptionId: ownerUser.stripe_subscription_id,
+        syncResult,
+      },
+      request,
+    });
 
     return NextResponse.json({
       updated: syncResult.updated,

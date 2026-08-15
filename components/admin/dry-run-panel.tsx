@@ -305,7 +305,7 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
             }
           />
           <KpiCard
-            icon={<Receipt className="h-4 w-4 text-brand-primary" />}
+            icon={<Receipt className="h-4 w-4 text-primary" />}
             label="Rechnungen"
             value={summary.invoicedMemberCount.toString()}
             subtitle={
@@ -592,7 +592,7 @@ function KpiCard({
     <div
       className={cn(
         'rounded-xl border p-3',
-        highlight ? 'border-brand-primary/30 bg-brand-primary/5' : 'border-border bg-background'
+        highlight ? 'border-primary/30 bg-primary/5' : 'border-border bg-background'
       )}
     >
       <div className="flex items-center gap-1.5">
@@ -602,7 +602,7 @@ function KpiCard({
       <p
         className={cn(
           'text-xl font-bold mt-1 tabular-nums',
-          highlight ? 'text-brand-primary' : 'text-foreground'
+          highlight ? 'text-primary' : 'text-foreground'
         )}
       >
         {value}
@@ -660,14 +660,14 @@ function FinancialKpi({
     <div
       className={cn(
         'rounded-md border px-3 py-2',
-        highlight ? 'border-brand-primary/30 bg-brand-primary/5' : 'border-border bg-background'
+        highlight ? 'border-primary/30 bg-primary/5' : 'border-border bg-background'
       )}
     >
       <p className="text-xs text-muted-foreground">{label}</p>
       <p
         className={cn(
           'text-lg font-bold tabular-nums',
-          highlight ? 'text-brand-primary' : 'text-foreground'
+          highlight ? 'text-primary' : 'text-foreground'
         )}
       >
         {value.toFixed(2)} €

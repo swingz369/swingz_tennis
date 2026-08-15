@@ -467,7 +467,7 @@ export default function AdminShopPage() {
                   <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
                     {kpi.label}
                   </p>
-                  <p className="text-2xl font-bold text-brand-primary mt-1.5 tabular-nums">
+                  <p className="text-2xl font-bold text-primary mt-1.5 tabular-nums">
                     {typeof kpi.value === 'number' ? kpi.value.toLocaleString('de-DE') : kpi.value}
                   </p>
                 </div>
@@ -487,14 +487,14 @@ export default function AdminShopPage() {
         <TabsList className="w-full max-w-md grid grid-cols-2 bg-muted dark:bg-card/5 p-1 rounded-xl">
           <TabsTrigger
             value="products"
-            className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+            className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-primary data-[state=active]:shadow-sm"
           >
             <Package className="h-4 w-4 mr-2" />
             Produkte
           </TabsTrigger>
           <TabsTrigger
             value="orders"
-            className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+            className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-primary data-[state=active]:shadow-sm"
           >
             <ClipboardList className="h-4 w-4 mr-2" />
             Bestellungen

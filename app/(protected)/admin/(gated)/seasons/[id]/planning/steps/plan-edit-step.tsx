@@ -1,33 +1,201 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import ScheduleGrid from '@/lib/season-planning/schedule-grid';
 import GroupListView from '@/lib/season-planning/group-list-view';
 import { useSchedulePlan } from '@/lib/season-planning/use-schedule-plan';
-import { generateAIAnalysis } from '@/lib/season-planning/ai-analysis';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { PremiumUpsellTrigger } from '@/components/season-planning/premium-upsell-trigger';
 import { useWizard } from '@/lib/season-planning/wizard-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Sparkles,
   Loader2,
   AlertTriangle,
   Play,
   RefreshCw,
-  Brain,
   Users,
   Target,
   Heart,
   Star,
   Zap,
   CheckCircle,
+  Save,
+  History,
+  RotateCcw,
 } from 'lucide-react';
 
 import { COLORS } from '@/lib/season-planning/schedule-constants';
+import type { ScheduleSlot } from '@/lib/season-planning/types';
 import { apiFetch } from '@/lib/api-fetch';
+import { formatDateTime } from '@/lib/format';
 import { toast } from 'sonner';
+
+interface PlanVersion {
+  id: string;
+  label: string;
+  createdAt: string;
+  createdByName: string | null;
+  groupCount: number;
+}
+
+/**
+ * Gespeicherte Planstände.
+ *
+ * Ein Klick auf „Neu generieren" wirft den gesamten Plan weg und baut ihn neu auf —
+ * inklusive aller von Hand verschobenen Gruppen. Wer vorher einen Stand sichert,
+ * kommt darauf zurück.
+ */
+function PlanVersionsPanel({
+  seasonId,
+  plan,
+  onRestore,
+}: {
+  seasonId: string;
+  plan: ScheduleSlot[];
+  onRestore: (slots: ScheduleSlot[]) => void;
+}) {
+  const [versions, setVersions] = useState<PlanVersion[]>([]);
+  const [label, setLabel] = useState('');
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    const res = await apiFetch(`/api/seasons/${seasonId}/planning/versions`);
+    if (!res.ok) return;
+    const data = await res.json();
+    setVersions(data.versions ?? []);
+  }, [seasonId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const handleSave = async () => {
+    if (plan.length === 0) return;
+    setBusy('save');
+    try {
+      const res = await apiFetch(`/api/seasons/${seasonId}/planning/versions`, {
+        method: 'POST',
+        body: JSON.stringify({ label, slots: plan }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error ?? 'Stand konnte nicht gesichert werden');
+        return;
+      }
+      toast.success(`Planstand „${data.version?.label}" gesichert`);
+      setLabel('');
+      await load();
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleRestore = async (version: PlanVersion) => {
+    setBusy(version.id);
+    try {
+      const res = await apiFetch(`/api/seasons/${seasonId}/planning/versions`, {
+        method: 'PUT',
+        body: JSON.stringify({ versionId: version.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error ?? 'Wiederherstellen fehlgeschlagen');
+        return;
+      }
+      onRestore(data.slots ?? []);
+      const missing: string[] = data.missingGroupNames ?? [];
+      if (missing.length > 0) {
+        toast.warning(
+          `„${version.label}" übernommen — ${missing.length} Gruppe${missing.length !== 1 ? 'n' : ''} aus diesem Stand gibt es nicht mehr: ${missing.join(', ')}`
+        );
+      } else {
+        toast.success(`„${version.label}" wiederhergestellt`);
+      }
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <History className="h-4 w-4 text-primary" />
+          Planstände
+        </CardTitle>
+        <CardDescription>
+          Sichert den aktuellen Wochenstundenplan. „Neu generieren" überschreibt den Plan — ein
+          gesicherter Stand lässt sich danach wieder herstellen.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Bezeichnung (optional, z.B. „vor Trainerwechsel“)"
+            maxLength={100}
+            className="flex-1"
+          />
+          <Button
+            onClick={handleSave}
+            disabled={busy !== null || plan.length === 0}
+            size="sm"
+            className="gap-2 shrink-0"
+          >
+            {busy === 'save' ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Save className="h-3.5 w-3.5" />
+            )}
+            Stand sichern
+          </Button>
+        </div>
+
+        {versions.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Noch kein Stand gesichert. Es werden die letzten 10 aufbewahrt.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {versions.map((v) => (
+              <div
+                key={v.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background p-3 text-sm"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{v.label}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDateTime(new Date(v.createdAt))} · {v.groupCount} Gruppen
+                    {v.createdByName ? ` · ${v.createdByName}` : ''}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy !== null}
+                  onClick={() => void handleRestore(v)}
+                  className="gap-1.5 shrink-0"
+                >
+                  {busy === v.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  )}
+                  Wiederherstellen
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 /**
  * PlanEditStep (Schritt 3 von 4)
@@ -56,8 +224,7 @@ export function PlanEditStep() {
   } = useSchedulePlan();
 
   const [isGenerating, setIsGenerating] = useState(false);
-  const [aiText, setAiText] = useState<string | null>(state.aiAnalysisText);
-  const [aiLoading, setAiLoading] = useState(false);
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
 
   // Convert ClusteringResult → ScheduleSlot[] when result changes
@@ -87,6 +254,52 @@ export function PlanEditStep() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.clusteringResult]);
+
+  // Verschobene Gruppen landeten bisher nur im React-State — planning/confirm liest
+  // die Termine aber aus der DB, jede Handkorrektur war beim Publish weg. Deshalb
+  // wird nach jeder Änderung zurückgeschrieben. `dirty` verhindert, dass schon das
+  // Befüllen aus dem frischen Clustering-Ergebnis einen Schreibvorgang auslöst.
+  const dirtyRef = useRef(false);
+  const markDirty = useCallback(() => {
+    dirtyRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!dirtyRef.current || plan.length === 0 || !state.seasonId) return;
+    const timer = setTimeout(async () => {
+      dirtyRef.current = false;
+      const res = await apiFetch(`/api/seasons/${state.seasonId}/planning/plan`, {
+        method: 'PUT',
+        body: JSON.stringify({ slots: plan }),
+      });
+      if (!res.ok) toast.error('Änderung am Plan konnte nicht gespeichert werden');
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [plan, state.seasonId]);
+
+  const handleSlotMove = useCallback(
+    (slotId: string, newDay: number, newStartTime: string) => {
+      slotMove(slotId, newDay, newStartTime);
+      markDirty();
+    },
+    [slotMove, markDirty]
+  );
+
+  const handleSlotUpdate = useCallback(
+    (updated: ScheduleSlot) => {
+      slotUpdate(updated);
+      markDirty();
+    },
+    [slotUpdate, markDirty]
+  );
+
+  const handleMoveMember = useCallback(
+    (fromId: string, personId: string, personName: string, toId: string) => {
+      moveMember(fromId, personId, personName, toId);
+      markDirty();
+    },
+    [moveMember, markDirty]
+  );
 
   // Sync DnD changes (drop, moveMember) back to wizard context
   // plan only changes on drop/moveMember, not during drag-over — no performance concern
@@ -143,7 +356,7 @@ export function PlanEditStep() {
     [waitlistIds, state.seasonId, runClustering]
   );
 
-  const handleGenerate = useCallback(async () => {
+  const runGenerate = useCallback(async () => {
     setIsGenerating(true);
     setGenerationError(null);
     try {
@@ -155,39 +368,17 @@ export function PlanEditStep() {
     }
   }, [runClustering]);
 
-  const handleAiAnalysis = useCallback(async () => {
-    if (plan.length === 0) return;
-    setAiLoading(true);
-    try {
-      const members = plan.flatMap((s) => s.memberIds);
-      const uniqueMembers = new Set(members);
-      const totalInPlan = uniqueMembers.size;
-      const totalAllMembers = state.selectedMemberIds.length;
-      const multiple = members.length - uniqueMembers.size;
-
-      const text = await generateAIAnalysis({
-        plan,
-        totalMembers: totalAllMembers,
-        totalMembersPlanned: totalInPlan,
-        membersMultipleGroups: multiple,
-        membersNotPlanned:
-          totalAllMembers > totalInPlan
-            ? state.selectedMemberIds
-                .filter((id) => !uniqueMembers.has(id))
-                .map((_id, i) => ({ name: `Mitglied ${i + 1}` }))
-            : [],
-        seasonStart: '',
-        seasonEnd: '',
-        activeWeeks: 1,
-        useAI: true,
-      });
-      setAiText(text);
-    } catch {
-      setAiText('KI-Analyse momentan nicht verfügbar.');
-    } finally {
-      setAiLoading(false);
+  // Neu generieren verwirft alle bestehenden Planeinträge und legt sie neu an —
+  // von Hand geänderte Plätze, Zeiten oder Trainer sind danach weg, ohne dass
+  // die Oberfläche das vorher gesagt hätte. Beim ersten Lauf (noch kein Plan)
+  // gibt es nichts zu verlieren, da fragt niemand.
+  const handleGenerate = useCallback(() => {
+    if (state.clusteringResult) {
+      setConfirmRegenerate(true);
+      return;
     }
-  }, [plan, state.selectedMemberIds]);
+    void runGenerate();
+  }, [state.clusteringResult, runGenerate]);
 
   const metrics = state.clusteringResult?.metrics;
 
@@ -240,7 +431,7 @@ export function PlanEditStep() {
         <Card>
           <CardContent className="py-12 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-light/10 mx-auto mb-4">
-              <Sparkles className="h-8 w-8 text-brand-primary" />
+              <Sparkles className="h-8 w-8 text-primary" />
             </div>
             <h3 className="text-lg font-semibold text-foreground">Planung generieren</h3>
             <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
@@ -347,7 +538,7 @@ export function PlanEditStep() {
             <Card>
               <CardContent className="pt-4 pb-3">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-brand-primary" />
+                  <Users className="h-4 w-4 text-primary" />
                   <p className="text-xs text-muted-foreground">Gruppen</p>
                 </div>
                 <p className="text-xl font-bold mt-1">{metrics.totalGroups}</p>
@@ -487,7 +678,10 @@ export function PlanEditStep() {
       </div>
 
       {/* Schedule Grid with dnd-kit */}
-      <ScheduleGrid plan={plan} onSlotMove={slotMove} onSlotUpdate={slotUpdate} />
+      <ScheduleGrid plan={plan} onSlotMove={handleSlotMove} onSlotUpdate={handleSlotUpdate} />
+
+      {/* Gespeicherte Planstände */}
+      <PlanVersionsPanel seasonId={state.seasonId} plan={plan} onRestore={setPlan} />
 
       {/* Group List View */}
       <GroupListView
@@ -496,50 +690,8 @@ export function PlanEditStep() {
         byDay={byDay()}
         activeDays={activeDays()}
         onToggleExpand={(id) => setExpandedSlot(id)}
-        onMoveMember={moveMember}
+        onMoveMember={handleMoveMember}
       />
-
-      {/* AI Analysis */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Brain className="h-4 w-4 text-brand-primary" />
-            KI-Analyse
-          </CardTitle>
-          <CardDescription>Automatische Bewertung des generierten Plans</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {aiText ? (
-            <div className="rounded-xl bg-brand-light/5 border border-brand-light/20 p-4">
-              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                {aiText}
-              </p>
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <Button
-                onClick={handleAiAnalysis}
-                disabled={aiLoading}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                {aiLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Analysiere...
-                  </>
-                ) : (
-                  <>
-                    <Brain className="h-4 w-4" />
-                    Plan analysieren
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Waitlist Summary */}
       {state.clusteringResult.waitlistSummary.length > 0 && (
@@ -614,6 +766,18 @@ export function PlanEditStep() {
       <p className="text-xs text-muted-foreground text-right">
         Generierung in {metrics?.runtimeMs ?? 0}ms abgeschlossen
       </p>
+
+      <ConfirmDialog
+        open={confirmRegenerate}
+        onOpenChange={setConfirmRegenerate}
+        variant="warning"
+        title="Plan neu generieren?"
+        description={`Der Algorithmus verwirft den bestehenden Plan und legt ihn komplett neu an. Alle von Hand geänderten Plätze, Zeiten, Trainer und Gruppenzuordnungen gehen dabei verloren.`}
+        confirmLabel="Neu generieren"
+        cancelLabel="Plan behalten"
+        loading={isGenerating}
+        onConfirm={runGenerate}
+      />
 
       {/* 1.2.2 Premium Upsell — fires once after first lock-step, Starter-tier only.
           Self-contained: returns null until conditions are met. */}

@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasRole = await verifyRole(auth, 'member');
     if (!hasRole) {
-      return forbiddenResponse('Member access required');
+      return forbiddenResponse('Zugriff nur für Mitglieder');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
     if (!hasRole) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
@@ -121,7 +121,7 @@ export async function PUT(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
     if (!hasRole) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);

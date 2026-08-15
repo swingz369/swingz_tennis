@@ -28,7 +28,7 @@ const log = createLogger('api:owner:audit-logs');
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'owner'))) {
-      return forbiddenResponse('Owner access required');
+      return forbiddenResponse('Zugriff nur für den Plattformbetreiber');
     }
 
     try {

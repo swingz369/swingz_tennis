@@ -20,7 +20,6 @@ import {
   UserCheck,
   UserX,
   Search,
-  Download,
   UserPlus,
   CheckSquare,
   Square,
@@ -33,7 +32,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { showInviteResult } from '@/lib/invite-feedback';
-import { exportMembersCSV } from '@/lib/csv-export';
 import type { Member } from './member.types';
 import type { PaginationMeta } from '@/lib/pagination';
 import { PaginationNav } from '@/components/ui/pagination-nav';
@@ -336,7 +334,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
             <ClipboardCheck className="h-4 w-4 mr-2" />
             Genehmigungen
             {approvalCount > 0 && (
-              <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-2xs font-semibold bg-brand-primary text-white">
+              <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-2xs font-semibold bg-primary text-white">
                 {approvalCount}
               </span>
             )}
@@ -418,7 +416,9 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
             </Select>
           </div>
 
-          {/* Export + View Toggle */}
+          {/* View Toggle — der CSV-Export sitzt jetzt bei den Import-Schaltflächen
+              unter Vereinseinstellungen und erfasst dort den vollen Bestand statt
+              nur die angezeigte Seite. */}
           <div className="flex justify-end gap-2">
             <Button
               variant="ghost"
@@ -433,18 +433,6 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
               ) : (
                 <List className="h-4 w-4" />
               )}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                exportMembersCSV(filteredMembers);
-                toast.success('Mitglieder-Export gestartet');
-              }}
-              className="gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Export CSV
             </Button>
           </div>
 
@@ -603,7 +591,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                       key={member.id}
                       className={`hover:shadow-md transition-all border-border dark:border-white/10 ${
                         isSelected
-                          ? 'ring-2 ring-brand-primary border-brand-primary bg-brand-primary/5 dark:bg-brand-primary/10'
+                          ? 'ring-2 ring-primary border-primary bg-primary/5 dark:bg-primary/10'
                           : ''
                       }`}
                     >

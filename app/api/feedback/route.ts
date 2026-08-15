@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) {
-      return forbiddenResponse('Authentication required');
+      return forbiddenResponse('Anmeldung erforderlich');
     }
 
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) {
-      return forbiddenResponse('Authentication required');
+      return forbiddenResponse('Anmeldung erforderlich');
     }
 
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);

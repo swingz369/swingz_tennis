@@ -10,31 +10,13 @@ import {
   Clock,
   AlertCircle,
   Users,
-  Wifi,
   ExternalLink,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
+import { TIER_LABELS, PLAN_PRICES } from '@/lib/billing-plans';
 
 export const dynamic = 'force-dynamic';
 
-const TIER_LABELS: Record<string, string> = {
-  free: 'Kein Abo',
-  solo_s: 'Einzelverein S',
-  solo_l: 'Einzelverein L',
-  school_s: 'Tennisschule S',
-  school_l: 'Tennisschule L',
-  starter: 'Starter', // legacy
-  professional: 'Professional', // legacy
-};
-
-const PLAN_PRICES: Record<string, number> = {
-  solo_s: 29,
-  solo_l: 59,
-  school_s: 99,
-  school_l: 179,
-  starter: 29,
-  professional: 79,
-};
 const STATUS_CFG: Record<
   string,
   {
@@ -97,21 +79,18 @@ export default async function OwnerBillingPage() {
     club,
     admin: userMap[clubAdminMap[club.id]] ?? null,
     memberCount: memberCountByClub[club.id] ?? 0,
-    hasSmartCourt: !!(club.features as Record<string, unknown> | null)?.['smart_court'],
   }));
   const active = rows.filter(({ admin }) => admin?.subscription_status === 'active').length;
-  const smartCourtCount = rows.filter((r) => r.hasSmartCourt).length;
-  const mrr = rows.reduce((sum, { admin, hasSmartCourt }) => {
+  const mrr = rows.reduce((sum, { admin }) => {
     const tier = admin?.subscription_tier ?? 'free';
-    const baseMrr = admin?.subscription_status === 'active' ? (PLAN_PRICES[tier] ?? 0) : 0;
-    return sum + baseMrr + (hasSmartCourt ? 79 : 0);
+    return sum + (admin?.subscription_status === 'active' ? (PLAN_PRICES[tier] ?? 0) : 0);
   }, 0);
 
   return (
     <div className="space-y-6">
       <PageHeader title="Umsatz & Abos" description="Abo-Status aller Vereine auf der Plattform" />
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {(
           [
             { label: 'Vereine gesamt', value: rows.length, Icon: Building2, color: 'brand' },
@@ -125,12 +104,6 @@ export default async function OwnerBillingPage() {
               color: 'purple',
             },
             { label: 'Mitglieder gesamt', value: totalMembers, Icon: Users, color: 'blue' },
-            {
-              label: 'Smart Court Add-Ons',
-              value: smartCourtCount,
-              Icon: Wifi,
-              color: 'orange',
-            },
             { label: 'MRR (ca.)', value: `€ ${mrr}`, Icon: Euro, color: 'green' },
           ] as const
         ).map(({ label, value, Icon, color }) => (
@@ -144,7 +117,7 @@ export default async function OwnerBillingPage() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border">
-            {rows.map(({ club, admin, memberCount, hasSmartCourt }) => {
+            {rows.map(({ club, admin, memberCount }) => {
               const tier = admin?.subscription_tier ?? 'free';
               const status = admin?.subscription_status ?? 'inactive';
               const cfg = STATUS_CFG[status] ?? STATUS_CFG.inactive;
@@ -160,15 +133,6 @@ export default async function OwnerBillingPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    {hasSmartCourt && (
-                      <Badge
-                        variant="outline"
-                        className="gap-1 text-xs text-brand-accent-600 border-brand-accent-300 dark:text-brand-accent-400 dark:border-brand-accent-700/50"
-                      >
-                        <Wifi className="h-3 w-3" />
-                        Smart Court
-                      </Badge>
-                    )}
                     <Badge variant="outline" className="text-xs">
                       {TIER_LABELS[tier] ?? tier}
                     </Badge>

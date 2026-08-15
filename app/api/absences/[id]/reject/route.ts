@@ -18,7 +18,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     // Only admins can reject absences
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);

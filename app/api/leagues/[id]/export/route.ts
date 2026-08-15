@@ -11,7 +11,7 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) return forbiddenResponse('Admin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id } = await params;
 

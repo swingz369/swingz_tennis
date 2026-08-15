@@ -6,13 +6,12 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useWizard } from '@/lib/season-planning/wizard-context';
-import { generateAIAnalysis } from '@/lib/season-planning/ai-analysis';
+import { conflictFixTarget } from '@/lib/season-planning/conflict-utils';
+import type { ConflictDetectionResult } from '@/lib/season-planning/types';
 import {
   CheckCircle,
   AlertTriangle,
-  ShieldAlert,
   Info,
   Loader2,
   ClipboardCheck,
@@ -23,19 +22,17 @@ import {
   FileText,
   Sparkles,
   Star,
-  XCircle,
   ChevronRight,
   RefreshCw,
-  Brain,
   Euro,
   Receipt,
   TrendingUp,
   DollarSign,
   Table2,
 } from 'lucide-react';
-import type { ConflictDetectionResult, ConflictSeverityLevel } from '@/lib/season-planning/types';
 import type { SeasonBillingPreview } from '@/lib/billing/season-billing.service';
 import { apiFetch } from '@/lib/api-fetch';
+import { ConflictList } from '@/components/season-planning/conflict-list';
 import { DryRunPanel } from '@/components/admin/dry-run-panel';
 import { InactiveWeeksPanel } from './inactive-weeks-panel';
 import { SubstituteTrainerPanel } from './substitute-trainer-panel';
@@ -51,9 +48,8 @@ import { SubstituteTrainerPanel } from './substitute-trainer-panel';
  * 5. Final Confirmation: Publish plan to sessions
  * 6. Post-Publish: Show success metrics, invoices, waitlist
  */
-/* eslint-disable react-hooks/preserve-manual-memoization -- complex wizard step, compiler cannot preserve memoization */
 export function FinalizeStep() {
-  const { state, dispatch, confirmPlan, detectConflicts } = useWizard();
+  const { state, dispatch, confirmPlan, detectConflicts, goToStep } = useWizard();
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [isGeneratingInvoices, setIsGeneratingInvoices] = useState(false);
@@ -63,11 +59,7 @@ export function FinalizeStep() {
   useEffect(() => {
     setHasRunCheck(false);
   }, [state.clusteringResult]);
-  const [confirmedWarnings, setConfirmedWarnings] = useState<Set<string>>(new Set());
   const [resolvingId, setResolvingId] = useState<string | null>(null);
-  const [aiReviewText, setAiReviewText] = useState<string | null>(null);
-  const [aiReviewLoading, setAiReviewLoading] = useState(false);
-  const [hasRunAiReview, setHasRunAiReview] = useState(false);
 
   // Billing preview state
   const [billingPreview, setBillingPreview] = useState<SeasonBillingPreview | null>(null);
@@ -79,13 +71,15 @@ export function FinalizeStep() {
   const criticalConflicts = conflicts.filter(
     (c) => c.severity === 'critical' && c.status === 'open'
   );
+  // Nur offene Warnungen — eine gelöste oder ignorierte Warnung verschwand
+  // vorher aus der Liste, wurde aber weiter für die Freigabe verlangt: der
+  // Veröffentlichen-Knopf blieb mit "Bitte alle Warnungen bestätigen" gesperrt,
+  // ohne dass es noch etwas zum Bestätigen gab.
   const warningConflicts = conflicts.filter(
-    (c) => c.severity === 'warning' || c.severity === 'info'
+    (c) => (c.severity === 'warning' || c.severity === 'info') && c.status === 'open'
   );
   const hasBlockingConflicts = criticalConflicts.length > 0;
-  const allWarningsAccepted =
-    warningConflicts.length === 0 || warningConflicts.every((c) => confirmedWarnings.has(c.id));
-  const resolvedCount = conflicts.filter((c) => c.status === 'resolved').length;
+  const decidedCount = conflicts.filter((c) => c.status !== 'open').length;
 
   const handleRunConflicts = useCallback(async () => {
     setIsLoading(true);
@@ -103,29 +97,21 @@ export function FinalizeStep() {
     }
   }, [detectConflicts]);
 
-  const handleResolve = async (conflictId: string) => {
-    setResolvingId(conflictId);
-    try {
-      const res = await apiFetch(`/api/seasons/${state.seasonId}/planning/conflicts`, {
-        method: 'PATCH',
-        body: JSON.stringify({ conflictId, action: 'resolve', notes: 'Manuell gelöst' }),
+  // "Beheben" springt in den Schritt, in dem die Ursache liegt, statt — wie der
+  // frühere Knopf "Lösen" — nur einen Status zu schreiben, an dem sich in den
+  // Daten nichts ändert. Der Konflikt verschwindet erst, wenn die nächste
+  // Prüfung ihn nicht mehr findet.
+  const handleFix = useCallback(
+    (conflict: ConflictDetectionResult) => {
+      const target = conflictFixTarget(conflict.type);
+      toast.info('Zum Konflikt gesprungen', {
+        description: `${conflict.description}\n\n${target.hint}`,
+        duration: 10000,
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `Server-Fehler (${res.status})`);
-      }
-      // Optimistic update handled by re-fetch
-      await detectConflicts();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Fehler beim Lösen';
-      toast.error('Konflikt konnte nicht gelöst werden', {
-        description: message,
-        duration: 6000,
-      });
-    } finally {
-      setResolvingId(null);
-    }
-  };
+      goToStep(target.step);
+    },
+    [goToStep]
+  );
 
   const handleIgnore = async (conflictId: string) => {
     setResolvingId(conflictId);
@@ -150,52 +136,8 @@ export function FinalizeStep() {
     }
   };
 
-  // AI Review: analyzes the plan + conflicts and gives a human-readable summary
-  const handleAiReview = useCallback(async () => {
-    setAiReviewLoading(true);
-    setHasRunAiReview(true);
-    try {
-      const groups = state.clusteringResult?.groups || [];
-      const planSlots = groups.map((g) => ({
-        id: g.groupId,
-        groupName: g.groupName,
-        groupColor: '#6366F1',
-        trainerId: g.trainerId,
-        trainerName: g.trainerName,
-        dayOfWeek: g.dayOfWeek as number,
-        startTime: g.startTime,
-        endTime: g.endTime,
-        durationMin: 90,
-        courtId: g.courtId,
-        courtName: g.courtName,
-        memberIds: g.memberIds,
-        memberNames: g.memberDetails.map((d) => d.memberName),
-      }));
-
-      const text = await generateAIAnalysis({
-        plan: planSlots,
-        totalMembers: state.selectedMemberIds.length,
-        totalMembersPlanned: state.clusteringResult?.metrics.totalMembers || 0,
-        membersMultipleGroups: 0,
-        membersNotPlanned:
-          state.clusteringResult?.unassignedMembers.map((m) => ({
-            name: m.memberName,
-          })) || [],
-        seasonStart: '',
-        seasonEnd: '',
-        activeWeeks: 1,
-        useAI: true,
-      });
-      setAiReviewText(text);
-    } catch {
-      setAiReviewText('KI-Review momentan nicht verfügbar.');
-    } finally {
-      setAiReviewLoading(false);
-    }
-  }, [state.clusteringResult, state.selectedMemberIds]);
-
   const handleConfirm = useCallback(async () => {
-    if (hasBlockingConflicts || !allWarningsAccepted) return;
+    if (hasBlockingConflicts) return;
     setIsConfirming(true);
     try {
       await confirmPlan();
@@ -208,16 +150,7 @@ export function FinalizeStep() {
     } finally {
       setIsConfirming(false);
     }
-  }, [hasBlockingConflicts, allWarningsAccepted, confirmPlan]);
-
-  const toggleWarning = (conflictId: string) => {
-    setConfirmedWarnings((prev) => {
-      const next = new Set(prev);
-      if (next.has(conflictId)) next.delete(conflictId);
-      else next.add(conflictId);
-      return next;
-    });
-  };
+  }, [hasBlockingConflicts, confirmPlan]);
 
   // Fetch billing preview as soon as a plan exists (not just after confirm)
   useEffect(() => {
@@ -287,7 +220,7 @@ export function FinalizeStep() {
           <Card>
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-brand-primary" />
+                <Users className="h-4 w-4 text-primary" />
                 <p className="text-sm text-muted-foreground">Gruppen erstellt</p>
               </div>
               <p className="text-2xl font-bold mt-1">
@@ -351,7 +284,7 @@ export function FinalizeStep() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Receipt className="h-4 w-4 text-brand-primary" />
+                  <Receipt className="h-4 w-4 text-primary" />
                   Abrechnungs-Vorschau
                 </CardTitle>
                 <CardDescription>
@@ -369,7 +302,7 @@ export function FinalizeStep() {
             {/* ── Loading State ── */}
             {billingLoading && (
               <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <Loader2 className="h-6 w-6 animate-spin text-brand-primary" />
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 <p className="text-sm text-muted-foreground">Berechne Abrechnungs-Vorschau...</p>
               </div>
             )}
@@ -415,7 +348,7 @@ export function FinalizeStep() {
                   {/* ▸ Summary KPI Cards */}
                   <div className="grid gap-3 md:grid-cols-4">
                     <BillingKpiCard
-                      icon={<Euro className="h-4 w-4 text-brand-primary" />}
+                      icon={<Euro className="h-4 w-4 text-primary" />}
                       label="Trainingskosten"
                       value={billingPreview.totalTrainingCost}
                       subtitle={`${billingPreview.groupCount} Gruppen`}
@@ -529,7 +462,7 @@ export function FinalizeStep() {
                               <td className="text-right px-3 py-2.5 tabular-nums font-medium">
                                 {group.totalTrainerCost.toFixed(2)} €
                               </td>
-                              <td className="text-right px-3 py-2.5 tabular-nums font-medium text-brand-primary">
+                              <td className="text-right px-3 py-2.5 tabular-nums font-medium text-primary">
                                 {group.costPerParticipant.toFixed(2)} €
                               </td>
                             </tr>
@@ -599,7 +532,7 @@ export function FinalizeStep() {
                                   ? `${member.additionalFees.toFixed(2)} €`
                                   : '–'}
                               </td>
-                              <td className="text-right px-3 py-2.5 tabular-nums font-semibold text-brand-primary">
+                              <td className="text-right px-3 py-2.5 tabular-nums font-semibold text-primary">
                                 {member.totalAmount.toFixed(2)} €
                               </td>
                             </tr>
@@ -610,10 +543,10 @@ export function FinalizeStep() {
                   </div>
 
                   {/* ▸ Grand Total Bar */}
-                  <div className="flex items-center justify-between rounded-xl bg-brand-primary/5 border border-brand-primary/20 px-4 py-3">
+                  <div className="flex items-center justify-between rounded-xl bg-primary/5 border border-primary/20 px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-primary/10">
-                        <Euro className="h-4 w-4 text-brand-primary" />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+                        <Euro className="h-4 w-4 text-primary" />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-foreground">
@@ -625,7 +558,7 @@ export function FinalizeStep() {
                         </p>
                       </div>
                     </div>
-                    <p className="text-2xl font-bold text-brand-primary tabular-nums">
+                    <p className="text-2xl font-bold text-primary tabular-nums">
                       {billingPreview.grandTotal.toFixed(2)} €
                     </p>
                   </div>
@@ -634,7 +567,7 @@ export function FinalizeStep() {
                   <div className="flex items-center gap-3">
                     <Button
                       size="lg"
-                      className="gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white"
+                      className="gap-2 bg-primary hover:bg-primary/90 text-white"
                       disabled={isGeneratingInvoices}
                       onClick={handleGenerateInvoices}
                     >
@@ -675,7 +608,7 @@ export function FinalizeStep() {
           <Card>
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-brand-primary" />
+                <Users className="h-4 w-4 text-primary" />
                 <p className="text-sm text-muted-foreground">Gruppen</p>
               </div>
               <p className="text-2xl font-bold mt-1">
@@ -733,7 +666,7 @@ export function FinalizeStep() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <Loader2 className="h-10 w-10 animate-spin text-brand-primary" />
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
         <p className="text-sm text-muted-foreground">Konfliktprüfung läuft...</p>
       </div>
     );
@@ -773,14 +706,14 @@ export function FinalizeStep() {
               <p className="text-xs text-muted-foreground">Gelöst / Ignoriert</p>
             </div>
             <p className="text-xl font-bold mt-1">
-              {resolvedCount}/{conflicts.length}
+              {decidedCount}/{conflicts.length}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-brand-primary" />
+              <Users className="h-4 w-4 text-primary" />
               <p className="text-xs text-muted-foreground">Gruppen</p>
             </div>
             <p className="text-xl font-bold mt-1">{state.clusteringResult?.groups.length || 0}</p>
@@ -788,130 +721,18 @@ export function FinalizeStep() {
         </Card>
       </div>
 
-      {/* Critical Conflicts */}
-      {criticalConflicts.length > 0 && (
-        <Card className="border-error-200 bg-error-50/30">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2 text-error-700">
-              <ShieldAlert className="h-5 w-5" />
-              Kritische Konflikte — müssen gelöst werden
-            </CardTitle>
-            <CardDescription className="text-error-600">
-              Diese Konflikte blockieren die finale Bestätigung
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {criticalConflicts.map((conflict) => (
-              <ConflictCard
-                key={conflict.id}
-                conflict={conflict}
-                onResolve={handleResolve}
-                onIgnore={handleIgnore}
-                isResolving={resolvingId === conflict.id}
-                canIgnore={false}
-              />
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Warnings */}
-      {warningConflicts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2 text-warning-700">
-              <AlertTriangle className="h-5 w-5" />
-              Warnungen & Hinweise
-            </CardTitle>
-            <CardDescription>Können bewusst akzeptiert oder gelöst werden</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {warningConflicts.map((conflict) => (
-              <ConflictCard
-                key={conflict.id}
-                conflict={conflict}
-                onResolve={handleResolve}
-                onIgnore={handleIgnore}
-                isResolving={resolvingId === conflict.id}
-                canIgnore={true}
-              />
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* All clear message (after check ran or all resolved) */}
-      {criticalConflicts.length === 0 &&
-        warningConflicts.filter((c) => c.status === 'open').length === 0 && (
-          <Card className="border-success-200 bg-success-50/30">
-            <CardContent className="py-8 text-center">
-              <CheckCircle className="h-12 w-12 text-success-500 mx-auto" />
-              <h3 className="mt-4 text-lg font-semibold text-success-800">
-                {conflicts.length === 0
-                  ? 'Keine Konflikte gefunden'
-                  : 'Alle Konflikte gelöst oder ignoriert'}
-              </h3>
-              <p className="text-sm text-success-700 mt-1">
-                {conflicts.length === 0
-                  ? 'Die Planung ist konfliktfrei und kann bestätigt werden.'
-                  : 'Alle Konflikte wurden gelöst oder ignoriert.'}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-      {/* Warning Acceptance Checklist */}
-      {warningConflicts.filter((c) => c.status === 'open').length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <FileText className="h-4 w-4 text-brand-primary" />
-              Warnungen akzeptieren
-            </CardTitle>
-            <CardDescription>
-              Akzeptieren Sie jede Warnung bewusst. Dies wird im Protokoll festgehalten.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {warningConflicts
-                .filter((c) => c.status === 'open')
-                .map((conflict) => (
-                  <label
-                    key={conflict.id}
-                    className="flex items-start gap-3 rounded-xl border p-3 cursor-pointer hover:bg-muted transition-colors"
-                  >
-                    <Checkbox
-                      checked={confirmedWarnings.has(conflict.id)}
-                      onCheckedChange={() => toggleWarning(conflict.id)}
-                      className="mt-0.5"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <Badge
-                          className={`text-xs ${
-                            conflict.severity === 'warning'
-                              ? 'bg-warning-100 text-warning-700'
-                              : 'bg-info-100 text-info-700'
-                          }`}
-                        >
-                          {conflict.severity === 'warning' ? 'Warnung' : 'Hinweis'}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-foreground">{conflict.description}</p>
-                      {conflict.suggestedResolution && (
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                          <Sparkles className="h-3 w-3 text-brand-primary" />
-                          {conflict.suggestedResolution}
-                        </p>
-                      )}
-                    </div>
-                  </label>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Dieselbe Liste wie unter /admin/seasons/[id]/conflicts — vorher waren
+          das zwei Implementierungen mit abweichendem Verhalten.
+          Die frühere Checkliste "Warnungen akzeptieren" ist entfallen: dieselbe
+          Warnung war dreifach zu quittieren (Lösen, Ignorieren, Häkchen), und
+          nur das Häkchen entschied über die Freigabe. "Ignorieren" hält die
+          bewusste Annahme jetzt mit Notiz in der Datenbank fest. */}
+      <ConflictList
+        conflicts={conflicts}
+        onFix={handleFix}
+        onIgnore={handleIgnore}
+        resolvingId={resolvingId}
+      />
 
       {/* Inactive Weeks Panel */}
       <InactiveWeeksPanel />
@@ -922,61 +743,11 @@ export function FinalizeStep() {
       {/* Dry-Run Preview — simulates the full publish workflow (read-only) */}
       <DryRunPanel seasonId={state.seasonId} />
 
-      {/* AI Review */}
-      <Card className="border-info-200 bg-info-50/30">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2 text-info-800">
-            <Brain className="h-4 w-4" />
-            KI-Review der Planung
-          </CardTitle>
-          <CardDescription className="text-info-600">
-            Automatische Zusammenfassung und Bewertung vor der finalen Bestätigung
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {aiReviewText ? (
-            <div className="rounded-xl bg-background border border-info-200 p-4">
-              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                {aiReviewText}
-              </p>
-            </div>
-          ) : hasRunAiReview ? (
-            <p className="text-sm text-muted-foreground">KI-Review momentan nicht verfügbar.</p>
-          ) : (
-            <div className="text-center py-4">
-              <p className="text-sm text-info-700 mb-3">
-                Lassen Sie die KI eine Zusammenfassung und Bewertung der Planung erstellen, bevor
-                Sie bestätigen.
-              </p>
-              <Button
-                onClick={handleAiReview}
-                disabled={aiReviewLoading}
-                variant="outline"
-                size="sm"
-                className="gap-2 border-info-300 text-info-700 hover:bg-info-100"
-              >
-                {aiReviewLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Analysiere...
-                  </>
-                ) : (
-                  <>
-                    <Brain className="h-4 w-4" />
-                    KI-Review starten
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Admin Notes */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <FileText className="h-4 w-4 text-brand-primary" />
+            <FileText className="h-4 w-4 text-primary" />
             Admin-Notiz (optional)
           </CardTitle>
         </CardHeader>
@@ -999,10 +770,11 @@ export function FinalizeStep() {
                 <AlertTriangle className="h-4 w-4" />
                 Kritische Konflikte müssen zuerst gelöst werden
               </span>
-            ) : !allWarningsAccepted ? (
+            ) : warningConflicts.length > 0 ? (
               <span className="flex items-center gap-1 text-warning-600">
                 <Info className="h-4 w-4" />
-                Bitte alle Warnungen bestätigen
+                {warningConflicts.length} offene Warnung
+                {warningConflicts.length !== 1 ? 'en' : ''} — Veröffentlichen ist möglich
               </span>
             ) : (
               <span className="flex items-center gap-1 text-success-600">
@@ -1019,7 +791,7 @@ export function FinalizeStep() {
             </Button>
             <Button
               onClick={handleConfirm}
-              disabled={hasBlockingConflicts || !allWarningsAccepted || isConfirming}
+              disabled={hasBlockingConflicts || isConfirming}
               variant="primary"
               size="lg"
               className="gap-2"
@@ -1060,7 +832,7 @@ function BillingKpiCard({
   highlight?: boolean;
 }) {
   return (
-    <Card className={highlight ? 'border-brand-primary/30 bg-brand-primary/5' : ''}>
+    <Card className={highlight ? 'border-primary/30 bg-primary/5' : ''}>
       <CardContent className="pt-4 pb-3">
         <div className="flex items-center gap-2">
           {icon}
@@ -1068,7 +840,7 @@ function BillingKpiCard({
         </div>
         <p
           className={`text-xl font-bold mt-1 tabular-nums ${
-            highlight ? 'text-brand-primary' : 'text-foreground'
+            highlight ? 'text-primary' : 'text-foreground'
           }`}
         >
           {value.toFixed(2)} €
@@ -1076,100 +848,5 @@ function BillingKpiCard({
         <p className="text-2xs text-muted-foreground">{subtitle}</p>
       </CardContent>
     </Card>
-  );
-}
-
-// ============================================
-// CONFLICT CARD
-// ============================================
-function ConflictCard({
-  conflict,
-  onResolve,
-  onIgnore,
-  isResolving,
-  canIgnore,
-}: {
-  conflict: ConflictDetectionResult;
-  onResolve: (id: string) => void;
-  onIgnore: (id: string) => void;
-  isResolving: boolean;
-  canIgnore: boolean;
-}) {
-  const severityConfig: Record<ConflictSeverityLevel, { badgeColor: string }> = {
-    critical: { badgeColor: 'bg-error-100 text-error-700' },
-    warning: { badgeColor: 'bg-warning-100 text-warning-700' },
-    info: { badgeColor: 'bg-info-100 text-info-700' },
-  };
-  const config = severityConfig[conflict.severity];
-  const isOpen = conflict.status === 'open';
-
-  return (
-    <div
-      className={`rounded-xl border p-4 ${
-        conflict.status === 'resolved'
-          ? 'border-success-200 bg-success-50/30 opacity-70'
-          : conflict.status === 'ignored'
-            ? 'border-border bg-muted/30 opacity-70'
-            : conflict.severity === 'critical'
-              ? 'border-error-200 bg-background'
-              : 'border-warning-200 bg-background'
-      }`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Badge className={`text-xs ${config.badgeColor}`}>
-              {conflict.severity === 'critical'
-                ? 'Kritisch'
-                : conflict.severity === 'warning'
-                  ? 'Warnung'
-                  : 'Hinweis'}
-            </Badge>
-            {conflict.status === 'resolved' && (
-              <Badge className="text-xs bg-success-100 text-success-700">
-                <CheckCircle className="h-3 w-3 mr-0.5" /> Gelöst
-              </Badge>
-            )}
-            {conflict.status === 'ignored' && (
-              <Badge className="text-xs bg-muted text-muted-foreground">
-                <XCircle className="h-3 w-3 mr-0.5" /> Ignoriert
-              </Badge>
-            )}
-          </div>
-          <p className="text-sm font-medium text-foreground">{conflict.description}</p>
-          {conflict.suggestedResolution && (
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-              <Sparkles className="h-3 w-3 text-brand-primary" />
-              {conflict.suggestedResolution}
-            </p>
-          )}
-        </div>
-
-        {isOpen && (
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onResolve(conflict.id)}
-              disabled={isResolving}
-              className="text-xs h-8"
-            >
-              <CheckCircle className="h-3 w-3 mr-1" /> Lösen
-            </Button>
-            {canIgnore && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => onIgnore(conflict.id)}
-                disabled={isResolving}
-                className="text-xs h-8"
-              >
-                <XCircle className="h-3 w-3 mr-1" /> Ignorieren
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
   );
 }

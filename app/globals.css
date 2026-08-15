@@ -47,42 +47,58 @@
 :root {
   color-scheme: light;
 
-  /* ── shadcn/ui Theme Variables (Light) ── */
-  /* Tennis-Blue/Green Rebrand (aus Club-Logo abgeleitet) — cool blue-gray
-     nudge (hue ~208) statt dem früheren warmen hue-35-Grauton. */
-  --background: 210 40% 98%;
-  --foreground: 217 33% 17%;
-  --card: 0 0% 100%;
-  --card-foreground: 217 33% 17%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 217 33% 17%;
-  --primary: 206 100% 31%;
+  /* ── shadcn/ui Theme Variables (Light) — Palette "Clay" ──
+     Warmes Neutral (hue ~40) als Grund, tiefes Tennisgrün als einzige
+     Akzentfarbe, Ocker als Signal. Löst das kühle Blaugrau + Lime ab:
+     das Lime war der lauteste Ton im System und hat als Akzent nie
+     genug Kontrast auf hellem Grund gehabt. */
+  --background: 48 17% 94%;
+  --foreground: 160 23% 10%;
+  --card: 40 27% 98%;
+  --card-foreground: 160 23% 10%;
+  --popover: 40 27% 98%;
+  --popover-foreground: 160 23% 10%;
+  --primary: 152 56% 28%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 217 33% 17%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 38%;
-  --accent: 210 40% 94%;
-  --accent-foreground: 217 33% 17%;
-  --destructive: 4 74% 49%;
+  --secondary: 43 16% 91%;
+  --secondary-foreground: 160 23% 10%;
+  --muted: 43 16% 91%;
+  --muted-foreground: 153 6% 40%;
+  --accent: 40 15% 89%;
+  --accent-foreground: 160 23% 10%;
+  --destructive: 15 59% 42%;
   --destructive-foreground: 0 0% 100%;
-  --border: 208 33% 89%;
-  --input: 208 33% 89%;
-  --ring: 206 100% 31%;
+  --border: 40 9% 87%;
+  /* --input ist bewusst dunkler als --border: die Umrandung eines
+     Eingabefelds ist das, was es überhaupt als Eingabefeld erkennbar macht,
+     und fällt damit unter WCAG 1.4.11 (3:1). Dekorative Kartenrahmen tun
+     das nicht — deshalb bleibt --border hell. */
+  --input: 40 10% 52%;
+  --ring: 152 56% 28%;
 
-  /* ── Brand Tokens — Primary Blue #00599F / Secondary Blue #50ACDE /
-     Primary Green #00983A / Accent Green #94C121 ── */
-  --brand-primary: 206 100% 31%;
-  --brand-primary-light: 201 68% 59%;
-  --brand-dark: 206 100% 18%;
-  --brand-secondary: 217 40% 22%;
-  --brand-accent: 77 71% 44%;
-  --brand-accent-dashboard: 77 71% 44%;
-  --surface: 0 0% 100%;
-  --surface-elevated: 210 40% 99%;
-  --border-subtle: 208 33% 92%;
-  --text-primary: 217 33% 17%;
-  --text-secondary: 215 16% 47%;
+  /* ── Brand Tokens — Forest #1F6F4A / Tannen #22443A / Ocker #D8B34A ──
+     Logo-Blau bleibt Marketing/Logo, die App führt Grün. */
+  --brand-primary: 152 56% 28%;
+  --brand-primary-light: 152 40% 42%;
+  --brand-dark: 162 33% 20%;
+  --brand-secondary: 162 33% 20%;
+  /* Ocker abgedunkelt gegenüber dem Entwurf (war 57 % Helligkeit): als
+     Fläche für dünne Grafik — Fortschrittsbalken, Badge-Punkte — kam der
+     helle Ton auf 1,9:1 gegen die Karte und war damit auf einem mässigen
+     Monitor schlicht nicht zu sehen. */
+  --brand-accent: 44 70% 36%;
+  /* Terrakotta aus dem Entwurf (--accent-2, #c1633f). Der dritte Ton neben
+     Grün und Ocker: Zustände, die weder gut noch kaputt sind — Warteliste,
+     Wartet-auf-Freigabe. Ohne ihn landeten die bei Ocker (dem Signalton) oder
+     bei --destructive (dem Fehlerton), und beide sagen etwas Falsches.
+     Wie beim Ocker abgedunkelt: der Entwurfswert (50 % Helligkeit) kam als
+     Text auf der Karte auf 3,9:1. */
+  --brand-accent-2: 17 51% 44%;
+  --surface: 40 27% 98%;
+  --surface-elevated: 0 0% 100%;
+  --border-subtle: 43 16% 91%;
+  --text-primary: 160 23% 10%;
+  --text-secondary: 153 6% 40%;
 
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -110,40 +126,131 @@
 .dark {
   color-scheme: dark;
 
-  /* ── shadcn/ui Theme Variables (Dark) ── */
-  /* Same cool blue-gray nudge as :root — small nudge, not a redesign. */
-  --background: 210 20% 8%;
-  --foreground: 216 33% 97%;
-  --card: 211 28% 15%;
-  --card-foreground: 216 33% 97%;
-  --popover: 211 28% 15%;
-  --popover-foreground: 216 33% 97%;
-  --primary: 201 68% 59%;
-  --primary-foreground: 210 20% 10%;
-  --secondary: 211 20% 17%;
-  --secondary-foreground: 216 33% 97%;
-  --muted: 211 20% 17%;
-  --muted-foreground: 215 16% 65%;
-  --accent: 211 20% 20%;
-  --accent-foreground: 216 33% 97%;
-  --destructive: 4 70% 55%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 211 20% 20%;
-  --input: 211 20% 20%;
-  --ring: 201 68% 59%;
+  /* ── shadcn/ui Theme Variables (Dark) — Palette "Nocturne" ──
+     Nocturne behält seine kühlen Neutralen (der Grund bleibt blaugrau, damit
+     Karten als eigene Ebene lesbar bleiben) — die Aktionsfarbe ist aber nicht
+     mehr Blau, sondern dasselbe Grün wie im Light-Theme, nur aufgehellt.
+     Grund: ein Haupt-Knopf, der beim Theme-Wechsel die Farbfamilie tauscht,
+     ist kein wiedererkennbares Bedienelement. Das ursprüngliche Argument
+     „Grün auf Schwarz kippt ins Giftige" gilt für die satten, hellen Grüns —
+     152 50% 48% liegt luminanzgleich zum vorherigen Blau (7,5:1 gegen den
+     Grund statt 7,4:1), tauscht also nur den Farbton, nicht den Kontrast. */
+  --background: 210 29% 7%;
+  --foreground: 210 35% 93%;
+  --card: 210 26% 11%;
+  --card-foreground: 210 35% 93%;
+  --popover: 210 26% 11%;
+  --popover-foreground: 210 35% 93%;
+  --primary: 152 50% 48%;
+  --primary-foreground: 210 29% 7%;
+  --secondary: 211 32% 15%;
+  --secondary-foreground: 210 35% 93%;
+  --muted: 211 32% 15%;
+  --muted-foreground: 208 17% 59%;
+  --accent: 209 28% 19%;
+  --accent-foreground: 210 35% 93%;
+  --destructive: 12 73% 66%;
+  --destructive-foreground: 210 29% 7%;
+  --border: 209 28% 19%;
+  /* Gleiche Begründung wie im Light-Theme: Eingabefeld-Rahmen fällt unter
+     WCAG 1.4.11, dekorativer Kartenrahmen nicht. */
+  --input: 209 20% 42%;
+  --ring: 152 50% 48%;
 
-  /* ── Brand Tokens — dark mode leads with the lighter blue/green per spec ── */
-  --brand-primary: 201 68% 59%;
-  --brand-primary-light: 201 68% 70%;
-  --brand-dark: 210 20% 8%;
-  --brand-secondary: 217 40% 35%;
+  /* ── Brand Tokens — Dark führt dasselbe Grün wie Light, nur aufgehellt ──
+     Das helle Brand-Blau bleibt Marketing/Logo, wie im Light-Theme auch. */
+  --brand-primary: 152 50% 48%;
+  --brand-primary-light: 152 45% 62%;
+  --brand-dark: 210 29% 7%;
+  --brand-secondary: 209 35% 16%;
   --brand-accent: 77 71% 50%;
-  --brand-accent-dashboard: 77 71% 50%;
-  --surface: 211 28% 15%;
-  --surface-elevated: 211 24% 18%;
-  --border-subtle: 211 20% 22%;
-  --text-primary: 216 33% 97%;
-  --text-secondary: 215 16% 65%;
+  --brand-accent-2: 22 62% 62%;
+  --surface: 210 26% 11%;
+  --surface-elevated: 209 35% 16%;
+  --border-subtle: 211 32% 15%;
+  --text-primary: 210 35% 93%;
+  --text-secondary: 208 17% 59%;
+}
+
+/* ── Sidebar-Oberfläche (.sidebar-surface) ──
+ * Die Sidebar ist die einzige Fläche der App, die dunkel bleibt — auch im
+ * Light-Theme. Statt in `components/layout/sidebar.tsx` jede der ~40
+ * Utility-Klassen zu verdoppeln (`bg-muted dark:bg-… light:bg-…`), werden
+ * hier dieselben Token-Namen lokal umdefiniert. Die bestehenden Utilities
+ * (`text-muted-foreground`, `hover:bg-muted`, `border-border`, …) lösen
+ * damit innerhalb der Sidebar automatisch auf die dunklen Werte auf.
+ *
+ * Gleiche Strategie wie `.theme-editorial` weiter unten — bewusst, damit es
+ * im Projekt nur ein Muster für „Bereich mit eigenem Farbraum" gibt.
+ */
+@layer base {
+  .sidebar-surface {
+    --background: 162 33% 20%;
+    --foreground: 0 0% 100%;
+    --card: 162 30% 24%;
+    --card-foreground: 0 0% 100%;
+    --muted: 162 25% 28%;
+    --muted-foreground: 158 14% 76%;
+    --accent: 162 25% 28%;
+    --accent-foreground: 0 0% 100%;
+    --border: 162 22% 30%;
+    --input: 162 22% 34%;
+    --secondary: 162 25% 28%;
+    --secondary-foreground: 0 0% 100%;
+
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+
+    /* Court-Linien: zwei 1px-Raster, 64px-Takt. Bewusst sehr schwach —
+       es soll als Textur gelesen werden, nicht als Tabelle. */
+    background-image:
+      linear-gradient(hsl(0 0% 100% / 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(0 0% 100% / 0.045) 1px, transparent 1px);
+    background-size:
+      100% 64px,
+      64px 100%;
+  }
+
+  /* Im Dark-Theme geht die Sidebar noch eine Stufe tiefer als die Seite,
+     sonst verschwimmt sie mit dem Inhaltsbereich. */
+  .dark .sidebar-surface {
+    --background: 210 30% 9%;
+    --card: 210 26% 13%;
+    --muted: 209 24% 17%;
+    --muted-foreground: 208 17% 66%;
+    --accent: 209 24% 17%;
+    --border: 209 26% 17%;
+    --input: 209 22% 30%;
+    --secondary: 209 24% 17%;
+  }
+
+  /* Aktiver Navigationspunkt: helle Pille auf dunklem Grund. Überschreibt
+     die rollenabhängigen `colors.bg`/`colors.text`-Klassen aus sidebar.tsx
+     über höhere Spezifität (0,2,1 gegen 0,1,0) — kein !important nötig. */
+  .sidebar-surface [aria-current='page'] {
+    background-color: hsl(0 0% 100%);
+    color: hsl(var(--brand-dark));
+    font-weight: 600;
+  }
+  .dark .sidebar-surface [aria-current='page'] {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  /* ── Dunkle Insel im hellen Theme (.brand-dark-surface) ──
+   * Für Flächen, die in beiden Themes dunkel bleiben — aktuell die
+   * Saison-Karte. Der Ocker ist dort ein anderes Problem als auf einer
+   * hellen Karte: `--brand-accent` ist wegen des Kontrasts auf hellem Grund
+   * abgedunkelt (siehe oben) und kommt auf `--brand-dark` nur noch auf
+   * 2,7:1 — unter den 3:1, die WCAG 1.4.11 für Grafik verlangt, und genau
+   * das, was Fortschrittsbalken und Eyebrow dort sind. Auf dunklem Grund
+   * gilt der ursprüngliche Entwurfswert #d8b34a: 5,3:1.
+   * Gleiches Muster wie `.sidebar-surface` — Token lokal umdefinieren statt
+   * an jeder Utility-Klasse eine Sondervariante zu führen.
+   */
+  .brand-dark-surface {
+    --brand-accent: 44 64% 57%;
+  }
 }
 
 * {

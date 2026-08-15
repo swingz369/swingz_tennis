@@ -14,7 +14,7 @@ const AbsenceManagement = dynamic(
 );
 
 const TRIGGER_CLASS =
-  'gap-2 rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm';
+  'gap-2 rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-primary data-[state=active]:shadow-sm';
 
 export function HoursLogsTabsWrapper({
   children,

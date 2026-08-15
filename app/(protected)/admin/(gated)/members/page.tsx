@@ -1,4 +1,5 @@
 import { requireAdminClub } from '@/lib/admin-context';
+import { createServiceClient } from '@/lib/supabase/service';
 import { getPagination, buildPaginationMeta } from '@/lib/pagination';
 import { MembersClient } from './members-client';
 import type { Member } from './member.types';
@@ -81,7 +82,16 @@ export default async function MembersPage({
   >();
 
   if (userIds.length > 0) {
-    const { data: usersData } = await supabase
+    // Service-Client: Die RLS-Policy auf `users` lässt einen Admin die Zeilen
+    // anderer Mitglieder nicht lesen (dieselbe Ursache wie bei den
+    // Familienkonten und der Trainer-Suche). Mit dem User-Client kam hier eine
+    // leere Liste zurück — und die Tabelle zeigte für JEDES Mitglied „—" bei
+    // Name, E-Mail und Telefon.
+    //
+    // Die Abfrage ist trotzdem club-gebunden: `userIds` stammt ausschließlich
+    // aus den Mitgliedschaften dieses Vereins, die oben über den RLS-Client
+    // geladen wurden. Es kann also keine vereinsfremde Zeile mitkommen.
+    const { data: usersData } = await createServiceClient()
       .from('users')
       .select('id, full_name, email, phone, address, city')
       .in('id', userIds);

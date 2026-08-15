@@ -229,7 +229,7 @@ export class ReactivationService {
     if (membershipsError) throw membershipsError;
     if (!memberships || memberships.length === 0) return [];
 
-    const userIds = [...new Set(memberships.map((m: any) => m.user_id))];
+    const userIds = [...new Set(memberships.map((m) => m.user_id))];
 
     // 2. Get recent bookings for those users (BOOKING_LOOKBACK_DAYS window)
     const lookbackCutoff = new Date(
@@ -256,7 +256,7 @@ export class ReactivationService {
 
     // 4. Compute inactive members
     const inactive: InactiveMember[] = [];
-    for (const m of memberships as any[]) {
+    for (const m of memberships) {
       const user = Array.isArray(m.users) ? m.users[0] : m.users;
       const lastBookingAt = lastBookingByUser.get(m.user_id) ?? null;
 

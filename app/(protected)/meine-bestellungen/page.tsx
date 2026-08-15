@@ -122,7 +122,7 @@ export default function MeineBestellungenPage() {
             variant={activeFilter === tab.key ? 'default' : 'outline'}
             size="sm"
             onClick={() => setActiveFilter(tab.key)}
-            className={activeFilter === tab.key ? 'bg-brand-primary hover:bg-brand-primary/90' : ''}
+            className={activeFilter === tab.key ? 'bg-primary hover:bg-primary/90' : ''}
           >
             {tab.label}
           </Button>

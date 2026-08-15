@@ -224,6 +224,25 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
+  // 8. Geschützte Antworten nicht zwischenspeichern lassen.
+  //
+  // Next.js liefert für dieselbe URL zwei Varianten aus — HTML für den Seitenaufruf
+  // und die RSC-Nutzlast (`text/x-component`) für die clientseitige Navigation —
+  // und trennt sie nur über `Vary: rsc, next-router-state-tree, …`. Mit dem
+  // Vorgabewert `no-cache, must-revalidate` darf der Browser beide ablegen. Firefox
+  // unterscheidet die Varianten über diese Zusatz-Header nicht zuverlässig und gibt
+  // beim Neuladen (F5) die zwischengespeicherte RSC-Nutzlast als Dokument aus — die
+  // Seite bleibt dann leer. Chrome trifft die Unterscheidung korrekt, weshalb der
+  // Fehler dort nicht auftritt.
+  //
+  // `no-store` verbietet das Ablegen ganz. Für eingeloggte Seiten ist das ohnehin
+  // richtig: sie enthalten personenbezogene Daten und dürfen nicht im Browsercache
+  // oder auf einem Zwischenproxy liegen bleiben. Öffentliche Routen sind oben
+  // bereits zurückgegeben worden und behalten ihr Caching.
+  if (!pathname.startsWith('/api/')) {
+    response.headers.set('Cache-Control', 'no-store, must-revalidate');
+  }
+
   return response;
 }
 

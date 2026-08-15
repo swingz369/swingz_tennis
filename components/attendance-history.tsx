@@ -77,7 +77,7 @@ export default function AttendanceHistory() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-brand-primary">Anwesenheitshistorie</h1>
+        <h1 className="text-2xl font-bold text-primary">Anwesenheitshistorie</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           Deine Trainings-Anwesenheit im Überblick
         </p>

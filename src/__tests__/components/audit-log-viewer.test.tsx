@@ -41,7 +41,7 @@ describe('AuditLogViewer', () => {
       new Promise(() => {}) // never resolves
     );
     render(<AuditLogViewer />);
-    expect(screen.getByText(/loading audit logs/i)).toBeInTheDocument();
+    expect(screen.getByText(/Audit-Logs werden geladen/i)).toBeInTheDocument();
   });
 
   // ── Data rendering ───────────────────────────────────────────────────
@@ -65,7 +65,7 @@ describe('AuditLogViewer', () => {
     render(<AuditLogViewer />);
 
     await waitFor(() => {
-      expect(screen.getByText(/no audit logs found/i)).toBeInTheDocument();
+      expect(screen.getByText(/Keine Audit-Logs vorhanden/i)).toBeInTheDocument();
     });
   });
 
@@ -152,7 +152,7 @@ describe('AuditLogViewer', () => {
     });
 
     const callsBefore = fetchMock.mock.calls.length;
-    fireEvent.click(screen.getByRole('button', { name: /refresh/i }));
+    fireEvent.click(screen.getByRole('button', { name: /aktualisieren/i }));
 
     await waitFor(() => {
       expect(fetchMock.mock.calls.length).toBeGreaterThan(callsBefore);
@@ -168,7 +168,7 @@ describe('AuditLogViewer', () => {
     render(<AuditLogViewer />);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Failed to load audit logs');
+      expect(toast.error).toHaveBeenCalledWith('Audit-Logs konnten nicht geladen werden');
     });
   });
 });

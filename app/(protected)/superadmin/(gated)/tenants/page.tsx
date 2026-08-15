@@ -131,14 +131,11 @@ export default function SuperadminTenantsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {clubs.map((club) => (
-            <Card
-              key={club.id}
-              className="hover:border-brand-primary/50 hover:shadow-sm transition-all"
-            >
+            <Card key={club.id} className="hover:border-primary/50 hover:shadow-sm transition-all">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-lg">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/10 shrink-0">
-                    <Building2 className="h-4 w-4 text-brand-primary" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                    <Building2 className="h-4 w-4 text-primary" />
                   </div>
                   <span className="truncate">{club.name}</span>
                 </CardTitle>
@@ -178,7 +175,7 @@ export default function SuperadminTenantsPage() {
                   </div>
                   <Button
                     onClick={() => switchToClub(club.id, club.name)}
-                    className="w-full mt-4 bg-brand-primary hover:bg-brand-light/80"
+                    className="w-full mt-4 bg-primary hover:bg-brand-light/80"
                   >
                     Verein verwalten
                     <ArrowRight className="ml-2 h-4 w-4" />

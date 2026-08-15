@@ -8,6 +8,8 @@
  */
 
 import type { GroupAssignment } from '@/lib/season-planning/types';
+import type { SkillLevel } from '@/lib/types/season-planning';
+import { LEVEL_RANK, LEVEL_LABEL } from '@/lib/season-planning/schedule-constants';
 
 // ============================================
 // TIME HELPERS
@@ -214,7 +216,154 @@ export function detectTrainerOverLimit(
   return findings;
 }
 
-/** Assignments whose warnings contain a "Niveau-Spanne" violation. */
-export function detectLargeNiveauSpan(assignments: GroupAssignment[]): GroupAssignment[] {
-  return assignments.filter((a) => a.warnings.some((w) => w.includes('Niveau-Spanne')));
+/**
+ * Mitgliedsdaten, die die Niveau- und Avoid-Prüfung braucht. Kommen aus
+ * `users.skill_level` und `user_training_preferences.avoid_member_ids`.
+ */
+export interface ConflictMemberInfo {
+  name: string;
+  skillLevel: SkillLevel;
+  avoidMemberIds: string[];
+}
+
+export interface NiveauSpanFinding {
+  assignment: GroupAssignment;
+  span: number;
+  minLabel: string;
+  maxLabel: string;
+}
+
+/**
+ * Gruppen, deren Niveau-Spanne das konfigurierte Maximum überschreitet.
+ *
+ * Vorher wurde dafür der Warntext der Clustering-Engine durchsucht
+ * (`warnings.includes('Niveau-Spanne')`). Planeinträge aus der Datenbank tragen
+ * keine Warnungen, deshalb konnte die Regel außerhalb des Dry-Runs nie
+ * auslösen. Jetzt wird die Spanne aus den Niveaus der Mitglieder gerechnet.
+ */
+export function detectLargeNiveauSpan(
+  assignments: GroupAssignment[],
+  membersById: Map<string, ConflictMemberInfo>,
+  maxLevelSteps: number
+): NiveauSpanFinding[] {
+  const findings: NiveauSpanFinding[] = [];
+
+  for (const assignment of assignments) {
+    const ranks = assignment.memberIds
+      .map((id) => membersById.get(id))
+      .filter((m): m is ConflictMemberInfo => !!m)
+      .map((m) => LEVEL_RANK[m.skillLevel] ?? 0);
+    if (ranks.length < 2) continue;
+
+    const min = Math.min(...ranks);
+    const max = Math.max(...ranks);
+    const span = max - min;
+    if (span <= maxLevelSteps) continue;
+
+    findings.push({
+      assignment,
+      span,
+      minLabel: labelForRank(min),
+      maxLabel: labelForRank(max),
+    });
+  }
+  return findings;
+}
+
+function labelForRank(rank: number): string {
+  const level = (Object.keys(LEVEL_RANK) as SkillLevel[]).find((l) => LEVEL_RANK[l] === rank);
+  return level ? LEVEL_LABEL[level] : `Stufe ${rank}`;
+}
+
+export interface AvoidPartnerFinding {
+  assignment: GroupAssignment;
+  /** Paare als Namen, in stabiler Reihenfolge (a vor b nach memberIds-Position). */
+  pairs: Array<[string, string]>;
+  memberIds: string[];
+}
+
+/**
+ * Gruppen, in denen zwei Mitglieder stehen, von denen mindestens eines das
+ * andere ausgeschlossen hat (`avoid_member_ids`). Auch das lief vorher nur über
+ * den Warntext der Engine und damit nie auf gespeicherten Planeinträgen.
+ */
+export function detectAvoidPartnerConflicts(
+  assignments: GroupAssignment[],
+  membersById: Map<string, ConflictMemberInfo>
+): AvoidPartnerFinding[] {
+  const findings: AvoidPartnerFinding[] = [];
+
+  for (const assignment of assignments) {
+    const ids = [...new Set(assignment.memberIds)];
+    const pairs: Array<[string, string]> = [];
+    const involved = new Set<string>();
+
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const a = membersById.get(ids[i]);
+        const b = membersById.get(ids[j]);
+        if (!a || !b) continue;
+        if (!a.avoidMemberIds.includes(ids[j]) && !b.avoidMemberIds.includes(ids[i])) continue;
+        pairs.push([a.name, b.name]);
+        involved.add(ids[i]);
+        involved.add(ids[j]);
+      }
+    }
+    if (pairs.length > 0) {
+      findings.push({ assignment, pairs, memberIds: [...involved] });
+    }
+  }
+  return findings;
+}
+
+// ============================================
+// KONFLIKT → BEHEBUNGSORT
+// ============================================
+
+/**
+ * Wo im Wizard lässt sich die Ursache eines Konflikts beheben?
+ *
+ * Hintergrund: Die Konfliktliste hatte einen Knopf „Lösen", der nur einen
+ * Status schrieb. An den Daten änderte er nichts — der Konflikt galt danach
+ * für immer als gelöst, obwohl die Ursache blieb (bei TC Rheinland wurden so
+ * zwei Gruppen ohne Platz veröffentlicht). Statt eines Status-Knopfes führt
+ * „Beheben" jetzt an die Stelle, an der man die Ursache wirklich abstellt;
+ * verschwindet der Konflikt danach von selbst, war er echt behoben.
+ */
+export function conflictFixTarget(type: string): { step: 1 | 2 | 3; hint: string } {
+  switch (type) {
+    case 'member_unplanned':
+    case 'member_unavailable':
+      return {
+        step: 1,
+        hint: 'Mitglieder-Auswahl: betroffene Mitglieder zuordnen oder aus der Planung nehmen.',
+      };
+    case 'no_trainer_assigned':
+    case 'trainer_double_booking':
+    case 'trainer_over_limit':
+      return { step: 2, hint: 'Trainer-Verfügbarkeit: Zeiten oder Wochenstunden anpassen.' };
+    default:
+      // no_court_assigned, court_unavailable, member_double_booking,
+      // large_niveau_span, avoid_partner_conflict, high_failure_rate_slot
+      return {
+        step: 3,
+        hint: 'Stundenplan: Platz, Zeit oder Gruppenzusammensetzung des Eintrags ändern.',
+      };
+  }
+}
+
+/**
+ * Minderjährig laut Geburtsdatum — `null`, wenn kein Datum hinterlegt ist
+ * (dann muss der Aufrufer auf seine bisherige Heuristik zurückfallen).
+ */
+export function isMinorByBirthdate(dob: unknown, today: Date = new Date()): boolean | null {
+  if (!dob) return null;
+  const born = dob instanceof Date ? dob : new Date(String(dob));
+  if (Number.isNaN(born.getTime())) return null;
+  let age = today.getFullYear() - born.getFullYear();
+  const beforeBirthday =
+    today.getMonth() < born.getMonth() ||
+    (today.getMonth() === born.getMonth() && today.getDate() < born.getDate());
+  if (beforeBirthday) age -= 1;
+  return age < 18;
 }

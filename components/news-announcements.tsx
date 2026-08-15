@@ -335,16 +335,14 @@ export default function NewsAnnouncements({
               <Card
                 key={item.id}
                 className={`transition-all hover:shadow-md ${
-                  item.isPinned ? 'border-brand-primary/30 bg-brand-primary/5' : ''
+                  item.isPinned ? 'border-primary/30 bg-primary/5' : ''
                 } ${expired ? 'opacity-60' : ''}`}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start gap-3 flex-1">
                       <div
-                        className={`p-2 rounded-xl ${
-                          item.isPinned ? 'bg-brand-primary/20' : 'bg-muted'
-                        }`}
+                        className={`p-2 rounded-xl ${item.isPinned ? 'bg-primary/20' : 'bg-muted'}`}
                       >
                         <Bell className="h-5 w-5" />
                       </div>
@@ -543,7 +541,7 @@ export default function NewsAnnouncements({
                 type="checkbox"
                 checked={form.isPinned}
                 onChange={(e) => setForm((f) => ({ ...f, isPinned: e.target.checked }))}
-                className="h-4 w-4 rounded border-border text-brand-primary focus:ring-brand-primary"
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
               />
               <Pin className="h-4 w-4 text-muted-foreground" />
               <span>Angepinnt an den Anfang der Liste</span>

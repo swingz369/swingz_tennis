@@ -1,0 +1,232 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>SwingZ — Farbvarianten</title>
+<style>
+/* ══ A · Clay — warmes Neutral, tiefes Tennisgrün, Ton statt Signalfarbe ══ */
+body.pA{
+  --paper:#f3f2ee; --card:#fbfaf8; --ink:#14201c; --ink-2:#22443a;
+  --line:#e0dedA; --line-soft:#eceae5; --muted:#6f7a75;
+  --accent:#1f6f4a; --accent-2:#c1633f; --pos:#1f6f4a; --neg:#a94b2c;
+  --sig:#d8b34a;
+  --hm0:#eae8e2; --hm1:#d5e2d7; --hm2:#a9c8b3; --hm3:#5f9a78; --hm4:#1f6f4a;
+}
+/* ══ B · Slate — kühl, ruhig, nur eine Akzentfarbe (Brand-Blau) ══ */
+body.pB{
+  --paper:#f4f6f8; --card:#ffffff; --ink:#0f1d2b; --ink-2:#1c3a56;
+  --line:#e1e7ed; --line-soft:#eff3f6; --muted:#65788a;
+  --accent:#00599f; --accent-2:#50acde; --pos:#0f7a45; --neg:#b3341f;
+  --sig:#50acde;
+  --hm0:#e9edf1; --hm1:#d3e3f0; --hm2:#9dc6e3; --hm3:#4d95c8; --hm4:#00599f;
+}
+/* ══ C · Cream — Magazin: cremiges Papier, Tinte fast schwarz, Waldgrün ══ */
+body.pC{
+  --paper:#f9f6ef; --card:#ffffff; --ink:#16140f; --ink-2:#243d2c;
+  --line:#e6e0d2; --line-soft:#f2eee3; --muted:#77705f;
+  --accent:#14532d; --accent-2:#b4813a; --pos:#14532d; --neg:#9c3620;
+  --sig:#b4813a;
+  --hm0:#ece7d9; --hm1:#d9e2cf; --hm2:#adc4a3; --hm3:#5c8a5e; --hm4:#14532d;
+}
+/* ══ D · Nocturne — dunkel, gleiche Struktur (Dark-Mode-Antwort) ══ */
+body.pD{
+  --paper:#0c1116; --card:#141b22; --ink:#e8eef4; --ink-2:#1b2a38;
+  --line:#22303d; --line-soft:#1b2734; --muted:#8497a8;
+  --accent:#50acde; --accent-2:#94c121; --pos:#7ab648; --neg:#e8846a;
+  --sig:#94c121;
+  --hm0:#1a242e; --hm1:#1e3a44; --hm2:#256074; --hm3:#2f8ba8; --hm4:#50acde;
+}
+
+:root{--mono:ui-monospace,"SF Mono",Menlo,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",system-ui,sans-serif;background:var(--paper);color:var(--ink);display:flex;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* Sidebar */
+aside{width:236px;flex:0 0 236px;background:var(--ink-2);color:#fff;padding:26px 18px;position:relative;overflow:hidden}
+body.pD aside{background:#0f161d;border-right:1px solid var(--line)}
+aside::after{content:"";position:absolute;inset:0;pointer-events:none;background:
+  linear-gradient(#ffffff0a 1px,transparent 1px) 0 0/100% 64px,
+  linear-gradient(90deg,#ffffff0a 1px,transparent 1px) 0 0/64px 100%}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:-.025em;margin-bottom:24px;position:relative}
+.logo i{width:25px;height:25px;border-radius:50%;background:var(--sig);position:relative;flex:0 0 25px}
+.logo i::before{content:"";position:absolute;inset:3px;border-radius:50%;border:1.5px solid var(--ink-2);border-left-color:transparent;border-right-color:transparent}
+.switch{display:flex;justify-content:space-between;align-items:center;background:#ffffff12;border:1px solid #ffffff1f;border-radius:9px;padding:9px 12px;font-size:13px;font-weight:500;margin-bottom:24px;position:relative}
+.switch small{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#ffffff66;margin-bottom:3px;font-weight:600}
+nav{position:relative}
+nav p{font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:#ffffff4d;margin:20px 0 7px 12px;font-weight:600}
+nav a{display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:8px;color:#ffffffba;text-decoration:none;font-size:13.5px;font-weight:500}
+nav a.on{background:var(--card);color:var(--ink);font-weight:650}
+nav a s{width:15px;height:15px;border:1.6px solid currentColor;border-radius:4px;opacity:.6;text-decoration:none;flex:0 0 15px}
+nav a.on s{opacity:1;background:var(--accent);border-color:var(--accent)}
+nav a b{margin-left:auto;font-family:var(--mono);font-size:10.5px;font-weight:600;background:#ffffff1f;padding:1px 6px;border-radius:5px}
+nav a.on b{background:var(--line-soft);color:var(--accent)}
+
+/* Header */
+main{flex:1;min-width:0}
+header{padding:16px 34px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;background:var(--paper)}
+header .sp{flex:1}
+.search{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13px;color:var(--muted);width:300px;display:flex;justify-content:space-between;align-items:center;white-space:nowrap;gap:12px}
+.search kbd{font-family:var(--mono);font-size:10.5px;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--muted)}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:9px;padding:9px 15px;font-size:13.5px;font-weight:600;font-family:inherit}
+body.pD .btn{color:#0c1116}
+.ghost{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;color:var(--muted);position:relative}
+.ghost::after{content:"";position:absolute;top:8px;right:9px;width:6px;height:6px;border-radius:50%;background:var(--pos);border:1.5px solid var(--card)}
+
+.wrap{padding:30px 34px 50px;max-width:1440px}
+.eyebrow{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);margin-bottom:9px}
+h1{font-size:34px;line-height:1.05;letter-spacing:-.038em;font-weight:700;margin-bottom:6px}
+.sub{color:var(--muted);font-size:14.5px;margin-bottom:28px}
+.sub b{color:var(--ink);font-weight:600}
+
+/* KPI-Band */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);border-top:2px solid var(--ink);border-bottom:1px solid var(--line);margin-bottom:26px}
+body.pD .kpis{border-top-color:var(--accent)}
+.kpi{padding:20px 24px 18px;border-right:1px solid var(--line)}
+.kpi:last-child{border-right:0}
+.kpi dt{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600;margin-bottom:11px}
+.kpi dd{font-size:34px;font-weight:700;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums}
+.kpi dd small{font-size:16px;font-weight:600;color:var(--muted);letter-spacing:-.02em}
+.kpi .d{margin-top:8px;font-family:var(--mono);font-size:11.5px;font-weight:600}
+.up{color:var(--pos)} .dn{color:var(--neg)} .fl{color:var(--muted)}
+
+/* Bento */
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:18px 20px}
+.s4{grid-column:span 4} .s8{grid-column:span 8}
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:15px}
+.hdr h2{font-size:14.5px;font-weight:650;letter-spacing:-.015em}
+.hdr p{font-size:11.5px;color:var(--muted);margin-top:2px}
+.hdr a{font-size:12.5px;color:var(--accent);text-decoration:none;font-weight:500;white-space:nowrap}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600;padding:0 0 9px;border-bottom:1px solid var(--line)}
+td{padding:11px 0;border-bottom:1px solid var(--line-soft)}
+tr:last-child td{border-bottom:0}
+.who{font-weight:600}
+.mn{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.amt{font-family:var(--mono);font-weight:600;text-align:right;font-size:12.5px}
+.dot{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600}
+.dot::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.g{color:var(--pos)} .o{color:var(--accent-2)}
+
+.heat{display:grid;grid-template-columns:30px repeat(12,1fr);gap:3px}
+.heat span{font-family:var(--mono);font-size:9.5px;color:var(--muted);display:grid;place-items:center}
+.heat i{height:20px;border-radius:3px;background:var(--hm0);display:block}
+.h1{background:var(--hm1)!important} .h2{background:var(--hm2)!important}
+.h3{background:var(--hm3)!important} .h4{background:var(--hm4)!important}
+.legend{display:flex;align-items:center;gap:6px;margin-top:13px;font-family:var(--mono);font-size:10px;color:var(--muted)}
+.legend i{width:16px;height:9px;border-radius:2px;display:block}
+
+.season{background:linear-gradient(140deg,var(--ink-2) 0%,var(--accent) 190%);color:#fff;border:0;position:relative;overflow:hidden}
+body.pD .season{background:linear-gradient(140deg,#16232e,#1d3d4d);border:1px solid var(--line)}
+.season::after{content:"";position:absolute;right:-56px;bottom:-72px;width:190px;height:190px;border:2px solid #ffffff1f;border-radius:50%}
+.season b.tag{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.13em;color:var(--sig);display:block;margin-bottom:10px}
+.season h3{font-size:19px;font-weight:650;letter-spacing:-.025em;margin-bottom:14px;color:#fff}
+.season .big{font-size:30px;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums;position:relative;color:#fff}
+.season .big small{font-size:15px;color:#ffffff8c;font-weight:600}
+.bar{height:6px;background:#ffffff29;border-radius:4px;overflow:hidden;margin:12px 0 8px;position:relative}
+.bar i{display:block;height:100%;width:68%;background:var(--sig);border-radius:4px}
+.season .meta{font-family:var(--mono);font-size:11px;color:#ffffff94;position:relative}
+.season a{display:flex;align-items:center;justify-content:space-between;margin-top:17px;background:#ffffff17;border:1px solid #ffffff29;border-radius:9px;padding:11px 14px;color:#fff;text-decoration:none;font-size:13px;font-weight:600;position:relative}
+
+.qa{display:grid;gap:8px}
+.qa a{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:10px;padding:11px 13px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:600;background:var(--paper)}
+.qa a em{width:28px;height:28px;border-radius:8px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;font-style:normal;font-size:12px;flex:0 0 28px;color:var(--accent)}
+.qa a span{margin-left:auto;font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--neg)}
+
+/* Varianten-Label */
+.tagline{position:fixed;right:14px;bottom:12px;font-family:var(--mono);font-size:10.5px;color:var(--muted);background:var(--card);border:1px solid var(--line);padding:5px 10px;border-radius:7px;z-index:9}
+</style>
+
+<body class="pA">
+<aside>
+  <div class="logo"><i></i>SwingZ</div>
+  <div class="switch"><div><small>Verein</small>TC Rheinland e.V.</div><span>⌄</span></div>
+  <nav>
+    <a class="on" href="#"><s></s>Übersicht</a>
+    <a href="#"><s></s>Mitglieder<b>248</b></a>
+    <a href="#"><s></s>Plätze</a>
+    <a href="#"><s></s>Saisonplanung<b>68%</b></a>
+    <p>Verwaltung</p>
+    <a href="#"><s></s>Rechnungen<b>4</b></a>
+    <a href="#"><s></s>Trainer</a>
+    <a href="#"><s></s>Auswertung</a>
+    <a href="#"><s></s>Einstellungen</a>
+  </nav>
+</aside>
+
+<main>
+  <header>
+    <div class="search"><span>Mitglied, Platz, Rechnung …</span><kbd>⌘K</kbd></div>
+    <div class="sp"></div>
+    <div class="ghost">◍</div>
+    <button class="btn">＋ Mitglied einladen</button>
+  </header>
+
+  <div class="wrap">
+    <div class="eyebrow">Donnerstag, 14. August 2026</div>
+    <h1>Guten Morgen, Bart.</h1>
+    <p class="sub">Heute <b>17 Sessions</b>, <b>4 Rechnungen</b> fällig zum 01.09. — sonst läuft alles.</p>
+
+    <dl class="kpis">
+      <div class="kpi"><dt>Mitglieder</dt><dd>248</dd><div class="d up">+12 diesen Monat</div></div>
+      <div class="kpi"><dt>Sessions heute</dt><dd>17<small>/24</small></dd><div class="d fl">71 % Auslastung</div></div>
+      <div class="kpi"><dt>Umsatz August</dt><dd>8.420 €</dd><div class="d up">+6,2 % vs. Juli</div></div>
+      <div class="kpi"><dt>Offene Forderungen</dt><dd>1.180 €</dd><div class="d dn">4 Rechnungen</div></div>
+    </dl>
+
+    <div class="grid">
+      <div class="c s8">
+        <div class="hdr"><div><h2>Letzte Buchungen</h2><p>Heute · 5 Vorgänge</p></div><a href="#">Alle Aktivitäten →</a></div>
+        <table>
+          <tr><th>Mitglied</th><th>Platz / Zeit</th><th>Status</th><th style="text-align:right">Betrag</th></tr>
+          <tr><td class="who">Lena Hoffmann</td><td class="mn">Platz 3 · 18:00</td><td><span class="dot g">Bestätigt</span></td><td class="amt">24,00 €</td></tr>
+          <tr><td class="who">Markus Weber</td><td class="mn">Platz 1 · 19:30</td><td><span class="dot g">Bestätigt</span></td><td class="amt">24,00 €</td></tr>
+          <tr><td class="who">Jugend U14 — Gruppe B</td><td class="mn">Halle 2 · Fr 16:00</td><td><span class="dot o">Warteliste</span></td><td class="amt">—</td></tr>
+          <tr><td class="who">Sonja Bittner</td><td class="mn">Platz 5 · Fr 07:00</td><td><span class="dot g">Bestätigt</span></td><td class="amt">18,00 €</td></tr>
+          <tr><td class="who">Trainer Kalt — Einzelstunde</td><td class="mn">Platz 2 · Fr 10:00</td><td><span class="dot g">Bestätigt</span></td><td class="amt">45,00 €</td></tr>
+        </table>
+      </div>
+
+      <div class="c s4 season">
+        <b class="tag">Wintersaison 26/27</b>
+        <h3>Präferenzen laufen</h3>
+        <div class="big">168<small>/248 Mitgliedern</small></div>
+        <div class="bar"><i></i></div>
+        <div class="meta">68 % · endet in 9 Tagen</div>
+        <a href="#">Zur Saisonplanung <span>→</span></a>
+      </div>
+
+      <div class="c s8">
+        <div class="hdr"><div><h2>Platzbelegung diese Woche</h2><p>6 Plätze · 07:00 – 22:00 Uhr</p></div><a href="#">Kalender öffnen →</a></div>
+        <div class="heat">
+          <span></span><span>7</span><span>8</span><span>10</span><span>12</span><span>14</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span>
+          <span>Mo</span><i class="h1"></i><i></i><i class="h1"></i><i></i><i class="h2"></i><i class="h3"></i><i class="h4"></i><i class="h4"></i><i class="h4"></i><i class="h3"></i><i class="h2"></i><i></i>
+          <span>Di</span><i></i><i class="h1"></i><i></i><i class="h1"></i><i class="h2"></i><i class="h4"></i><i class="h4"></i><i class="h4"></i><i class="h3"></i><i class="h3"></i><i class="h1"></i><i></i>
+          <span>Mi</span><i class="h1"></i><i class="h1"></i><i></i><i class="h2"></i><i class="h3"></i><i class="h3"></i><i class="h4"></i><i class="h4"></i><i class="h4"></i><i class="h4"></i><i class="h2"></i><i class="h1"></i>
+          <span>Do</span><i></i><i></i><i class="h1"></i><i class="h1"></i><i class="h2"></i><i class="h4"></i><i class="h4"></i><i class="h3"></i><i class="h4"></i><i class="h2"></i><i class="h1"></i><i></i>
+          <span>Fr</span><i class="h2"></i><i class="h1"></i><i class="h1"></i><i class="h2"></i><i class="h3"></i><i class="h4"></i><i class="h4"></i><i class="h4"></i><i class="h3"></i><i class="h2"></i><i></i><i></i>
+          <span>Sa</span><i class="h3"></i><i class="h4"></i><i class="h4"></i><i class="h4"></i><i class="h3"></i><i class="h2"></i><i class="h2"></i><i class="h1"></i><i class="h1"></i><i></i><i></i><i></i>
+        </div>
+        <div class="legend">frei <i style="background:var(--hm0)"></i><i style="background:var(--hm1)"></i><i style="background:var(--hm2)"></i><i style="background:var(--hm3)"></i><i style="background:var(--hm4)"></i> ausgebucht</div>
+      </div>
+
+      <div class="c s4">
+        <div class="hdr"><div><h2>Schnellzugriff</h2></div></div>
+        <div class="qa">
+          <a href="#"><em>€</em>Rechnungen erstellen<span>4 fällig</span></a>
+          <a href="#"><em>▦</em>Platz sperren</a>
+          <a href="#"><em>◍</em>Mitglied einladen</a>
+          <a href="#"><em>⤓</em>Mitglieder importieren (CSV)</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="tagline" id="lbl"></div>
+<script>
+  var names={pA:'A · Clay',pB:'B · Slate',pC:'C · Cream',pD:'D · Nocturne'};
+  var p=(location.hash||'#pA').slice(1);
+  if(!names[p])p='pA';
+  document.body.className=p;
+  document.getElementById('lbl').textContent=names[p];
+</script>

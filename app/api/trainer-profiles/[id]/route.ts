@@ -11,7 +11,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'trainer');
     if (!hasPermission) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
@@ -44,7 +44,7 @@ export async function PATCH(
     const isTrainer = await verifyRole(auth, 'trainer');
 
     if (!isAdmin && !isTrainer) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
@@ -58,7 +58,7 @@ export async function PATCH(
       if (!isAdmin) {
         const profile = await trainerProfileService.getTrainerProfileById(id);
         if (!profile || profile.userId !== auth.user.id) {
-          return forbiddenResponse('You can only edit your own profile');
+          return forbiddenResponse('Du kannst nur dein eigenes Profil bearbeiten');
         }
       }
 
@@ -177,7 +177,7 @@ export async function DELETE(
     const isTrainer = await verifyRole(auth, 'trainer');
 
     if (!isAdmin && !isTrainer) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
@@ -191,7 +191,7 @@ export async function DELETE(
       if (!isAdmin) {
         const profile = await trainerProfileService.getTrainerProfileById(id);
         if (!profile || profile.userId !== auth.user.id) {
-          return forbiddenResponse('You can only delete your own profile');
+          return forbiddenResponse('Du kannst nur dein eigenes Profil löschen');
         }
       }
 

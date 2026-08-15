@@ -15,7 +15,7 @@ const log = createLogger('api:courts:[id]');
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     const hasRole = await verifyRole(auth, 'member');
-    if (!hasRole) return forbiddenResponse('Member access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Mitglieder');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     const isAdmin = await verifyRole(auth, 'admin');
-    if (!isAdmin) return forbiddenResponse('Admin access required');
+    if (!isAdmin) return forbiddenResponse('Zugriff nur für Admins');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
@@ -93,7 +93,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     const isAdmin = await verifyRole(auth, 'admin');
-    if (!isAdmin) return forbiddenResponse('Admin access required');
+    if (!isAdmin) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id: courtId } = await params;
 

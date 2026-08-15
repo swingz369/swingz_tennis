@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, STALE_TIMES } from '@/lib/cache';
+import { apiFetch } from '@/lib/api-fetch';
 
 export interface Court {
   id: string;
@@ -26,9 +27,9 @@ export function useCourts(clubId: string | null) {
     queryKey: QUERY_KEYS.courts(clubId || ''),
     queryFn: async () => {
       if (!clubId) return [];
-      const res = await fetch(`/api/courts?clubId=${clubId}`, { credentials: 'include' });
+      const res = await apiFetch(`/api/courts?clubId=${clubId}`, { credentials: 'include' });
       if (!res.ok) {
-        throw new Error('Failed to fetch courts');
+        throw new Error('Plätze konnten nicht geladen werden');
       }
       const data = await res.json();
       return Array.isArray(data) ? (data as Court[]) : [];

@@ -131,7 +131,7 @@ function DroppableCell({
       className={`relative min-h-[56px] border-b border-r p-1 transition-all duration-150
         ${
           isOver
-            ? 'bg-brand-primary/10 ring-2 ring-inset ring-brand-primary/30'
+            ? 'bg-primary/10 ring-2 ring-inset ring-primary/30'
             : hasSlots
               ? 'bg-muted/40'
               : 'hover:bg-muted/30'
@@ -141,8 +141,8 @@ function DroppableCell({
     >
       {/* Empty cell drop hint */}
       {isOver && !hasSlots && (
-        <div className="absolute inset-1 rounded-md border-2 border-dashed border-brand-primary/30 flex items-center justify-center">
-          <span className="text-[10px] text-brand-primary/50 font-medium">Ablegen</span>
+        <div className="absolute inset-1 rounded-md border-2 border-dashed border-primary/30 flex items-center justify-center">
+          <span className="text-[10px] text-primary/50 font-medium">Ablegen</span>
         </div>
       )}
 
@@ -241,7 +241,7 @@ function SlotEditModal({
                   className={`flex-1 py-2 text-xs font-medium rounded-xl transition-all
                     ${
                       day === i
-                        ? 'bg-brand-primary text-white shadow-sm'
+                        ? 'bg-primary text-white shadow-sm'
                         : 'bg-muted dark:bg-muted text-muted-foreground hover:bg-muted/80 dark:hover:bg-muted/80'
                     }`}
                 >
@@ -264,7 +264,7 @@ function SlotEditModal({
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
               className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm
-                focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition-all"
+                focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
             >
               {HOURS.map((h) => (
                 <option key={h} value={h}>
@@ -289,7 +289,7 @@ function SlotEditModal({
               value={trainerName}
               onChange={(e) => setTrainerName(e.target.value)}
               className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm
-                focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition-all"
+                focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
             />
           </div>
 
@@ -309,7 +309,7 @@ function SlotEditModal({
               onChange={(e) => setCourtName(e.target.value)}
               placeholder="z.B. Platz 1"
               className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm
-                focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition-all"
+                focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
             />
           </div>
 
@@ -346,7 +346,7 @@ function SlotEditModal({
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 text-sm bg-brand-primary text-white rounded-xl hover:bg-brand-primary/90 transition-colors shadow-sm"
+            className="px-4 py-2 text-sm bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors shadow-sm"
           >
             Speichern
           </button>

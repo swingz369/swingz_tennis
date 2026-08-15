@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       if (!isAdmin && !isSuperadmin) {
         const hasClubAccess = auth.memberships.some((m) => m.club_id === clubId);
         if (!hasClubAccess) {
-          return forbiddenResponse('You do not have access to this club');
+          return forbiddenResponse('Kein Zugriff auf diesen Verein');
         }
       }
 
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
       const isSuperadmin = await verifyRole(auth, 'superadmin');
 
       if (!isAdmin && !isSuperadmin) {
-        return forbiddenResponse('Only admins can create seasons');
+        return forbiddenResponse('Nur Admins können Saisons anlegen');
       }
 
       const body = await request.json();
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
         const hasClubAccess = auth.memberships.some(
           (m) => m.club_id === body.club_id && (m.role === 'admin' || m.role === 'superadmin')
         );
-        if (!hasClubAccess) return forbiddenResponse('You do not have access to this club');
+        if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Verein');
       }
 
       const startDate = new Date(body.start_date);

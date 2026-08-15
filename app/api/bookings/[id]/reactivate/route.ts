@@ -20,7 +20,7 @@ const log = createLogger('api:bookings:[id]:reactivate');
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
     const isMember = await verifyRole(auth, 'member');
-    if (!isMember) return forbiddenResponse('Member access required');
+    if (!isMember) return forbiddenResponse('Zugriff nur für Mitglieder');
 
     const { id } = await params;
     const sb = createServiceClient() as any;

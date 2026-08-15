@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     return withApiAuth(request, async (auth) => {
       const hasRole = await verifyRole(auth, 'admin');
-      if (!hasRole) return forbiddenResponse('Admin access required');
+      if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
       const clubId = auth.clubId;
       if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });

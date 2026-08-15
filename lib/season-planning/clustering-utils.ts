@@ -7,7 +7,7 @@
  * in the database or Supabase modules.
  */
 
-import type { MemberWithDetails } from '@/lib/season-planning/types';
+import type { MemberWithDetails, ClusteringMetrics } from '@/lib/season-planning/types';
 
 /**
  * String-comparison overlap for "HH:MM" time slots (back-to-back = no overlap).
@@ -41,6 +41,41 @@ export function computeNiveauMatchScore(
   const normalizedDistance = maxSpan > 0 ? distance / (maxSpan / 2) : 0;
 
   return Math.max(0, Math.min(100, Math.round((1 - normalizedDistance) * 100)));
+}
+
+/**
+ * Gleichmäßige Gruppengrößen für `total` Mitglieder bei Obergrenze `maxSize`.
+ * 7 Mitglieder / max 6 ergeben [4, 3] statt [6, 1] — die frühere Chunk-Logik
+ * ließ regelmäßig eine Ein-Personen-Restgruppe übrig.
+ */
+export function balancedSliceSizes(total: number, maxSize: number): number[] {
+  if (total <= 0) return [];
+  const groups = Math.ceil(total / Math.max(1, maxSize));
+  const base = Math.floor(total / groups);
+  const remainder = total % groups;
+  return Array.from({ length: groups }, (_, i) => base + (i < remainder ? 1 : 0));
+}
+
+/**
+ * Eine Zahl für die Gesamtqualität eines Plans, damit die Multi-Start-Varianten
+ * in `runClustering` vergleichbar sind. Gewichte nach Vereinsrelevanz: dass
+ * jemand überhaupt Training bekommt, schlägt alles andere; Wunschpartner und
+ * Niveau-Passung sind Komfort; überlastete Trainer sind teuer.
+ */
+export function scorePlan(metrics: ClusteringMetrics, unassignedCount: number): number {
+  const assigned = Math.max(0, metrics.totalMembers - unassignedCount);
+  // Die beiden Komfort-Boni sind Prozentwerte (0–100) und zusammen bewusst auf
+  // unter 100 Punkte gedeckelt: ein zusätzlich versorgtes Mitglied (100) muss
+  // jede erreichbare Kombination aus Wunschpartner- und Niveau-Bonus schlagen.
+  return (
+    assigned * 100 +
+    metrics.wishPartnerRate * 0.5 +
+    metrics.avgNiveauMatch * 0.2 -
+    metrics.niveauSpanViolations * 20 -
+    metrics.totalWaitlisted * 5 -
+    metrics.trainerOverloadWarnings * 30 -
+    metrics.highRiskSlotsUsed * 10
+  );
 }
 
 /**

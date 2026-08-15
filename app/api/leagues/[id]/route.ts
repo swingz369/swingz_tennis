@@ -10,7 +10,7 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'member');
-    if (!hasRole) return forbiddenResponse('Authentication required');
+    if (!hasRole) return forbiddenResponse('Anmeldung erforderlich');
 
     const { id } = await params;
 
@@ -48,10 +48,35 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { data: matchDays } = await (auth.supabase as any)
       .from('match_days')
       .select(
-        'id, matchday_number, scheduled_date, opponent, is_home, venue, result, score_home, score_away, status, notes'
+        'id, matchday_number, scheduled_date, opponent, is_home, venue, result, score_home, score_away, status, notes, nuliga_report_url'
       )
       .eq('league_id', id)
       .order('matchday_number', { ascending: true });
+
+    // Kader (Meldeliste) und bestehende Platzsperren je Spieltag.
+    const matchDayIds = (matchDays ?? []).map((m: any) => m.id);
+    const [rosterRes, closuresRes] = await Promise.all([
+      (auth.supabase as any)
+        .from('league_players')
+        .select('id, name, lk, position_number, member_id, synced_at')
+        .eq('league_id', id)
+        .order('position_number', { ascending: true, nullsFirst: false }),
+      matchDayIds.length > 0
+        ? (auth.supabase as any)
+            .from('court_closures')
+            .select('id, match_day_id')
+            .in('match_day_id', matchDayIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const blockedCourts: Record<string, number> = {};
+    for (const c of closuresRes.data ?? []) {
+      blockedCourts[c.match_day_id] = (blockedCourts[c.match_day_id] ?? 0) + 1;
+    }
+    const enrichedMatchDays = (matchDays ?? []).map((m: any) => ({
+      ...m,
+      blocked_courts: blockedCourts[m.id] ?? 0,
+    }));
 
     // Enrich team members with user names
     const allMemberIds = new Set<string>();
@@ -87,7 +112,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }));
 
     return NextResponse.json({
-      league: { ...league, teams: enrichedTeams, match_days: matchDays ?? [] },
+      league: {
+        ...league,
+        teams: enrichedTeams,
+        match_days: enrichedMatchDays,
+        players: rosterRes.data ?? [],
+      },
     });
   });
 }
@@ -95,7 +125,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) return forbiddenResponse('Admin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id } = await params;
     const body = await request.json();
@@ -119,17 +149,28 @@ export async function DELETE(
 ) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) return forbiddenResponse('Admin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id } = await params;
 
-    const { error } = await (auth.supabase as any)
+    // `.select()` erzwingt, dass wir die betroffenen Zeilen sehen. Ohne das
+    // meldet Supabase auch dann keinen Fehler, wenn RLS oder der club_id-Filter
+    // alles weggeschnitten haben — die UI hätte "gelöscht" gemeldet und beim
+    // Neuladen wäre die Liga wieder da gewesen.
+    const { data, error } = await (auth.supabase as any)
       .from('leagues')
       .delete()
       .eq('id', id)
-      .eq('club_id', auth.clubId);
+      .eq('club_id', auth.clubId)
+      .select('id');
 
     if (error) return NextResponse.json({ error: 'Failed to delete league' }, { status: 500 });
+    if (!data || data.length === 0) {
+      return NextResponse.json(
+        { error: 'Liga nicht gefunden oder keine Berechtigung zum Löschen' },
+        { status: 404 }
+      );
+    }
     return NextResponse.json({ success: true });
   });
 }

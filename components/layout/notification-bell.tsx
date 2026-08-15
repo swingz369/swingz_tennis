@@ -277,7 +277,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                   /* non-critical */
                 }
               }}
-              className="text-xs font-medium text-brand-light hover:text-brand-primary transition-colors"
+              className="text-xs font-medium text-brand-light hover:text-primary transition-colors"
             >
               <CheckCheck className="h-3.5 w-3.5 inline mr-1" />
               Alle lesen
@@ -285,7 +285,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
           )}
           <Link
             href="/messages"
-            className="text-xs font-medium text-brand-light hover:text-brand-primary ml-auto"
+            className="text-xs font-medium text-brand-light hover:text-primary ml-auto"
           >
             Alle anzeigen
           </Link>

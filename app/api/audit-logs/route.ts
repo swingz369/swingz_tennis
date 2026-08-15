@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
@@ -68,17 +68,20 @@ export async function GET(request: NextRequest) {
 
       let query = supabase
         .from('audit_logs')
-        .select('*', { count: 'exact' })
+        .select('*, actor:actor_id(email, full_name)', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      // Filter by club if provided
+      // Vereins-Filter läuft über audit_logs.club_id. Vorher stand hier
+      // `resource_type='club' AND resource_id=<clubId>` — das trifft nur
+      // Mutationen AM Verein selbst, nie die Einträge DES Vereins, und lieferte
+      // deshalb praktisch immer eine leere Liste.
+      // Ohne expliziten Filter greift RLS (audit_logs_admin_select →
+      // is_club_admin(club_id)) und scopet auf die eigenen Vereine.
       if (clubId) {
-        // For audit logs, we need to filter by resource_type and resource_id
-        query = query.eq('resource_type', 'club').eq('resource_id', clubId);
+        query = query.eq('club_id', clubId);
       } else if (auth.clubId) {
-        // If no club_id provided, filter by user's club
-        query = query.eq('resource_type', 'club').eq('resource_id', auth.clubId);
+        query = query.eq('club_id', auth.clubId);
       }
 
       // Additional filters
@@ -94,8 +97,25 @@ export async function GET(request: NextRequest) {
 
       if (error) throw error;
 
+      // Der AuditLogViewer erwartet entity_*/user_email/changes. Die Tabelle
+      // heißt resource_*/actor_id/details — hier einmal übersetzt, statt das
+      // Schema an eine Komponente anzupassen.
+      const logs = (data ?? []).map((row: any) => ({
+        id: row.id,
+        action: row.action,
+        entity_type: row.resource_type,
+        entity_id: row.resource_id,
+        user_id: row.actor_id,
+        user_email: row.actor?.email ?? row.actor?.full_name ?? 'System',
+        club_id: row.club_id,
+        changes: row.details ?? {},
+        ip_address: row.ip_address,
+        user_agent: row.user_agent,
+        created_at: row.created_at,
+      }));
+
       return NextResponse.json({
-        logs: data || [],
+        logs,
         total: count || 0,
         limit,
         offset,

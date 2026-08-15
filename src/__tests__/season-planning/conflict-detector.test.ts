@@ -9,8 +9,9 @@ import {
   detectCourtDoubleBookings,
   detectTrainerOverLimit,
   detectLargeNiveauSpan,
+  detectAvoidPartnerConflicts,
 } from '@/lib/season-planning/conflict-utils';
-import type { ExistingPlanEntry } from '@/lib/season-planning/conflict-utils';
+import type { ExistingPlanEntry, ConflictMemberInfo } from '@/lib/season-planning/conflict-utils';
 import type { GroupAssignment } from '@/lib/season-planning/types';
 
 // ============================================
@@ -454,21 +455,72 @@ describe('detectCourtDoubleBookings', () => {
 // TESTS: large niveau span
 // ============================================
 
-describe('detectLargeNiveauSpan', () => {
-  it('should detect when warnings contain niveau span violation', () => {
-    const assignments = [
-      makeAssignment({
-        groupId: 'g1',
-        groupName: 'Mixed Level Group',
-        warnings: ['Niveau-Spanne (1-48 Monate) überschreitet Maximum (4)'],
-      }),
-    ];
+// Beide Regeln lasen früher den Warntext der Clustering-Engine und feuerten
+// deshalb nie auf gespeicherten Planeinträgen (die tragen keine Warnungen).
+// Diese Tests halten fest, dass sie jetzt aus den Mitgliedsdaten rechnen.
+function memberMap(
+  entries: Array<[string, Partial<ConflictMemberInfo>]>
+): Map<string, ConflictMemberInfo> {
+  return new Map(
+    entries.map(([id, info]) => [
+      id,
+      { name: id, skillLevel: 'beginner', avoidMemberIds: [], ...info },
+    ])
+  );
+}
 
-    expect(detectLargeNiveauSpan(assignments)).toHaveLength(1);
+describe('detectLargeNiveauSpan', () => {
+  it('meldet eine Gruppe, deren Niveau-Spanne das Maximum überschreitet', () => {
+    const assignments = [makeAssignment({ groupId: 'g1', memberIds: ['m1', 'm2'] })];
+    const members = memberMap([
+      ['m1', { name: 'Anna', skillLevel: 'beginner' }],
+      ['m2', { name: 'Bert', skillLevel: 'professional' }], // 3 Stufen Abstand
+    ]);
+
+    const findings = detectLargeNiveauSpan(assignments, members, 1);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].span).toBe(3);
+    expect(findings[0].minLabel).toBe('Anfänger');
+    expect(findings[0].maxLabel).toBe('Profi');
   });
 
-  it('should pass when no niveau warnings', () => {
-    const assignments = [makeAssignment({ groupId: 'g1', groupName: 'Homogeneous Group' })];
-    expect(detectLargeNiveauSpan(assignments)).toHaveLength(0);
+  it('schweigt, solange die Spanne im Limit liegt', () => {
+    const assignments = [makeAssignment({ groupId: 'g1', memberIds: ['m1', 'm2'] })];
+    const members = memberMap([
+      ['m1', { skillLevel: 'beginner' }],
+      ['m2', { skillLevel: 'intermediate' }],
+    ]);
+    expect(detectLargeNiveauSpan(assignments, members, 1)).toHaveLength(0);
+  });
+
+  it('braucht mindestens zwei bekannte Mitglieder', () => {
+    const assignments = [makeAssignment({ groupId: 'g1', memberIds: ['m1', 'unbekannt'] })];
+    const members = memberMap([['m1', { skillLevel: 'professional' }]]);
+    expect(detectLargeNiveauSpan(assignments, members, 1)).toHaveLength(0);
+  });
+});
+
+describe('detectAvoidPartnerConflicts', () => {
+  it('meldet ein Paar, wenn eines der beiden das andere ausgeschlossen hat', () => {
+    const assignments = [makeAssignment({ groupId: 'g1', memberIds: ['m1', 'm2', 'm3'] })];
+    const members = memberMap([
+      ['m1', { name: 'Anna', avoidMemberIds: ['m2'] }],
+      ['m2', { name: 'Bert' }],
+      ['m3', { name: 'Cem' }],
+    ]);
+
+    const findings = detectAvoidPartnerConflicts(assignments, members);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].pairs).toEqual([['Anna', 'Bert']]);
+    expect(findings[0].memberIds.sort()).toEqual(['m1', 'm2']);
+  });
+
+  it('meldet nichts, wenn sich die Ausschlüsse auf andere Gruppen beziehen', () => {
+    const assignments = [makeAssignment({ groupId: 'g1', memberIds: ['m1', 'm2'] })];
+    const members = memberMap([
+      ['m1', { avoidMemberIds: ['m9'] }],
+      ['m2', {}],
+    ]);
+    expect(detectAvoidPartnerConflicts(assignments, members)).toHaveLength(0);
   });
 });

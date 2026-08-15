@@ -1,8 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth } from '@/lib/api-auth';
+import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createClient } from '@/infrastructure/external/supabase/server';
+import { logAudit } from '@/lib/audit';
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 
@@ -16,7 +17,7 @@ const bulkDeleteSchema = z.object({
 export async function DELETE(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     // Only admins and trainers can bulk delete sessions
-    if (auth.role !== 'admin' && auth.role !== 'superadmin' && auth.role !== 'trainer') {
+    if (!(await verifyRole(auth, 'trainer'))) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
@@ -80,18 +81,16 @@ export async function DELETE(request: NextRequest) {
 
       // Audit log — one row per deleted session (resource_id is NOT NULL)
       if (deleted && deleted.length > 0) {
-        await supabase.from('audit_logs').insert(
+        await logAudit(
           deleted.map((s) => ({
-            actor_id: auth.user.id,
+            actorId: auth.user.id,
             action: 'session_bulk_deleted',
-            resource_type: 'session',
-            resource_id: s.id,
-            club_id: auth.clubId,
-            metadata: { reason, count: deleted.length },
-            ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
-            user_agent: request.headers.get('user-agent'),
-            created_at: new Date().toISOString(),
-          })) as any
+            resourceType: 'session',
+            resourceId: s.id,
+            clubId: auth.clubId,
+            details: { reason, count: deleted.length },
+            request,
+          }))
         );
       }
 

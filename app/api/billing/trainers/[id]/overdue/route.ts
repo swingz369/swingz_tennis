@@ -15,7 +15,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       const isAdmin = await verifyRole(auth, 'admin');
       const isTrainer = await verifyRole(auth, 'trainer');
       if (!isAdmin && !isTrainer) {
-        return forbiddenResponse('Admin or trainer access required');
+        return forbiddenResponse('Zugriff nur für Admins oder Trainer');
       }
 
       const { id } = await params;

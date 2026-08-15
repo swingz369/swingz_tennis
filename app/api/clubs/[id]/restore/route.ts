@@ -56,7 +56,7 @@ const auditService = new AuditServiceImpl();
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     if (!(await verifyRole(auth, 'superadmin'))) {
-      return forbiddenResponse('Superadmin access required');
+      return forbiddenResponse('Zugriff nur für Superadmins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);

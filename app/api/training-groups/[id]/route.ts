@@ -9,7 +9,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const { id } = await params;
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Admin access required');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
     const body = await request.json();
     const { data, error } = await (auth.supabase.from('training_groups') as any)
       .update(body)
@@ -32,7 +32,7 @@ export async function DELETE(
   const { id } = await params;
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Admin access required');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
     const { error } = await (auth.supabase.from('training_groups') as any)
       .delete()
       .eq('id', id)

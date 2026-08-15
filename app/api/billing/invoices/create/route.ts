@@ -13,7 +13,7 @@ export async function POST(_request: NextRequest) {
     // Permission check (trainer or admin)
     const hasPermission = await verifyRole(auth, 'trainer');
     if (!hasPermission) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     // Rate limit

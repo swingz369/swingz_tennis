@@ -8,7 +8,7 @@ const BUCKET = 'swingz-files';
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return withApiAuth(req, async (auth) => {
-    if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse('Admin access required');
+    if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse('Zugriff nur für Admins');
 
     const sb = createServiceClient();
     const { data: doc } = await (sb as any)

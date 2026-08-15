@@ -13,7 +13,7 @@ const log = createLogger('api:rsvps:my');
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const isMember = await verifyRole(auth, 'member');
-    if (!isMember) return forbiddenResponse('Member access required');
+    if (!isMember) return forbiddenResponse('Zugriff nur für Mitglieder');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;

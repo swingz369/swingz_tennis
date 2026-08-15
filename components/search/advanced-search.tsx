@@ -28,6 +28,20 @@ interface AdvancedSearchProps {
   onClearFilters?: () => void;
 }
 
+/**
+ * Nur was tatsächlich gebunden ist: Cmd/Ctrl+K in components/command-palette.tsx,
+ * der Rest in hooks/use-keyboard-shortcuts.ts. Der frühere Shortcut-Dialog listete
+ * zusätzlich "/" und Cmd+Shift+N — beides war nirgends im Code verdrahtet.
+ */
+const KEYBOARD_SHORTCUTS = [
+  { keys: 'Cmd/Ctrl+K', description: 'Schnellsuche öffnen' },
+  { keys: 'Cmd/Ctrl+D', description: 'Dashboard öffnen' },
+  { keys: 'Cmd/Ctrl+B', description: 'Buchungen öffnen' },
+  { keys: 'Cmd/Ctrl+M', description: 'Mitglieder öffnen' },
+  { keys: 'Cmd/Ctrl+S', description: 'Einstellungen öffnen' },
+  { keys: 'Esc', description: 'Dialog schließen' },
+];
+
 export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps) {
   const [query, setQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -271,14 +285,35 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
         )}
 
         {/* Search Tips */}
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p>
-            <strong>Tipp:</strong> Nutze &quot;&quot; für exakte Phrasensuche, z.B. &quot;Max
-            Mustermann&quot;
+        <div className="text-xs text-muted-foreground">
+          <strong>Tipp:</strong> Nutze &quot;&quot; für exakte Phrasensuche, z.B. &quot;Max
+          Mustermann&quot;
+        </div>
+
+        {/* Tastenkürzel — früher hinter einem schwebenden Button unten rechts, der auf
+            jeder Seite im Weg lag. Hier sucht man ohnehin nach dem schnellen Weg. */}
+        <div className="rounded-xl border border-border bg-muted/30 p-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+            Tastenkürzel
           </p>
-          <p>
-            <strong>Shortcuts:</strong> Cmd/Ctrl + K für Schnellsuche, Enter zum Suchen
-          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {KEYBOARD_SHORTCUTS.map((s) => (
+              <div key={s.keys} className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-muted-foreground">{s.description}</span>
+                <span className="flex gap-1 shrink-0">
+                  {s.keys.split('+').map((k) => (
+                    <Badge
+                      key={k}
+                      variant="outline"
+                      className="min-w-[32px] justify-center font-mono text-xs"
+                    >
+                      {k}
+                    </Badge>
+                  ))}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>

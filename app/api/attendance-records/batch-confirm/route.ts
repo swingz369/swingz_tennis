@@ -15,7 +15,7 @@ const log = createLogger('api:attendance-records:batch-confirm');
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'trainer');
-    if (!hasPermission) return forbiddenResponse('Trainer or admin access required');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für Trainer oder Admins');
 
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;

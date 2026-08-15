@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
+import { eq, and, gte, lte, desc, sql, type SQL } from 'drizzle-orm';
 import { db } from '../db';
 import { trainerAvailabilities } from '../schema';
 import type {
@@ -67,7 +67,7 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
   }
 
   async findByQuery(query: AvailabilityQuery): Promise<TrainerAvailability[]> {
-    const conditions: any[] = [];
+    const conditions: SQL[] = [];
 
     if (query.trainerId) {
       conditions.push(eq(trainerAvailabilities.trainer_id, query.trainerId));
@@ -99,7 +99,7 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
     startDate: string,
     endDate: string
   ): Promise<TrainerAvailability[]> {
-    const conditions: any[] = [
+    const conditions: SQL[] = [
       gte(trainerAvailabilities.date, new Date(startDate)),
       lte(trainerAvailabilities.date, new Date(endDate)),
     ];

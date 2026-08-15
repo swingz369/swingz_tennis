@@ -1,13 +1,13 @@
 /**
  * B8/A4: PII-Read-Audit-Logger
  * Non-fatal fire-and-forget. Rate-dedup 60s per (actor, resource_type, resource_id).
+ *
+ * Schreibt über `logAudit()` (lib/audit.ts) — dort liegt der einzige
+ * Insert-Pfad auf `audit_logs` inkl. Service-Client und Spalten-Mapping.
  */
 
-import { createServiceClient } from '@/lib/supabase/service';
-import { createLogger } from '@/lib/logger';
+import { logAudit } from '@/lib/audit';
 import type { NextRequest } from 'next/server';
-
-const log = createLogger('audit-logger');
 
 const DEDUP_WINDOW_MS = 60_000;
 const DEDUP_MAX = 2000;
@@ -31,21 +31,19 @@ export async function logPiiRead(
   resourceType: string,
   resourceId: string,
   req?: NextRequest,
-  details?: Record<string, unknown>
+  details?: Record<string, unknown>,
+  clubId?: string | null
 ): Promise<void> {
   if (!shouldLog(actorId, resourceType, resourceId)) return;
-  try {
-    const sb = createServiceClient();
-    await sb.from('audit_logs').insert({
-      action: 'PII_READ',
-      actor_id: actorId,
-      resource_type: resourceType,
-      resource_id: resourceId,
-      ip_address: req?.headers.get('x-forwarded-for') ?? req?.headers.get('x-real-ip') ?? null,
-      user_agent: req?.headers.get('user-agent') ?? null,
-      details: { schema_version: 1, ...details },
-    });
-  } catch (err) {
-    log.error('PII_READ log failed', err instanceof Error ? err : undefined);
-  }
+  await logAudit({
+    actorId,
+    action: 'PII_READ',
+    resourceType,
+    // Listen-Reads übergeben Pseudo-IDs wie `list:<clubId>`; logAudit legt die
+    // in details.resource_ref ab und hängt die Zeile an den Verein.
+    resourceId,
+    clubId: clubId ?? null,
+    details: { schema_version: 1, ...details },
+    request: req ?? null,
+  });
 }

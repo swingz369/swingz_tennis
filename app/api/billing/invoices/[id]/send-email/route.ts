@@ -25,7 +25,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (rateLimitError) return rateLimitError;
 
     const isAdmin = await verifyRole(auth, 'admin');
-    if (!isAdmin) return forbiddenResponse('Admin access required');
+    if (!isAdmin) return forbiddenResponse('Zugriff nur für Admins');
 
     try {
       const { id: invoiceId } = await context.params;

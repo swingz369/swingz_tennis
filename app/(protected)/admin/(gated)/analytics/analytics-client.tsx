@@ -1,12 +1,10 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { Card } from '@/components/ui/card';
 import { StatCard } from '@/components/ui/stat-card';
-import { TrendingUp, Users, DollarSign, Calendar, Brain } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, Calendar } from 'lucide-react';
 import { ScrollReveal } from '@/components/animations';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useClubFeatures } from '@/hooks/use-club-features';
 
 // Lazy-load recharts (~360 KB) — only needed when charts are visible
 const RechartsLazy = dynamic(() => import('./analytics-charts').then((m) => m.AnalyticsCharts), {
@@ -25,7 +23,7 @@ const RechartsLazy = dynamic(() => import('./analytics-charts').then((m) => m.An
 
 // Lazy-load AI churn panel — heavy component with its own data fetching
 const ChurnRiskPanel = dynamic(
-  () => import('@/components/ai/churn-risk-panel').then((m) => m.ChurnRiskPanel),
+  () => import('@/components/churn-risk-panel').then((m) => m.ChurnRiskPanel),
   { ssr: false, loading: () => <Skeleton className="h-64 w-full rounded-xl" /> }
 );
 
@@ -42,16 +40,9 @@ export interface AnalyticsData {
 
 interface AnalyticsClientProps {
   data: AnalyticsData | null;
-  clubId: string;
 }
 
-export function AnalyticsClient({ data, clubId }: AnalyticsClientProps) {
-  // Fail-closed: while flags are loading (or on error) AI panels stay hidden,
-  // matching the server-side `requireFeature` gate on the underlying AI routes.
-  const { isEnabled: isFeatureEnabled, loading: featuresLoading } = useClubFeatures(clubId);
-  const showChurnInsights = !featuresLoading && isFeatureEnabled('ai_analysis');
-  const showMatchmaking = !featuresLoading && isFeatureEnabled('ai_matchmaking');
-
+export function AnalyticsClient({ data }: AnalyticsClientProps) {
   if (!data) {
     return <div className="text-center py-12 text-muted-foreground">Keine Vereine gefunden.</div>;
   }
@@ -109,51 +100,12 @@ export function AnalyticsClient({ data, clubId }: AnalyticsClientProps) {
       {/* Charts Grid — lazy-loaded (recharts ~360 KB) */}
       <RechartsLazy data={data} />
 
-      {/* AI Insights: Churn Prediction — gated by club.features (ai_analysis / ai_matchmaking) */}
-      {(showChurnInsights || showMatchmaking) && (
-        <ScrollReveal delay={300}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {showChurnInsights && (
-              <div className="lg:col-span-2">
-                <ChurnRiskPanel />
-              </div>
-            )}
-            <Card variant="bordered" className={`p-6 ${showChurnInsights ? '' : 'lg:col-span-3'}`}>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 rounded-xl bg-info-50 dark:bg-info-900/20">
-                  <Brain className="h-5 w-5 text-info-500 dark:text-info-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">KI Insights</h3>
-                  <p className="text-xs text-muted-foreground">Automatische Analysen</p>
-                </div>
-              </div>
-              <div className="space-y-3">
-                {showMatchmaking && (
-                  <div className="p-3 bg-info-50 dark:bg-info-900/20 rounded-xl border border-info-100 dark:border-info-800/30">
-                    <p className="text-sm font-medium text-info-800 dark:text-info-300">
-                      Matchmaking
-                    </p>
-                    <p className="text-xs text-info-600 dark:text-info-400 mt-1">
-                      Finde Trainingspartner mit passendem Level und freien Zeiten.
-                    </p>
-                  </div>
-                )}
-                {showChurnInsights && (
-                  <div className="p-3 bg-success-50 dark:bg-success-900/20 rounded-xl border border-success-100 dark:border-success-800/30">
-                    <p className="text-sm font-medium text-success-800 dark:text-success-300">
-                      Empfehlungen
-                    </p>
-                    <p className="text-xs text-success-600 dark:text-success-400 mt-1">
-                      Basierend auf Buchungs- und Anwesenheitsdaten generiert.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </div>
-        </ScrollReveal>
-      )}
+      {/* Abwanderungsrisiko — wertet Buchungs- und Anwesenheitsdaten aus (kein Modell).
+          Die zweite Karte daneben war reine Werbefläche ohne eigene Daten und ist entfallen,
+          zusammen mit dem `ai_analysis`-Gate. */}
+      <ScrollReveal delay={300}>
+        <ChurnRiskPanel />
+      </ScrollReveal>
     </div>
   );
 }

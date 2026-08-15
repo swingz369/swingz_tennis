@@ -92,7 +92,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
           },
           created_at: now,
           updated_at: now,
-        } as any)
+        } as typeof trainerProfiles.$inferInsert)
         .returning();
 
       if (!profile) {
@@ -102,7 +102,8 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
       return this.mapToEntity(profile);
     } catch (error) {
       // Handle duplicate key (23505) gracefully — profile already exists, return it
-      const pgCode = (error as any)?.cause?.code || (error as any)?.code;
+      const pgErr = error as { code?: string; cause?: { code?: string } };
+      const pgCode = pgErr.cause?.code ?? pgErr.code;
       if (pgCode === '23505') {
         const existing = await this.findByUserId(input.userId);
         if (existing) return existing;
@@ -275,7 +276,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
             : {}),
           ...(extraHoursRate !== undefined ? { extra_hours_rate: extraHoursRate } : {}),
           updated_at: new Date(),
-        } as any)
+        } as Partial<typeof trainerProfiles.$inferInsert>)
         .where(eq(trainerProfiles.id, id))
         .returning();
 

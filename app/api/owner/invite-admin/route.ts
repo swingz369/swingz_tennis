@@ -7,6 +7,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
+import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 import { appBaseUrl } from '@/lib/app-url';
 
@@ -15,7 +16,7 @@ const log = createLogger('api:owner:invite-admin');
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const isOwner = await verifyRole(auth, 'owner');
-    if (!isOwner) return forbiddenResponse('Owner access required');
+    if (!isOwner) return forbiddenResponse('Zugriff nur für den Plattformbetreiber');
 
     const { email, fullName, clubId, role: inviteRole = 'admin' } = await request.json();
 
@@ -178,31 +179,25 @@ export async function POST(request: NextRequest) {
     // resource_id=userId (semantischer Anker: der neu eingeladene User).
     // details enthält den vollen Kontext, damit das /owner/audit-Log die
     // Aktion später rekonstruieren kann ohne JOIN auf andere Tabellen.
-    try {
-      await sb.from('audit_logs').insert({
-        actor_id: auth.user.id,
-        action: 'invite',
-        resource_type: 'membership',
-        resource_id: userId ?? null,
-        club_id: club?.id ?? null,
-        details: {
-          email,
-          full_name: fullName ?? email.split('@')[0],
-          invited_role: inviteRole,
-          club_name: club?.name ?? null,
-          reactivation: reactivation,
-          previous_club_relationship: anyClubMembershipExists,
-          mail_sent: mailSent,
-        },
-      });
-    } catch (auditErr) {
-      // Audit-Failure darf die Haupt-Aktion nicht rollbacken — Logging ist
-      // 'super-best-effort'. Fehler wird geloggt, damit Ops es nachverfolgen kann.
-      log.warn('AuditLog insert failed for invite (non-fatal)', {
+    // resource_id ist NOT NULL: fehlt die userId (Invite ohne angelegten User),
+    // trägt logAudit die Zeile an der club_id — die Zuordnung bleibt lesbar.
+    await logAudit({
+      actorId: auth.user.id,
+      action: 'invite',
+      resourceType: 'membership',
+      resourceId: userId ?? null,
+      clubId: club?.id ?? null,
+      details: {
         email,
-        auditErr: auditErr instanceof Error ? auditErr.message : String(auditErr),
-      });
-    }
+        full_name: fullName ?? email.split('@')[0],
+        invited_role: inviteRole,
+        club_name: club?.name ?? null,
+        reactivation: reactivation,
+        previous_club_relationship: anyClubMembershipExists,
+        mail_sent: mailSent,
+      },
+      request,
+    });
 
     return NextResponse.json({ success: true, clubName: club?.name, mailSent, inviteLink });
   });

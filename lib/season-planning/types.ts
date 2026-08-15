@@ -84,7 +84,6 @@ export interface WizardState {
   // Schritt 2: Plan bearbeiten
   clusteringResult: ClusteringResult | null;
   scheduleSlots: ScheduleSlot[];
-  aiAnalysisText: string | null;
   holidayWeeks: HolidayWeekInfo[];
   bundeslandCode: string | null;
 
@@ -390,7 +389,8 @@ export interface RunClusteringRequest {
 
 export interface ConfirmPlanRequest {
   seasonId: string;
-  acceptedWarnings: string[]; // IDs of accepted warnings
+  /** @deprecated Ohne Wirkung — der Server liest die persistierten Konflikt-Entscheidungen. */
+  acceptedWarnings?: string[];
   adminNotes: string;
 }
 

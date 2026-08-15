@@ -214,7 +214,7 @@ describe('POST /api/billing/generate-invoices', () => {
 
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toBe('Admin access required');
+    expect(body.error).toBe('Zugriff nur für Admins');
   });
 
   it('returns 400 when no club context is available', async () => {

@@ -97,7 +97,7 @@ export function InactiveWeeksPanel() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-base flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-brand-primary" />
+              <Calendar className="h-4 w-4 text-primary" />
               Inaktive Wochen pro Gruppe
             </CardTitle>
             <CardDescription>

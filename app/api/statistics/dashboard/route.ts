@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasRole = await verifyRole(auth, 'trainer');
     if (!hasRole) {
-      return forbiddenResponse('Trainer access required');
+      return forbiddenResponse('Zugriff nur für Trainer');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);

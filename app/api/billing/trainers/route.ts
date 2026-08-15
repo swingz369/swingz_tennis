@@ -14,7 +14,7 @@ export async function POST(_request: NextRequest) {
     // 'trainer', womit sich jeder Trainer selbst hätte abrechnen können.
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     // Rate limit
@@ -102,7 +102,7 @@ export async function GET(_request: NextRequest) {
     // Trainer nutzen /api/trainer/billing, das über die Session scopt.
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     // Rate limit

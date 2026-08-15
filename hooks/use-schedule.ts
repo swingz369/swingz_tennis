@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { QUERY_KEYS, STALE_TIMES } from '@/lib/cache';
+import { apiFetch } from '@/lib/api-fetch';
 
 export interface Session {
   id: string;
@@ -26,10 +27,10 @@ export function useSchedule(clubId: string) {
   return useQuery({
     queryKey: QUERY_KEYS.schedule(clubId),
     queryFn: async () => {
-      const res = await fetch(`/api/schedule?clubId=${clubId}`, { credentials: 'include' });
+      const res = await apiFetch(`/api/schedule?clubId=${clubId}`, { credentials: 'include' });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Failed to load schedule');
+        throw new Error(err.error || 'Trainingsplan konnte nicht geladen werden');
       }
       return res.json() as Promise<ScheduleData>;
     },
@@ -51,9 +52,8 @@ export function useUpdateSchedule() {
       sessions: Session[];
       clubId: string;
     }) => {
-      const res = await fetch('/api/schedule', {
+      const res = await apiFetch('/api/schedule', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           scheduleId,
           clubId,
@@ -71,7 +71,7 @@ export function useUpdateSchedule() {
       });
 
       if (!res.ok) {
-        throw new Error('Update failed');
+        throw new Error('Speichern fehlgeschlagen');
       }
 
       return res.json();

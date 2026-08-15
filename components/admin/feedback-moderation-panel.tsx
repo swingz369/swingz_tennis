@@ -201,7 +201,7 @@ export function FeedbackModerationPanel({ clubId: _clubId }: FeedbackModerationP
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-brand-primary">Feedback Moderation</h2>
+        <h2 className="text-2xl font-bold text-primary">Feedback Moderation</h2>
         <p className="text-muted-foreground">Review and moderate trainer feedback</p>
       </div>
 

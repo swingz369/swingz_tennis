@@ -336,19 +336,19 @@ export default function MemberProfile() {
             <TabsList className="w-full justify-start bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b rounded-none px-0 gap-6 overflow-x-auto sticky top-0 z-20">
               <TabsTrigger
                 value="profile"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Profil
               </TabsTrigger>
               <TabsTrigger
                 value="billing"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Zahlungen
               </TabsTrigger>
               <TabsTrigger
                 value="security"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Sicherheit
               </TabsTrigger>
@@ -360,7 +360,7 @@ export default function MemberProfile() {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <User className="h-4 w-4 text-brand-primary" />
+                    <User className="h-4 w-4 text-primary" />
                     Persönliche Informationen
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -457,12 +457,12 @@ export default function MemberProfile() {
                         />
                       ) : formData.dtbId ? (
                         <div className="font-medium flex items-center gap-2">
-                          <Award className="h-4 w-4 text-brand-primary" />
+                          <Award className="h-4 w-4 text-primary" />
                           <a
                             href={`https://www.tennis.de/vereinsspielbetrieb/spieler/${formData.dtbId}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-brand-primary hover:underline"
+                            className="text-primary hover:underline"
                           >
                             {formData.dtbId}
                           </a>
@@ -524,7 +524,7 @@ export default function MemberProfile() {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <User className="h-4 w-4 text-brand-primary" />
+                    <User className="h-4 w-4 text-primary" />
                     Über mich
                   </h3>
                   {isEditing ? (
@@ -609,7 +609,7 @@ export default function MemberProfile() {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <Mail className="h-4 w-4 text-brand-primary" />
+                    <Mail className="h-4 w-4 text-primary" />
                     E-Mail-Adresse ändern
                   </h3>
                   <div className="space-y-3 max-w-md">
@@ -653,7 +653,7 @@ export default function MemberProfile() {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-2 flex items-center gap-2 text-base">
-                    <Shield className="h-4 w-4 text-brand-primary" />
+                    <Shield className="h-4 w-4 text-primary" />
                     Zwei-Faktor-Authentifizierung (2FA)
                   </h3>
                   <p className="text-xs text-muted-foreground mb-5">
@@ -808,7 +808,7 @@ function DeleteAccountSection() {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await fetch('/api/user/delete', { method: 'DELETE' });
+      const response = await apiFetch('/api/user/delete', { method: 'DELETE' });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         alert(data.error ?? 'Löschung fehlgeschlagen');

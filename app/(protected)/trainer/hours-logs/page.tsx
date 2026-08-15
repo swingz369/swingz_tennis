@@ -165,7 +165,7 @@ export default function TrainerHoursLogsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
@@ -335,7 +335,7 @@ export default function TrainerHoursLogsPage() {
                 <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                   Stunden gesamt
                 </p>
-                <p className="text-xl font-bold mt-0.5 text-brand-primary dark:text-brand-light">
+                <p className="text-xl font-bold mt-0.5 text-primary dark:text-brand-light">
                   {stats.totalHours.toFixed(1)}h
                 </p>
               </div>

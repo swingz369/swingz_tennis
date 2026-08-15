@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         const isAdmin = await verifyRole(auth, 'admin');
         const isTrainer = await verifyRole(auth, 'trainer');
         if (!isAdmin && !isTrainer) {
-          return forbiddenResponse('Insufficient permissions to create members');
+          return forbiddenResponse('Keine Berechtigung zum Anlegen von Mitgliedern');
         }
 
         const body = await request.json();
@@ -143,7 +143,14 @@ export async function GET(request: NextRequest) {
       const members = await memberService.queryMembers(query);
 
       // B8: Audit PII list read
-      void logPiiRead(auth.user.id, 'member', `list:${query.clubId ?? 'all'}`, request);
+      void logPiiRead(
+        auth.user.id,
+        'member',
+        `list:${query.clubId ?? 'all'}`,
+        request,
+        undefined,
+        query.clubId ?? auth.clubId
+      );
 
       // Apply pagination
       const paginatedMembers = members.slice(offset, offset + limit);

@@ -77,6 +77,8 @@ function RecommendationBadge({ level }: { level: 'green' | 'yellow' | 'red' }) {
  */
 export default function WeatherClient() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [city, setCity] = useState<string | null>(null);
+  const [unavailableReason, setUnavailableReason] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -86,6 +88,8 @@ export default function WeatherClient() {
       if (res.ok) {
         const data = await res.json();
         setWeather(data.weather);
+        setCity(data.city ?? null);
+        setUnavailableReason(data.unavailableReason ?? null);
       }
     } catch {
       toast.error('Fehler beim Laden der Wetterdaten');
@@ -106,7 +110,19 @@ export default function WeatherClient() {
     );
   }
 
-  if (!weather) return null;
+  // Statt still zu verschwinden wird der Grund genannt — vorher rendert die Karte
+  // nichts und der Admin konnte nicht wissen, warum kein Wetter dasteht.
+  if (!weather) {
+    return (
+      <Card>
+        <CardContent className="py-6">
+          <p className="text-sm text-muted-foreground">
+            {unavailableReason ?? 'Wetterdaten sind derzeit nicht abrufbar.'}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -116,6 +132,9 @@ export default function WeatherClient() {
           <div>
             <div className="text-2xl font-bold">{Math.round(weather.temperature)}°C</div>
             <div className="text-sm text-muted-foreground capitalize">{weather.description}</div>
+            <div className="text-xs text-muted-foreground">
+              Aktuell{city ? ` in ${city}` : ''} — keine Vorhersage
+            </div>
           </div>
         </CardTitle>
         <div className="flex items-center gap-3">

@@ -160,7 +160,7 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
               id="member-csv-upload"
             />
             <label htmlFor="member-csv-upload">
-              <div className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-brand-primary/50 transition-colors">
+              <div className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 transition-colors">
                 <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground mb-2">
                   Klicke hier, um eine CSV-Datei auszuwählen
@@ -176,7 +176,7 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
           {loading && (
             <div className="text-center py-4">
               <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-primary border-t-transparent" />
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 Mitglieder werden importiert...
               </div>
             </div>

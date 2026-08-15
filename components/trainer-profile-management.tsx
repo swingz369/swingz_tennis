@@ -32,7 +32,6 @@ import {
   User,
   Award,
   Plus,
-  Upload,
   Search,
   GraduationCap,
   Euro,
@@ -46,7 +45,6 @@ import { toast } from 'sonner';
 import { showInviteResult } from '@/lib/invite-feedback';
 import { apiFetch } from '@/lib/api-fetch';
 import { Checkbox } from '@/components/ui/checkbox';
-import TrainerImportDialog from '@/components/admin/trainer-import-dialog';
 import { PageHeader } from '@/components/ui/page-header';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import { buildPaginationMeta, ALL_LIMIT } from '@/lib/pagination';
@@ -132,7 +130,6 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [showInviteForm, setShowInviteForm] = useState(false);
-  const [importOpen, setImportOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
@@ -359,24 +356,15 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
       <PageHeader
         title="Trainer-Verwaltung"
         description="Übersicht und Management aller Trainerprofile"
+        // CSV-Import stand hier ein zweites Mal — er lebt unter
+        // Vereinseinstellungen → CSV-Import & -Export, zusammen mit dem Export.
         actions={[
-          {
-            label: 'CSV Import',
-            icon: Upload,
-            variant: 'outline',
-            onClick: () => setImportOpen(true),
-          },
           {
             label: 'Neuer Trainer',
             icon: Plus,
             onClick: () => setShowInviteForm(true),
           },
         ]}
-      />
-      <TrainerImportDialog
-        open={importOpen}
-        onOpenChange={setImportOpen}
-        onImportComplete={loadTrainers}
       />
 
       {/* ── Filters ────────────────────────────────────────────────────────── */}
@@ -409,10 +397,10 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
       {filteredTrainers.length === 0 ? (
         searchQuery || statusFilter !== 'all' ? (
           <Card variant="flat" className="p-12 text-center">
-            <div className="flex h-20 w-20 mx-auto items-center justify-center rounded-xl bg-brand-primary/10 mb-6">
-              <GraduationCap className="h-10 w-10 text-brand-primary" />
+            <div className="flex h-20 w-20 mx-auto items-center justify-center rounded-xl bg-primary/10 mb-6">
+              <GraduationCap className="h-10 w-10 text-primary" />
             </div>
-            <h3 className="text-2xl font-bold text-brand-primary">Keine Treffer</h3>
+            <h3 className="text-2xl font-bold text-primary">Keine Treffer</h3>
             <p className="text-muted-foreground dark:text-muted-foreground mt-2 max-w-sm mx-auto">
               Passe deine Filterkriterien an, um Ergebnisse zu sehen.
             </p>
@@ -470,8 +458,8 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                     </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-brand-primary/10 shrink-0">
-                          <User className="h-4 w-4 text-brand-primary" />
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 shrink-0">
+                          <User className="h-4 w-4 text-primary" />
                         </div>
                         <div className="min-w-0">
                           <div className="truncate text-sm font-semibold">
@@ -499,8 +487,11 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                     <TableCell className="hidden lg:table-cell text-sm">
                       {trainer.specializations.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {trainer.specializations.slice(0, 2).map((s) => (
-                            <Badge key={s.id} variant="outline" size="sm">
+                          {/* Spezialisierungen kommen teils ohne `id` aus der API —
+                              dann ist key={s.id} undefined und React warnt für die
+                              ganze Liste. Name und Index sind hier eindeutig genug. */}
+                          {trainer.specializations.slice(0, 2).map((s, i) => (
+                            <Badge key={s.id ?? `${s.name}-${i}`} variant="outline" size="sm">
                               {s.name}
                             </Badge>
                           ))}
@@ -529,7 +520,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                         // the full form, so this list view stays terse.
                         <div className="inline-flex items-center justify-end gap-1.5">
                           <span
-                            className="inline-flex items-center gap-1 font-medium text-brand-primary"
+                            className="inline-flex items-center gap-1 font-medium text-primary"
                             title={`Vertragssatz (Admin-only) · ${trainer.contractedHourlyRate.toFixed(2)} €/h`}
                           >
                             <Euro className="h-3.5 w-3.5" />
@@ -727,7 +718,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
               onChange={(e) => setInviteName(e.target.value)}
             />
           </div>
-          <div className="bg-brand-primary/5 border border-brand-primary/10 p-3 rounded-xl text-sm text-muted-foreground dark:text-muted-foreground">
+          <div className="bg-primary/5 border border-primary/10 p-3 rounded-xl text-sm text-muted-foreground dark:text-muted-foreground">
             Der Trainer erhält eine Einladungs-E-Mail und wird dem Verein mit der Rolle
             &quot;Trainer&quot; hinzugefügt.
           </div>

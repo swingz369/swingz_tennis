@@ -138,7 +138,7 @@ export default function AdminApprovals() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Mitglieder-Genehmigungen</h1>
+          <h1 className="text-2xl font-bold text-primary">Mitglieder-Genehmigungen</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {counts.pending} ausstehende{counts.pending !== 1 ? '' : 's'} von {counts.all} Anträgen
           </p>

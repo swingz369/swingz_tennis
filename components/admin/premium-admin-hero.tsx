@@ -18,9 +18,14 @@ function getGreeting(): string {
 
 interface PremiumAdminHeroProps {
   firstName: string;
-  clubName: string;
   role: 'owner' | 'superadmin' | 'admin';
   todaySessionCount: number;
+  /** Offene + überfällige Rechnungen. 0 blendet den Satzteil aus. */
+  openInvoiceCount: number;
+  /** Davon überfällig — entscheidet, ob die Zeile „fällig" oder „überfällig" sagt. */
+  overdueInvoiceCount: number;
+  /** Nächste Fälligkeit über alle offenen Rechnungen (ISO). */
+  nextInvoiceDue?: string;
 }
 
 const ROLE_BADGE_LABEL: Record<PremiumAdminHeroProps['role'], string> = {
@@ -39,24 +44,35 @@ const ROLE_BADGE_LABEL: Record<PremiumAdminHeroProps['role'], string> = {
  */
 export function PremiumAdminHero({
   firstName,
-  clubName,
   role,
   todaySessionCount,
+  openInvoiceCount,
+  overdueInvoiceCount,
+  nextInvoiceDue,
 }: PremiumAdminHeroProps) {
   const isPlatformStaff = role === 'owner' || role === 'superadmin';
   const todayLabel = new Date().toLocaleDateString('de-DE', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
+    year: 'numeric',
     timeZone: 'Europe/Berlin',
   });
   const greeting = getGreeting();
+  const dueLabel = nextInvoiceDue
+    ? new Date(nextInvoiceDue).toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        timeZone: 'Europe/Berlin',
+      })
+    : null;
 
   return (
     <div className="min-w-0">
-      {/* Date + Role pill */}
-      <div className="flex items-center gap-2 mb-1">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      {/* Date + Role pill — Datum in Mono, damit es als Datenzeile liest und
+          nicht als zweite Überschrift mit der Begrüßung konkurriert. */}
+      <div className="flex items-center gap-2 mb-2">
+        <p className="font-mono text-[11px] font-medium uppercase tracking-[0.13em] text-muted-foreground">
           {todayLabel}
         </p>
         <span
@@ -64,26 +80,40 @@ export function PremiumAdminHero({
             'text-2xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
             isPlatformStaff
               ? 'bg-info-50 text-info-700 dark:bg-info-900/20 dark:text-info-300'
-              : 'bg-brand-accent-100 text-brand-accent-700 dark:bg-brand-accent-900/30 dark:text-brand-accent-300'
+              : 'bg-brand-light/10 text-brand-light dark:bg-brand-light/20 dark:text-success-300'
           )}
         >
           {ROLE_BADGE_LABEL[role]}
         </span>
       </div>
 
-      {/* Greeting */}
-      <h1 className="text-2xl font-bold font-display text-foreground dark:text-white tracking-tight">
+      {/* Greeting — grösser und enger gesetzt: die Begrüssung ist das Einzige
+          auf der Seite, das keine Zahl ist, und darf deshalb Platz nehmen. */}
+      <h1 className="text-3xl sm:text-[34px] font-bold font-display text-foreground leading-[1.05] tracking-[-0.038em]">
         {greeting}, {firstName}.
       </h1>
 
-      {/* Subline with club context */}
-      <p className="text-sm text-muted-foreground mt-0.5">
-        <strong className="text-foreground dark:text-white font-semibold">{clubName}</strong> läuft
-        — heute stehen{' '}
+      {/* Lagebericht in einem Satz: was heute läuft, was Geld kostet, und ob
+          sonst etwas offen ist. Der Vereinsname steht nicht mehr drin — er
+          steht im Vereins-Umschalter der Sidebar, direkt links daneben, und
+          war hier nur eine zweite Kopie ohne neue Information. */}
+      <p className="text-sm text-muted-foreground mt-1.5">
+        Heute{' '}
         <strong className="text-foreground dark:text-white font-semibold">
           <AnimatedCounter value={todaySessionCount} />
         </strong>{' '}
-        {todaySessionCount === 1 ? 'Session' : 'Sessions'} auf dem Plan.
+        {todaySessionCount === 1 ? 'Session' : 'Sessions'}
+        {openInvoiceCount > 0 && (
+          <>
+            ,{' '}
+            <strong className="text-foreground dark:text-white font-semibold">
+              {openInvoiceCount} {openInvoiceCount === 1 ? 'Rechnung' : 'Rechnungen'}
+            </strong>{' '}
+            {overdueInvoiceCount > 0 ? 'überfällig' : 'fällig'}
+            {dueLabel ? ` ${overdueInvoiceCount > 0 ? 'seit' : 'zum'} ${dueLabel}` : ''}
+          </>
+        )}
+        {overdueInvoiceCount > 0 ? '.' : ' — sonst läuft alles.'}
       </p>
     </div>
   );

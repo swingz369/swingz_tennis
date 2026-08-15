@@ -15,7 +15,7 @@ export async function DELETE(
 ) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'trainer');
-    if (!hasPermission) return forbiddenResponse('Only trainers can delete availability');
+    if (!hasPermission) return forbiddenResponse('Nur Trainer können Verfügbarkeiten löschen');
 
     const { supabase, user } = auth;
     const { id } = await params;

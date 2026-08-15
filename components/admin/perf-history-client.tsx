@@ -209,7 +209,7 @@ export function PerfHistoryClient() {
       {/* Chart */}
       <Card variant="bordered" className="p-4 md:p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Activity className="h-5 w-5 text-brand-primary" />
+          <Activity className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold">Clustering-Benchmarks (mean ms)</h2>
         </div>
         <div className="h-[420px] w-full">

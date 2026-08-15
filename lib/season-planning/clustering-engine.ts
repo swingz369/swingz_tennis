@@ -25,15 +25,22 @@ import {
   seasonPlanningConfigs,
 } from '@/src/infrastructure/persistence/season-planning-schema';
 import { createLogger } from '@/lib/logger';
-import { DAY_LABELS } from './schedule-constants';
+import { isMinorByBirthdate } from './conflict-utils';
+import { DAY_LABELS, LEVEL_RANK, LEVEL_LABEL } from './schedule-constants';
 import { createServiceClient } from '@/lib/supabase/service';
 import {
   timeSlotsOverlap,
   computeNiveauMatchScore,
   sortMembersByPriority,
+  balancedSliceSizes,
+  scorePlan,
 } from './clustering-utils';
+import { randomUUID } from 'node:crypto';
 
 const log = createLogger('season-clustering-engine');
+
+/** Spätestes Ende einer Trainingseinheit mit Minderjährigen. */
+const MINOR_LATEST_END = '20:00';
 import { and, eq, asc, gte, inArray } from 'drizzle-orm';
 import {
   resolveBundeslandCode,
@@ -94,6 +101,26 @@ export interface ClusteringConfig {
   // Sonntag ist standardmäßig spielfrei (Vereinsrealität / Arbeits- & Ruhezeitregeln
   // für Trainer). Opt-in pro Saison über die Wizard-Checkbox, nicht global änderbar.
   includeSunday: boolean; // default false
+  // Multi-Start: mehrere feste Startvarianten rechnen und die beste behalten.
+  // Keine DB-Spalte — abschaltbar für Benchmarks/Tests, die einen einzelnen
+  // Greedy-Durchlauf messen wollen.
+  multiStart: boolean; // default true
+}
+
+/** Eine Startvariante des Greedy-Laufs (siehe `multiStart`). */
+interface PlanVariant {
+  /** Erwachsene vor Kindern verplanen (Default: Kinder zuerst). */
+  adultsFirst: boolean;
+  /** Wunschpartner-/Vorsaison-Cluster als Sortierschlüssel nutzen. */
+  useAffinity: boolean;
+}
+
+/** Präfix einer noch nicht in der DB angelegten Gruppe (siehe `saveToDatabase`). */
+const PLACEHOLDER_GROUP_PREFIX = 'new:';
+
+function hhmmToMinutes(hhmm: string): number {
+  const [h, m] = hhmm.split(':');
+  return Number(h) * 60 + Number(m);
 }
 
 const DEFAULT_CONFIG: ClusteringConfig = {
@@ -112,12 +139,15 @@ const DEFAULT_CONFIG: ClusteringConfig = {
   preferHistoricGroups: true,
   avoidHighFailureSlots: true,
   treatHighFailureAsHard: false,
-  backtrackDepth: 0,
+  // War 0 — damit lief der komplette Backtracking-Pfad in Produktion nie.
+  // 3 ist der in tests/bench/clustering.bench.ts vermessene Wert.
+  backtrackDepth: 3,
   unassignedRateThreshold: 0.05,
   teamSlotMinutes: 120,
   teamLevels: ['advanced', 'professional'],
   minTrainingWeeks: 12,
   includeSunday: false,
+  multiStart: true,
 };
 
 // ============================================
@@ -175,20 +205,6 @@ const NEXT_LEVEL: Record<SkillLevel, SkillLevel> = {
   intermediate: 'advanced',
   advanced: 'professional',
   professional: 'professional',
-};
-
-const LEVEL_RANK: Record<SkillLevel, number> = {
-  beginner: 0,
-  intermediate: 1,
-  advanced: 2,
-  professional: 3,
-};
-
-const LEVEL_LABEL: Record<SkillLevel, string> = {
-  beginner: 'Anfänger',
-  intermediate: 'Mittel',
-  advanced: 'Fortgeschritten',
-  professional: 'Profi',
 };
 
 // Bugfix (Q2-Audit): trainer.specialties sind deutsche Freitext-Strings aus der
@@ -263,6 +279,18 @@ export class SeasonClusteringEngine {
     | null = null;
   private _cachedTrainersForSlotCheck: TrainerWithDetails[] | null = null;
 
+  // Aktive Startvariante des laufenden Durchgangs (Multi-Start, siehe runClustering).
+  private variant: PlanVariant = { adultsFirst: false, useAffinity: true };
+  // Gruppen, die dieser Lauf neu erfinden will. Sie entstehen erst in
+  // `saveToDatabase` als DB-Zeile — vorher sind es Platzhalter mit `new:`-ID.
+  // Vorher legte `assignMembersToGroups` sie sofort per INSERT an, auch im
+  // Dry Run: jeder Klick auf "Neu berechnen" im Wizard hinterließ verwaiste
+  // `groups`-Zeilen.
+  private pendingGroups = new Map<
+    string,
+    { name: string; level: SkillLevel; ageGroup: 'kids' | 'adult' }
+  >();
+
   constructor(seasonId: string, clubId: string, config?: Partial<ClusteringConfig>) {
     this.seasonId = seasonId;
     this.clubId = clubId;
@@ -288,13 +316,7 @@ export class SeasonClusteringEngine {
     const slotFailureRates = await this.loadSlotFailureRates();
     const historicGroups = await this.loadHistoricGroups();
 
-    // Step 2: Apply niveau promotions (Schritt 4c)
-    this.applyNiveauPromotions(members);
-
-    // Step 3: Build candidate groups from historic patterns (Schritt 4b)
-    const candidateGroups = this.buildCandidateGroups(members, trainers, groups, historicGroups);
-
-    // Step 4: Build dynamic time slots based on configured duration
+    // Step 2: Build dynamic time slots based on configured duration
     const timeSlots = buildStandardTimeSlots(this.config.slotDurationMinutes);
 
     // Sprint 4 P0 #1: Pre-compute slot-availability caches so findBestTimeSlot can
@@ -302,27 +324,97 @@ export class SeasonClusteringEngine {
     // Expected impact: 2000m run 32ms → ~18ms (-44%) per docs/SCALING_ANALYSIS.md.
     this.buildSlotAvailabilityCaches(members, trainers, timeSlots);
 
-    // Step 5: Run greedy clustering with hard + soft constraints
-    const { assignments, unassigned } = await this.greedyCluster(
-      members,
-      trainers,
-      courts,
-      candidateGroups,
-      slotFailureRates,
-      timeSlots
-    );
+    // Step 3–6: Multi-Start.
+    // Bei einem Greedy-Verfahren entscheidet die Startreihenfolge maßgeblich über
+    // das Ergebnis — wer zuerst schneidet, bekommt die besten Trainer und Plätze.
+    // Statt einen Constraint-Solver einzuführen, werden ein paar feste Varianten
+    // gerechnet und über `scorePlan` verglichen. Deterministisch, weil die
+    // Variantenliste konstant ist und der Rest der Engine keine Zufallsquelle hat.
+    // Kosten: Faktor `variants.length` auf der reinen Rechenzeit (Daten werden nur
+    // einmal geladen, die Slot-Caches nur einmal gebaut).
+    const variants: PlanVariant[] = this.config.multiStart
+      ? [
+          { adultsFirst: false, useAffinity: true },
+          { adultsFirst: true, useAffinity: true },
+          { adultsFirst: false, useAffinity: false },
+        ]
+      : [{ adultsFirst: false, useAffinity: true }];
 
-    // Step 6: Apply waitlist logic (Schritt 4d)
-    const waitlistResult = this.applyWaitlistLogic(assignments, members, groups);
+    let best: {
+      score: number;
+      assignments: GroupAssignment[];
+      unassigned: Array<{ memberId: string; memberName: string; reason: string }>;
+      waitlistSummary: ClusteringResult['waitlistSummary'];
+      metrics: ClusteringMetrics;
+      pendingGroups: Map<string, { name: string; level: SkillLevel; ageGroup: 'kids' | 'adult' }>;
+    } | null = null;
 
-    // Step 7: Compute metrics
-    const metrics = this.computeMetrics(
-      members,
-      trainers,
-      assignments,
-      unassigned,
-      waitlistResult.waitlisted
-    );
+    for (const variant of variants) {
+      this.variant = variant;
+      this.pendingGroups = new Map();
+      // Mitglieder sind über die Varianten hinweg dieselben Objekte — der
+      // Lauf-Zustand darauf muss zurückgesetzt werden.
+      for (const m of members) {
+        m._unassignedReason = undefined;
+        m.promotedLevel = null;
+      }
+
+      // Schritt 4c: Höherstufungen
+      this.applyNiveauPromotions(members);
+      // Schritt 4b: Kandidatengruppen aus Bestand + bewährten Vorsaison-Gruppen
+      const candidateGroups = this.buildCandidateGroups(members, trainers, groups, historicGroups);
+      // Schritt 4a/4b: Greedy mit harten + weichen Constraints
+      const { assignments, unassigned } = await this.greedyCluster(
+        members,
+        trainers,
+        courts,
+        candidateGroups,
+        slotFailureRates,
+        timeSlots
+      );
+      // Schritt 4d: Warteliste
+      const waitlistResult = this.applyWaitlistLogic(assignments, members, groups);
+      const metrics = this.computeMetrics(
+        members,
+        trainers,
+        assignments,
+        unassigned,
+        waitlistResult.waitlisted
+      );
+
+      const score = scorePlan(metrics, unassigned.length);
+      if (!best || score > best.score) {
+        best = {
+          score,
+          assignments,
+          // Die Begründungen hängen als `_unassignedReason` am gemeinsamen
+          // Mitglieder-Objekt und werden von der nächsten Variante überschrieben
+          // — hier einfrieren.
+          unassigned: unassigned.map((m) => ({
+            memberId: m.id,
+            memberName: m.name,
+            reason: m._unassignedReason || 'Keine passende Gruppe gefunden',
+          })),
+          waitlistSummary: waitlistResult.summary,
+          metrics,
+          pendingGroups: this.pendingGroups,
+        };
+      }
+    }
+
+    // `variants` ist nie leer, `best` daher immer gesetzt — der Non-Null-Assert
+    // spart einen unerreichbaren Fehlerpfad.
+    const winner = best!;
+    const assignments = winner.assignments;
+    const metrics = winner.metrics;
+    this.pendingGroups = winner.pendingGroups;
+    if (variants.length > 1) {
+      log.info('Multi-Start: beste Variante gewählt', {
+        seasonId: this.seasonId,
+        score: winner.score,
+        variants: variants.length,
+      });
+    }
 
     // Step 7b: Fix 5 — Mindest-Trainingswochen prüfen
     const [currentSeason] = await db
@@ -415,12 +507,8 @@ export class SeasonClusteringEngine {
 
     const result: ClusteringResult = {
       groups: assignments,
-      unassignedMembers: unassigned.map((m) => ({
-        memberId: m.id,
-        memberName: m.name,
-        reason: m._unassignedReason || 'Keine passende Gruppe gefunden',
-      })),
-      waitlistSummary: waitlistResult.summary,
+      unassignedMembers: winner.unassigned,
+      waitlistSummary: winner.waitlistSummary,
       metrics,
       explanations,
     };
@@ -490,9 +578,11 @@ export class SeasonClusteringEngine {
         teamSlotMinutes: DEFAULT_CONFIG.teamSlotMinutes,
         teamLevels: DEFAULT_CONFIG.teamLevels,
         minTrainingWeeks: DEFAULT_CONFIG.minTrainingWeeks,
-        // Keine DB-Spalte (request-scoped Wizard-Checkbox) — Wert aus dem
-        // Konstruktor-Merge erhalten statt auf den Default zurückzufallen.
+        // Keine DB-Spalte (request-scoped Wizard-Checkbox bzw. Test-/Bench-Schalter)
+        // — Wert aus dem Konstruktor-Merge erhalten statt auf den Default
+        // zurückzufallen.
         includeSunday: this.config.includeSunday,
+        multiStart: this.config.multiStart,
       };
     }
   }
@@ -511,6 +601,7 @@ export class SeasonClusteringEngine {
         user_email: users.email,
         user_experience: users.experience_months,
         user_skill_level: users.skill_level,
+        user_dob: users.date_of_birth,
       })
       .from(userTrainingPreferences)
       .innerJoin(users, eq(userTrainingPreferences.user_id, users.id))
@@ -536,6 +627,7 @@ export class SeasonClusteringEngine {
         user_email: users.email,
         user_experience: users.experience_months,
         user_skill_level: users.skill_level,
+        user_dob: users.date_of_birth,
       })
       .from(memberSchedulePreferences)
       .innerJoin(users, eq(memberSchedulePreferences.user_id, users.id))
@@ -549,6 +641,7 @@ export class SeasonClusteringEngine {
       .select({
         user_id: userClubMemberships.user_id,
         role: userClubMemberships.role,
+        include_in_planning: userClubMemberships.include_in_planning,
       })
       .from(userClubMemberships)
       .where(
@@ -665,14 +758,19 @@ export class SeasonClusteringEngine {
       const fb = feedbackMap.get(p.pref.user_id);
       const skillLevel = (p.user_skill_level || p.pref.preferred_level || 'beginner') as SkillLevel;
       const prefAgeGroup = p.pref.preferred_age_group || '';
-      // Any under-18 age group is school-bound on weekdays → needs after-14:00 slots
+      // Any under-18 age group is school-bound on weekdays → needs after-14:00 slots.
+      // Das Geburtsdatum entscheidet, wenn vorhanden: `preferred_age_group` ist
+      // ein Wunschfeld aus dem Präferenz-Formular und bei Mitgliedern ohne
+      // Präferenzen gar nicht gefüllt — ein 12-Jähriger wäre dann als
+      // Erwachsener in einen 20-Uhr-Slot gerutscht.
       const isMinor =
-        prefAgeGroup === 'kids' ||
-        prefAgeGroup === 'youth' ||
-        prefAgeGroup === 'junior' ||
-        prefAgeGroup === 'u18' ||
-        prefAgeGroup === 'children' ||
-        membershipRoleMap.get(p.pref.user_id) === 'junior';
+        isMinorByBirthdate((p as { user_dob?: unknown }).user_dob) ??
+        (prefAgeGroup === 'kids' ||
+          prefAgeGroup === 'youth' ||
+          prefAgeGroup === 'junior' ||
+          prefAgeGroup === 'u18' ||
+          prefAgeGroup === 'children' ||
+          membershipRoleMap.get(p.pref.user_id) === 'junior');
       // Opt #5: count unavailable dates per day-of-week for penalty scoring
       const unavailDates = (p.pref.unavailable_dates as string[] | null) ?? [];
       const unavailByDow: Record<number, number> = {};
@@ -707,6 +805,72 @@ export class SeasonClusteringEngine {
         _unassignedReason: undefined,
       };
     });
+
+    // ── 4. Mitglieder ohne jede Präferenz-Zeile ───────────────────────────
+    // Wer für die Planung vorgesehen ist (`include_in_planning`), aber weder
+    // Saison- noch Club-Präferenzen abgegeben hat, tauchte im Algorithmus
+    // überhaupt nicht auf: `mergedRows` speiste sich nur aus den beiden
+    // Präferenz-Tabellen. Bei TC Rheinland waren das 22 von 60 Mitgliedern —
+    // die Konfliktprüfung meldete sie hinterher als "in keiner Gruppe",
+    // obwohl der Verein sie eingeplant sehen will.
+    //
+    // Keine Angabe ist keine Absage: sie bekommen — wie Trainer ohne
+    // eingereichte Verfügbarkeit weiter unten — die Standard-Verfügbarkeit und
+    // werden damit ganz normal eingruppiert. Niveau und Erfahrung kommen aus
+    // dem Profil, die harten Regeln (Schulzeiten für Kinder, Platz, Trainer)
+    // gelten unverändert. Wer nicht mitgeplant werden soll, wird in Schritt 1
+    // abgewählt — dafür ist `include_in_planning` da.
+    const coveredIds = new Set(result.map((m) => m.id));
+    const missingIds = memberships
+      .filter(
+        (m) => m.role === 'member' && m.include_in_planning !== false && !coveredIds.has(m.user_id)
+      )
+      .map((m) => m.user_id);
+
+    if (missingIds.length > 0) {
+      const defaultAvailability = this.buildDefaultAvailability();
+      const profiles = await db
+        .select({
+          id: users.id,
+          full_name: users.full_name,
+          email: users.email,
+          skill_level: users.skill_level,
+          experience_months: users.experience_months,
+          date_of_birth: users.date_of_birth,
+        })
+        .from(users)
+        .where(inArray(users.id, missingIds));
+
+      for (const u of profiles) {
+        const fb = feedbackMap.get(u.id);
+        result.push({
+          id: u.id,
+          name: u.full_name || u.email || 'Unbekannt',
+          email: u.email || '',
+          skillLevel: (u.skill_level || 'beginner') as SkillLevel,
+          experienceMonths: u.experience_months || 0,
+          attendanceQuote: fb?.attendance ?? null,
+          readyForNextLevel: fb?.ready ?? false,
+          recommendedLevel: fb?.level ?? null,
+          promotedLevel: null,
+          availability: defaultAvailability,
+          wishPartnerIds: [],
+          avoidMemberIds: [],
+          selfAssessedLevel: null,
+          previousGroupId: previousGroups.get(u.id) ?? null,
+          isMinor: isMinorByBirthdate(u.date_of_birth) ?? membershipRoleMap.get(u.id) === 'junior',
+          maxSessionsPerWeek: 1,
+          preferredCourtIds: [],
+          preferredGroupIds: [],
+          // Niedrigste Priorität: bei Platzmangel weicht zuerst, wer nichts
+          // angegeben hat — vor jemandem mit ausdrücklichem Wunsch.
+          priority: 1,
+          _unavailByDow: {},
+          _unassignedReason: undefined,
+        });
+      }
+    }
+
     this._cachedMembers = result;
     return result;
   }
@@ -1090,10 +1254,16 @@ export class SeasonClusteringEngine {
     const kids = sortedMembers.filter((m) => m.isMinor);
     const adults = sortedMembers.filter((m) => !m.isMinor);
 
-    // Assign kids first (usually smaller groups, more attention needed)
+    // Kinder zuerst (kleinere Gruppen, engeres Zeitfenster) — die Multi-Start-
+    // Variante `adultsFirst` dreht das um, weil die zuerst verplante Kohorte die
+    // besten Trainer und Plätze bekommt.
+    const [firstCohort, firstAge, secondCohort, secondAge] = this.variant.adultsFirst
+      ? ([adults, 'adult', kids, 'kids'] as const)
+      : ([kids, 'kids', adults, 'adult'] as const);
+
     let _groupIndex = await this.assignMembersToGroups(
-      kids,
-      'kids',
+      firstCohort,
+      firstAge,
       trainers,
       courts,
       candidateGroups,
@@ -1106,10 +1276,9 @@ export class SeasonClusteringEngine {
       0
     );
 
-    // Then assign adults
     _groupIndex = await this.assignMembersToGroups(
-      adults,
-      'adult',
+      secondCohort,
+      secondAge,
       trainers,
       courts,
       candidateGroups,
@@ -1659,7 +1828,9 @@ export class SeasonClusteringEngine {
     // separating friends by coincidence of sort order. Priority (member-set Wichtigkeit,
     // 1-5) breaks remaining ties so higher-priority members are less likely to end up
     // on the waitlist.
-    const affinity = this.computeAffinityGroups(cohort);
+    const affinity = this.variant.useAffinity
+      ? this.computeAffinityGroups(cohort)
+      : new Map<string, number>();
     const sorted = [...cohort].sort((a, b) => {
       const aRank = LEVEL_RANK[a.promotedLevel || a.skillLevel];
       const bRank = LEVEL_RANK[b.promotedLevel || b.skillLevel];
@@ -1683,11 +1854,54 @@ export class SeasonClusteringEngine {
     }
 
     let groupIndex = startGroupIndex;
-    const numGroups = Math.ceil(sorted.length / maxSize);
 
-    for (let i = 0; i < numGroups; i++) {
-      const slice = sorted.slice(i * maxSize, (i + 1) * maxSize);
+    // Slices bilden: höchstens `maxSize` Mitglieder UND höchstens
+    // `maxNiveauLevelSteps` Niveau-Stufen Spanne.
+    // Vorher wurde stur alle `maxSize` Mitglieder geschnitten. Weil `sorted`
+    // nach Niveau aufsteigt, fiel ein Schnitt regelmäßig mitten in einen
+    // Niveau-Sprung: bei TC Rheinland landeten Mittel und Profi in derselben
+    // Gruppe (Spanne 2, erlaubt 1) — die Konfliktprüfung meldete das hinterher
+    // als `large_niveau_span`, obwohl der Algorithmus die Grenze kennt und im
+    // zweiten Durchlauf sogar prüft. Der Schnitt an der Niveau-Grenze
+    // zersplittert die Gruppen nicht: er greift nur dort, wo ohnehin ein Sprung
+    // von mehr als einer Stufe liegt.
+    // Erst Läufe bilden, die nur an echten Niveau-Sprüngen getrennt werden ...
+    const runs: (typeof sorted)[] = [];
+    {
+      let current: typeof sorted = [];
+      let minRank = Infinity;
+      let maxRank = -Infinity;
+      for (const m of sorted) {
+        const rank = LEVEL_RANK[m.promotedLevel || m.skillLevel];
+        const spanWithMember = Math.max(maxRank, rank) - Math.min(minRank, rank);
+        if (current.length > 0 && spanWithMember > this.config.maxNiveauLevelSteps) {
+          runs.push(current);
+          current = [];
+          minRank = Infinity;
+          maxRank = -Infinity;
+        }
+        current.push(m);
+        minRank = Math.min(minRank, rank);
+        maxRank = Math.max(maxRank, rank);
+      }
+      if (current.length > 0) runs.push(current);
+    }
 
+    // ... und diese Läufe dann gleichmäßig aufteilen. Vorher wurde stur alle
+    // `maxSize` Mitglieder geschnitten: 7 Erwachsene bei maxSize 6 ergaben eine
+    // Sechsergruppe plus ein "Einzeltraining". Jetzt entstehen bei 7 Mitgliedern
+    // zwei Gruppen zu 4 und 3.
+    const slices: (typeof sorted)[] = [];
+    for (const run of runs) {
+      let offset = 0;
+      for (const size of balancedSliceSizes(run.length, maxSize)) {
+        slices.push(run.slice(offset, offset + size));
+        offset += size;
+      }
+    }
+    const numGroups = slices.length;
+
+    for (const slice of slices) {
       // Filter out avoid-member conflicts from this slice
       const filteredSlice = slice.filter((m) => {
         const enemies = avoidMap.get(m.id);
@@ -1755,14 +1969,37 @@ export class SeasonClusteringEngine {
       }
 
       // Select matching group or create placeholder in DB
+      // Eine bereits verplante Gruppe darf nicht ein zweites Mal gewählt werden: die
+      // Modulo-Zuweisung unten vergab sonst bei mehr Slices als passenden Gruppen
+      // dieselbe groups.id mehrfach. Zwei Plan-Einträge mit identischer ID sind im
+      // Wizard nicht mehr auseinanderzuhalten (Drag & Drop verschob beide zugleich,
+      // Mitglieder-Umzüge trafen beide) — stattdessen wird unten eine neue angelegt.
+      const usedGroupIds = new Set(assignments.map((a) => a.groupId));
       const allMatching = Array.from(candidateGroups.values()).filter(
-        (g) => g.level === skillLevel && (!g.ageGroup || g.ageGroup === ageGroup)
+        (g) =>
+          g.level === skillLevel &&
+          (!g.ageGroup || g.ageGroup === ageGroup) &&
+          !usedGroupIds.has(g.id)
       );
       // Bugfix (Q2-Audit): preferred_group_ids wurde geladen, aber nie ausgewertet —
       // die Modulo-Zuweisung gewann immer. Jetzt bekommt eine Gruppe Vorrang, die von
       // mindestens einem Mitglied der Slice explizit gewünscht wurde.
+      // Zweite Priorität: die Gruppe, in der die meisten dieser Slice letzte
+      // Saison saßen. `previousGroupId` war geladen, aber ungenutzt — es gewann
+      // immer die willkürliche Modulo-Zuweisung, was Gruppen jede Saison neu
+      // durchmischte und Gruppennamen sinnlos machte.
+      const prevGroupCounts = new Map<string, number>();
+      for (const m of filteredSlice) {
+        if (m.previousGroupId)
+          prevGroupCounts.set(m.previousGroupId, (prevGroupCounts.get(m.previousGroupId) ?? 0) + 1);
+      }
+      const byContinuity = allMatching
+        .filter((g) => prevGroupCounts.has(g.id))
+        .sort((a, b) => (prevGroupCounts.get(b.id) ?? 0) - (prevGroupCounts.get(a.id) ?? 0))[0];
+
       const existingGroup =
         allMatching.find((g) => filteredSlice.some((m) => m.preferredGroupIds.includes(g.id))) ||
+        byContinuity ||
         allMatching[groupIndex % Math.max(1, allMatching.length)];
       const prefix = ageGroup === 'kids' ? 'Kids' : LEVEL_LABEL[skillLevel];
       let group: GroupInfo;
@@ -1778,27 +2015,21 @@ export class SeasonClusteringEngine {
           filteredSlice.length === 1
             ? `Einzeltraining ${prefix} — ${filteredSlice[0].name}`
             : `${prefix} Gruppe ${groupIndex + 1}`;
-        const [newGroup] = await db
-          .insert(groups)
-          .values({
-            club_id: this.clubId,
-            name: groupName,
-            level: skillLevel,
-            age_group: ageGroup === 'kids' ? 'kids' : 'adult',
-            is_active: true,
-            member_ids: [],
-          })
-          .returning({
-            id: groups.id,
-            name: groups.name,
-            level: groups.level,
-            age_group: groups.age_group,
-          });
+        // Platzhalter statt INSERT: die Zeile entsteht erst in `saveToDatabase`.
+        // Vorher legte jeder Rechenlauf Gruppen an — auch der Dry Run, den der
+        // Wizard bei jedem "Neu berechnen" auslöst, und (seit Multi-Start) jede
+        // verworfene Variante.
+        const placeholderId = `${PLACEHOLDER_GROUP_PREFIX}${randomUUID()}`;
+        this.pendingGroups.set(placeholderId, {
+          name: groupName,
+          level: skillLevel,
+          ageGroup,
+        });
         group = {
-          id: newGroup.id,
-          name: newGroup.name,
-          level: newGroup.level as SkillLevel,
-          ageGroup: newGroup.age_group,
+          id: placeholderId,
+          name: groupName,
+          level: skillLevel,
+          ageGroup,
         };
       }
 
@@ -1854,6 +2085,21 @@ export class SeasonClusteringEngine {
           LEVEL_LABEL[effectiveLevels.reduce((a, b) => (LEVEL_RANK[a] > LEVEL_RANK[b] ? a : b))];
         warnings.push(
           `Niveau-Spanne: ${minL}–${maxL} (${levelSpan} Stufen, Max. ${this.config.maxNiveauLevelSteps})`
+        );
+      }
+
+      // `maxNiveauSpanBeginner/-Advanced` (Erfahrungs-Spanne in Monaten) wurden aus
+      // der DB gelesen und nirgends ausgewertet. Als harte Schnittgrenze würden sie
+      // Gruppen zersplittern (Anfänger streuen real 0–12 Monate), als sichtbare
+      // Warnung geben sie dem Admin genau die Information, für die die Stellschraube
+      // gedacht war: Diese Gruppe ist fachlich weiter auseinander als gewollt.
+      const expSpanLimit =
+        LEVEL_RANK[skillLevel] >= LEVEL_RANK.advanced
+          ? this.config.maxNiveauSpanAdvanced
+          : this.config.maxNiveauSpanBeginner;
+      if (maxExp - minExp > expSpanLimit) {
+        warnings.push(
+          `Erfahrungs-Spanne: ${maxExp - minExp} Monate (Max. ${expSpanLimit} für ${LEVEL_LABEL[skillLevel]})`
         );
       }
 
@@ -1978,6 +2224,11 @@ export class SeasonClusteringEngine {
         // HARD CONSTRAINT: Kinder/Jugendliche sind Mo-Fr in der Schule → frühestens 14:00
         // Samstag: keine Einschränkung (kein Schultag)
         if (groupHasMinors && dayOfWeek < 5 && timeSlot.start < '14:00') continue;
+        // HARD CONSTRAINT: und am Abend eine Obergrenze — die gab es bisher nicht.
+        // Solange nur Mitglieder mit Präferenzen geplant wurden, fiel das nicht
+        // auf; sobald alle vorgesehenen Mitglieder eingeplant werden, weicht der
+        // Algorithmus auf 20–22 Uhr aus und hätte dort auch Kinder einsortiert.
+        if (groupHasMinors && timeSlot.end > MINOR_LATEST_END) continue;
 
         // HARD CONSTRAINT: Check member availability via pre-computed cache
         // (Sprint 4 P0 #1: O(1) lookup instead of Array.some() per member)
@@ -2006,8 +2257,15 @@ export class SeasonClusteringEngine {
           const currentSessions = trainerSessionCount.get(trainer.id) || 0;
           if (currentSessions >= trainer.maxSessionsPerWeek) continue;
 
-          // Check hours limit (uses configured slot duration, not hardcoded 1.5h)
-          const slotHours = this.config.slotDurationMinutes / 60;
+          // Stundenbudget gegen die TATSÄCHLICHE Slot-Länge prüfen. Vorher stand
+          // hier `config.slotDurationMinutes`, obwohl Team-/Leistungsgruppen mit
+          // 120-Minuten-Slots hereinkommen — Doppelstunden zählten als eine Stunde
+          // und Trainer wurden über ihr Wochenlimit hinaus verplant.
+          const slotHours = (hhmmToMinutes(timeSlot.end) - hhmmToMinutes(timeSlot.start)) / 60;
+          // ponytail: bereits verplante Sessions werden mit der Länge DIESES Slots
+          // bewertet, weil die Engine pro Trainer nur Sessions zählt, keine Stunden.
+          // Überschätzt die Last bei gemischten Längen — echte Stundenbuchführung
+          // erst, wenn ein Verein das wirklich braucht.
           const hoursAssigned = currentSessions * slotHours;
           const maxHours = trainer.maxHoursPerWeek * (trainer.utilizationPct / 100);
           if (hoursAssigned + slotHours > maxHours) continue;
@@ -2080,7 +2338,17 @@ export class SeasonClusteringEngine {
           }
         }
 
-        // Court is optional (can be null if no courts configured)
+        // HARD CONSTRAINT: freier Platz — analog zum Trainer oben.
+        // Ohne Platz war der Slot bisher trotzdem wählbar ("Court is optional").
+        // Bei einem Verein mit nur einer Halle (TC Rheinland, Winter: ein
+        // Indoor-Platz für acht Gruppen) gewann deshalb regelmäßig ein bereits
+        // belegter Slot, und der Eintrag entstand mit court_id = NULL. Der
+        // Publish legt daraus Sessions ohne Platz an, für die keine Buchung
+        // entsteht — die Abrechnung stellt die Teilnehmer trotzdem in Rechnung.
+        // Ein Verein ganz ohne konfigurierte Plätze plant weiter platzlos; ist
+        // aber ein Platz vorhanden und in diesem Slot alles belegt, ist der Slot
+        // unbrauchbar und der Algorithmus weicht auf eine freie Zeit aus.
+        if (courts.length > 0 && !selectedCourt) continue;
 
         // Check slot failure rate (soft constraint by default, hard-constraint
         // when `treatHighFailureAsHard` is true — see Optimization #5).
@@ -2537,10 +2805,26 @@ export class SeasonClusteringEngine {
       }
     }
 
+    // Mitglieder ohne Wunschpartner und ohne Vorsaison-Gruppe bilden je eine
+    // eigene Komponente. Bekämen sie eine eigene Nummer, wäre der Affinitäts-
+    // Vergleich in `assignMembersToGroups` für sie IMMER ungleich — die
+    // nachgelagerten Sortierschlüssel (Verfügbarkeit, Priorität, Erfahrung)
+    // würden nie erreicht. Sie teilen sich deshalb einen neutralen Wert, der
+    // hinter allen echten Clustern einsortiert.
+    const componentSize = new Map<string, number>();
+    for (const m of cohort) {
+      const root = find(m.id);
+      componentSize.set(root, (componentSize.get(root) ?? 0) + 1);
+    }
+    const SINGLETON = Number.MAX_SAFE_INTEGER;
     const rootToIndex = new Map<string, number>();
     const result = new Map<string, number>();
     for (const m of cohort) {
       const root = find(m.id);
+      if ((componentSize.get(root) ?? 0) < 2) {
+        result.set(m.id, SINGLETON);
+        continue;
+      }
       if (!rootToIndex.has(root)) rootToIndex.set(root, rootToIndex.size);
       result.set(m.id, rootToIndex.get(root)!);
     }
@@ -2691,12 +2975,46 @@ export class SeasonClusteringEngine {
     // einer Vierergruppe — sichtbar für Trainer und alle Teilnehmer. Hier steht die
     // endgültige Belegung fest, also wird der Name hier geradegezogen.
     for (const [idx, g] of result.groups.entries()) {
+      const isPlaceholder = g.groupId.startsWith(PLACEHOLDER_GROUP_PREFIX);
+      let renamed: string | null = null;
       if (g.memberIds.length > 1 && g.groupName.startsWith('Einzeltraining ')) {
         const prefix = g.groupName.replace(/^Einzeltraining /, '').split(' — ')[0];
-        const renamed = `${prefix} Gruppe ${idx + 1}`;
-        await db.update(groups).set({ name: renamed }).where(eq(groups.id, g.groupId));
+        renamed = `${prefix} Gruppe ${idx + 1}`;
+        // Die Warteliste referenziert Gruppen unten über den NAMEN. Ohne diesen
+        // Abgleich zeigte ein umbenannter Eintrag ins Leere und wurde mit
+        // group_id = '' geschrieben.
+        const oldName = g.groupName;
+        for (const w of result.waitlistSummary) {
+          if (w.groupName === oldName) w.groupName = renamed;
+          if (w.alternativeGroupName === oldName) w.alternativeGroupName = renamed;
+        }
         g.groupName = renamed;
       }
+
+      if (!isPlaceholder) {
+        if (renamed) await db.update(groups).set({ name: renamed }).where(eq(groups.id, g.groupId));
+        continue;
+      }
+
+      // Erst hier entsteht die Gruppe wirklich — der Rechenlauf hat nur einen
+      // Platzhalter erzeugt (siehe `pendingGroups`). Damit legen Dry Runs und
+      // verworfene Multi-Start-Varianten keine verwaisten Zeilen mehr an.
+      const pending = this.pendingGroups.get(g.groupId);
+      const [newGroup] = await db
+        .insert(groups)
+        .values({
+          club_id: this.clubId,
+          name: g.groupName,
+          level: pending?.level ?? 'beginner',
+          age_group: pending?.ageGroup ?? 'adult',
+          is_active: true,
+          member_ids: [],
+        })
+        .returning({ id: groups.id });
+
+      // Planeinträge und Warteliste unten lesen `g.groupId` bzw. den Namen —
+      // beides zeigt ab hier auf die echte Zeile.
+      g.groupId = newGroup.id;
     }
 
     // Insert new plan entries

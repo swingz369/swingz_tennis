@@ -4,7 +4,6 @@ import { withApiAuth } from '@/lib/api-auth';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
-import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
 import { db } from '@/src/infrastructure/persistence/db';
 import { seasons } from '@/src/infrastructure/persistence/schema';
 import { eq } from 'drizzle-orm';
@@ -27,7 +26,7 @@ interface RouteContext {
  * Body: AutoPlanRequest
  * - config?: Partial<AutoPlanConfig> - Override default config
  * - dry_run?: boolean - Preview only, don't save
- * - use_ai?: boolean - Use AI-powered scheduling (default: false, uses deterministic)
+ * (Der frühere `use_ai`-Schalter ist entfallen — es gibt nur den deterministischen Algorithmus.)
  *
  * Returns: AutoPlanResponse with generated entries and metrics
  */
@@ -51,9 +50,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
         });
         if (!access.ok) return access.response;
         const { season } = access;
-        const isSuperadmin =
-          access.effectiveRole === 'superadmin' || access.effectiveRole === 'owner';
-
         const clubId = season.club_id;
 
         // Check if auto-planning is enabled
@@ -87,16 +83,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
         };
 
         const dryRun = body.dry_run || false;
-        const useAI = body.use_ai === true || finalConfig.use_ai === true;
-
-        // Server-side Premium-Gate: der Client-Toggle allein reicht nicht, ein
-        // Admin könnte use_ai per curl direkt anfragen (analog ai-analysis/route.ts).
-        if (useAI && !isSuperadmin) {
-          const features = await getClubFeatures(auth.supabase, clubId);
-          if (!features.ai_analysis) {
-            return featureDisabledResponse('ai_analysis');
-          }
-        }
 
         // Update season status
         if (!dryRun) {
@@ -106,27 +92,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
             .where(eq(seasons.id, seasonId));
         }
 
-        // Run auto-planning algorithm (AI or deterministic)
-        log.info('Starting auto-planning', { seasonId, dryRun, useAI });
+        // Ausschließlich der deterministische Algorithmus — der frühere KI-Pfad
+        // (lib/ai/schedule-generator-v2.ts) schickte Mitglieder-, Trainer- und
+        // Verfügbarkeitsdaten an ein Sprachmodell und ist entfernt.
+        log.info('Starting auto-planning', { seasonId, dryRun });
         const startTime = Date.now();
 
         let result;
-        let aiEnhanced = false;
-        let modelUsed = 'none';
 
         try {
-          if (useAI) {
-            const aiResult = await AutoPlanningService.generatePlanAI(
-              seasonId,
-              finalConfig,
-              dryRun
-            );
-            result = aiResult;
-            aiEnhanced = aiResult.aiEnhanced;
-            modelUsed = aiResult.modelUsed;
-          } else {
-            result = await AutoPlanningService.generatePlan(seasonId, finalConfig, dryRun);
-          }
+          result = await AutoPlanningService.generatePlan(seasonId, finalConfig, dryRun);
         } catch (error) {
           // Revert status on failure
           if (!dryRun) {
@@ -141,8 +116,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
         const endTime = Date.now();
         log.info('Auto-planning completed', {
           durationMs: endTime - startTime,
-          aiEnhanced,
-          modelUsed,
         });
 
         // Build warnings
@@ -160,18 +133,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
           warnings.push('Less than 50% of preferences could be matched');
         }
 
-        if (aiEnhanced) {
-          warnings.push(`AI-enhanced planning (${modelUsed})`);
-        }
-
         const response = {
           success: true,
           season_id: seasonId,
           metrics: result.metrics,
           entries_created: result.entries.length,
           conflicts_detected: result.conflicts.length,
-          ai_enhanced: aiEnhanced,
-          model_used: modelUsed,
           warnings,
           ...(dryRun && {
             plan_entries: result.entries.map((entry) => ({

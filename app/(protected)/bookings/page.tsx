@@ -275,7 +275,7 @@ function BookingsContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">reserviert</p>
                 </div>
-                <div className="p-3 rounded-xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <CalendarCheck className="h-5 w-5" />
                 </div>
               </div>

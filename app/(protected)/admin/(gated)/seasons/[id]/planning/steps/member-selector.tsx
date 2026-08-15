@@ -170,7 +170,7 @@ export function MemberSelector() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Users className="h-4 w-4 text-brand-primary" />
+              <Users className="h-4 w-4 text-primary" />
               Mitglieder
             </CardTitle>
           </CardHeader>
@@ -241,7 +241,7 @@ export function MemberSelector() {
                 onClick={() => setFilterLevel(level)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-xl transition-colors ${
                   filterLevel === level
-                    ? 'bg-brand-primary text-white'
+                    ? 'bg-primary text-white'
                     : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-muted dark:text-muted-foreground'
                 }`}
               >

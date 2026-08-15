@@ -168,16 +168,16 @@ export default function OnboardingPage() {
                 {stepNum < TOTAL_STEPS && (
                   <div
                     className={`absolute top-5 left-full h-0.5 w-[calc(100%+0.5rem)] -translate-y-1/2 transition-colors duration-500 ${
-                      isCompleted ? 'bg-brand-primary' : 'bg-muted'
+                      isCompleted ? 'bg-primary' : 'bg-muted'
                     }`}
                   />
                 )}
                 <div
                   className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
                     isCompleted
-                      ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/20'
+                      ? 'bg-primary text-white shadow-md shadow-primary/20'
                       : isCurrent
-                        ? 'bg-brand-primary text-white ring-4 ring-brand-primary/20 shadow-lg shadow-brand-primary/30 scale-110'
+                        ? 'bg-primary text-white ring-4 ring-primary/20 shadow-lg shadow-primary/30 scale-110'
                         : 'bg-background border-2 border-border text-muted-foreground'
                   }`}
                 >
@@ -192,9 +192,9 @@ export default function OnboardingPage() {
                 <span
                   className={`text-xs font-medium whitespace-nowrap hidden sm:block transition-colors duration-300 ${
                     isCurrent
-                      ? 'text-brand-primary font-semibold'
+                      ? 'text-primary font-semibold'
                       : isCompleted
-                        ? 'text-brand-primary/70'
+                        ? 'text-primary/70'
                         : 'text-muted-foreground'
                   }`}
                 >
@@ -281,10 +281,13 @@ export default function OnboardingPage() {
                 clubId={club.id}
                 continueLabel="Speichern & fertig"
                 onSaved={handleModulesSaved}
+                // Im Wizard NICHT pro Klick speichern: `onSaved` schaltet hier
+                // den Schritt weiter — das würde beim ersten Häkchen passieren.
+                autoSave={false}
               />
             ) : (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-brand-primary" />
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             )}
           </div>
@@ -293,8 +296,8 @@ export default function OnboardingPage() {
       case 3:
         return (
           <div className="text-center space-y-8 py-6">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-brand-primary/10 rounded-full">
-              <CheckCircle2 className="w-12 h-12 text-brand-primary" />
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-primary/10 rounded-full">
+              <CheckCircle2 className="w-12 h-12 text-primary" />
             </div>
             <div className="space-y-3">
               <h2 className="text-3xl font-bold text-foreground">Verein angelegt!</h2>
@@ -309,7 +312,7 @@ export default function OnboardingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button
                 size="lg"
-                className="bg-brand-primary hover:bg-brand-primary/90 text-white px-8 shadow-lg shadow-brand-primary/20"
+                className="bg-primary hover:bg-primary/90 text-white px-8 shadow-lg shadow-primary/20"
                 onClick={() => router.push('/admin/courts')}
               >
                 <CheckCircle2 className="mr-2 h-5 w-5" />
@@ -328,7 +331,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-brand-primary/5 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-primary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <Card className="border-0 shadow-xl shadow-gray-200/50 ring-1 ring-gray-100">
           <CardHeader className="pb-2">{renderStepper()}</CardHeader>
@@ -366,7 +369,7 @@ export default function OnboardingPage() {
                     <Button
                       onClick={goNext}
                       disabled={loading}
-                      className="bg-brand-primary hover:bg-brand-primary/90 text-white shadow-md shadow-brand-primary/10"
+                      className="bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/10"
                     >
                       {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                       Speichern & Weiter

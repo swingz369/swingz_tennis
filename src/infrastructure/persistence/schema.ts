@@ -74,7 +74,7 @@ export const clubs = pgTable(
       shop: false,
       tournaments: false,
       trial_training: false,
-      ai_matchmaking: false,
+      partner_finder: false,
       weather_integration: false,
       league_lineup: false,
       work_duty: false,
@@ -366,6 +366,11 @@ export const users = pgTable(
     // Season planning fields
     experience_months: integer('experience_months').default(0),
     skill_level: varchar('skill_level', { length: 20 }).default('beginner'),
+    // Existiert in der Live-DB, war im Drizzle-Schema aber nicht abgebildet.
+    // Die Saisonplanung braucht es, um Minderjährige zu erkennen (Schulzeiten,
+    // späteste Trainingszeit) — vorher wurde das aus dem Wunschfeld
+    // `preferred_age_group` geraten, das ohne Präferenzen leer ist.
+    date_of_birth: date('date_of_birth'),
     // Superadmin onboarding completion flag (person-bound, not club-bound)
     superadmin_setup_completed_at: timestamp('superadmin_setup_completed_at'),
     //    DTB-ID: Deutsche Tennis Bund Spielernummer für tennis.de Integration
@@ -2084,6 +2089,9 @@ export const courtClosures = pgTable(
     is_active: boolean('is_active').notNull().default(true),
     weather_condition: varchar('weather_condition', { length: 50 }), // 'rain', 'frost', 'extreme_heat', 'snow'
     auto_generated: boolean('auto_generated').notNull().default(false),
+    // Gesetzt, wenn die Sperre zu einem Heimspieltag gehört. ON DELETE CASCADE:
+    // Spieltag weg ⇒ Platzsperre weg.
+    match_day_id: uuid('match_day_id'),
     created_by: uuid('created_by').references(() => users.id),
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -2133,6 +2141,10 @@ export const leagues = pgTable(
     notes: text('notes'),
     // nuLiga integration
     nuliga_url: text('nuliga_url'),
+    // Name der eigenen Mannschaft exakt wie in der nuLiga-Tabelle. Ohne diesen
+    // Wert kann der Sync nicht entscheiden, welche Begegnungen unsere sind.
+    own_team_name: varchar('own_team_name', { length: 200 }),
+    nuliga_roster_url: text('nuliga_roster_url'),
     last_synced_at: timestamp('last_synced_at', { withTimezone: true }),
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -2210,6 +2222,9 @@ export const matchDays = pgTable(
     score_away: integer('score_away'),
     notes: text('notes'),
     status: varchar('status', { length: 20 }).notNull().default('scheduled'), // 'scheduled', 'in_progress', 'completed', 'cancelled'
+    // Link zum nuLiga-Spielbericht — dort stehen die Einzel-/Doppelpaarungen
+    // mit Spielernamen. Wir verlinken sie, statt sie zu speichern (DSGVO).
+    nuliga_report_url: text('nuliga_report_url'),
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -2217,6 +2232,39 @@ export const matchDays = pgTable(
     league_idx: index('match_days_league_idx').on(table.league_id),
     date_idx: index('match_days_date_idx').on(table.scheduled_date),
     status_idx: index('match_days_status_idx').on(table.status),
+  })
+);
+
+/**
+ * Kader / Meldeliste einer Liga-Mannschaft (aus der nuLiga-Mannschaftsmeldung).
+ *
+ * Abgrenzung zu `team_members`: dort steht, wer im SwingZ-Verein zu einem Team
+ * gehört (interne member_id). Hier steht die beim Verband GEMELDETE Aufstellung
+ * inklusive LK und Meldeposition — die Reihenfolge, gegen die eine Aufstellung
+ * geprüft werden muss. `member_id` ist die Brücke zwischen beiden, sofern der
+ * Name eindeutig zugeordnet werden konnte.
+ */
+export const leaguePlayers = pgTable(
+  'league_players',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    league_id: uuid('league_id')
+      .notNull()
+      .references(() => leagues.id, { onDelete: 'cascade' }),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    member_id: uuid('member_id').references(() => users.id, { onDelete: 'set null' }),
+    name: varchar('name', { length: 200 }).notNull(),
+    lk: varchar('lk', { length: 10 }), // Leistungsklasse, z. B. "LK 12,3"
+    position_number: integer('position_number'), // Meldeposition (1 = erste Position)
+    source_url: text('source_url'),
+    synced_at: timestamp('synced_at', { withTimezone: true }).notNull().defaultNow(),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('league_players_club_idx').on(table.club_id),
+    member_idx: index('league_players_member_idx').on(table.member_id),
   })
 );
 

@@ -12,7 +12,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'trainer');
     if (!hasPermission) {
-      return forbiddenResponse('Trainer access required');
+      return forbiddenResponse('Zugriff nur für Trainer');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);

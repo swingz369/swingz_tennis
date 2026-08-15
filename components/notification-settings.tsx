@@ -167,7 +167,7 @@ export default function NotificationSettings() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Benachrichtigungen</h1>
+          <h1 className="text-2xl font-bold text-primary">Benachrichtigungen</h1>
           <p className="text-muted-foreground">Verwalte deine Benachrichtigungseinstellungen</p>
         </div>
         <div className="flex items-center gap-2">
@@ -209,9 +209,9 @@ export default function NotificationSettings() {
           {/* Push Notifications */}
           <div className="flex items-center justify-between p-4 bg-muted dark:bg-muted rounded-xl">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-brand-primary/10 rounded-xl">
+              <div className="p-2 bg-primary/10 rounded-xl">
                 {settings.pushNotifications ? (
-                  <Bell className="h-5 w-5 text-brand-primary" />
+                  <Bell className="h-5 w-5 text-primary" />
                 ) : (
                   <BellOff className="h-5 w-5 text-muted-foreground" />
                 )}
@@ -360,12 +360,12 @@ export default function NotificationSettings() {
                     className={`flex items-start gap-3 p-4 rounded-xl border transition-colors ${
                       notification.read
                         ? 'bg-background dark:bg-card border-border dark:border-white/10'
-                        : 'bg-brand-primary/5 border-brand-primary/30'
+                        : 'bg-primary/5 border-primary/30'
                     }`}
                   >
                     <div
                       className={`p-2 rounded-xl ${
-                        notification.read ? 'bg-muted dark:bg-muted' : 'bg-brand-primary/20'
+                        notification.read ? 'bg-muted dark:bg-muted' : 'bg-primary/20'
                       }`}
                     >
                       <Bell className="h-5 w-5" />
@@ -374,7 +374,7 @@ export default function NotificationSettings() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="font-medium">{notification.title}</div>
                         {!notification.read && (
-                          <div className="w-2 h-2 rounded-full bg-brand-primary flex-shrink-0 mt-2" />
+                          <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2" />
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">

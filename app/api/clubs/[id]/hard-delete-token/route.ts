@@ -39,7 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   return withApiAuth(req, async (auth) => {
     const hasRole = await verifyRole(auth, 'superadmin');
     if (!hasRole) {
-      return forbiddenResponse('Superadmin access required');
+      return forbiddenResponse('Zugriff nur für Superadmins');
     }
 
     // Rate-limit matches the surrounding DELETE route (RATE_LIMITS.STANDARD)

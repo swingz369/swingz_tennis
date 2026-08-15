@@ -117,6 +117,13 @@ export function adminSidebarSections(hidden: Hidden, belongsToTennisschule = fal
         { name: 'Saisonplanung', href: '/admin/seasons' },
         { name: 'Platzkalender', href: '/scheduler' },
         { name: 'Platzverwaltung', href: '/admin/courts' },
+        // Medenspiele gehören hierher und nicht in eine Modul-Restekiste: sie
+        // sind Spielbetrieb auf den eigenen Plätzen, ein Heimspieltag sperrt
+        // sie sogar (court_closures.match_day_id). Der Sportwart sucht sie
+        // neben Saisonplanung und Platzkalender, nicht unter „Weitere Module".
+        ...(!hidden.has('league_lineup')
+          ? [{ name: 'Ligen & Mannschaften', href: '/admin/leagues' }]
+          : []),
         { name: 'Sonderveranstaltungen', href: '/admin/special-events' },
       ],
     },
@@ -147,17 +154,11 @@ export function adminSidebarSections(hidden: Hidden, belongsToTennisschule = fal
       label: 'Weitere Module',
       icon: Blocks,
       items: [
-        ...(!hidden.has('league_lineup')
-          ? [{ name: 'Ligen & Teams', href: '/admin/leagues' }]
-          : []),
         ...(!hidden.has('tournaments') ? [{ name: 'Turniere', href: '/admin/tournaments' }] : []),
-        ...(!hidden.has('ai_matchmaking')
-          ? [{ name: 'KI-Matchmaking', href: '/admin/ai/matchmaking' }]
+        ...(!hidden.has('partner_finder')
+          ? [{ name: 'Spielpartner-Suche', href: '/admin/partner-finder' }]
           : []),
         ...(!hidden.has('shop') ? [{ name: 'Shop', href: '/admin/shop' }] : []),
-        // Smart Court ist bewusst kein eigener Eintrag: die Seite ist ein Tab
-        // von /admin/courts (dort selbst gegated). Ein zweiter Nav-Eintrag mit
-        // ?tab=… zeigte auf dieselbe Route und brach das Active-Highlighting.
       ],
     },
   ];
@@ -183,9 +184,18 @@ export function memberSidebarSections(hidden: Hidden, includeMemberOnly: boolean
       items: [
         { name: 'Platz buchen', href: '/bookings' },
         { name: 'Offene Spiele', href: '/matches' },
-        // Nur ein Matchmaking-Eintrag: der zweite stand ungegated davor und
-        // hebelte damit das `ai_matchmaking`-Flag aus.
-        ...(!hidden.has('ai_matchmaking') ? [{ name: 'Matchmaking', href: '/matchmaking' }] : []),
+        // Nur ein Eintrag zur Spielpartner-Suche: der zweite stand ungegated davor und
+        // hebelte damit das `partner_finder`-Flag aus.
+        ...(!hidden.has('partner_finder')
+          ? [{ name: 'Spielpartner-Suche', href: '/partner-finder' }]
+          : []),
+        // Medenspiele: der Eintrag steht hier unabhängig davon, ob das Mitglied
+        // schon in einer Meldeliste steht. Die Dashboard-Kachel erscheint erst
+        // mit dem ersten Kadereintrag — ohne diesen Nav-Eintrag war
+        // /member/leagues bis dahin über die Oberfläche nicht erreichbar.
+        ...(!hidden.has('league_lineup')
+          ? [{ name: 'Meine Mannschaften', href: '/member/leagues' }]
+          : []),
         ...(!hidden.has('tournaments') ? [{ name: 'Turniere', href: '/member/tournaments' }] : []),
         ...(!hidden.has('gamification')
           ? [{ name: 'Erfolge & Ranglisten', href: '/gamification' }]

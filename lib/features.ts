@@ -36,6 +36,7 @@ export interface ClubFeature {
  */
 export const CLUB_FEATURES: readonly ClubFeature[] = [
   // ── Core (always on) ────────────────────────────────────────────────────
+  // ── Core (always on) ────────────────────────────────────────────────────
   {
     key: 'members',
     label: 'Mitgliederverwaltung',
@@ -73,25 +74,11 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     order: 4,
   },
 
-  // ── Optional (toggleable) ───────────────────────────────────────────────
-  {
-    key: 'shop',
-    label: 'Shop',
-    description: 'Verkauf von Vereinsartikeln, Bällen und Zubehör direkt an Mitglieder.',
-    icon: 'ShoppingBag',
-    category: 'optional',
-    sidebarSection: 'shop',
-    order: 5,
-  },
-  {
-    key: 'tournaments',
-    label: 'Turniere',
-    description: 'Organisation von Vereinsturnieren, Anmeldungen und Spielplänen.',
-    icon: 'Trophy',
-    category: 'optional',
-    sidebarSection: 'tournaments',
-    order: 6,
-  },
+  // ── Optional ───────────────────────────────────────────────────────────
+  // Reihenfolge = Nutzen für den Verein, nicht Einbaudatum: was Mitglieder und damit
+  // Beiträge bringt zuerst (Probetraining, Familienkonten), dann der reguläre
+  // Vereinsbetrieb (Arbeitsdienst, Liga, Turniere), zuletzt Beiwerk. Gerendert wird
+  // diese Array-Reihenfolge — das `order`-Feld sortiert nirgends etwas.
   {
     key: 'trial_training',
     label: 'Probetrainings',
@@ -99,34 +86,16 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     icon: 'FlaskConical',
     category: 'optional',
     sidebarSection: 'trial_training',
-    order: 7,
+    order: 5,
   },
   {
-    key: 'ai_matchmaking',
-    label: 'KI-Matchmaking',
-    description: 'Spielpartner-Matching auf Basis von Niveau und Verfügbarkeit.',
-    icon: 'Sparkles',
+    key: 'family_accounts',
+    label: 'Familienkonten',
+    description: 'Eltern verwalten mehrere Kinderkonten unter einem Login.',
+    icon: 'Users',
     category: 'optional',
-    sidebarSection: 'ai_matchmaking',
-    order: 8,
-  },
-  {
-    key: 'weather_integration',
-    label: 'Wetter-Integration',
-    description: 'Automatische Platzsperren bei Regen und Schlechtwetter.',
-    icon: 'CloudRain',
-    category: 'optional',
-    sidebarSection: 'weather_integration',
-    order: 9,
-  },
-  {
-    key: 'league_lineup',
-    label: 'Liga & Mannschaft',
-    description: 'Mannschaftsaufstellung, Liga-Verwaltung und Spieltag-Planung.',
-    icon: 'Flag',
-    category: 'optional',
-    sidebarSection: 'league_lineup',
-    order: 10,
+    sidebarSection: 'family_accounts',
+    order: 6,
   },
   {
     key: 'work_duty',
@@ -135,18 +104,37 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     icon: 'HardHat',
     category: 'optional',
     sidebarSection: 'work_duty',
-    order: 11,
+    order: 7,
   },
-  // ponytail: add-on priced separately (€79/Monat) — gates hardware vendor access from 3.1.x
   {
-    key: 'smart_court',
-    label: 'Smart Court',
-    description:
-      'Automatische Platzkontrolle via Hardware-Integration (Nuki, Shelly, Loxone). Add-On € 79/Monat.',
-    icon: 'Wifi',
+    key: 'league_lineup',
+    label: 'Liga & Mannschaft',
+    description: 'Mannschaftsaufstellung, Liga-Verwaltung und Spieltag-Planung.',
+    icon: 'Flag',
     category: 'optional',
-    sidebarSection: 'smart_court',
-    order: 12,
+    sidebarSection: 'league_lineup',
+    order: 8,
+  },
+  {
+    key: 'tournaments',
+    label: 'Turniere',
+    description: 'Organisation von Vereinsturnieren, Anmeldungen und Spielplänen.',
+    icon: 'Trophy',
+    category: 'optional',
+    sidebarSection: 'tournaments',
+    order: 9,
+  },
+  {
+    key: 'weather_integration',
+    label: 'Wetter am Vereinsort',
+    // Hieß „Automatische Platzsperren bei Regen und Schlechtwetter" — gesperrt wird
+    // aber nichts automatisch, und das war auch nie implementiert.
+    description:
+      'Zeigt die aktuelle Wetterlage neben den Platzsperren, damit die Entscheidung zum Sperren auf einer Zahl statt auf dem Blick aus dem Fenster beruht.',
+    icon: 'CloudRain',
+    category: 'optional',
+    sidebarSection: 'weather_integration',
+    order: 10,
   },
   {
     key: 'dynamic_pricing',
@@ -156,23 +144,36 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     icon: 'TrendingUp',
     category: 'optional',
     sidebarSection: 'pricing',
+    order: 11,
+  },
+  {
+    key: 'partner_finder',
+    label: 'Spielpartner-Suche',
+    description: 'Spielpartner-Matching auf Basis von Niveau und Verfügbarkeit.',
+    icon: 'Sparkles',
+    category: 'optional',
+    sidebarSection: 'partner_finder',
+    order: 12,
+  },
+  // ── Optional (toggleable) ───────────────────────────────────────────────
+  {
+    key: 'shop',
+    label: 'Shop',
+    description: 'Verkauf von Vereinsartikeln, Bällen und Zubehör direkt an Mitglieder.',
+    icon: 'ShoppingBag',
+    category: 'optional',
+    sidebarSection: 'shop',
     order: 13,
   },
-  // Tier-4 (Audit): KI-Analyse als eigenes Modul. Server-seitiges Gate in
-  // api/seasons/planning/ai-analysis/route.ts checkt `clubs.features.ai_analysis`
-  // via requireFeature. Default OFF — Clubs können das Modul im Onboarding-
-  // Wizard oder in Settings → Module aktivieren.
   {
-    key: 'ai_analysis',
-    label: 'KI-Analyse (Saisonplanung)',
-    description:
-      'KI-gestützte Plausibilitäts- und Konflikt-Analyse des generierten Saisonplans (Google Gemini Flash).',
-    icon: 'Brain',
+    key: 'decisions',
+    label: 'Board-Beschlüsse',
+    description: 'Digitale Beschlussfassung und Abstimmungen für den Vorstand.',
+    icon: 'Gavel',
     category: 'optional',
-    sidebarSection: 'ai_analysis',
+    sidebarSection: 'decisions',
     order: 14,
   },
-  // Produktaudit 26.07.2026 (P4): Nebenfunktionen eingefroren — kein Support-/
   // Testbudget, standardmäßig aus. Nicht gelöscht, nur per Flag verborgen.
   {
     key: 'gamification',
@@ -191,33 +192,6 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     category: 'optional',
     sidebarSection: 'wallet_passes',
     order: 16,
-  },
-  {
-    key: 'family_accounts',
-    label: 'Familienkonten',
-    description: 'Eltern verwalten mehrere Kinderkonten unter einem Login.',
-    icon: 'Users',
-    category: 'optional',
-    sidebarSection: 'family_accounts',
-    order: 17,
-  },
-  {
-    key: 'zapier_integration',
-    label: 'Zapier-Integration',
-    description: 'Webhooks für externe Automatisierung via Zapier.',
-    icon: 'Zap',
-    category: 'optional',
-    sidebarSection: 'zapier_integration',
-    order: 18,
-  },
-  {
-    key: 'decisions',
-    label: 'Board-Beschlüsse',
-    description: 'Digitale Beschlussfassung und Abstimmungen für den Vorstand.',
-    icon: 'Gavel',
-    category: 'optional',
-    sidebarSection: 'decisions',
-    order: 19,
   },
 ] as const;
 

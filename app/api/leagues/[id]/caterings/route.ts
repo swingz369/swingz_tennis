@@ -13,7 +13,7 @@ const log = createLogger('api:leagues:[id]:caterings');
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'member');
-    if (!hasRole) return forbiddenResponse('Authentication required');
+    if (!hasRole) return forbiddenResponse('Anmeldung erforderlich');
 
     const { id: leagueId } = await params;
     const sb = createServiceClient();

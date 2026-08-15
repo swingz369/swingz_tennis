@@ -103,16 +103,8 @@ export function useGlobalKeyboardShortcuts() {
     // Note: Cmd/Ctrl+K is intentionally NOT bound here — the command palette
     // (components/command-palette.tsx) owns that shortcut globally so it
     // opens the palette instead of navigating away from it.
-    // Help
-    {
-      key: '?',
-      shiftKey: true,
-      action: () => {
-        // Will be handled by KeyboardShortcutsDialog
-      },
-      description: 'Shortcuts anzeigen',
-      category: 'general',
-    },
+    // Die Übersicht der Tastenkürzel steht unter /search in der erweiterten Suche;
+    // der frühere Shift+?-Dialog samt schwebendem Button ist entfallen.
   ];
 
   useKeyboardShortcuts(shortcuts);

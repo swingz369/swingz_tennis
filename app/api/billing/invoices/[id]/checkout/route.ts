@@ -14,7 +14,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     // Members can checkout their own invoices
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) {
-      return forbiddenResponse('Authentication required');
+      return forbiddenResponse('Anmeldung erforderlich');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);

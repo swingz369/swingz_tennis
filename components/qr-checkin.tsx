@@ -50,7 +50,7 @@ export function QrCodeDisplay({ sessionId, courtName, startTime, endTime }: QrDi
     <Card className="border border-border dark:border-white/10">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <QrCode className="h-5 w-5 text-brand-primary" />
+          <QrCode className="h-5 w-5 text-primary" />
           QR Check-in
         </CardTitle>
       </CardHeader>
@@ -94,8 +94,8 @@ export function QrCodeDisplay({ sessionId, courtName, startTime, endTime }: QrDi
           </div>
         ) : (
           <div className="text-center py-6">
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-brand-primary/10 mb-4">
-              <QrCode className="h-8 w-8 text-brand-primary" />
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4">
+              <QrCode className="h-8 w-8 text-primary" />
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               Generiere einen QR-Code, den Mitglieder am Platz scannen können.
@@ -171,7 +171,7 @@ export function QrCheckinForm({ onSuccess }: QrScannerManualProps) {
     <Card className="border border-border dark:border-white/10">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Camera className="h-5 w-5 text-brand-primary" />
+          <Camera className="h-5 w-5 text-primary" />
           Am Platz einchecken
         </CardTitle>
       </CardHeader>

@@ -12,7 +12,7 @@ export async function PATCH(
 ) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) return forbiddenResponse('Admin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id: leagueId, matchdayId } = await params;
     const body = await request.json();
@@ -51,7 +51,7 @@ export async function DELETE(
 ) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) return forbiddenResponse('Admin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id: leagueId, matchdayId } = await params;
 
@@ -67,14 +67,21 @@ export async function DELETE(
       return NextResponse.json({ error: 'League not found' }, { status: 404 });
     }
 
-    const { error } = await (auth.supabase as any)
+    const { data, error } = await (auth.supabase as any)
       .from('match_days')
       .delete()
       .eq('id', matchdayId)
-      .eq('league_id', leagueId);
+      .eq('league_id', leagueId)
+      .select('id');
 
     if (error) {
       return NextResponse.json({ error: 'Failed to delete match day' }, { status: 500 });
+    }
+    if (!data || data.length === 0) {
+      return NextResponse.json(
+        { error: 'Spieltag nicht gefunden oder keine Berechtigung zum Löschen' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ success: true });

@@ -10,7 +10,7 @@ const log = createLogger('onboarding-email');
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Admin role required');
+    if (!hasPermission) return forbiddenResponse('Admin-Rolle erforderlich');
 
     try {
       const body = await request.json();

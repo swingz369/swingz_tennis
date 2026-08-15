@@ -96,7 +96,13 @@ export const colors = {
 export const typography = {
   fontFamily: {
     sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
-    display: ['"Clash Display"', '"DM Sans"', 'system-ui', 'sans-serif'],
+    // ponytail: "Clash Display" wurde nirgends geladen — kein @font-face, kein
+    // next/font, kein CDN-Link. Die 35 `font-display`-Stellen sind damit seit
+    // jeher auf DM Sans zurückgefallen, nur unbemerkt: ein Font-Stack, dessen
+    // erster Eintrag nicht existiert, sagt nichts, er verschweigt nur. Der
+    // Entwurf führt ohnehin durchgehend DM Sans. Wenn Clash Display wirklich
+    // kommen soll, gehört es zuerst in app/fonts/ und app/layout.tsx.
+    display: ['"DM Sans"', 'system-ui', 'sans-serif'],
     // Marketing-only (Editorial Sports theme). Pally via Fontshare CDN — switch
     // to PP Editorial New once Pangram license is procured (~next/font/local).
     editorial: ['"Pally"', '"PP Editorial New"', 'Georgia', 'serif'],

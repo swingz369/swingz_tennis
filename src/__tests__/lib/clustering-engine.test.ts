@@ -876,7 +876,43 @@ describe('findBestTimeSlot', () => {
       existing,
       [{ start: '18:00', end: '19:30' }]
     );
-    // The slot can still be used but with courtId=null (court is optional)
+    // Belegter Platz = unbrauchbarer Slot. Vorher lieferte der Algorithmus hier
+    // den Slot mit courtId=null zurück; daraus entstanden beim Veröffentlichen
+    // Sessions ohne Platz, für die keine Buchung angelegt wird, während die
+    // Abrechnung die Teilnehmer trotzdem erfasst.
+    expect(result).toBeNull();
+  });
+
+  it('plant weiter ohne Platz, wenn der Verein gar keine Plätze hat', () => {
+    const { engine, members, trainers, trainerSessionCount, courtTimeSlotUsage } = setup();
+    members[0].availability = {
+      monday: [],
+      tuesday: [{ start: '08:00', end: '22:00' }],
+      wednesday: [],
+      thursday: [],
+      friday: [],
+      saturday: [],
+      sunday: [],
+    };
+    trainers[0].availability = {
+      monday: [],
+      tuesday: [{ start: '08:00', end: '22:00' }],
+      wednesday: [],
+      thursday: [],
+      friday: [],
+      saturday: [],
+      sunday: [],
+    };
+    const result = engine.findBestTimeSlot(
+      members,
+      trainers,
+      [], // keine Plätze konfiguriert
+      trainerSessionCount,
+      courtTimeSlotUsage,
+      {},
+      [],
+      [{ start: '18:00', end: '19:30' }]
+    );
     expect(result).not.toBeNull();
     expect(result?.courtId).toBeNull();
   });
@@ -1064,9 +1100,9 @@ describe('Optimization #5: treatHighFailureAsHard', () => {
 // ═══ Backtracking (Optimization #6) ════════════════════════════════════
 
 describe('Optimization #6: Backtracking', () => {
-  it('default config has backtrackDepth=0 (disabled)', () => {
+  it('default config has backtrackDepth=3 (aktiv)', () => {
     const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
-    expect(engine.config.backtrackDepth).toBe(0);
+    expect(engine.config.backtrackDepth).toBe(3);
   });
 
   it('respects backtrackDepth override', () => {

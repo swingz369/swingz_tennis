@@ -30,7 +30,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       // Admin dispute resolution
       if (isResolve) {
         const isAdmin = await verifyRole(auth, 'admin');
-        if (!isAdmin) return forbiddenResponse('Admin access required');
+        if (!isAdmin) return forbiddenResponse('Zugriff nur für Admins');
 
         const { resolution } = body;
         if (!resolution || !['confirmed', 'absent'].includes(resolution)) {

@@ -26,7 +26,7 @@ export async function POST(_request: NextRequest) {
     // Only admins can create fee configurations
     const hasRole = await verifyRole(auth, 'admin');
     if (!hasRole) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
@@ -71,7 +71,7 @@ export async function GET(_request: NextRequest) {
     // Members can view fee configurations
     const hasRole = await verifyRole(auth, 'member');
     if (!hasRole) {
-      return forbiddenResponse('Authentication required');
+      return forbiddenResponse('Anmeldung erforderlich');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);

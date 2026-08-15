@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { STALE_TIMES } from '@/lib/cache';
+import { apiFetch } from '@/lib/api-fetch';
 
 /**
  * Returns the active training group IDs for the current member within a club.
@@ -10,7 +11,7 @@ export function useMemberGroupIds(clubId: string | null) {
     queryKey: ['member-group-ids', clubId],
     queryFn: async ({ signal }) => {
       if (!clubId) return [] as string[];
-      const res = await fetch(`/api/user/member/groups?clubId=${clubId}`, {
+      const res = await apiFetch(`/api/user/member/groups?clubId=${clubId}`, {
         credentials: 'include',
         signal,
       });

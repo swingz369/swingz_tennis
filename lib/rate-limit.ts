@@ -8,6 +8,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('rate-limit');
 
 interface RateLimitConfig {
   /**
@@ -183,35 +186,47 @@ export async function checkRateLimit(
   reset: number;
 }> {
   if (rateLimiters) {
-    // Use Redis
-    const result = await rateLimiters[type].limit(identifier);
-    return {
-      success: result.success,
-      limit: result.limit,
-      remaining: result.remaining,
-      reset: result.reset,
-    };
-  } else {
-    // Fallback to in-memory
-    const limits: Record<RateLimitType, { max: number; windowMs: number }> = {
-      auth: { max: 10, windowMs: 5 * 60 * 1000 },
-      api: { max: 100, windowMs: 60 * 1000 },
-      strict: { max: 5, windowMs: 15 * 60 * 1000 },
-      booking: { max: 20, windowMs: 5 * 60 * 1000 },
-      ai: { max: 5, windowMs: 60 * 1000 },
-      upload: { max: 10, windowMs: 60 * 60 * 1000 },
-    };
-
-    const config = limits[type];
-    const result = inMemoryRateLimit(`${type}:${identifier}`, config.max, config.windowMs);
-
-    return {
-      success: result.success,
-      limit: config.max,
-      remaining: result.remaining,
-      reset: result.reset,
-    };
+    try {
+      // Use Redis
+      const result = await rateLimiters[type].limit(identifier);
+      return {
+        success: result.success,
+        limit: result.limit,
+        remaining: result.remaining,
+        reset: result.reset,
+      };
+    } catch (err) {
+      // Ist Upstash nicht erreichbar (DNS weg, Konto gelöscht, Netzwerkfehler),
+      // warf `.limit()` bis hierher durch — und der Aufrufer machte daraus eine
+      // Fehlerantwort. Beim Login hieß das: 401 {"error":"fetch failed"}, also
+      // ein kompletter Anmeldeausfall wegen des Rate-Limiters. Ein ausgefallener
+      // Limiter darf höchstens die Zählung verlieren, nicht die Funktion.
+      log.warn(
+        'Rate-Limit-Backend nicht erreichbar, nutze In-Memory-Fallback',
+        err instanceof Error ? err : undefined
+      );
+    }
   }
+
+  // Fallback to in-memory
+  const limits: Record<RateLimitType, { max: number; windowMs: number }> = {
+    auth: { max: 10, windowMs: 5 * 60 * 1000 },
+    api: { max: 100, windowMs: 60 * 1000 },
+    strict: { max: 5, windowMs: 15 * 60 * 1000 },
+    booking: { max: 20, windowMs: 5 * 60 * 1000 },
+    ai: { max: 5, windowMs: 60 * 1000 },
+    upload: { max: 10, windowMs: 60 * 60 * 1000 },
+  };
+
+  const config = limits[type];
+  const result = inMemoryRateLimit(`${type}:${identifier}`, config.max, config.windowMs);
+
+  return {
+    success: result.success,
+    limit: config.max,
+    remaining: result.remaining,
+    reset: result.reset,
+  };
 }
 
 // ============================================

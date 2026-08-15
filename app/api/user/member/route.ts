@@ -10,7 +10,7 @@ export async function GET(_req: NextRequest) {
   return withApiAuth(_req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) {
-      return forbiddenResponse('Member access required');
+      return forbiddenResponse('Zugriff nur für Mitglieder');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_req, RATE_LIMITS.STANDARD);
@@ -51,7 +51,7 @@ export async function PATCH(_req: NextRequest) {
   return withApiAuth(_req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) {
-      return forbiddenResponse('Member access required');
+      return forbiddenResponse('Zugriff nur für Mitglieder');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_req, RATE_LIMITS.STANDARD);

@@ -5,7 +5,6 @@ import { PageHeader } from '@/components/ui/page-header';
 import { getHiddenSidebarSections } from '@/lib/features';
 import { createLogger } from '@/lib/logger';
 import { CourtsHubTabs } from './courts-hub-tabs';
-import type { HardwareVendor } from '@/lib/hardware/adapter';
 import type { Court } from '@/lib/types/court-booking';
 
 const log = createLogger('admin:courts:page');
@@ -43,15 +42,11 @@ export default async function AdminCourtsPage() {
   const features = (club?.features ?? {}) as Record<string, unknown>;
   const hidden = getHiddenSidebarSections(features as Record<string, boolean>);
 
-  const vendorRaw = features.hardware_vendor;
-  const initialVendor: HardwareVendor =
-    vendorRaw === 'nuki' || vendorRaw === 'shelly' || vendorRaw === 'loxone' ? vendorRaw : 'shelly';
-
   return (
     <div className="space-y-6">
       <PageHeader
         title="Platzverwaltung"
-        description="Plätze, Wartung, Platzsperren und Smart-Court an einem Ort"
+        description="Plätze, Wartung und Platzsperren an einem Ort"
       />
       <CourtsHubTabs
         clubId={clubId}
@@ -62,8 +57,6 @@ export default async function AdminCourtsPage() {
           surface: t.surface_type ?? '',
         }))}
         showWeather={!hidden.has('weather_integration')}
-        showSmartCourt={!hidden.has('smart_court')}
-        initialVendor={initialVendor}
       />
     </div>
   );

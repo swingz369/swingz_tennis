@@ -19,7 +19,10 @@ import {
   bookings,
 } from '@/src/infrastructure/persistence/schema';
 import { eq, and, gte, inArray } from 'drizzle-orm';
-import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
+import {
+  ConflictDetector,
+  detectConflictsForSeason,
+} from '@/lib/season-planning/conflict-detector';
 import { seasonConfirmationEmailService } from '@/lib/season-planning/season-confirmation-email.service';
 import { env } from '@/lib/env';
 import {
@@ -31,11 +34,7 @@ import { berlinWallClock } from '@/lib/berlin-time';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:confirm-plan');
-import type {
-  ConfirmPlanRequest,
-  ConfirmPlanResponse,
-  GroupAssignment,
-} from '@/lib/season-planning/types';
+import type { ConfirmPlanRequest, ConfirmPlanResponse } from '@/lib/season-planning/types';
 import { loadHolidaysForState } from '@/lib/season-planning/holidays.server';
 
 interface RouteContext {
@@ -67,8 +66,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         const body: ConfirmPlanRequest = await request.json();
 
-        // Re-run conflict detection
-        const detector = new ConflictDetector(seasonId, season.club_id);
         const entries = await db
           .select()
           .from(seasonPlanEntries)
@@ -84,70 +81,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
           );
         }
 
-        // Build GroupAssignments from plan entries
-        const assignments: GroupAssignment[] = [];
-        const groupMap = new Map<string, GroupAssignment>();
-        for (const entry of entries) {
-          const gid = entry.group_id || entry.id;
-          if (groupMap.has(gid)) {
-            const ga = groupMap.get(gid)!;
-            ga.memberIds.push(...((entry.expected_participants as string[]) || []));
-            ga.memberDetails.push(
-              ...((entry.expected_participants as string[]) || []).map((mid) => ({
-                memberId: mid,
-                memberName: mid,
-                niveauMatch: 100,
-                experienceMonths: 0,
-                groupExperienceSpan: '0-0 Monate',
-                wishPartnerFulfilled: false,
-                wishPartnerNames: [],
-                isPromoted: false,
-                assignmentReason: '',
-              }))
-            );
-          } else {
-            const ga: GroupAssignment = {
-              groupId: gid,
-              groupName: entry.group_id || entry.id,
-              trainerId: entry.trainer_id,
-              trainerName: entry.trainer_id,
-              dayOfWeek: entry.day_of_week as any,
-              startTime: entry.start_time?.substring(0, 5) || '00:00',
-              endTime: entry.end_time?.substring(0, 5) || '00:00',
-              courtId: entry.court_id,
-              courtName: entry.court_id,
-              maxSize: entry.max_participants ?? 6,
-              memberIds: (entry.expected_participants as string[]) || [],
-              memberDetails: ((entry.expected_participants as string[]) || []).map((mid) => ({
-                memberId: mid,
-                memberName: mid,
-                niveauMatch: 100,
-                experienceMonths: 0,
-                groupExperienceSpan: '0-0 Monate',
-                wishPartnerFulfilled: false,
-                wishPartnerNames: [],
-                isPromoted: false,
-                assignmentReason: '',
-              })),
-              waitlistIds: [],
-              waitlistDetails: [],
-              warnings: [],
-              conflictIds: [],
-            };
-            groupMap.set(gid, ga);
-            assignments.push(ga);
-          }
-        }
-
-        const conflicts = await detector.detectAll(assignments);
-        const criticalConflicts = detector.getCriticalConflicts(conflicts);
-        // `acceptedWarnings` ist optional; fehlt es im Request, lief die Zeile
-        // vorher in "Cannot read properties of undefined" — ein 500 statt des
-        // eigentlich gemeinten 409. Aufgefallen ist das erst, als überhaupt ein
-        // kritischer Konflikt existierte und dieser Pfad zum ersten Mal lief.
-        const acceptedWarnings = body.acceptedWarnings ?? [];
-        const unresolvedCritical = criticalConflicts.filter(
-          (c) => !acceptedWarnings.includes(c.id)
+        // Konflikte über denselben Weg erkennen wie Konfliktseite und Wizard —
+        // inklusive der persistierten "gelöst"/"ignoriert"-Entscheidungen.
+        // Vorher lief hier eine zweite, eigene Erkennung ohne diese
+        // Entscheidungen: ein als gelöst markierter kritischer Konflikt
+        // verschwand in der Oberfläche, blockierte das Veröffentlichen aber
+        // weiter mit 409 — ohne dass der Admin noch etwas tun konnte.
+        const detector = new ConflictDetector(seasonId, season.club_id);
+        const { conflicts } = await detectConflictsForSeason(seasonId, season.club_id);
+        const unresolvedCritical = conflicts.filter(
+          (c) => c.severity === 'critical' && c.status === 'open'
         );
 
         if (unresolvedCritical.length > 0) {
@@ -222,7 +165,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
         // ein Trainerwechsel o. ä. kam also nie bei den Mitgliedern an.
         // Jetzt gilt: künftige Sessions samt Buchungen werden verworfen und aus
         // dem aktuellen Plan neu erzeugt, bereits stattgefundene bleiben stehen.
-        const isRepublish = season.planning_status === 'published';
+        //
+        // Maßgeblich ist `published_at`, nicht der Status: ein Lauf des
+        // Planungsalgorithmus setzt `planning_status` auf 'manual_review'
+        // zurück (siehe saveToDatabase). Die Kette "veröffentlichen → neu
+        // planen → erneut veröffentlichen" galt damit als Erstveröffentlichung.
+        // Folge: `replaceDrafts` blieb aus, und die Entwurfsrechnungen der
+        // ersten Veröffentlichung behielten ihre Beträge aus dem alten Plan,
+        // obwohl sich Gruppen und Terminzahl geändert hatten.
+        const isRepublish = season.published_at != null;
         const now = new Date();
 
         const { publishedCount, publishedIds, bookingsCreated, removedSessions } =
@@ -285,6 +236,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
             if (isNaN(seasonEnd.getTime())) {
               seasonEnd = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
             }
+            // `end_date` ist ein DATE und wird zu UTC-Mitternacht geparst. Die
+            // Abbruchbedingung `sessionDate > seasonEnd` warf damit jeden Termin
+            // AM Enddatum weg — bei Winter 2026/27 (Ende Di 31.03.2027) fiel die
+            // letzte Woche jeder Dienstagsgruppe stillschweigend aus.
+            seasonEnd.setUTCHours(23, 59, 59, 999);
 
             const seasonLengthDays = Math.ceil(
               (seasonEnd.getTime() - seasonStart.getTime()) / (1000 * 60 * 60 * 24)
@@ -304,13 +260,21 @@ export async function POST(request: NextRequest, context: RouteContext) {
             for (const entry of entries) {
               // Lazily find or create schedule on first entry to publish
               if (!scheduleId) {
+                // Saisontyp gehört in den Schlüssel: Sommer- und Wintersaison
+                // eines Vereins teilen sich dasselbe `year` (Winter 2026/27 ist
+                // year=2026). Ohne den Typ landeten die Winter-Sessions im
+                // Sommer-Schedule — und der neu angelegte Schedule trug den fest
+                // verdrahteten Typ 'summer', egal welche Saison veröffentlicht
+                // wurde.
+                const scheduleSeasonType = season.season_type === 'winter' ? 'winter' : 'summer';
                 const [existingSchedule] = await tx
                   .select()
                   .from(schedules)
                   .where(
                     and(
                       eq(schedules.club_id, season.club_id),
-                      eq(schedules.season_year, seasonYear)
+                      eq(schedules.season_year, seasonYear),
+                      eq(schedules.season_type, scheduleSeasonType)
                     )
                   )
                   .limit(1);
@@ -322,7 +286,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
                     .insert(schedules)
                     .values({
                       club_id: season.club_id,
-                      season_type: 'summer',
+                      season_type: scheduleSeasonType,
                       season_year: seasonYear,
                       season_start_date: seasonStart,
                       season_end_date: seasonEnd,
@@ -542,8 +506,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
               .set({ planning_status: 'published', published_at: new Date(), is_active: true })
               .where(eq(seasons.id, seasonId));
 
-            // 5. Persist detected conflicts (pass tx so it participates in the transaction)
-            await detector.persistConflicts(conflicts, tx);
+            // 5. Persist detected conflicts (pass tx so it participates in the transaction).
+            // Nur die offenen — gelöste/ignorierte stehen bereits mit ihrer
+            // Entscheidung in der Tabelle und dürfen nicht als "open" zurückkehren.
+            await detector.persistConflicts(
+              conflicts.filter((c) => c.status === 'open'),
+              tx
+            );
 
             // 6. Write audit trail (inside transaction)
             await tx.insert(seasonPlanningHistory).values({
@@ -558,12 +527,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
                 publishedSessions: publishedCount,
                 entriesCount: entries.length,
                 conflictsDetected: conflicts.length,
-                criticalConflicts: criticalConflicts.length,
-                acceptedWarnings: body.acceptedWarnings,
+                openConflicts: conflicts.filter((c) => c.status === 'open').length,
+                decidedConflicts: conflicts
+                  .filter((c) => c.status !== 'open')
+                  .map((c) => ({ id: c.id, status: c.status })),
+                // Die Admin-Notiz aus Schritt 4 wurde bisher mitgeschickt und
+                // stillschweigend verworfen — jetzt landet sie im Protokoll.
+                adminNotes: body.adminNotes ?? null,
               },
               entries_affected: publishedCount,
-              conflicts_created: conflicts.length,
-              conflicts_resolved: 0,
+              conflicts_created: conflicts.filter((c) => c.status === 'open').length,
+              conflicts_resolved: conflicts.filter((c) => c.status !== 'open').length,
               notes: isRepublish
                 ? `Plan erneut veröffentlicht: ${removedSessions} künftige Sessions ersetzt durch ${publishedCount} neue`
                 : `Plan veröffentlicht: ${publishedCount} Sessions aus ${entries.length} Einträgen`,

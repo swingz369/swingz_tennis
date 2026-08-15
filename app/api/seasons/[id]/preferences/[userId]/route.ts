@@ -55,7 +55,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       // Check permissions
       const isOwnPreference = userId === auth.user?.id;
       if (!isOwnPreference && !hasClubAdminAccess(auth.memberships, season.club_id)) {
-        return forbiddenResponse('You can only view your own preferences');
+        return forbiddenResponse('Du kannst nur deine eigenen Präferenzen einsehen');
       }
 
       // Fetch preference with user details
@@ -123,7 +123,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         const isClubAdmin = hasClubAdminAccess(auth.memberships, season.club_id);
 
         if (!isOwnPreference && !isClubAdmin) {
-          return forbiddenResponse('You can only update your own preferences');
+          return forbiddenResponse('Du kannst nur deine eigenen Präferenzen ändern');
         }
 
         // Check if preferences are still open
@@ -231,7 +231,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         // Check permissions
         const isOwnPreference = userId === auth.user?.id;
         if (!isOwnPreference && !hasClubAdminAccess(auth.memberships, season.club_id)) {
-          return forbiddenResponse('You can only delete your own preferences');
+          return forbiddenResponse('Du kannst nur deine eigenen Präferenzen löschen');
         }
 
         // Fetch existing preference

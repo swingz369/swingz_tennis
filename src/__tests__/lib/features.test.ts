@@ -194,12 +194,12 @@ describe('getHiddenSidebarSections', () => {
     input.shop = false;
     input.tournaments = false;
     input.trial_training = false;
-    input.ai_matchmaking = false;
+    input.partner_finder = false;
     const hidden = getHiddenSidebarSections(input);
     expect(hidden.has('shop')).toBe(true);
     expect(hidden.has('tournaments')).toBe(true);
     expect(hidden.has('trial_training')).toBe(true);
-    expect(hidden.has('ai_matchmaking')).toBe(true);
+    expect(hidden.has('partner_finder')).toBe(true);
   });
 
   it('does not hide core-feature sections', () => {

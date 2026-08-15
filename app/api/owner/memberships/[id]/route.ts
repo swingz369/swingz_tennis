@@ -34,6 +34,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
+import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:owner:memberships');
@@ -60,7 +61,7 @@ function isUuidArray(v: unknown): v is string[] {
 export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'owner'))) {
-      return forbiddenResponse('Owner access required');
+      return forbiddenResponse('Zugriff nur für den Plattformbetreiber');
     }
 
     const { id: membershipId } = await ctx.params;
@@ -249,12 +250,12 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     }
 
     // 4) AuditLog: alle Mutationen zusammen loggen (eine Row pro PATCH-Request).
-    await sb.from('audit_logs').insert({
-      actor_id: auth.user.id,
+    await logAudit({
+      actorId: auth.user.id,
       action: 'update',
-      resource_type: 'membership',
-      resource_id: membershipId,
-      club_id: current.club_id,
+      resourceType: 'membership',
+      resourceId: membershipId,
+      clubId: current.club_id,
       details: {
         kind: mutations.join('+') || 'noop',
         target_user_id: current.user_id,
@@ -267,8 +268,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
         warnings,
         multi_mutation_not_atomic: true,
       },
-      ip_address: request.headers.get('x-forwarded-for') ?? null,
-      user_agent: request.headers.get('user-agent') ?? null,
+      request,
     });
 
     log.info('Membership updated by owner', {

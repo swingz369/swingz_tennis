@@ -196,7 +196,7 @@ export default function AdminFamilyPage() {
               <CardHeader className="pb-3 flex-row items-start justify-between gap-3 space-y-0">
                 <div>
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <Users className="h-4 w-4 text-brand-primary" />
+                    <Users className="h-4 w-4 text-primary" />
                     {group.members.find((m) => m.role === 'parent')?.fullName ??
                       group.members[0]?.fullName ??
                       'Familiengruppe'}

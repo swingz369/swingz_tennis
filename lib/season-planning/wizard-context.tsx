@@ -55,7 +55,6 @@ function createInitialState(seasonId: string, clubId: string, initialStep?: numb
     },
     clusteringResult: null,
     scheduleSlots: [],
-    aiAnalysisText: null,
     holidayWeeks: [],
     bundeslandCode: null,
     conflicts: [],
@@ -309,11 +308,11 @@ export function WizardProvider({
     try {
       const res = await apiFetch(`/api/seasons/${state.seasonId}/planning/confirm`, {
         method: 'POST',
+        // Kein `acceptedWarnings` mehr: die Freigabe entscheidet der Server
+        // anhand der persistierten "gelöst"/"ignoriert"-Einträge, nicht anhand
+        // einer Liste, die der Client sich selbst zusammenstellt.
         body: JSON.stringify({
           seasonId: state.seasonId,
-          acceptedWarnings: state.conflicts
-            .filter((c) => c.severity !== 'critical')
-            .map((c) => c.id),
           adminNotes: state.adminNotes || 'Planung bestätigt via Wizard',
         }),
       });
@@ -331,7 +330,7 @@ export function WizardProvider({
       });
       throw err;
     }
-  }, [state.seasonId, state.conflicts, state.adminNotes]);
+  }, [state.seasonId, state.adminNotes]);
 
   const resetWizard = useCallback(() => {
     dispatch({ type: 'RESET_WIZARD' });

@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     try {
@@ -55,17 +55,15 @@ export async function GET(request: NextRequest) {
 
       let query = supabase
         .from('audit_logs')
-        .select('*')
+        .select('*, actor:actor_id(email)')
         .order('created_at', { ascending: false })
         .limit(10000); // Max 10k rows for export
 
-      if (action) query = query.eq('action', action);
-      // Filter by club if specified
+      // Vereins-Filter über club_id (siehe Kommentar in ../route.ts).
       if (clubId) {
-        // For audit logs, we need to filter by resource_type and resource_id
-        query = query.eq('resource_type', 'club').eq('resource_id', clubId);
+        query = query.eq('club_id', clubId);
       } else if (auth.clubId) {
-        query = query.eq('resource_type', 'club').eq('resource_id', auth.clubId);
+        query = query.eq('club_id', auth.clubId);
       }
 
       if (action) query = query.eq('action', action);
@@ -75,24 +73,28 @@ export async function GET(request: NextRequest) {
 
       if (error) throw error;
 
-      // Generate CSV
+      // CSV — Spalten müssen der Tabelle entsprechen. Vorher standen hier
+      // entity_type/entity_id/user_email/changes; die Spalten existieren nicht,
+      // der Export lieferte vier leere Spalten.
       const headers = [
-        'Timestamp',
-        'Action',
-        'Entity Type',
-        'Entity ID',
-        'User Email',
-        'IP Address',
-        'Changes',
+        'Zeitpunkt',
+        'Aktion',
+        'Objekttyp',
+        'Objekt-ID',
+        'Akteur',
+        'Verein',
+        'IP-Adresse',
+        'Details',
       ];
-      const rows = (data || []).map((log: any) => [
-        format(new Date(log.created_at), 'yyyy-MM-dd HH:mm:ss'),
-        log.action,
-        log.entity_type,
-        log.entity_id,
-        log.user_email || '',
-        log.ip_address || '',
-        JSON.stringify(log.changes || {}),
+      const rows = (data || []).map((row: any) => [
+        format(new Date(row.created_at), 'yyyy-MM-dd HH:mm:ss'),
+        row.action,
+        row.resource_type,
+        row.resource_id,
+        row.actor?.email ?? row.actor_id ?? '',
+        row.club_id ?? '',
+        row.ip_address || '',
+        JSON.stringify(row.details ?? {}),
       ]);
 
       const csv = [

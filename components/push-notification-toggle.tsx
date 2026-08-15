@@ -47,11 +47,11 @@ export function PushNotificationToggle({
       <button
         onClick={handleToggle}
         disabled={isLoading}
-        className={`group flex items-center justify-between rounded-xl border border-border p-4 transition-all hover:border-brand-primary/30 hover:shadow-sm ${className ?? ''}`}
+        className={`group flex items-center justify-between rounded-xl border border-border p-4 transition-all hover:border-primary/30 hover:shadow-sm ${className ?? ''}`}
       >
         <div className="flex items-center gap-3">
           <div
-            className={`rounded-xl p-2 ${isSubscribed ? 'bg-brand-primary/10 text-brand-primary' : 'bg-muted text-muted-foreground'}`}
+            className={`rounded-xl p-2 ${isSubscribed ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -75,7 +75,7 @@ export function PushNotificationToggle({
           aria-checked={isSubscribed}
           aria-label="Push-Benachrichtigungen"
           className={`relative h-6 w-11 rounded-full transition-colors ${
-            isSubscribed ? 'bg-brand-primary' : 'bg-muted'
+            isSubscribed ? 'bg-primary' : 'bg-muted'
           }`}
         >
           <div

@@ -156,7 +156,7 @@ describe('GET /api/clubs/[id]/features', () => {
           shop: true,
           tournaments: false,
           trial_training: false,
-          ai_matchmaking: false,
+          partner_finder: false,
         },
       },
     ];
@@ -181,7 +181,7 @@ describe('GET /api/clubs/[id]/features', () => {
           shop: true,
           tournaments: true,
           trial_training: false,
-          ai_matchmaking: true,
+          partner_finder: true,
         },
       },
     ];
@@ -191,7 +191,7 @@ describe('GET /api/clubs/[id]/features', () => {
     const body = await res.json();
     expect(body.features.shop).toBe(true);
     expect(body.features.tournaments).toBe(true);
-    expect(body.features.ai_matchmaking).toBe(true);
+    expect(body.features.partner_finder).toBe(true);
   });
 
   it('denies a superadmin access to a club they do not manage', async () => {
@@ -230,7 +230,7 @@ describe('GET /api/clubs/[id]/features', () => {
     const res = await withAuth(asMember('club-2'), () => GET(makeRequest(), ROUTE_PARAMS));
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body.error).toBe('No access to this club');
+    expect(body.error).toBe('Kein Zugriff auf diesen Verein');
   });
 
   it('returns 404 when the club does not exist', async () => {

@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   return withApiAuth(req, async (auth) => {
     const hasRole = await verifyRole(auth, 'member');
     if (!hasRole) {
-      return forbiddenResponse('Member access required');
+      return forbiddenResponse('Zugriff nur für Mitglieder');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);

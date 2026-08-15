@@ -308,7 +308,7 @@ export default function MemberTrainerBookingPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-xl font-bold text-brand-primary">{selectedTrainer.full_name}</h1>
+          <h1 className="text-xl font-bold text-primary">{selectedTrainer.full_name}</h1>
           <p className="text-xs text-muted-foreground">Verfügbare Zeitfenster wählen</p>
         </div>
       </div>

@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
+import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:user:delete');
@@ -54,12 +55,15 @@ export async function DELETE(request: NextRequest) {
       await (serviceSb as any).from('trainer_member_notes').delete().eq('member_id', user.id);
 
       // Audit trail (DSGVO Art. 5 Abs. 2)
-      await (serviceSb as any).from('audit_logs').insert({
+      // Vor dem Auth-Delete: der FK audit_logs.actor_id → users.id muss noch halten.
+      await logAudit({
+        actorId: user.id,
         action: 'DSGVO_DELETE',
-        resource_type: 'user',
-        resource_id: user.id,
-        actor_id: user.id,
-        details: { pseudonym: `deleted-${user.id}`, timestamp: new Date().toISOString() },
+        resourceType: 'user',
+        resourceId: user.id,
+        clubId: auth.clubId,
+        details: { pseudonym: `deleted-${user.id}` },
+        request,
       });
 
       // Delete auth user (invalidates all sessions)

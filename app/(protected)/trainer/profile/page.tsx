@@ -320,7 +320,7 @@ export default function TrainerProfilePage() {
       <nav className="mb-4 flex items-center gap-1.5 text-sm">
         <Link
           href="/trainer/profile"
-          className="inline-flex items-center gap-1 text-muted-foreground hover:text-brand-primary transition-colors"
+          className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Profil
@@ -336,8 +336,8 @@ export default function TrainerProfilePage() {
         <div className="p-5 border-b border-border dark:border-white/10">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-12 w-12 rounded-full bg-brand-primary/10 dark:bg-brand-primary/20 flex items-center justify-center shrink-0">
-                <User className="h-6 w-6 text-brand-primary" />
+              <div className="h-12 w-12 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center shrink-0">
+                <User className="h-6 w-6 text-primary" />
               </div>
               <div className="min-w-0">
                 <h2 className="text-xl md:text-2xl font-bold text-foreground dark:text-white truncate">
@@ -387,20 +387,20 @@ export default function TrainerProfilePage() {
             <TabsList className="w-full justify-start bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b rounded-none px-0 gap-6 overflow-x-auto sticky top-0 z-20">
               <TabsTrigger
                 value="profile"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Profil
               </TabsTrigger>
               <TabsTrigger
                 value="rates"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Honorar
               </TabsTrigger>
               {profile.qualifications && profile.qualifications.length > 0 && (
                 <TabsTrigger
                   value="qualifications"
-                  className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                  className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
                 >
                   Qualifikationen ({profile.qualifications.length})
                 </TabsTrigger>
@@ -412,7 +412,7 @@ export default function TrainerProfilePage() {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <User className="h-4 w-4 text-brand-primary" />
+                    <User className="h-4 w-4 text-primary" />
                     Persönliche Informationen
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -501,7 +501,7 @@ export default function TrainerProfilePage() {
                 <Card variant="bordered">
                   <CardContent className="p-5">
                     <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
-                      <Globe className="h-4 w-4 text-brand-primary" />
+                      <Globe className="h-4 w-4 text-primary" />
                       Sprachen
                     </h3>
                     <div className="flex flex-wrap gap-2">
@@ -616,7 +616,7 @@ export default function TrainerProfilePage() {
                 <Card variant="bordered">
                   <CardContent className="p-5">
                     <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
-                      <Briefcase className="h-4 w-4 text-brand-primary" />
+                      <Briefcase className="h-4 w-4 text-primary" />
                       Qualifikationen ({profile.qualifications.length})
                     </h3>
                     <div className="space-y-2">

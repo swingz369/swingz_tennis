@@ -16,6 +16,7 @@ import {
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import type { PaginationMeta } from '@/lib/pagination';
 import { apiFetch } from '@/lib/api-fetch';
+import { auditActionLabel } from '@/lib/audit-labels';
 
 import { createLogger } from '@/lib/logger';
 
@@ -41,36 +42,19 @@ const actionIcons: Record<string, React.ReactNode> = {
   family_account_member_added: <UserCheck className="h-4 w-4 text-success-500" />,
   family_account_member_removed: <ShieldAlert className="h-4 w-4 text-warning-500" />,
   STRIPE_QUANTITY_SYNC: <Settings className="h-4 w-4 text-info-500" />,
-  hardware_vendor_update: <Settings className="h-4 w-4 text-info-500" />,
   DSGVO_DELETE: <ShieldAlert className="h-4 w-4 text-error-500" />,
   PII_READ: <UserCheck className="h-4 w-4 text-muted-foreground" />,
   READ_MEMBER: <UserCheck className="h-4 w-4 text-muted-foreground" />,
-};
-
-const actionLabels: Record<string, string> = {
-  user_created: 'Mitglied erstellt',
-  user_deleted: 'Mitglied gelöscht',
-  role_changed: 'Rolle geändert',
-  settings_updated: 'Einstellungen aktualisiert',
-  login: 'Anmeldung',
-  logout: 'Abmeldung',
-  season_created: 'Saison erstellt',
-  season_published: 'Saison veröffentlicht',
-  billing_generated: 'Abrechnung erstellt',
-  member_deactivated: 'Mitglied deaktiviert',
-  member_status_changed: 'Mitgliedsstatus geändert',
-  member_bulk_deactivated: 'Mitglieder deaktiviert (Sammelaktion)',
-  members_bulk_imported: 'Mitglieder importiert (Sammelaktion)',
-  session_bulk_deleted: 'Trainingseinheiten gelöscht (Sammelaktion)',
-  membership_cancelled: 'Mitgliedschaft gekündigt',
-  family_account_created: 'Familienkonto erstellt',
-  family_account_member_added: 'Mitglied zu Familienkonto hinzugefügt',
-  family_account_member_removed: 'Mitglied aus Familienkonto entfernt',
-  STRIPE_QUANTITY_SYNC: 'Stripe-Abrechnung synchronisiert',
-  hardware_vendor_update: 'Hardware-Anbieter geändert',
-  DSGVO_DELETE: 'Konto gelöscht (DSGVO)',
-  PII_READ: 'Personenbezogene Daten eingesehen',
-  READ_MEMBER: 'Mitgliedsdaten eingesehen',
+  // Generische Verben — so schreibt sie AuditServiceImpl (Club, Buchung,
+  // Membership, Abrechnung) und die Owner-Routen.
+  create: <UserCheck className="h-4 w-4 text-success-500" />,
+  update: <Settings className="h-4 w-4 text-info-500" />,
+  delete: <ShieldAlert className="h-4 w-4 text-error-500" />,
+  restore: <UserCheck className="h-4 w-4 text-success-500" />,
+  cancel: <ShieldAlert className="h-4 w-4 text-warning-500" />,
+  invite: <UserCheck className="h-4 w-4 text-success-500" />,
+  approve: <UserCheck className="h-4 w-4 text-success-500" />,
+  reject: <ShieldAlert className="h-4 w-4 text-warning-500" />,
 };
 
 export default function AuditLogsTab({ clubId }: { clubId: string }) {
@@ -105,7 +89,7 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-bold text-brand-primary">Audit-Logs</h2>
+        <h2 className="text-lg font-bold text-primary">Audit-Logs</h2>
         <p className="text-sm text-muted-foreground">Sicherheitsrelevante Aktivitäten im Verein</p>
       </div>
 
@@ -132,7 +116,7 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-medium text-foreground dark:text-white">
-                      {actionLabels[log.action] ?? log.action}
+                      {auditActionLabel(log.action)}
                     </span>
                     <Badge variant="secondary" className="text-2xs font-mono">
                       {log.action}

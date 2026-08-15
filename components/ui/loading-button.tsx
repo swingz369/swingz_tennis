@@ -105,7 +105,7 @@ export function useFormSubmit<T = any>(
   onSubmit: (data: T) => Promise<void>,
   options?: {
     onSuccess?: () => void;
-    onError?: (error: any) => void;
+    onError?: (error: unknown) => void;
   }
 ) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);

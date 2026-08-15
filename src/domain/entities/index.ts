@@ -3,7 +3,6 @@ export * from './schedule';
 export * from './booking';
 export * from './group.entity';
 export * from './pricing-rule.entity';
-export * from './audit-log.entity';
 export * from './billing.entity';
 export * from './fee-configuration.entity';
 export * from './hourly-rate.entity';

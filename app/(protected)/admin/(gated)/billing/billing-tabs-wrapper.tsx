@@ -53,7 +53,7 @@ function DatevExportTab() {
     <Card>
       <CardContent className="pt-6 space-y-4">
         <div className="flex items-start gap-3 text-sm text-muted-foreground">
-          <Info className="h-5 w-5 mt-0.5 shrink-0 text-brand-primary" />
+          <Info className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
           <p>
             Exportiert alle abgeschlossenen Rechnungen im Zeitraum als{' '}
             <strong>DATEV Buchungsstapel</strong> (CSV, Format EXTF). Direkt importierbar in DATEV
@@ -133,7 +133,7 @@ function SepaExportTab() {
     <Card>
       <CardContent className="pt-6 space-y-4">
         <div className="flex items-start gap-3 text-sm text-muted-foreground">
-          <Info className="h-5 w-5 mt-0.5 shrink-0 text-brand-primary" />
+          <Info className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
           <p>
             Wähle in der Rechnungsliste die gewünschten SEPA-Zahlungen aus und klicke dann{' '}
             <strong>SEPA exportieren</strong> — oder exportiere hier direkt mit konkreten
@@ -179,35 +179,35 @@ export function BillingCategoriesTabs({
       <TabsList className="w-full max-w-3xl grid grid-cols-5 bg-muted dark:bg-card/5 p-1 rounded-xl">
         <TabsTrigger
           value="invoices"
-          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-primary data-[state=active]:shadow-sm"
         >
           <CreditCard className="h-4 w-4 mr-2" />
           Rechnungen
         </TabsTrigger>
         <TabsTrigger
           value="categories"
-          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-primary data-[state=active]:shadow-sm"
         >
           <Tag className="h-4 w-4 mr-2" />
           Kategorien
         </TabsTrigger>
         <TabsTrigger
           value="trainer"
-          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-primary data-[state=active]:shadow-sm"
         >
           <GraduationCap className="h-4 w-4 mr-2" />
           Trainer
         </TabsTrigger>
         <TabsTrigger
           value="sepa"
-          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-primary data-[state=active]:shadow-sm"
         >
           <FileDown className="h-4 w-4 mr-2" />
           SEPA-Export
         </TabsTrigger>
         <TabsTrigger
           value="datev"
-          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-primary data-[state=active]:shadow-sm"
         >
           <BookOpen className="h-4 w-4 mr-2" />
           DATEV

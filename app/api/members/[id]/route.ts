@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { memberService } from '@/src/application/services/member-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:members:[id]');
@@ -15,7 +16,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) {
-      return forbiddenResponse('Authentication required');
+      return forbiddenResponse('Anmeldung erforderlich');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
@@ -34,18 +35,19 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         .single();
 
       if (!isTrainer && membership?.user_id !== auth.user.id) {
-        return forbiddenResponse('Access denied');
+        return forbiddenResponse('Zugriff verweigert');
       }
 
       const member = await memberService.getMemberById(id);
 
       // A4: DSGVO Read-Audit (Art. 5 Abs. 2) — non-blocking
-      void (serviceClient as any).from('audit_logs').insert({
+      void logAudit({
+        actorId: auth.user.id,
         action: 'READ_MEMBER',
-        table_name: 'users',
-        record_id: id,
-        performed_by: auth.user.id,
-        details: { club_id: auth.clubId },
+        resourceType: 'membership',
+        resourceId: id,
+        clubId: auth.clubId,
+        request: _request,
       });
 
       if (!member) {
@@ -68,7 +70,7 @@ export async function PATCH(
     // Only trainers and admins can update members
     const hasPermission = await verifyRole(auth, 'trainer');
     if (!hasPermission) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
@@ -218,7 +220,7 @@ export async function DELETE(
     // Only admins can delete members
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
@@ -243,7 +245,7 @@ export async function DELETE(
 
       // Verify club access for non-superadmin
       if (auth.role !== 'superadmin' && membership.club_id !== auth.clubId) {
-        return forbiddenResponse('Cannot delete members from other clubs');
+        return forbiddenResponse('Mitglieder anderer Vereine können nicht gelöscht werden');
       }
 
       // Soft delete: Deactivate membership instead of deleting
@@ -265,25 +267,20 @@ export async function DELETE(
       }
 
       // Audit log
-      try {
-        await auth.supabase.from('audit_logs').insert({
-          actor_id: auth.user.id,
-          action: 'member_deactivated',
-          resource_type: 'membership',
-          resource_id: id,
-          club_id: membership.club_id,
-          details: {
-            membership_id: id,
-            user_id: membership.user_id,
-            role: membership.role,
-            method: 'soft_delete',
-          },
-          ip_address: _request.headers.get('x-forwarded-for') || _request.headers.get('x-real-ip'),
-          user_agent: _request.headers.get('user-agent'),
-        } as any);
-      } catch (auditError) {
-        log.error('Audit logging failed:', auditError);
-      }
+      await logAudit({
+        actorId: auth.user.id,
+        action: 'member_deactivated',
+        resourceType: 'membership',
+        resourceId: id,
+        clubId: membership.club_id,
+        details: {
+          membership_id: id,
+          user_id: membership.user_id,
+          role: membership.role,
+          method: 'soft_delete',
+        },
+        request: _request,
+      });
 
       // Notify the deactivated member
       try {

@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
     if (!hasRole) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STRICT);
@@ -21,10 +21,7 @@ export async function GET(req: NextRequest) {
       const searchParams = req.nextUrl.searchParams;
       const format = (searchParams.get('format') || 'pdf') as 'pdf' | 'excel' | 'csv';
       const period = (searchParams.get('period') || 'monthly') as
-        | 'daily'
-        | 'weekly'
-        | 'monthly'
-        | 'yearly';
+        'daily' | 'weekly' | 'monthly' | 'yearly';
 
       const statisticsService = new StatisticsService();
       const statistics = await statisticsService.generateStatistics(period, new Date(), new Date());

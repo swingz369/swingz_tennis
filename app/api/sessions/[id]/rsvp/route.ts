@@ -17,7 +17,7 @@ const log = createLogger('api:sessions:[id]:rsvp');
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     const isMember = await verifyRole(auth, 'member');
-    if (!isMember) return forbiddenResponse('Member access required');
+    if (!isMember) return forbiddenResponse('Zugriff nur für Mitglieder');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     const isTrainerOrAdmin = await verifyRole(auth, 'trainer');
-    if (!isTrainerOrAdmin) return forbiddenResponse('Trainer or admin access required');
+    if (!isTrainerOrAdmin) return forbiddenResponse('Zugriff nur für Trainer oder Admins');
 
     const { id: sessionId } = await params;
 

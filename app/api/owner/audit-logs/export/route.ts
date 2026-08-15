@@ -22,7 +22,7 @@ const EXPORT_MAX_ROWS = 10_000;
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'owner'))) {
-      return forbiddenResponse('Owner access required');
+      return forbiddenResponse('Zugriff nur für den Plattformbetreiber');
     }
 
     try {

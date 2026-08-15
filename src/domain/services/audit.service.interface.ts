@@ -1,6 +1,13 @@
 /**
  * Audit Service Interface
  * Domain layer interface for audit logging functionality
+ *
+ * Geschrieben wird ausschließlich über `lib/audit.ts` → Tabelle `audit_logs`.
+ * Gelesen wird über die API-Routen (/api/audit-logs, /api/admin/audit-logs,
+ * /api/owner/audit-logs) direkt per Supabase — dafür braucht es hier keine
+ * Query-Methoden (die frühere `query`/`getEntityAuditTrail`/`getUserAuditTrail`
+ * hatte nie einen Aufrufer und war durch ein `this`-Binding in `.map()` ohnehin
+ * defekt).
  */
 
 export type AuditAction =
@@ -30,6 +37,7 @@ export type AuditEntityType =
   | 'club';
 
 export interface AuditLogEntry {
+  /** auth-User-ID; muss in `users` existieren (FK auf audit_logs.actor_id). */
   userId: string;
   action: AuditAction;
   entityType: AuditEntityType;
@@ -41,52 +49,10 @@ export interface AuditLogEntry {
   metadata?: Record<string, any>;
 }
 
-export interface AuditLogQuery {
-  userId?: string;
-  action?: AuditAction[];
-  entityType?: AuditEntityType;
-  entityId?: string;
-  startDate?: Date;
-  endDate?: Date;
-  limit?: number;
-  offset?: number;
-}
-
-export interface AuditLogResult {
-  id: string;
-  userId: string;
-  action: AuditAction;
-  entityType: AuditEntityType;
-  entityId: string;
-  details?: Record<string, any>;
-  ipAddress?: string;
-  userAgent?: string;
-  metadata?: Record<string, any>;
-  createdAt: Date;
-}
-
 /**
  * Audit Service Interface
  * All audit logging must be done through this interface
  */
 export interface IAuditService {
-  /**
-   * Log an audit entry
-   */
   log(entry: AuditLogEntry): Promise<void>;
-
-  /**
-   * Query audit logs
-   */
-  query(query: AuditLogQuery): Promise<AuditLogResult[]>;
-
-  /**
-   * Get audit logs for a specific entity
-   */
-  getEntityAuditTrail(entityType: AuditEntityType, entityId: string): Promise<AuditLogResult[]>;
-
-  /**
-   * Get audit logs for a specific user
-   */
-  getUserAuditTrail(userId: string, limit?: number): Promise<AuditLogResult[]>;
 }

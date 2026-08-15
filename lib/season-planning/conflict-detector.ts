@@ -2,11 +2,15 @@
 // Implements Schritt 5: automatic conflict detection with 7 conflict types
 // Runs continuously in the background, blocks confirmation for critical issues
 
+import { createHash } from 'node:crypto';
+
 import { db } from '@/src/infrastructure/persistence/db';
 import {
   seasonPlanEntries,
   trainers,
+  trainerClubs,
   courts,
+  groups,
   planningConflicts,
   users,
   userClubMemberships,
@@ -16,7 +20,7 @@ import {
   seasonStatistics,
   seasonPlanningConfigs,
 } from '@/src/infrastructure/persistence/season-planning-schema';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 
 import { createLogger } from '@/lib/logger';
 
@@ -29,6 +33,8 @@ import {
   detectCourtDoubleBookings,
   detectTrainerOverLimit,
   detectLargeNiveauSpan,
+  detectAvoidPartnerConflicts,
+  type ConflictMemberInfo,
 } from './conflict-utils';
 
 const log = createLogger('season-planning:conflict-detector');
@@ -50,7 +56,7 @@ import type {
   ConflictTypeCode,
 } from '@/lib/season-planning/types';
 import type { GroupAssignment } from '@/lib/season-planning/types';
-import type { WeeklyAvailability } from '@/lib/types/season-planning';
+import type { WeeklyAvailability, SkillLevel } from '@/lib/types/season-planning';
 import { DAY_LABELS } from '@/lib/season-planning/schedule-constants';
 
 /** Convert app-wide dayOfWeek (0=Mo..6=So, see lib/types/season-planning.ts) to German weekday name */
@@ -89,7 +95,13 @@ interface ConflictCheckParams {
    * Wochenverfügbarkeit (null = keine Präferenzen abgegeben). Basis für die
    * Prüfungen "außerhalb der Verfügbarkeit" und "nicht eingeplant".
    */
-  members: Array<{ id: string; name: string; availability: WeeklyAvailability | null }>;
+  members: Array<
+    {
+      id: string;
+      name: string;
+      availability: WeeklyAvailability | null;
+    } & ConflictMemberInfo
+  >;
   slotFailureRates: Record<string, number>;
   config: {
     trainerUtilizationMaxPct: number;
@@ -146,6 +158,16 @@ function fitsAvailability(
   const end = timeStringToMinutes(endTime);
   return slots.some(
     (slot) => timeStringToMinutes(slot.start) <= start && end <= timeStringToMinutes(slot.end)
+  );
+}
+
+/** Nachschlagetabelle für die Niveau- und Avoid-Prüfung. */
+function memberInfoMap(members: ConflictCheckParams['members']): Map<string, ConflictMemberInfo> {
+  return new Map(
+    members.map((m) => [
+      m.id,
+      { name: m.name, skillLevel: m.skillLevel, avoidMemberIds: m.avoidMemberIds },
+    ])
   );
 }
 
@@ -554,14 +576,18 @@ const CONFLICT_RULES: ConflictRule[] = [
       'Große Niveau-Spanne: Die Erfahrungs-Spanne innerhalb einer Gruppe überschreitet das konfigurierte Maximum',
     check: async (params) => {
       const conflicts: ConflictDetectionResult[] = [];
+      const byId = memberInfoMap(params.members);
 
-      for (const assignment of detectLargeNiveauSpan(params.assignments)) {
-        const warning = assignment.warnings.find((w) => w.includes('Niveau-Spanne'))!;
+      for (const { assignment, span, minLabel, maxLabel } of detectLargeNiveauSpan(
+        params.assignments,
+        byId,
+        params.config.maxNiveauLevelSteps
+      )) {
         conflicts.push({
-          id: `conflict_lns_${assignment.groupId}`,
+          id: `conflict_lns_${assignment.groupId}_${assignment.dayOfWeek}_${assignment.startTime}`,
           type: 'large_niveau_span',
           severity: 'info',
-          description: warning,
+          description: `${assignmentLabel(assignment)}: Niveau-Spanne ${minLabel}–${maxLabel} (${span} Stufen, Maximum ${params.config.maxNiveauLevelSteps})`,
           suggestedResolution:
             'Teilen Sie die Gruppe auf oder passen Sie die Niveau-Spanne-Konfiguration an.',
           affectedEntities: {
@@ -594,35 +620,36 @@ const CONFLICT_RULES: ConflictRule[] = [
       'Avoid-Partner-Konflikt: Zwei Mitglieder, die sich gegenseitig ausschließen, sind in derselben Gruppe',
     check: async (params) => {
       const conflicts: ConflictDetectionResult[] = [];
+      const byId = memberInfoMap(params.members);
 
-      for (const assignment of params.assignments) {
-        const warning = assignment.warnings.find((w) => w.includes('Avoid-Konflikten'));
-        if (warning) {
-          conflicts.push({
-            id: `conflict_apc_${assignment.groupId}`,
-            type: 'avoid_partner_conflict',
-            severity: 'warning',
-            description: `Gruppe ${assignment.groupName}: ${warning}`,
-            suggestedResolution:
-              'Trennen Sie die betroffenen Mitglieder auf verschiedene Gruppen auf oder klären Sie den Konflikt manuell.',
-            affectedEntities: {
-              trainerIds: [assignment.trainerId],
-              memberIds: assignment.memberIds,
-              courtIds: assignment.courtId ? [assignment.courtId] : [],
-              groupIds: [assignment.groupId],
-              planEntryIds: [],
-            },
-            timeSlot: {
-              dayOfWeek: assignment.dayOfWeek,
-              startTime: assignment.startTime,
-              endTime: assignment.endTime,
-            },
-            status: 'open',
-            resolvedAt: null,
-            resolvedBy: null,
-            resolutionNotes: null,
-          });
-        }
+      for (const { assignment, pairs, memberIds } of detectAvoidPartnerConflicts(
+        params.assignments,
+        byId
+      )) {
+        conflicts.push({
+          id: `conflict_apc_${assignment.groupId}_${assignment.dayOfWeek}_${assignment.startTime}`,
+          type: 'avoid_partner_conflict',
+          severity: 'warning',
+          description: `${assignmentLabel(assignment)}: ${pairs.map(([a, b]) => `${a} und ${b}`).join(', ')} möchten laut Präferenzen nicht zusammen trainieren.`,
+          suggestedResolution:
+            'Trennen Sie die betroffenen Mitglieder auf verschiedene Gruppen auf oder klären Sie den Konflikt manuell.',
+          affectedEntities: {
+            trainerIds: [assignment.trainerId],
+            memberIds,
+            courtIds: assignment.courtId ? [assignment.courtId] : [],
+            groupIds: [assignment.groupId],
+            planEntryIds: [],
+          },
+          timeSlot: {
+            dayOfWeek: assignment.dayOfWeek,
+            startTime: assignment.startTime,
+            endTime: assignment.endTime,
+          },
+          status: 'open',
+          resolvedAt: null,
+          resolvedBy: null,
+          resolutionNotes: null,
+        });
       }
       return conflicts;
     },
@@ -764,52 +791,76 @@ export class ConflictDetector {
   // ============================================
 
   private async buildCheckParams(assignments: GroupAssignment[]): Promise<ConflictCheckParams> {
-    // Load plan entries for this season (for checking against existing data)
-    const entries = await db
-      .select()
-      .from(seasonPlanEntries)
-      .where(eq(seasonPlanEntries.season_id, this.seasonId));
+    // Die sechs Abfragen hängen nicht voneinander ab, liefen aber nacheinander:
+    // gegen eine entfernte Datenbank summierten sich die Roundtrips auf über
+    // vier Sekunden und rissen zusammen mit `buildAssignmentsFromPlanEntries`
+    // das 8-Sekunden-Limit von `detectConflictsForSeason` — die Konfliktseite
+    // antwortete dann mit 500. Parallel bleibt die Summe bei der langsamsten
+    // Abfrage. (Der Verbindungspool steht auf max: 3, die Abfragen laufen also
+    // in zwei Wellen statt sechs.)
+    const [entries, trainerRows, courtRows, memberRows, stats, dbConfigRows] = await Promise.all([
+      // Plan entries for this season (for checking against existing data)
+      db.select().from(seasonPlanEntries).where(eq(seasonPlanEntries.season_id, this.seasonId)),
 
-    // Load trainers
-    const trainerRows = await db.select().from(trainers);
+      // Trainer — über trainer_club auf den Verein eingegrenzt. Vorher lud das
+      // `select().from(trainers)` ALLE Trainer aller Vereine; die
+      // Auslastungsprüfung lief damit über vereinsfremde Trainer.
+      db
+        .select({
+          id: trainers.id,
+          name: trainers.name,
+          max_hours_per_week: trainers.max_hours_per_week,
+        })
+        .from(trainers)
+        .innerJoin(trainerClubs, eq(trainerClubs.trainer_id, trainers.id))
+        .where(eq(trainerClubs.club_id, this.clubId)),
 
-    // Load courts
-    const courtRows = await db.select().from(courts).where(eq(courts.club_id, this.clubId));
+      db.select().from(courts).where(eq(courts.club_id, this.clubId)),
 
-    // Load planungsrelevante Mitglieder samt eingereichter Wochenverfügbarkeit.
-    // Left join: wer keine Präferenzen abgegeben hat, muss trotzdem auftauchen —
-    // sonst fällt genau diese Gruppe wieder aus der Prüfung heraus.
-    const memberRows = await db
-      .select({
-        id: users.id,
-        name: users.full_name,
-        availability: userTrainingPreferences.weekly_availability,
-        submitted: userTrainingPreferences.is_submitted,
-      })
-      .from(userClubMemberships)
-      .innerJoin(users, eq(userClubMemberships.user_id, users.id))
-      .leftJoin(
-        userTrainingPreferences,
-        and(
-          eq(userTrainingPreferences.user_id, users.id),
-          eq(userTrainingPreferences.season_id, this.seasonId),
-          eq(userTrainingPreferences.user_role, 'member')
+      // Planungsrelevante Mitglieder samt eingereichter Wochenverfügbarkeit.
+      // Left join: wer keine Präferenzen abgegeben hat, muss trotzdem auftauchen —
+      // sonst fällt genau diese Gruppe wieder aus der Prüfung heraus.
+      db
+        .select({
+          id: users.id,
+          name: users.full_name,
+          skill_level: users.skill_level,
+          availability: userTrainingPreferences.weekly_availability,
+          submitted: userTrainingPreferences.is_submitted,
+          avoid_member_ids: userTrainingPreferences.avoid_member_ids,
+        })
+        .from(userClubMemberships)
+        .innerJoin(users, eq(userClubMemberships.user_id, users.id))
+        .leftJoin(
+          userTrainingPreferences,
+          and(
+            eq(userTrainingPreferences.user_id, users.id),
+            eq(userTrainingPreferences.season_id, this.seasonId),
+            eq(userTrainingPreferences.user_role, 'member')
+          )
         )
-      )
-      .where(
-        and(
-          eq(userClubMemberships.club_id, this.clubId),
-          eq(userClubMemberships.role, 'member'),
-          eq(userClubMemberships.is_active, true),
-          eq(userClubMemberships.include_in_planning, true)
-        )
-      );
+        .where(
+          and(
+            eq(userClubMemberships.club_id, this.clubId),
+            eq(userClubMemberships.role, 'member'),
+            eq(userClubMemberships.is_active, true),
+            eq(userClubMemberships.include_in_planning, true)
+          )
+        ),
 
-    // Load slot failure rates from statistics
-    const stats = await db
-      .select()
-      .from(seasonStatistics)
-      .where(eq(seasonStatistics.club_id, this.clubId));
+      // Slot failure rates from statistics
+      db.select().from(seasonStatistics).where(eq(seasonStatistics.club_id, this.clubId)),
+
+      db
+        .select()
+        .from(seasonPlanningConfigs)
+        .where(
+          and(
+            eq(seasonPlanningConfigs.club_id, this.clubId),
+            eq(seasonPlanningConfigs.season_id, this.seasonId)
+          )
+        ),
+    ]);
 
     const slotFailureRates: Record<string, number> = {};
     for (const stat of stats) {
@@ -828,16 +879,7 @@ export class ConflictDetector {
       }
     }
 
-    // Load config
-    const [dbConfig] = await db
-      .select()
-      .from(seasonPlanningConfigs)
-      .where(
-        and(
-          eq(seasonPlanningConfigs.club_id, this.clubId),
-          eq(seasonPlanningConfigs.season_id, this.seasonId)
-        )
-      );
+    const [dbConfig] = dbConfigRows;
 
     return {
       seasonId: this.seasonId,
@@ -864,6 +906,11 @@ export class ConflictDetector {
         // Nur eingereichte Präferenzen gelten als Aussage über die Verfügbarkeit;
         // ein angefangener Entwurf zählt wie "nichts abgegeben".
         availability: m.submitted ? ((m.availability as WeeklyAvailability | null) ?? null) : null,
+        skillLevel: (m.skill_level ?? 'beginner') as SkillLevel,
+        // Ausschlusswünsche gelten auch aus einem Entwurf heraus — anders als bei
+        // der Verfügbarkeit ist "will nicht mit X" keine Terminzusage, sondern
+        // eine Angabe, die man nicht versehentlich übergeht.
+        avoidMemberIds: (m.avoid_member_ids as string[] | null) ?? [],
       })),
       slotFailureRates,
       config: {
@@ -901,43 +948,157 @@ export async function detectConflictsForSeason(seasonId: string, clubId: string)
   ]);
 }
 
-async function detectConflictsForSeasonInner(seasonId: string, clubId: string) {
-  const detector = new ConflictDetector(seasonId, clubId);
+/**
+ * Live-erkannte Konflikte haben synthetische IDs (`conflict_<typ>_<...>`), die
+ * `planning_conflicts.id` (uuid) nicht aufnehmen kann. Wir leiten daraus eine
+ * stabile UUID ab, damit ein "gelöst"/"ignoriert" persistiert werden kann,
+ * ohne dafür eine Spalte oder Tabelle zusätzlich zu schaffen.
+ * ponytail: SHA1-Ableitung statt neuer Schlüsselspalte — bei einer Migration
+ * auf ein echtes `conflict_key`-Feld umstellen.
+ */
+export function conflictRowId(seasonId: string, conflictKey: string): string {
+  const h = createHash('sha1').update(`${seasonId}:${conflictKey}`).digest('hex');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-5${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`;
+}
+
+/**
+ * Baut die Zuweisungen für die Konflikterkennung aus den gespeicherten
+ * Planeinträgen — die gemeinsame Grundlage von Konfliktseite, Wizard-Schritt 4
+ * und der Publish-Route.
+ *
+ * Zwei Dinge, die vorher fehlten und die Konflikttexte unbrauchbar machten:
+ * - Trainer/Platz/Gruppe/Mitglied werden mit ihrem Namen aufgelöst. Vorher stand
+ *   in jeder Meldung die UUID ("Trainer 8f2c-… ist 2-fach belegt").
+ * - Der Schlüssel enthält Tag und Uhrzeit. Vorher fielen alle Termine einer
+ *   Gruppe außer dem ersten aus der Prüfung heraus, weil nur nach `group_id`
+ *   zusammengefasst wurde.
+ */
+export async function buildAssignmentsFromPlanEntries(
+  seasonId: string,
+  clubId: string
+): Promise<GroupAssignment[]> {
   const entries = await db
     .select()
     .from(seasonPlanEntries)
     .where(eq(seasonPlanEntries.season_id, seasonId));
+  if (entries.length === 0) return [];
 
-  const assignments: GroupAssignment[] = [];
-  const groupMap = new Map<string, GroupAssignment>();
+  const [trainerRows, courtRows, groupRows] = await Promise.all([
+    db
+      .select({ id: trainers.id, name: trainers.name })
+      .from(trainers)
+      .innerJoin(trainerClubs, eq(trainerClubs.trainer_id, trainers.id))
+      .where(eq(trainerClubs.club_id, clubId)),
+    db.select({ id: courts.id, name: courts.name }).from(courts).where(eq(courts.club_id, clubId)),
+    db
+      .select({ id: groups.id, name: groups.name, member_ids: groups.member_ids })
+      .from(groups)
+      .where(eq(groups.club_id, clubId)),
+  ]);
+  const trainerNames = new Map(trainerRows.map((r) => [r.id, r.name]));
+  const courtNames = new Map(courtRows.map((r) => [r.id, r.name]));
+  const groupNames = new Map(groupRows.map((r) => [r.id, r.name]));
+  const groupMembers = new Map(groupRows.map((r) => [r.id, (r.member_ids as string[]) || []]));
+
+  // `expected_participants` am Planeintrag ist in der Praxis oft leer — die
+  // Zugehörigkeit steht dann nur an der Gruppe. Ohne diesen Rückgriff meldete
+  // die Prüfung praktisch jedes Mitglied als "ohne Gruppe" und die Regeln zu
+  // Mitglieds-Doppelbelegung und Verfügbarkeit liefen ins Leere.
+  const participantsOf = (entry: (typeof entries)[number]): string[] => {
+    const own = (entry.expected_participants as string[]) || [];
+    if (own.length > 0) return own;
+    return entry.group_id ? (groupMembers.get(entry.group_id) ?? []) : [];
+  };
+
+  const memberIds = [...new Set(entries.flatMap(participantsOf))];
+  const memberRows =
+    memberIds.length > 0
+      ? await db
+          .select({ id: users.id, name: users.full_name })
+          .from(users)
+          .where(inArray(users.id, memberIds))
+      : [];
+  const memberNames = new Map(memberRows.map((r) => [r.id, r.name ?? 'Unbekannt']));
+
+  const bySlot = new Map<string, GroupAssignment>();
   for (const entry of entries) {
     const gid = entry.group_id || entry.id;
-    if (groupMap.has(gid)) {
-      groupMap.get(gid)!.memberIds.push(...((entry.expected_participants as string[]) || []));
-    } else {
-      groupMap.set(gid, {
-        groupId: gid,
-        groupName: gid,
-        trainerId: entry.trainer_id,
-        trainerName: entry.trainer_id,
-        dayOfWeek: entry.day_of_week as any,
-        startTime: entry.start_time?.substring(0, 5) || '00:00',
-        endTime: entry.end_time?.substring(0, 5) || '00:00',
-        courtId: entry.court_id,
-        courtName: entry.court_id,
-        maxSize: entry.max_participants ?? 6,
-        memberIds: (entry.expected_participants as string[]) || [],
-        memberDetails: [],
-        waitlistIds: [],
-        waitlistDetails: [],
-        warnings: [],
-        conflictIds: [],
-      });
+    const startTime = entry.start_time?.substring(0, 5) || '00:00';
+    const participants = participantsOf(entry);
+    // Eine Gruppe kann mehrfach pro Woche trainieren — jeder Termin ist eine
+    // eigene Zuweisung, sonst bleibt der zweite Termin ungeprüft.
+    const key = `${gid}_${entry.day_of_week}_${startTime}`;
+    const existing = bySlot.get(key);
+    if (existing) {
+      existing.memberIds.push(...participants);
+      existing.memberDetails.push(...participants.map(memberDetail));
+      continue;
     }
+    bySlot.set(key, {
+      groupId: gid,
+      groupName: groupNames.get(gid) ?? gid,
+      trainerId: entry.trainer_id,
+      trainerName: trainerNames.get(entry.trainer_id) ?? 'Unbekannter Trainer',
+      dayOfWeek: entry.day_of_week as any,
+      startTime,
+      endTime: entry.end_time?.substring(0, 5) || '00:00',
+      courtId: entry.court_id,
+      courtName: entry.court_id ? (courtNames.get(entry.court_id) ?? null) : null,
+      maxSize: entry.max_participants ?? 6,
+      memberIds: [...participants],
+      memberDetails: participants.map(memberDetail),
+      waitlistIds: [],
+      waitlistDetails: [],
+      warnings: [],
+      conflictIds: [],
+    });
   }
-  assignments.push(...groupMap.values());
+  return [...bySlot.values()];
+
+  function memberDetail(id: string): GroupAssignment['memberDetails'][number] {
+    // Nur `memberName` wird von den Konfliktregeln gelesen; der Rest ist
+    // Pflichtfeld des Typs und stammt sonst aus dem Clustering.
+    return {
+      memberId: id,
+      memberName: memberNames.get(id) ?? id,
+      niveauMatch: 100,
+      experienceMonths: 0,
+      groupExperienceSpan: '0-0 Monate',
+      wishPartnerFulfilled: false,
+      wishPartnerNames: [],
+      isPromoted: false,
+      assignmentReason: '',
+    };
+  }
+}
+
+async function detectConflictsForSeasonInner(seasonId: string, clubId: string) {
+  const detector = new ConflictDetector(seasonId, clubId);
+  const assignments = await buildAssignmentsFromPlanEntries(seasonId, clubId);
 
   const conflicts = await detector.detectAll(assignments);
-  const summary = detector.summarize(conflicts);
+
+  // Persistierte Entscheidungen (gelöst/ignoriert) auf die live erkannten
+  // Konflikte legen — sonst taucht ein ignorierter Konflikt bei jedem Reload
+  // wieder als offen auf. Die Zusammenfassung zählt nur noch offene, damit
+  // Badges und die Publish-Blockade der Entscheidung folgen.
+  const decided = await db
+    .select({ id: planningConflicts.id, status: planningConflicts.status })
+    .from(planningConflicts)
+    .where(eq(planningConflicts.season_id, seasonId));
+  const decisionByRowId = new Map(decided.map((row) => [row.id, row.status]));
+  for (const conflict of conflicts) {
+    const status = decisionByRowId.get(conflictRowId(seasonId, conflict.id));
+    // Nur "ignoriert" überlebt eine erneute Erkennung. "Gelöst" behauptet, die
+    // Ursache sei beseitigt — steht der Konflikt hier, ist er das nachweislich
+    // nicht. Vorher blieb er trotzdem für immer gelöst: bei TC Rheinland waren
+    // zwei kritische "kein Platz zugewiesen" als gelöst markiert, die Plätze
+    // fehlten weiter, die Publish-Blockade griff nicht — veröffentlicht wurden
+    // Sessions ohne Platz, für die keine Buchung entsteht, während die
+    // Abrechnung die Teilnehmer trotzdem in Rechnung stellt.
+    if (status === 'ignored') conflict.status = status;
+  }
+
+  const summary = detector.summarize(conflicts.filter((c) => c.status === 'open'));
   return { conflicts, summary };
 }

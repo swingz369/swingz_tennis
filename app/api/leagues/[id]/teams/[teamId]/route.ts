@@ -12,7 +12,7 @@ export async function PATCH(
 ) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) return forbiddenResponse('Admin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id: leagueId, teamId } = await params;
     const body = await request.json();
@@ -51,18 +51,27 @@ export async function DELETE(
 ) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) return forbiddenResponse('Admin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { teamId } = await params;
 
-    const { error } = await (auth.supabase as any)
+    // `.select()`: ohne das meldet ein Delete, das RLS oder der club_id-Filter
+    // auf null Zeilen reduziert hat, trotzdem Erfolg — die UI log dann.
+    const { data, error } = await (auth.supabase as any)
       .from('teams')
       .delete()
       .eq('id', teamId)
-      .eq('club_id', auth.clubId);
+      .eq('club_id', auth.clubId)
+      .select('id');
 
     if (error) {
       return NextResponse.json({ error: 'Failed to delete team' }, { status: 500 });
+    }
+    if (!data || data.length === 0) {
+      return NextResponse.json(
+        { error: 'Team nicht gefunden oder keine Berechtigung zum Löschen' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ success: true });

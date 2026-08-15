@@ -120,7 +120,7 @@ const SortIcon = ({
 }) => (
   <ArrowUpDown
     className={`h-3.5 w-3.5 ml-1 inline-block transition-colors ${
-      currentSortField === field ? 'text-brand-primary' : 'text-muted-foreground/40'
+      currentSortField === field ? 'text-primary' : 'text-muted-foreground/40'
     }`}
   />
 );
@@ -542,8 +542,8 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-brand-primary/10 flex items-center justify-center flex-shrink-0">
-                              <User className="h-3.5 w-3.5 text-brand-primary" />
+                            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <User className="h-3.5 w-3.5 text-primary" />
                             </div>
                             <div>
                               <div className="font-medium text-sm">{booking.member_name}</div>
@@ -642,7 +642,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
           <>
             <div className="space-y-1.5">
               <h2 className="text-lg font-bold flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5 text-brand-primary" />
+                <CalendarIcon className="h-5 w-5 text-primary" />
                 Buchungsdetails
               </h2>
               <p className="text-sm text-muted-foreground">
@@ -675,7 +675,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                 </div>
               ) : (
                 <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-xl">
-                  <User className="h-5 w-5 text-brand-primary mt-0.5 flex-shrink-0" />
+                  <User className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
                     <div className="font-medium">{selectedBooking.member_name}</div>
                     <div className="text-sm text-muted-foreground">

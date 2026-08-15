@@ -421,8 +421,8 @@ export default function BillingClient({
             </div>
             {/* Bulk actions bar — inline when invoices are selected via header checkbox or row checkboxes */}
             {selectedIds.size > 0 && (
-              <div className="flex items-center gap-3 mt-3 p-3 rounded-xl bg-brand-primary/5 border border-brand-primary/20">
-                <span className="text-sm font-medium text-brand-primary">
+              <div className="flex items-center gap-3 mt-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
+                <span className="text-sm font-medium text-primary">
                   {selectedIds.size} Rechnung{selectedIds.size !== 1 ? 'en' : ''} ausgewählt
                 </span>
                 <div className="flex-1" />
@@ -487,7 +487,7 @@ export default function BillingClient({
                     }}
                     className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
                       invoiceTypeFilter === t
-                        ? 'border-brand-primary text-brand-primary'
+                        ? 'border-primary text-primary'
                         : 'border-transparent text-muted-foreground hover:text-foreground'
                     }`}
                   >
@@ -749,7 +749,7 @@ export default function BillingClient({
       >
         <div className="space-y-1.5">
           <h2 className="text-lg font-bold flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-brand-primary" />
+            <Sparkles className="h-5 w-5 text-primary" />
             Rechnungen generieren
           </h2>
           <p className="text-sm text-muted-foreground">

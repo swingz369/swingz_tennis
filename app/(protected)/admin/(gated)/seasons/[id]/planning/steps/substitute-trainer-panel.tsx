@@ -160,7 +160,7 @@ export function SubstituteTrainerPanel() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-base flex items-center gap-2">
-              <Users className="h-4 w-4 text-brand-primary" />
+              <Users className="h-4 w-4 text-primary" />
               Trainer-Vertretungen
             </CardTitle>
             <CardDescription>

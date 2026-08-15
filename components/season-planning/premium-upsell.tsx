@@ -64,11 +64,11 @@ export function PremiumUpsell({
       onClose={onClose}
       ariaLabel="Premium-Features entdecken"
       className={cn('max-w-lg', className)}
-      overlayClassName="bg-gradient-to-br from-brand-secondary/60 via-brand-primary/30 to-brand-accent/40 backdrop-blur-md"
+      overlayClassName="bg-gradient-to-br from-brand-secondary/60 via-primary/30 to-brand-accent/40 backdrop-blur-md"
     >
       {/* ═══ Hero ═══ */}
       <div className="flex flex-col items-center text-center gap-2 -mt-2 mb-4">
-        <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-primary to-brand-accent text-white shadow-lg shadow-brand-accent/20">
+        <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-brand-accent text-white shadow-lg shadow-brand-accent/20">
           <Sparkles className="h-6 w-6" />
         </div>
         <h2 className="text-xl font-bold text-foreground">
@@ -100,9 +100,9 @@ export function PremiumUpsell({
       </div>
 
       {/* ═══ Big savings line ═══ */}
-      <div className="rounded-xl border border-brand-accent/30 bg-gradient-to-br from-brand-accent/10 via-brand-primary/5 to-transparent p-4 mb-4">
+      <div className="rounded-xl border border-brand-accent/30 bg-gradient-to-br from-brand-accent/10 via-primary/5 to-transparent p-4 mb-4">
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-bold text-brand-primary tabular-nums">
+          <span className="text-3xl font-bold text-primary tabular-nums">
             ~{stats.adminHoursSaved}
           </span>
           <span className="text-sm font-semibold text-foreground">Stunden</span>

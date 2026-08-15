@@ -12,7 +12,7 @@ import type { DatevInvoice } from '@/lib/billing/datev-mapper';
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) return forbiddenResponse('Admin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { clubId, supabase } = auth;
     if (!clubId) return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });

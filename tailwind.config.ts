@@ -54,7 +54,9 @@ const config: Config = {
           // bleibt unverändert, `bg-brand-accent-100` etc. ersetzen die früheren
           // hartcodierten `orange-*`-Klassen.
           accent: { DEFAULT: 'hsl(var(--brand-accent))', ...colors.accent },
-          'accent-dashboard': 'hsl(var(--brand-accent-dashboard))',
+          // Terrakotta — Zustände zwischen gut und kaputt (Warteliste, wartet
+          // auf Freigabe). Siehe Begründung an `--brand-accent-2`.
+          'accent-2': 'hsl(var(--brand-accent-2))',
         },
         surface: {
           DEFAULT: 'hsl(var(--surface))',

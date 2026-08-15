@@ -12,7 +12,7 @@ const log = createLogger('api:leagues');
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'member');
-    if (!hasRole) return forbiddenResponse('Authentication required');
+    if (!hasRole) return forbiddenResponse('Anmeldung erforderlich');
 
     const clubId = auth.clubId;
     if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
@@ -52,13 +52,24 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) return forbiddenResponse('Admin access required');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const clubId = auth.clubId;
     if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
 
     const body = await request.json();
-    const { name, season_year, league_type, division, sport, age_group, notes, nuliga_url } = body;
+    const {
+      name,
+      season_year,
+      league_type,
+      division,
+      sport,
+      age_group,
+      notes,
+      nuliga_url,
+      own_team_name,
+      nuliga_roster_url,
+    } = body;
 
     if (!name || !season_year) {
       return NextResponse.json({ error: 'Name and season year required' }, { status: 400 });
@@ -76,6 +87,8 @@ export async function POST(request: NextRequest) {
         age_group: age_group ?? null,
         notes: notes ?? null,
         nuliga_url: nuliga_url || null,
+        own_team_name: own_team_name || null,
+        nuliga_roster_url: nuliga_roster_url || null,
       })
       .select()
       .single();

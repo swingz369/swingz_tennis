@@ -17,8 +17,10 @@ import { PaginationNav } from '@/components/ui/pagination-nav';
 import { buildPaginationMeta } from '@/lib/pagination';
 import type { PaginationMeta } from '@/lib/pagination';
 import { formatDistanceToNow, format } from 'date-fns';
+import { de } from '@/lib/locale';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
+import { auditActionLabel, auditResourceLabel } from '@/lib/audit-labels';
 
 import { createLogger } from '@/lib/logger';
 
@@ -65,14 +67,14 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
       }
 
       const response = await apiFetch(`/api/audit-logs?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch audit logs');
+      if (!response.ok) throw new Error('Audit-Logs konnten nicht geladen werden');
 
       const data = await response.json();
       setLogs(data.logs || []);
       setPagination(buildPaginationMeta(page, ITEMS_PER_PAGE, data.total ?? 0));
     } catch (_error) {
       log.error('Error fetching audit logs:', _error);
-      toast.error('Failed to load audit logs');
+      toast.error('Audit-Logs konnten nicht geladen werden');
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +92,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
       if (filterEntity !== 'all') params.append('entity_type', filterEntity);
 
       const response = await apiFetch(`/api/audit-logs/export?${params}`);
-      if (!response.ok) throw new Error('Failed to export logs');
+      if (!response.ok) throw new Error('Export fehlgeschlagen');
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -102,9 +104,9 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      toast.success('Audit logs exported');
+      toast.success('Audit-Logs exportiert');
     } catch (_error) {
-      toast.error('Failed to export logs');
+      toast.error('Export fehlgeschlagen');
     }
   };
 
@@ -148,17 +150,17 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-brand-primary">Audit Logs</h2>
-          <p className="text-muted-foreground">System activity and changes</p>
+          <h2 className="text-2xl font-bold text-primary">Audit-Logs</h2>
+          <p className="text-muted-foreground">Sicherheitsrelevante Aktivitäten und Änderungen</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={fetchLogs}>
             <RefreshCw className="h-4 w-4 mr-1" />
-            Refresh
+            Aktualisieren
           </Button>
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4 mr-1" />
-            Export
+            Exportieren
           </Button>
         </div>
       </div>
@@ -170,7 +172,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by user, action, entity..."
+                placeholder="Nach Person, Aktion oder Objekt suchen…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -180,13 +182,13 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
             <div className="flex gap-2">
               <Select value={filterAction} onValueChange={setFilterAction}>
                 <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="All Actions" />
+                  <SelectValue placeholder="Alle Aktionen" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Actions</SelectItem>
+                  <SelectItem value="all">Alle Aktionen</SelectItem>
                   {uniqueActions.map((action) => (
                     <SelectItem key={action} value={action}>
-                      {action}
+                      {auditActionLabel(action)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -194,13 +196,13 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
 
               <Select value={filterEntity} onValueChange={setFilterEntity}>
                 <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="All Entities" />
+                  <SelectValue placeholder="Alle Objekttypen" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Entities</SelectItem>
+                  <SelectItem value="all">Alle Objekttypen</SelectItem>
                   {uniqueEntities.map((entity) => (
                     <SelectItem key={entity} value={entity}>
-                      {entity}
+                      {auditResourceLabel(entity)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -214,9 +216,9 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
       <Card variant="bordered">
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-8 text-center text-muted-foreground">Loading audit logs...</div>
+            <div className="p-8 text-center text-muted-foreground">Audit-Logs werden geladen…</div>
           ) : filteredLogs.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">No audit logs found</div>
+            <div className="p-8 text-center text-muted-foreground">Keine Audit-Logs vorhanden.</div>
           ) : (
             <div className="divide-y">
               {filteredLogs.map((log) => (
@@ -228,9 +230,11 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge variant={getActionColor(log.action)}>{log.action}</Badge>
+                        <Badge variant={getActionColor(log.action)}>
+                          {auditActionLabel(log.action)}
+                        </Badge>
                         <span className="text-sm font-medium text-foreground">
-                          {log.entity_type}
+                          {auditResourceLabel(log.entity_type)}
                         </span>
                         <span className="text-sm text-muted-foreground">
                           #{log.entity_id.slice(0, 8)}
@@ -245,7 +249,10 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           <span>
-                            {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(log.created_at), {
+                              addSuffix: true,
+                              locale: de,
+                            })}
                           </span>
                         </div>
                       </div>
@@ -253,7 +260,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
                       {log.changes && Object.keys(log.changes).length > 0 && (
                         <details className="text-sm">
                           <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-                            View changes
+                            Details anzeigen
                           </summary>
                           <div className="mt-2 p-3 bg-muted rounded-xl">
                             <pre className="text-xs overflow-x-auto">
@@ -271,7 +278,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
                     </div>
 
                     <div className="text-xs text-muted-foreground text-right">
-                      {format(new Date(log.created_at), 'MMM dd, yyyy HH:mm:ss')}
+                      {format(new Date(log.created_at), 'dd.MM.yyyy HH:mm:ss')}
                     </div>
                   </div>
                 </div>

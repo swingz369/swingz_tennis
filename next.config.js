@@ -160,6 +160,29 @@ const nextConfig = {
           },
         ],
       },
+      // Eingeloggte Bereiche nie zwischenspeichern.
+      //
+      // Next.js liefert unter derselben URL zwei Varianten aus — HTML für den
+      // Seitenaufruf, die RSC-Nutzlast (`text/x-component`) für die clientseitige
+      // Navigation — und trennt sie nur über `Vary: rsc, next-router-state-tree, …`.
+      // Firefox unterscheidet die Varianten darüber nicht zuverlässig und gibt beim
+      // Neuladen mit F5 die zwischengespeicherte RSC-Nutzlast als Dokument aus; die
+      // Seite bleibt leer, bis man über eine andere Route neu einsteigt. Chrome
+      // trifft die Unterscheidung korrekt, weshalb der Fehler dort nicht auftrat.
+      //
+      // `no-store` verbietet das Ablegen und ist für diese Seiten ohnehin richtig:
+      // sie enthalten personenbezogene Daten. Öffentliche Seiten (Landing, Impressum,
+      // Datenschutz) bleiben absichtlich außen vor und behalten ihr Caching.
+      {
+        source:
+          '/:path(dashboard|admin|superadmin|owner|trainer|member|messages|bookings|scheduler|billing|search|documents)',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store, max-age=0, must-revalidate' }],
+      },
+      {
+        source:
+          '/:path(dashboard|admin|superadmin|owner|trainer|member|messages|bookings|scheduler|billing|search|documents)/:rest*',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store, max-age=0, must-revalidate' }],
+      },
     ];
   },
   // Redirects

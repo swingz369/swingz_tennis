@@ -181,7 +181,7 @@ function DefaultErrorFallback({
           </p>
           <a
             href="mailto:support@swingz.cloud?subject=Fehler%20in%20SWINGZ"
-            className="inline-flex items-center gap-1.5 text-sm text-brand-primary hover:text-brand-light transition-colors font-medium"
+            className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-brand-light transition-colors font-medium"
           >
             <Mail className="h-3.5 w-3.5" />
             support@swingz.cloud

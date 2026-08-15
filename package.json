@@ -56,6 +56,7 @@
     "tsc:scripts": "tsc --noEmit -p tsconfig.scripts.json",
     "docs:autogen": "tsx scripts/docs-autogen.ts",
     "docs:check": "npx tsx scripts/check-docs.ts",
+    "contrast:check": "node scripts/check-contrast.mjs",
     "seed:agent": "npx tsx scripts/seed-testdata.ts --lane=agent --yes",
     "seed:reset": "npx tsx scripts/seed-testdata.ts --all --yes",
     "seed:docs": "npx tsx scripts/seed-testdata.ts --docs-only"

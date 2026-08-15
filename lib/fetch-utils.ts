@@ -8,7 +8,6 @@
  * - Request cancellation support
  */
 
-import { isApiError } from './api-error';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 export interface FetchOptions extends RequestInit {
@@ -23,8 +22,6 @@ export interface FetchOptions extends RequestInit {
 
 export interface FetchError extends Error {
   status?: number;
-  code?: string;
-  details?: Record<string, unknown>;
 }
 
 /**
@@ -132,19 +129,13 @@ export async function fetchJSON<T = unknown>(url: string, options: FetchOptions 
     throw new Error(`Failed to parse JSON response: ${error}`);
   }
 
-  // Handle API errors
+  // Handle API errors — flacher `{ error: string }`-Vertrag (lib/api-auth.ts).
+  // `extractErrorMessage` versteht string, { error }, { message }, { error: { message } }.
   if (!response.ok) {
-    if (isApiError(data)) {
-      const error: FetchError = new Error(data.error.message);
-      error.status = response.status;
-      error.code = data.error.code;
-      error.details = data.error.details;
-      throw error;
-    }
-
-    // Fallback for non-standardized errors
-    const errorMessage = extractErrorMessage(data) || `HTTP ${response.status}`;
-    throw new Error(errorMessage);
+    const message = extractErrorMessage(data) || `HTTP ${response.status}`;
+    const error: FetchError = new Error(message);
+    error.status = response.status;
+    throw error;
   }
 
   return data as T;

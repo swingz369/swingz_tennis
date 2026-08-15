@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
+import { apiFetch } from '@/lib/api-fetch';
 
 export function useCurrentUser() {
   return useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
-      const res = await fetch('/api/user/me', { credentials: 'include' });
+      const res = await apiFetch('/api/user/me', { credentials: 'include' });
       if (!res.ok) {
         if (res.status === 401) return null;
-        throw new Error('Failed to fetch current user');
+        throw new Error('Nutzerdaten konnten nicht geladen werden');
       }
       return res.json();
     },

@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { format, parseISO } from 'date-fns';
-import { de } from '@/lib/locale';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +50,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
+import { formatDate, formatDateLong } from '@/lib/format';
 import type {
   TrainerProfile,
   TrainerAvailabilitySlot,
@@ -548,7 +547,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
       <nav className="mb-4 flex items-center gap-1.5 text-sm">
         <Link
           href="/admin/trainers"
-          className="inline-flex items-center gap-1 text-muted-foreground hover:text-brand-primary transition-colors"
+          className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Trainer
@@ -591,31 +590,31 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
             <TabsList className="w-full justify-start bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b rounded-none px-0 gap-6 overflow-x-auto sticky top-0 z-20">
               <TabsTrigger
                 value="profile"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Profil
               </TabsTrigger>
               <TabsTrigger
                 value="qualifications"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Qualifikationen ({trainer.qualifications.length})
               </TabsTrigger>
               <TabsTrigger
                 value="experience"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Erfahrung
               </TabsTrigger>
               <TabsTrigger
                 value="availability"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Verfügbarkeit ({weeklySlots.length + availabilitySlots.length})
               </TabsTrigger>
               <TabsTrigger
                 value="trials"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Probetrainings ({trialTrainings.length})
               </TabsTrigger>
@@ -626,7 +625,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <User className="h-4 w-4 text-brand-primary" />
+                    <User className="h-4 w-4 text-primary" />
                     Persönliche Informationen
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -685,13 +684,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                           }
                         />
                       ) : (
-                        <div className="font-medium">
-                          {trainer.dateOfBirth
-                            ? format(parseISO(trainer.dateOfBirth), 'dd. MMMM yyyy', {
-                                locale: de,
-                              })
-                            : '—'}
-                        </div>
+                        <div className="font-medium">{formatDateLong(trainer.dateOfBirth)}</div>
                       )}
                     </div>
                     <div className="md:col-span-2 space-y-1.5">
@@ -871,7 +864,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
-                    <Globe className="h-4 w-4 text-brand-primary" />
+                    <Globe className="h-4 w-4 text-primary" />
                     Sprachen
                   </h3>
                   <div className="flex flex-wrap gap-2">
@@ -925,18 +918,18 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                             </div>
                             <div>
                               <span className="font-medium text-foreground">Ausgestellt:</span>{' '}
-                              {format(parseISO(qual.issuedDate), 'dd. MMMM yyyy', { locale: de })}
+                              {formatDateLong(qual.issuedDate)}
                             </div>
                             {qual.expiryDate && (
                               <div>
                                 <span className="font-medium text-foreground">Gültig bis:</span>{' '}
-                                {format(parseISO(qual.expiryDate), 'dd. MMMM yyyy', { locale: de })}
+                                {formatDateLong(qual.expiryDate)}
                               </div>
                             )}
                             {qual.verifiedAt && (
                               <div>
                                 <span className="font-medium text-foreground">Verifiziert am:</span>{' '}
-                                {format(parseISO(qual.verifiedAt), 'dd. MMMM yyyy', { locale: de })}
+                                {formatDateLong(qual.verifiedAt)}
                               </div>
                             )}
                           </div>
@@ -984,7 +977,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
             {/* ── Experience Tab ───────────────────────────────────────── */}
             <TabsContent value="experience" className="space-y-5 animate-in">
               <h3 className="text-lg font-bold flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-brand-primary" />
+                <Briefcase className="h-5 w-5 text-primary" />
                 Berufserfahrung
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1061,7 +1054,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-semibold flex items-center gap-2 text-base">
-                      <Calendar className="h-4 w-4 text-brand-primary" />
+                      <Calendar className="h-4 w-4 text-primary" />
                       Reguläre Wochenverfügbarkeit
                     </h3>
                     <div className="flex items-center gap-1">
@@ -1098,9 +1091,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                         if (daySlots.length === 0) return null;
                         return (
                           <div key={day.value} className="border rounded-xl p-3">
-                            <h4 className="font-semibold text-sm text-brand-primary mb-2">
-                              {day.label}
-                            </h4>
+                            <h4 className="font-semibold text-sm text-primary mb-2">{day.label}</h4>
                             <div className="space-y-2">
                               {daySlots.map((slot) => (
                                 <div
@@ -1279,9 +1270,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium text-xs truncate">
-                              {format(parseISO(slot.date), 'dd. MMM yyyy', { locale: de })}
-                            </p>
+                            <p className="font-medium text-xs truncate">{formatDate(slot.date)}</p>
                             <p className="text-xs text-muted-foreground">
                               {slot.startTime} - {slot.endTime}
                               <span className="ml-2 capitalize">({slot.status})</span>
@@ -1475,10 +1464,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                               <div className="flex items-center gap-4 text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <Calendar className="h-3.5 w-3.5" />
-                                  {format(parseISO(trial.scheduledDate), 'dd. MMMM yyyy', {
-                                    locale: de,
-                                  })}{' '}
-                                  um {trial.scheduledTime} Uhr
+                                  {formatDateLong(trial.scheduledDate)} um {trial.scheduledTime} Uhr
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <Clock className="h-3.5 w-3.5" />

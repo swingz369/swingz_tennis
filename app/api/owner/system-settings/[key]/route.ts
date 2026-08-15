@@ -22,6 +22,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
+import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:owner:system-settings');
@@ -119,7 +120,7 @@ function validate(value: unknown, s: Setting): string | null {
 export async function PATCH(request: NextRequest, ctx: { params: Promise<{ key: string }> }) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'owner'))) {
-      return forbiddenResponse('Owner access required');
+      return forbiddenResponse('Zugriff nur für den Plattformbetreiber');
     }
 
     const { key } = await ctx.params;
@@ -199,19 +200,20 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ key: 
       return NextResponse.json({ error: 'Update fehlgeschlagen' }, { status: 500 });
     }
 
-    await sb.from('audit_logs').insert({
-      actor_id: auth.user.id,
+    await logAudit({
+      actorId: auth.user.id,
       action: 'update',
-      resource_type: 'system_settings',
-      resource_id: setting.id,
+      resourceType: 'system_settings',
+      resourceId: setting.id,
+      // Plattformweite Einstellung — bewusst ohne club_id (nur Owner-sichtbar).
+      clubId: null,
       details: {
         kind: 'system_setting_update',
         setting_key: key,
         value_was: setting.value,
         value_now: newValue,
       },
-      ip_address: request.headers.get('x-forwarded-for') ?? null,
-      user_agent: request.headers.get('user-agent') ?? null,
+      request,
     });
 
     log.info('System setting updated by owner', { actor: auth.user.id, key });

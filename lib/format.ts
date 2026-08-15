@@ -46,6 +46,15 @@ const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('de-DE', {
   timeZone: TIME_ZONE,
 });
 
+// "6. Oktober 2026" — ausgeschriebener Monat ohne Wochentag, für Detailseiten
+// (Geburtsdatum, Zertifikatsdaten), wo das Datum einzeln steht statt in einer Liste.
+const LONG_DATE_FORMATTER = new Intl.DateTimeFormat('de-DE', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: TIME_ZONE,
+});
+
 const MONTH_YEAR_FORMATTER = new Intl.DateTimeFormat('de-DE', {
   month: 'long',
   year: 'numeric',
@@ -108,6 +117,16 @@ export function formatDateTime(value: string | Date | null | undefined): string 
   if (!value) return '—';
   try {
     return DATE_TIME_FORMATTER.format(new Date(value));
+  } catch {
+    return '—';
+  }
+}
+
+/** Format with written-out month (e.g., "1. Januar 2024") */
+export function formatDateLong(value: string | Date | null | undefined): string {
+  if (!value) return '—';
+  try {
+    return LONG_DATE_FORMATTER.format(new Date(value));
   } catch {
     return '—';
   }

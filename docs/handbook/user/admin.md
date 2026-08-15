@@ -148,7 +148,19 @@ if (!(await isFeatureEnabled(clubId, 'dynamic_pricing'))) skip;
 
 - `/admin/tournaments` — Turnier-Erstellung, Anmeldungen, Spielpläne
 - `/admin/leagues` — Liga-Verwaltung (nuLiga-Sync)
-- `/admin/leagues/[id]` — Mannschaftsaufstellung
+- `/admin/leagues/[id]` — Tabs: Teams, Spieltage, Kader, Tabelle, Bewirtung
+
+**Liga mit nuLiga verbinden:** In den Liga-Einstellungen die **Mannschaftsseite**
+hinterlegen — also die nuLiga-Seite der eigenen Mannschaft („Mannschaftsportrait",
+URL enthält `/wa/teamPortrait`). Aus dieser einen Adresse holt der Sync die eigenen
+Spieltermine, den Kader mit LK (per DTB-ID den Mitgliedern zugeordnet) und über
+den Liga-Link die Tabelle. Wer stattdessen die Gruppenseite (`/wa/groupPage`)
+einträgt, muss zusätzlich „Eigene Mannschaft" exakt so ausfüllen, wie der Name in
+der nuLiga-Tabelle steht — sonst wird nur die Tabelle übernommen, nicht der
+Spielplan.
+
+Bei einem Heimspieltag lassen sich über den Button „Plätze" alle aktiven Plätze
+für diesen Tag sperren; das Löschen des Spieltags gibt sie automatisch wieder frei.
 
 ### Analytics (`/admin/analytics*`)
 

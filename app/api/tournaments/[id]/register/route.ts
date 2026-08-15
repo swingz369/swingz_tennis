@@ -11,7 +11,7 @@ const log = createLogger('api:tournaments:[id]:register');
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
-    if (!hasPermission) return forbiddenResponse('Authentication required');
+    if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
     const { supabase, user } = auth;
     const { id: tournamentId } = await params;

@@ -388,7 +388,7 @@ export function CustomizableDashboard({
                 size="sm"
                 onClick={() => savePreferences(layout)}
                 disabled={!hasChanges || isSaving}
-                className="text-xs bg-brand-primary hover:bg-brand-dark text-white"
+                className="text-xs bg-primary hover:bg-brand-dark text-white"
               >
                 {isSaving ? (
                   <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
