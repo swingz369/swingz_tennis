@@ -118,15 +118,21 @@ Service-Client erreichbar. → **Fix:** Policies definieren oder bewusst dokumen
   Code-Bezeichnern trennen — keine pauschale Ersetzung.
   → Quelle: `docs/ARCHIV/2026-08-13-nav-workflow-audit.md`.
 - **`/gamification` verschleiert einen 403** als „0 Punkte / 0 Badges" statt zu sagen, dass das
-  Modul nicht aktiviert ist (Fail-open-Darstellung).
+  Modul nicht aktiviert ist (Fail-open-Darstellung). ✅ **Erledigt 15.08.2026** — das Dashboard
+  prüft jetzt `res.ok` und zeigt bei deaktiviertem Modul einen klaren Hinweis statt Nullen.
   → Quelle: `docs/ARCHIV/2026-08-13-nav-workflow-audit.md`.
 - **`/news`** (Command-Palette) landet auf `/messages` — Eintrag ohne eigenes Ziel.
+  ✅ **Erledigt 15.08.2026** — redundanter Palette-Eintrag entfernt (`/messages` ist bereits
+  verlinkt).
   → Quelle: `docs/ARCHIV/2026-08-13-nav-workflow-audit.md`.
 - **Mitglieder-CSV-Import liegt in `/admin/settings`**, nicht in der Mitgliederverwaltung —
-  dort gibt es nur „Export CSV". → Dialog zusätzlich auf `/admin/members` einhängen.
+  dort gibt es nur „Export CSV". ✅ **Erledigt 15.08.2026** — `MemberImportDialog` jetzt auch
+  in der Mitgliederverwaltung (`/admin/members`) eingehängt.
   → Quelle: `docs/ARCHIV/2026-08-13-ui-klickweg-kernfunktionen.md`.
 - **Widersprüchliche Aussage im „Rechnungen generieren"-Dialog:** Warnhinweis „Keine aktive
   Mitgliedsgebühr konfiguriert" **und** aktiver Button „1 Rechnung erstellen".
+  ✅ **Erledigt 15.08.2026** — Button ist bereits deaktiviert; Label zeigt jetzt ehrlich
+  „Keine Gebühr konfiguriert" statt einer Rechnungsanzahl.
   → Quelle: `docs/ARCHIV/2026-08-13-ui-klickweg-kernfunktionen.md`.
 - **Playwright-Matrix verkleinern.** ✅ **Erledigt 13.08.2026** — Standardlauf
   `pnpm test:e2e` = chromium + mobile-chrome, Vollmatrix über `pnpm test:e2e:full`.

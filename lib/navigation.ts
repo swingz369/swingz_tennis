@@ -25,7 +25,6 @@ import {
   Landmark,
   MapPin,
   MessageSquare,
-  Newspaper,
   ScrollText,
   Search,
   Settings,
@@ -403,7 +402,8 @@ export function paletteNavItems(hidden: Hidden = new Set()): NavItem[] {
     { name: 'Mein Trainingsplan', href: '/training-schedule', icon: ClipboardCheck },
     { name: 'Platzkalender', href: '/scheduler', icon: Calendar },
     { name: 'Benachrichtigungen', href: '/notifications', icon: Bell },
-    { name: 'News', href: '/news', icon: Newspaper },
+    // /news leitet nur auf /messages weiter (News & Nachrichten wurden
+    // zusammengeführt) — kein eigener Palette-Eintrag mehr nötig.
     { name: 'Erweiterte Suche', href: '/search', icon: Search },
     // Ohne dieses Gate bot die Palette Gamification auch Vereinen an, die das
     // Modul nicht gebucht haben — dort antwortet die Seite mit 403.

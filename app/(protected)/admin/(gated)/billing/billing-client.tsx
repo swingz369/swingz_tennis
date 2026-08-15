@@ -915,7 +915,9 @@ export default function BillingClient({
               <Sparkles className="h-4 w-4 mr-2" />
             )}
             {previewData
-              ? `${previewData.members.length - previewExcluded.size} Rechnung${previewData.members.length - previewExcluded.size !== 1 ? 'en' : ''} erstellen`
+              ? previewData.warning === 'NO_FEE_CONFIGURED'
+                ? 'Keine Gebühr konfiguriert'
+                : `${previewData.members.length - previewExcluded.size} Rechnung${previewData.members.length - previewExcluded.size !== 1 ? 'en' : ''} erstellen`
               : 'Generieren'}
           </Button>
         </div>

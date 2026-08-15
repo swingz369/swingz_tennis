@@ -30,11 +30,22 @@ export default function GamificationDashboard() {
   const [badges, setBadges] = useState<Badge_[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [streak, setStreak] = useState(0);
+  const [disabled, setDisabled] = useState(false);
 
   useEffect(() => {
     apiFetch('/api/gamification')
-      .then((r) => r.json())
+      .then((r) => {
+        // 403 = Feature-Flag deaktiviert (`featureDisabledResponse`). Nicht
+        // als „0 Punkte / 0 Badges“ verschleiern (Fail-open-Darstellung),
+        // sondern ehrlich anzeigen, dass das Modul nicht gebucht ist.
+        if (!r.ok) {
+          setDisabled(true);
+          return null;
+        }
+        return r.json();
+      })
       .then((data) => {
+        if (!data) return;
         setPoints(data.points || 0);
         setBadges(data.badges || []);
         setLeaderboard(data.leaderboard || []);
@@ -53,6 +64,22 @@ export default function GamificationDashboard() {
     return (
       <div className="flex items-center justify-center min-h-[40vh]">
         <Loader2 className="h-8 w-8 animate-spin text-brand-light" />
+      </div>
+    );
+  }
+
+  if (disabled) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-2xl font-bold text-primary">Dein Fortschritt</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Punkte, Badges & Rangliste</p>
+        </div>
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            Das Gamification-Modul ist für deinen Verein nicht aktiviert.
+          </CardContent>
+        </Card>
       </div>
     );
   }
