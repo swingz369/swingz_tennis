@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useMemo, useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -123,7 +124,7 @@ export function DecisionsClient({ initialDecisions, initialVotes, initialInvitat
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error ?? 'Fehler beim Anlegen');
+        toast.error(extractErrorMessage(err) ?? 'Fehler beim Anlegen');
         return;
       }
       const created = (await res.json()) as BoardDecision;

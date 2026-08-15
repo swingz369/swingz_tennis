@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -177,7 +178,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Fehler beim Einladen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) ?? 'Fehler beim Einladen');
       showInviteResult(data, 'Trainer erfolgreich eingeladen');
       setShowInviteForm(false);
       setInviteEmail('');
@@ -206,7 +207,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? 'Fehler beim Ändern des Status');
+        throw new Error(extractErrorMessage(err) ?? 'Fehler beim Ändern des Status');
       }
       setTrainers((prev) =>
         prev.map((t) => (t.id === trainerId ? { ...t, status: newStatus } : t))
@@ -294,7 +295,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
           }).then(async (res) => {
             if (!res.ok) {
               const err = await res.json().catch(() => ({}));
-              throw new Error(err.error ?? `HTTP ${res.status}`);
+              throw new Error(extractErrorMessage(err) ?? `HTTP ${res.status}`);
             }
             return id;
           })

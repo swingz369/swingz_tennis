@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
@@ -52,7 +53,8 @@ export default function SeasonPreferencesPage({ params }: PreferencesPageProps) 
       try {
         const res = await apiFetch(`/api/seasons/${seasonId}/preferences`);
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? 'Fehler beim Laden der Präferenzen');
+        if (!res.ok)
+          throw new Error(extractErrorMessage(data) ?? 'Fehler beim Laden der Präferenzen');
         if (!cancelled) setPreferences(data.preferences ?? []);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Unbekannter Fehler');

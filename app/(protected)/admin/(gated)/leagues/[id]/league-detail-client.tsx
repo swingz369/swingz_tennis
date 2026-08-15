@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
@@ -230,7 +231,7 @@ export default function LeagueDetailClient({
     try {
       const res = await apiFetch(`/api/leagues/${leagueId}/teams/${teamId}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Löschen fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Löschen fehlgeschlagen');
       toast.success('Team gelöscht');
       fetchLeague();
     } catch (err) {
@@ -251,7 +252,7 @@ export default function LeagueDetailClient({
           toast.error('Mitglied ist bereits im Team');
           return;
         }
-        throw new Error(err.error || 'Failed');
+        throw new Error(extractErrorMessage(err) || 'Failed');
       }
       toast.success('Mitglied hinzugefügt');
       setMemberSearch('');
@@ -332,7 +333,7 @@ export default function LeagueDetailClient({
         method: 'DELETE',
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Löschen fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Löschen fehlgeschlagen');
       toast.success('Spieltag gelöscht');
       fetchLeague();
     } catch (err) {
@@ -359,7 +360,7 @@ export default function LeagueDetailClient({
         body: JSON.stringify({ nuliga_url: nuligaUrl }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Sync fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Sync fehlgeschlagen');
 
       setSyncResult(data);
       const parts: string[] = [];
@@ -400,7 +401,7 @@ export default function LeagueDetailClient({
         body: JSON.stringify({ nuliga_roster_url: rosterUrl }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Abruf fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Abruf fehlgeschlagen');
       toast.success(
         `${data.imported} Spieler übernommen, ${data.linked} davon einem Mitglied zugeordnet`
       );
@@ -420,7 +421,7 @@ export default function LeagueDetailClient({
         body: JSON.stringify({ player_id: playerId, member_id: memberId }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Zuordnung fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Zuordnung fehlgeschlagen');
       toast.success(memberId ? 'Mitglied zugeordnet' : 'Zuordnung entfernt');
       fetchLeague();
     } catch (err) {
@@ -438,7 +439,7 @@ export default function LeagueDetailClient({
         body: blocked ? undefined : JSON.stringify({ notify_members: true }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Fehlgeschlagen');
       toast.success(blocked ? 'Platzsperre aufgehoben' : `${data.created} Plätze gesperrt`);
       fetchLeague();
     } catch (err) {
@@ -493,7 +494,7 @@ export default function LeagueDetailClient({
         body: JSON.stringify({ csv: importCsv }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Import fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Import fehlgeschlagen');
 
       const parts = [] as string[];
       if (data.created > 0) parts.push(`${data.created} neue Spieltage`);

@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
@@ -122,7 +123,7 @@ export function FinalizeStep() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `Server-Fehler (${res.status})`);
+        throw new Error(extractErrorMessage(data) || `Server-Fehler (${res.status})`);
       }
       await detectConflicts();
     } catch (err) {
@@ -164,7 +165,8 @@ export function FinalizeStep() {
       apiFetch(`/api/seasons/${state.seasonId}/billing`)
         .then((res) => res.json())
         .then((data) => {
-          if (data.error) throw new Error(data.error);
+          const msg = extractErrorMessage(data);
+          if (msg) throw new Error(msg);
           setBillingPreview(data);
         })
         .catch((err) => {
@@ -190,7 +192,7 @@ export function FinalizeStep() {
           `${created} Rechnung(en) erstellt${skipped > 0 ? `, ${skipped} bereits vorhanden` : ''}`
         );
       } else {
-        toast.error(data.error ?? 'Fehler beim Erstellen der Rechnungen');
+        toast.error(extractErrorMessage(data) ?? 'Fehler beim Erstellen der Rechnungen');
       }
     } catch {
       toast.error('Netzwerkfehler');

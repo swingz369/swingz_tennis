@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -84,7 +85,7 @@ export function TrainerAvailabilityPanel() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error ?? 'Erinnerung fehlgeschlagen');
+        toast.error(extractErrorMessage(err) ?? 'Erinnerung fehlgeschlagen');
       } else {
         const data = await res.json();
         toast.success(`${data.sent ?? 0} Trainer erinnert`);

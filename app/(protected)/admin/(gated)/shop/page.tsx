@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
@@ -240,7 +241,7 @@ export default function AdminShopPage() {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Aktualisieren');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Aktualisieren');
       }
       toast.success(`Bestellung auf „${STATUS_LABELS[newStatus]}“ gesetzt`);
       fetchOrders(orderStatusFilter, ordersPage);
@@ -321,7 +322,7 @@ export default function AdminShopPage() {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Upload fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) || 'Upload fehlgeschlagen');
       }
 
       const data = await res.json();
@@ -363,7 +364,7 @@ export default function AdminShopPage() {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Speichern');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Speichern');
       }
 
       toast.success(editId ? 'Produkt aktualisiert' : 'Produkt erstellt');
@@ -386,7 +387,7 @@ export default function AdminShopPage() {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Löschen');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Löschen');
       }
       toast.success('Produkt gelöscht');
       setDeleteId(null);

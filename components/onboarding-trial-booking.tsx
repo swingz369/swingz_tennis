@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -139,7 +140,7 @@ export default function OnboardingTrialBooking({
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Buchung fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Buchung fehlgeschlagen');
 
       setSuccess(true);
     } catch (err: unknown) {

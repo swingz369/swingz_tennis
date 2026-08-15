@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -120,7 +121,7 @@ export function SubstituteTrainerPanel() {
         }
       } else {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error || 'Fehler beim Hinzufügen');
+        toast.error(extractErrorMessage(err) || 'Fehler beim Hinzufügen');
       }
     } catch {
       toast.error('Netzwerkfehler');

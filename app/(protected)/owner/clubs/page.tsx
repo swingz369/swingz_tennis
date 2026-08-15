@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
@@ -89,7 +90,7 @@ export default function OwnerClubsPage() {
       const res = await apiFetch(`/api/clubs/${deleteClubId}`, { method: 'DELETE' });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        toast.error(data.error || 'Fehler beim Löschen');
+        toast.error(extractErrorMessage(data) || 'Fehler beim Löschen');
         return;
       }
       toast.success('Verein gelöscht — über „Wiederherstellen" rückgängig machbar');
@@ -109,7 +110,7 @@ export default function OwnerClubsPage() {
       const res = await apiFetch(`/api/clubs/${clubId}/restore`, { method: 'POST' });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        toast.error(data.error || 'Fehler beim Wiederherstellen');
+        toast.error(extractErrorMessage(data) || 'Fehler beim Wiederherstellen');
         return;
       }
       toast.success('Verein wiederhergestellt');
@@ -144,7 +145,7 @@ export default function OwnerClubsPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? 'Fehler');
+        toast.error(extractErrorMessage(data) ?? 'Fehler');
         return;
       }
       toast.success(`Verein "${data.name}" angelegt`);
@@ -169,7 +170,7 @@ export default function OwnerClubsPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? 'Fehler');
+        toast.error(extractErrorMessage(data) ?? 'Fehler');
         return;
       }
       showInviteResult(data, `Einladung an ${inviteEmail} verschickt`);

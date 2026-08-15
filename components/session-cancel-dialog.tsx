@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -47,7 +48,7 @@ export function SessionCancelDialog({
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error ?? 'Absage fehlgeschlagen');
+        toast.error(extractErrorMessage(data) ?? 'Absage fehlgeschlagen');
         return;
       }
 

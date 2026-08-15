@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -66,7 +67,7 @@ function ShopContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Checkout fehlgeschlagen');
+        throw new Error(extractErrorMessage(data) || 'Checkout fehlgeschlagen');
       }
 
       if (data.url) {

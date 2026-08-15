@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -260,7 +261,7 @@ export default function AdminTrialApprovals() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Konvertierung fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) ?? 'Konvertierung fehlgeschlagen');
       setConvertedIds((prev) => new Set(prev).add(convertId));
       setConvertId(null);
     } catch (err: unknown) {

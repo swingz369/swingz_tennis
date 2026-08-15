@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
@@ -223,7 +224,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Erstellen');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Erstellen');
       }
       toast.success('Preisregel erstellt');
       setShowForm(null);
@@ -263,7 +264,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Aktualisieren');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Aktualisieren');
       }
       toast.success('Preisregel aktualisiert');
       setShowForm(null);

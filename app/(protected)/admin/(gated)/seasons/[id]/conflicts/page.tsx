@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
@@ -37,7 +38,7 @@ export default function ConflictsPage({ params }: { params: Promise<{ id: string
       const res = await apiFetch(`/api/seasons/${seasonId}/planning/conflicts`, { method: 'POST' });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Fehler beim Laden der Konflikte');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Laden der Konflikte');
       }
       setData(await res.json());
       setError(null);
@@ -69,7 +70,7 @@ export default function ConflictsPage({ params }: { params: Promise<{ id: string
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error || 'Fehler beim Aktualisieren');
+        toast.error(extractErrorMessage(err) || 'Fehler beim Aktualisieren');
         return;
       }
       toast.success('Konflikt ignoriert');

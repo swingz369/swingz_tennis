@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/api-fetch';
@@ -105,7 +106,7 @@ export function usePushNotifications(): PushSubscriptionState {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        console.error('[Push] Server subscribe failed:', err.error);
+        console.error('[Push] Server subscribe failed:', extractErrorMessage(err));
         return false;
       }
 

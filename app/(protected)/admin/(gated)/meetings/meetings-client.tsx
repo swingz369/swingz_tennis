@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Calendar, MapPin, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -53,7 +54,7 @@ export function MeetingsClient() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? 'Fehler');
+        toast.error(extractErrorMessage(data) ?? 'Fehler');
         return;
       }
       setMeetings((prev) => [data.meeting, ...prev]);

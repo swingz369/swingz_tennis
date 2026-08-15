@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -100,7 +101,7 @@ export default function HoursLogsClient() {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler bei der Genehmigung');
+        throw new Error(extractErrorMessage(err) || 'Fehler bei der Genehmigung');
       }
       toast.success('Stundennachweis genehmigt');
       fetchHoursLogs();
@@ -124,7 +125,7 @@ export default function HoursLogsClient() {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler bei der Ablehnung');
+        throw new Error(extractErrorMessage(err) || 'Fehler bei der Ablehnung');
       }
       toast.success('Stundennachweis abgelehnt');
       setRejectId(null);
@@ -146,7 +147,7 @@ export default function HoursLogsClient() {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Löschen');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Löschen');
       }
       toast.success('Stundennachweis gelöscht');
       setDeleteId(null);

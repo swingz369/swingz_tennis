@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -35,7 +36,7 @@ export function SubscribeButton({
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? 'Fehler beim Starten des Checkouts');
+        toast.error(extractErrorMessage(data) ?? 'Fehler beim Starten des Checkouts');
         return;
       }
       if (data.url) {
@@ -73,7 +74,7 @@ export function PortalButton() {
       const res = await apiFetch('/api/stripe/portal');
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? 'Fehler beim Öffnen des Kundenportals');
+        toast.error(extractErrorMessage(data) ?? 'Fehler beim Öffnen des Kundenportals');
         return;
       }
       if (data.url) router.push(data.url);

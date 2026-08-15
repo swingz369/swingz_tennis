@@ -1,3 +1,4 @@
+import { extractErrorMessage } from '@/lib/typed-helpers';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { QUERY_KEYS, STALE_TIMES } from '@/lib/cache';
@@ -30,7 +31,7 @@ export function useSchedule(clubId: string) {
       const res = await apiFetch(`/api/schedule?clubId=${clubId}`, { credentials: 'include' });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Trainingsplan konnte nicht geladen werden');
+        throw new Error(extractErrorMessage(err) || 'Trainingsplan konnte nicht geladen werden');
       }
       return res.json() as Promise<ScheduleData>;
     },

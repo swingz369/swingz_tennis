@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -90,7 +91,7 @@ export function TrainerBillingTab() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Aktion fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) || 'Aktion fehlgeschlagen');
       }
       const data = await res.json().catch(() => ({}));
       setBillings((prev) =>

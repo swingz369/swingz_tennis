@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -77,7 +78,7 @@ export function InactiveWeeksPanel() {
         setChanged(false);
       } else {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error || 'Fehler beim Speichern');
+        toast.error(extractErrorMessage(err) || 'Fehler beim Speichern');
       }
     } catch {
       toast.error('Netzwerkfehler');

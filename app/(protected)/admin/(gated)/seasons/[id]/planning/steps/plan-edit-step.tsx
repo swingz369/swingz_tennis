@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import ScheduleGrid from '@/lib/season-planning/schedule-grid';
@@ -83,7 +84,7 @@ function PlanVersionsPanel({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        toast.error(data.error ?? 'Stand konnte nicht gesichert werden');
+        toast.error(extractErrorMessage(data) ?? 'Stand konnte nicht gesichert werden');
         return;
       }
       toast.success(`Planstand „${data.version?.label}" gesichert`);
@@ -103,7 +104,7 @@ function PlanVersionsPanel({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        toast.error(data.error ?? 'Wiederherstellen fehlgeschlagen');
+        toast.error(extractErrorMessage(data) ?? 'Wiederherstellen fehlgeschlagen');
         return;
       }
       onRestore(data.slots ?? []);
@@ -344,7 +345,7 @@ export function PlanEditStep() {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          toast.error(data.error ?? 'Nachrücken fehlgeschlagen');
+          toast.error(extractErrorMessage(data) ?? 'Nachrücken fehlgeschlagen');
           return;
         }
         toast.success('Mitglied in die Gruppe aufgenommen');

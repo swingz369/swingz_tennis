@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -176,7 +177,7 @@ export default function SEPAMandateSigning() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Fehler beim Speichern');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Speichern');
       }
 
       setIsSigned(true);

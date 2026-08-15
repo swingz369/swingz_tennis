@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -30,7 +31,7 @@ export default function ForgotPasswordPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Anfrage fehlgeschlagen');
+        throw new Error(extractErrorMessage(data) || 'Anfrage fehlgeschlagen');
       }
 
       setSubmitted(true);

@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { CenteredModal } from '@/components/ui/centered-modal';
@@ -246,7 +247,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error ?? 'Benachrichtigung fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) ?? 'Benachrichtigung fehlgeschlagen');
       }
       const data = await res.json();
       toast.success(
@@ -284,7 +285,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler bei Rollenänderung');
+        throw new Error(extractErrorMessage(err) || 'Fehler bei Rollenänderung');
       }
 
       setMember((prev) => ({ ...prev, role: newRole }));
@@ -316,7 +317,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler');
+        throw new Error(extractErrorMessage(err) || 'Fehler');
       }
 
       setMember((prev) => ({ ...prev, is_active: !prev.is_active }));
@@ -339,7 +340,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Speichern');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Speichern');
       }
       setMember((prev) => ({ ...prev, joined_at: newDate }));
       toast.success('Beitrittsdatum aktualisiert');
@@ -373,7 +374,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Speichern');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Speichern');
       }
 
       setMember((prev) => ({

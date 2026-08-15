@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -811,7 +812,7 @@ function DeleteAccountSection() {
       const response = await apiFetch('/api/user/delete', { method: 'DELETE' });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        alert(data.error ?? 'Löschung fehlgeschlagen');
+        alert(extractErrorMessage(data) ?? 'Löschung fehlgeschlagen');
         setIsDeleting(false);
         return;
       }

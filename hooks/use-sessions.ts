@@ -1,3 +1,4 @@
+import { extractErrorMessage } from '@/lib/typed-helpers';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { QUERY_KEYS, STALE_TIMES } from '@/lib/cache';
@@ -95,7 +96,7 @@ export function useCreateBooking() {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Buchung fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) || 'Buchung fehlgeschlagen');
       }
 
       return res.json();
@@ -198,7 +199,7 @@ export function useCancelBooking() {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Stornierung fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) || 'Stornierung fehlgeschlagen');
       }
 
       return res.json();
@@ -269,7 +270,7 @@ export function useJoinWaitlist() {
         credentials: 'include',
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Warteliste fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Warteliste fehlgeschlagen');
       return data;
     },
     onSuccess: (_data, variables) => {
@@ -292,7 +293,7 @@ export function useLeaveWaitlist() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Warteliste verlassen fehlgeschlagen');
+        throw new Error(extractErrorMessage(data) || 'Warteliste verlassen fehlgeschlagen');
       }
       return res.json();
     },
@@ -326,7 +327,7 @@ export function useUpdateBookingStatus() {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Statusaktualisierung fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) || 'Statusaktualisierung fehlgeschlagen');
       }
 
       return res.json();

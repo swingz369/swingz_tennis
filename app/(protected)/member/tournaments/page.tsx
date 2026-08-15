@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useEffect, useState, useCallback } from 'react';
 import { Trophy, Calendar, Users, CheckCircle, Clock, Euro } from 'lucide-react';
@@ -90,7 +91,7 @@ export default function MemberTournamentsPage() {
         headers: { 'Content-Type': 'application/json' },
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Anmeldung fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) ?? 'Anmeldung fehlgeschlagen');
       setRegisterSuccess(confirmTournament.name);
       setConfirmTournament(null);
       await fetchTournaments();

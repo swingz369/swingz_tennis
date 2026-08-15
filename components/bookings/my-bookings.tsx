@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -108,7 +109,7 @@ export function MyBookings() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Stornierung fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) || 'Stornierung fehlgeschlagen');
       }
       setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status: 'cancelled' } : b)));
       toast.success('Buchung storniert');
@@ -128,7 +129,7 @@ export function MyBookings() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Anmeldung fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) || 'Anmeldung fehlgeschlagen');
       }
       setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status: 'confirmed' } : b)));
       toast.success('Du bist wieder angemeldet');

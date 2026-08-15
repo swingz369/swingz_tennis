@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -127,7 +128,7 @@ export default function TrainerHoursLogsPage() {
 
       if (!response.ok) {
         const err = await response.json();
-        throw new Error(err.error || 'Fehler beim Erstellen');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Erstellen');
       }
 
       toast.success('Stundennachweis erstellt');

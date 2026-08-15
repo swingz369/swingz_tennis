@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -54,7 +55,7 @@ export function RescheduleSessionDialog({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.details ?? data.error ?? 'Verschieben fehlgeschlagen');
+        setError(data.details ?? extractErrorMessage(data) ?? 'Verschieben fehlgeschlagen');
         return;
       }
       toast.success(data.message ?? 'Trainingszeit verschoben');

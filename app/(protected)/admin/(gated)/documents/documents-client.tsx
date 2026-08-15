@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 import { useState, useEffect, useRef } from 'react';
 import { Upload, Trash2, FileText, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -60,7 +61,7 @@ export function DocumentsClient() {
       const res = await apiFetch('/api/admin/documents', { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? 'Fehler');
+        toast.error(extractErrorMessage(data) ?? 'Fehler');
         return;
       }
       toast.success('Dokument hochgeladen');

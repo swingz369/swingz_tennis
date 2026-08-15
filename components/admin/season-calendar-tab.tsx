@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useEffect, useState } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -25,7 +26,7 @@ export function SeasonCalendarTab({ seasonId, clubId }: Props) {
         const res = await apiFetch(`/api/seasons/${seasonId}/calendar`);
         if (!res.ok) {
           const err = (await res.json().catch(() => ({}))) as { error?: string };
-          throw new Error(err.error ?? `HTTP ${res.status}`);
+          throw new Error(extractErrorMessage(err) ?? `HTTP ${res.status}`);
         }
         const json = (await res.json()) as { ok: boolean; data: SeasonCalendarData };
         if (!cancelled) {

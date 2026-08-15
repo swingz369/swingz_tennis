@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
@@ -99,7 +100,7 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Speichern');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Speichern');
       }
       toast.success('Saison gespeichert');
       router.push(`/admin/seasons/${id}`);
@@ -122,7 +123,7 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Löschen');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Löschen');
       }
       toast.success('Saison gelöscht');
       router.push('/admin/seasons');

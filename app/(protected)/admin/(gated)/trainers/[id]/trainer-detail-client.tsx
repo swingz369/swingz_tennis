@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -288,7 +289,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Speichern');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Speichern');
       }
       toast.success('Wöchentliche Verfügbarkeit hinzugefügt');
       setWeeklyDialogOpen(false);
@@ -339,7 +340,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Speichern');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Speichern');
       }
       toast.success('Verfügbarkeit hinzugefügt');
       setSlotDialogOpen(false);
@@ -380,7 +381,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Speichern');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Speichern');
       }
       toast.success('Abwesenheit erfolgreich eingetragen');
       setAbsenceDialogOpen(false);

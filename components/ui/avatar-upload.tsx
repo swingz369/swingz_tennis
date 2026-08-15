@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useRef, useCallback } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -80,7 +81,7 @@ export function AvatarUpload({
 
         if (!res.ok) {
           const data = await res.json();
-          throw new Error(data.error || 'Upload fehlgeschlagen');
+          throw new Error(extractErrorMessage(data) || 'Upload fehlgeschlagen');
         }
 
         const data = await res.json();
@@ -103,7 +104,7 @@ export function AvatarUpload({
       const res = await apiFetch('/api/avatar/upload', { method: 'DELETE' });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Löschen fehlgeschlagen');
+        throw new Error(extractErrorMessage(data) || 'Löschen fehlgeschlagen');
       }
       setCurrentUrl(null);
       onAvatarChange?.(null);

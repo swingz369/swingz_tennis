@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -192,7 +193,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Speichern');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Speichern');
       }
 
       toast.success('Präferenzen gespeichert');

@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -150,7 +151,7 @@ export default function AdminFamilyPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Fehler');
+        throw new Error(extractErrorMessage(data) || 'Fehler');
       }
       toast.success(dialogGroupId ? 'Mitglieder hinzugefügt' : 'Familiengruppe angelegt');
       setDialogOpen(false);

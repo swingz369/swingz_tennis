@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -838,7 +839,7 @@ function ComposeDialog({
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error ?? 'Fehler beim Senden');
+        throw new Error(extractErrorMessage(err) ?? 'Fehler beim Senden');
       }
 
       const data = await res.json();

@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
@@ -199,7 +200,7 @@ function CopyGroupsPanel({ seasonId, clubId }: { seasonId: string; clubId: strin
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? 'Fehler beim Kopieren der Gruppen');
+        toast.error(extractErrorMessage(data) ?? 'Fehler beim Kopieren der Gruppen');
         return;
       }
       toast.success(
@@ -337,7 +338,7 @@ export function ConfigStep({ aiAvailable = true }: { aiAvailable?: boolean }) {
         toast.success('Abrechnungseinstellungen gespeichert');
       } else {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error ?? 'Fehler beim Speichern');
+        toast.error(extractErrorMessage(err) ?? 'Fehler beim Speichern');
       }
     } catch {
       toast.error('Netzwerkfehler');

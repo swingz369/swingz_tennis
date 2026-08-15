@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -110,7 +111,7 @@ export default function LeaguesClient() {
         setDiscovered(null);
         return;
       }
-      if (!res.ok) throw new Error(data.error || 'Abruf fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Abruf fehlgeschlagen');
       setDiscovered(data.teams ?? []);
       // Vorauswahl: alles, was noch nicht angelegt ist — der Regelfall ist
       // „alle eigenen Mannschaften übernehmen".
@@ -139,7 +140,7 @@ export default function LeaguesClient() {
         body: JSON.stringify({ search: clubSearch.trim() }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Suche fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Suche fehlgeschlagen');
       setClubHits(data.clubs ?? []);
       if ((data.clubs ?? []).length === 0) toast.info('Kein Verein gefunden');
     } catch (err) {
@@ -174,7 +175,7 @@ export default function LeaguesClient() {
         body: JSON.stringify({ portraitUrls: Array.from(picked) }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Übernahme fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Übernahme fehlgeschlagen');
       toast.success(
         `${data.created} Mannschaft(en) übernommen${data.skipped ? `, ${data.skipped} bereits vorhanden` : ''}`
       );
@@ -205,7 +206,7 @@ export default function LeaguesClient() {
     try {
       const res = await apiFetch(`/api/leagues/${league.id}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Löschen fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Löschen fehlgeschlagen');
       toast.success('Liga gelöscht');
       fetchLeagues();
     } catch (err) {

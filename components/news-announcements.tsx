@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { format, parseISO } from 'date-fns';
@@ -148,7 +149,7 @@ export default function NewsAnnouncements({
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `Fehler ${res.status}`);
+        throw new Error(extractErrorMessage(err) || `Fehler ${res.status}`);
       }
 
       toast.success('Nachricht veröffentlicht');
@@ -169,7 +170,7 @@ export default function NewsAnnouncements({
       const res = await apiFetch(`/api/news/${id}`, { method: 'DELETE' });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `Fehler ${res.status}`);
+        throw new Error(extractErrorMessage(err) || `Fehler ${res.status}`);
       }
       toast.success('Nachricht gelöscht');
       setNews((prev) => prev.filter((n) => n.id !== id));

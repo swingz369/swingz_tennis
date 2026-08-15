@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
 import { UserPlus, Loader2, Send } from 'lucide-react';
@@ -24,7 +25,7 @@ export function SuperadminInviteForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? 'Fehler');
+        toast.error(extractErrorMessage(data) ?? 'Fehler');
         return;
       }
       toast.success(`Einladung an ${email} verschickt`);

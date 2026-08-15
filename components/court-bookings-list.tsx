@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useCallback, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
@@ -184,7 +185,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
       const res = await apiFetch(`/api/admin/bookings?${params.toString()}`);
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Failed to load bookings');
+        throw new Error(extractErrorMessage(err) || 'Failed to load bookings');
       }
       return res.json();
     },
@@ -246,7 +247,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
         });
         if (!res.ok) {
           const err = await res.json();
-          throw new Error(err.error || 'Aktion fehlgeschlagen');
+          throw new Error(extractErrorMessage(err) || 'Aktion fehlgeschlagen');
         }
         const labels: Record<string, string> = {
           cancel: 'Buchung storniert',

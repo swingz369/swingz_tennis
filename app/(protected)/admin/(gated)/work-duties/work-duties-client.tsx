@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -231,7 +232,7 @@ export default function WorkDutiesClient({
           toast.error('Mitglied bereits zugewiesen');
           return;
         }
-        throw new Error(err.error || 'Failed');
+        throw new Error(extractErrorMessage(err) || 'Failed');
       }
       toast.success('Mitglied zugewiesen');
       setMemberSearch('');
@@ -336,7 +337,7 @@ export default function WorkDutiesClient({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed');
+        throw new Error(extractErrorMessage(err) || 'Failed');
       }
       const data = await res.json();
       toast.success(`${data.created} Arbeitsdienste erstellt`);

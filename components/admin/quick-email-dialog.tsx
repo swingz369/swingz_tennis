@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
 import { Mail } from 'lucide-react';
@@ -49,7 +50,7 @@ export function QuickEmailDialog({
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || 'E-Mail konnte nicht gesendet werden');
+        toast.error(extractErrorMessage(data) || 'E-Mail konnte nicht gesendet werden');
         return;
       }
       toast.success(`E-Mail an ${recipientName} gesendet`);

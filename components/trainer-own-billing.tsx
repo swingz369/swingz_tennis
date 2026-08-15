@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,7 +55,7 @@ export function TrainerOwnBilling() {
         const data = await res.json();
         if (cancelled) return;
         if (!res.ok) {
-          setError(data.error ?? 'Abrechnung konnte nicht geladen werden.');
+          setError(extractErrorMessage(data) ?? 'Abrechnung konnte nicht geladen werden.');
           return;
         }
         setBillings(data.trainerBillings ?? []);

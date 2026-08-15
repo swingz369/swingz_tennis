@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 /**
  * 1.3.3 — Krisenfall-Button: nuLiga CSV-Import
@@ -54,7 +55,7 @@ export function NuligaImport({ leagueId, teamName = '' }: Props) {
         error?: string;
       };
       if (!r.ok) {
-        toast.error(data.error ?? 'Import fehlgeschlagen');
+        toast.error(extractErrorMessage(data) ?? 'Import fehlgeschlagen');
         return;
       }
       toast.success(

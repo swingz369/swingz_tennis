@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 /**
  * TrainerMemberNote
@@ -83,7 +84,7 @@ export function TrainerMemberNote({ memberId, memberName, className }: Props) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error ?? 'Speichern fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) ?? 'Speichern fehlgeschlagen');
       }
       const data = await res.json();
       setNote(data.note);
@@ -105,7 +106,7 @@ export function TrainerMemberNote({ memberId, memberName, className }: Props) {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error ?? 'Löschen fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) ?? 'Löschen fehlgeschlagen');
       }
       setNote(null);
       setEditing(false);

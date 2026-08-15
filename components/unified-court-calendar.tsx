@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
@@ -923,7 +924,7 @@ export default function UnifiedCourtCalendar({
         });
         if (!res.ok) {
           const err = await res.json();
-          toast.error(err.error ?? 'Direktbuchung fehlgeschlagen');
+          toast.error(extractErrorMessage(err) ?? 'Direktbuchung fehlgeschlagen');
           return;
         }
         toast.success('Platz gebucht!');
@@ -1003,7 +1004,7 @@ export default function UnifiedCourtCalendar({
       });
       if (!res.ok) {
         const err = await res.json();
-        toast.error(err.error ?? 'Sperrung fehlgeschlagen');
+        toast.error(extractErrorMessage(err) ?? 'Sperrung fehlgeschlagen');
         return;
       }
       const blockLabel =
@@ -1035,7 +1036,7 @@ export default function UnifiedCourtCalendar({
         const res = await apiFetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
         if (!res.ok) {
           const err = await res.json();
-          toast.error(err.error ?? 'Sperrung konnte nicht aufgehoben werden');
+          toast.error(extractErrorMessage(err) ?? 'Sperrung konnte nicht aufgehoben werden');
           return;
         }
         toast.success('Sperrung aufgehoben');
@@ -1107,7 +1108,7 @@ export default function UnifiedCourtCalendar({
       });
       if (!res.ok) {
         const err = await res.json();
-        toast.error(err.error ?? 'Einheit konnte nicht angelegt werden');
+        toast.error(extractErrorMessage(err) ?? 'Einheit konnte nicht angelegt werden');
         return;
       }
       toast.success('Einheit eingetragen');
@@ -1188,7 +1189,7 @@ export default function UnifiedCourtCalendar({
         });
         if (!res.ok) {
           const err = await res.json();
-          throw new Error(err.error || 'Update failed');
+          throw new Error(extractErrorMessage(err) || 'Update failed');
         }
         toast.success(`Session verschoben nach ${targetTimeSlot}`);
       } catch (error) {

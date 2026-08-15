@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -123,7 +124,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
       const res = await apiFetch(`/api/work-duties/${dutyId}/volunteer`, { method: 'POST' });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error || 'Fehler beim Eintragen');
+        toast.error(extractErrorMessage(err) || 'Fehler beim Eintragen');
         return;
       }
       toast.success('Erfolgreich eingetragen!');
@@ -141,7 +142,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
       const res = await apiFetch(`/api/work-duties/${dutyId}/volunteer`, { method: 'DELETE' });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error || 'Fehler beim Austragen');
+        toast.error(extractErrorMessage(err) || 'Fehler beim Austragen');
         return;
       }
       toast.success('Erfolgreich ausgetragen');
@@ -159,7 +160,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
       const res = await apiFetch(`/api/work-duties/${dutyId}/complete`, { method: 'POST' });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error || 'Fehler beim Aktualisieren');
+        toast.error(extractErrorMessage(err) || 'Fehler beim Aktualisieren');
         return;
       }
       toast.success('Als erledigt markiert!');

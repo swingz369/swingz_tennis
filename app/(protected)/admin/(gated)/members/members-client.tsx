@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -214,7 +215,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Failed to update membership');
+        throw new Error(extractErrorMessage(err) || 'Failed to update membership');
       }
 
       setMembers((prev) =>
@@ -240,7 +241,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Failed to update membership');
+        throw new Error(extractErrorMessage(err) || 'Failed to update membership');
       }
 
       setMembers((prev) =>
@@ -275,7 +276,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Einladung fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) || 'Einladung fehlgeschlagen');
       }
 
       const data = await res.json();

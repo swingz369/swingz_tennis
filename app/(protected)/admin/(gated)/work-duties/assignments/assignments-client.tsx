@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -117,7 +118,7 @@ export default function AssignmentsClient({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error || 'Fehler');
+        toast.error(extractErrorMessage(err) || 'Fehler');
         return;
       }
       toast.success(action === 'confirm' ? 'Bestätigt' : 'Abgelehnt');

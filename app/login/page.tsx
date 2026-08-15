@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -35,7 +36,7 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Login fehlgeschlagen');
+        setError(extractErrorMessage(data) || 'Login fehlgeschlagen');
         return;
       }
 

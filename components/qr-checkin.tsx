@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -147,8 +148,11 @@ export function QrCheckinForm({ onSuccess }: QrScannerManualProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        setResult({ success: false, message: data.error || 'Check-in fehlgeschlagen' });
-        toast.error(data.error || 'Check-in fehlgeschlagen');
+        setResult({
+          success: false,
+          message: extractErrorMessage(data) || 'Check-in fehlgeschlagen',
+        });
+        toast.error(extractErrorMessage(data) || 'Check-in fehlgeschlagen');
         return;
       }
 

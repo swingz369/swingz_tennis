@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
@@ -64,7 +65,7 @@ export function LogoUpload({
 
         if (!res.ok) {
           const data = await res.json();
-          throw new Error(data.error || 'Upload fehlgeschlagen');
+          throw new Error(extractErrorMessage(data) || 'Upload fehlgeschlagen');
         }
 
         const data = await res.json();
@@ -113,7 +114,7 @@ export function LogoUpload({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Speichern fehlgeschlagen');
+        throw new Error(extractErrorMessage(data) || 'Speichern fehlgeschlagen');
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Speichern fehlgeschlagen');
@@ -135,7 +136,7 @@ export function LogoUpload({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Löschen fehlgeschlagen');
+        throw new Error(extractErrorMessage(data) || 'Löschen fehlgeschlagen');
       }
       setCurrentUrl(null);
       setUrlInput('');

@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useEffect, useState, useCallback } from 'react';
 import {
@@ -150,7 +151,7 @@ export default function MemberTrainerBookingPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Buchung fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) ?? 'Buchung fehlgeschlagen');
       setBookingSuccess(true);
       setConfirmSlot(null);
       await fetchSlots();
@@ -172,7 +173,8 @@ export default function MemberTrainerBookingPage() {
         body: JSON.stringify({ slotId: confirmSlot.id }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Warteliste-Eintrag fehlgeschlagen');
+      if (!res.ok)
+        throw new Error(extractErrorMessage(data) ?? 'Warteliste-Eintrag fehlgeschlagen');
       setWaitlistSuccess(true);
       setConfirmSlot(null);
     } catch (e: any) {

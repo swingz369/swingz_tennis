@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,7 +58,7 @@ export function ChurnRiskPanel() {
       const res = await apiFetch('/api/churn-risk');
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Fehler beim Laden' }));
-        throw new Error(err.error || `HTTP ${res.status}`);
+        throw new Error(extractErrorMessage(err) || `HTTP ${res.status}`);
       }
       const json: ChurnData = await res.json();
       setData(json);

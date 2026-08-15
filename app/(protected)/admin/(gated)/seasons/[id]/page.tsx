@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -208,7 +209,7 @@ function GroupChangeDialog({
       });
       const data = await res.json();
       if (!res.ok) {
-        setErr(data.error ?? 'Fehler beim Gruppenwechsel');
+        setErr(extractErrorMessage(data) ?? 'Fehler beim Gruppenwechsel');
       } else {
         setResult(data.data);
         onSuccess();
@@ -498,7 +499,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
     try {
       const res = await apiFetch(`/api/seasons/${id}/planning/remind`, { method: 'POST' });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? 'Erinnerung fehlgeschlagen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) ?? 'Erinnerung fehlgeschlagen');
       toast.success(data.message ?? `${data.sent ?? 0} Erinnerungen versendet`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Fehler');
@@ -526,7 +527,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || 'Fehler beim Veröffentlichen');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Veröffentlichen');
       }
 
       const data = await response.json();
@@ -555,7 +556,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
       if (!response.ok) {
         const err = await response.json();
-        toast.error(err.error ?? 'Auto-Plan fehlgeschlagen');
+        toast.error(extractErrorMessage(err) ?? 'Auto-Plan fehlgeschlagen');
         setQuickStarting(false);
         return;
       }
@@ -579,7 +580,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
       if (!response.ok) {
         const err = await response.json();
-        toast.error(err.error ?? 'Fehler beim Löschen der Saison');
+        toast.error(extractErrorMessage(err) ?? 'Fehler beim Löschen der Saison');
         setDeleting(false);
         return;
       }

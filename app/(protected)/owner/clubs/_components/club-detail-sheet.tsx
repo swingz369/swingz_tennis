@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 /**
  * ClubDetailSheet — Phase 2 Owner-Master-Drawer
@@ -231,7 +232,9 @@ export function ClubDetailSheet({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        toast.error(data.error || data.details?.[0]?.message || 'Fehler beim Speichern');
+        toast.error(
+          extractErrorMessage(data) || data.details?.[0]?.message || 'Fehler beim Speichern'
+        );
         return;
       }
       toast.success('Änderungen gespeichert');

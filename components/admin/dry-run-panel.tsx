@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -171,7 +172,7 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
       });
       const data = (await res.json()) as DryRunResponse;
       if (!data.ok) {
-        setError(data.error);
+        setError(extractErrorMessage(data));
         setReport(null);
         return;
       }

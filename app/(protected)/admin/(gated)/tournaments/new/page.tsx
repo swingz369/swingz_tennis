@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -64,7 +65,7 @@ export default function NewTournamentPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Fehler beim Erstellen');
+      if (!res.ok) throw new Error(extractErrorMessage(data) ?? 'Fehler beim Erstellen');
       router.push('/admin/tournaments');
     } catch (e: any) {
       setError(e.message);

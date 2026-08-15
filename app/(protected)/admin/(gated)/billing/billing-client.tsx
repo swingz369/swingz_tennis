@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -119,7 +120,7 @@ export default function BillingClient({
         const res = await apiFetch(`/api/admin/billing/invoices?${params.toString()}`);
         const json = await res.json();
         if (!res.ok) {
-          toast.error(json.error ?? 'Fehler beim Laden der Rechnungen');
+          toast.error(extractErrorMessage(json) ?? 'Fehler beim Laden der Rechnungen');
           return;
         }
         const meta = json.pagination as PaginationMeta | undefined;
@@ -260,7 +261,7 @@ export default function BillingClient({
           prev.map((inv) => (inv.id === invoiceId ? { ...inv, status: 'sent' } : inv))
         );
       } else {
-        toast.error(`Fehler: ${data.error || 'Unbekannt'}`);
+        toast.error(`Fehler: ${extractErrorMessage(data) || 'Unbekannt'}`);
       }
     } catch {
       toast.error('Netzwerkfehler beim E-Mail-Versand');
@@ -288,7 +289,7 @@ export default function BillingClient({
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok) sent.push(id);
-        else failed.push({ id, error: data.error ?? `HTTP ${res.status}` });
+        else failed.push({ id, error: extractErrorMessage(data) ?? `HTTP ${res.status}` });
       } catch {
         failed.push({ id, error: 'Netzwerkfehler' });
       }
@@ -329,7 +330,7 @@ export default function BillingClient({
         setInvoiceToDelete(null);
       } else {
         const err = await res.json();
-        toast.error(err.error ?? 'Fehler beim Löschen');
+        toast.error(extractErrorMessage(err) ?? 'Fehler beim Löschen');
       }
     } catch {
       toast.error('Netzwerkfehler beim Löschen');
@@ -354,7 +355,7 @@ export default function BillingClient({
           toast.warning('Keine aktive Mitgliedsgebühr konfiguriert');
         }
       } else {
-        toast.error(data.error ?? 'Fehler beim Laden der Vorschau');
+        toast.error(extractErrorMessage(data) ?? 'Fehler beim Laden der Vorschau');
       }
     } catch {
       toast.error('Netzwerkfehler');
@@ -384,7 +385,7 @@ export default function BillingClient({
         setPreviewOpen(false);
         setPreviewData(null);
       } else {
-        toast.error(data.error ?? 'Fehler beim Generieren der Rechnungen');
+        toast.error(extractErrorMessage(data) ?? 'Fehler beim Generieren der Rechnungen');
       }
     } catch {
       toast.error('Netzwerkfehler');

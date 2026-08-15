@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
 import Image from 'next/image';
@@ -129,7 +130,7 @@ export default function PublicTrialBooking({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Buchung fehlgeschlagen');
+        throw new Error(extractErrorMessage(data) || 'Buchung fehlgeschlagen');
       }
 
       setSuccess(true);

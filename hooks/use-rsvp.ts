@@ -1,3 +1,4 @@
+import { extractErrorMessage } from '@/lib/typed-helpers';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { STALE_TIMES } from '@/lib/cache';
@@ -58,7 +59,7 @@ export function useSubmitRsvp() {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'RSVP fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) || 'RSVP fehlgeschlagen');
       }
       return res.json();
     },

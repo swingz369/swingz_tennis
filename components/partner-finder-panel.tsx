@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card as MatchCard, CardContent } from '@/components/ui/card';
@@ -107,7 +108,7 @@ export function PartnerFinderPanel({ showAdminBadge }: PartnerFinderPanelProps =
       const res = await apiFetch('/api/partner-finder');
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Fehler beim Laden' }));
-        throw new Error(err.error || `HTTP ${res.status}`);
+        throw new Error(extractErrorMessage(err) || `HTTP ${res.status}`);
       }
       const json: PartnerFinderData = await res.json();
       setData(json);
@@ -429,7 +430,9 @@ export function PartnerFinderPanel({ showAdminBadge }: PartnerFinderPanelProps =
                                   });
                                   if (!res.ok) {
                                     const err = await res.json().catch(() => ({}));
-                                    throw new Error(err.error || 'Erstellung fehlgeschlagen');
+                                    throw new Error(
+                                      extractErrorMessage(err) || 'Erstellung fehlgeschlagen'
+                                    );
                                   }
                                   toast.success(`Offenes Spiel gegen ${match.name} erstellt!`);
                                   router.push('/matches');

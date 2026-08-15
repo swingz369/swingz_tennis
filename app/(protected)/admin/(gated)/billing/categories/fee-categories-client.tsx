@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -89,7 +90,7 @@ export default function FeeCategoriesClient({
         router.refresh();
       } else {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error || 'Erstellung fehlgeschlagen');
+        toast.error(extractErrorMessage(err) || 'Erstellung fehlgeschlagen');
       }
     } catch {
       toast.error('Netzwerkfehler');
@@ -147,7 +148,7 @@ export default function FeeCategoriesClient({
         router.refresh();
       } else {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error || 'Aktualisierung fehlgeschlagen');
+        toast.error(extractErrorMessage(err) || 'Aktualisierung fehlgeschlagen');
       }
     } catch {
       toast.error('Netzwerkfehler');
@@ -167,7 +168,7 @@ export default function FeeCategoriesClient({
         router.refresh();
       } else {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error || 'Löschen fehlgeschlagen');
+        toast.error(extractErrorMessage(err) || 'Löschen fehlgeschlagen');
       }
     } catch {
       toast.error('Netzwerkfehler');

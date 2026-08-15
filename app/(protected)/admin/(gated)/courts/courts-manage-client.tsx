@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
@@ -190,7 +191,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Erstellen');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Erstellen');
       }
       toast.success('Platz-Typ erfolgreich erstellt');
       setShowCTCreate(false);
@@ -231,7 +232,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Aktualisieren');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Aktualisieren');
       }
       toast.success('Platz-Typ erfolgreich aktualisiert');
       setShowCTEdit(false);
@@ -254,7 +255,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Löschen');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Löschen');
       }
       toast.success('Platz-Typ deaktiviert');
       setShowCTDelete(false);
@@ -305,7 +306,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Erstellen');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Erstellen');
       }
 
       const data = await res.json();
@@ -366,7 +367,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Aktualisieren');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Aktualisieren');
       }
 
       const data = await res.json();
@@ -393,7 +394,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Aktualisieren');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Aktualisieren');
       }
 
       const data = await res.json();
@@ -418,7 +419,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Deaktivieren');
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Deaktivieren');
       }
 
       setCourts((prev) => prev.filter((c) => c.id !== selectedCourt.id));

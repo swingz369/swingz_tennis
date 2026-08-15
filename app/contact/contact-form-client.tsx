@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -35,7 +36,7 @@ export function ContactFormClient() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? 'Senden fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) ?? 'Senden fehlgeschlagen');
       }
 
       setSubmitted(true);

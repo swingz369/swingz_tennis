@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -124,7 +125,7 @@ export default function MemberBilling() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'PDF-Generierung fehlgeschlagen' }));
-        throw new Error(err.error || `HTTP ${res.status}`);
+        throw new Error(extractErrorMessage(err) || `HTTP ${res.status}`);
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);

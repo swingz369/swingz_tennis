@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -31,7 +32,7 @@ function DatevExportTab() {
       const res = await apiFetch(`/api/billing/export/datev?from=${from}&to=${to}`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        toast.error(data.error ?? 'DATEV-Export fehlgeschlagen');
+        toast.error(extractErrorMessage(data) ?? 'DATEV-Export fehlgeschlagen');
         return;
       }
       const blob = await res.blob();
@@ -110,7 +111,7 @@ function SepaExportTab() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        toast.error(data.error ?? 'SEPA-Export fehlgeschlagen');
+        toast.error(extractErrorMessage(data) ?? 'SEPA-Export fehlgeschlagen');
         return;
       }
 

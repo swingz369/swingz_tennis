@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -100,7 +101,7 @@ export default function SuperadminOnboardingPage() {
       });
       if (!res.ok) {
         const err = await res.json();
-        toast.error(err.error ?? 'Fehler beim Erstellen des Vereins');
+        toast.error(extractErrorMessage(err) ?? 'Fehler beim Erstellen des Vereins');
         return;
       }
       const data = await res.json();

@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
@@ -62,7 +63,7 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
           onImportComplete?.();
         }
       } else {
-        toast.error(`Fehler: ${data.error || 'Import fehlgeschlagen'}`);
+        toast.error(`Fehler: ${extractErrorMessage(data) || 'Import fehlgeschlagen'}`);
       }
     } catch (err) {
       log.error('Failed to import members:', err);

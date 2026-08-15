@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
@@ -66,7 +67,7 @@ export function DecisionVoteButton({
         // Revert optimistic update
         setVote(currentVote);
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error ?? 'Stimme konnte nicht gespeichert werden');
+        toast.error(extractErrorMessage(err) ?? 'Stimme konnte nicht gespeichert werden');
         return;
       }
       const saved = (await res.json()) as DecisionVote;

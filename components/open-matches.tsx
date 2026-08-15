@@ -1,4 +1,5 @@
 'use client';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -172,7 +173,7 @@ export default function OpenMatches({ clubId, userId }: Props) {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Erstellung fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) || 'Erstellung fehlgeschlagen');
       }
       toast.success('Spiel erstellt!');
       setCreateOpen(false);
@@ -205,7 +206,7 @@ export default function OpenMatches({ clubId, userId }: Props) {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Beitritt fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) || 'Beitritt fehlgeschlagen');
       }
       toast.success('Du bist beigetreten!');
       loadMatches();
@@ -227,7 +228,7 @@ export default function OpenMatches({ clubId, userId }: Props) {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Austritt fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) || 'Austritt fehlgeschlagen');
       }
       toast.success('Du hast das Spiel verlassen');
       loadMatches();
@@ -247,7 +248,7 @@ export default function OpenMatches({ clubId, userId }: Props) {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Stornierung fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) || 'Stornierung fehlgeschlagen');
       }
       toast.success('Spiel abgesagt');
       await loadMatches();
@@ -278,7 +279,7 @@ export default function OpenMatches({ clubId, userId }: Props) {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Erstellung fehlgeschlagen');
+        throw new Error(extractErrorMessage(err) || 'Erstellung fehlgeschlagen');
       }
       toast.success(`Herausforderung an ${match.creatorName} gesendet!`);
       loadMatches();
