@@ -209,6 +209,22 @@ Component-Tests verwenden `TestProviders` aus `src/__tests__/test-utils.tsx`.
 
 ---
 
+## Umgebungen
+
+Entwicklung läuft gegen den **lokalen** Supabase-Stack (`supabase start`), nicht gegen
+Produktion. Aufteilung, Env-Dateien, Migrations- und Deploy-Weg, Backups:
+**`docs/ENVIRONMENTS.md`** (Begründung: `docs/decisions/adr-003-datenbank-umgebungen.md`).
+
+```bash
+npm run db:status         # offene Migrationen — lokal
+npm run db:migrate        # anwenden — lokal
+npm run db:migrate:prod   # anwenden — Produktion (liest .env.prod.local, nach Merge auf main)
+```
+
+Seed-Skripte brechen ab, wenn `DATABASE_URL` nicht auf localhost zeigt.
+
+---
+
 ## Test-Accounts & Lanes (Entwicklung)
 
 > Stand 13.08.2026: Die DB wurde komplett zurückgesetzt. Alle früheren Test-Accounts

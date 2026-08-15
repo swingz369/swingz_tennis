@@ -21,15 +21,22 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import * as dotenv from 'dotenv';
 
-dotenv.config({ path: '.env.local', quiet: true });
+// Lokal und Produktion haben getrennte Env-Dateien (docs/ENVIRONMENTS.md).
+// `.env.local` zeigt auf den Docker-Stack, `.env.prod.local` auf den VPS —
+// Prod-Migrationen muss man also bewusst über MIGRATE_ENV=prod anfordern.
+const ENV_FILE = process.env.MIGRATE_ENV === 'prod' ? '.env.prod.local' : '.env.local';
+dotenv.config({ path: ENV_FILE, quiet: true });
 
 const DIR = 'supabase/migrations';
 const cmd = process.argv[2] ?? 'status';
 
 if (!process.env.DATABASE_URL) {
-  console.error('DATABASE_URL fehlt (.env.local)');
+  console.error(`DATABASE_URL fehlt (${ENV_FILE})`);
   process.exit(1);
 }
+
+// Ziel immer zeigen — ein Prod-Lauf, den man für lokal hielt, ist der teuerste Fehler hier.
+console.log(`→ ${new URL(process.env.DATABASE_URL).host} (${ENV_FILE})`);
 
 const sql = postgres(process.env.DATABASE_URL, {
   ssl: process.env.DATABASE_SSL === 'require' ? 'require' : false,

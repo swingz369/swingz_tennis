@@ -42,8 +42,12 @@ const SEED_PASSWORD = process.env.SEED_PASSWORD ?? 'SwingZ-Test-2026!';
 /** Der einzige echte Zugang — wird nie gelöscht. */
 const OWNER_EMAIL = 'admin@swingz.com';
 
-/** Tabellen ohne club_id, die globale Referenzdaten halten. Nie leeren. */
-const GLOBAL_TABLES = ['school_holidays', 'base_interest_rates'];
+/**
+ * Tabellen, die ein Reset nie anfassen darf: globale Referenzdaten — und
+ * `schema_migrations`, sonst löscht jeder Seed-Lauf die Migrations-Buchführung
+ * und die DB behauptet danach, keine Migration sei je angewendet worden.
+ */
+const GLOBAL_TABLES = ['school_holidays', 'base_interest_rates', 'schema_migrations'];
 
 type Lane = 'user' | 'agent';
 
@@ -422,10 +426,21 @@ async function addMembership(userId: string, clubId: string | null, role: string
 async function wipeAll() {
   log('\n🗑️  Kompletter Reset...');
 
-  const [owner] = await sql<
+  const [found] = await sql<
     { id: string }[]
   >`select id from auth.users where email = ${OWNER_EMAIL}`;
-  if (!owner) throw new Error(`Owner ${OWNER_EMAIL} nicht in auth.users gefunden — Abbruch.`);
+
+  // Auf einer frischen DB (lokaler Stack) existiert der Owner noch nicht. Er war
+  // der einzige Account, den der Seed voraussetzte statt ihn anzulegen — damit
+  // war ein lokales Erstsetup nicht möglich.
+  let owner = found;
+  if (!owner) {
+    log(`  Owner ${OWNER_EMAIL} fehlt — wird angelegt`);
+    owner = { id: await createLogin(OWNER_EMAIL, 'Platform Owner') };
+  } else {
+    await sql`insert into users ${sql({ id: owner.id, email: OWNER_EMAIL, full_name: 'Platform Owner' })}
+              on conflict (id) do nothing`;
+  }
 
   const tables = await sql<{ tablename: string }[]>`
     select tablename from pg_tables
@@ -1188,6 +1203,23 @@ async function regenerateDoc() {
   writeCredentialsDoc(seeded, supers);
 }
 
+/**
+ * Testdaten werden nur in eine lokale DB geschrieben (docs/ENVIRONMENTS.md).
+ * Bis 16.08.2026 zeigte `.env.local` auf die Produktions-DB — `npm run seed:reset`
+ * hätte dort jeden echten Verein gelöscht. Kein Override-Flag: einen Grund, den
+ * Seed gegen Produktion laufen zu lassen, gibt es nicht.
+ */
+function assertNotProduction() {
+  const host = process.env.DATABASE_URL ? new URL(process.env.DATABASE_URL).hostname : '';
+  if (['localhost', '127.0.0.1', '::1', 'db'].includes(host)) return;
+  console.error(
+    `\n⛔ Abbruch: DATABASE_URL zeigt auf "${host || '(leer)'}", nicht auf den lokalen Stack.\n` +
+      '   Seed schreibt ausschließlich lokal — siehe docs/ENVIRONMENTS.md.\n' +
+      '   Lokalen Stack starten: supabase start (DB dann auf 127.0.0.1:54322)\n'
+  );
+  process.exit(1);
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const yes = args.includes('--yes');
@@ -1205,6 +1237,8 @@ async function main() {
     await showStatus();
     return;
   }
+
+  assertNotProduction();
 
   const lanes: Lane[] = all ? ['user', 'agent'] : [laneArg!];
 
