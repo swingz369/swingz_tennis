@@ -40,6 +40,12 @@ import { buildSetupChecklist, getSetupCounts } from '@/lib/setup-checklist';
 
 export const dynamic = 'force-dynamic';
 
+// Zeilenmasse der Buchungstabelle. Die geteilten Table-Bausteine bringen `p-4`
+// und `h-10` mit — hier auf das Mass der Referenz (docs/SwingZ — Farbvarianten.html:
+// td 11px, th 9px, bündig zum Kartenrand).
+const HEAD_CELL = 'h-auto px-5 pb-2.5 pt-0';
+const BODY_CELL = 'px-5 py-2.5';
+
 // ─── Types ─────────────────────────────────────────────────────────────
 
 // Explicit shape for the awaited `clubs` row. Used as the generic
@@ -817,8 +823,21 @@ export default async function AdminPage() {
                   // lässt „Warteliste" tatsächlich herausstechen.
                   <Table>
                     <TableHeader>
+                      {/* Zeilenhöhe: die geteilten Table-Bausteine bringen `p-4`
+                          und `h-10` mit — bei fünf Vorgängen ergab das eine
+                          Karte, die fast so hoch war wie die Heatmap darunter,
+                          ohne mehr zu sagen. Hier auf das Mass der Referenz
+                          (docs/SwingZ — Farbvarianten.html: td 11px, th 9px).
+                          Waagerecht px-5, damit die Spalten unter dem
+                          Kartentitel stehen statt 4px daneben. Die Masse stehen
+                          je Zelle statt als `[&>td]:`-Variante auf der Zeile:
+                          Tailwind erzeugte die td-Variante hier nicht, die
+                          Regel fehlte im CSS. Nur diese Tabelle — die geteilte
+                          Komponente bleibt unberührt. */}
                       <TableRow>
-                        <TableHead className="text-[10px] uppercase tracking-[0.09em]">
+                        <TableHead
+                          className={cn(HEAD_CELL, 'text-[10px] uppercase tracking-[0.09em]')}
+                        >
                           Mitglied
                         </TableHead>
                         {/* Feste Breiten für die schmalen Spalten, damit die
@@ -827,10 +846,20 @@ export default async function AdminPage() {
                             drei Spalten — zwischen Uhrzeit und Status stand
                             dann ein Handbreit Nichts. Status rechtsbündig,
                             damit die Zeile eine saubere Aussenkante bekommt. */}
-                        <TableHead className="w-[30%] text-[10px] uppercase tracking-[0.09em]">
+                        <TableHead
+                          className={cn(
+                            HEAD_CELL,
+                            'w-[30%] text-[10px] uppercase tracking-[0.09em]'
+                          )}
+                        >
                           Platz / Zeit
                         </TableHead>
-                        <TableHead className="w-[1%] whitespace-nowrap text-right text-[10px] uppercase tracking-[0.09em]">
+                        <TableHead
+                          className={cn(
+                            HEAD_CELL,
+                            'w-[1%] whitespace-nowrap text-right text-[10px] uppercase tracking-[0.09em]'
+                          )}
+                        >
                           Status
                         </TableHead>
                       </TableRow>
@@ -843,13 +872,23 @@ export default async function AdminPage() {
                               max-w auf Mobile plus `whitespace-nowrap` bei
                               Platz/Zeit. Auf 390 px brachen Name und Uhrzeit
                               sonst jeweils zweizeilig um. */}
-                          <TableCell className="max-w-[8.5rem] truncate font-semibold sm:max-w-none">
+                          <TableCell
+                            className={cn(
+                              BODY_CELL,
+                              'max-w-[8.5rem] truncate font-semibold sm:max-w-none'
+                            )}
+                          >
                             {b.memberName}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap font-mono text-xs text-muted-foreground">
+                          <TableCell
+                            className={cn(
+                              BODY_CELL,
+                              'whitespace-nowrap font-mono text-xs text-muted-foreground'
+                            )}
+                          >
                             {b.courtName} · {b.time}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap text-right">
+                          <TableCell className={cn(BODY_CELL, 'whitespace-nowrap text-right')}>
                             <span
                               className={cn(
                                 'inline-flex items-center gap-1.5 text-[11.5px] font-semibold',
