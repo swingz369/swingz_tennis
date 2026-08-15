@@ -8,6 +8,20 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 const isDev = process.env.NODE_ENV === 'development';
 
+// connect-src: In der Entwicklung läuft Supabase lokal (supabase start, http://127.0.0.1:3001),
+// und dieser Ursprung passt auf keinen der Produktions-Einträge unten — der Browser-Client
+// bekam deshalb "Refused to connect" und jeder Login im Browser scheiterte, obwohl serverseitig
+// alles funktionierte. Ursprung aus der Env ableiten, damit ein anderer Port hier nichts bricht.
+// Siehe docs/ENVIRONMENTS.md.
+const localSupabase = [];
+if (isDev) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  if (url.startsWith('http://')) {
+    const { host } = new URL(url);
+    localSupabase.push(`http://${host}`, `ws://${host}`);
+  }
+}
+
 // script-src: unsafe-eval is only needed in development (HMR / eval-source-maps).
 // unsafe-inline is required for Next.js __NEXT_DATA__ and hydration scripts.
 const scriptSrc = [
@@ -124,7 +138,12 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://cdn.fontshare.com https://api.fontshare.com https://fonts.googleapis.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data: https://cdn.fontshare.com https://fonts.gstatic.com",
-              "connect-src 'self' https://*.supabase.co https://*.swingz.cloud https://api.stripe.com wss://*.supabase.co wss://*.swingz.cloud https://api.github.com https://*.sentry.io",
+              [
+                "connect-src 'self'",
+                'https://*.supabase.co https://*.swingz.cloud https://api.stripe.com',
+                'wss://*.supabase.co wss://*.swingz.cloud https://api.github.com https://*.sentry.io',
+                ...localSupabase,
+              ].join(' '),
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
