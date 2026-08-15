@@ -36,7 +36,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         const { resolution } = body;
         if (!resolution || !['confirmed', 'absent'].includes(resolution)) {
           return NextResponse.json(
-            { error: 'resolution must be "confirmed" or "absent"' },
+            { error: 'resolution muss "confirmed" oder "absent" sein' },
             { status: 400 }
           );
         }
@@ -47,7 +47,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           resolution
         );
         if (!updated) {
-          return NextResponse.json({ error: 'Record not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Eintrag nicht gefunden' }, { status: 404 });
         }
         return NextResponse.json({ success: true, record: updated });
       }
@@ -56,14 +56,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const { action, reason } = body;
       if (!action || !['confirm', 'dispute'].includes(action)) {
         return NextResponse.json(
-          { error: 'action must be "confirm" or "dispute"' },
+          { error: 'action muss "confirm" oder "dispute" sein' },
           { status: 400 }
         );
       }
 
       if (action === 'dispute' && (!reason || reason.trim().length < 3)) {
         return NextResponse.json(
-          { error: 'Dispute requires a reason (min 3 characters)' },
+          { error: 'Ein Einspruch benötigt einen Grund (mind. 3 Zeichen)' },
           { status: 400 }
         );
       }
@@ -76,7 +76,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
 
       if (!record) {
-        return NextResponse.json({ error: 'Record not found or not authorized' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Eintrag nicht gefunden oder nicht berechtigt' },
+          { status: 404 }
+        );
       }
 
       return NextResponse.json({ success: true, record });

@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (!email) {
-        return NextResponse.json({ error: 'Email required' }, { status: 400 });
+        return NextResponse.json({ error: 'E-Mail erforderlich' }, { status: 400 });
       }
 
       // Fetch club name from system_settings (matching trial-training route pattern)
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       await infraEmail.sendEmail({ to: email, ...template });
       log.info(`Onboarding email sent to ${email}`);
 
-      return NextResponse.json({ success: true, message: 'Onboarding email sent' });
+      return NextResponse.json({ success: true, message: 'Onboarding-E-Mail gesendet' });
     } catch (error: any) {
       log.error('Onboarding email failed', { error: error.message });
       return internalErrorResponse();

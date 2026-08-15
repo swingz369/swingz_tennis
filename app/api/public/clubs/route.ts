@@ -31,6 +31,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ clubs: data });
   } catch (error) {
     log.error('[api/public/clubs] Error:', error);
-    return NextResponse.json({ error: 'Failed to fetch clubs' }, { status: 500 });
+    return NextResponse.json({ error: 'Vereine konnten nicht geladen werden' }, { status: 500 });
   }
 }

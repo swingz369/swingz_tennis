@@ -163,7 +163,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         // Validate day of week
         if (body.day_of_week < 0 || body.day_of_week > 6) {
           return NextResponse.json(
-            { error: 'day_of_week must be between 0 (Monday) and 6 (Sunday)' },
+            { error: 'day_of_week muss zwischen 0 (Montag) und 6 (Sonntag) liegen' },
             { status: 400 }
           );
         }
@@ -182,13 +182,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
         // Validate time format (HH:MM:SS)
         const timeRegex = /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
         if (!timeRegex.test(body.start_time) || !timeRegex.test(body.end_time)) {
-          return NextResponse.json({ error: 'Times must be in HH:MM:SS format' }, { status: 400 });
+          return NextResponse.json(
+            { error: 'Zeiten müssen im Format HH:MM:SS sein' },
+            { status: 400 }
+          );
         }
 
         // Validate start_time < end_time
         if (body.start_time >= body.end_time) {
           return NextResponse.json(
-            { error: 'start_time must be before end_time' },
+            { error: 'start_time muss vor end_time liegen' },
             { status: 400 }
           );
         }
@@ -214,7 +217,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         if (conflicts.length > 0) {
           return NextResponse.json(
             {
-              error: 'Scheduling conflict detected',
+              error: 'Terminkonflikt erkannt',
               details: 'Trainer or court is already booked at this time',
               conflicts: conflicts.map((c) => ({
                 id: c.id,
@@ -256,7 +259,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           {
             success: true,
             entry: newEntry,
-            message: 'Plan entry created successfully',
+            message: 'Plan-Eintrag erfolgreich erstellt',
           },
           { status: 201 }
         );

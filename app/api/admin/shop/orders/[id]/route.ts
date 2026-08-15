@@ -27,7 +27,7 @@ export async function PATCH(
 ) {
   return withApiAuth(_request, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const { id } = await params;
@@ -69,7 +69,7 @@ export async function PATCH(
           .eq('club_id', auth.clubId);
 
         if (!clubProducts || clubProducts.length === 0) {
-          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+          return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
         }
       }
     }

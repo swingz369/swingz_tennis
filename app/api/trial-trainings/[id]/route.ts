@@ -25,7 +25,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const trialTraining = await trialTrainingService.getTrialTrainingById(id);
 
       if (!trialTraining) {
-        return NextResponse.json({ error: 'Trial training not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Probetraining nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ trialTraining });
@@ -78,7 +78,7 @@ export async function PATCH(
       });
 
       if (!updated) {
-        return NextResponse.json({ error: 'Trial training not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Probetraining nicht gefunden' }, { status: 404 });
       }
 
       // Auto-join: when trial training is completed, add participant as club member
@@ -158,7 +158,7 @@ export async function DELETE(
       const success = await trialTrainingService.deleteTrialTraining(id);
 
       if (!success) {
-        return NextResponse.json({ error: 'Trial training not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Probetraining nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true });

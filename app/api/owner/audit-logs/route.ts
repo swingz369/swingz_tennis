@@ -112,7 +112,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ logs, pagination });
     } catch (error) {
       log.error('Failed to fetch owner audit logs', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: 'Failed to fetch audit logs' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Audit-Logs konnten nicht geladen werden' },
+        { status: 500 }
+      );
     }
   });
 }

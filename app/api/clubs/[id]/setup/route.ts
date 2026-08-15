@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const { id } = await params;
 
     const body = await req.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     // Only allow safe fields to be updated (onboarding wizard fields)
     const allowed = [
@@ -55,7 +55,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Keine gültigen Felder zum Aktualisieren' },
+        { status: 400 }
+      );
     }
 
     // Convert empty strings for date/timestamp columns to null

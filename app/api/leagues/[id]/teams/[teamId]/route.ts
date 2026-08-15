@@ -26,7 +26,7 @@ export async function PATCH(
       .single();
 
     if (!league) {
-      return NextResponse.json({ error: 'League not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Liga nicht gefunden' }, { status: 404 });
     }
 
     const { data, error } = await (auth.supabase as any)
@@ -38,7 +38,10 @@ export async function PATCH(
       .single();
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to update team' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Mannschaft konnte nicht aktualisiert werden' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ team: data });
@@ -65,7 +68,10 @@ export async function DELETE(
       .select('id');
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to delete team' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Mannschaft konnte nicht gelöscht werden' },
+        { status: 500 }
+      );
     }
     if (!data || data.length === 0) {
       return NextResponse.json(

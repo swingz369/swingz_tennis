@@ -87,7 +87,10 @@ export async function GET(request: NextRequest) {
       return csvResponse(rows, { clubId, actorEmail, action, resourceType, from, to });
     } catch (error) {
       log.error('Failed to export owner audit logs', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: 'Failed to export audit logs' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Audit-Logs konnten nicht exportiert werden' },
+        { status: 500 }
+      );
     }
   });
 }

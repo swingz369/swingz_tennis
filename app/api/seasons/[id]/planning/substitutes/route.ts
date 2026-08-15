@@ -23,7 +23,8 @@ async function requireAdminAccess(
   seasonId: string
 ) {
   const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-  if (!season) return { error: NextResponse.json({ error: 'Season not found' }, { status: 404 }) };
+  if (!season)
+    return { error: NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 }) };
 
   const isAdmin = await verifyRole(auth, 'admin');
   const isSuperadmin = await verifyRole(auth, 'superadmin');
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ substitutes });
     } catch (error) {
       log.error('GET substitutes error', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+      return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }
   });
 }
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const body = await request.json();
       const { groupId, fromWeek, toWeek, substituteTrainerId } = body;
       if (!groupId || !substituteTrainerId) {
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
       }
 
       // `.returning()` statt blindem Update: Traf die Bedingung keine Zeile (etwa
@@ -167,7 +168,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       });
     } catch (error) {
       log.error('POST substitutes error', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+      return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }
   });
 }
@@ -184,7 +185,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
       const body = await request.json();
       const { groupId } = body;
-      if (!groupId) return NextResponse.json({ error: 'Missing groupId' }, { status: 400 });
+      if (!groupId) return NextResponse.json({ error: 'groupId fehlt' }, { status: 400 });
 
       await db
         .update(seasonPlanEntries)
@@ -197,7 +198,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ success: true });
     } catch (error) {
       log.error('DELETE substitutes error', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+      return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }
   });
 }

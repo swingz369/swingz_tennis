@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
           .maybeSingle();
 
         if (fetchError || !user) {
-          return NextResponse.json({ error: 'User not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 });
         }
 
         if (user.superadmin_setup_completed_at) {

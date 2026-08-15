@@ -46,7 +46,7 @@ export async function POST(_request: NextRequest) {
         !hourlyRate ||
         !totalAmount
       ) {
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
       }
 
       // Übungsleiterpauschale (§ 3 Nr. 26 EStG): max. 3.000 € steuerfrei p.a.

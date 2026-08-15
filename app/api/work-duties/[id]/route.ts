@@ -22,7 +22,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .single();
 
     if (error || !duty) {
-      return NextResponse.json({ error: 'Duty not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Dienst nicht gefunden' }, { status: 404 });
     }
 
     // Enrich assignments with member names
@@ -71,7 +71,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .single();
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to update duty' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Dienst konnte nicht aktualisiert werden' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ duty: data });
@@ -95,7 +98,7 @@ export async function DELETE(
       .eq('club_id', auth.clubId);
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to delete duty' }, { status: 500 });
+      return NextResponse.json({ error: 'Dienst konnte nicht gelöscht werden' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

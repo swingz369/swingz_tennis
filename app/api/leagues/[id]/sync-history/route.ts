@@ -28,7 +28,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (error) {
       log.error('[Sync History GET] Error:', error);
-      return NextResponse.json({ error: 'Failed to fetch sync history' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Synchronisationsverlauf konnte nicht geladen werden' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ logs: logs ?? [] });

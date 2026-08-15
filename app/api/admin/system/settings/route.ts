@@ -113,7 +113,7 @@ export async function PUT(_request: NextRequest) {
       }
 
       if (updates.length === 0) {
-        return NextResponse.json({ success: true, message: 'No changes' });
+        return NextResponse.json({ success: true, message: 'Keine Änderungen' });
       }
 
       // Upsert each setting
@@ -129,7 +129,7 @@ export async function PUT(_request: NextRequest) {
         }
       }
 
-      return NextResponse.json({ success: true, message: 'System settings saved' });
+      return NextResponse.json({ success: true, message: 'Systemeinstellungen gespeichert' });
     } catch (error) {
       log.error('Error saving system settings:', error);
       return internalErrorResponse();

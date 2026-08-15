@@ -60,7 +60,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
       const body = (await request.json()) as Record<string, any>;
       if (!body || typeof body !== 'object') {
-        return NextResponse.json({ error: 'Body must be a JSON object' }, { status: 400 });
+        return NextResponse.json({ error: 'Body muss ein JSON-Objekt sein' }, { status: 400 });
       }
 
       // Build the update payload from the whitelist
@@ -74,7 +74,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         const depth = Number(updatePayload.backtrack_depth);
         if (!Number.isFinite(depth) || depth < 0 || depth > 10) {
           return NextResponse.json(
-            { error: 'backtrack_depth must be a number between 0 and 10' },
+            { error: 'backtrack_depth muss eine Zahl zwischen 0 und 10 sein' },
             { status: 400 }
           );
         }
@@ -94,7 +94,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       }
 
       if (Object.keys(updatePayload).length === 0) {
-        return NextResponse.json({ error: 'No updatable fields provided' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Keine aktualisierbaren Felder angegeben' },
+          { status: 400 }
+        );
       }
 
       // Upsert: insert if missing, otherwise update

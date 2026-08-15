@@ -57,7 +57,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const { id } = await params;
 
     const body = await request.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     // Build update payload — only allowed fields
     const allowedFields = [
@@ -83,7 +83,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Keine gültigen Felder zum Aktualisieren' },
+        { status: 400 }
+      );
     }
 
     const { data: tournament, error } = await supabase
@@ -95,7 +98,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     if (error) {
       log.error('tournament PATCH error:', error);
-      return NextResponse.json({ error: 'Failed to update tournament' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Turnier konnte nicht aktualisiert werden' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ tournament });
@@ -120,7 +126,7 @@ export async function DELETE(
 
     if (error) {
       log.error('tournament DELETE error:', error);
-      return NextResponse.json({ error: 'Failed to delete tournament' }, { status: 500 });
+      return NextResponse.json({ error: 'Turnier konnte nicht gelöscht werden' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

@@ -29,7 +29,7 @@ export async function POST(
       const { verifiedBy } = body;
 
       if (!verifiedBy) {
-        return NextResponse.json({ error: 'Verified by is required' }, { status: 400 });
+        return NextResponse.json({ error: 'Verifiziert-von ist erforderlich' }, { status: 400 });
       }
 
       const updated = await trainerProfileService.verifyQualification(
@@ -40,7 +40,7 @@ export async function POST(
 
       if (!updated) {
         return NextResponse.json(
-          { error: 'Trainer profile or qualification not found' },
+          { error: 'Trainer-Profil oder Qualifikation nicht gefunden' },
           { status: 404 }
         );
       }

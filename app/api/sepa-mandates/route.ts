@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
           const errors = (validation as { success: false; errors: ZodError }).errors;
           return NextResponse.json(
             {
-              error: 'Validation failed',
+              error: 'Validierung fehlgeschlagen',
               details: formatValidationErrors(errors),
             },
             { status: 400 }
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
       if (mandateId) {
         const mandate = await SEPAMandateService.getMandateById(mandateId);
         if (!mandate) {
-          return NextResponse.json({ error: 'Mandate not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Mandat nicht gefunden' }, { status: 404 });
         }
         return NextResponse.json({ mandate });
       }
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ mandates });
       }
 
-      return NextResponse.json({ error: 'Member ID or Mandate ID is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Member-ID oder Mandat-ID erforderlich' }, { status: 400 });
     } catch (error) {
       log.error('SEPA mandate fetch error:', error);
       return internalErrorResponse();

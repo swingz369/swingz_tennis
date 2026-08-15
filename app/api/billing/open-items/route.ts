@@ -33,7 +33,7 @@ export async function GET(_request: NextRequest) {
 
       if (!clubId && !memberId) {
         return NextResponse.json(
-          { error: 'Either clubId or memberId is required' },
+          { error: 'clubId oder memberId ist erforderlich' },
           { status: 400 }
         );
       }
@@ -117,7 +117,10 @@ export async function GET(_request: NextRequest) {
       });
     } catch (error) {
       log.error('Error getting open items:', error);
-      return NextResponse.json({ error: 'Failed to get open items' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Offene Posten konnten nicht geladen werden' },
+        { status: 500 }
+      );
     }
   });
 }

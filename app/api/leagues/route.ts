@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     if (!hasRole) return forbiddenResponse('Anmeldung erforderlich');
 
     const clubId = auth.clubId;
-    if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
+    if (!clubId) return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
 
     const { data: leagues, error } = await (auth.supabase as any)
       .from('leagues')
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       log.error('[Leagues GET] Error:', error);
-      return NextResponse.json({ error: 'Failed to fetch leagues' }, { status: 500 });
+      return NextResponse.json({ error: 'Ligen konnten nicht geladen werden' }, { status: 500 });
     }
 
     // Fetch teams for all leagues
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const clubId = auth.clubId;
-    if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
+    if (!clubId) return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
 
     const body = await request.json();
     const {
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!name || !season_year) {
-      return NextResponse.json({ error: 'Name and season year required' }, { status: 400 });
+      return NextResponse.json({ error: 'Name und Saisonjahr erforderlich' }, { status: 400 });
     }
 
     const { data, error } = await (auth.supabase as any)
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       log.error('[Leagues POST] Error:', error);
-      return NextResponse.json({ error: 'Failed to create league' }, { status: 500 });
+      return NextResponse.json({ error: 'Liga konnte nicht erstellt werden' }, { status: 500 });
     }
 
     return NextResponse.json({ league: data }, { status: 201 });

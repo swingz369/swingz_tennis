@@ -25,7 +25,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (error) {
       log.error('[MatchDays GET] Error:', error);
-      return NextResponse.json({ error: 'Failed to fetch match days' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Spieltage konnten nicht geladen werden' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ match_days: matchDays ?? [] });
@@ -42,7 +45,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { matchday_number, scheduled_date, opponent, is_home, venue, notes } = body;
 
     if (!matchday_number || !opponent) {
-      return NextResponse.json({ error: 'Matchday number and opponent required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Spieltagsnummer und Gegner erforderlich' },
+        { status: 400 }
+      );
     }
 
     // Verify league belongs to club
@@ -54,7 +60,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (!league) {
-      return NextResponse.json({ error: 'League not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Liga nicht gefunden' }, { status: 404 });
     }
 
     const { data, error } = await (auth.supabase as any)
@@ -73,7 +79,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (error) {
       log.error('[MatchDays POST] Error:', error);
-      return NextResponse.json({ error: 'Failed to create match day' }, { status: 500 });
+      return NextResponse.json({ error: 'Spieltag konnte nicht erstellt werden' }, { status: 500 });
     }
 
     // F4.3: Heimspiel → Catering-Eintrag automatisch anlegen (non-fatal)

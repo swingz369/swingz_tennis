@@ -42,7 +42,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       .single();
 
     if (error || !membership) {
-      return NextResponse.json({ error: 'Membership not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Mitgliedschaft nicht gefunden' }, { status: 404 });
     }
 
     // Verify club access (superadmin can access any club)
@@ -73,11 +73,11 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
       // Validate inputs
       if (role && !['member', 'trainer', 'admin', 'superadmin'].includes(role)) {
-        return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+        return NextResponse.json({ error: 'Ungültige Rolle' }, { status: 400 });
       }
 
       if (is_active !== undefined && typeof is_active !== 'boolean') {
-        return NextResponse.json({ error: 'Invalid is_active value' }, { status: 400 });
+        return NextResponse.json({ error: 'Ungültiger Wert für is_active' }, { status: 400 });
       }
 
       // Get current membership
@@ -88,7 +88,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         .single();
 
       if (fetchError || !currentMembership) {
-        return NextResponse.json({ error: 'Membership not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Mitgliedschaft nicht gefunden' }, { status: 404 });
       }
 
       // Security: Verify club access (non-superadmin can only modify own club)
@@ -231,7 +231,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
         .single();
 
       if (fetchError || !currentMembership) {
-        return NextResponse.json({ error: 'Membership not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Mitgliedschaft nicht gefunden' }, { status: 404 });
       }
 
       // Security: Verify club access
@@ -279,7 +279,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 
       return NextResponse.json({
         success: true,
-        message: 'Membership deactivated successfully',
+        message: 'Mitgliedschaft erfolgreich deaktiviert',
       });
     } catch (error) {
       log.error('Error in DELETE /api/admin/memberships/[id]:', error);

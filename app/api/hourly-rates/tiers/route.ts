@@ -26,7 +26,7 @@ export async function POST(_request: NextRequest) {
       const { name, description, baseRate, trainingTypes, experienceLevel } = body;
 
       if (!name || !baseRate || !trainingTypes || !experienceLevel) {
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
       }
 
       const rateTier = await hourlyRateService.createHourlyRateTier({

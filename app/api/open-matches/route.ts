@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const clubId = url.searchParams.get('clubId');
     if (!clubId) {
-      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+      return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
     }
 
     const status = url.searchParams.get('status') || 'open';
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
     if (rateLimitError) return rateLimitError;
 
     const body = await req.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     const {
       clubId,
@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
 
     if (!clubId || !title || !matchDate || !startTime || !endTime) {
       return NextResponse.json(
-        { error: 'clubId, title, matchDate, startTime, endTime are required' },
+        { error: 'clubId, title, matchDate, startTime, endTime sind erforderlich' },
         { status: 400 }
       );
     }
@@ -168,7 +168,7 @@ export async function POST(req: NextRequest) {
     // Validate date is in the future
     const matchDateTime = new Date(`${matchDate}T${startTime}:00`);
     if (matchDateTime <= new Date()) {
-      return NextResponse.json({ error: 'Match must be in the future' }, { status: 400 });
+      return NextResponse.json({ error: 'Match muss in der Zukunft liegen' }, { status: 400 });
     }
 
     const serviceClient = createServiceClient();
@@ -221,11 +221,11 @@ export async function PATCH(req: NextRequest) {
     if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
     const body = await req.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     const { matchId, action } = body;
     if (!matchId || !action) {
-      return NextResponse.json({ error: 'matchId and action required' }, { status: 400 });
+      return NextResponse.json({ error: 'matchId und action erforderlich' }, { status: 400 });
     }
 
     const serviceClient = createServiceClient();
@@ -238,11 +238,11 @@ export async function PATCH(req: NextRequest) {
         .eq('id', matchId)
         .single();
 
-      if (!match) return NextResponse.json({ error: 'Match not found' }, { status: 404 });
+      if (!match) return NextResponse.json({ error: 'Match nicht gefunden' }, { status: 404 });
       if (match.status !== 'open')
-        return NextResponse.json({ error: 'Match is not open' }, { status: 409 });
+        return NextResponse.json({ error: 'Match ist nicht offen' }, { status: 409 });
       if (match.current_players >= match.max_players) {
-        return NextResponse.json({ error: 'Match is full' }, { status: 409 });
+        return NextResponse.json({ error: 'Match ist voll' }, { status: 409 });
       }
 
       // Check not already joined
@@ -254,7 +254,7 @@ export async function PATCH(req: NextRequest) {
         .maybeSingle();
 
       if (existing && existing.status === 'joined') {
-        return NextResponse.json({ error: 'Already joined' }, { status: 409 });
+        return NextResponse.json({ error: 'Bereits beigetreten' }, { status: 409 });
       }
 
       // Join (or re-join after leaving)
@@ -291,10 +291,10 @@ export async function PATCH(req: NextRequest) {
         .eq('id', matchId)
         .single();
 
-      if (!match) return NextResponse.json({ error: 'Match not found' }, { status: 404 });
+      if (!match) return NextResponse.json({ error: 'Match nicht gefunden' }, { status: 404 });
       if (match.creator_id === auth.user.id) {
         return NextResponse.json(
-          { error: 'Creator cannot leave — cancel the match instead' },
+          { error: 'Der Ersteller kann nicht austreten — stattdessen Match absagen' },
           { status: 409 }
         );
       }
@@ -329,7 +329,7 @@ export async function DELETE(req: NextRequest) {
     if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
     const matchId = new URL(req.url).searchParams.get('id');
-    if (!matchId) return NextResponse.json({ error: 'id required' }, { status: 400 });
+    if (!matchId) return NextResponse.json({ error: 'id erforderlich' }, { status: 400 });
 
     const serviceClient = createServiceClient();
 
@@ -340,9 +340,9 @@ export async function DELETE(req: NextRequest) {
       .eq('id', matchId)
       .single();
 
-    if (!match) return NextResponse.json({ error: 'Match not found' }, { status: 404 });
+    if (!match) return NextResponse.json({ error: 'Match nicht gefunden' }, { status: 404 });
     if (match.creator_id !== auth.user.id) {
-      return NextResponse.json({ error: 'Only the creator can cancel' }, { status: 403 });
+      return NextResponse.json({ error: 'Nur der Ersteller kann absagen' }, { status: 403 });
     }
 
     await serviceClient.from('open_matches').update({ status: 'cancelled' }).eq('id', matchId);

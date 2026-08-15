@@ -10,10 +10,10 @@ interface RouteContext {
 // GET /api/seasons/[id]/groups/[groupId]/members – aktive Mitglieder der Gruppe
 export async function GET(request: NextRequest, context: RouteContext) {
   const auth = await requireAuth(request);
-  if (!auth.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!auth.user) return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   const { groupId } = await context.params;
   const clubId = request.nextUrl.searchParams.get('clubId');
-  if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+  if (!clubId) return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
 
   const { data: memberships, error } = await (auth.supabase as any)
     .from('training_group_memberships')
@@ -45,11 +45,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   const auth = await requireAuth(request);
-  if (!auth.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!auth.user) return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   const { groupId } = await context.params;
   const { member_ids } = await request.json();
   if (!Array.isArray(member_ids))
-    return NextResponse.json({ error: 'member_ids must be an array' }, { status: 400 });
+    return NextResponse.json({ error: 'member_ids muss ein Array sein' }, { status: 400 });
   const { data, error } = await (auth.supabase as any)
     .from('groups')
     .update({ member_ids, updated_at: new Date().toISOString() })

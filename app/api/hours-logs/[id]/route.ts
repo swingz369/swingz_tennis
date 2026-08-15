@@ -25,12 +25,12 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const hoursLog = await hoursLogService.getHoursLogById(id);
 
       if (!hoursLog) {
-        return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Stundennachweis nicht gefunden' }, { status: 404 });
       }
 
       const isAdmin = await verifyRole(auth, 'admin');
       if (isAdmin && !(await verifyTrainerInClub(auth, hoursLog.trainerId))) {
-        return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Stundennachweis nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ hoursLog });
@@ -68,10 +68,10 @@ export async function PATCH(
       if (isAdmin) {
         const existing = await hoursLogService.getHoursLogById(id);
         if (!existing) {
-          return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Stundennachweis nicht gefunden' }, { status: 404 });
         }
         if (!(await verifyTrainerInClub(auth, existing.trainerId))) {
-          return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Stundennachweis nicht gefunden' }, { status: 404 });
         }
       }
 
@@ -86,7 +86,7 @@ export async function PATCH(
       });
 
       if (!updated) {
-        return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Stundennachweis nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true, hoursLog: updated });
@@ -116,16 +116,16 @@ export async function DELETE(
       const { id } = await params;
       const existing = await hoursLogService.getHoursLogById(id);
       if (!existing) {
-        return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Stundennachweis nicht gefunden' }, { status: 404 });
       }
       if (!(await verifyTrainerInClub(auth, existing.trainerId))) {
-        return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Stundennachweis nicht gefunden' }, { status: 404 });
       }
 
       const success = await hoursLogService.deleteHoursLog(id);
 
       if (!success) {
-        return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Stundennachweis nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true });

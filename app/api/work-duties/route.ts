@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     if (!hasRole) return forbiddenResponse('Anmeldung erforderlich');
 
     const clubId = auth.clubId;
-    if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
+    if (!clubId) return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
     if (error) {
       log.error('[WorkDuties GET] Error:', error);
-      return NextResponse.json({ error: 'Failed to fetch duties' }, { status: 500 });
+      return NextResponse.json({ error: 'Dienste konnten nicht geladen werden' }, { status: 500 });
     }
 
     return NextResponse.json({ duties: data ?? [] });
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const clubId = auth.clubId;
-    if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
+    if (!clubId) return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
 
     const body = await request.json();
     const {
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!title || !duty_type) {
-      return NextResponse.json({ error: 'Title and duty type required' }, { status: 400 });
+      return NextResponse.json({ error: 'Titel und Diensttyp erforderlich' }, { status: 400 });
     }
 
     const { data, error } = await (auth.supabase as any)
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       log.error('[WorkDuties POST] Error:', error);
-      return NextResponse.json({ error: 'Failed to create duty' }, { status: 500 });
+      return NextResponse.json({ error: 'Dienst konnte nicht erstellt werden' }, { status: 500 });
     }
 
     return NextResponse.json({ duty: data }, { status: 201 });

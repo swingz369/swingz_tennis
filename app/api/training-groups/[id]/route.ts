@@ -19,7 +19,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .select()
       .single();
     if (error) return internalErrorResponse();
-    if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!data) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
     return NextResponse.json(data);
   });
 }

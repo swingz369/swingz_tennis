@@ -11,10 +11,7 @@ export async function GET(request: NextRequest) {
     try {
       const searchParams = request.nextUrl.searchParams;
       const period = (searchParams.get('period') || 'monthly') as
-        | 'daily'
-        | 'weekly'
-        | 'monthly'
-        | 'yearly';
+        'daily' | 'weekly' | 'monthly' | 'yearly';
       const startDate = searchParams.get('startDate');
       const endDate = searchParams.get('endDate');
 
@@ -31,7 +28,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(statistics);
     } catch (error) {
       log.error('Error generating statistics:', error);
-      return NextResponse.json({ error: 'Failed to generate statistics' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Statistiken konnten nicht erstellt werden' },
+        { status: 500 }
+      );
     }
   });
 }

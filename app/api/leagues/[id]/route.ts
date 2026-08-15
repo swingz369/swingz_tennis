@@ -22,7 +22,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .single();
 
     if (error || !league) {
-      return NextResponse.json({ error: 'League not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Liga nicht gefunden' }, { status: 404 });
     }
 
     // Fetch teams for this league
@@ -138,7 +138,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: 'Failed to update league' }, { status: 500 });
+    if (error)
+      return NextResponse.json({ error: 'Liga konnte nicht aktualisiert werden' }, { status: 500 });
     return NextResponse.json({ league: data });
   });
 }
@@ -164,7 +165,8 @@ export async function DELETE(
       .eq('club_id', auth.clubId)
       .select('id');
 
-    if (error) return NextResponse.json({ error: 'Failed to delete league' }, { status: 500 });
+    if (error)
+      return NextResponse.json({ error: 'Liga konnte nicht gelöscht werden' }, { status: 500 });
     if (!data || data.length === 0) {
       return NextResponse.json(
         { error: 'Liga nicht gefunden oder keine Berechtigung zum Löschen' },

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const clubId = auth.clubId;
-    if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
+    if (!clubId) return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
 
     const features = await getClubFeatures(auth.supabase, clubId);
     if (!features.family_accounts) return featureDisabledResponse('family_accounts');
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     if (memberError) {
       log.error('Memberships fetch error:', memberError);
-      return NextResponse.json({ error: 'DB error' }, { status: 500 });
+      return NextResponse.json({ error: 'Datenbankfehler' }, { status: 500 });
     }
 
     const clubUserIds: string[] = (memberships ?? []).map((m: { user_id: string }) => m.user_id);
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const clubId = auth.clubId;
-    if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
+    if (!clubId) return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
 
     const features = await getClubFeatures(auth.supabase, clubId);
     if (!features.family_accounts) return featureDisabledResponse('family_accounts');
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     const relationship: string | null = body.relationship ?? null;
 
     if (memberIds.length === 0) {
-      return NextResponse.json({ error: 'memberIds required' }, { status: 400 });
+      return NextResponse.json({ error: 'memberIds erforderlich' }, { status: 400 });
     }
 
     const db = createServiceClient();
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     if (memberError) {
       log.error('Membership check error:', memberError);
-      return NextResponse.json({ error: 'DB error' }, { status: 500 });
+      return NextResponse.json({ error: 'Datenbankfehler' }, { status: 500 });
     }
 
     const validIds = new Set((memberships ?? []).map((m: { user_id: string }) => m.user_id));
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       log.error('Family account insert error:', insertError);
-      return NextResponse.json({ error: 'DB error' }, { status: 500 });
+      return NextResponse.json({ error: 'Datenbankfehler' }, { status: 500 });
     }
 
     await logAudit({
@@ -165,7 +165,7 @@ export async function DELETE(request: NextRequest) {
 
     const { familyGroupId, userId } = await request.json();
     if (!familyGroupId || !userId) {
-      return NextResponse.json({ error: 'familyGroupId and userId required' }, { status: 400 });
+      return NextResponse.json({ error: 'familyGroupId und userId erforderlich' }, { status: 400 });
     }
 
     const db = createServiceClient();
@@ -177,7 +177,7 @@ export async function DELETE(request: NextRequest) {
 
     if (error) {
       log.error('Delete family member error:', error);
-      return NextResponse.json({ error: 'DB error' }, { status: 500 });
+      return NextResponse.json({ error: 'Datenbankfehler' }, { status: 500 });
     }
 
     await logAudit({

@@ -48,7 +48,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ weeks: rows });
     } catch (error) {
       log.error('GET inactive-weeks error', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+      return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }
   });
 }
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const weeks: Array<{ groupId: string; weekNumber: number; isActive: boolean }> =
         body.weeks ?? [];
       if (!Array.isArray(weeks)) {
-        return NextResponse.json({ error: 'weeks must be an array' }, { status: 400 });
+        return NextResponse.json({ error: 'weeks muss ein Array sein' }, { status: 400 });
       }
 
       await db.transaction(async (tx) => {
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ success: true, updated: weeks.length });
     } catch (error) {
       log.error('POST inactive-weeks error', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+      return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }
   });
 }

@@ -25,7 +25,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const attendanceRecord = await hoursLogService.getAttendanceRecordById(id);
 
       if (!attendanceRecord) {
-        return NextResponse.json({ error: 'Attendance record not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Anwesenheitseintrag nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ attendanceRecord });
@@ -66,7 +66,7 @@ export async function PATCH(
       });
 
       if (!updated) {
-        return NextResponse.json({ error: 'Attendance record not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Anwesenheitseintrag nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true, attendanceRecord: updated });
@@ -98,7 +98,7 @@ export async function DELETE(
       const success = await hoursLogService.deleteAttendanceRecord(id);
 
       if (!success) {
-        return NextResponse.json({ error: 'Attendance record not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Anwesenheitseintrag nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true });

@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'member'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'member'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const user = auth.user;

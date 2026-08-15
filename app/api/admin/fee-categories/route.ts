@@ -5,10 +5,10 @@ import { requireAuth } from '@/lib/api-auth';
 
 export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
-  if (!auth.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!auth.user) return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   const { supabase, user } = auth;
   const clubId = new URL(request.url).searchParams.get('clubId');
-  if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+  if (!clubId) return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
 
   const { data: membership } = await (supabase as any)
     .from('user_club_memberships')
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     .eq('club_id', clubId)
     .eq('is_active', true)
     .maybeSingle();
-  if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!membership) return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
   const { data, error } = await (supabase as any)
     .from('fee_configurations')
@@ -32,12 +32,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const auth = await requireAuth(request);
-  if (!auth.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!auth.user) return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   const { supabase, user } = auth;
   const body = await request.json();
   const { club_id, name, type, amount, billing_cycle = 'yearly', billing_unit_count = 1 } = body;
   if (!club_id || !name || !type || amount === undefined)
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
 
   const { data: membership } = await (supabase as any)
     .from('user_club_memberships')
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     .eq('is_active', true)
     .maybeSingle();
   if (!membership || !['admin', 'superadmin'].includes(membership.role))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
   const { data, error } = await (supabase as any)
     .from('fee_configurations')

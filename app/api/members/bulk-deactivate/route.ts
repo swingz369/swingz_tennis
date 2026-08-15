@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     // Only admins can bulk deactivate
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+      return NextResponse.json({ error: 'Unzureichende Berechtigungen' }, { status: 403 });
     }
 
     // Rate limit: strict (10 requests per minute)
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
       if (!validation.success) {
         return NextResponse.json(
-          { error: 'Invalid request', details: validation.error.errors },
+          { error: 'Ungültige Anfrage', details: validation.error.errors },
           { status: 400 }
         );
       }
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
       // Deactivate memberships (soft delete)
       if (!auth.clubId) {
-        return NextResponse.json({ error: 'Club ID required' }, { status: 400 });
+        return NextResponse.json({ error: 'Club-ID erforderlich' }, { status: 400 });
       }
       const clubId = auth.clubId;
       const { data: deactivated, error } = await supabase
@@ -62,7 +62,10 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         log.error('Bulk deactivation error:', error);
-        return NextResponse.json({ error: 'Failed to deactivate members' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Mitglieder konnten nicht deaktiviert werden' },
+          { status: 500 }
+        );
       }
 
       // Audit log each deactivation

@@ -19,7 +19,7 @@ export async function DELETE(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     // Only admins and trainers can bulk delete sessions
     if (!(await verifyRole(auth, 'trainer'))) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+      return NextResponse.json({ error: 'Unzureichende Berechtigungen' }, { status: 403 });
     }
 
     // Rate limit: strict (10 requests per minute)
@@ -35,7 +35,7 @@ export async function DELETE(request: NextRequest) {
 
       if (!validation.success) {
         return NextResponse.json(
-          { error: 'Invalid request', details: validation.error.errors },
+          { error: 'Ungültige Anfrage', details: validation.error.errors },
           { status: 400 }
         );
       }
@@ -66,7 +66,7 @@ export async function DELETE(request: NextRequest) {
 
           if (ownedSessions.length !== sessions.length) {
             return NextResponse.json(
-              { error: 'Cannot delete sessions owned by other trainers' },
+              { error: 'Sessions anderer Trainer können nicht gelöscht werden' },
               { status: 403 }
             );
           }
@@ -77,7 +77,10 @@ export async function DELETE(request: NextRequest) {
 
       if (error) {
         log.error('Bulk delete sessions error:', error);
-        return NextResponse.json({ error: 'Failed to delete sessions' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Sessions konnten nicht gelöscht werden' },
+          { status: 500 }
+        );
       }
 
       // Audit log — one row per deleted session (resource_id is NOT NULL)

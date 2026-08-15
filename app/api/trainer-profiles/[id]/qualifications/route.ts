@@ -25,7 +25,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const profile = await trainerProfileService.getTrainerProfileById(id);
 
       if (!profile) {
-        return NextResponse.json({ error: 'Trainer profile not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Trainer-Profil nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ qualifications: profile.qualifications || [] });
@@ -67,7 +67,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       const { name, issuer, issuedDate, expiryDate, certificateUrl } = body;
 
       if (!name || !issuer || !issuedDate) {
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
       }
 
       const updated = await trainerProfileService.addQualification(id, {
@@ -79,7 +79,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       });
 
       if (!updated) {
-        return NextResponse.json({ error: 'Trainer profile not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Trainer-Profil nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true, trainerProfile: updated });

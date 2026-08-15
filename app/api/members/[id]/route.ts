@@ -52,7 +52,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       });
 
       if (!member) {
-        return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Mitglied nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ member });
@@ -129,7 +129,7 @@ export async function PATCH(
       });
 
       if (!updated) {
-        return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Mitglied nicht gefunden' }, { status: 404 });
       }
 
       // Persist profile fields to Supabase users table
@@ -238,7 +238,7 @@ export async function DELETE(
         .single();
 
       if (fetchError || !membership) {
-        return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Mitglied nicht gefunden' }, { status: 404 });
       }
 
       // Verify club access for non-superadmin
@@ -293,7 +293,7 @@ export async function DELETE(
 
       return NextResponse.json({
         success: true,
-        message: 'Member deactivated successfully (soft delete)',
+        message: 'Mitglied erfolgreich deaktiviert (Soft Delete)',
       });
     } catch (error) {
       log.error('Member delete error:', error);

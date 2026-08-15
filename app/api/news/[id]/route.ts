@@ -28,7 +28,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   return withApiAuth(req, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const body = await req.json();
@@ -53,7 +53,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   return withApiAuth(req, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const { error } = await auth.supabase.from('news_posts').delete().eq('id', id);

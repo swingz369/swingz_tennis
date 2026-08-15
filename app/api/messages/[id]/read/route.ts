@@ -28,7 +28,7 @@ export async function PATCH(
     error: authError,
   } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   }
 
   const { error } = await supabase

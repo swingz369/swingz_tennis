@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
     if (!clubId) {
-      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+      return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
     }
 
     const supabase = auth.supabase as SupabaseClient<Database>;
@@ -377,11 +377,11 @@ export async function PATCH(req: NextRequest) {
       reason?: string;
       newSessionId?: string;
     } | null;
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     const { bookingId, action, reason, newSessionId } = body;
     if (!bookingId || !action) {
-      return NextResponse.json({ error: 'bookingId and action required' }, { status: 400 });
+      return NextResponse.json({ error: 'bookingId und action erforderlich' }, { status: 400 });
     }
 
     const validActions = ['cancel', 'no_show', 'confirm', 'reschedule'] as const;
@@ -397,7 +397,7 @@ export async function PATCH(req: NextRequest) {
     if (typedAction === 'reschedule') {
       if (!newSessionId) {
         return NextResponse.json(
-          { error: 'newSessionId required for reschedule' },
+          { error: 'newSessionId für Verschiebung erforderlich' },
           { status: 400 }
         );
       }

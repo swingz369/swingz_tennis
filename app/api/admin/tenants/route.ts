@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
       if (error) {
         log.error('Error fetching clubs:', error);
-        throw new Error('Failed to fetch clubs');
+        throw new Error('Vereine konnten nicht geladen werden');
       }
 
       // Get all club IDs for batch queries

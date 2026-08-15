@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     if (rateLimitError) return rateLimitError;
 
     const body = await req.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     const validation = validateRequestBody(CreateBookingSchema, body);
     if (!validation.success) {

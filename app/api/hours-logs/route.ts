@@ -159,7 +159,7 @@ export async function POST(_request: NextRequest) {
       const duration = eh * 60 + em - (sh * 60 + sm);
 
       if (duration <= 0) {
-        return NextResponse.json({ error: 'endTime must be after startTime' }, { status: 400 });
+        return NextResponse.json({ error: 'endTime muss nach startTime liegen' }, { status: 400 });
       }
 
       const supabase = auth.supabase;

@@ -31,7 +31,7 @@ export async function POST(_request: NextRequest) {
       const { userId, firstName, lastName, email, phone, dateOfBirth } = body;
 
       if (!userId) {
-        return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+        return NextResponse.json({ error: 'userId ist erforderlich' }, { status: 400 });
       }
 
       const clubId =
@@ -40,7 +40,7 @@ export async function POST(_request: NextRequest) {
             m.club_id && (m.role === 'trainer' || m.role === 'admin' || m.role === 'superadmin')
         )?.club_id ?? null;
       if (!clubId) {
-        return NextResponse.json({ error: 'No club selected' }, { status: 400 });
+        return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
       }
 
       // Check if profile already exists

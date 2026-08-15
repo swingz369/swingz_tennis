@@ -34,7 +34,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const validation = addMemberSchema.safeParse(body);
       if (!validation.success) {
         return NextResponse.json(
-          { error: 'Validation failed', details: validation.error.errors },
+          { error: 'Validierung fehlgeschlagen', details: validation.error.errors },
           { status: 400 }
         );
       }

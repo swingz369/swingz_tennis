@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     // Validate club context
     if (!auth.clubId) {
-      return NextResponse.json({ error: 'Club ID required' }, { status: 400 });
+      return NextResponse.json({ error: 'Club-ID erforderlich' }, { status: 400 });
     }
 
     const clubId = auth.clubId!;
@@ -72,11 +72,11 @@ export async function POST(request: NextRequest) {
 
       // Validate required fields
       if (!trainer_id) {
-        return NextResponse.json({ error: 'trainer_id is required' }, { status: 400 });
+        return NextResponse.json({ error: 'trainer_id ist erforderlich' }, { status: 400 });
       }
 
       if (!rating || rating < 1 || rating > 5) {
-        return NextResponse.json({ error: 'rating must be between 1 and 5' }, { status: 400 });
+        return NextResponse.json({ error: 'rating muss zwischen 1 und 5 liegen' }, { status: 400 });
       }
 
       // Check if member has already submitted feedback for this session
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
 
         if (hasSubmitted) {
           return NextResponse.json(
-            { error: 'Feedback already submitted for this session' },
+            { error: 'Für diese Session wurde bereits Feedback abgegeben' },
             { status: 400 }
           );
         }
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(feedback, { status: 201 });
     } catch (error) {
       log.error('Error creating feedback:', error);
-      return NextResponse.json({ error: 'Failed to create feedback' }, { status: 500 });
+      return NextResponse.json({ error: 'Feedback konnte nicht erstellt werden' }, { status: 500 });
     }
   });
 }
@@ -159,7 +159,7 @@ export async function GET(request: NextRequest) {
 
     // Validate club context
     if (!auth.clubId) {
-      return NextResponse.json({ error: 'Club ID required' }, { status: 400 });
+      return NextResponse.json({ error: 'Club-ID erforderlich' }, { status: 400 });
     }
 
     const clubId = auth.clubId!;
@@ -184,7 +184,7 @@ export async function GET(request: NextRequest) {
       });
     } catch (error) {
       log.error('Error fetching feedback:', error);
-      return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 });
+      return NextResponse.json({ error: 'Feedback konnte nicht geladen werden' }, { status: 500 });
     }
   });
 }

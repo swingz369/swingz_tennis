@@ -29,7 +29,7 @@ export const maxDuration = 60; // Pro plan — enough for a few hundred recipien
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const db = createServiceClient() as any;
@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const db = createServiceClient() as any;

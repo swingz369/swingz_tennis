@@ -24,13 +24,13 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => null);
     if (!body) {
-      return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+      return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
     }
 
     const { endpoint, p256dh, auth: authKey } = body;
     if (!endpoint || !p256dh || !authKey) {
       return NextResponse.json(
-        { error: 'endpoint, p256dh, and auth are required' },
+        { error: 'endpoint, p256dh und auth sind erforderlich' },
         { status: 400 }
       );
     }
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!clubId) {
-      return NextResponse.json({ error: 'No club context found' }, { status: 400 });
+      return NextResponse.json({ error: 'Kein Club-Kontext gefunden' }, { status: 400 });
     }
 
     const result = await pushNotificationService.subscribe({
@@ -81,7 +81,7 @@ export async function DELETE(req: NextRequest) {
 
     const body = await req.json().catch(() => null);
     if (!body?.endpoint) {
-      return NextResponse.json({ error: 'endpoint is required' }, { status: 400 });
+      return NextResponse.json({ error: 'endpoint ist erforderlich' }, { status: 400 });
     }
 
     const result = await pushNotificationService.unsubscribe(body.endpoint);

@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   const clubId = searchParams.get('clubId');
 
   if (!clubId) {
-    return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+    return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
   }
 
   // Membership-Check (jede Rolle darf lesen — auch Trainer/Mitglied)

@@ -24,7 +24,7 @@ export async function DELETE(
       .single();
 
     if (!duty) {
-      return NextResponse.json({ error: 'Duty not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Dienst nicht gefunden' }, { status: 404 });
     }
 
     const { error } = await (auth.supabase as any)
@@ -34,7 +34,10 @@ export async function DELETE(
       .eq('duty_id', id);
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to remove assignment' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Zuweisung konnte nicht entfernt werden' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ success: true });

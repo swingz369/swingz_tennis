@@ -43,7 +43,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
 
       if (!season) {
-        return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
       }
 
       // Verify user has access to this club
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
 
         if (!season) {
-          return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
         }
 
         // Verify user has access to this club
@@ -141,14 +141,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
         // Check if preferences are open
         if (!season.preferences_open) {
           return NextResponse.json(
-            { error: 'Preferences are not open for this season' },
+            { error: 'Präferenzen sind für diese Saison nicht geöffnet' },
             { status: 400 }
           );
         }
 
         // Check deadline
         if (season.preferences_deadline && new Date() > season.preferences_deadline) {
-          return NextResponse.json({ error: 'Preferences deadline has passed' }, { status: 400 });
+          return NextResponse.json({ error: 'Präferenzfrist ist abgelaufen' }, { status: 400 });
         }
 
         const body: SubmitPreferencesRequest = await request.json();
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         // Validate required fields
         if (!body.user_role || !body.weekly_availability) {
           return NextResponse.json(
-            { error: 'Missing required fields: user_role, weekly_availability' },
+            { error: 'Pflichtfelder fehlen: user_role, weekly_availability' },
             { status: 400 }
           );
         }
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           return NextResponse.json({
             success: true,
             preference: updated,
-            message: 'Preferences updated successfully',
+            message: 'Präferenzen erfolgreich aktualisiert',
           });
         } else {
           // Create new preference
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             {
               success: true,
               preference: newPreference,
-              message: 'Preferences submitted successfully',
+              message: 'Präferenzen erfolgreich übermittelt',
             },
             { status: 201 }
           );

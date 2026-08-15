@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       log.error('trainers GET error:', error);
-      return NextResponse.json({ error: 'Failed to fetch trainers' }, { status: 500 });
+      return NextResponse.json({ error: 'Trainer konnten nicht geladen werden' }, { status: 500 });
     }
 
     // Also try to get trainer profile specialties

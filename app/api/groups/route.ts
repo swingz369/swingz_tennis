@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     const clubId = url.searchParams.get('clubId');
 
     if (!clubId) {
-      return NextResponse.json({ error: 'clubId query parameter required' }, { status: 400 });
+      return NextResponse.json({ error: 'Query-Parameter clubId erforderlich' }, { status: 400 });
     }
     if (!verifyClubAccess(auth, clubId)) {
       return forbiddenResponse('Kein Zugriff auf diesen Verein');
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       const validation = createGroupSchema.safeParse(body);
       if (!validation.success) {
         return NextResponse.json(
-          { error: 'Validation failed', details: validation.error.errors },
+          { error: 'Validierung fehlgeschlagen', details: validation.error.errors },
           { status: 400 }
         );
       }

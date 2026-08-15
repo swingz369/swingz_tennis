@@ -110,7 +110,10 @@ export async function GET(request: NextRequest) {
       });
     } catch (error) {
       log.error('Error exporting audit logs:', error);
-      return NextResponse.json({ error: 'Failed to export audit logs' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Audit-Logs konnten nicht exportiert werden' },
+        { status: 500 }
+      );
     }
   });
 }

@@ -25,7 +25,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const trainerProfile = await trainerProfileService.getTrainerProfileById(id);
 
       if (!trainerProfile) {
-        return NextResponse.json({ error: 'Trainer profile not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Trainer-Profil nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ trainerProfile });
@@ -155,7 +155,7 @@ export async function PATCH(
       });
 
       if (!updated) {
-        return NextResponse.json({ error: 'Trainer profile not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Trainer-Profil nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true, trainerProfile: updated });
@@ -196,7 +196,7 @@ export async function DELETE(
       const success = await trainerProfileService.deleteTrainerProfile(id);
 
       if (!success) {
-        return NextResponse.json({ error: 'Trainer profile not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Trainer-Profil nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true });

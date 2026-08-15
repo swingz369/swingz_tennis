@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const body = await req.json().catch(() => null);
 
     if (!body?.status) {
-      return NextResponse.json({ error: 'status required' }, { status: 400 });
+      return NextResponse.json({ error: 'status erforderlich' }, { status: 400 });
     }
 
     const validStatuses = ['pending', 'confirmed', 'cancelled', 'no_show'];

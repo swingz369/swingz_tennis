@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     if (!hasRole) return forbiddenResponse('Anmeldung erforderlich');
 
     const clubId = auth.clubId;
-    if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
+    if (!clubId) return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
 
     const { searchParams } = new URL(request.url);
     const activeOnly = searchParams.get('active') === 'true';
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
     if (error) {
       log.error('[Closures GET] Error:', error);
-      return NextResponse.json({ error: 'Failed to fetch closures' }, { status: 500 });
+      return NextResponse.json({ error: 'Sperren konnten nicht geladen werden' }, { status: 500 });
     }
 
     return NextResponse.json({ closures: data ?? [] });
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const clubId = auth.clubId;
-    if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
+    if (!clubId) return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
 
     const body = await request.json();
     const {
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!court_id || !reason || !start_date) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
     }
 
     const { data, error } = await (auth.supabase as any)
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       log.error('[Closures POST] Error:', error);
-      return NextResponse.json({ error: 'Failed to create closure' }, { status: 500 });
+      return NextResponse.json({ error: 'Sperre konnte nicht erstellt werden' }, { status: 500 });
     }
 
     // Notify members for tournament blocks, weather closures, or explicit flag

@@ -35,7 +35,7 @@ export async function POST(_request: NextRequest) {
       } = body;
 
       if (!gateway || !gatewayName || !supportedCurrencies || !supportedMethods) {
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
       }
 
       const paymentSettings = await paymentSettingsService.createPaymentSettings({

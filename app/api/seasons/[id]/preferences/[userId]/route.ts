@@ -50,7 +50,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
 
       if (!season) {
-        return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
       }
 
       // Check permissions
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         );
 
       if (!result) {
-        return NextResponse.json({ error: 'Preference not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Präferenz nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({
@@ -113,7 +113,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
 
         if (!season) {
-          return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
         }
 
         // Check permissions
@@ -127,7 +127,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         // Check if preferences are still open
         if (!season.preferences_open && !isClubAdmin) {
           return NextResponse.json(
-            { error: 'Preferences are not open for this season' },
+            { error: 'Präferenzen sind für diese Saison nicht geöffnet' },
             { status: 400 }
           );
         }
@@ -144,7 +144,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           );
 
         if (!existingPreference) {
-          return NextResponse.json({ error: 'Preference not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Präferenz nicht gefunden' }, { status: 404 });
         }
 
         const body: UpdatePreferencesRequest = await request.json();
@@ -191,7 +191,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         return NextResponse.json({
           success: true,
           preference: updatedPreference,
-          message: 'Preference updated successfully',
+          message: 'Präferenz erfolgreich aktualisiert',
         });
       } catch (error) {
         log.error(`PATCH /api/seasons/[id]/preferences/${userId} error:`, error);
@@ -220,7 +220,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         // THIS season's club, see hasClubAdminAccess above)
         const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
         if (!season) {
-          return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
         }
 
         // Check permissions
@@ -241,7 +241,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
           );
 
         if (!existingPreference) {
-          return NextResponse.json({ error: 'Preference not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Präferenz nicht gefunden' }, { status: 404 });
         }
 
         // Delete preference
@@ -251,7 +251,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
         return NextResponse.json({
           success: true,
-          message: 'Preference deleted successfully',
+          message: 'Präferenz erfolgreich gelöscht',
         });
       } catch (error) {
         log.error(`DELETE /api/seasons/${seasonId}/preferences/${userId} error:`, error);

@@ -78,7 +78,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       });
     } catch (error) {
       log.error('GET planning config error:', error);
-      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+      return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }
   });
 }
@@ -103,7 +103,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
       const body = (await request.json()) as Record<string, any>;
       if (!body || typeof body !== 'object') {
-        return NextResponse.json({ error: 'Body must be a JSON object' }, { status: 400 });
+        return NextResponse.json({ error: 'Body muss ein JSON-Objekt sein' }, { status: 400 });
       }
 
       // Build the update payload from the whitelist
@@ -117,7 +117,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         const depth = Number(updatePayload.backtrack_depth);
         if (!Number.isFinite(depth) || depth < 0 || depth > 10) {
           return NextResponse.json(
-            { error: 'backtrack_depth must be a number between 0 and 10' },
+            { error: 'backtrack_depth muss eine Zahl zwischen 0 und 10 sein' },
             { status: 400 }
           );
         }
@@ -132,7 +132,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         const threshold = Number(updatePayload.unassigned_rate_threshold);
         if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
           return NextResponse.json(
-            { error: 'unassigned_rate_threshold must be a number between 0 and 1' },
+            { error: 'unassigned_rate_threshold muss eine Zahl zwischen 0 und 1 sein' },
             { status: 400 }
           );
         }
@@ -140,7 +140,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       }
 
       if (Object.keys(updatePayload).length === 0) {
-        return NextResponse.json({ error: 'No updatable fields provided' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Keine aktualisierbaren Felder angegeben' },
+          { status: 400 }
+        );
       }
 
       // Upsert: insert if missing, otherwise update

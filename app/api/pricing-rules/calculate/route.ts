@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     const seasonId = url.searchParams.get('seasonId');
 
     if (!clubId) {
-      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+      return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
     }
 
     try {

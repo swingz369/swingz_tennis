@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     // Query ?clubId= still wins for explicit overrides.
     const clubId = url.searchParams.get('clubId') ?? auth.clubId;
     if (!clubId) {
-      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+      return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
     }
 
     const { data: courts, error } = await auth.supabase
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     if (rateLimitError) return rateLimitError;
 
     const body = await req.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     const {
       name,
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
     const effectiveClubId: string | null =
       auth.role === 'superadmin' ? (bodyClubId ?? auth.clubId) : auth.clubId;
     if (!effectiveClubId) {
-      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+      return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
     }
 
     // Platztyp und Platznummer sind interne Angaben — der Onboarding-Wizard kennt

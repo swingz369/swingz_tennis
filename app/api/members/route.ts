@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
           const errors = (validation as { success: false; errors: ZodError }).errors;
           return NextResponse.json(
             {
-              error: 'Validation failed',
+              error: 'Validierung fehlgeschlagen',
               details: formatValidationErrors(errors),
             },
             { status: 400 }
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
         const errors = (validation as { success: false; errors: ZodError }).errors;
         return NextResponse.json(
           {
-            error: 'Invalid query parameters',
+            error: 'Ungültige Query-Parameter',
             details: formatValidationErrors(errors),
           },
           { status: 400 }

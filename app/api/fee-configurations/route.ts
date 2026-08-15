@@ -46,7 +46,7 @@ export async function POST(_request: NextRequest) {
       const validation = createFeeConfigSchema.safeParse(body);
       if (!validation.success) {
         return NextResponse.json(
-          { error: 'Validation failed', details: validation.error.issues },
+          { error: 'Validierung fehlgeschlagen', details: validation.error.issues },
           { status: 400 }
         );
       }
@@ -89,7 +89,7 @@ export async function GET(_request: NextRequest) {
         // Filter active configs by member type and age
         const memberAgeNum = parseInt(memberAge, 10);
         if (isNaN(memberAgeNum)) {
-          return NextResponse.json({ error: 'Invalid memberAge parameter' }, { status: 400 });
+          return NextResponse.json({ error: 'Ungültiger memberAge-Parameter' }, { status: 400 });
         }
         const configs = await feeConfigurationService.calculateFeeForMember(
           memberType,

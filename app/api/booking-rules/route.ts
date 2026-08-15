@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     // which honors ADMIN_CLUB_COOKIE for superadmin (club-exists strategy) and admins
     // (membership-match). Query param still wins for explicit overrides.
     const clubId = url.searchParams.get('clubId') ?? auth.clubId;
-    if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+    if (!clubId) return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
 
     const { data, error } = await auth.supabase
       .from('booking_rules')
@@ -64,11 +64,11 @@ export async function POST(req: NextRequest) {
     if (rateLimitError) return rateLimitError;
 
     const body = await req.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     // auth.clubId is the cookie-aware resolution result (see comment in GET).
     const clubId: string | null = body.clubId ?? auth.clubId;
-    if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+    if (!clubId) return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
 
     const {
       max_booking_duration_minutes = 90,

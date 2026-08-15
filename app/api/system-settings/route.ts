@@ -37,7 +37,7 @@ export async function POST(_request: NextRequest) {
       } = body;
 
       if (!category || !key || !value || !type) {
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
       }
 
       // Only superadmins can override club context via body
@@ -102,7 +102,7 @@ export async function GET(_request: NextRequest) {
           effectiveClubId
         );
         if (!systemSetting) {
-          return NextResponse.json({ error: 'System setting not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Systemeinstellung nicht gefunden' }, { status: 404 });
         }
         return NextResponse.json({ systemSetting });
       }

@@ -51,7 +51,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         .where(and(eq(seasonPlanEntries.id, entryId), eq(seasonPlanEntries.season_id, seasonId)));
 
       if (!result) {
-        return NextResponse.json({ error: 'Plan entry not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Plan-Eintrag nicht gefunden' }, { status: 404 });
       }
 
       // Check permissions
@@ -113,7 +113,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           .where(and(eq(seasonPlanEntries.id, entryId), eq(seasonPlanEntries.season_id, seasonId)));
 
         if (!existingEntry) {
-          return NextResponse.json({ error: 'Plan entry not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Plan-Eintrag nicht gefunden' }, { status: 404 });
         }
 
         // Verify access
@@ -136,7 +136,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         if (body.day_of_week !== undefined) {
           if (body.day_of_week < 0 || body.day_of_week > 6) {
             return NextResponse.json(
-              { error: 'day_of_week must be between 0 and 6' },
+              { error: 'day_of_week muss zwischen 0 und 6 liegen' },
               { status: 400 }
             );
           }
@@ -189,7 +189,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
         if (finalStartTime >= finalEndTime) {
           return NextResponse.json(
-            { error: 'start_time must be before end_time' },
+            { error: 'start_time muss vor end_time liegen' },
             { status: 400 }
           );
         }
@@ -227,7 +227,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           if (conflicts.length > 0) {
             return NextResponse.json(
               {
-                error: 'Scheduling conflict detected',
+                error: 'Terminkonflikt erkannt',
                 details: 'Trainer or court is already booked at this time',
                 conflicts: conflicts.map((c) => ({
                   id: c.id,
@@ -265,7 +265,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           success: true,
           entry: updatedEntry,
           promoted,
-          message: 'Plan entry updated successfully',
+          message: 'Plan-Eintrag erfolgreich aktualisiert',
         });
       } catch (error) {
         log.error(`PATCH /api/seasons/${seasonId}/plan-entries/${entryId} error:`, error);
@@ -302,7 +302,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
           .where(and(eq(seasonPlanEntries.id, entryId), eq(seasonPlanEntries.season_id, seasonId)));
 
         if (!existingEntry) {
-          return NextResponse.json({ error: 'Plan entry not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Plan-Eintrag nicht gefunden' }, { status: 404 });
         }
 
         // Verify access
@@ -317,7 +317,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         // Cannot delete published entries
         if (existingEntry.status === 'published' || existingEntry.status === 'active') {
           return NextResponse.json(
-            { error: 'Cannot delete published or active entries' },
+            { error: 'Veröffentlichte oder aktive Einträge können nicht gelöscht werden' },
             { status: 400 }
           );
         }
@@ -327,7 +327,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
         return NextResponse.json({
           success: true,
-          message: 'Plan entry deleted successfully',
+          message: 'Plan-Eintrag erfolgreich gelöscht',
         });
       } catch (error) {
         log.error(`DELETE /api/seasons/${seasonId}/plan-entries/${entryId} error:`, error);

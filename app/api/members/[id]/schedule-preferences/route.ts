@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const clubId = searchParams.get('clubId');
 
     if (!clubId) {
-      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+      return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
     }
 
     if (!(await canAccess(auth, userId, clubId))) {
@@ -92,7 +92,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     } = body;
 
     if (!clubId) {
-      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+      return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
     }
 
     if (!(await canAccess(auth, userId, clubId))) {

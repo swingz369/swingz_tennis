@@ -26,7 +26,7 @@ export async function GET(_request: NextRequest) {
     const clubId = searchParams.get('clubId') || auth.clubId;
 
     if (!clubId) {
-      return NextResponse.json({ error: 'Missing required parameter: clubId' }, { status: 400 });
+      return NextResponse.json({ error: 'Pflichtparameter fehlt: clubId' }, { status: 400 });
     }
     if (!verifyClubAccess(auth, clubId)) {
       return forbiddenResponse('Kein Zugriff auf diesen Verein');

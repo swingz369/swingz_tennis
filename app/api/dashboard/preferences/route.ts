@@ -33,13 +33,16 @@ export async function GET(req: NextRequest) {
 
     if (!dashboardType || !['superadmin', 'club'].includes(dashboardType)) {
       return NextResponse.json(
-        { error: 'dashboardType required (superadmin|club)' },
+        { error: 'dashboardType erforderlich (superadmin|club)' },
         { status: 400 }
       );
     }
 
     if (dashboardType === 'club' && !clubId) {
-      return NextResponse.json({ error: 'clubId required for club dashboard' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'clubId für Vereins-Dashboard erforderlich' },
+        { status: 400 }
+      );
     }
 
     const sb = auth.supabase as AnySupabase;
@@ -54,7 +57,10 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       log.error('Dashboard preferences fetch error:', error);
-      return NextResponse.json({ error: 'Failed to fetch preferences' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Präferenzen konnten nicht geladen werden' },
+        { status: 500 }
+      );
     }
 
     // Return stored layout or default
@@ -78,17 +84,20 @@ export async function PUT(req: NextRequest) {
 
     if (!dashboardType || !['superadmin', 'club'].includes(dashboardType)) {
       return NextResponse.json(
-        { error: 'dashboardType required (superadmin|club)' },
+        { error: 'dashboardType erforderlich (superadmin|club)' },
         { status: 400 }
       );
     }
 
     if (dashboardType === 'club' && !clubId) {
-      return NextResponse.json({ error: 'clubId required for club dashboard' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'clubId für Vereins-Dashboard erforderlich' },
+        { status: 400 }
+      );
     }
 
     if (!Array.isArray(layout)) {
-      return NextResponse.json({ error: 'layout must be an array' }, { status: 400 });
+      return NextResponse.json({ error: 'layout muss ein Array sein' }, { status: 400 });
     }
 
     const sb = auth.supabase as AnySupabase;
@@ -110,7 +119,10 @@ export async function PUT(req: NextRequest) {
 
     if (error) {
       log.error('Dashboard preferences save error:', error);
-      return NextResponse.json({ error: 'Failed to save preferences' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Präferenzen konnten nicht gespeichert werden' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ layout: data.layout, saved: true });

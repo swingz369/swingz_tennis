@@ -64,18 +64,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, level, age_group, season_id } = body;
     if (!name || !level)
-      return NextResponse.json({ error: 'name and level required' }, { status: 400 });
-    if (!season_id) return NextResponse.json({ error: 'season_id required' }, { status: 400 });
+      return NextResponse.json({ error: 'Name und Level erforderlich' }, { status: 400 });
+    if (!season_id) return NextResponse.json({ error: 'season_id erforderlich' }, { status: 400 });
 
     const { data: season, error: seasonErr } = await (auth.supabase.from('seasons') as any)
       .select('id, club_id, season_type, year, start_date, end_date')
       .eq('id', season_id)
       .single();
     if (seasonErr || !season)
-      return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
 
     if (season.club_id !== auth.clubId)
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
     const { scheduleId, error: scheduleErr } = await findOrCreateSchedule(auth.supabase, season);
     if (scheduleErr) return internalErrorResponse();

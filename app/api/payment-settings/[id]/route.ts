@@ -25,7 +25,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const paymentSettings = await paymentSettingsService.getPaymentSettingsById(id);
 
       if (!paymentSettings) {
-        return NextResponse.json({ error: 'Payment settings not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Zahlungseinstellungen nicht gefunden' },
+          { status: 404 }
+        );
       }
 
       return NextResponse.json({ paymentSettings });
@@ -80,7 +83,10 @@ export async function PATCH(
       });
 
       if (!updated) {
-        return NextResponse.json({ error: 'Payment settings not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Zahlungseinstellungen nicht gefunden' },
+          { status: 404 }
+        );
       }
 
       return NextResponse.json({ success: true, paymentSettings: updated });
@@ -111,7 +117,10 @@ export async function DELETE(
       const success = await paymentSettingsService.deletePaymentSettings(id);
 
       if (!success) {
-        return NextResponse.json({ error: 'Payment settings not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Zahlungseinstellungen nicht gefunden' },
+          { status: 404 }
+        );
       }
 
       return NextResponse.json({ success: true });

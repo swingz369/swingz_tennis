@@ -37,7 +37,7 @@ export async function GET(_request: NextRequest) {
 
       if (!clubId && !memberId) {
         return NextResponse.json(
-          { error: 'Either clubId or memberId is required' },
+          { error: 'clubId oder memberId ist erforderlich' },
           { status: 400 }
         );
       }

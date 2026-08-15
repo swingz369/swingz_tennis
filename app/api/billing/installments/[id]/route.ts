@@ -21,7 +21,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .select('*, invoices(club_id, member_id, amount)')
     .eq('id', id)
     .single();
-  if (fetchErr || !installment) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (fetchErr || !installment)
+    return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
 
   const clubId = installment.invoices?.club_id;
   const { data: membership } = await (supabase as any)
@@ -32,7 +33,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .eq('is_active', true)
     .maybeSingle();
   if (!membership || !['admin', 'superadmin'].includes(membership.role))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
   const paidAt = parsed.data.paid_at ?? new Date().toISOString();
 

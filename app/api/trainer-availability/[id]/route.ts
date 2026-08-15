@@ -26,7 +26,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const availability = await trainerAvailabilityService.getTrainerAvailabilityById(id);
 
       if (!availability) {
-        return NextResponse.json({ error: 'Trainer availability not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Trainer-Verfügbarkeit nicht gefunden' },
+          { status: 404 }
+        );
       }
 
       return NextResponse.json({ availability });
@@ -78,7 +81,10 @@ export async function PATCH(
       });
 
       if (!updated) {
-        return NextResponse.json({ error: 'Trainer availability not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Trainer-Verfügbarkeit nicht gefunden' },
+          { status: 404 }
+        );
       }
 
       return NextResponse.json({ success: true, availability: updated });
@@ -120,7 +126,10 @@ export async function DELETE(
       const success = await trainerAvailabilityService.deleteTrainerAvailability(id);
 
       if (!success) {
-        return NextResponse.json({ error: 'Trainer availability not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Trainer-Verfügbarkeit nicht gefunden' },
+          { status: 404 }
+        );
       }
 
       return NextResponse.json({ success: true });

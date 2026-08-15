@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
     const url = new URL(req.url);
     const clubIdParam = url.searchParams.get('clubId');
-    if (!clubIdParam) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+    if (!clubIdParam) return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
 
     const supabase = auth.supabase as SupabaseClient<Database>;
     const userId = auth.user.id;
@@ -267,7 +267,7 @@ export async function POST(req: NextRequest) {
     if (!isAdmin) return forbiddenResponse('Zugriff nur für Admins');
 
     const body = await req.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     const {
       schedule_id,
@@ -291,7 +291,7 @@ export async function POST(req: NextRequest) {
 
     if (!schedule_id || !timeslot_start || !timeslot_end) {
       return NextResponse.json(
-        { error: 'schedule_id, timeslot_start, timeslot_end required' },
+        { error: 'schedule_id, timeslot_start, timeslot_end erforderlich' },
         { status: 400 }
       );
     }

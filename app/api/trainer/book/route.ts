@@ -17,12 +17,12 @@ export async function POST(request: NextRequest) {
     const { supabase, user } = auth;
 
     const body = await request.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     const { trainerId, date, startTime, endTime } = body;
     if (!trainerId || !date || !startTime || !endTime) {
       return NextResponse.json(
-        { error: 'trainerId, date, startTime, endTime required' },
+        { error: 'trainerId, date, startTime, endTime erforderlich' },
         { status: 400 }
       );
     }

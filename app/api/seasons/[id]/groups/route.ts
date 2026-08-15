@@ -9,12 +9,12 @@ interface RouteContext {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   const auth = await requireAuth(request);
-  if (!auth.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!auth.user) return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   const { supabase } = auth;
 
   const { id: seasonId } = await context.params;
   const clubId = request.nextUrl.searchParams.get('clubId');
-  if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+  if (!clubId) return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
 
   // Fetch distinct groups used in plan entries for this season
   const { data: entries, error } = await (supabase as any)

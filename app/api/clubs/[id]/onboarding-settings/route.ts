@@ -38,7 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== 'object') {
-      return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+      return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
     }
 
     // Build upsert rows from allowed keys
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     if (rows.length === 0) {
-      return NextResponse.json({ success: true, message: 'No settings to save' });
+      return NextResponse.json({ success: true, message: 'Keine Einstellungen zum Speichern' });
     }
 
     const { error } = await auth.supabase

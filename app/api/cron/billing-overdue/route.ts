@@ -16,10 +16,10 @@ export async function GET(request: NextRequest) {
   const cronSecret = env.CRON_SECRET;
   if (!cronSecret) {
     log.error('CRON_SECRET not configured — rejecting request');
-    return NextResponse.json({ error: 'Service misconfigured' }, { status: 500 });
+    return NextResponse.json({ error: 'Dienst fehlkonfiguriert' }, { status: 500 });
   }
   if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   }
 
   // Sentry cron monitoring: start check-in
@@ -69,6 +69,6 @@ export async function GET(request: NextRequest) {
     Sentry.captureCheckIn({ checkInId, monitorSlug: 'billing-overdue', status: 'error' });
     Sentry.captureException(error, { tags: { cron: 'billing-overdue' } });
 
-    return NextResponse.json({ error: 'Cron job failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Cron-Job fehlgeschlagen' }, { status: 500 });
   }
 }

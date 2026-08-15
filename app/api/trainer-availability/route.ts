@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
 
       if (!trainer_id || !date || !start_time || !end_time) {
         return NextResponse.json(
-          { error: 'Missing required fields: trainer_id, date, start_time, end_time' },
+          { error: 'Pflichtfelder fehlen: trainer_id, date, start_time, end_time' },
           { status: 400 }
         );
       }
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
           const isInClub = [...clubRecordIds.values()].includes(targetRecordId);
           if (!isInClub) {
             return NextResponse.json(
-              { error: 'Trainer does not belong to your club' },
+              { error: 'Trainer gehört nicht zu deinem Verein' },
               { status: 403 }
             );
           }
@@ -195,14 +195,14 @@ export async function DELETE(request: NextRequest) {
       const availabilityId = searchParams.get('id');
 
       if (!availabilityId) {
-        return NextResponse.json({ error: 'Availability ID required' }, { status: 400 });
+        return NextResponse.json({ error: 'Verfügbarkeits-ID erforderlich' }, { status: 400 });
       }
 
       // Look up the availability record
       const availability =
         await trainerAvailabilityService.getTrainerAvailabilityById(availabilityId);
       if (!availability) {
-        return NextResponse.json({ error: 'Availability not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Verfügbarkeit nicht gefunden' }, { status: 404 });
       }
 
       // Trainer: can only delete own availability. availability.trainerId ist eine
@@ -223,7 +223,7 @@ export async function DELETE(request: NextRequest) {
           const isInClub = [...clubRecordIds.values()].includes(availability.trainerId);
           if (!isInClub) {
             return NextResponse.json(
-              { error: 'Availability does not belong to your club' },
+              { error: 'Verfügbarkeit gehört nicht zu deinem Verein' },
               { status: 403 }
             );
           }

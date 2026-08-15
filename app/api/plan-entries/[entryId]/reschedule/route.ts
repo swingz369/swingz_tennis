@@ -101,13 +101,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         if (finalDayOfWeek < 0 || finalDayOfWeek > 6) {
           return NextResponse.json(
-            { error: 'day_of_week must be between 0 and 6' },
+            { error: 'day_of_week muss zwischen 0 und 6 liegen' },
             { status: 400 }
           );
         }
         if (finalStartTime >= finalEndTime) {
           return NextResponse.json(
-            { error: 'start_time must be before end_time' },
+            { error: 'start_time muss vor end_time liegen' },
             { status: 400 }
           );
         }

@@ -21,7 +21,7 @@ interface CreateSeriesBookingRequest {
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'member'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const supabase = auth.supabase;
@@ -32,13 +32,13 @@ export async function POST(request: NextRequest) {
 
     // Validate input
     if (!club_id || !court_id || !start_time || !end_time || !recurring_pattern) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
     }
 
     // Validate max occurrences
     const maxOccurrences = recurring_pattern.occurrences || 52;
     if (maxOccurrences > 52) {
-      return NextResponse.json({ error: 'Maximum 52 occurrences allowed' }, { status: 400 });
+      return NextResponse.json({ error: 'Maximal 52 Wiederholungen erlaubt' }, { status: 400 });
     }
 
     // Generate all booking dates
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
         if (conflicts && conflicts.length > 0) {
           errors.push({
             date: booking.start_time.toISOString(),
-            error: 'Time slot already booked',
+            error: 'Zeitslot bereits gebucht',
           });
           continue;
         }

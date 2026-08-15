@@ -5,14 +5,14 @@ import { getMemberBalance, getMemberBalanceHistory } from '@/lib/services/member
 
 export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
-  if (!auth.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!auth.user) return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   const { supabase, user } = auth;
 
   const { searchParams } = new URL(request.url);
   const memberId = searchParams.get('memberId');
   const clubId = searchParams.get('clubId');
   if (!memberId || !clubId)
-    return NextResponse.json({ error: 'memberId and clubId required' }, { status: 400 });
+    return NextResponse.json({ error: 'memberId und clubId erforderlich' }, { status: 400 });
 
   const isSelf = memberId === user.id;
   if (!isSelf) {
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       .eq('is_active', true)
       .maybeSingle();
     if (!membership || !['admin', 'superadmin'].includes(membership.role))
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
   }
 
   const balance = await getMemberBalance(supabase as any, memberId, clubId);

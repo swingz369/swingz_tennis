@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
       const clubId = url.searchParams.get('clubId');
 
       if (!clubId) {
-        return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+        return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
       }
 
       // Get separate counts for trainers and members

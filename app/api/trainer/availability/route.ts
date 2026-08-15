@@ -64,19 +64,19 @@ export async function POST(request: NextRequest) {
     const { supabase, user } = auth;
 
     const body = await request.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     const { date, start_time, end_time, notes } = body;
     if (!date || !start_time || !end_time) {
       return NextResponse.json(
-        { error: 'date, start_time and end_time required' },
+        { error: 'date, start_time und end_time erforderlich' },
         { status: 400 }
       );
     }
 
     const recordId = await resolveTrainerRecordId(user.id);
     if (!recordId) {
-      return NextResponse.json({ error: 'No trainer profile found' }, { status: 404 });
+      return NextResponse.json({ error: 'Kein Trainerprofil gefunden' }, { status: 404 });
     }
 
     // Check for overlap using the correct trainer record id
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       log.error('trainer availability POST error:', error);
-      return NextResponse.json({ error: 'Failed to create slot' }, { status: 500 });
+      return NextResponse.json({ error: 'Slot konnte nicht erstellt werden' }, { status: 500 });
     }
 
     return NextResponse.json({ slot }, { status: 201 });

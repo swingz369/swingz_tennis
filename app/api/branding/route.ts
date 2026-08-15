@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     const clubId = searchParams.get('clubId');
 
     if (!clubId) {
-      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+      return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
     }
 
     if (!verifyClubAccess(auth, clubId)) return forbiddenResponse('Kein Zugriff auf diesen Verein');
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
         .single();
 
       if (error || !data) {
-        return NextResponse.json({ error: 'Club not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({
@@ -102,7 +102,7 @@ export async function PUT(request: NextRequest) {
     try {
       const clubId = request.headers.get('x-club-id') || request.headers.get('x-tenant-id');
       if (!clubId) {
-        return NextResponse.json({ error: 'Club ID header missing' }, { status: 400 });
+        return NextResponse.json({ error: 'Club-ID-Header fehlt' }, { status: 400 });
       }
       const body = await request.json();
       const validated = BrandingUpdateSchema.parse(body);
@@ -120,7 +120,7 @@ export async function PUT(request: NextRequest) {
       if (validated.customDomain !== undefined) updates.custom_domain = validated.customDomain;
 
       if (Object.keys(updates).length === 0) {
-        return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+        return NextResponse.json({ error: 'Keine Felder zum Aktualisieren' }, { status: 400 });
       }
 
       updates.updated_at = new Date().toISOString();
@@ -167,12 +167,15 @@ export async function PUT(request: NextRequest) {
 
       if (error) {
         log.error('Branding update error:', error);
-        return NextResponse.json({ error: 'Failed to update branding' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Branding konnte nicht aktualisiert werden' },
+          { status: 500 }
+        );
       }
 
       return NextResponse.json({
         success: true,
-        message: 'Branding updated',
+        message: 'Branding aktualisiert',
       });
     } catch (err) {
       if (err instanceof z.ZodError) {

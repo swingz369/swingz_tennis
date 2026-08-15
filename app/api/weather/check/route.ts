@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     const clubId = auth.clubId;
     if (!clubId) {
-      return NextResponse.json({ error: 'No club selected' }, { status: 400 });
+      return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
     }
 
     const supabase = auth.supabase;

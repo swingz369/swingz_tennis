@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 
   if (!cronSecret || incomingSecret !== cronSecret) {
     log.error('Cron-Aufruf mit ungültigem Secret abgewiesen', undefined);
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   }
 
   const service = createServiceClient();

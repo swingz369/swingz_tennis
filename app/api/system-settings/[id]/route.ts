@@ -25,7 +25,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const systemSetting = await systemSettingsService.getSystemSettingById(id);
 
       if (!systemSetting) {
-        return NextResponse.json({ error: 'System setting not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Systemeinstellung nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ systemSetting });
@@ -66,7 +66,7 @@ export async function PATCH(
       });
 
       if (!updated) {
-        return NextResponse.json({ error: 'System setting not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Systemeinstellung nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true, systemSetting: updated });
@@ -97,7 +97,7 @@ export async function DELETE(
       const success = await systemSettingsService.deleteSystemSetting(id);
 
       if (!success) {
-        return NextResponse.json({ error: 'System setting not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Systemeinstellung nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true });

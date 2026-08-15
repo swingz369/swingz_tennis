@@ -28,7 +28,7 @@ export async function GET(_request: NextRequest) {
       const supabase = auth.supabase;
       const clubId = auth.clubId;
       if (!clubId) {
-        return NextResponse.json({ error: 'No club selected' }, { status: 400 });
+        return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
       }
 
       // Fetch members of the current club with subscription info
@@ -100,7 +100,7 @@ export async function POST(_request: NextRequest) {
         const supabase = auth.supabase;
         const clubId = auth.clubId;
         if (!clubId) {
-          return NextResponse.json({ error: 'No club selected' }, { status: 400 });
+          return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
         }
 
         // Verify that the member belongs to the admin's club

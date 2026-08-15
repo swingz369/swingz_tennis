@@ -33,8 +33,11 @@ export async function GET(_request: NextRequest) {
       });
 
       if (error) {
-        log.error('Failed to list backups', { error });
-        return NextResponse.json({ error: 'Failed to list backups' }, { status: 500 });
+        log.error('Backups konnten nicht aufgelistet werden', { error });
+        return NextResponse.json(
+          { error: 'Backups konnten nicht aufgelistet werden' },
+          { status: 500 }
+        );
       }
 
       const backups = (data ?? [])
@@ -86,7 +89,7 @@ export async function POST(request: NextRequest) {
         if (!cronSecret) {
           log.error('CRON_SECRET not configured - manual backup unavailable');
           return NextResponse.json(
-            { error: 'Backup system not fully configured: CRON_SECRET is missing' },
+            { error: 'Backup-System nicht vollständig konfiguriert: CRON_SECRET fehlt' },
             { status: 500 }
           );
         }
@@ -107,7 +110,7 @@ export async function POST(request: NextRequest) {
         if (!response.ok) {
           log.error('Manual backup failed', { status: response.status, result });
           return NextResponse.json(
-            { error: 'Backup failed', details: result },
+            { error: 'Backup fehlgeschlagen', details: result },
             { status: response.status }
           );
         }
@@ -144,12 +147,12 @@ export async function DELETE(request: NextRequest) {
       const filePath = searchParams.get('file');
 
       if (!filePath) {
-        return NextResponse.json({ error: 'Missing ?file= parameter' }, { status: 400 });
+        return NextResponse.json({ error: 'Parameter ?file= fehlt' }, { status: 400 });
       }
 
       // Prevent path traversal
       if (!filePath.startsWith(BACKUP_PREFIX) || filePath.includes('..')) {
-        return NextResponse.json({ error: 'Invalid file path' }, { status: 400 });
+        return NextResponse.json({ error: 'Ungültiger Dateipfad' }, { status: 400 });
       }
 
       try {
@@ -158,8 +161,15 @@ export async function DELETE(request: NextRequest) {
         const { error } = await serviceClient.storage.from(STORAGE_BUCKET).remove([filePath]);
 
         if (error) {
-          log.error('Failed to delete backup', { error, path: filePath, userId: auth.user.id });
-          return NextResponse.json({ error: 'Failed to delete backup' }, { status: 500 });
+          log.error('Backup konnte nicht gelöscht werden', {
+            error,
+            path: filePath,
+            userId: auth.user.id,
+          });
+          return NextResponse.json(
+            { error: 'Backup konnte nicht gelöscht werden' },
+            { status: 500 }
+          );
         }
 
         log.info(`Backup deleted: ${filePath}`, { userId: auth.user.id });

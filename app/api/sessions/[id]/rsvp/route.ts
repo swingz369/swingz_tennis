@@ -28,7 +28,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // Validate UUID
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(sessionId)) {
-      return NextResponse.json({ error: 'Invalid session ID' }, { status: 400 });
+      return NextResponse.json({ error: 'Ungültige Session-ID' }, { status: 400 });
     }
 
     const body = await req.json().catch(() => null);
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     if (!status || !['accepted', 'declined', 'maybe'].includes(status)) {
       return NextResponse.json(
-        { error: 'status must be one of: accepted, declined, maybe' },
+        { error: 'status muss einer sein von: accepted, declined, maybe' },
         { status: 400 }
       );
     }
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         .single();
 
       if (!session) {
-        return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Session nicht gefunden' }, { status: 404 });
       }
 
       // Upsert RSVP (insert or update)
@@ -117,7 +117,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(sessionId)) {
-      return NextResponse.json({ error: 'Invalid session ID' }, { status: 400 });
+      return NextResponse.json({ error: 'Ungültige Session-ID' }, { status: 400 });
     }
 
     const supabase = await createClient();

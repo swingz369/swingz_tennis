@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   if (process.env.NODE_ENV === 'production') {
     return withApiAuth(request, async (auth) => {
       if (!['admin', 'superadmin'].includes(auth.role ?? '')) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
       }
       const spec = getApiDocs();
       return NextResponse.json(spec);

@@ -67,7 +67,10 @@ export async function GET(req: NextRequest) {
 
       if (error) {
         log.error('Database error', error instanceof Error ? error : undefined);
-        return NextResponse.json({ error: 'Failed to fetch clubs' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Vereine konnten nicht geladen werden' },
+          { status: 500 }
+        );
       }
 
       // Get member counts for each club (optimized single query)
@@ -124,7 +127,7 @@ export async function POST(req: NextRequest) {
       const { name, city, maxMembers, openingHours } = body;
 
       if (!name || typeof name !== 'string' || name.trim().length === 0) {
-        return NextResponse.json({ error: 'Club name is required' }, { status: 400 });
+        return NextResponse.json({ error: 'Vereinsname ist erforderlich' }, { status: 400 });
       }
 
       const supabase = await createClient();
@@ -137,7 +140,10 @@ export async function POST(req: NextRequest) {
         .maybeSingle();
 
       if (existing) {
-        return NextResponse.json({ error: 'Club with this name already exists' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Ein Verein mit diesem Namen existiert bereits' },
+          { status: 400 }
+        );
       }
 
       // Owner creates clubs as active; superadmin-created clubs start as pending (needs owner approval)
@@ -158,7 +164,7 @@ export async function POST(req: NextRequest) {
 
       if (error) {
         log.error('Error creating club', error instanceof Error ? error : undefined);
-        return NextResponse.json({ error: 'Failed to create club' }, { status: 500 });
+        return NextResponse.json({ error: 'Verein konnte nicht erstellt werden' }, { status: 500 });
       }
 
       log.info('Club created', { clubId: newClub.id, name: newClub.name });

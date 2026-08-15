@@ -23,7 +23,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const trainerBilling = await BillingService.getTrainerBillingById(id);
 
       if (!trainerBilling) {
-        return NextResponse.json({ error: 'Trainer billing not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Trainer-Abrechnung nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ trainerBilling });
@@ -63,7 +63,7 @@ export async function PATCH(
       });
 
       if (!updated) {
-        return NextResponse.json({ error: 'Trainer billing not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Trainer-Abrechnung nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true, trainerBilling: updated });

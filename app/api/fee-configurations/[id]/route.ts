@@ -25,7 +25,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const feeConfiguration = await feeConfigurationService.getFeeConfigurationById(id);
 
       if (!feeConfiguration) {
-        return NextResponse.json({ error: 'Fee configuration not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Gebührenkonfiguration nicht gefunden' },
+          { status: 404 }
+        );
       }
 
       return NextResponse.json({ feeConfiguration });
@@ -82,7 +85,10 @@ export async function PATCH(
       });
 
       if (!updated) {
-        return NextResponse.json({ error: 'Fee configuration not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Gebührenkonfiguration nicht gefunden' },
+          { status: 404 }
+        );
       }
 
       return NextResponse.json({ success: true, feeConfiguration: updated });
@@ -113,7 +119,10 @@ export async function DELETE(
       const success = await feeConfigurationService.deleteFeeConfiguration(id);
 
       if (!success) {
-        return NextResponse.json({ error: 'Fee configuration not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Gebührenkonfiguration nicht gefunden' },
+          { status: 404 }
+        );
       }
 
       return NextResponse.json({ success: true });

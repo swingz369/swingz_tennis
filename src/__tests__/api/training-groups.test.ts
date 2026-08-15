@@ -303,7 +303,7 @@ describe('POST /api/training-groups', () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain('name');
+    expect(body.error).toContain('Name');
   });
 
   it('returns 400 when level is missing', async () => {
@@ -316,7 +316,7 @@ describe('POST /api/training-groups', () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain('level');
+    expect(body.error).toContain('Level');
   });
 
   it('returns 400 when season_id is missing', async () => {

@@ -15,7 +15,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { member_ids } = body;
 
     if (!member_ids || !Array.isArray(member_ids) || member_ids.length === 0) {
-      return NextResponse.json({ error: 'member_ids array required' }, { status: 400 });
+      return NextResponse.json({ error: 'member_ids-Array erforderlich' }, { status: 400 });
     }
 
     // Check duty exists and belongs to club
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (!duty) {
-      return NextResponse.json({ error: 'Duty not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Dienst nicht gefunden' }, { status: 404 });
     }
 
     // Check current assignment count
@@ -60,9 +60,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (error) {
       if (error.code === '23505') {
-        return NextResponse.json({ error: 'Member already assigned' }, { status: 409 });
+        return NextResponse.json({ error: 'Mitglied bereits zugewiesen' }, { status: 409 });
       }
-      return NextResponse.json({ error: 'Failed to assign members' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Mitglieder konnten nicht zugewiesen werden' },
+        { status: 500 }
+      );
     }
 
     // Update duty status if fully assigned

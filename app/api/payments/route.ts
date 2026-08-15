@@ -27,7 +27,7 @@ export async function POST(_request: NextRequest) {
 
       if (!invoiceId || !amount || !paymentMethod) {
         return NextResponse.json(
-          { error: 'Missing required fields (invoiceId, amount, paymentMethod)' },
+          { error: 'Pflichtfelder fehlen (invoiceId, amount, paymentMethod)' },
           { status: 400 }
         );
       }
@@ -43,7 +43,7 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ payment }, { status: 201 });
     } catch (error) {
       log.error('Error creating payment:', error);
-      return NextResponse.json({ error: 'Failed to create payment' }, { status: 500 });
+      return NextResponse.json({ error: 'Zahlung konnte nicht erstellt werden' }, { status: 500 });
     }
   });
 }
@@ -84,12 +84,15 @@ export async function GET(_request: NextRequest) {
       }
 
       return NextResponse.json(
-        { error: 'Either invoiceId or memberId is required' },
+        { error: 'invoiceId oder memberId ist erforderlich' },
         { status: 400 }
       );
     } catch (error) {
       log.error('Error getting payments:', error);
-      return NextResponse.json({ error: 'Failed to get payments' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Zahlungen konnten nicht geladen werden' },
+        { status: 500 }
+      );
     }
   });
 }

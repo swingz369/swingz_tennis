@@ -29,7 +29,7 @@ const EXT_TO_MIME: Record<string, string> = {
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const clubId = auth.clubId;

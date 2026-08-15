@@ -50,7 +50,7 @@ export async function GET(
       const feedback = await feedbackRepository.findByIdWithDetails(feedbackId);
 
       if (!feedback) {
-        return NextResponse.json({ error: 'Feedback not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Feedback nicht gefunden' }, { status: 404 });
       }
 
       // Check if user has access to this feedback
@@ -61,7 +61,7 @@ export async function GET(
       return NextResponse.json(feedback);
     } catch (error) {
       log.error('Error fetching feedback:', error);
-      return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 });
+      return NextResponse.json({ error: 'Feedback konnte nicht geladen werden' }, { status: 500 });
     }
   });
 }
@@ -125,7 +125,7 @@ export async function PATCH(
       // Verify feedback exists and belongs to club
       const existing = await feedbackRepository.findById(feedbackId);
       if (!existing) {
-        return NextResponse.json({ error: 'Feedback not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Feedback nicht gefunden' }, { status: 404 });
       }
 
       if (existing.club_id !== auth.clubId) {
@@ -140,7 +140,7 @@ export async function PATCH(
         updated = await feedbackRepository.flagFeedback(feedbackId, is_flagged, flagged_reason);
       } else {
         return NextResponse.json(
-          { error: 'Must provide is_visible or is_flagged' },
+          { error: 'is_visible oder is_flagged muss angegeben werden' },
           { status: 400 }
         );
       }
@@ -148,7 +148,10 @@ export async function PATCH(
       return NextResponse.json(updated);
     } catch (error) {
       log.error('Error updating feedback:', error);
-      return NextResponse.json({ error: 'Failed to update feedback' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Feedback konnte nicht aktualisiert werden' },
+        { status: 500 }
+      );
     }
   });
 }
@@ -196,7 +199,7 @@ export async function DELETE(
       // Verify feedback exists and belongs to club
       const existing = await feedbackRepository.findById(feedbackId);
       if (!existing) {
-        return NextResponse.json({ error: 'Feedback not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Feedback nicht gefunden' }, { status: 404 });
       }
 
       if (existing.club_id !== auth.clubId) {
@@ -208,7 +211,7 @@ export async function DELETE(
       return new NextResponse(null, { status: 204 });
     } catch (error) {
       log.error('Error deleting feedback:', error);
-      return NextResponse.json({ error: 'Failed to delete feedback' }, { status: 500 });
+      return NextResponse.json({ error: 'Feedback konnte nicht gelöscht werden' }, { status: 500 });
     }
   });
 }

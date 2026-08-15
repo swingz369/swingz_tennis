@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     if (!courtId || !dayOfWeek || !startTime) {
       return NextResponse.json(
-        { error: 'courtId, dayOfWeek, and startTime are required' },
+        { error: 'courtId, dayOfWeek und startTime sind erforderlich' },
         { status: 400 }
       );
     }
@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     // Validate UUIDs
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id) || !uuidRegex.test(courtId)) {
-      return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
+      return NextResponse.json({ error: 'Ungültiges ID-Format' }, { status: 400 });
     }
 
     try {
@@ -67,7 +67,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       } | null;
 
       if (fetchErr || !session) {
-        return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Session nicht gefunden' }, { status: 404 });
       }
 
       // Authorization: trainer can only update own sessions; admin can update any in their club
@@ -124,7 +124,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (conflicts && conflicts.length > 0) {
         return NextResponse.json(
           {
-            error: 'Time slot conflict: another session exists at this time on the selected court',
+            error:
+              'Zeitslot-Konflikt: zu dieser Zeit existiert bereits eine Session auf dem gewählten Platz',
           },
           { status: 409 }
         );
@@ -155,7 +156,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
       if (updateErr) {
         log.error('Session update error:', updateErr);
-        return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Session konnte nicht aktualisiert werden' },
+          { status: 500 }
+        );
       }
 
       return NextResponse.json({ success: true, session: updated });
@@ -183,7 +187,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     // Validate UUID
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id)) {
-      return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
+      return NextResponse.json({ error: 'Ungültiges ID-Format' }, { status: 400 });
     }
 
     try {
@@ -198,7 +202,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       const session = sessionRaw2 as { id: string; trainer_id: string; club_id: string } | null;
 
       if (fetchErr || !session) {
-        return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Session nicht gefunden' }, { status: 404 });
       }
 
       // Authorization: trainer can only delete own sessions; admin can delete any in their club
@@ -218,7 +222,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
       if (deleteErr) {
         log.error('Session delete error:', deleteErr);
-        return NextResponse.json({ error: 'Failed to delete session' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Session konnte nicht gelöscht werden' },
+          { status: 500 }
+        );
       }
 
       return NextResponse.json({ success: true });

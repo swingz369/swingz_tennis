@@ -8,7 +8,10 @@ import { pushNotificationService } from '@/lib/push-notification.service';
 export async function GET() {
   const publicKey = pushNotificationService.getPublicKey();
   if (!publicKey) {
-    return NextResponse.json({ error: 'Push notifications not configured' }, { status: 503 });
+    return NextResponse.json(
+      { error: 'Push-Benachrichtigungen nicht konfiguriert' },
+      { status: 503 }
+    );
   }
   return NextResponse.json({ publicKey });
 }

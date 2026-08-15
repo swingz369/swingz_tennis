@@ -57,7 +57,10 @@ export async function GET(req: NextRequest) {
       });
     } catch (error) {
       log.error('Error exporting statistics:', error);
-      return NextResponse.json({ error: 'Failed to export statistics' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Statistiken konnten nicht exportiert werden' },
+        { status: 500 }
+      );
     }
   });
 }

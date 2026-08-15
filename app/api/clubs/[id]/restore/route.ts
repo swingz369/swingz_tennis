@@ -100,7 +100,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
       const club = pre[0];
       if (!club) {
-        return NextResponse.json({ error: 'Club not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
       }
       if (club.deleted_at === null) {
         return NextResponse.json(

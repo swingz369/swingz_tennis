@@ -48,7 +48,7 @@ export async function GET(_req: NextRequest) {
 
     if (trainerError || !trainerRecord) {
       return NextResponse.json(
-        { error: 'Trainer record not found. Please contact administrator.' },
+        { error: 'Trainer-Datensatz nicht gefunden. Bitte wende dich an den Administrator.' },
         { status: 404 }
       );
     }

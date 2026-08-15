@@ -353,7 +353,7 @@ describe('GET /api/clubs', () => {
 
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toContain('Failed to fetch clubs');
+    expect(body.error).toContain('Vereine konnten nicht geladen werden');
   });
 
   it('returns 403 when verifyRole fails', async () => {

@@ -56,7 +56,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         // Check if auto-planning is enabled
         if (!season.auto_plan_enabled) {
           return NextResponse.json(
-            { error: 'Auto-planning is disabled for this season' },
+            { error: 'Auto-Planung ist für diese Saison deaktiviert' },
             { status: 400 }
           );
         }

@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     const clubId = url.searchParams.get('clubId');
 
     if (!trainerId && !clubId) {
-      return NextResponse.json({ error: 'trainerId or clubId required' }, { status: 400 });
+      return NextResponse.json({ error: 'trainerId oder clubId erforderlich' }, { status: 400 });
     }
 
     try {

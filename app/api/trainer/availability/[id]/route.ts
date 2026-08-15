@@ -53,7 +53,7 @@ export async function DELETE(
 
     if (error) {
       log.error('trainer availability DELETE error:', error);
-      return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
+      return NextResponse.json({ error: 'Löschen fehlgeschlagen' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

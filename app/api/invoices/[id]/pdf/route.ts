@@ -21,7 +21,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const invoice = await billingEngine.getInvoiceById(invoiceId);
 
       if (!invoice) {
-        return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Rechnung nicht gefunden' }, { status: 404 });
       }
 
       const isAdminOrTrainer = await verifyRole(auth, 'trainer');
@@ -70,7 +70,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       });
     } catch (error) {
       log.error('Error generating invoice PDF:', error);
-      return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 });
+      return NextResponse.json({ error: 'PDF konnte nicht erstellt werden' }, { status: 500 });
     }
   });
 }

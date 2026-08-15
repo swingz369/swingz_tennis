@@ -43,7 +43,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       });
     } catch (error) {
       log.error('GET conflicts error:', error);
-      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+      return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }
   });
 }
@@ -76,7 +76,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         notes?: string;
       };
       if (!body.conflictId || !body.action) {
-        return NextResponse.json({ error: 'conflictId and action required' }, { status: 400 });
+        return NextResponse.json({ error: 'conflictId und action erforderlich' }, { status: 400 });
       }
 
       const newStatus = body.action === 'resolve' ? 'resolved' : 'ignored';
@@ -88,7 +88,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       const { conflicts } = await detectConflictsForSeason(seasonId, access.season.club_id);
       const conflict = conflicts.find((c) => c.id === body.conflictId);
       if (!conflict) {
-        return NextResponse.json({ error: 'Conflict not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Konflikt nicht gefunden' }, { status: 404 });
       }
 
       const rowId = conflictRowId(seasonId, conflict.id);
@@ -126,7 +126,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       });
     } catch (error) {
       log.error('PATCH conflicts error:', error);
-      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+      return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }
   });
 }

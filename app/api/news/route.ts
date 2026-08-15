@@ -34,14 +34,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const body = await req.json();
     const { title, content } = body;
 
     if (!title || !content) {
-      return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
+      return NextResponse.json({ error: 'Titel und Inhalt sind erforderlich' }, { status: 400 });
     }
 
     if (!auth.clubId) {

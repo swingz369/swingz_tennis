@@ -21,7 +21,7 @@ export async function GET(_req: NextRequest) {
     // for subsequent calls to /api/clubs/${id}/features etc.
     const targetClubId = auth.clubId;
     if (!targetClubId) {
-      return NextResponse.json({ error: 'No club context available' }, { status: 404 });
+      return NextResponse.json({ error: 'Kein Club-Kontext verfügbar' }, { status: 404 });
     }
 
     const { data: clubRows, error: clubError } = await auth.supabase
@@ -33,7 +33,7 @@ export async function GET(_req: NextRequest) {
       .limit(1);
 
     if (clubError || !clubRows || clubRows.length === 0) {
-      return NextResponse.json({ error: 'Club not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
     }
 
     const club = clubRows[0] as unknown as {

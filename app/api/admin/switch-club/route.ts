@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const { clubId } = body;
 
     if (!clubId) {
-      return NextResponse.json({ error: 'clubId is required' }, { status: 400 });
+      return NextResponse.json({ error: 'clubId ist erforderlich' }, { status: 400 });
     }
 
     // 3. Verify user is superadmin AND this club is one they actually manage
@@ -43,7 +43,10 @@ export async function POST(req: NextRequest) {
 
     const isSuperadmin = (memberships ?? []).some((m: any) => m.role === 'superadmin');
     if (!isSuperadmin) {
-      return NextResponse.json({ error: 'Only superadmins can switch clubs' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Nur Superadmins können Vereine wechseln' },
+        { status: 403 }
+      );
     }
 
     const managesClub = (memberships ?? []).some(
@@ -81,7 +84,7 @@ export async function DELETE() {
 
     return NextResponse.json({
       success: true,
-      message: 'Club selection cleared',
+      message: 'Vereinsauswahl zurückgesetzt',
     });
   } catch (error) {
     log.error('[Switch Club] Error clearing club:', error);

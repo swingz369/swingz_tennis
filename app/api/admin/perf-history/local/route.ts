@@ -164,7 +164,7 @@ export async function GET(_req: NextRequest) {
   try {
     await requireAdminClub();
   } catch {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
   }
 
   const rateLimitResponse = await checkRateLimitOrFail(_req, RATE_LIMITS.STANDARD);

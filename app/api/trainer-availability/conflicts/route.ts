@@ -27,7 +27,7 @@ export async function GET(_request: NextRequest) {
 
       if (!startDate || !endDate) {
         return NextResponse.json(
-          { error: 'Start date and end date are required' },
+          { error: 'Start- und Enddatum sind erforderlich' },
           { status: 400 }
         );
       }

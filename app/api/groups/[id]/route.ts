@@ -36,7 +36,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     try {
       const group = await groupRepo.findById(GroupId.fromString(id));
       if (!group) {
-        return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Gruppe nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({
@@ -78,14 +78,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const validation = updateGroupSchema.safeParse(body);
       if (!validation.success) {
         return NextResponse.json(
-          { error: 'Validation failed', details: validation.error.errors },
+          { error: 'Validierung fehlgeschlagen', details: validation.error.errors },
           { status: 400 }
         );
       }
 
       const group = await groupRepo.findById(GroupId.fromString(id));
       if (!group) {
-        return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Gruppe nicht gefunden' }, { status: 404 });
       }
 
       if (validation.data.name !== undefined) group.setName(validation.data.name);
@@ -147,13 +147,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     try {
       const group = await groupRepo.findById(GroupId.fromString(id));
       if (!group) {
-        return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Gruppe nicht gefunden' }, { status: 404 });
       }
 
       group.deactivate();
       await groupRepo.save(group);
 
-      return NextResponse.json({ success: true, message: 'Group deactivated' });
+      return NextResponse.json({ success: true, message: 'Gruppe deaktiviert' });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error deleting group:', message);

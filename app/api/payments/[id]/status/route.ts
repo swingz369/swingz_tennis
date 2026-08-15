@@ -29,7 +29,7 @@ export async function PATCH(
       const { status } = body;
 
       if (!status) {
-        return NextResponse.json({ error: 'Status is required' }, { status: 400 });
+        return NextResponse.json({ error: 'Status erforderlich' }, { status: 400 });
       }
 
       const payment = await billingEngine.updatePaymentStatus(id, status as PaymentStatus);
@@ -37,7 +37,10 @@ export async function PATCH(
       return NextResponse.json({ payment });
     } catch (error) {
       log.error('Error updating payment status:', error);
-      return NextResponse.json({ error: 'Failed to update payment status' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Zahlungsstatus konnte nicht aktualisiert werden' },
+        { status: 500 }
+      );
     }
   });
 }

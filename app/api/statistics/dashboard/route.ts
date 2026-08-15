@@ -24,7 +24,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(metrics);
     } catch (error) {
       log.error('Error fetching dashboard metrics:', error);
-      return NextResponse.json({ error: 'Failed to fetch dashboard metrics' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Dashboard-Kennzahlen konnten nicht geladen werden' },
+        { status: 500 }
+      );
     }
   });
 }

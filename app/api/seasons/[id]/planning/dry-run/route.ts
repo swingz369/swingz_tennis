@@ -29,7 +29,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
     if (!season) {
-      return NextResponse.json({ ok: false, error: 'Season not found' }, { status: 404 });
+      return NextResponse.json({ ok: false, error: 'Saison nicht gefunden' }, { status: 404 });
     }
     if (!isSuperadmin) {
       const hasClubAccess = auth.memberships.some(

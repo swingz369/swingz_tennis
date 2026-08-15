@@ -19,7 +19,7 @@ const log = createLogger('api:approvals');
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const sb = auth.supabase as any;
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const sb = auth.supabase as any;

@@ -21,7 +21,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     }
 
     if (!auth.clubId) {
-      return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Abwesenheit nicht gefunden' }, { status: 404 });
     }
 
     try {
@@ -29,7 +29,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const absence = await absenceService.getAbsenceById(id, auth.clubId);
 
       if (!absence) {
-        return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Abwesenheit nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ absence });
@@ -57,7 +57,7 @@ export async function PATCH(
     }
 
     if (!auth.clubId) {
-      return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Abwesenheit nicht gefunden' }, { status: 404 });
     }
 
     try {
@@ -80,7 +80,7 @@ export async function PATCH(
       );
 
       if (!updated) {
-        return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Abwesenheit nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true, absence: updated });
@@ -108,7 +108,7 @@ export async function DELETE(
     }
 
     if (!auth.clubId) {
-      return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Abwesenheit nicht gefunden' }, { status: 404 });
     }
 
     try {
@@ -116,7 +116,7 @@ export async function DELETE(
       const success = await absenceService.deleteAbsence(id, auth.clubId);
 
       if (!success) {
-        return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Abwesenheit nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true });

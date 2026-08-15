@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
     if (error) {
       log.error('tournaments GET error:', error);
-      return NextResponse.json({ error: 'Failed to fetch tournaments' }, { status: 500 });
+      return NextResponse.json({ error: 'Turniere konnten nicht geladen werden' }, { status: 500 });
     }
 
     const tournaments = (data ?? []).map((t: any) => ({
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     const { supabase, user, clubId } = auth;
 
     const body = await request.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     const {
       name,
@@ -85,11 +85,11 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!name || !start_date) {
-      return NextResponse.json({ error: 'name and start_date required' }, { status: 400 });
+      return NextResponse.json({ error: 'name und start_date erforderlich' }, { status: 400 });
     }
 
     if (!clubId) {
-      return NextResponse.json({ error: 'No club context' }, { status: 400 });
+      return NextResponse.json({ error: 'Kein Club-Kontext' }, { status: 400 });
     }
 
     const { data: tournament, error } = await supabase
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       log.error('tournaments POST error:', error);
-      return NextResponse.json({ error: 'Failed to create tournament' }, { status: 500 });
+      return NextResponse.json({ error: 'Turnier konnte nicht erstellt werden' }, { status: 500 });
     }
 
     return NextResponse.json({ tournament }, { status: 201 });

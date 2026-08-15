@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
       const clubId = auth.clubId;
-      if (!clubId) return NextResponse.json({ error: 'No club' }, { status: 400 });
+      if (!clubId) return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
 
       try {
         const body = await request.json();
@@ -59,19 +59,22 @@ export async function POST(request: NextRequest) {
         // ── Validate ──
         if (!template?.title || !template?.duty_type) {
           return NextResponse.json(
-            { error: 'Template title and duty_type required' },
+            { error: 'Vorlagen-Titel und duty_type erforderlich' },
             { status: 400 }
           );
         }
         if (!start_date || !end_date) {
-          return NextResponse.json({ error: 'start_date and end_date required' }, { status: 400 });
+          return NextResponse.json(
+            { error: 'start_date und end_date erforderlich' },
+            { status: 400 }
+          );
         }
         if (!recurrence) {
-          return NextResponse.json({ error: 'recurrence required' }, { status: 400 });
+          return NextResponse.json({ error: 'recurrence erforderlich' }, { status: 400 });
         }
         if (recurrence === 'weekdays' && (!weekdays || weekdays.length === 0)) {
           return NextResponse.json(
-            { error: 'weekdays array required for weekday recurrence' },
+            { error: 'weekdays-Array für Wochentags-Wiederholung erforderlich' },
             { status: 400 }
           );
         }
@@ -79,11 +82,11 @@ export async function POST(request: NextRequest) {
         const start = new Date(start_date);
         const end = new Date(end_date);
         if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-          return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
+          return NextResponse.json({ error: 'Ungültiges Datumsformat' }, { status: 400 });
         }
         if (start > end) {
           return NextResponse.json(
-            { error: 'start_date must be before end_date' },
+            { error: 'start_date muss vor end_date liegen' },
             { status: 400 }
           );
         }
@@ -131,7 +134,9 @@ export async function POST(request: NextRequest) {
 
         if (dates.length === 0) {
           return NextResponse.json(
-            { error: 'No dates generated — check your date range and recurrence settings' },
+            {
+              error: 'Keine Termine generiert — prüfe Datumsbereich und Wiederholungseinstellungen',
+            },
             { status: 400 }
           );
         }
@@ -157,7 +162,10 @@ export async function POST(request: NextRequest) {
 
         if (error) {
           log.error('[WorkDuties Bulk POST] Error:', error);
-          return NextResponse.json({ error: 'Failed to create duties' }, { status: 500 });
+          return NextResponse.json(
+            { error: 'Dienste konnten nicht erstellt werden' },
+            { status: 500 }
+          );
         }
 
         return NextResponse.json(

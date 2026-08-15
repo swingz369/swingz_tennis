@@ -33,7 +33,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         .maybeSingle();
 
       if (seasonErr || !season) {
-        return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
       }
 
       if (!isSuperadmin) {
@@ -53,7 +53,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
       if (membErr) {
         log.error('Failed to load memberships', membErr);
-        return NextResponse.json({ error: 'Failed to load members' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Mitglieder konnten nicht geladen werden' },
+          { status: 500 }
+        );
       }
 
       const memberIds = (memberships ?? []).map((m) => m.user_id);
@@ -116,7 +119,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       });
     } catch (error) {
       log.error('GET /api/seasons/[id]/planning/members error:', error);
-      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+      return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }
   });
 }

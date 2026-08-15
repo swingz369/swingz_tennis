@@ -32,12 +32,12 @@ export async function POST(_request: NextRequest) {
       const { type, bookingId, sessionId, clubId, amount, description } = body;
 
       if (!type || !clubId) {
-        return NextResponse.json({ error: 'type and clubId are required' }, { status: 400 });
+        return NextResponse.json({ error: 'type und clubId sind erforderlich' }, { status: 400 });
       }
 
       if (type === 'booking' && !bookingId) {
         return NextResponse.json(
-          { error: 'bookingId is required for booking payments' },
+          { error: 'bookingId ist für Buchungszahlungen erforderlich' },
           { status: 400 }
         );
       }

@@ -223,14 +223,17 @@ export async function GET(req: NextRequest) {
 
     const url = new URL(req.url);
     const clubId = resolveClubId(auth, url.searchParams.get('clubId'));
-    if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+    if (!clubId) return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
 
     const monthStr: string = url.searchParams.get('month') ?? new Date().toISOString().slice(0, 7);
     const [yearStr, monStr] = monthStr.split('-');
     const year = parseInt(yearStr, 10);
     const month = parseInt(monStr, 10);
     if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
-      return NextResponse.json({ error: 'Invalid month format. Use YYYY-MM' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Ungültiges Monatsformat. Verwende YYYY-MM' },
+        { status: 400 }
+      );
     }
 
     try {
@@ -266,14 +269,17 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
 
     const clubId = resolveClubId(auth, body.clubId ?? null);
-    if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+    if (!clubId) return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
 
     const monthStr: string = body.month ?? new Date().toISOString().slice(0, 7);
     const [yearStr, monStr] = monthStr.split('-');
     const year = parseInt(yearStr, 10);
     const month = parseInt(monStr, 10);
     if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
-      return NextResponse.json({ error: 'Invalid month format. Use YYYY-MM' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Ungültiges Monatsformat. Verwende YYYY-MM' },
+        { status: 400 }
+      );
     }
 
     try {
@@ -295,7 +301,11 @@ export async function POST(req: NextRequest) {
       }
 
       if (data.memberships.length === 0) {
-        return NextResponse.json({ created: 0, skipped: 0, message: 'No active members found' });
+        return NextResponse.json({
+          created: 0,
+          skipped: 0,
+          message: 'Keine aktiven Mitglieder gefunden',
+        });
       }
 
       // Parse optional exclude list from body

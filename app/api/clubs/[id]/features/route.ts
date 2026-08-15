@@ -29,11 +29,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         .eq('id', id)
         .maybeSingle();
 
-      if (!data) return NextResponse.json({ error: 'Club not found' }, { status: 404 });
+      if (!data) return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
       return NextResponse.json({ features: sanitizeFeatureFlags(data.features) });
     } catch (error) {
       log.error('Error getting club features', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+      return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }
   });
 }
@@ -59,7 +59,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const parsed = PutBodySchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Invalid payload — expected { [featureKey]: boolean }' },
+        { error: 'Ungültiger Payload — erwartet { [featureKey]: boolean }' },
         { status: 400 }
       );
     }
@@ -76,7 +76,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ features: sanitized });
     } catch (error) {
       log.error('Error updating club features', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+      return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }
   });
 }

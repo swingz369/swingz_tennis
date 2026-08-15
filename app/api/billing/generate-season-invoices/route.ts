@@ -14,7 +14,7 @@ const Schema = z.object({
 
 export async function POST(request: NextRequest) {
   const auth = await requireAuth(request);
-  if (!auth.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!auth.user) return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   const { supabase, user } = auth;
 
   const body = await request.json();
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     .eq('is_active', true)
     .maybeSingle();
   if (!membership || !['admin', 'superadmin'].includes(membership.role))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
   const { data: members } = await (supabase as any)
     .from('user_club_memberships')

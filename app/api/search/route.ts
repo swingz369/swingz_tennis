@@ -208,7 +208,7 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const validation = validateQuery(searchQuerySchema, url.searchParams);
     if (!validation) {
-      return NextResponse.json({ error: 'Invalid search query' }, { status: 400 });
+      return NextResponse.json({ error: 'Ungültige Suchanfrage' }, { status: 400 });
     }
     const { q, type, limit } = validation.data;
 

@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     if (rateLimitError) return rateLimitError;
 
     const clubIdParam = new URL(req.url).searchParams.get('clubId');
-    if (!clubIdParam) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+    if (!clubIdParam) return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
     if (!verifyClubAccess(auth, clubIdParam)) {
       return forbiddenResponse('Kein Zugriff auf diesen Verein');
     }

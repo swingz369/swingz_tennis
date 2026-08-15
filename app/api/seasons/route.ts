@@ -26,7 +26,7 @@ function isTableNotFound(error: { code?: string; message?: string }): boolean {
 function migrationRequiredResponse(): NextResponse {
   return NextResponse.json(
     {
-      error: 'Season planning database tables not yet configured.',
+      error: 'Saisonplanungs-Datenbanktabellen noch nicht konfiguriert.',
       detail: 'The seasons table does not exist. Run the migration script to create it.',
       migration_command:
         'psql "$DATABASE_URL" -f supabase/migrations/20260506_season_planning_system.sql',
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       const isActive = searchParams.get('is_active');
 
       if (!clubId) {
-        return NextResponse.json({ error: 'club_id is required' }, { status: 400 });
+        return NextResponse.json({ error: 'club_id ist erforderlich' }, { status: 400 });
       }
 
       // Verify user has access to this club
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (startDate >= endDate) {
-        return NextResponse.json({ error: 'start_date must be before end_date' }, { status: 400 });
+        return NextResponse.json({ error: 'start_date muss vor end_date liegen' }, { status: 400 });
       }
 
       const supabase = auth.supabase;

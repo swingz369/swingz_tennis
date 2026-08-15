@@ -62,7 +62,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     try {
       const club = await clubRepo.findById(ClubId.fromString(id));
       if (!club) {
-        return NextResponse.json({ error: 'Club not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
       }
       const result = await db
         .select({
@@ -184,7 +184,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         const clubId = ClubId.fromString(id);
         const existing = await clubRepo.findById(clubId);
         if (!existing) {
-          return NextResponse.json({ error: 'Club not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
         }
 
         // Update domain fields (name, maxMembers, openingHours, status)
@@ -312,7 +312,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       const clubId = ClubId.fromString(id);
       const existing = await clubRepo.findById(clubId);
       if (!existing) {
-        return NextResponse.json({ error: 'Club not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
       }
 
       // Hard-Delete-Pfad?

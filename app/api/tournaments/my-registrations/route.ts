@@ -23,7 +23,10 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       log.error('my-registrations GET error:', error);
-      return NextResponse.json({ error: 'Failed to fetch registrations' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Registrierungen konnten nicht geladen werden' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ registrations: data ?? [] });

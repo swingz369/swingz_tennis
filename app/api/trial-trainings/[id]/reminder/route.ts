@@ -28,12 +28,12 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       const trialTraining = await trialTrainingService.getTrialTrainingById(trialTrainingId);
 
       if (!trialTraining) {
-        return NextResponse.json({ error: 'Trial training not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Probetraining nicht gefunden' }, { status: 404 });
       }
 
       if (trialTraining.status !== 'scheduled') {
         return NextResponse.json(
-          { error: 'Can only send reminders for scheduled trial trainings' },
+          { error: 'Erinnerungen nur für geplante Probetrainings möglich' },
           { status: 400 }
         );
       }
@@ -61,10 +61,13 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       });
 
       if (!success) {
-        return NextResponse.json({ error: 'Failed to send reminder email' }, { status: 500 });
+        return NextResponse.json(
+          { error: 'Erinnerungs-E-Mail konnte nicht gesendet werden' },
+          { status: 500 }
+        );
       }
 
-      return NextResponse.json({ success: true, message: 'Reminder sent successfully' });
+      return NextResponse.json({ success: true, message: 'Erinnerung erfolgreich gesendet' });
     } catch (error) {
       log.error('Trial training reminder error:', error);
       return internalErrorResponse();

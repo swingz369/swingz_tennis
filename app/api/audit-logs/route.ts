@@ -122,7 +122,10 @@ export async function GET(request: NextRequest) {
       });
     } catch (error) {
       log.error('Error fetching audit logs:', error);
-      return NextResponse.json({ error: 'Failed to fetch audit logs' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Audit-Logs konnten nicht geladen werden' },
+        { status: 500 }
+      );
     }
   });
 }

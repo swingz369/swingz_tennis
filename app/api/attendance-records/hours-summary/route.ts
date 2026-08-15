@@ -36,7 +36,10 @@ export async function GET(request: NextRequest) {
 
         const summary = await hoursLogService.getAttendanceHoursSummaryForMember(memberId);
         if (!summary) {
-          return NextResponse.json({ summary: null, message: 'No attendance records found' });
+          return NextResponse.json({
+            summary: null,
+            message: 'Keine Anwesenheitseinträge gefunden',
+          });
         }
         return NextResponse.json({ summary });
       }

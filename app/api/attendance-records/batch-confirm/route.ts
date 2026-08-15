@@ -26,11 +26,11 @@ export async function POST(request: NextRequest) {
       const { recordIds } = body;
 
       if (!Array.isArray(recordIds) || recordIds.length === 0) {
-        return NextResponse.json({ error: 'recordIds array required' }, { status: 400 });
+        return NextResponse.json({ error: 'recordIds-Array erforderlich' }, { status: 400 });
       }
 
       if (recordIds.length > 100) {
-        return NextResponse.json({ error: 'Maximum 100 records per batch' }, { status: 400 });
+        return NextResponse.json({ error: 'Maximal 100 Datensätze pro Batch' }, { status: 400 });
       }
 
       const confirmed = await hoursLogService.batchConfirmAttendance(recordIds, auth.user.id);

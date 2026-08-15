@@ -27,21 +27,21 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       const { id: invoiceId } = await params;
 
       if (!invoiceId) {
-        return NextResponse.json({ error: 'invoiceId is required' }, { status: 400 });
+        return NextResponse.json({ error: 'invoiceId ist erforderlich' }, { status: 400 });
       }
 
       const invoice = await billingEngine.getInvoiceById(invoiceId);
 
       if (!invoice) {
-        return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Rechnung nicht gefunden' }, { status: 404 });
       }
 
       if (invoice.member_id !== auth.user.id) {
-        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        return NextResponse.json({ error: 'Zugriff verweigert' }, { status: 403 });
       }
 
       if (invoice.status === 'paid') {
-        return NextResponse.json({ error: 'Invoice is already paid' }, { status: 400 });
+        return NextResponse.json({ error: 'Rechnung ist bereits bezahlt' }, { status: 400 });
       }
 
       const baseUrl = appBaseUrl(_request.nextUrl.origin);

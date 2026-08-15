@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest) {
       .eq('is_active', true);
 
     if (rolesError) {
-      return NextResponse.json({ error: 'Failed to fetch roles' }, { status: 500 });
+      return NextResponse.json({ error: 'Rollen konnten nicht geladen werden' }, { status: 500 });
     }
 
     const roles = (rolesData as Array<{ role: string }>).map((m) => m.role);

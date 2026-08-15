@@ -16,7 +16,7 @@ const UPLOAD_PREFIX = 'shop-products';
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const sb = auth.supabase as any;
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const sb = auth.supabase as any;
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const sb = auth.supabase as any;
@@ -121,7 +121,7 @@ export async function PUT(request: NextRequest) {
         .single();
 
       if (!existing || existing.club_id !== auth.clubId) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
       }
     }
 
@@ -156,7 +156,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const sb = auth.supabase as any;
@@ -179,7 +179,7 @@ export async function DELETE(request: NextRequest) {
         .single();
 
       if (!existing || existing.club_id !== auth.clubId) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
       }
     }
 

@@ -33,7 +33,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
       const invoice = await billingEngine.getInvoiceById(invoiceId);
       if (!invoice) {
-        return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Rechnung nicht gefunden' }, { status: 404 });
       }
 
       // Fetch club info for PDF header

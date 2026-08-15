@@ -230,7 +230,7 @@ describe('POST /api/billing/generate-invoices', () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe('clubId required');
+    expect(body.error).toBe('clubId erforderlich');
   });
 
   it('returns 400 for invalid month format', async () => {
@@ -243,7 +243,7 @@ describe('POST /api/billing/generate-invoices', () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain('Invalid month format');
+    expect(body.error).toContain('Ungültiges Monatsformat');
   });
 
   it('returns 400 for month=13 (out of range)', async () => {
@@ -256,7 +256,7 @@ describe('POST /api/billing/generate-invoices', () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain('Invalid month format');
+    expect(body.error).toContain('Ungültiges Monatsformat');
   });
 
   // ── Empty / no members ─────────────────────────────────────────────────
@@ -688,6 +688,6 @@ describe('POST /api/billing/generate-invoices', () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe('clubId required');
+    expect(body.error).toBe('clubId erforderlich');
   });
 });

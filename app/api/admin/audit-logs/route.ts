@@ -37,6 +37,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ logs, pagination });
   } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   }
 }

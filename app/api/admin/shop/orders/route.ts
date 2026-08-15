@@ -15,7 +15,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     // Typed Supabase client using generated Database types

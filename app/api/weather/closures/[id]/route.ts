@@ -23,7 +23,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .single();
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to update closure' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Sperre konnte nicht aktualisiert werden' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ closure: data });
@@ -48,7 +51,10 @@ export async function DELETE(
       .eq('club_id', auth.clubId);
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to deactivate closure' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Sperre konnte nicht deaktiviert werden' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ success: true });

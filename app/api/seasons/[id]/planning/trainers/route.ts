@@ -215,7 +215,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ success: true, summary });
     } catch (error) {
       log.error('GET trainers error:', error);
-      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+      return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }
   });
 }

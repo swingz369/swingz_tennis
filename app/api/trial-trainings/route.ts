@@ -46,7 +46,7 @@ export async function POST(_request: NextRequest) {
       const validation = createTrialTrainingSchema.safeParse(body);
       if (!validation.success) {
         return NextResponse.json(
-          { error: 'Validation failed', details: validation.error.issues },
+          { error: 'Validierung fehlgeschlagen', details: validation.error.issues },
           { status: 400 }
         );
       }

@@ -18,7 +18,7 @@ import { OUTSTANDING_INVOICE_STATUSES } from '@/lib/billing/invoice-visibility';
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
     const clubId = auth.clubId;

@@ -25,7 +25,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const trainerRate = await hourlyRateService.getTrainerHourlyRateById(id);
 
       if (!trainerRate) {
-        return NextResponse.json({ error: 'Trainer hourly rate not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Trainer-Stundensatz nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ trainerRate });
@@ -64,7 +64,7 @@ export async function PATCH(
       });
 
       if (!updated) {
-        return NextResponse.json({ error: 'Trainer hourly rate not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Trainer-Stundensatz nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true, trainerRate: updated });
@@ -95,7 +95,7 @@ export async function DELETE(
       const success = await hourlyRateService.deleteTrainerHourlyRate(id);
 
       if (!success) {
-        return NextResponse.json({ error: 'Trainer hourly rate not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Trainer-Stundensatz nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true });

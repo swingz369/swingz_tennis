@@ -28,7 +28,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     }
 
     if (!auth.clubId) {
-      return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Abwesenheit nicht gefunden' }, { status: 404 });
     }
 
     try {
@@ -38,7 +38,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       const validation = rejectSchema.safeParse(body);
       if (!validation.success) {
         return NextResponse.json(
-          { error: 'Validation failed', details: validation.error.issues },
+          { error: 'Validierung fehlgeschlagen', details: validation.error.issues },
           { status: 400 }
         );
       }
@@ -50,7 +50,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       );
 
       if (!updated) {
-        return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Abwesenheit nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true, absence: updated });

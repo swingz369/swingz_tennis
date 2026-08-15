@@ -19,7 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .select('*, invoice_items(*), invoice_installments(*)')
     .eq('id', id)
     .single();
-  if (error) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (error) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
 
   const { data: membership } = await (supabase as any)
     .from('user_club_memberships')
@@ -29,7 +29,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .eq('is_active', true)
     .maybeSingle();
   const isMember = data.member_id === user.id;
-  if (!membership && !isMember) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!membership && !isMember)
+    return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
   return NextResponse.json({ data });
 }
@@ -46,7 +47,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .select('club_id, status')
     .eq('id', id)
     .single();
-  if (fetchErr || !invoice) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (fetchErr || !invoice) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
 
   const { data: membership } = await (supabase as any)
     .from('user_club_memberships')
@@ -56,7 +57,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .eq('is_active', true)
     .maybeSingle();
   if (!membership || !['admin', 'superadmin'].includes(membership.role))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
   const updates: Record<string, unknown> = { status: parsed.data.status };
   if (parsed.data.status === 'sent') updates.sent_at = new Date().toISOString();
@@ -88,7 +89,7 @@ export async function DELETE(
     .select('club_id, status')
     .eq('id', id)
     .single();
-  if (fetchErr || !invoice) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (fetchErr || !invoice) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
 
   // Only admin/superadmin can delete
   const { data: membership } = await (supabase as any)
@@ -99,7 +100,7 @@ export async function DELETE(
     .eq('is_active', true)
     .maybeSingle();
   if (!membership || !['admin', 'superadmin'].includes(membership.role))
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
   // Prevent deleting paid invoices (safety guard)
   if (invoice.status === 'paid') {

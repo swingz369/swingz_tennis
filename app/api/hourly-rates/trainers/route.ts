@@ -27,7 +27,7 @@ export async function POST(_request: NextRequest) {
         body;
 
       if (!trainerId || !trainerName || !baseRate || !validFrom) {
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
       }
 
       const trainerRate = await hourlyRateService.createTrainerHourlyRate({
@@ -67,7 +67,10 @@ export async function GET(_request: NextRequest) {
       if (trainerId) {
         const trainerRate = await hourlyRateService.getTrainerHourlyRateByTrainerId(trainerId);
         if (!trainerRate) {
-          return NextResponse.json({ error: 'Trainer hourly rate not found' }, { status: 404 });
+          return NextResponse.json(
+            { error: 'Trainer-Stundensatz nicht gefunden' },
+            { status: 404 }
+          );
         }
         return NextResponse.json({ trainerRate });
       }

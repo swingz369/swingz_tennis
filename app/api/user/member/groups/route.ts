@@ -92,7 +92,10 @@ export async function GET(req: NextRequest) {
       });
     } catch (error) {
       log.error('Gruppen des Mitglieds konnten nicht geladen werden', error);
-      return NextResponse.json({ error: 'Failed to fetch group memberships' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Gruppenmitgliedschaften konnten nicht geladen werden' },
+        { status: 500 }
+      );
     }
   });
 }

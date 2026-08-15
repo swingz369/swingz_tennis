@@ -26,7 +26,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (error) {
       log.error('[Teams GET] Error:', error);
-      return NextResponse.json({ error: 'Failed to fetch teams' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Mannschaften konnten nicht geladen werden' },
+        { status: 500 }
+      );
     }
 
     // Fetch team members for all teams
@@ -79,7 +82,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { name, captain_id, position, notes } = body;
 
     if (!name) {
-      return NextResponse.json({ error: 'Team name required' }, { status: 400 });
+      return NextResponse.json({ error: 'Mannschaftsname erforderlich' }, { status: 400 });
     }
 
     // Verify league belongs to club
@@ -91,7 +94,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (!league) {
-      return NextResponse.json({ error: 'League not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Liga nicht gefunden' }, { status: 404 });
     }
 
     const { data, error } = await (auth.supabase as any)
@@ -109,7 +112,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (error) {
       log.error('[Teams POST] Error:', error);
-      return NextResponse.json({ error: 'Failed to create team' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Mannschaft konnte nicht erstellt werden' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ team: { ...data, members: [] } }, { status: 201 });

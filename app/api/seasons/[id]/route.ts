@@ -32,14 +32,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
         .single();
 
       if (error || !season) {
-        return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
       }
 
       const isSuperadmin = await verifyRole(auth, 'superadmin');
       if (!isSuperadmin) {
         const hasClubAccess = auth.memberships.some((m) => m.club_id === season.club_id);
         if (!hasClubAccess) {
-          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+          return NextResponse.json({ error: 'Zugriff verweigert' }, { status: 403 });
         }
       }
 
@@ -139,7 +139,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           .single();
 
         if (fetchError || !existing) {
-          return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
         }
         if (!isSuperadmin) {
           const hasClubAccess = auth.memberships.some(
@@ -245,7 +245,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
           .single();
 
         if (fetchError || !existing) {
-          return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+          return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
         }
         if (!isSuperadmin) {
           const hasClubAccess = auth.memberships.some(

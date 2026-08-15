@@ -86,7 +86,10 @@ export async function GET(
       });
     } catch (error) {
       log.error('Error fetching trainer feedback:', error);
-      return NextResponse.json({ error: 'Failed to fetch trainer feedback' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Trainer-Feedback konnte nicht geladen werden' },
+        { status: 500 }
+      );
     }
   });
 }

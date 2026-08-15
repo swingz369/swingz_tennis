@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     if (rateLimitError) return rateLimitError;
 
     const body = await req.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     const { courtId, date, startTime, endTime, clubId, blockType, reason } = body as {
       courtId?: string;
@@ -46,14 +46,14 @@ export async function POST(req: NextRequest) {
 
     if (!courtId || !date || !startTime || !endTime || !clubId || !blockType) {
       return NextResponse.json(
-        { error: 'courtId, date, startTime, endTime, clubId, and blockType are required' },
+        { error: 'courtId, date, startTime, endTime, clubId und blockType sind erforderlich' },
         { status: 400 }
       );
     }
 
     if (blockType !== 'event' && blockType !== 'maintenance') {
       return NextResponse.json(
-        { error: 'blockType must be "event" or "maintenance"' },
+        { error: 'blockType muss "event" oder "maintenance" sein' },
         { status: 400 }
       );
     }
@@ -63,11 +63,11 @@ export async function POST(req: NextRequest) {
     const timeslotEnd = new Date(`${date}T${endTime}:00`);
 
     if (isNaN(timeslotStart.getTime()) || isNaN(timeslotEnd.getTime())) {
-      return NextResponse.json({ error: 'Invalid date/time format' }, { status: 400 });
+      return NextResponse.json({ error: 'Ungültiges Datums-/Zeitformat' }, { status: 400 });
     }
 
     if (timeslotEnd <= timeslotStart) {
-      return NextResponse.json({ error: 'endTime must be after startTime' }, { status: 400 });
+      return NextResponse.json({ error: 'endTime muss nach startTime liegen' }, { status: 400 });
     }
 
     const serviceClient = createServiceClient();

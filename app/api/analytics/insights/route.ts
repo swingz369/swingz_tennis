@@ -25,7 +25,7 @@ export async function GET(_request: NextRequest) {
     const insightType = searchParams.get('type') || 'churn'; // 'churn' | 'recommendations' | 'all'
 
     if (!clubId) {
-      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+      return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
     }
 
     try {

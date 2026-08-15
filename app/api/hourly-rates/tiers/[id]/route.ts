@@ -25,7 +25,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       const rateTier = await hourlyRateService.getHourlyRateTierById(id);
 
       if (!rateTier) {
-        return NextResponse.json({ error: 'Hourly rate tier not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Stundensatz-Stufe nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ rateTier });
@@ -67,7 +67,7 @@ export async function PATCH(
       });
 
       if (!updated) {
-        return NextResponse.json({ error: 'Hourly rate tier not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Stundensatz-Stufe nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true, rateTier: updated });
@@ -98,7 +98,7 @@ export async function DELETE(
       const success = await hourlyRateService.deleteHourlyRateTier(id);
 
       if (!success) {
-        return NextResponse.json({ error: 'Hourly rate tier not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Stundensatz-Stufe nicht gefunden' }, { status: 404 });
       }
 
       return NextResponse.json({ success: true });

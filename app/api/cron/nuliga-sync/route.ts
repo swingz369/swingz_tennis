@@ -27,10 +27,10 @@ export async function GET(request: NextRequest) {
   const cronSecret = env.CRON_SECRET;
   if (!cronSecret) {
     log.error('CRON_SECRET not configured — rejecting request');
-    return NextResponse.json({ error: 'Service misconfigured' }, { status: 500 });
+    return NextResponse.json({ error: 'Dienst fehlkonfiguriert' }, { status: 500 });
   }
   if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   }
 
   const checkInId = Sentry.captureCheckIn({
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     if (!leagues || leagues.length === 0) {
       log.info('No leagues with nuliga_url configured — nothing to sync');
       Sentry.captureCheckIn({ checkInId, monitorSlug: 'nuliga-sync', status: 'ok' });
-      return NextResponse.json({ success: true, synced: 0, message: 'No leagues connected' });
+      return NextResponse.json({ success: true, synced: 0, message: 'Keine Ligen verbunden' });
     }
 
     log.info(`Starting auto-sync for ${leagues.length} connected league(s)`);
@@ -67,7 +67,11 @@ export async function GET(request: NextRequest) {
 
       if (!isValidNuligaUrl(nuligaUrl)) {
         log.warn(`Skipping league "${league.name}" — invalid nuLiga URL: ${nuligaUrl}`);
-        errors.push({ leagueId: league.id, leagueName: league.name, error: 'Invalid nuLiga URL' });
+        errors.push({
+          leagueId: league.id,
+          leagueName: league.name,
+          error: 'Ungültige nuLiga-URL',
+        });
         failed++;
         continue;
       }
@@ -169,6 +173,6 @@ export async function GET(request: NextRequest) {
     Sentry.captureCheckIn({ checkInId, monitorSlug: 'nuliga-sync', status: 'error' });
     Sentry.captureException(error, { tags: { cron: 'nuliga-sync' } });
 
-    return NextResponse.json({ error: 'Cron job failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Cron-Job fehlgeschlagen' }, { status: 500 });
   }
 }

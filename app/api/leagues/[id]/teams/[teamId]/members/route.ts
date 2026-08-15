@@ -19,7 +19,7 @@ export async function POST(
     const { member_ids, role, position_number } = body;
 
     if (!member_ids || !Array.isArray(member_ids) || member_ids.length === 0) {
-      return NextResponse.json({ error: 'member_ids array required' }, { status: 400 });
+      return NextResponse.json({ error: 'member_ids-Array erforderlich' }, { status: 400 });
     }
 
     // Verify team belongs to the club
@@ -31,7 +31,7 @@ export async function POST(
       .single();
 
     if (!team) {
-      return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Mannschaft nicht gefunden' }, { status: 404 });
     }
 
     const rows = member_ids.map((memberId: string) => ({
@@ -45,9 +45,12 @@ export async function POST(
 
     if (error) {
       if (error.code === '23505') {
-        return NextResponse.json({ error: 'Member already in team' }, { status: 409 });
+        return NextResponse.json({ error: 'Mitglied bereits in der Mannschaft' }, { status: 409 });
       }
-      return NextResponse.json({ error: 'Failed to add members' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Mitglieder konnten nicht hinzugefügt werden' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ members: data }, { status: 201 });
@@ -67,7 +70,7 @@ export async function DELETE(
     const { member_id } = body;
 
     if (!member_id) {
-      return NextResponse.json({ error: 'member_id required' }, { status: 400 });
+      return NextResponse.json({ error: 'member_id erforderlich' }, { status: 400 });
     }
 
     const { error } = await (auth.supabase as any)
@@ -77,7 +80,7 @@ export async function DELETE(
       .eq('member_id', member_id);
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to remove member' }, { status: 500 });
+      return NextResponse.json({ error: 'Mitglied konnte nicht entfernt werden' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

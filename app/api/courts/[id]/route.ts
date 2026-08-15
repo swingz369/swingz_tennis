@@ -32,7 +32,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       .single();
 
     if (error || !court) {
-      return NextResponse.json({ error: 'Court not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Platz nicht gefunden' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -59,7 +59,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const { id: courtId } = await params;
     const body = await req.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     const updates: Record<string, unknown> = {};
     if (body.name !== undefined) updates.name = body.name;
@@ -70,7 +70,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (body.usableForTraining !== undefined) updates.usable_for_training = body.usableForTraining;
 
     if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+      return NextResponse.json({ error: 'Keine Felder zum Aktualisieren' }, { status: 400 });
     }
 
     const { data: court, error } = await auth.supabase

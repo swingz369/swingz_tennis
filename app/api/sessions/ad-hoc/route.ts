@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     if (rateLimitError) return rateLimitError;
 
     const body = await req.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+    if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
     const { courtId, date, startTime, endTime, clubId, maxParticipants, notes } = body as {
       courtId?: string;
@@ -58,11 +58,11 @@ export async function POST(req: NextRequest) {
     const timeslotEnd = new Date(`${date}T${endTime}:00`);
 
     if (isNaN(timeslotStart.getTime()) || isNaN(timeslotEnd.getTime())) {
-      return NextResponse.json({ error: 'Invalid date/time format' }, { status: 400 });
+      return NextResponse.json({ error: 'Ungültiges Datums-/Zeitformat' }, { status: 400 });
     }
 
     if (timeslotEnd <= timeslotStart) {
-      return NextResponse.json({ error: 'endTime must be after startTime' }, { status: 400 });
+      return NextResponse.json({ error: 'endTime muss nach startTime liegen' }, { status: 400 });
     }
 
     const serviceClient = createServiceClient();

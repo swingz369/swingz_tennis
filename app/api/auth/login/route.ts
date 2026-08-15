@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const { email, password } = await request.json();
 
     if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password required' }, { status: 400 });
+      return NextResponse.json({ error: 'E-Mail und Passwort erforderlich' }, { status: 400 });
     }
 
     // Create response that we can modify (for setting cookies)
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!data.session) {
-      return NextResponse.json({ error: 'No session created' }, { status: 500 });
+      return NextResponse.json({ error: 'Keine Session erstellt' }, { status: 500 });
     }
 
     log.info('Login successful', {

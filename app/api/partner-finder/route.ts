@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!auth.clubId) {
-      return NextResponse.json({ error: 'No active membership' }, { status: 404 });
+      return NextResponse.json({ error: 'Keine aktive Mitgliedschaft' }, { status: 404 });
     }
 
     try {

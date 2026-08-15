@@ -52,14 +52,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     try {
       const existing = await repo.findById(id);
       if (!existing) {
-        return NextResponse.json({ error: 'Pricing rule not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Preisregel nicht gefunden' }, { status: 404 });
       }
 
       const body = await req.json();
       const validation = updateSchema.safeParse(body);
       if (!validation.success) {
         return NextResponse.json(
-          { error: 'Validation failed', details: validation.error.errors },
+          { error: 'Validierung fehlgeschlagen', details: validation.error.errors },
           { status: 400 }
         );
       }
@@ -135,7 +135,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     try {
       const existing = await repo.findById(id);
       if (!existing) {
-        return NextResponse.json({ error: 'Pricing rule not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Preisregel nicht gefunden' }, { status: 404 });
       }
 
       await repo.delete(id);

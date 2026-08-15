@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   const cronSecret = env.CRON_SECRET;
   if (!cronSecret) {
     log.error('CRON_SECRET not configured — rejecting request');
-    return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 });
+    return NextResponse.json({ error: 'CRON_SECRET nicht konfiguriert' }, { status: 500 });
   }
 
   const headerSecret =
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
   if (!headerSecret || !safeEqualStrings(headerSecret, cronSecret)) {
     log.warn('Unauthorized refresh-base-rates call');
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   }
 
   const sb = createServiceClient();

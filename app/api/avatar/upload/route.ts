@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const userId = auth.user?.id;
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
     }
 
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STRICT);
@@ -154,7 +154,7 @@ export async function DELETE(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const userId = auth.user?.id;
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
     }
 
     try {

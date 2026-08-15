@@ -24,13 +24,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id)) {
-      return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
+      return NextResponse.json({ error: 'Ungültiges ID-Format' }, { status: 400 });
     }
 
     // 404 statt 400: ein fremder Platztyp soll sich nicht von einem nicht
     // existierenden unterscheiden lassen.
     if (!auth.clubId) {
-      return NextResponse.json({ error: 'Court type not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Platztyp nicht gefunden' }, { status: 404 });
     }
 
     try {
@@ -61,7 +61,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const courtType = await courtService.updateCourtType(id, auth.clubId, updates);
       if (!courtType) {
         return NextResponse.json(
-          { error: 'Court type not found or update failed' },
+          { error: 'Platztyp nicht gefunden oder Update fehlgeschlagen' },
           { status: 404 }
         );
       }
@@ -90,13 +90,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id)) {
-      return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
+      return NextResponse.json({ error: 'Ungültiges ID-Format' }, { status: 400 });
     }
 
     // 404 statt 400: ein fremder Platztyp soll sich nicht von einem nicht
     // existierenden unterscheiden lassen.
     if (!auth.clubId) {
-      return NextResponse.json({ error: 'Court type not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Platztyp nicht gefunden' }, { status: 404 });
     }
 
     try {
@@ -124,7 +124,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         );
       }
 
-      return NextResponse.json({ success: true, message: 'Court type deactivated' });
+      return NextResponse.json({ success: true, message: 'Platztyp deaktiviert' });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error deleting court type:', message);

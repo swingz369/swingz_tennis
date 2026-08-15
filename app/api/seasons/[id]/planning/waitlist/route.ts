@@ -56,7 +56,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       });
     } catch (error) {
       log.error('GET waitlist error:', error);
-      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+      return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }
   });
 }
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         const { waitlistId, promoteToGroupId } = body;
 
         if (!waitlistId) {
-          return NextResponse.json({ error: 'waitlistId required' }, { status: 400 });
+          return NextResponse.json({ error: 'waitlistId erforderlich' }, { status: 400 });
         }
 
         const [entry] = await db
@@ -92,10 +92,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
           .where(eq(seasonWaitlists.id, waitlistId));
 
         if (!entry)
-          return NextResponse.json({ error: 'Waitlist entry not found' }, { status: 404 });
+          return NextResponse.json(
+            { error: 'Wartelisten-Eintrag nicht gefunden' },
+            { status: 404 }
+          );
 
         if (entry.season_id !== seasonId) {
-          return NextResponse.json({ error: 'Waitlist entry not found' }, { status: 404 });
+          return NextResponse.json(
+            { error: 'Wartelisten-Eintrag nicht gefunden' },
+            { status: 404 }
+          );
         }
 
         // Der Zugriff auf die Saison ist oben bereits geprüft, und Zeile 97
@@ -164,7 +170,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         });
       } catch (error) {
         log.error('POST waitlist promote error:', error);
-        return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+        return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
       }
     });
   });

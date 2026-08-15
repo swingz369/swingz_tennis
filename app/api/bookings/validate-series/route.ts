@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       const { club_id, court_id, bookings } = body;
 
       if (!club_id || !court_id || !bookings || !Array.isArray(bookings)) {
-        return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+        return NextResponse.json({ error: 'Ungültige Anfrage' }, { status: 400 });
       }
 
       if (!verifyClubAccess(auth, club_id)) {
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
             return {
               date: booking.date,
               valid: false,
-              error: 'Validation error',
+              error: 'Validierungsfehler',
             };
           }
 

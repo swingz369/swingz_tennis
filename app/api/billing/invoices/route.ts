@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   const { supabase, user } = await requireAuth(request);
   const { searchParams } = new URL(request.url);
   const clubId = searchParams.get('clubId');
-  if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+  if (!clubId) return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
 
   const { data: membership } = await (supabase as any)
     .from('user_club_memberships')
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     .eq('club_id', clubId)
     .eq('is_active', true)
     .maybeSingle();
-  if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!membership) return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
   let query = (supabase as any)
     .from('invoices')
