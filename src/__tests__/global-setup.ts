@@ -21,6 +21,31 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env.test'), override: true });
 
 /**
+ * Produktions-Datenbanken, die dieses Test-Setup NIEMALS anfassen darf.
+ * Ein schlichter `pnpm test` mit `.env.local` (zeigt auf den Prod-Pooler
+ * `supabase.swingz.cloud:6543`) würde sonst `drizzle-kit push` und die
+ * Test-DDL gegen die Live-DB ausführen (Schema-Mutation auf Produktion).
+ *
+ * @see docs/OPEN_ITEMS.md (P1: global-setup mutiert die DB aus .env.local)
+ */
+const PRODUCTION_DB_HOSTS = ['supabase.swingz.cloud', '178.254.37.110'];
+
+function isProductionDbTarget(url: string | undefined): boolean {
+  if (!url) return false;
+  let host = '';
+  try {
+    host = new URL(url).hostname.toLowerCase();
+  } catch {
+    // Kein URL-Schema (z. B. `host:port` ohne Protokoll): Host manuell extrahieren.
+    const atIndex = url.lastIndexOf('@');
+    const hostPort = atIndex >= 0 ? url.slice(atIndex + 1) : url;
+    host = hostPort.split('/')[0].split(':')[0].toLowerCase();
+  }
+  if (!host) return false;
+  return PRODUCTION_DB_HOSTS.some((p) => host === p || host.endsWith(`.${p}`));
+}
+
+/**
  * Apply targeted DDL for tests that need columns/tables NOT in the Drizzle
  * schema. The Drizzle push covers ~38 of ~105 tables — the rest live only in
  * supabase/migrations/*.sql and need to be applied separately.
@@ -111,8 +136,16 @@ export async function setup(): Promise<void> {
   console.log('─────────────────────────');
 
   // ── Database (Drizzle/PostgreSQL) ──────────────────────────────────
-  if (dbUrl) {
-    console.log('📦 DATABASE_URL: configured');
+  const dbIsProd = isProductionDbTarget(dbUrl);
+  if (dbUrl && dbIsProd) {
+    console.warn('🛑 DATABASE_URL zeigt auf eine Produktions-DB.');
+    console.warn(
+      '   `drizzle-kit push` + Test-DDL werden NICHT angewendet (Schema-Mutationsschutz).'
+    );
+    console.warn('   Für echte Integrationstests eine lokale Test-DB nutzen:');
+    console.warn('   `bash scripts/setup-test-db.sh` oder `.env.test` mit lokalem DATABASE_URL.');
+  } else if (dbUrl) {
+    console.log('📦 DATABASE_URL: configured (non-production)');
     try {
       console.log('🔄 Applying Drizzle migrations...');
       execSync('npx drizzle-kit push', {
@@ -140,10 +173,24 @@ export async function setup(): Promise<void> {
   }
 
   // ── Supabase Integration ───────────────────────────────────────────
-  if (supabaseKey && supabaseUrl) {
+  const supabaseIsProd = isProductionDbTarget(supabaseUrl);
+  if (supabaseIsProd && supabaseKey) {
+    // Safety-Belt: Integrationstests prüfen auf SUPABASE_SERVICE_ROLE_KEY und
+    // schreiben Testdaten. Zeigt die URL auf Produktion, entleeren wir den Key,
+    // damit sie garantiert skippen — unabhängig davon, ob Env-Variablen an die
+    // Test-Worker durchgereicht werden.
+    process.env.SUPABASE_SERVICE_ROLE_KEY = '';
+    process.env.NEXT_PUBLIC_SUPABASE_URL = '';
+  }
+  if (supabaseKey && supabaseUrl && !supabaseIsProd) {
     console.log('🔑 SUPABASE_SERVICE_ROLE_KEY: configured');
     console.log(`🌐 Supabase URL: ${supabaseUrl}`);
     console.log('✅ Supabase integration tests WILL run');
+  } else if (supabaseIsProd) {
+    console.warn('🛑 NEXT_PUBLIC_SUPABASE_URL zeigt auf Produktion.');
+    console.warn(
+      '   Integrationstests schreiben Testdaten — bitte eine Test-/Staging-Instanz verwenden.'
+    );
   } else {
     console.log('⚠️  SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL: not set');
     console.log('   Supabase integration tests will be SKIPPED');

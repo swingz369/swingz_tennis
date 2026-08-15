@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 13. August 2026
+> Zuletzt verifiziert: 15. August 2026
 >
 > Lebendes Dokument. Bündelt **alle dokumentierten, aber noch nicht umgesetzten** Altlasten und
 > ToDos. Wer einen Punkt umsetzt, streicht ihn hier; wer einen neuen offenen Punkt findet, trägt
@@ -99,9 +99,10 @@ Service-Client erreichbar. → **Fix:** Policies definieren oder bewusst dokumen
 - **Integrationstests laufen in CI nie.** 10 Tests (`billing-engine`, `payment-flow`,
   `rls-policies`, `stripe-webhook`, …) skippen ohne `SUPABASE_SERVICE_ROLE_KEY`.
   → Quelle: `docs/ARCHIV/2026-08-13-test-audit.md` (P1).
-- **`global-setup.ts` mutiert die DB aus `.env.local`.** Zeigt `DATABASE_URL` auf eine
-  Nicht-Test-DB, ändert ein schlichter `pnpm test` deren Schema. → **Fix:** Guard gegen
-  Produktions-URLs.
+- **✅ Erledigt 15.08.2026** — `global-setup.ts` mutierte die DB aus `.env.local`. Ein Guard
+  (`isProductionDbTarget`, Prod-Hosts `supabase.swingz.cloud`/`178.254.37.110`) verhindert
+  jetzt `drizzle-kit push` + Test-DDL gegen Produktion und entleert den Service-Key, damit
+  Integrationstests bei Prod-URL skippen.
   → Quelle: `docs/ARCHIV/2026-08-13-test-audit.md` (P1).
 
 ---
