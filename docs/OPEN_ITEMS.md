@@ -96,10 +96,13 @@ Service-Client erreichbar. → **Fix:** Policies definieren oder bewusst dokumen
 - **Verwaiste Session-Einheiten in Bestandsdaten.** Vereine, die vor dem B5-Fix nach dem
   Veröffentlichen neu geplant haben, tragen `sessions.plan_entry_id IS NULL`-Geistertermine.
   Vor dem nächsten Veröffentlichen prüfen (keine Auto-Migration, weil dabei echte Buchungen
-  gelöscht würden).
+  gelöscht würden). → **SQL vorbereitet 15.08.2026** — Diagnose-Queries in `docs/DATABASE.md`
+  (Abschnitt „Offene Datenhygiene-Aufräumung“); löschen erst nach Sichtung durch den Owner.
   → Quelle: `docs/ARCHIV/2026-08-13-kernmodul-durchlauf.md` (B5).
 - **`trainer_absences`: 20 unauflösbare Zeilen.** Hängen an Test-Trainern ohne `users`-Zeile;
-  bewusst kein `DELETE` auf Live-Daten mitgemacht.
+  bewusst kein `DELETE` auf Live-Daten mitgemacht. → **SQL vorbereitet 15.08.2026** — guarded
+  `DELETE` (nur Trainer ohne `users`-Zeile) in `docs/DATABASE.md` (Abschnitt „Offene
+  Datenhygiene-Aufräumung“).
   → Quelle: `docs/DATABASE.md`.
 - **Integrationstests laufen in CI nie — und liefen lokal gegen Produktion.** 10 Tests
   (`billing-engine`, `payment-flow`, `rls-policies`, `stripe-webhook`, …) skippen ohne

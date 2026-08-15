@@ -128,6 +128,56 @@ Ticket `docs/tickets/roadmap/TICKET-billing-tables-rls-scoping.md`:
 - Zugriffsmuster: weiterhin ausschließlich Service-Client (BYPASSRLS) — die Policies sind
   Defense-in-depth, wirksam erst nach Umstellung auf eine Rolle ohne BYPASSRLS.
 
+## Offene Datenhygiene-Aufräumung (SQL vorbereitet, Owner führt aus)
+
+Zwei Aufräum-Operationen aus dem 13.08.-Audit sind **bewusst nicht automatisiert** — sie löschen
+Live-Daten. SQL liegt hier fertig vor; vor jeder Ausführung die `SELECT`-Diagnose laufen lassen
+und das Ergebnis sichten.
+
+### `trainer_absences` — 20 unauflösbare Zeilen (#13)
+
+Die 20 Rest-Zeilen hängen an Trainern aus abgebrochenen RLS-Integrationstests
+(`trainer-rls-<timestamp>@test.com`) plus dem Sentinel `unassigned@placeholder.local`; für keinen
+davon existiert eine `users`-Zeile (`user_id` blieb nach dem Backfill
+`20260812030000` NULL). Löschen nur, wenn der Trainer keine `users`-Zeile hat:
+
+```sql
+-- Diagnose (Anzahl vorher):
+SELECT count(*) FROM trainer_absences ta
+JOIN trainers t ON t.id = ta.trainer_id
+LEFT JOIN users u ON u.id = t.user_id
+WHERE u.id IS NULL;
+
+-- Löschen (nur unauflösbare Zeilen):
+DELETE FROM trainer_absences ta
+USING trainers t
+WHERE t.id = ta.trainer_id
+  AND NOT EXISTS (SELECT 1 FROM users u WHERE u.id = t.user_id);
+```
+
+### Verwaiste Geister-Sessions (#12)
+
+Vereine, die vor dem B5-Fix nach dem Veröffentlichen neu geplant haben, tragen
+`sessions.plan_entry_id IS NULL`-Geistertermine. **Kein Blind-DELETE** — es hängen ggf. echte
+Buchungen/Anwesenheiten dran. Erst diagnostizieren:
+
+```sql
+-- Wie viele Sessions ohne Rückverweis auf einen Plan-Eintrag?
+SELECT count(*) FROM sessions WHERE plan_entry_id IS NULL;
+
+-- Aufschlüsselung pro Schedule (stammen sie aus einer Saison?):
+SELECT schedule_id, count(*) AS n
+FROM sessions
+WHERE plan_entry_id IS NULL
+GROUP BY schedule_id
+ORDER BY n DESC
+LIMIT 20;
+```
+
+Erst nach Sichtung entscheiden, ob und welche Zeilen (und deren abhängige Datensätze) gelöscht
+werden — die Audit-Quelle (`docs/ARCHIV/2026-08-13-kernmodul-durchlauf.md`, B5) warnt ausdrücklich
+davor, hier automatisiert zu löschen.
+
 ## Bewusst zurückgestellt (siehe `docs/tickets/`)
 
 - **`background_jobs`**: `club_id` steckt nur optional in einem JSONB-Payload-Feld, nicht jeder Job ist vereinsbezogen — bewusst unscoped gelassen, kein Ticket nötig.
