@@ -1050,7 +1050,13 @@ function writeCredentialsDoc(
   L.push('');
   L.push(`| Rolle | E-Mail | Passwort |`);
   L.push(`| --- | --- | --- |`);
-  L.push(`| owner | \`${OWNER_EMAIL}\` | unverändert (echter Zugang, vom Seed nie angefasst) |`);
+  // Der Seed ändert das Owner-Passwort nie — er dokumentiert es nur, wenn es in
+  // .env.local hinterlegt ist. Ohne diese Zeile stünde es nach jedem Doku-Lauf
+  // wieder nicht drin, weil diese Datei bei jedem Lauf neu geschrieben wird.
+  const ownerPw = process.env.OWNER_PASSWORD;
+  L.push(
+    `| owner | \`${OWNER_EMAIL}\` | ${ownerPw ? `\`${ownerPw}\`` : 'nicht hinterlegt (OWNER_PASSWORD in .env.local setzen)'} |`
+  );
   L.push('');
   if (superadmins.length) {
     L.push('## Superadmins (Tennisschule, mehrere Vereine)');
