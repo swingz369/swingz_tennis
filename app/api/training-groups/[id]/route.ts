@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -17,7 +18,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .eq('club_id', auth.clubId)
       .select()
       .single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return internalErrorResponse();
     if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(data);
   });
@@ -37,7 +38,7 @@ export async function DELETE(
       .delete()
       .eq('id', id)
       .eq('club_id', auth.clubId);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return internalErrorResponse();
     return new NextResponse(null, { status: 204 });
   });
 }

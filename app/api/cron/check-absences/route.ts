@@ -9,6 +9,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
@@ -50,7 +51,7 @@ export async function GET(req: NextRequest) {
         'no_show-Abfrage fehlgeschlagen',
         noShowErr instanceof Error ? noShowErr : undefined
       );
-      return NextResponse.json({ error: noShowErr.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     // 2. Gruppieren: (member_id, club_id) → Anzahl

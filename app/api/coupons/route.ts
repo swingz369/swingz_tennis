@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { createClient } from '@/lib/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 
@@ -42,8 +43,8 @@ export async function GET(request: NextRequest) {
       minAmount: coupon.min_amount,
       message: `${coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `€${coupon.discount_value}`} Rabatt${coupon.min_amount ? ` (Mindestbestellwert: €${coupon.min_amount})` : ''}`,
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (_error: any) {
+    return internalErrorResponse();
   }
 }
 

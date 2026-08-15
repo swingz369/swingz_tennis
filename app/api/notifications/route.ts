@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     const unreadCount = showRead
@@ -73,7 +74,7 @@ export async function PATCH(request: NextRequest) {
     const { error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ success: true });

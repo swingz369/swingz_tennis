@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { createClient } from '@/src/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -159,9 +160,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
       return NextResponse.json({ success: true, session: updated });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error updating session:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -223,9 +223,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
       return NextResponse.json({ success: true });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error deleting session:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

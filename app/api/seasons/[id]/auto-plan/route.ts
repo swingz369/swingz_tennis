@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth } from '@/lib/api-auth';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
@@ -187,13 +188,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           `POST auto-plan error (season ${_id})`,
           error instanceof Error ? error : undefined
         );
-        return NextResponse.json(
-          {
-            error: error instanceof Error ? error.message : 'Auto-planning failed',
-            details: error instanceof Error ? error.stack : undefined,
-          },
-          { status: 500 }
-        );
+        return internalErrorResponse();
       }
     });
   });
@@ -235,10 +230,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       });
     } catch (error) {
       log.error('GET auto-plan/status error', error instanceof Error ? error : undefined);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Failed to fetch status' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }

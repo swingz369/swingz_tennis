@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
@@ -73,8 +74,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ checkoutUrl });
     } catch (error) {
       log.error('Error creating Stripe Checkout session:', error);
-      const message = error instanceof Error ? error.message : 'Internal server error';
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

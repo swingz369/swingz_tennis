@@ -6,6 +6,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { getStripe } from '@/lib/stripe/client';
@@ -176,9 +177,7 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ url: session.url, orderId: order.id });
     } catch (error) {
       log.error('[Shop Checkout] Error:', error);
-      const message =
-        error instanceof Error ? error.message : 'Fehler beim Erstellen der Checkout-Session';
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

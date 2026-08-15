@@ -3,6 +3,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { createClient } from '@/src/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -74,9 +75,8 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({ rsvps: result });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('My RSVPs error:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

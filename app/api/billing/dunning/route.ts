@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { requireAuth } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
 import type { DunningRecord } from '@/lib/types/billing';
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
 
   if (recordsRes.error) {
     log.error('Failed to fetch dunning records', { error: recordsRes.error.message });
-    return NextResponse.json({ error: recordsRes.error.message }, { status: 500 });
+    return internalErrorResponse();
   }
 
   const records = (recordsRes.data ?? []) as unknown as DunningRecord[];

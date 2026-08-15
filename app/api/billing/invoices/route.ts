@@ -1,8 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/api-auth';
 import { createAdhocInvoice } from '@/lib/services/billing.service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:invoices');
 
 const CreateSchema = z.object({
   club_id: z.string().uuid(),
@@ -48,7 +52,7 @@ export async function GET(request: NextRequest) {
   if (memberId) query = query.eq('member_id', memberId);
 
   const { data, error } = await query.order('invoice_date', { ascending: false });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return internalErrorResponse();
   return NextResponse.json({ data });
 }
 
@@ -62,6 +66,7 @@ export async function POST(request: NextRequest) {
     const invoice = await createAdhocInvoice({ ...parsed.data, created_by: user.id });
     return NextResponse.json({ data: invoice }, { status: 201 });
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : 'Failed' }, { status: 500 });
+    log.error('Adhoc-Rechnung konnte nicht erstellt werden', e instanceof Error ? e : undefined);
+    return internalErrorResponse();
   }
 }

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -68,10 +69,7 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ success: true, trialTraining });
     } catch (error) {
       log.error('Trial training creation error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Internal server error' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -132,7 +130,7 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ trialTrainings: allTrainings });
     } catch (error) {
       log.error('Trial trainings fetch error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

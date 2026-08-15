@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
@@ -133,7 +134,7 @@ export async function GET(request: NextRequest) {
           if (error) {
             // Table might not exist or have RLS issues
             log.warn(`Skipping table "${table}": ${error.message}`);
-            errors.push(`${table}: ${error.message}`);
+            errors.push(`${table}: nicht lesbar`);
             break;
           }
 
@@ -189,10 +190,7 @@ export async function GET(request: NextRequest) {
 
     if (uploadError) {
       log.error('Failed to upload backup to storage', { error: uploadError });
-      return NextResponse.json(
-        { error: 'Backup upload failed', details: uploadError.message },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
 
     // Cleanup old backups (keep only the last MAX_BACKUPS)
@@ -213,7 +211,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Backup cron failed', { error: message });
-    return NextResponse.json({ error: 'Backup failed', details: message }, { status: 500 });
+    return internalErrorResponse();
   }
 }
 

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { hourlyRateService } from '@/src/application/services/hourly-rate-service.adapter';
@@ -32,7 +33,7 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ history });
     } catch (error) {
       log.error('Rate history fetch error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

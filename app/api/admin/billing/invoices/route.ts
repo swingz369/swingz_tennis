@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { getPagination, buildPaginationMeta } from '@/lib/pagination';
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
       const { data: invoicesData, error: invoicesError, count } = await query;
 
       if (invoicesError) {
-        return NextResponse.json({ error: invoicesError.message }, { status: 500 });
+        return internalErrorResponse();
       }
 
       const invoices = (invoicesData || []).map((inv: any) => ({
@@ -88,9 +89,8 @@ export async function GET(request: NextRequest) {
         pagination: buildPaginationMeta(page, limit, count),
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Internal server error';
       log.error('Error fetching invoices:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

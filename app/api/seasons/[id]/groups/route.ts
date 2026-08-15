@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { requireAuth } from '@/lib/api-auth';
 
 interface RouteContext {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     .eq('club_id', clubId)
     .not('group_id', 'is', null);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return internalErrorResponse();
 
   const groupIds: string[] = [
     ...new Set<string>((entries ?? []).map((e: any) => e.group_id as string)),
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     .eq('club_id', clubId)
     .eq('is_active', true);
 
-  if (gErr) return NextResponse.json({ error: gErr.message }, { status: 500 });
+  if (gErr) return internalErrorResponse();
 
   return NextResponse.json({ groups: groups ?? [] });
 }

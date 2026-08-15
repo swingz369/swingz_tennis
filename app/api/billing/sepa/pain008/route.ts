@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
@@ -128,10 +129,7 @@ export async function POST(_request: NextRequest) {
       });
     } catch (error) {
       log.error('Error generating SEPA Pain.008 XML:', error);
-      const isDevelopment = process.env.NODE_ENV === 'development';
-      const message =
-        isDevelopment && error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten';
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import { createLogger } from '@/lib/logger';
@@ -81,7 +82,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ clubs: clubsWithStats });
     } catch (error) {
       log.error('Tenant fetch error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

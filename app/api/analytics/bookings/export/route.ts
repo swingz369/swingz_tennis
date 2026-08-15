@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { getClubBookingsUseCase } from '@/application/bookings/get-club-bookings.use-case';
 import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositories/booking.repository';
 import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories/club.repository';
@@ -40,9 +41,8 @@ export async function GET(_request: NextRequest) {
           'Content-Disposition': `attachment; filename="bookings-${clubId}.csv"`,
         },
       });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      return NextResponse.json({ error: message }, { status: 500 });
+    } catch (_error) {
+      return internalErrorResponse();
     }
   });
 }

@@ -7,6 +7,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -110,7 +111,7 @@ export async function GET(request: NextRequest) {
           });
         }
         log.error('GET /api/seasons error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return internalErrorResponse();
       }
 
       return NextResponse.json({
@@ -120,10 +121,7 @@ export async function GET(request: NextRequest) {
       });
     } catch (error) {
       log.error('GET /api/seasons error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Failed to fetch seasons' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -247,16 +245,13 @@ export async function POST(request: NextRequest) {
         if (isTableNotFound(insertError)) {
           return migrationRequiredResponse();
         }
-        return NextResponse.json({ error: insertError.message }, { status: 500 });
+        return internalErrorResponse();
       }
 
       return NextResponse.json({ success: true, season: newSeason }, { status: 201 });
     } catch (error) {
       log.error('POST /api/seasons error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Failed to create season' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }

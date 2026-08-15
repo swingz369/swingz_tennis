@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { OptimizeScheduleUseCase } from '@/application/use-cases/schedule.use-cases';
 import { SchedulingService } from '@/domain/services/scheduling.service';
 import { DrizzleScheduleRepository } from '@/infrastructure/persistence/repositories/schedule.repository';
@@ -60,9 +61,8 @@ export async function GET(req: NextRequest) {
         clubId: schedule.getClubId().getValue(),
         sessions: sessionsList,
       });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      return NextResponse.json({ error: message }, { status: 500 });
+    } catch (_error) {
+      return internalErrorResponse();
     }
   });
 }
@@ -109,9 +109,8 @@ export async function POST(req: NextRequest) {
           scheduleId: schedule.getId().getValue(),
           sessions: sessionsList,
         });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        return NextResponse.json({ error: message }, { status: 500 });
+      } catch (_error) {
+        return internalErrorResponse();
       }
     })(req);
   });
@@ -166,9 +165,8 @@ export async function PUT(req: NextRequest) {
         cache.invalidatePattern('session:');
 
         return NextResponse.json({ success: true });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        return NextResponse.json({ error: message }, { status: 500 });
+      } catch (_error) {
+        return internalErrorResponse();
       }
     })(req);
   });

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createClient } from '@/infrastructure/external/supabase/server';
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
       });
     } catch (error) {
       log.error('Bulk deactivate error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

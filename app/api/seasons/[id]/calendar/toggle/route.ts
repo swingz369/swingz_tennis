@@ -1,3 +1,4 @@
+import { internalErrorResponse } from '@/lib/api-error';
 import { NextResponse, type NextRequest } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
@@ -125,8 +126,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ id: str
       });
     } catch (err) {
       log.error('Kalender-Toggle fehlgeschlagen', { err, seasonId, groupId });
-      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
-      return NextResponse.json({ ok: false, error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

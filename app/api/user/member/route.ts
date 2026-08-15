@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -91,13 +92,13 @@ export async function PATCH(_req: NextRequest) {
 
       if (error) {
         log.error('Profile update error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return internalErrorResponse();
       }
 
       return NextResponse.json({ success: true });
     } catch (error) {
       log.error('Profile PATCH error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

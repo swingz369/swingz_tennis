@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -73,7 +74,7 @@ export async function GET(_req: NextRequest) {
       .order('timeslot_start', { ascending: true });
 
     if (sessionsError) {
-      return NextResponse.json({ error: sessionsError.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     const today = new Date();

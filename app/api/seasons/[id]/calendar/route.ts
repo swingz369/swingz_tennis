@@ -1,3 +1,4 @@
+import { internalErrorResponse } from '@/lib/api-error';
 import { NextResponse, type NextRequest } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
@@ -37,8 +38,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       return NextResponse.json({ ok: true, data });
     } catch (err) {
       log.error('Saisonkalender konnte nicht geladen werden', { err, seasonId });
-      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
-      return NextResponse.json({ ok: false, error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

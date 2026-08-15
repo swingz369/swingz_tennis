@@ -289,11 +289,11 @@ export async function POST(request: NextRequest) {
         }
 
         result.imported++;
-      } catch (err) {
+      } catch (_err) {
         result.failed++;
         result.errors.push({
           record,
-          error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+          error: 'Import fehlgeschlagen',
         });
       }
     }

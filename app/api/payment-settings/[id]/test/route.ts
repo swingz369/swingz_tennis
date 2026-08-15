@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { paymentSettingsService } from '@/src/application/services/payment-settings-service.adapter';
@@ -30,7 +31,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ success: true, message: result.message });
     } catch (error) {
       log.error('Payment settings test error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

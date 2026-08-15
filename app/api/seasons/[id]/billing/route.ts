@@ -4,6 +4,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth } from '@/lib/api-auth';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { seasonBillingService } from '@/lib/billing/season-billing.service';
@@ -31,10 +32,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json(preview);
     } catch (error) {
       log.error('GET billing preview error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Preview failed' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -52,10 +50,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json(config);
     } catch (error) {
       log.error('PUT billing config error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Config update failed' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -72,10 +67,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json(result);
     } catch (error) {
       log.error('POST generate invoices error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Invoice generation failed' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }

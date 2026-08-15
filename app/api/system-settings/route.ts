@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { systemSettingsService } from '@/src/application/services/system-settings-service.adapter';
@@ -59,10 +60,7 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ success: true, systemSetting });
     } catch (error) {
       log.error('System setting creation error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Internal server error' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -134,7 +132,7 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ systemSettings });
     } catch (error) {
       log.error('System settings fetch error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

@@ -5,6 +5,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -53,10 +54,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ summary });
     } catch (error) {
       log.error('Hours summary error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Internal server error' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }

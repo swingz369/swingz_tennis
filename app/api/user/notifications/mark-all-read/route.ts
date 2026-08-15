@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth } from '@/lib/api-auth';
 
 // POST /api/user/notifications/mark-all-read — marks all notifications as read
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest) {
       .eq('read', false);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ success: true });

@@ -5,6 +5,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { db } from '@/infrastructure/persistence/db';
 import { sql } from 'drizzle-orm';
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
       });
     } catch (error) {
       log.error('[CronHealth] Error:', error);
-      return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

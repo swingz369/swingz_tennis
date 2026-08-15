@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { signHardDeleteToken } from '@/lib/security/hard-delete-token';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -87,9 +88,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         ttlSeconds: issued.ttlSeconds,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error issuing hard-delete token:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { z } from 'zod';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -164,9 +165,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         restored_at: new Date().toISOString(),
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error restoring club:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

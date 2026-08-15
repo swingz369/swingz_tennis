@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { withApiAuth, verifyRole, verifyTrainerInClub, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -35,7 +36,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ hoursLog });
     } catch (error) {
       log.error('Hours log fetch error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -91,10 +92,7 @@ export async function PATCH(
       return NextResponse.json({ success: true, hoursLog: updated });
     } catch (error) {
       log.error('Hours log update error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Internal server error' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -133,7 +131,7 @@ export async function DELETE(
       return NextResponse.json({ success: true });
     } catch (error) {
       log.error('Hours log delete error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

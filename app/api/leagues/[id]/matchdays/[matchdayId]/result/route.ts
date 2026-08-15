@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { ZodError } from 'zod';
 import type { Json } from '@/types/supabase';
 import { withApiAuth, verifyRole, verifyOffice, forbiddenResponse } from '@/lib/api-auth';
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     ] as const);
     const { data: results, error } = resultsRes;
     const { data: matchDay } = matchDayRes;
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return internalErrorResponse();
     return NextResponse.json({ results: results ?? [], matchDay });
   });
 }
@@ -105,7 +106,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       .eq('club_id', clubId)
       .eq('position_number', position_number);
 
-    if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    if (updateErr) return internalErrorResponse();
 
     // Spieltag-Gesamtergebnis aus allen Positionen berechnen
     const { data: allResults } = await sb

@@ -3,6 +3,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth } from '@/lib/api-auth';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -178,10 +179,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       });
     } catch (error) {
       log.error('PUT planning config error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Internal error' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }

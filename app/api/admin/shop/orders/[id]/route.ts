@@ -6,6 +6,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
@@ -103,7 +104,7 @@ export async function PATCH(
       .single();
 
     if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ order: updated });

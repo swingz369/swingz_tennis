@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/api-auth';
 
@@ -39,7 +40,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .from('invoice_installments')
     .update({ status: 'paid', paid_at: paidAt })
     .eq('id', id);
-  if (markErr) return NextResponse.json({ error: markErr.message }, { status: 500 });
+  if (markErr) return internalErrorResponse();
 
   // Check if all installments paid
   const { data: remaining } = await (supabase as any)

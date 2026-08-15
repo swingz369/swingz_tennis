@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 
 // GET /api/news — returns news for the current user's club
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ success: true, news: data });

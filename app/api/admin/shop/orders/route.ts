@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { buildPaginationMeta } from '@/lib/pagination';
 import type { Database } from '@/types/supabase';
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
         .select('id, user_id, total_amount, status, payment_status, items, created_at');
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return internalErrorResponse();
       }
 
       // Client-side filter: orders containing club products
@@ -120,7 +121,7 @@ export async function GET(request: NextRequest) {
     const { data: orders, error, count } = await query.range(offset, offset + limit - 1);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     const normalized = ((orders ?? []) as ShopOrderRow[]).map(normalizeStatus);

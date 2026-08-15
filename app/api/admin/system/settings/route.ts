@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -74,9 +75,8 @@ export async function GET(_request: NextRequest) {
 
       return NextResponse.json(finalSettings);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Internal server error';
       log.error('Error fetching system settings:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -131,9 +131,8 @@ export async function PUT(_request: NextRequest) {
 
       return NextResponse.json({ success: true, message: 'System settings saved' });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Internal server error';
       log.error('Error saving system settings:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

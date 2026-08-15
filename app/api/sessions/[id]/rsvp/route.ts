@@ -6,6 +6,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { createClient } from '@/src/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -101,9 +102,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
       return NextResponse.json({ rsvp: result });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('RSVP error:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -129,9 +129,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       const rsvps = await getSessionParticipants(sb, sessionId);
       return NextResponse.json({ rsvps });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('RSVP GET error:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 
@@ -109,9 +110,8 @@ export async function POST(request: NextRequest) {
         url: urlData.publicUrl,
         path: storagePath,
       });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unbekannter Upload-Fehler';
-      return NextResponse.json({ error: message }, { status: 500 });
+    } catch (_err) {
+      return internalErrorResponse();
     }
   });
 }

@@ -6,6 +6,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -78,7 +79,7 @@ export async function GET(req: NextRequest) {
 
       if (sessionsError) {
         log.error('[Sessions API]', sessionsError);
-        return NextResponse.json({ error: sessionsError.message }, { status: 500 });
+        return internalErrorResponse();
       }
 
       const typedSessions = (sessions ?? []) as unknown as SessionWithJoins[];
@@ -252,7 +253,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(result);
     } catch (err) {
       log.error('[Sessions API] Unexpected error:', err);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -313,7 +314,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       log.error('[Sessions POST]', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ session: data }, { status: 201 });

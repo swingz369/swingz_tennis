@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
       .eq('is_read', false);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ success: true });

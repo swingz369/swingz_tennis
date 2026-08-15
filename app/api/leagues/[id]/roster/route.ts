@@ -198,12 +198,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     try {
       portrait = await fetchNuligaTeamPortrait(rosterUrl);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
-      log.error('Meldeliste konnte nicht geladen werden', { leagueId: id, error: message });
-      return NextResponse.json(
-        { error: `Fehler beim Abrufen der Meldeliste: ${message}` },
-        { status: 502 }
-      );
+      log.error('Meldeliste konnte nicht geladen werden', {
+        leagueId: id,
+        error: err instanceof Error ? err.message : 'Unbekannter Fehler',
+      });
+      return NextResponse.json({ error: 'Fehler beim Abrufen der Meldeliste' }, { status: 502 });
     }
 
     if (portrait.players.length === 0) {

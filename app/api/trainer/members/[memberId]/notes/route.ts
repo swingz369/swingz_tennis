@@ -7,6 +7,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
@@ -50,7 +51,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ memb
 
     if (error) {
       log.error('Notiz-Abfrage fehlgeschlagen', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ note: note ?? null });
@@ -149,7 +150,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ memb
 
     if (error) {
       log.error('Notiz-Upsert fehlgeschlagen', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     log.info('Trainer-Notiz gespeichert', { trainerId: trainer.id, memberId, clubId });
@@ -194,7 +195,7 @@ export async function DELETE(
 
     if (error) {
       log.error('Notiz-Löschen fehlgeschlagen', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     log.info('Trainer-Notiz gelöscht', { trainerId: trainer.id, memberId, clubId });

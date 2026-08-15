@@ -9,6 +9,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       log.error('[OpenMatches GET]', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     // Fetch creator names and current user's participation
@@ -196,7 +197,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       log.error('[OpenMatches POST]', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     // Auto-add creator as participant

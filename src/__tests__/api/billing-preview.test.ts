@@ -116,13 +116,14 @@ describe('POST /api/seasons/[id]/billing-preview', () => {
     expect(res.status).toBe(403);
   });
 
-  it('returns 500 when the plan-entries query fails', async () => {
+  it('returns 500 without leaking DB details when the plan-entries query fails', async () => {
     mockEntriesError = { message: 'connection-lost' };
     stubEntries([]);
     const res = await POST(buildRequest(), ctx());
     expect(res.status).toBe(500);
     const json = await res.json();
-    expect(json.error).toMatch(/connection-lost/);
+    expect(json.error.code).toBe('INTERNAL');
+    expect(JSON.stringify(json)).not.toMatch(/connection-lost/);
   });
 
   it('returns an empty preview array when no plan entries exist', async () => {

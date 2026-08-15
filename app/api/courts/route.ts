@@ -6,6 +6,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       log.error('[Courts GET]', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     const courtsList = (courts ?? []).map((c: any) => ({
@@ -154,7 +155,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       log.error('[Courts POST]', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ success: true, court }, { status: 201 });

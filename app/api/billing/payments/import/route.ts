@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
@@ -158,11 +159,11 @@ export async function POST(_request: NextRequest) {
           }
 
           results.imported++;
-        } catch (error) {
+        } catch (_error) {
           results.failed++;
           results.errors.push({
             record,
-            error: error instanceof Error ? error.message : 'Unbekannter Fehler',
+            error: 'Import fehlgeschlagen',
           });
         }
       }
@@ -180,10 +181,7 @@ export async function POST(_request: NextRequest) {
       });
     } catch (error) {
       log.error('Error importing payments:', error);
-      const isDevelopment = process.env.NODE_ENV === 'development';
-      const message =
-        isDevelopment && error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten';
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { courtBookingEngine } from '@/lib/court-booking-engine';
@@ -62,10 +63,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json(schedule);
     } catch (error) {
       log.error('Error fetching court schedule:', error);
-      const isDevelopment = process.env.NODE_ENV === 'development';
-      const message =
-        isDevelopment && error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten';
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

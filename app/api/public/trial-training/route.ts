@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { z } from 'zod';
 import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
 import type { CreateTrialTrainingInput } from '@/src/domain/entities/trial-training.entity';
@@ -116,11 +117,6 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     log.error('Public trial training creation error:', error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Interner Serverfehler',
-      },
-      { status: 500 }
-    );
+    return internalErrorResponse();
   }
 }

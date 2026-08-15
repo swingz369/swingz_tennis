@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { Resend } from 'resend';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
     const { data: recipients, error: fetchError } = await query;
 
     if (fetchError) {
-      return NextResponse.json({ error: fetchError.message }, { status: 500 });
+      return internalErrorResponse();
     }
     if (!recipients || recipients.length === 0) {
       return NextResponse.json({ error: 'Keine Empfänger gefunden' }, { status: 400 });
@@ -225,7 +226,7 @@ export async function GET(request: NextRequest) {
       .limit(20);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ campaigns: data });

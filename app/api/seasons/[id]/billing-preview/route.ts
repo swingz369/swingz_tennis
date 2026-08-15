@@ -15,6 +15,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth } from '@/lib/api-auth';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { feeConfigurationService } from '@/src/application/services/fee-configuration-service.adapter';
@@ -74,10 +75,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json(preview);
     } catch (error) {
       log.error('POST billing-preview error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Billing preview failed' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }

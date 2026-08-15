@@ -8,6 +8,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -247,10 +248,7 @@ export async function GET(req: NextRequest) {
       });
     } catch (err) {
       log.error('[GenerateInvoices GET] preview error:', err);
-      return NextResponse.json(
-        { error: err instanceof Error ? err.message : 'Preview failed' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -354,7 +352,7 @@ export async function POST(req: NextRequest) {
 
         if (insertError) {
           log.error('[GenerateInvoices] insert error:', insertError);
-          return NextResponse.json({ error: insertError.message }, { status: 500 });
+          return internalErrorResponse();
         }
 
         // Create line items for each invoice
@@ -398,10 +396,7 @@ export async function POST(req: NextRequest) {
       });
     } catch (err) {
       log.error('[GenerateInvoices POST] error:', err);
-      return NextResponse.json(
-        { error: err instanceof Error ? err.message : 'Invoice generation failed' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }

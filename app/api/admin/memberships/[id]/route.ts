@@ -5,6 +5,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse, type AuthContext } from '@/lib/api-auth';
 import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
@@ -154,10 +155,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
       if (updateError) {
         log.error('Error updating membership:', updateError);
-        return NextResponse.json(
-          { error: 'Failed to update membership', details: updateError.message },
-          { status: 500 }
-        );
+        return internalErrorResponse();
       }
 
       // Audit log the change
@@ -206,13 +204,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       });
     } catch (error) {
       log.error('Error in PATCH /api/admin/memberships/[id]:', error);
-      return NextResponse.json(
-        {
-          error: 'Internal server error',
-          details: error instanceof Error ? error.message : 'Unknown error',
-        },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -267,10 +259,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 
       if (updateError) {
         log.error('Error deactivating membership:', updateError);
-        return NextResponse.json(
-          { error: 'Failed to deactivate membership', details: updateError.message },
-          { status: 500 }
-        );
+        return internalErrorResponse();
       }
 
       // Audit log
@@ -294,13 +283,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       });
     } catch (error) {
       log.error('Error in DELETE /api/admin/memberships/[id]:', error);
-      return NextResponse.json(
-        {
-          error: 'Internal server error',
-          details: error instanceof Error ? error.message : 'Unknown error',
-        },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }

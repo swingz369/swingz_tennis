@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { DrizzleGroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
 import { GroupId, MemberId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error fetching group:', message);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -125,7 +126,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error updating group:', message);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -156,7 +157,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error deleting group:', message);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

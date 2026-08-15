@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import type { Database } from '@/types/supabase';
 import { createLogger } from '@/lib/logger';
@@ -206,9 +207,8 @@ export async function GET(request: NextRequest) {
         totalMembers: members.length,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Churn prediction error:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

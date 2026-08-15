@@ -194,7 +194,8 @@ describe('POST /api/reminders/booking-tomorrow', () => {
 
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toContain('dryRun');
+    expect(body.error.code).toBe('INTERNAL');
+    expect(body.error.message).toBe('Interner Serverfehler');
   });
 
   // ── Dry run ────────────────────────────────────────────
@@ -264,7 +265,7 @@ describe('POST /api/reminders/booking-tomorrow', () => {
 
   // ── Edge cases ─────────────────────────────────────────
 
-  it('returns 500 when the session query fails (DB errors are not swallowed)', async () => {
+  it('returns 500 and does not leak DB error details when the session query fails', async () => {
     mockSupabase.from.mockImplementation((table: string) => {
       if (table === 'sessions') return makeChain({ error: { message: 'connection refused' } });
       return makeChain({});
@@ -274,7 +275,9 @@ describe('POST /api/reminders/booking-tomorrow', () => {
 
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toContain('Failed to load sessions');
+    expect(body.error.code).toBe('INTERNAL');
+    expect(body.error.message).toBe('Interner Serverfehler');
+    expect(JSON.stringify(body)).not.toContain('connection refused');
   });
 
   it('does not send any reminder when no sessions exist for tomorrow', async () => {

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
@@ -51,7 +52,7 @@ export async function GET(_request: NextRequest) {
         .eq('role', 'member'); // only members have subscriptions
 
       if (membersError) {
-        return NextResponse.json({ error: membersError.message }, { status: 500 });
+        return internalErrorResponse();
       }
 
       const subscriptions = (memberships || [])
@@ -74,9 +75,8 @@ export async function GET(_request: NextRequest) {
 
       return NextResponse.json(subscriptions);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Internal server error';
       log.error('Error fetching subscriptions:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -130,7 +130,7 @@ export async function POST(_request: NextRequest) {
           .eq('id', memberId);
 
         if (updateError) {
-          return NextResponse.json({ error: updateError.message }, { status: 500 });
+          return internalErrorResponse();
         }
 
         // Audit log
@@ -146,9 +146,8 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json({ success: true });
       })(_request);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Internal server error';
       log.error('Error assigning subscription:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

@@ -4,6 +4,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       log.error('[BookingRules GET]', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     // Return defaults if no rules found
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
         .single();
       if (error) {
         log.error('[BookingRules PATCH]', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return internalErrorResponse();
       }
       result = data;
     } else {
@@ -128,7 +129,7 @@ export async function POST(req: NextRequest) {
         .single();
       if (error) {
         log.error('[BookingRules POST]', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return internalErrorResponse();
       }
       result = data;
     }

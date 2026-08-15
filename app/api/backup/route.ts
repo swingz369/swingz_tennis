@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
@@ -58,7 +59,7 @@ export async function GET(_request: NextRequest) {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       log.error('Error listing backups', { error: message });
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         log.error('Manual backup error', { error: message });
-        return NextResponse.json({ error: 'Backup failed', details: message }, { status: 500 });
+        return internalErrorResponse();
       }
     });
     return response as NextResponse;
@@ -166,7 +167,7 @@ export async function DELETE(request: NextRequest) {
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         log.error('Error deleting backup', { error: message });
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return internalErrorResponse();
       }
     });
     return response as NextResponse;

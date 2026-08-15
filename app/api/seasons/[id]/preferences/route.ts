@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
@@ -104,10 +105,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       });
     } catch (error) {
       log.error(`GET /api/seasons/[id]/preferences error:`, error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Failed to fetch preferences' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -238,10 +236,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         }
       } catch (error) {
         log.error(`POST /api/seasons/[id]/preferences error:`, error);
-        return NextResponse.json(
-          { error: error instanceof Error ? error.message : 'Failed to submit preferences' },
-          { status: 500 }
-        );
+        return internalErrorResponse();
       }
     });
   });

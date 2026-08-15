@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { deleteStorageFile } from '@/lib/supabase/storage-utils';
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     const pagination = buildPaginationMeta(page, limit, count);
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await sb.from('shop_products').insert(productData).select().single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ product: data }, { status: 201 });
@@ -141,7 +142,7 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ product: data });
@@ -192,7 +193,7 @@ export async function DELETE(request: NextRequest) {
     const { error } = await sb.from('shop_products').delete().eq('id', id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     // Clean up Storage file if the product had a Supabase Storage image

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { requireAuth } from '@/lib/api-auth';
 
 interface RouteContext {
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     .eq('training_group_id', groupId)
     .eq('club_id', clubId)
     .is('left_at', null);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return internalErrorResponse();
 
   const memberIds: string[] = [
     ...new Set<string>((memberships ?? []).map((m: any) => m.member_id as string)),
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     .from('users')
     .select('id, full_name, email')
     .in('id', memberIds);
-  if (uErr) return NextResponse.json({ error: uErr.message }, { status: 500 });
+  if (uErr) return internalErrorResponse();
 
   const members = (users ?? []).map((u: any) => ({
     id: u.id as string,
@@ -55,6 +56,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     .eq('id', groupId)
     .select('id, member_ids')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return internalErrorResponse();
   return NextResponse.json(data);
 }

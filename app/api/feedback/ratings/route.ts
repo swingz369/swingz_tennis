@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -42,14 +43,13 @@ export async function GET(req: NextRequest) {
 
       if (error) {
         log.error('Failed to fetch rating summaries:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return internalErrorResponse();
       }
 
       return NextResponse.json(data);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error fetching rating summaries:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

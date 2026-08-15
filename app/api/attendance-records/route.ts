@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -84,10 +85,7 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ success: true, attendanceRecord });
     } catch (error) {
       log.error('Attendance record creation error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Internal server error' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -159,7 +157,7 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ records, total: count ?? 0 });
     } catch (error) {
       log.error('Attendance record fetch error', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

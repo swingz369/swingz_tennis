@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { memberService } from '@/src/application/services/member-service.adapter';
 import type { CreateMemberInput } from '@/src/domain/entities/member.entity';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
@@ -57,10 +58,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, member });
       } catch (error) {
         log.error('Member creation error:', error);
-        return NextResponse.json(
-          { error: error instanceof Error ? error.message : 'Internal server error' },
-          { status: 500 }
-        );
+        return internalErrorResponse();
       }
     });
   });
@@ -166,7 +164,7 @@ export async function GET(request: NextRequest) {
       });
     } catch (error) {
       log.error('Member fetch error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

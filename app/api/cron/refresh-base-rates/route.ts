@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { timingSafeEqual } from 'crypto';
 import { env } from '@/lib/env';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -90,7 +91,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     log.error('Failed to upsert base_interest_rates', { error: error.message });
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalErrorResponse();
   }
 
   log.info('Base interest rate upserted', { validFrom, rate, source });
@@ -110,7 +111,7 @@ async function runDiagnostics(sb: ReturnType<typeof createServiceClient>) {
 
   if (error) {
     log.error('Diagnostics failed', { error: error.message });
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return internalErrorResponse();
   }
 
   const lastValidFrom = data?.[0]?.valid_from ?? null;

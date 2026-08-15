@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -21,7 +22,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       .eq('id', id)
       .select()
       .single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return internalErrorResponse();
     return NextResponse.json({ item: data });
   });
 }

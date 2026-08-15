@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { buildDatevCsv } from '@/lib/billing/datev-mapper';
 import type { DatevInvoice } from '@/lib/billing/datev-mapper';
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
       .not('status', 'in', '(draft,cancelled)')
       .order('invoice_date');
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return internalErrorResponse();
 
     const invoices: DatevInvoice[] = (invoicesRaw ?? []).map((inv: Record<string, unknown>) => {
       const user = inv.users as Record<string, unknown> | null;

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import type { NextRequest } from 'next/server';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import type { AuthContext } from '@/lib/api-auth';
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (error && error.code !== 'PGRST116') {
       log.error('Failed to fetch schedule preferences:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({
@@ -149,7 +150,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     if (result.error) {
       log.error('Failed to save schedule preferences:', result.error);
-      return NextResponse.json({ error: result.error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ success: true, preferences: result.data });

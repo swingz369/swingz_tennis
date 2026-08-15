@@ -5,6 +5,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth } from '@/lib/api-auth';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -157,10 +158,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         });
       } catch (error) {
         log.error('POST remind error:', error instanceof Error ? error : undefined);
-        return NextResponse.json(
-          { error: error instanceof Error ? error.message : 'Reminder failed' },
-          { status: 500 }
-        );
+        return internalErrorResponse();
       }
     });
   });

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { createServiceClient } from '@/lib/supabase/service';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { EmailService } from '@/src/application/services/email.service';
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ requests: data });
@@ -64,7 +65,7 @@ export async function PATCH(request: NextRequest) {
     const { error } = await sb.from('registration_requests').update(updateData).eq('id', id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     if (status === 'approved') {

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { pushNotificationService } from '@/lib/push-notification.service';
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
       );
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return internalErrorResponse();
       }
       return NextResponse.json({ unreadCount: count ?? 0 });
     }
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
       .limit(limit);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     // Fetch sender/receiver user details for all messages
@@ -178,7 +179,7 @@ export async function POST(request: NextRequest) {
         .select('id, receiver_id');
 
       if (insertError) {
-        return NextResponse.json({ error: insertError.message }, { status: 500 });
+        return internalErrorResponse();
       }
 
       // Create notifications + push for all recipients (fire-and-forget)
@@ -231,7 +232,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return internalErrorResponse();
       }
 
       // Create notification + push for receiver (non-blocking)
@@ -346,7 +347,7 @@ export async function POST(request: NextRequest) {
 
       if (insertError) {
         log.error('[Messages] Broadcast insert error:', insertError);
-        return NextResponse.json({ error: insertError.message }, { status: 500 });
+        return internalErrorResponse();
       }
 
       // Create notifications for all recipients (fire-and-forget)

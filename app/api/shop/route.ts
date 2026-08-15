@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import type { NextRequest } from 'next/server';
 import { withApiAuth } from '@/lib/api-auth';
 import { createClient } from '@/lib/supabase/server';
@@ -21,9 +22,8 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ products: data });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Shop products fetch error', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

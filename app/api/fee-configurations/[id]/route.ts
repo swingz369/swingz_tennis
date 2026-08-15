@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { feeConfigurationService } from '@/src/application/services/fee-configuration-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -30,7 +31,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ feeConfiguration });
     } catch (error) {
       log.error('Fee configuration fetch error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -87,10 +88,7 @@ export async function PATCH(
       return NextResponse.json({ success: true, feeConfiguration: updated });
     } catch (error) {
       log.error('Fee configuration update error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Internal server error' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -121,7 +119,7 @@ export async function DELETE(
       return NextResponse.json({ success: true });
     } catch (error) {
       log.error('Fee configuration delete error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

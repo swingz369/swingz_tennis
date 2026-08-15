@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { cookies } from 'next/headers';
 import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     log.error('[Switch Club] Error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return internalErrorResponse();
   }
 }
 
@@ -84,6 +85,6 @@ export async function DELETE() {
     });
   } catch (error) {
     log.error('[Switch Club] Error clearing club:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return internalErrorResponse();
   }
 }

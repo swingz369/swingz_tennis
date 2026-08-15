@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { ZodError } from 'zod';
 import { withApiAuth, verifyRole, verifyOffice, forbiddenResponse } from '@/lib/api-auth';
 import { LineupPositionsSchema } from '@/lib/types/matchdays';
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest, { params }: Params) {
       .eq('club_id', clubId)
       .order('position_number');
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return internalErrorResponse();
     return NextResponse.json({ lineup: data ?? [] });
   });
 }
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       .from('match_results')
       .upsert(rows, { onConflict: 'match_day_id,position_number' })
       .select();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return internalErrorResponse();
     return NextResponse.json({ lineup: data });
   });
 }

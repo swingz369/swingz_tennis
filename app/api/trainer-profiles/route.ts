@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
 import type { TrainerProfile } from '@/domain/entities/trainer.entity';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
@@ -70,10 +71,7 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ success: true, trainerProfile: profile });
     } catch (error) {
       log.error('Trainer profile creation error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Internal server error' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -349,7 +347,7 @@ export async function GET(_request: NextRequest) {
         '[trainer-profiles GET] Error',
         error instanceof Error ? error : { message, stack }
       );
-      return NextResponse.json({ error: `Failed to load trainers: ${message}` }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

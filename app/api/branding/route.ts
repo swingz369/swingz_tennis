@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { errorResponse, internalErrorResponse } from '@/lib/api-error';
 import { z } from 'zod';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
@@ -81,7 +82,7 @@ export async function GET(request: NextRequest) {
       });
     } catch (err) {
       log.error('GET /api/branding error:', err);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -174,10 +175,11 @@ export async function PUT(request: NextRequest) {
         message: 'Branding updated',
       });
     } catch (err) {
-      return NextResponse.json(
-        { error: err instanceof Error ? err.message : 'Validation failed' },
-        { status: 400 }
-      );
+      if (err instanceof z.ZodError) {
+        return errorResponse('VALIDATION_ERROR', 'Ungültige Eingabe', { details: err.flatten() });
+      }
+      log.error('Branding update error:', err instanceof Error ? err : undefined);
+      return internalErrorResponse();
     }
   });
 }

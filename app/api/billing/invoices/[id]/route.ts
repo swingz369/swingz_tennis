@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -70,7 +71,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .eq('id', id)
     .select()
     .single();
-  if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
+  if (updateErr) return internalErrorResponse();
   return NextResponse.json({ data: updated });
 }
 
@@ -119,6 +120,6 @@ export async function DELETE(
   // Delete the invoice itself
   const { error: deleteErr } = await serviceSb.from('invoices').delete().eq('id', id);
 
-  if (deleteErr) return NextResponse.json({ error: deleteErr.message }, { status: 500 });
+  if (deleteErr) return internalErrorResponse();
   return NextResponse.json({ success: true });
 }

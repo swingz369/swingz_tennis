@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { BillingService } from '@/src/application/services/billing.service';
@@ -28,7 +29,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ success: true, trainerBilling: updated });
     } catch (error) {
       log.error('Trainer billing overdue error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

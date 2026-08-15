@@ -5,6 +5,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
@@ -157,10 +158,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       });
     } catch (error) {
       log.error('[SendInvoiceEmail] Error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Failed to send invoice email' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }

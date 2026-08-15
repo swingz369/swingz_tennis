@@ -599,7 +599,8 @@ describe('POST /api/billing/generate-invoices', () => {
 
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toContain('connection timeout');
+    expect(body.error.code).toBe('INTERNAL');
+    expect(JSON.stringify(body)).not.toContain('connection timeout');
   });
 
   it('returns 200 with NO_FEE_CONFIGURED on fee_configurations query error (maybeSingle returns null)', async () => {
@@ -640,7 +641,8 @@ describe('POST /api/billing/generate-invoices', () => {
 
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toContain('duplicate key');
+    expect(body.error.code).toBe('INTERNAL');
+    expect(JSON.stringify(body)).not.toContain('duplicate key');
   });
 
   // ── Idempotency with mixed member_id null case ─────────────────────────

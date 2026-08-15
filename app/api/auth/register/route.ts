@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { createServerClient } from '@supabase/ssr';
 import { createServiceClient } from '@/lib/supabase/service';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
@@ -158,9 +159,6 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     log.error('Unexpected registration error:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Registrierung fehlgeschlagen' },
-      { status: 500 }
-    );
+    return internalErrorResponse();
   }
 }

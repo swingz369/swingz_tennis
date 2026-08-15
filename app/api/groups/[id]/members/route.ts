@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { DrizzleGroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
 import { GroupId, MemberId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error adding member to group:', message);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

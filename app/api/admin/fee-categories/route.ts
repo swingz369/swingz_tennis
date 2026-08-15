@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { requireAuth } from '@/lib/api-auth';
 
 export async function GET(request: NextRequest) {
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     .in('type', ['training', 'membership'])
     .order('type')
     .order('name');
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return internalErrorResponse();
   return NextResponse.json({ data });
 }
 
@@ -53,6 +54,6 @@ export async function POST(request: NextRequest) {
     .insert({ club_id, name, type, amount, billing_cycle, billing_unit_count, currency: 'EUR' })
     .select()
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return internalErrorResponse();
   return NextResponse.json({ data }, { status: 201 });
 }

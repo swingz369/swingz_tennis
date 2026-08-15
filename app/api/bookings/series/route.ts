@@ -137,15 +137,15 @@ export async function POST(request: NextRequest) {
         if (error) {
           errors.push({
             date: booking.start_time.toISOString(),
-            error: error.message,
+            error: 'Buchung konnte nicht erstellt werden',
           });
         } else if (data) {
           bookingIds.push(data.id);
         }
-      } catch (err) {
+      } catch (_err) {
         errors.push({
           date: booking.start_time.toISOString(),
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: 'Buchung konnte nicht erstellt werden',
         });
       }
     }

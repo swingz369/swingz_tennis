@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { trainerAvailabilityService } from '@/src/application/services/trainer-availability-service.adapter';
 import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
@@ -93,10 +94,7 @@ export async function GET(request: NextRequest) {
       });
     } catch (error) {
       log.error('Trainer availability GET error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Internal server error' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -171,10 +169,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ availability }, { status: 201 });
     } catch (error) {
       log.error('Trainer availability POST error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Internal server error' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -239,10 +234,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: true });
     } catch (error) {
       log.error('Trainer availability DELETE error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Internal server error' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }

@@ -2,7 +2,11 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/api-auth';
+import { internalErrorResponse } from '@/lib/api-error';
+import { createLogger } from '@/lib/logger';
 import { processGroupChange } from '@/lib/services/group-change.service';
+
+const log = createLogger('api:billing:group-change');
 
 const Schema = z.object({
   club_id: z.string().uuid(),
@@ -35,6 +39,7 @@ export async function POST(request: NextRequest) {
     const result = await processGroupChange({ ...parsed.data, created_by: user.id });
     return NextResponse.json({ data: result });
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : 'Failed' }, { status: 500 });
+    log.error('Gruppenwechsel fehlgeschlagen', e instanceof Error ? e : undefined);
+    return internalErrorResponse();
   }
 }

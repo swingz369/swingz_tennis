@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('club_id', auth.clubId)
       .order('created_at', { ascending: true });
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return internalErrorResponse();
     return NextResponse.json(data);
   });
 }
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { scheduleId, error: scheduleErr } = await findOrCreateSchedule(auth.supabase, season);
-    if (scheduleErr) return NextResponse.json({ error: scheduleErr.message }, { status: 500 });
+    if (scheduleErr) return internalErrorResponse();
 
     const { data, error } = await (auth.supabase.from('training_groups') as any)
       .insert({
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest) {
       })
       .select()
       .single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return internalErrorResponse();
     return NextResponse.json(data, { status: 201 });
   });
 }

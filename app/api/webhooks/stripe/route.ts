@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import type Stripe from 'stripe';
 import { Resend } from 'resend';
 import { constructStripeEvent, stripe as getStripeClient } from '@/lib/stripe/stripe-client';
@@ -149,8 +150,7 @@ export async function POST(_request: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (error) {
     log.error('Error handling Stripe webhook', error instanceof Error ? error : undefined);
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return internalErrorResponse();
   }
 }
 

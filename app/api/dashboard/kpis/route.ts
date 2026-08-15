@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -81,9 +82,8 @@ export async function GET(req: NextRequest) {
         totalCourts: courtsCount || 0,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error fetching dashboard KPIs:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

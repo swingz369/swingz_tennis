@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { SEPAMandateService } from '@/src/application/services/sepa-mandate.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
@@ -61,10 +62,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, mandate });
       } catch (error) {
         log.error('SEPA mandate creation error:', error);
-        return NextResponse.json(
-          { error: error instanceof Error ? error.message : 'Internal server error' },
-          { status: 500 }
-        );
+        return internalErrorResponse();
       }
     });
   });
@@ -115,7 +113,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Member ID or Mandate ID is required' }, { status: 400 });
     } catch (error) {
       log.error('SEPA mandate fetch error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

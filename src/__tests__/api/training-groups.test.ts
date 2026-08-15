@@ -157,7 +157,8 @@ describe('GET /api/training-groups', () => {
 
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toContain('Internal error');
+    expect(body.error.code).toBe('INTERNAL');
+    expect(JSON.stringify(body)).not.toContain('Internal error');
   });
 
   it('returns 403 when user is not admin', async () => {
@@ -355,7 +356,8 @@ describe('POST /api/training-groups', () => {
 
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toContain('Unique constraint');
+    expect(body.error.code).toBe('INTERNAL');
+    expect(JSON.stringify(body)).not.toContain('Unique constraint');
   });
 
   it('returns 403 when user is not admin', async () => {
@@ -422,7 +424,8 @@ describe('PATCH /api/training-groups/[id]', () => {
 
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toContain('Record not found');
+    expect(body.error.code).toBe('INTERNAL');
+    expect(JSON.stringify(body)).not.toContain('Record not found');
   });
 
   it('returns 403 when user is not admin', async () => {
@@ -483,7 +486,8 @@ describe('DELETE /api/training-groups/[id]', () => {
 
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error).toContain('Foreign key constraint');
+    expect(body.error.code).toBe('INTERNAL');
+    expect(JSON.stringify(body)).not.toContain('Foreign key constraint');
   });
 
   it('returns 403 when user is not admin', async () => {

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import {
@@ -147,9 +148,8 @@ export async function POST(_request: NextRequest) {
         results: results.slice(0, 50),
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error sending reminders:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

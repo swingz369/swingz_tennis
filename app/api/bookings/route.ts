@@ -6,6 +6,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { errorResponse, internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createBookingSafe } from '@/lib/booking/safe-booking';
@@ -105,7 +106,8 @@ export async function POST(req: NextRequest) {
         result.error?.includes('already booked') ||
         result.error?.includes('fully booked') ||
         result.error?.includes('already started');
-      return NextResponse.json({ error: result.error }, { status: isConflict ? 409 : 500 });
+      if (isConflict) return errorResponse('CONFLICT', result.error ?? 'Konflikt bei der Buchung');
+      return internalErrorResponse();
     }
 
     // Fire-and-forget: create hours_log entry when the session has a trainer.
@@ -248,7 +250,7 @@ export async function GET(req: NextRequest) {
       .limit(50);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ bookings: bookings ?? [] });

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { errorResponse, internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 
 // GET /api/news/[id] — returns a single news item
@@ -14,7 +15,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 404 });
+      return errorResponse('NOT_FOUND', 'News-Eintrag nicht gefunden');
     }
 
     return NextResponse.json({ news: data });
@@ -39,7 +40,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ success: true, news: data });
@@ -58,7 +59,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const { error } = await auth.supabase.from('news_posts').delete().eq('id', id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ success: true });

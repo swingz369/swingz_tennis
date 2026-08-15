@@ -6,6 +6,7 @@
 // im Wochenplan sehen) als auch die Saisonplan-Vorlage selbst.
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
@@ -226,10 +227,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         });
       } catch (error) {
         log.error(`POST /api/plan-entries/${entryId}/reschedule error:`, error);
-        return NextResponse.json(
-          { error: error instanceof Error ? error.message : 'Verschieben fehlgeschlagen' },
-          { status: 500 }
-        );
+        return internalErrorResponse();
       }
     });
   });

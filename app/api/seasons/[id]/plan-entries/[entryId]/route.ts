@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
@@ -80,10 +81,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       });
     } catch (error) {
       log.error(`GET /api/seasons/[id]/plan-entries/${entryId} error:`, error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Failed to fetch plan entry' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -271,10 +269,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         });
       } catch (error) {
         log.error(`PATCH /api/seasons/${seasonId}/plan-entries/${entryId} error:`, error);
-        return NextResponse.json(
-          { error: error instanceof Error ? error.message : 'Failed to update plan entry' },
-          { status: 500 }
-        );
+        return internalErrorResponse();
       }
     });
   });
@@ -336,10 +331,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         });
       } catch (error) {
         log.error(`DELETE /api/seasons/${seasonId}/plan-entries/${entryId} error:`, error);
-        return NextResponse.json(
-          { error: error instanceof Error ? error.message : 'Failed to delete plan entry' },
-          { status: 500 }
-        );
+        return internalErrorResponse();
       }
     });
   });

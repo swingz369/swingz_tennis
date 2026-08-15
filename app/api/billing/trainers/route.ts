@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { BillingService } from '@/src/application/services/billing.service';
@@ -84,10 +85,7 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ success: true, trainerBilling });
     } catch (error) {
       log.error('Trainer billing creation error:', error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Internal server error' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -144,7 +142,7 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ trainerBillings });
     } catch (error) {
       log.error('Trainer billing fetch error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

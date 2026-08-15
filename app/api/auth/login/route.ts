@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { errorResponse, internalErrorResponse } from '@/lib/api-error';
 import { createServerClient } from '@supabase/ssr';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       log.error('Login error:', error.message);
-      return NextResponse.json({ error: error.message }, { status: 401 });
+      return errorResponse('UNAUTHORIZED', 'E-Mail oder Passwort ist falsch');
     }
 
     if (!data.session) {
@@ -74,9 +75,6 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     log.error('Unexpected login error:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Login failed' },
-      { status: 500 }
-    );
+    return internalErrorResponse();
   }
 }

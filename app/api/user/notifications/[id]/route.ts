@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth } from '@/lib/api-auth';
 
 // PATCH /api/user/notifications/[id] — marks a single notification as read
@@ -14,7 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       .eq('user_id', auth.user.id); // ensure user owns this notification
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ success: true });
@@ -33,7 +34,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       .eq('user_id', auth.user.id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ success: true });

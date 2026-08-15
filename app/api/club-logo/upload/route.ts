@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -158,9 +159,8 @@ export async function POST(request: NextRequest) {
         path: storagePath,
         variant,
       });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unbekannter Upload-Fehler';
-      return NextResponse.json({ error: message }, { status: 500 });
+    } catch (_err) {
+      return internalErrorResponse();
     }
   });
 }
@@ -227,9 +227,8 @@ export async function DELETE(request: NextRequest) {
         .eq('id', clubId);
 
       return NextResponse.json({ success: true });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return NextResponse.json({ error: message }, { status: 500 });
+    } catch (_err) {
+      return internalErrorResponse();
     }
   });
 }

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { db } from '@/src/infrastructure/persistence/db';
@@ -201,7 +202,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         'GET /api/seasons/[id]/plan-grid error',
         error instanceof Error ? error : { message: msg, stack }
       );
-      return NextResponse.json({ error: `Failed to fetch plan grid: ${msg}` }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

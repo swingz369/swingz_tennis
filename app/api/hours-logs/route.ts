@@ -4,6 +4,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -87,7 +88,7 @@ export async function GET(_request: NextRequest) {
           return NextResponse.json({ hoursLogs: [] });
         }
         log.error('Hours logs fetch error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return internalErrorResponse();
       }
 
       // Resolve trainer names from users table where trainer_name is missing
@@ -126,7 +127,7 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ hoursLogs });
     } catch (error) {
       log.error('Hours log fetch error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -207,13 +208,13 @@ export async function POST(_request: NextRequest) {
 
       if (error) {
         log.error('Hours log creation error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return internalErrorResponse();
       }
 
       return NextResponse.json({ hoursLog }, { status: 201 });
     } catch (error) {
       log.error('Hours log creation error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

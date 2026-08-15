@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { errorResponse, internalErrorResponse } from '@/lib/api-error';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
@@ -102,9 +103,8 @@ export async function GET(req: NextRequest) {
         pagination,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error listing clubs', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -187,9 +187,8 @@ export async function POST(req: NextRequest) {
         { status: 201 }
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error creating club', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: message }, { status: 400 });
+      return errorResponse('VALIDATION_ERROR', 'Verein konnte nicht erstellt werden');
     }
   });
 }

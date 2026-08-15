@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { DrizzleGroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
 import { GroupEntity } from '@/domain/entities/group.entity';
 import { ClubId } from '@/domain/value-objects';
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error fetching groups:', message);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -121,7 +122,7 @@ export async function POST(req: NextRequest) {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error creating group:', message);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

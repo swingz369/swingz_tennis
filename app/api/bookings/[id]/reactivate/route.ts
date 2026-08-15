@@ -11,6 +11,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (updateError) {
       log.error('Reaktivierung fehlgeschlagen', updateError);
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     // Der Trainer hat die Abmeldung als Benachrichtigung bekommen — die Rücknahme

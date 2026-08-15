@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
@@ -106,10 +107,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       });
     } catch (error) {
       log.error(`GET /api/seasons/[id] error:`, error);
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Failed to fetch season' },
-        { status: 500 }
-      );
+      return internalErrorResponse();
     }
   });
 }
@@ -200,10 +198,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
         if (updateError) {
           log.error(`PATCH /api/seasons/[id] supabase error:`, JSON.stringify(updateError));
-          return NextResponse.json(
-            { error: updateError.message || updateError.details || JSON.stringify(updateError) },
-            { status: 500 }
-          );
+          return internalErrorResponse();
         }
 
         return NextResponse.json({ season: updated });
@@ -264,10 +259,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         return NextResponse.json({ success: true });
       } catch (error) {
         log.error(`DELETE /api/seasons/[id] error:`, error);
-        return NextResponse.json(
-          { error: error instanceof Error ? error.message : 'Failed to delete season' },
-          { status: 500 }
-        );
+        return internalErrorResponse();
       }
     });
   });

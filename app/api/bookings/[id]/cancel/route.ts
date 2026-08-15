@@ -7,6 +7,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { LastMinuteAlertService } from '@/lib/services/last-minute-alert.service';
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       .eq('id', bookingId);
 
     if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     // Last-Minute-Alert: Push an alle aktiven Mitglieder des Clubs

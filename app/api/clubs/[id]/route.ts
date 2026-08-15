@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { errorResponse, internalErrorResponse } from '@/lib/api-error';
 import { z } from 'zod';
 import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories/club.repository';
 import { ClubId } from '@/domain/value-objects';
@@ -154,9 +155,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         stripe_live_mode: !!process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_'),
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error getting club:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -262,9 +262,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
         return NextResponse.json({ success: true });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
         log.error('Error updating club:', error);
-        return NextResponse.json({ error: message }, { status: 400 });
+        return errorResponse('VALIDATION_ERROR', 'Verein konnte nicht aktualisiert werden');
       }
     })(req);
   });
@@ -444,9 +443,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         deactivated_members_count: softDeleteResult,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error deleting club:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

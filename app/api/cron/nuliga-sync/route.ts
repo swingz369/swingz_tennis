@@ -129,7 +129,11 @@ export async function GET(request: NextRequest) {
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         log.error(`Failed to sync league "${league.name}"`, { error: message });
-        errors.push({ leagueId: league.id, leagueName: league.name, error: message });
+        errors.push({
+          leagueId: league.id,
+          leagueName: league.name,
+          error: 'Synchronisierung fehlgeschlagen',
+        });
         failed++;
 
         if (league.club_id) {

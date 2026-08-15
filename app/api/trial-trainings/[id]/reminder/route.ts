@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
@@ -66,7 +67,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ success: true, message: 'Reminder sent successfully' });
     } catch (error) {
       log.error('Trial training reminder error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

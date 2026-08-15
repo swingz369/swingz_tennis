@@ -7,6 +7,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { pushNotificationService } from '@/lib/push-notification.service';
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({
@@ -86,7 +87,7 @@ export async function DELETE(req: NextRequest) {
     const result = await pushNotificationService.unsubscribe(body.endpoint);
 
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ success: true });

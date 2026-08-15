@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { DrizzlePricingRuleRepository } from '@/infrastructure/persistence/repositories/pricing-rule.repository';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -115,7 +116,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error updating pricing rule:', message);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -142,7 +143,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error deleting pricing rule:', message);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

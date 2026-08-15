@@ -9,6 +9,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
@@ -48,7 +49,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ memb
 
     if (error) {
       log.error('Fehlzeiten-Abfrage fehlgeschlagen', error instanceof Error ? error : undefined);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({
@@ -103,7 +104,7 @@ export async function POST(
         'Trainer-Abfrage fehlgeschlagen',
         trainerErr instanceof Error ? trainerErr : undefined
       );
-      return NextResponse.json({ error: trainerErr.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     const notifiedTrainers: string[] = [];

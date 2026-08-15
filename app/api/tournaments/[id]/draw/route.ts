@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { drawKoBracket, drawRoundRobin } from '@/lib/tournament/draw';
 import type { DrawEntry } from '@/lib/tournament/draw';
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .eq('status', 'confirmed')
       .order('seed', { ascending: true, nullsFirst: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return internalErrorResponse();
     if (!regs || regs.length < 2)
       return NextResponse.json(
         { error: 'Mindestens 2 bestätigte Anmeldungen erforderlich' },
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }));
 
     const { error: insertErr } = await sb.from('tournament_matches').insert(rows);
-    if (insertErr) return NextResponse.json({ error: insertErr.message }, { status: 500 });
+    if (insertErr) return internalErrorResponse();
 
     await sb.from('tournaments').update({ status: 'in_progress' }).eq('id', tournamentId);
 

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { getClubMembersUseCase } from '@/application/members/get-club-members.use-case';
 import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories/club.repository';
 import { DrizzleMemberRepository } from '@/infrastructure/persistence/repositories/member.repository';
@@ -50,9 +51,8 @@ export async function GET(_request: NextRequest) {
       }
 
       return NextResponse.json(result);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      return NextResponse.json({ error: message }, { status: 500 });
+    } catch (_error) {
+      return internalErrorResponse();
     }
   });
 }

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { courtService } from '@/lib/booking/court.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -69,7 +70,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error updating court type:', message);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }
@@ -127,7 +128,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error deleting court type:', message);
-      return NextResponse.json({ error: message }, { status: 500 });
+      return internalErrorResponse();
     }
   });
 }

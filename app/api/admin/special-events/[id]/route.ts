@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createClient } from '@/infrastructure/external/supabase/server';
 
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
     const { data, error } = await from(sb, 'special_event_registrations')
       .select('*, user:users(id, full_name, email)')
       .eq('event_id', id);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return internalErrorResponse();
     return NextResponse.json({ registrations: data });
   });
 }
@@ -36,7 +37,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       .eq('club_id', auth.clubId!)
       .select()
       .single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return internalErrorResponse();
     return NextResponse.json({ event: data });
   });
 }
@@ -50,7 +51,7 @@ export async function DELETE(req: NextRequest, { params }: Ctx) {
       .delete()
       .eq('id', id)
       .eq('club_id', auth.clubId!);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return internalErrorResponse();
     return NextResponse.json({ success: true });
   });
 }

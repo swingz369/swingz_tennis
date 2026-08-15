@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
@@ -168,10 +169,7 @@ export async function POST(request: NextRequest) {
         );
       } catch (err) {
         log.error('[WorkDuties Bulk POST] Error:', err);
-        return NextResponse.json(
-          { error: err instanceof Error ? err.message : 'Failed' },
-          { status: 500 }
-        );
+        return internalErrorResponse();
       }
     });
   });

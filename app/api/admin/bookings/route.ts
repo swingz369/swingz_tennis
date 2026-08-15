@@ -6,6 +6,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import {
   unwrapJoin,
@@ -185,7 +186,7 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       log.error('Admin bookings fetch error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     // Transform the nested Supabase response into a flat, frontend-friendly shape
@@ -412,7 +413,7 @@ export async function PATCH(req: NextRequest) {
         .from('bookings')
         .update({ session_id: newSessionId, session_start_time: session.timeslot_start })
         .eq('id', bookingId);
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) return internalErrorResponse();
       return NextResponse.json({ success: true, bookingId, action });
     }
 
@@ -439,7 +440,7 @@ export async function PATCH(req: NextRequest) {
     const { error } = await supabase.from('bookings').update(updates).eq('id', bookingId);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return internalErrorResponse();
     }
 
     return NextResponse.json({ success: true, bookingId, action });
