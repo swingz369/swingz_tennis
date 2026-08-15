@@ -82,13 +82,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `nuLiga nicht erreichbar: ${message}` }, { status: 502 });
     }
 
-    // Nur Mannschaften, die wirklich auf der Vereinsseite stehen.
-    const byPortrait = new Map(
-      discovered.teams.filter((t) => t.portraitUrl).map((t) => [t.portraitUrl as string, t])
-    );
-    const selected = requested
-      .map((url) => byPortrait.get(url))
-      .filter((t): t is NuligaClubTeam => !!t);
+    // Nur Mannschaften, die wirklich auf der Vereinsseite stehen. Manche Zeilen
+    // verlinken kein Mannschaftsportrait, sondern ausschließlich die
+    // Gruppenseite (z. B. Spielgemeinschaften). Die waren bisher gar nicht
+    // übernehmbar — der Client konnte sie auswählen, der Server kannte den
+    // Schlüssel nicht und lehnte die gesamte Auswahl ab.
+    const byUrl = new Map<string, NuligaClubTeam>();
+    for (const t of discovered.teams) {
+      if (t.portraitUrl) byUrl.set(t.portraitUrl, t);
+      if (t.groupUrl) byUrl.set(t.groupUrl, t);
+    }
+    const selected = requested.map((url) => byUrl.get(url)).filter((t): t is NuligaClubTeam => !!t);
 
     if (selected.length === 0) {
       return NextResponse.json(
@@ -112,8 +116,9 @@ export async function POST(request: NextRequest) {
     );
 
     const currentYear = new Date().getFullYear();
+    // Dubletten über beide möglichen Quellen prüfen, nicht nur über das Portrait.
     const rows = selected
-      .filter((t) => !known.has(t.portraitUrl as string))
+      .filter((t) => !known.has((t.portraitUrl ?? t.groupUrl) as string))
       .map((t) => ({
         club_id: clubId,
         name: t.leagueName ? `${t.teamName} — ${divisionFrom(t.leagueName)}` : t.teamName,
@@ -124,8 +129,10 @@ export async function POST(request: NextRequest) {
         age_group: ageGroupFrom(t),
         // Das Mannschaftsportrait ist die bessere Hauptquelle: Es liefert nur
         // die eigenen Spieltermine und die Meldeliste, die Gruppenseite nur
-        // Tabelle plus alle fremden Begegnungen.
-        nuliga_url: t.portraitUrl,
+        // Tabelle plus alle fremden Begegnungen. Fehlt das Portrait, ist die
+        // Gruppenseite besser als gar keine Verknüpfung.
+        nuliga_url: t.portraitUrl ?? t.groupUrl,
+        // Eine Meldeliste gibt es nur im Portrait — ohne Portrait bleibt das leer.
         nuliga_roster_url: t.portraitUrl,
         own_team_name: t.teamName,
         notes: t.groupUrl ? `Gruppenseite (Tabelle): ${t.groupUrl}` : null,

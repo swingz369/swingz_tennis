@@ -138,12 +138,38 @@ export async function POST(request: NextRequest) {
       ),
     }));
 
-    // URL merken — ab jetzt läuft die Suche ohne Eingabe.
-    if (club && club.nuliga_club_url !== result.sourceUrl) {
-      await (auth.supabase as any)
+    // URL merken — ab jetzt läuft die Suche ohne Eingabe, und der Import kann
+    // die Auswahl gegen die Vereinsseite prüfen.
+    //
+    // Früher hing dieser Schreibvorgang an `if (club && …)` und sein Fehler wurde
+    // nicht ausgewertet: Lieferte die vorherige Abfrage keine Zeile (oder schlug
+    // das UPDATE fehl), meldete diese Route trotzdem Erfolg, die Mannschaften
+    // erschienen — und der anschließende Import brach mit „keine nuLiga-
+    // Vereinsseite hinterlegt" ab, ohne dass ein erneuter Versuch daran etwas
+    // geändert hätte. Deshalb: immer schreiben, Fehler melden.
+    if (club?.nuliga_club_url !== result.sourceUrl) {
+      const { data: saved, error: saveError } = await (auth.supabase as any)
         .from('clubs')
         .update({ nuliga_club_url: result.sourceUrl })
-        .eq('id', clubId);
+        .eq('id', clubId)
+        .select('id')
+        .maybeSingle();
+
+      // Kein Fehler, aber auch keine Zeile: RLS hat das UPDATE stillschweigend
+      // gefiltert. Das ist derselbe Ausfall wie ein harter Fehler.
+      if (saveError || !saved) {
+        log.error('Vereinsseite konnte nicht gespeichert werden', {
+          clubId,
+          error: saveError?.message ?? 'keine Zeile aktualisiert (RLS?)',
+        });
+        return NextResponse.json(
+          {
+            error:
+              'Die Vereinsseite konnte nicht am Verein gespeichert werden. Ohne sie schlägt die Übernahme fehl — bitte erneut versuchen.',
+          },
+          { status: 500 }
+        );
+      }
 
       await logAudit({
         actorId: auth.user.id,

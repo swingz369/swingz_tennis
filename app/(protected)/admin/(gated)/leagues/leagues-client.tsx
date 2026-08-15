@@ -115,11 +115,13 @@ export default function LeaguesClient() {
       setDiscovered(data.teams ?? []);
       // Vorauswahl: alles, was noch nicht angelegt ist — der Regelfall ist
       // „alle eigenen Mannschaften übernehmen".
+      // Auswahlschlüssel: Portrait, sonst Gruppenseite. Zeilen ohne Portrait
+      // (z. B. Spielgemeinschaften) waren sonst dauerhaft nicht anklickbar.
       setPicked(
         new Set(
           (data.teams ?? [])
-            .filter((t: NuligaTeam) => t.portraitUrl && !t.alreadyImported)
-            .map((t: NuligaTeam) => t.portraitUrl as string)
+            .filter((t: NuligaTeam) => (t.portraitUrl ?? t.groupUrl) && !t.alreadyImported)
+            .map((t: NuligaTeam) => (t.portraitUrl ?? t.groupUrl) as string)
         )
       );
     } catch (err) {
@@ -314,7 +316,7 @@ export default function LeaguesClient() {
 
                 <div className="max-h-80 overflow-y-auto rounded-lg border border-border divide-y divide-border/60">
                   {discovered.map((team) => {
-                    const url = team.portraitUrl;
+                    const url = team.portraitUrl ?? team.groupUrl;
                     const disabled = !url || team.alreadyImported;
                     return (
                       <label
