@@ -96,13 +96,16 @@ Service-Client erreichbar. → **Fix:** Policies definieren oder bewusst dokumen
 - **`trainer_absences`: 20 unauflösbare Zeilen.** Hängen an Test-Trainern ohne `users`-Zeile;
   bewusst kein `DELETE` auf Live-Daten mitgemacht.
   → Quelle: `docs/DATABASE.md`.
-- **Integrationstests laufen in CI nie.** 10 Tests (`billing-engine`, `payment-flow`,
-  `rls-policies`, `stripe-webhook`, …) skippen ohne `SUPABASE_SERVICE_ROLE_KEY`.
-  → Quelle: `docs/ARCHIV/2026-08-13-test-audit.md` (P1).
+- **Integrationstests laufen in CI nie — und lokal gegen Produktion.** 10 Tests (`billing-engine`,
+  `payment-flow`, `rls-policies`, `stripe-webhook`, …) skippen ohne `SUPABASE_SERVICE_ROLE_KEY`.
+  Umgekehrt schreiben sie lokal **Testdaten in die Live-DB**, weil `.env.local` auf den
+  Prod-Pooler zeigt (`lib/billing-engine.ts` ruft `createServiceClient()` beim Import auf; der
+  Testseed legt echte `users`-Zeilen an). → **Fix:** Test-/Staging-Supabase + `.env.test`
+  einrichten, Integrationstests bei Prod-URL skippen.
+  → Quelle: `docs/ARCHIV/2026-08-13-test-audit.md` (P1), Befund 15.08.2026.
 - **✅ Erledigt 15.08.2026** — `global-setup.ts` mutierte die DB aus `.env.local`. Ein Guard
   (`isProductionDbTarget`, Prod-Hosts `supabase.swingz.cloud`/`178.254.37.110`) verhindert
-  jetzt `drizzle-kit push` + Test-DDL gegen Produktion und entleert den Service-Key, damit
-  Integrationstests bei Prod-URL skippen.
+  jetzt `drizzle-kit push` + Test-DDL gegen Produktion (Schema-Mutationsschutz).
   → Quelle: `docs/ARCHIV/2026-08-13-test-audit.md` (P1).
 
 ---

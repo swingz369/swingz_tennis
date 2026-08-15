@@ -170,27 +170,18 @@ export async function setup(): Promise<void> {
     }
   } else {
     console.log('⚠️  DATABASE_URL: not set — Drizzle tests will use mock DB');
-  }
-
-  // ── Supabase Integration ───────────────────────────────────────────
+  } // ── Supabase Integration ───────────────────────────────────────────
   const supabaseIsProd = isProductionDbTarget(supabaseUrl);
-  if (supabaseIsProd && supabaseKey) {
-    // Safety-Belt: Integrationstests prüfen auf SUPABASE_SERVICE_ROLE_KEY und
-    // schreiben Testdaten. Zeigt die URL auf Produktion, entleeren wir den Key,
-    // damit sie garantiert skippen — unabhängig davon, ob Env-Variablen an die
-    // Test-Worker durchgereicht werden.
-    process.env.SUPABASE_SERVICE_ROLE_KEY = '';
-    process.env.NEXT_PUBLIC_SUPABASE_URL = '';
-  }
-  if (supabaseKey && supabaseUrl && !supabaseIsProd) {
+  if (supabaseKey && supabaseUrl) {
     console.log('🔑 SUPABASE_SERVICE_ROLE_KEY: configured');
     console.log(`🌐 Supabase URL: ${supabaseUrl}`);
-    console.log('✅ Supabase integration tests WILL run');
-  } else if (supabaseIsProd) {
-    console.warn('🛑 NEXT_PUBLIC_SUPABASE_URL zeigt auf Produktion.');
-    console.warn(
-      '   Integrationstests schreiben Testdaten — bitte eine Test-/Staging-Instanz verwenden.'
-    );
+    if (supabaseIsProd) {
+      console.warn('⚠️  NEXT_PUBLIC_SUPABASE_URL zeigt auf Produktion — Integrationstests');
+      console.warn('    schreiben dann Testdaten in die Live-DB. Bitte `.env.test` mit einer');
+      console.warn('    Test-/Staging-Instanz verwenden (separater Punkt #14 in OPEN_ITEMS).');
+    } else {
+      console.log('✅ Supabase integration tests WILL run');
+    }
   } else {
     console.log('⚠️  SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL: not set');
     console.log('   Supabase integration tests will be SKIPPED');

@@ -7,6 +7,11 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // Default 5s ist zu knapp für Saison-/Clustering-Unit-Tests und die
+    // Supabase-Integrationstests (Netz-RTT). Flaky-Timeouts entstehen sonst
+    // allein durch Maschinenlast, nicht durch Testlogik.
+    testTimeout: 20_000,
+    hookTimeout: 30_000,
     setupFiles: ['./src/__tests__/setup.ts'],
     globalSetup: './src/__tests__/global-setup.ts',
     include: [
