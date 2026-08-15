@@ -1,5 +1,5 @@
 'use client';
-import { extractErrorMessage } from '@/lib/typed-helpers';
+import { extractErrorMessage, getErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -67,8 +67,8 @@ export default function NewTournamentPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(extractErrorMessage(data) ?? 'Fehler beim Erstellen');
       router.push('/admin/tournaments');
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }

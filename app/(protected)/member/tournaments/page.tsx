@@ -1,5 +1,5 @@
 'use client';
-import { extractErrorMessage } from '@/lib/typed-helpers';
+import { extractErrorMessage, getErrorMessage } from '@/lib/typed-helpers';
 
 import { useEffect, useState, useCallback } from 'react';
 import { Trophy, Calendar, Users, CheckCircle, Clock, Euro } from 'lucide-react';
@@ -70,8 +70,8 @@ export default function MemberTournamentsPage() {
         myRegistration: myRegs[t.id] ?? null,
       }));
       setTournaments(list);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -95,8 +95,8 @@ export default function MemberTournamentsPage() {
       setRegisterSuccess(confirmTournament.name);
       setConfirmTournament(null);
       await fetchTournaments();
-    } catch (e: any) {
-      setRegisterError(e.message);
+    } catch (e) {
+      setRegisterError(getErrorMessage(e));
     } finally {
       setRegisterLoading(false);
     }

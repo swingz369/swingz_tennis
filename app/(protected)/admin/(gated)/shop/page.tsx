@@ -1,5 +1,5 @@
 'use client';
-import { extractErrorMessage } from '@/lib/typed-helpers';
+import { extractErrorMessage, getErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
@@ -245,8 +245,8 @@ export default function AdminShopPage() {
       }
       toast.success(`Bestellung auf „${STATUS_LABELS[newStatus]}“ gesetzt`);
       fetchOrders(orderStatusFilter, ordersPage);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
     } finally {
       setUpdatingOrderId(null);
     }
@@ -327,8 +327,8 @@ export default function AdminShopPage() {
 
       const data = await res.json();
       return data.url;
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
       return null;
     } finally {
       setUploadingImage(false);
@@ -371,8 +371,8 @@ export default function AdminShopPage() {
       setShowForm(false);
       setEditId(null);
       fetchProducts(productsPage);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -397,8 +397,8 @@ export default function AdminShopPage() {
       } else {
         fetchProducts(productsPage);
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
     }
   };
 

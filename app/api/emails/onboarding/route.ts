@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { getErrorMessage } from '@/lib/typed-helpers';
 import { internalErrorResponse } from '@/lib/api-error';
 import { createLogger } from '@/lib/logger';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
@@ -47,8 +48,8 @@ export async function POST(request: NextRequest) {
       log.info(`Onboarding email sent to ${email}`);
 
       return NextResponse.json({ success: true, message: 'Onboarding-E-Mail gesendet' });
-    } catch (error: any) {
-      log.error('Onboarding email failed', { error: error.message });
+    } catch (error) {
+      log.error('Onboarding email failed', { error: getErrorMessage(error) });
       return internalErrorResponse();
     }
   });

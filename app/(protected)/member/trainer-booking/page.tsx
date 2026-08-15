@@ -1,5 +1,5 @@
 'use client';
-import { extractErrorMessage } from '@/lib/typed-helpers';
+import { extractErrorMessage, getErrorMessage } from '@/lib/typed-helpers';
 
 import { useEffect, useState, useCallback } from 'react';
 import {
@@ -101,8 +101,8 @@ export default function MemberTrainerBookingPage() {
           specialties: t.specialties ?? t.skills ?? [],
         }));
         setTrainers(trainerList);
-      } catch (e: any) {
-        setErrorTrainers(e.message);
+      } catch (e) {
+        setErrorTrainers(getErrorMessage(e));
       } finally {
         setLoadingTrainers(false);
       }
@@ -155,8 +155,8 @@ export default function MemberTrainerBookingPage() {
       setBookingSuccess(true);
       setConfirmSlot(null);
       await fetchSlots();
-    } catch (e: any) {
-      setBookingError(e.message);
+    } catch (e) {
+      setBookingError(getErrorMessage(e));
     } finally {
       setBookingLoading(false);
     }
@@ -177,8 +177,8 @@ export default function MemberTrainerBookingPage() {
         throw new Error(extractErrorMessage(data) ?? 'Warteliste-Eintrag fehlgeschlagen');
       setWaitlistSuccess(true);
       setConfirmSlot(null);
-    } catch (e: any) {
-      setBookingError(e.message);
+    } catch (e) {
+      setBookingError(getErrorMessage(e));
     } finally {
       setBookingLoading(false);
     }

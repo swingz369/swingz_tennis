@@ -1,5 +1,5 @@
 'use client';
-import { extractErrorMessage } from '@/lib/typed-helpers';
+import { extractErrorMessage, getErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -77,8 +77,8 @@ function ShopContent() {
       } else {
         throw new Error('Keine Checkout-URL erhalten');
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
     } finally {
       setCheckingOut(false);
     }

@@ -1,4 +1,5 @@
 'use client';
+import { getErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
@@ -131,8 +132,8 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
       }
       const json = await res.json();
       setData(json);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -152,8 +153,8 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
       });
       if (!res.ok) throw new Error('Fehler beim Aktualisieren');
       await fetchTournament();
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e) {
+      toast.error(getErrorMessage(e));
     } finally {
       setStatusUpdating(false);
     }
@@ -166,8 +167,8 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
       });
       if (!res.ok) throw new Error('Fehler beim Löschen');
       router.push('/admin/tournaments');
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e) {
+      toast.error(getErrorMessage(e));
     }
   };
 
