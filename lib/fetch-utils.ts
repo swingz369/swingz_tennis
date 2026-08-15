@@ -9,6 +9,8 @@
  */
 
 import { extractErrorMessage } from '@/lib/typed-helpers';
+import { apiErrorFromBody } from '@/lib/api-error-client';
+import type { ErrorCode } from '@/lib/api-error';
 
 export interface FetchOptions extends RequestInit {
   timeout?: number; // milliseconds
@@ -22,6 +24,7 @@ export interface FetchOptions extends RequestInit {
 
 export interface FetchError extends Error {
   status?: number;
+  code?: ErrorCode | 'UNKNOWN';
 }
 
 /**
@@ -129,12 +132,13 @@ export async function fetchJSON<T = unknown>(url: string, options: FetchOptions 
     throw new Error(`Failed to parse JSON response: ${error}`);
   }
 
-  // Handle API errors — flacher `{ error: string }`-Vertrag (lib/api-auth.ts).
-  // `extractErrorMessage` versteht string, { error }, { message }, { error: { message } }.
+  // Handle API errors — strukturierter `{ error: { code, message } }`-Vertrag
+  // (lib/api-error.ts); `apiErrorFromBody` toleriert auch Alt-Shapes.
   if (!response.ok) {
-    const message = extractErrorMessage(data) || `HTTP ${response.status}`;
-    const error: FetchError = new Error(message);
+    const parsed = apiErrorFromBody(data, response.status);
+    const error: FetchError = new Error(parsed.message);
     error.status = response.status;
+    error.code = parsed.code;
     throw error;
   }
 

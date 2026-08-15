@@ -42,6 +42,7 @@ import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
 import { hasRole, getHighestRole } from '@/lib/auth-common';
 import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
 import { isSubscriptionPastDue } from '@/lib/subscription-gate';
+import { errorResponse, internalErrorResponse, ApiException } from '@/lib/api-error';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api-auth');
@@ -274,11 +275,11 @@ export async function verifyOffice(
 }
 
 export function unauthorizedResponse(message = 'Nicht autorisiert'): NextResponse {
-  return NextResponse.json({ error: message }, { status: 401 });
+  return errorResponse('UNAUTHORIZED', message);
 }
 
 export function forbiddenResponse(message = 'Zugriff verweigert'): NextResponse {
-  return NextResponse.json({ error: message }, { status: 403 });
+  return errorResponse('FORBIDDEN', message);
 }
 
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -313,12 +314,9 @@ export async function withAuth(
       (auth.role === 'admin' || auth.role === 'superadmin') &&
       (await isSubscriptionPastDue(auth.supabase, auth.user.id))
     ) {
-      return NextResponse.json(
-        {
-          error:
-            'Zahlung ausstehend. Bitte aktualisiere deine Zahlungsmethode im Kundenportal, um fortzufahren.',
-        },
-        { status: 402 }
+      return errorResponse(
+        'PAYMENT_REQUIRED',
+        'Zahlung ausstehend. Bitte aktualisiere deine Zahlungsmethode im Kundenportal, um fortzufahren.'
       );
     }
 
@@ -351,8 +349,14 @@ export async function withAuth(
     if (error instanceof AuthError) {
       return unauthorizedResponse(error.message);
     }
+    if (error instanceof ApiException) {
+      return errorResponse(error.code, error.message, {
+        status: error.status,
+        ...(error.details !== undefined ? { details: error.details } : {}),
+      });
+    }
     log.error('Unhandled API error', error instanceof Error ? error : undefined);
-    return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
+    return internalErrorResponse();
   }
 }
 
