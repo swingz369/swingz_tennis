@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { KpiBand } from '@/components/ui/kpi-band';
 import { PageHeader } from '@/components/ui/page-header';
 import { monthlyRecurringRevenue } from '@/lib/billing-plans';
-import { auditActionLabel } from '@/lib/audit-labels';
+import { auditActionLabel, auditSubject } from '@/lib/audit-labels';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,7 +60,10 @@ export default async function OwnerPage() {
       .select('id, name, status, created_at, setup_completed_at, deleted_at')
       .is('deleted_at', null)
       .order('created_at', { ascending: false }),
-    sb.from('user_club_memberships').select('club_id, role, is_active').eq('is_active', true),
+    sb
+      .from('user_club_memberships')
+      .select('user_id, club_id, role, is_active')
+      .eq('is_active', true),
     sb
       .from('users')
       .select('subscription_tier, subscription_status')
@@ -71,7 +74,9 @@ export default async function OwnerPage() {
       .eq('status', 'pending'),
     sb
       .from('audit_logs')
-      .select('id, action, resource_type, created_at, club_id, actor:actor_id(full_name, email)')
+      .select(
+        'id, action, resource_type, details, created_at, club_id, actor:actor_id(full_name, email)'
+      )
       .order('created_at', { ascending: false })
       .limit(5),
     sb.from('users').select('full_name').eq('id', user.id).maybeSingle(),
@@ -82,11 +87,21 @@ export default async function OwnerPage() {
   const activeClubs = allClubs.filter((c: any) => c.status !== 'inactive');
 
   // Mitglieder- und Admin-Verteilung in einem Durchlauf statt einer Query je Verein.
+  //
+  // „Mitglieder" heißt hier Rolle `member` — nicht „Zeilen in
+  // user_club_memberships". Vorher zählte die Kennzahl jede Mitgliedschaft mit:
+  // Trainer, Admins und Superadmins waren als Mitglieder mitgezählt, und wer in
+  // drei Vereinen aktiv ist, zählte dreifach. Die Zahl war damit zuverlässig zu
+  // hoch und ließ sich mit keiner Zahl im Admin-Dashboard vergleichen.
   const membersByClub = new Map<string, number>();
   const adminsByClub = new Map<string, number>();
+  const memberUserIds = new Set<string>();
   for (const m of (memberships ?? []) as any[]) {
     if (!m.club_id) continue;
-    membersByClub.set(m.club_id, (membersByClub.get(m.club_id) ?? 0) + 1);
+    if (m.role === 'member') {
+      membersByClub.set(m.club_id, (membersByClub.get(m.club_id) ?? 0) + 1);
+      if (m.user_id) memberUserIds.add(m.user_id);
+    }
     if (m.role === 'admin' || m.role === 'superadmin') {
       adminsByClub.set(m.club_id, (adminsByClub.get(m.club_id) ?? 0) + 1);
     }
@@ -95,7 +110,9 @@ export default async function OwnerPage() {
   const mrr = monthlyRecurringRevenue((subscribers ?? []) as any[]);
   const clubsWithoutAdmin = activeClubs.filter((c: any) => !adminsByClub.get(c.id));
   const clubsWithoutSetup = activeClubs.filter((c: any) => !c.setup_completed_at);
-  const totalMembers = memberships?.length ?? 0;
+  // Personen, nicht Mitgliedschaften — sonst zählt ein Mitglied in zwei
+  // Vereinen doppelt, und die Plattform-Kennzahl wächst ohne neue Kunden.
+  const totalMembers = memberUserIds.size;
 
   const attention = [
     {
@@ -154,7 +171,7 @@ export default async function OwnerPage() {
           {
             label: 'Mitglieder',
             value: totalMembers.toLocaleString('de-DE'),
-            sub: 'aktiv über alle Vereine',
+            sub: 'Personen über alle Vereine',
           },
           {
             label: 'Offene Anfragen',
@@ -268,8 +285,13 @@ export default async function OwnerPage() {
             {((recentAudit ?? []) as any[]).map((entry) => (
               <div key={entry.id} className="flex items-center gap-3 py-2.5">
                 <ScrollText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                {/* Nur „Geändert" sieht für jeden Vorgang gleich aus — erst mit
+                    dem betroffenen Objekt wird die Zeile lesbar. */}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm">{auditActionLabel(entry.action)}</p>
+                  <p className="truncate text-sm">
+                    {auditActionLabel(entry.action)}{' '}
+                    <span className="text-muted-foreground">{auditSubject(entry)}</span>
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {entry.actor?.full_name ?? entry.actor?.email ?? 'System'}
                   </p>
