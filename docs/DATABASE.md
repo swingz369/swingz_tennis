@@ -1,8 +1,83 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 15. August 2026 (Abschnitt `league_players` ergänzt; Live-Prüfung zuletzt 13.08.2026 per psql auf `supabase.swingz.cloud:6543`)
+> Zuletzt verifiziert: 16. August 2026 (Migrations-Tracking ersetzt, Owner-UPDATE-Policy auf `clubs`, Audit-Trigger auf den Finanztabellen; Live-Prüfung per postgres-js auf `supabase.swingz.cloud:6543`)
 
-## Kernaussage: `supabase/migrations/` ist NICHT die Quelle der Wahrheit
+## Migrations-Tracking (Stand 16.08.2026, angewendet)
+
+**Die Tracking-Frage unten ist gelöst.** Maßgeblich ist ab sofort
+`public.schema_migrations` (Primärschlüssel: voller Dateiname, plus SHA-256-Prüfsumme),
+bedient von `scripts/migrate.ts`. Begründung und verworfene Alternativen:
+`docs/decisions/adr-002-migrations-tracking.md`.
+
+```bash
+npm run db:status     # was ist offen
+npm run db:dry        # alle offenen Migrationen testen, danach Rollback
+npm run db:migrate    # anwenden
+npm run db:baseline   # als angewendet markieren, ohne DDL auszuführen
+```
+
+Erstlauf am 16.08.2026: 173 der 175 Dateien lagen bereits auf der DB und wurden
+per `baseline --through 20260815170000_season_planning_configs_statistics_rls.sql`
+markiert. Wirklich offen waren zwei — `20260815180000_billing_tables_club_scoping.sql`
+scheiterte am `NOT NULL` auf `billing_periods.club_id`, weil der dort vorgesehene
+Backfill (`trainer_billings → trainers → trainer_club`) **null** der 93 Zeilen
+auflöste: kein einziger der beteiligten Trainer hatte einen `trainer_club`-Eintrag,
+und `billing_line_items` war leer. Sämtliche Perioden waren Rückstände von
+Testläufen seit dem DB-Reset am 13.08.2026 und werden von
+`20260815175500_billing_periods_orphan_cleanup.sql` entfernt (bewusst mit früherem
+Zeitstempel, damit die Bereinigung vor dem `NOT NULL` läuft).
+
+`supabase_migrations.schema_migrations` (die CLI-Tabelle, 8 Zeilen) bleibt liegen
+und hat keine Bedeutung mehr. Der Abschnitt darunter beschreibt, wie es dazu kam.
+
+## `clubs` UPDATE — Owner ergänzt (Stand 16.08.2026, angewendet)
+
+`20260816090000_clubs_update_allow_owner.sql`. Beide UPDATE-Policies auf `clubs`
+(`clubs_update` und die inhaltsgleiche Dublette `clubs_modify_admin`) prüften
+`is_club_admin(id)`. Die Funktion verlangt eine Mitgliedschaft mit Rolle
+admin/superadmin — der Owner hat per Definition **keine** Club-Mitgliedschaft
+(CLAUDE.md → DO NOT). Ergebnis: der Owner passiert `verifyRole(auth, 'admin')` in
+jeder Admin-Route, und das anschließende UPDATE wird von RLS stillschweigend auf
+0 Zeilen gefiltert — ohne Fehler, ohne Hinweis.
+
+Sichtbar wurde das am nuLiga-Import: `/api/admin/nuliga/discover` schrieb einen
+Audit-Eintrag `nuliga_club_url_set`, `clubs.nuliga_club_url` blieb null, und der
+Import brach danach mit „keine nuLiga-Vereinsseite hinterlegt" ab — dauerhaft,
+weil ein erneuter Versuch dieselbe Sackgasse lief.
+
+Jetzt: eine Policy `clubs_update` mit `is_club_admin(id) OR is_owner()`, USING
+und WITH CHECK. INSERT war für den Owner bereits geöffnet (20260804010000).
+
+**Diese Klasse von Fehler ist nicht auf `clubs` beschränkt.** Jede weitere Tabelle,
+deren Schreibpolicy nur auf Mitgliedschaft prüft, ist für den Owner still gesperrt,
+obwohl die Route ihn durchlässt. Wer eine Owner-Aktion baut, prüft die Policy —
+oder das UPDATE fällt genauso lautlos aus.
+
+## Audit-Trigger auf den Finanztabellen (Stand 16.08.2026, angewendet)
+
+`20260816100000_audit_finance_triggers_and_retention.sql`.
+
+- `audit_logs.actor_id` ist **nicht mehr NOT NULL**: Trigger, die aus dem
+  Service-Client oder einem Cron-Job feuern, kennen `auth.uid()` nicht.
+  `lib/audit.ts` verwirft Einträge ohne Actor weiterhin von sich aus.
+- `audit_finance_change()` + Trigger auf `invoices`, `payments`, `sepa_mandates`
+  (AFTER INSERT/UPDATE/DELETE). Grund: 29 Finanz-Routen protokollierten nichts
+  (GoBD). Ein Trigger deckt auch die Schreibwege ab, die es heute noch nicht
+  gibt — 29-mal `logAudit()` einzubauen deckt nur die heutigen.
+  Einträge tragen `details.source = 'db_trigger'`; Kontodaten (IBAN,
+  Kontoinhaber) werden bewusst **nicht** protokolliert.
+- `prune_audit_logs()` setzt die Aufbewahrung durch: Lese-Protokolle 90 Tage,
+  Sicherheitsprotokolle 12 Monate, Finanzvorgänge unbegrenzt (§ 147 AO).
+  Aufruf wöchentlich über `/api/cron/prune-audit-logs` (siehe `vercel.json`).
+
+Fallstrick für spätere Änderungen an `audit_finance_change()`: plpgsql bereitet
+einen SQL-Ausdruck als Ganzes vor und löst dabei **alle** Feldzugriffe auf eine
+RECORD-Variable auf, auch die in nicht genommenen `CASE`-Zweigen. Ein
+`v_row.payment_method` im Zahlungs-Zweig lässt deshalb jedes INSERT auf
+`invoices` mit „record has no field" scheitern. Die Funktion verwendet aus diesem
+Grund `IF/ELSIF` statt `CASE`.
+
+## Kernaussage: `supabase/migrations/` war NICHT die Quelle der Wahrheit
 
 `supabase_migrations.schema_migrations` (die Tracking-Tabelle der Supabase-CLI) wurde am 26.07.2026 erstmals angelegt (`CREATE SCHEMA`/`CREATE TABLE`, Standard-CLI-Schema: `version` PK, `statements`, `name`, `created_by`, `idempotency_key`) und per `scripts/bulk-track-only-migrations.sh --no-dry-run` befüllt — **aber nur mit 8 von 155 Dateien**. Das Script akzeptiert per `DATE_PREFIX_REGEX='^[0-9]{8}$'` ausschließlich Dateinamen im reinen `YYYYMMDD_`-Format; die 132 Dateien im `YYYYMMDDHHMMSS_`-Format (14-stelliger Zeitstempel) laufen als `SKIPPED-NON-DATE-FILENAME` durch, und die 15 Dateien mit Datum ≤ `20260628` (`TODAY_PREFIX`-Konstante im Script) wurden gar nicht erst als Kandidat enumeriert. Die Tabelle existiert also jetzt, ist aber **weiterhin kein verlässliches Abbild** davon, welche Datei tatsächlich live angewendet wurde — die Kernaussage unten bleibt in der Praxis gültig, nur die Begründung hat sich geändert (unvollständiges Tracking statt komplett fehlendem Tracking).
 
