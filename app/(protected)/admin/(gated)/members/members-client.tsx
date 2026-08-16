@@ -43,7 +43,6 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { CenteredModal } from '@/components/ui/centered-modal';
 import { BulkActionBar } from '@/components/ui/bulk-action-bar';
 import { QuickEmailDialog } from '@/components/admin/quick-email-dialog';
-import MemberImportDialog from '@/components/admin/member-import-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminApprovals from '@/components/admin-approvals';
 import {
@@ -418,10 +417,9 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
             </Select>
           </div>
 
-          {/* Werkzeugleiste: CSV-Import direkt in der Mitgliederverwaltung
-              (vorher nur unter Vereinseinstellungen auffindbar) + Ansichtsumschalter. */}
+          {/* Werkzeugleiste: Ansichtsumschalter. (CSV-Import liegt in den
+              Vereinseinstellungen.) */}
           <div className="flex justify-end gap-2">
-            <MemberImportDialog onImportComplete={() => router.refresh()} />
             <Button
               variant="ghost"
               size="icon"
