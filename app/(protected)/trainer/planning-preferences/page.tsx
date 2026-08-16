@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { createLogger } from '@/lib/logger';
 import { PageHeader } from '@/components/ui/page-header';
+import { jsonColumn } from '@/lib/typed-helpers';
 
 const log = createLogger('trainer:planning-preferences');
 
@@ -59,10 +60,12 @@ function prefsToAvailability(prefs: TimePref[]): WeeklyAvailability {
   return result;
 }
 
-function availabilityToPrefs(avail: WeeklyAvailability): TimePref[] {
+function availabilityToPrefs(avail: Partial<WeeklyAvailability> | null): TimePref[] {
   const prefs: TimePref[] = [];
-  for (const [day, slots] of Object.entries(avail ?? {}))
+  for (const [day, slots] of Object.entries(avail ?? {})) {
+    if (!Array.isArray(slots)) continue;
     for (const { start } of slots) prefs.push({ day, start });
+  }
   return prefs.slice(0, MAX_TIME_PREFS);
 }
 
@@ -132,7 +135,10 @@ export default function TrainerPlanningPreferencesPage() {
       .then(({ data }) => {
         if (data) {
           setPrefId(data.id);
-          setTimePrefs(availabilityToPrefs(data.weekly_availability as WeeklyAvailability));
+          // Die Spalte enthält je nach Zeile ein Objekt oder einen JSON-String.
+          setTimePrefs(
+            availabilityToPrefs(jsonColumn<WeeklyAvailability>(data.weekly_availability))
+          );
           setNotes(data.special_requests ?? '');
           setIsSubmitted(data.is_submitted ?? false);
         } else {

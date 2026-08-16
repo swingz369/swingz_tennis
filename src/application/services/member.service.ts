@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import { jsonColumn } from '@/lib/typed-helpers';
 import type {
   Member,
   CreateMemberInput,
@@ -87,6 +88,8 @@ export class MemberService {
     user?: Record<string, unknown> | null
   ): Member {
     const membershipStatus = m.is_active ? (m.status as string) || 'active' : 'inactive';
+    const address = jsonColumn<Record<string, string>>(user?.address);
+    const emergencyContact = jsonColumn<Record<string, string>>(user?.emergency_contact);
 
     return {
       id: m.id as string,
@@ -96,15 +99,12 @@ export class MemberService {
       email: (user?.email as string) || '',
       phone: (user?.phone as string) || '',
       dateOfBirth: (user?.date_of_birth as string) || '',
-      address: user?.address
+      address: address
         ? {
-            street: (user?.address as Record<string, string>)?.street || '',
-            houseNumber: (user?.address as Record<string, string>)?.house_number || '',
-            postalCode:
-              (user?.postal_code as string) ||
-              (user?.address as Record<string, string>)?.postal_code ||
-              '',
-            city: (user?.city as string) || (user?.address as Record<string, string>)?.city || '',
+            street: address.street || '',
+            houseNumber: address.house_number || '',
+            postalCode: (user?.postal_code as string) || address.postal_code || '',
+            city: (user?.city as string) || address.city || '',
           }
         : user?.city || user?.postal_code
           ? {
@@ -119,14 +119,13 @@ export class MemberService {
       membershipStart: (m.joined_at as string) || undefined,
       membershipEnd: (m.deactivated_at as string) || undefined,
       trainingGroup: undefined, // stored in training_group_memberships, fetched separately
-      emergencyContact: user?.emergency_contact
+      // jsonb-Spalte, die auch als JSON-String zurückkommen kann — ein Cast
+      // hätte daraus einen String gemacht, dessen `?.name` still `undefined` ist.
+      emergencyContact: emergencyContact
         ? {
-            name: (user?.emergency_contact as Record<string, string>)?.name || '',
-            phone:
-              (user?.emergency_phone as string) ||
-              (user?.emergency_contact as Record<string, string>)?.phone ||
-              '',
-            relationship: (user?.emergency_contact as Record<string, string>)?.relationship || '',
+            name: emergencyContact.name || '',
+            phone: (user?.emergency_phone as string) || emergencyContact.phone || '',
+            relationship: emergencyContact.relationship || '',
           }
         : undefined,
       notes: (user?.bio as string) || undefined,

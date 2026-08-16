@@ -16,6 +16,7 @@ import {
   userClubMemberships,
 } from '@/src/infrastructure/persistence/schema';
 import { and, eq, sql } from 'drizzle-orm';
+import { jsonColumn } from '@/lib/typed-helpers';
 import type { InferSelectModel } from 'drizzle-orm';
 import type {
   AutoPlanConfig,
@@ -135,7 +136,10 @@ export class AutoPlanningService {
         trainerPrefs.push({
           trainer_id: pref.user_id,
           trainer_name: user_name || 'Unknown',
-          weekly_availability: pref.weekly_availability as WeeklyAvailability,
+          // Die Spalte liefert je nach Zeile ein Objekt ODER einen JSON-String —
+          // ein blosser Cast machte daraus zur Laufzeit einen String ohne Wochentage.
+          weekly_availability:
+            jsonColumn<WeeklyAvailability>(pref.weekly_availability) ?? ({} as WeeklyAvailability),
           max_sessions_per_week: pref.max_sessions_per_week || 20,
           can_teach_groups: (pref.can_teach_groups as string[]) || [],
           preferred_court_ids: (pref.preferred_court_ids as string[]) || [],
@@ -145,7 +149,8 @@ export class AutoPlanningService {
         memberPrefs.push({
           user_id: pref.user_id,
           user_name: user_name || 'Unknown',
-          weekly_availability: pref.weekly_availability as WeeklyAvailability,
+          weekly_availability:
+            jsonColumn<WeeklyAvailability>(pref.weekly_availability) ?? ({} as WeeklyAvailability),
           preferred_level: pref.preferred_level,
           preferred_age_group: pref.preferred_age_group,
           preferred_group_ids: (pref.preferred_group_ids as string[]) || [],

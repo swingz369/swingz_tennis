@@ -31,6 +31,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/page-header';
 import { apiFetch } from '@/lib/api-fetch';
+import { jsonColumn } from '@/lib/typed-helpers';
 
 const MAX_TIME_PREFS = 4;
 const MAX_WISH_PARTNERS = 3;
@@ -88,10 +89,12 @@ function prefsToAvailability(prefs: TimePref[]): WeeklyAvailability {
   return result;
 }
 
-function availabilityToPrefs(avail: WeeklyAvailability): TimePref[] {
+function availabilityToPrefs(avail: Partial<WeeklyAvailability> | null): TimePref[] {
   const prefs: TimePref[] = [];
-  for (const [day, slots] of Object.entries(avail || {}))
+  for (const [day, slots] of Object.entries(avail || {})) {
+    if (!Array.isArray(slots)) continue;
     for (const { start } of slots) prefs.push({ day, start });
+  }
   return prefs.slice(0, MAX_TIME_PREFS);
 }
 
@@ -195,7 +198,10 @@ export default function MemberPreferencesPage() {
       .then(({ data }) => {
         if (data) {
           setPrefId(data.id);
-          setTimePrefs(availabilityToPrefs(data.weekly_availability as WeeklyAvailability));
+          // Die Spalte enthält je nach Zeile ein Objekt oder einen JSON-String.
+          setTimePrefs(
+            availabilityToPrefs(jsonColumn<WeeklyAvailability>(data.weekly_availability))
+          );
           setLevel(data.self_assessed_level || data.preferred_level || '');
           setSpecialRequests(data.special_requests || '');
           setWishPartnerIds((data.wish_partner_ids as string[]) || []);

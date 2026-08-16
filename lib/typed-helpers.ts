@@ -112,6 +112,32 @@ export function unwrapJoins<T>(value: T | T[] | null | undefined): T[] {
   return [value];
 }
 
+/**
+ * Eine JSON-Spalte (`jsonb` oder `text` mit JSON-Inhalt) in ein Objekt bringen.
+ *
+ * Grund: `member_schedule_preferences.weekly_availability` liegt in der Live-DB
+ * als JSON-**String** vor, nicht als Objekt. Der frühere
+ * `... as WeeklyAvailability`-Cast hat das zur Laufzeit nicht geändert —
+ * `availability['monday']` war `undefined`, und jede abgegebene Präferenz wurde
+ * still ignoriert (behoben am 16.08.2026). Der Cast behauptet eine Form, die
+ * niemand geprüft hat; diese Funktion prüft sie.
+ *
+ * Gibt `null` zurück, wenn der Wert fehlt, kein gültiges JSON ist oder kein
+ * Objekt ergibt — der Aufrufer entscheidet über den Ersatzwert.
+ */
+export function jsonColumn<T>(raw: unknown): T | null {
+  let value = raw;
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as T;
+}
+
 // =============================================================================
 // TYPED DEFAULTS (for unwrapJoin fallbacks)
 // =============================================================================
