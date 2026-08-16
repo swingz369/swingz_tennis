@@ -240,6 +240,61 @@ function isYouthSpecialty(specialty: string): boolean {
 // ENGINE
 // ============================================
 
+const UUID_MUSTER = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Nur echte Gruppen-IDs dürfen in die uuid-Spalte `group_id`.
+ *
+ * Der Backtracking-Pfad legt Ersatzgruppen mit synthetischen IDs an
+ * (`backtrack-2-<memberId>`, siehe unten) — dahinter steht keine
+ * Trainingsgruppe, die ID enthält sogar eine Mitglieds-UUID. Bis zum
+ * 16.08.2026 ging dieser Wert ungeprüft in den INSERT: sobald das Backtracking
+ * griff, scheiterte jedes Speichern mit `22P02 invalid input syntax for uuid`,
+ * und die Planerstellung antwortete mit 500. Der Trockenlauf blieb grün, weil
+ * er nichts schreibt — der Fehler trat also erst beim echten Lauf auf.
+ *
+ * Dieselbe Spalte bekam von der Warteliste einen leeren String, wenn keine
+ * Gruppe gefunden wurde — gleicher Fehler, anderer Weg.
+ */
+export function realGroupId(id: string | null | undefined): string | null {
+  return id && UUID_MUSTER.test(id) ? id : null;
+}
+
+/**
+ * Wochenverfügbarkeit aus der Datenbank in eine benutzbare Form bringen.
+ *
+ * Zwei Gründe, warum das nötig ist:
+ *
+ * 1. `member_schedule_preferences.weekly_availability` enthält den Wochenplan
+ *    als **JSON-String**, nicht als Objekt (in der Live-DB: alle 88 Zeilen).
+ *    Der frühere `as WeeklyAvailability`-Cast machte daraus zur Laufzeit einen
+ *    String; `availability["monday"]` war damit `undefined`, jeder Slot-Vergleich
+ *    scheiterte, und wer eine Präferenz abgegeben hatte, blieb ohne Gruppe —
+ *    genau umgekehrt zur Absicht.
+ * 2. Eine Präferenz ist laut Produktregel ein Vorteil, keine Bedingung. Wer
+ *    nichts angegeben hat (fehlende Zeile, leeres Objekt, alle Tage leer), gilt
+ *    als flexibel und bekommt die Standardverfügbarkeit — sonst fällt er aus
+ *    der Planung, obwohl er ausdrücklich für sie vorgesehen ist.
+ */
+export function normalizeAvailability(
+  raw: unknown,
+  fallback: WeeklyAvailability
+): WeeklyAvailability {
+  let value = raw;
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return fallback;
+    }
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return fallback;
+
+  const plan = value as WeeklyAvailability;
+  const hatSlots = Object.values(plan).some((slots) => Array.isArray(slots) && slots.length > 0);
+  return hatSlots ? plan : fallback;
+}
+
 export class SeasonClusteringEngine {
   private seasonId: string;
   private clubId: string;
@@ -788,7 +843,12 @@ export class SeasonClusteringEngine {
         readyForNextLevel: fb?.ready ?? false,
         recommendedLevel: fb?.level ?? null,
         promotedLevel: null,
-        availability: p.pref.weekly_availability as WeeklyAvailability,
+        // Präferenz ist Vorteil, keine Bedingung: wer nichts (Brauchbares)
+        // angegeben hat, gilt als flexibel statt als nie verfügbar.
+        availability: normalizeAvailability(
+          p.pref.weekly_availability,
+          this.buildDefaultAvailability()
+        ),
         wishPartnerIds: (p.pref.wish_partner_ids as string[]) || [],
         avoidMemberIds: ((p.pref.avoid_member_ids as string[] | null) ?? []) as string[],
         selfAssessedLevel: (p.pref.self_assessed_level as SkillLevel | null) ?? null,
@@ -905,7 +965,13 @@ export class SeasonClusteringEngine {
         specialties: (p.trainer?.specialties as string[]) || [],
         maxHoursPerWeek: p.trainer?.max_hours_per_week || 30,
         utilizationPct: this.config.trainerUtilizationMaxPct,
-        availability: p.pref.weekly_availability as WeeklyAvailability,
+        // Gleiche Behandlung wie bei Mitgliedern — die Spalte hat dieselbe
+        // String-Form, und ein Trainer ohne hinterlegte Zeiten ist einsetzbar,
+        // nicht abwesend.
+        availability: normalizeAvailability(
+          p.pref.weekly_availability,
+          this.buildDefaultAvailability()
+        ),
         maxSessionsPerWeek: p.pref.max_sessions_per_week || 20,
         preferredCourtIds: (p.pref.preferred_court_ids as string[]) || [],
         canTeachGroups: (p.pref.can_teach_groups as string[]) || [],
@@ -3023,7 +3089,7 @@ export class SeasonClusteringEngine {
       club_id: this.clubId,
       trainer_id: g.trainerId,
       court_id: g.courtId,
-      group_id: g.groupId,
+      group_id: realGroupId(g.groupId),
       day_of_week: g.dayOfWeek,
       start_time: `${g.startTime}:00`,
       end_time: `${g.endTime}:00`,
@@ -3063,20 +3129,41 @@ export class SeasonClusteringEngine {
       await db.insert(seasonPlanEntries).values(typedPlanEntries);
     }
 
-    // Insert waitlist entries
-    const waitlistToInsert = result.waitlistSummary.map((w) => ({
+    // Insert waitlist entries.
+    //
+    // `season_waitlists.group_id` ist NOT NULL — ein Wartender wartet immer auf
+    // eine bestimmte Gruppe. Findet sich dazu keine echte Gruppe (etwa weil das
+    // Backtracking eine Ersatzgruppe ohne DB-Entsprechung erzeugt hat), lässt
+    // sich der Eintrag nicht speichern. Bis zum 16.08.2026 wurde in dem Fall ein
+    // leerer String eingesetzt, was den gesamten Speichervorgang abbrechen liess
+    // — mitsamt der bereits berechneten Planung. Solche Einträge werden jetzt
+    // übersprungen und gezählt, statt alles scheitern zu lassen.
+    const waitlistCandidates = result.waitlistSummary.map((w) => ({
       season_id: this.seasonId,
       club_id: this.clubId,
-      group_id: result.groups.find((g) => g.groupName === w.groupName)?.groupId || '',
+      group_id: realGroupId(result.groups.find((g) => g.groupName === w.groupName)?.groupId),
       member_id: w.memberId,
       position: w.position,
       priority: 5,
       priority_reason: this.config.waitlistPriorityRule,
       status: 'waiting' as const,
       alternative_group_id: w.alternativeGroupName
-        ? result.groups.find((g) => g.groupName === w.alternativeGroupName)?.groupId || null
+        ? realGroupId(result.groups.find((g) => g.groupName === w.alternativeGroupName)?.groupId)
         : null,
     }));
+
+    const waitlistToInsert = waitlistCandidates.filter(
+      (w): w is typeof w & { group_id: string } => w.group_id !== null
+    );
+
+    const uebersprungen = waitlistCandidates.length - waitlistToInsert.length;
+    if (uebersprungen > 0) {
+      log.warn('Wartelisteneinträge ohne echte Gruppe übersprungen', {
+        seasonId: this.seasonId,
+        uebersprungen,
+        gesamt: waitlistCandidates.length,
+      });
+    }
 
     if (waitlistToInsert.length > 0) {
       // Typed via Drizzle's $inferInsert — see comment above on the plan-entries cast.
