@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
+import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,17 +12,20 @@ import { Sparkles, Zap, Star, Heart, Shield, Trophy, Brain, Calendar } from 'luc
 // ── Token Data ──
 
 // Light = Palette "Clay", Dark = Palette "Nocturne" (siehe app/globals.css).
-// Die Hex-Werte hier sind nur Beschriftung — gerendert wird immer die CSS-Variable.
+// Hier stehen bewusst NUR die Variablennamen. Bis 16.08.2026 lagen daneben
+// Hex-Paare als Beschriftung — sie wurden nie gerendert, niemand pflegte sie,
+// und sie behaupteten zuletzt ein blaues Brand-Grün (#50ACDE statt #3DB87E).
+// Der angezeigte Wert kommt jetzt aus getComputedStyle und kann nicht driften.
 const brandColors = [
-  { name: 'Brand Primary', var: '--brand-primary', light: '#1F6F4A', dark: '#50ACDE' },
-  { name: 'Brand Light', var: '--brand-primary-light', light: '#41946B', dark: '#84C6E8' },
-  { name: 'Brand Secondary', var: '--brand-secondary', light: '#22443A', dark: '#1B2A38' },
-  { name: 'Brand Accent', var: '--brand-accent', light: '#D8B34A', dark: '#A7DA25' },
-  { name: 'Surface', var: '--surface', light: '#FBFAF8', dark: '#141B22' },
-  { name: 'Surface Elevated', var: '--surface-elevated', light: '#FFFFFF', dark: '#1B2A38' },
-  { name: 'Border Subtle', var: '--border-subtle', light: '#ECEAE5', dark: '#1B2734' },
-  { name: 'Text Primary', var: '--text-primary', light: '#14201C', dark: '#E8EEF4' },
-  { name: 'Text Secondary', var: '--text-secondary', light: '#606C67', dark: '#8497A8' },
+  { name: 'Brand Primary', var: '--brand-primary' },
+  { name: 'Brand Light', var: '--brand-primary-light' },
+  { name: 'Brand Secondary', var: '--brand-secondary' },
+  { name: 'Brand Accent', var: '--brand-accent' },
+  { name: 'Surface', var: '--surface' },
+  { name: 'Surface Elevated', var: '--surface-elevated' },
+  { name: 'Border Subtle', var: '--border-subtle' },
+  { name: 'Text Primary', var: '--text-primary' },
+  { name: 'Text Secondary', var: '--text-secondary' },
 ];
 
 const typographySizes = [
@@ -177,6 +181,16 @@ function Section({
 }
 
 function ColorSwatch({ color }: { color: (typeof brandColors)[0] }) {
+  // Gelesen statt notiert: der angezeigte HSL-Wert ist immer der, den der
+  // Browser gerade auflöst. `resolvedTheme` hängt den Effekt an den
+  // Theme-Wechsel — der schaltet nur die Klasse am <html> um und würde sonst
+  // kein Re-Render auslösen, sodass hier der Wert des alten Themes stehenbliebe.
+  const { resolvedTheme } = useTheme();
+  const [wert, setWert] = useState('');
+  useEffect(() => {
+    setWert(getComputedStyle(document.documentElement).getPropertyValue(color.var).trim());
+  }, [color.var, resolvedTheme]);
+
   return (
     <div className="space-y-2">
       <div
@@ -187,6 +201,7 @@ function ColorSwatch({ color }: { color: (typeof brandColors)[0] }) {
         <p className="text-sm font-semibold text-foreground dark:text-white">{color.name}</p>
         <p className="text-xs font-mono text-muted-foreground dark:text-muted-foreground">
           <span className="inline-block w-24">var{color.var}</span>
+          <span>{wert}</span>
         </p>
       </div>
     </div>

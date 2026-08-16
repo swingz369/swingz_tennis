@@ -103,12 +103,13 @@ export const typography = {
     // Entwurf führt ohnehin durchgehend DM Sans. Wenn Clash Display wirklich
     // kommen soll, gehört es zuerst in app/fonts/ und app/layout.tsx.
     display: ['"DM Sans"', 'system-ui', 'sans-serif'],
-    // Marketing-only (Editorial Sports theme). Pally via Fontshare CDN — switch
-    // to PP Editorial New once Pangram license is procured (~next/font/local).
-    editorial: ['"Pally"', '"PP Editorial New"', 'Georgia', 'serif'],
     mono: ['"JetBrains Mono"', 'Consolas', 'monospace'],
   },
   fontSize: {
+    // Kleinste Stufe. Nur für dichte Raster (Kalenderzellen, Heatmap-Achsen),
+    // nicht für Fliesstext. Ersetzt die frühere Arbitrary-Schreibweise
+    // `text-[9px]` — und die zwei `text-[8px]`, die darunter lagen.
+    '3xs': '0.5625rem',
     '2xs': '0.625rem',
     xs: '0.75rem',
     sm: '0.875rem',
@@ -169,7 +170,6 @@ export const radius = {
   '3xl': '2rem',
   '4xl': '3rem',
   full: '9999px',
-  bubble: '1.5rem 1.5rem 0 1.5rem',
 };
 
 export const shadows = {
@@ -204,37 +204,9 @@ export const shadows = {
 };
 
 export const gradients = {
-  primary:
-    'linear-gradient(135deg, hsl(206 100% 31%) 0%, hsl(204 85% 45%) 50%, hsl(201 68% 59%) 100%)',
-  primaryRadial:
-    'radial-gradient(ellipse 80% 50% at 50% 0%, hsl(201 68% 59%) 0%, hsl(206 100% 31%) 100%)',
-  primaryMesh: `    radial-gradient(at 40% 20%, hsl(206 100% 25% / 0.8) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, hsl(201 68% 59% / 0.6) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, hsl(217 40% 22% / 0.5) 0px, transparent 50%),
-    radial-gradient(at 80% 50%, hsl(206 90% 35% / 0.4) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsl(217 40% 27% / 0.6) 0px, transparent 50%),
-    radial-gradient(at 80% 100%, hsl(201 68% 59% / 0.5) 0px, transparent 50%),
-    radial-gradient(at 0% 0%, hsl(206 100% 22% / 0.7) 0px, transparent 50%)
-  `,
-  accent: 'linear-gradient(135deg, hsl(77 71% 44%) 0%, hsl(77 71% 52%) 50%, hsl(77 71% 58%) 100%)',
-  accentRadial: 'radial-gradient(circle at 70% 30%, hsl(77 71% 58%) 0%, hsl(77 71% 44%) 100%)',
+  // Nur `hero` wird noch verdrahtet (tailwind.config.ts → bg-gradient-hero).
+  // Die übrigen Verläufe (primary/accent/mesh/aurora/glass/text …) waren
+  // Reste der alten blauen Marke (hsl 206) und wurden am 16.08.2026 entfernt —
+  // sie standen in keiner Utility mehr und widersprachen der Grün/Gold-Palette.
   hero: 'linear-gradient(160deg, hsl(206 100% 18%) 0%, hsl(206 100% 31%) 40%, hsl(204 85% 45%) 100%)',
-  heroMesh: `
-    radial-gradient(ellipse 100% 100% at 20% 0%, hsl(201 68% 59% / 0.25) 0%, transparent 50%),
-    radial-gradient(ellipse 80% 80% at 80% 20%, hsl(77 71% 44% / 0.1) 0%, transparent 40%),
-    radial-gradient(ellipse 60% 60% at 40% 80%, hsl(217 40% 27% / 0.2) 0%, transparent 50%),
-    linear-gradient(160deg, hsl(206 100% 18%) 0%, hsl(206 100% 31%) 40%, hsl(204 85% 45%) 100%)
-  `,
-  glass: 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)',
-  glassDark: 'linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.05) 100%)',
-  mesh: 'linear-gradient(135deg, hsl(206 100% 31%) 0%, hsl(204 85% 45%) 25%, hsl(201 68% 59%) 50%, hsl(201 65% 50%) 75%, hsl(201 60% 70%) 100%)',
-  aurora: `
-    radial-gradient(ellipse 60% 40% at 10% 20%, hsl(201 68% 59% / 0.3) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 50% at 90% 80%, hsl(77 71% 44% / 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse 80% 30% at 50% 90%, hsl(217 40% 27% / 0.2) 0%, transparent 40%)
-  `,
-  text: {
-    primary: 'linear-gradient(135deg, hsl(206 100% 31%) 0%, hsl(201 68% 59%) 100%)',
-    accent: 'linear-gradient(135deg, hsl(77 71% 44%) 0%, hsl(77 71% 58%) 100%)',
-  },
 };

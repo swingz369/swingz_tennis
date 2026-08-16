@@ -85,8 +85,15 @@
   /* Ocker abgedunkelt gegenüber dem Entwurf (war 57 % Helligkeit): als
      Fläche für dünne Grafik — Fortschrittsbalken, Badge-Punkte — kam der
      helle Ton auf 1,9:1 gegen die Karte und war damit auf einem mässigen
-     Monitor schlicht nicht zu sehen. */
-  --brand-accent: 44 70% 36%;
+     Monitor schlicht nicht zu sehen.
+     16.08.2026 ein zweites Mal abgedunkelt, 36 % → 28 %: als Textfarbe
+     (`text-brand-accent`, u. a. die Badge-Variante `accent` und die
+     Eyebrow-Zeilen der Landing Page) lag der Ton auf 3,56:1 gegen den
+     Seitengrund — unter AA. Maßgeblich war der engste Fall, Text auf der
+     eigenen 10-%-Tönung (`bg-brand-accent/10 text-brand-accent`): der
+     verlangt 28 %, um auf 4,69:1 zu kommen. Auf gefüllten Flächen mit
+     weisser Schrift wird es dadurch ebenfalls besser (4,03 → 6,07:1). */
+  --brand-accent: 44 70% 28%;
   /* Terrakotta aus dem Entwurf (--accent-2, #c1633f). Der dritte Ton neben
      Grün und Ocker: Zustände, die weder gut noch kaputt sind — Warteliste,
      Wartet-auf-Freigabe. Ohne ihn landeten die bei Ocker (dem Signalton) oder
@@ -99,6 +106,58 @@
   --border-subtle: 43 16% 91%;
   --text-primary: 160 23% 10%;
   --text-secondary: 153 6% 40%;
+
+  /* ── Statusfarben, themefähig ──────────────────────────────────────────
+     success/warning/error/info lagen als statische Hex-Skalen in
+     styles/theme.ts und waren damit im Dark Mode identisch — `bg-error-50`
+     blieb ein fast weißer Block auf dunklem Grund (182 Stellen).
+
+     Nur die Enden der Skala sind Variablen, und zwar getrennt nach
+     Verwendung (siehe tailwind.config.ts):
+       50–300      Flächen und zarte Rahmen  → dark: dunkle getönte Töne
+       text-600–900 Textfarben               → dark: helle Töne
+     Die Mitte (400/500) und die dunklen Stufen für bg/border (600–900)
+     bleiben statisch, weil sie gefüllte Buttons (`bg-info-600 text-white`)
+     und die 699 bereits vorhandenen `dark:`-Varianten tragen. Würde man
+     die ganze Skala umdrehen, kippen genau die ins Gegenteil.
+
+     Light-Werte sind exakt die bisherigen Hex-Werte aus styles/theme.ts —
+     im Light Mode ändert sich nichts. */
+  --success-50: 138 76% 97%;
+  --success-100: 141 84% 93%;
+  --success-200: 141 79% 85%;
+  --success-300: 142 77% 73%;
+  --success-text-600: 142 76% 36%;
+  --success-text-700: 142 72% 29%;
+  --success-text-800: 143 64% 24%;
+  --success-text-900: 144 61% 20%;
+
+  --warning-50: 48 100% 96%;
+  --warning-100: 48 96% 89%;
+  --warning-200: 48 97% 77%;
+  --warning-300: 46 97% 65%;
+  --warning-text-600: 32 95% 44%;
+  --warning-text-700: 26 90% 37%;
+  --warning-text-800: 23 83% 31%;
+  --warning-text-900: 22 78% 26%;
+
+  --error-50: 0 86% 97%;
+  --error-100: 0 93% 94%;
+  --error-200: 0 96% 89%;
+  --error-300: 0 94% 82%;
+  --error-text-600: 0 72% 51%;
+  --error-text-700: 0 74% 42%;
+  --error-text-800: 0 70% 35%;
+  --error-text-900: 0 63% 31%;
+
+  --info-50: 214 100% 97%;
+  --info-100: 214 95% 93%;
+  --info-200: 213 97% 87%;
+  --info-300: 212 96% 78%;
+  --info-text-600: 221 83% 53%;
+  --info-text-700: 224 76% 48%;
+  --info-text-800: 226 71% 40%;
+  --info-text-900: 224 64% 33%;
 
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -170,6 +229,46 @@
   --border-subtle: 211 32% 15%;
   --text-primary: 210 35% 93%;
   --text-secondary: 208 17% 59%;
+
+  /* ── Statusfarben, Dark ──
+     Flächen kippen auf dunkle Tönungen mit dem jeweiligen Farbton,
+     Texttöne auf helle. Gemessene Kontraste text-600 auf bg-50:
+     success 10.9:1 · warning 10.0:1 · error 7.0:1 · info 7.6:1. */
+  --success-50: 142 40% 11%;
+  --success-100: 142 42% 15%;
+  --success-200: 142 44% 21%;
+  --success-300: 142 46% 29%;
+  --success-text-600: 142 72% 72%;
+  --success-text-700: 142 80% 80%;
+  --success-text-800: 142 85% 87%;
+  --success-text-900: 142 88% 92%;
+
+  --warning-50: 38 40% 11%;
+  --warning-100: 38 42% 15%;
+  --warning-200: 38 44% 21%;
+  --warning-300: 38 46% 29%;
+  --warning-text-600: 38 72% 72%;
+  --warning-text-700: 38 80% 80%;
+  --warning-text-800: 38 85% 87%;
+  --warning-text-900: 38 88% 92%;
+
+  --error-50: 0 40% 11%;
+  --error-100: 0 42% 15%;
+  --error-200: 0 44% 21%;
+  --error-300: 0 46% 29%;
+  --error-text-600: 0 72% 72%;
+  --error-text-700: 0 80% 80%;
+  --error-text-800: 0 85% 87%;
+  --error-text-900: 0 88% 92%;
+
+  --info-50: 217 40% 11%;
+  --info-100: 217 42% 15%;
+  --info-200: 217 44% 21%;
+  --info-300: 217 46% 29%;
+  --info-text-600: 217 72% 72%;
+  --info-text-700: 217 80% 80%;
+  --info-text-800: 217 85% 87%;
+  --info-text-900: 217 88% 92%;
 }
 
 /* ── Sidebar-Oberfläche (.sidebar-surface) ──
@@ -180,8 +279,10 @@
  * (`text-muted-foreground`, `hover:bg-muted`, `border-border`, …) lösen
  * damit innerhalb der Sidebar automatisch auf die dunklen Werte auf.
  *
- * Gleiche Strategie wie `.theme-editorial` weiter unten — bewusst, damit es
- * im Projekt nur ein Muster für „Bereich mit eigenem Farbraum" gibt.
+ * Das ist im Projekt das einzige Muster für „Bereich mit eigenem Farbraum".
+ * (Bis 16.08.2026 gab es daneben `.theme-editorial` für die Marketing-Routen;
+ * die Klasse wurde nirgends mehr gesetzt und führte als einzige Stelle noch
+ * die alte Orange/Navy-Palette — entfernt.)
  */
 @layer base {
   .sidebar-surface {
@@ -407,10 +508,6 @@ body {
     animation-delay: 0.4s;
     opacity: 0;
   }
-  .animate-in-delay-5 {
-    animation-delay: 0.5s;
-    opacity: 0;
-  }
 
   /* ── Scroll-triggered reveal ── */
   .reveal {
@@ -423,18 +520,6 @@ body {
   .reveal.visible {
     opacity: 1;
     transform: translateY(0);
-  }
-  .reveal-delay-1 {
-    transition-delay: 0.1s;
-  }
-  .reveal-delay-2 {
-    transition-delay: 0.2s;
-  }
-  .reveal-delay-3 {
-    transition-delay: 0.3s;
-  }
-  .reveal-delay-4 {
-    transition-delay: 0.4s;
   }
 
   /* ── Hover Effects ── */
@@ -502,23 +587,8 @@ body {
   }
 
   /* ── iOS safe area ── */
-  .safe-area-pt {
-    padding-top: env(safe-area-inset-top, 0);
-  }
   .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom, 0);
-  }
-  .safe-area-pl {
-    padding-left: env(safe-area-inset-left, 0);
-  }
-  .safe-area-pr {
-    padding-right: env(safe-area-inset-right, 0);
-  }
-  .safe-area-mt {
-    margin-top: env(safe-area-inset-top, 0);
-  }
-  .safe-area-mb {
-    margin-bottom: env(safe-area-inset-bottom, 0);
   }
 
   /* ── Animated Grid Background ── */
@@ -527,181 +597,6 @@ body {
       linear-gradient(hsl(var(--border-subtle) / 0.3) 1px, transparent 1px),
       linear-gradient(90deg, hsl(var(--border-subtle) / 0.3) 1px, transparent 1px);
     background-size: 60px 60px;
-  }
-
-  /* ── Gradient overlays ── */
-  .overlay-gradient-t {
-    background: linear-gradient(to bottom, hsl(var(--brand-primary) / 0.9) 0%, transparent 100%);
-  }
-  .overlay-gradient-b {
-    background: linear-gradient(to top, hsl(var(--brand-primary) / 0.9) 0%, transparent 100%);
-  }
-
-  /* ── Viewport-aware min-height (with iOS Safari / old WebView fallback) ──
-   * Modern browsers (Chrome 108+, Safari 15.4+) prefer the dynamic 100dvh,
-   * older browsers discard the second declaration entirely and keep 100vh.
-   * Inside a single rule, the cascade order is deterministic — unlike
-   * two chained Tailwind arbitrary-value classes where emission order
-   * can vary between Tailwind versions.
-   */
-  .min-h-viewport {
-    min-height: 100vh;
-    min-height: 100dvh;
-  }
-
-  /* ── Editorial Typography ──
-   * Phase 2 hero primitives — Pally/PP Editorial New serif pairing.
-   * Fluid clamp() scales headline-to-mobile smoothly without media queries.
-   */
-  .font-editorial {
-    font-family: var(--font-editorial, 'Pally', Georgia, serif);
-    font-feature-settings:
-      'kern' 1,
-      'liga' 1,
-      'calt' 1;
-    letter-spacing: -0.015em;
-  }
-  .editorial-display {
-    font-family: var(--font-editorial, 'Pally', Georgia, serif);
-    font-weight: 500;
-    line-height: 0.96;
-    letter-spacing: -0.025em;
-    font-size: clamp(3rem, 8vw + 1rem, 6.75rem);
-  }
-  .editorial-eyebrow {
-    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
-    font-size: 0.6875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
-    font-weight: 500;
-  }
-
-  /* ── Editorial Hairlines ──
-   * 1px crisp borders in Court-Clay / Forest hues, anti-aliased for retina.
-   */
-  .hairline-t {
-    border-top: 1px solid hsl(var(--brand-primary) / 0.08);
-  }
-  .hairline-b {
-    border-bottom: 1px solid hsl(var(--brand-primary) / 0.08);
-  }
-  .hairline-x {
-    border-left: 1px solid hsl(var(--brand-primary) / 0.08);
-    border-right: 1px solid hsl(var(--brand-primary) / 0.08);
-  }
-  .hairline-y {
-    border-top: 1px solid hsl(var(--brand-primary) / 0.08);
-    border-bottom: 1px solid hsl(var(--brand-primary) / 0.08);
-  }
-  .hairline-clay-t {
-    border-top: 1px solid hsl(var(--brand-accent) / 0.35);
-  }
-
-  /* ── Editorial Paper Grain ──
-   * Static grain overlay for cream backgrounds — a notch above the global
-   * `.noise` so it reads as paper, not digital-noise.
-   */
-  .paper-grain::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.04;
-    mix-blend-mode: multiply;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.11 0 0 0 0 0.27 0 0 0 0 0.20 0 0 0 0.85 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
-  }
-
-  /* ── Editorial Roman Seperators ──
-   * Used as decorative ornament between sections (I. II. III. … I•••II)
-   */
-  .rule-clay {
-    display: inline-block;
-    width: 2.25rem;
-    height: 1px;
-    background: hsl(var(--brand-accent));
-    vertical-align: middle;
-  }
-  .rule-forest {
-    display: inline-block;
-    width: 2.25rem;
-    height: 1px;
-    background: hsl(var(--brand-primary));
-    vertical-align: middle;
-  }
-
-  /* ── Editorial Underline Mask (Kinetic Type Hover) ──
-   * A clean animated underline for nav- and pricing-link hover states.
-   * Reset on focus-visible for accessibility.
-   */
-  .link-mask {
-    background-image: linear-gradient(currentColor, currentColor);
-    background-position: 0 100%;
-    background-repeat: no-repeat;
-    background-size: 0% 1px;
-    transition: background-size 350ms cubic-bezier(0.16, 1, 0.3, 1);
-    padding-bottom: 2px;
-  }
-  .link-mask:hover {
-    background-size: 100% 1px;
-  }
-
-  /* ── Hero Video Slot (Phase 2 + Phase 6 — Editorial Sports) ──
-   * Multi-format <video> sits behind the hero type column.
-   * `inset` is interpolated by the `--hero-progress` CSS custom property
-   * (set by HeroScrollProgress via rAF scroll listener). Continuous
-   * interpolation: contained (progress=0) → full-bleed (progress=1).
-   * `mix-blend-mode: multiply` lets the Cream paper read through.
-   * Reduced-motion: video display:none; poster image (inline
-   * background-image on the layer) remains visible statically.
-   * NOTE: NO CSS transition on inset/border-radius — the rAF scroll
-   * listener writes to --hero-progress at ~60fps, any CSS transition
-   * would fight the JS updates and produce rubber-band lag. Frame-perfect
-   * scroll-linked values.
-   * See: app/(marketing)/landing/_components/hero-video-slot.tsx
-   *      app/(marketing)/landing/_components/hero-scroll-progress.tsx
-   *      docs/hero-video-briefing.md
-   */
-  .hero-video-layer {
-    position: absolute;
-    z-index: 0;
-    inset: calc(22% * (1 - var(--hero-progress, 0))) calc(24% * (1 - var(--hero-progress, 0)))
-      calc(22% * (1 - var(--hero-progress, 0))) calc(24% * (1 - var(--hero-progress, 0)));
-    border-radius: calc(4px * (1 - var(--hero-progress, 0)));
-    overflow: hidden;
-    background-color: hsl(var(--brand-primary) / 0.04);
-  }
-  .hero-video-layer video {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    mix-blend-mode: multiply;
-    opacity: 0.92;
-  }
-
-  /* ── Hero Scroll-Progress Anchor (Phase 4) ──
-   * 1px absolute marker; its offsetParent resolves to the SectionReveal
-   * <section>. HeroScrollProgress writes --hero-progress into it.
-   */
-  .hero-progress-sentinel {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  /* ── Hero Headline Accent — Scroll-Linked Editorial Breathing (Phase 4) ──
-   * The italic Court-Clay "<em>" accent subtly lifts and scales proportional
-   * to --hero-progress: 0% at hero fully visible, 0.3em Y-shift + 1.04× scale
-   * when fully scrolled past. NO transition — the variable is rAF-driven
-   * frame-by-frame, transition would create rubber-band lag.
-   */
-  .hero-headline-accent {
-    display: inline-block;
-    transform: translateY(calc(var(--hero-progress, 0) * -0.3em))
-      scale(calc(1 + var(--hero-progress, 0) * 0.04));
-    transform-origin: left bottom;
   }
 }
 
@@ -886,58 +781,6 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-  /* Hero video: suppress playback entirely. The poster image is set
-   * as a CSS background-image on the layer inline by the component,
-   * so users see the still frame where the video would have animated. */
-  .hero-video-layer video {
-    display: none;
-  }
-}
-
-/* ── Marketing Theme Override (.theme-editorial) ──
- * Scope: ONLY the (marketing) route group. The (protected)/(app) dashboards
- * continue to inherit from :root / .dark and are NOT affected.
- * Override strategy: redefine the same shadcn token names so that
- * `bg-background`, `text-foreground`, `bg-brand-primary`, etc. resolve
- * automatically via the existing Tailwind utilities inside the scope.
- */
-@layer base {
-  .theme-editorial {
-    /* Cream / Alabaster background, Deep Forest text, Court Clay accent */
-    --background: 38 30% 96%;
-    --foreground: 150 48% 18%;
-    --card: 0 0% 100%;
-    --card-foreground: 150 48% 18%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 150 48% 18%;
-    --primary: 150 48% 18%;
-    --primary-foreground: 38 30% 96%;
-    --secondary: 38 30% 92%;
-    --secondary-foreground: 150 48% 18%;
-    --muted: 38 30% 92%;
-    --muted-foreground: 150 10% 40%;
-    --accent: 18 50% 42%; /* Court Clay #C25934 */
-    --accent-foreground: 38 30% 96%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 150 10% 88%;
-    --input: 150 10% 88%;
-    --ring: 150 48% 18%;
-
-    /* Brand tokens — Forest stays, Sunrise Orange → Court Clay */
-    --brand-primary: 150 48% 18%;
-    --brand-primary-light: 150 45% 35%;
-    --brand-secondary: 217 33% 24%;
-    --brand-accent: 18 50% 42%;
-    --surface: 38 30% 96%;
-    --surface-elevated: 0 0% 100%;
-    --border-subtle: 150 10% 88%;
-    --text-primary: 150 48% 18%;
-    --text-secondary: 150 10% 35%;
-
-    /* Typography — Editorial Serif via --font-editorial */
-    --font-editorial: 'Pally', 'PP Editorial New', Georgia, serif;
   }
 }
 

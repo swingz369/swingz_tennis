@@ -647,7 +647,7 @@ export default async function AdminPage() {
       <IconBox icon={action.icon} size="xs" className="shrink-0" />
       <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{action.label}</span>
       {action.badge && (
-        <span className="shrink-0 rounded px-1.5 font-mono text-[10.5px] font-semibold text-destructive">
+        <span className="shrink-0 rounded px-1.5 font-mono text-2xs font-semibold text-destructive">
           {action.badge}
         </span>
       )}
@@ -815,7 +815,7 @@ export default async function AdminPage() {
                     <IconBox icon={Calendar} size="xs" variant="light" />
                     Letzte Buchungen
                   </CardTitle>
-                  <p className="mt-1 text-[11.5px] text-muted-foreground">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {latestBookings.length === 1
                       ? '1 Vorgang'
                       : `${latestBookings.length} Vorgänge`}
@@ -850,7 +850,7 @@ export default async function AdminPage() {
                           Komponente bleibt unberührt. */}
                       <TableRow>
                         <TableHead
-                          className={cn(HEAD_CELL, 'text-[10px] uppercase tracking-[0.09em]')}
+                          className={cn(HEAD_CELL, 'text-2xs uppercase tracking-[0.09em]')}
                         >
                           Mitglied
                         </TableHead>
@@ -861,17 +861,14 @@ export default async function AdminPage() {
                             dann ein Handbreit Nichts. Status rechtsbündig,
                             damit die Zeile eine saubere Aussenkante bekommt. */}
                         <TableHead
-                          className={cn(
-                            HEAD_CELL,
-                            'w-[30%] text-[10px] uppercase tracking-[0.09em]'
-                          )}
+                          className={cn(HEAD_CELL, 'w-[30%] text-2xs uppercase tracking-[0.09em]')}
                         >
                           Platz / Zeit
                         </TableHead>
                         <TableHead
                           className={cn(
                             HEAD_CELL,
-                            'w-[1%] whitespace-nowrap text-right text-[10px] uppercase tracking-[0.09em]'
+                            'w-[1%] whitespace-nowrap text-right text-2xs uppercase tracking-[0.09em]'
                           )}
                         >
                           Status
@@ -903,7 +900,7 @@ export default async function AdminPage() {
                           <TableCell className={cn(BODY_CELL, 'whitespace-nowrap text-right')}>
                             <span
                               className={cn(
-                                'inline-flex items-center gap-1.5 text-[11.5px] font-semibold',
+                                'inline-flex items-center gap-1.5 text-xs font-semibold',
                                 b.statusTone === 'success' && 'text-primary',
                                 b.statusTone === 'warning' && 'text-brand-accent-2',
                                 b.statusTone === 'error' && 'text-destructive',

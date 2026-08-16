@@ -31,7 +31,6 @@
     "src/infrastructure/persistence/schema.ts",
     "supabase-types.ts",
     "types.ts",
-    "design-tokens.json",
     "components/ui/index.ts",
     "lib/index.ts",
     "src/index.ts"

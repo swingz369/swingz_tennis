@@ -113,7 +113,7 @@ export function FamilySwitcher({
                 <Baby className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{child.fullName}</span>
                 {child.isMinor && (
-                  <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 font-semibold">
+                  <span className="ml-auto text-3xs px-1.5 py-0.5 rounded-full bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 font-semibold">
                     Minderjährig
                   </span>
                 )}

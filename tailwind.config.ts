@@ -14,15 +14,7 @@ const config: Config = {
   // in lib/billing/datev-mapper.ts), aber keine sind — sonst generiert
   // Tailwind daraus ungültiges CSS und der Build bricht.
   blocklist: ['[-:T.Z]'],
-  safelist: [
-    'bg-gradient-hero',
-    'bg-gradient-primary',
-    'bg-gradient-accent',
-    'bg-gradient-mesh',
-    'bg-gradient-radial',
-    'rounded-bubble',
-    'animate-shimmer',
-  ],
+  safelist: ['bg-gradient-hero', 'bg-gradient-primary', 'bg-gradient-accent', 'animate-shimmer'],
   theme: {
     extend: {
       colors: {
@@ -69,16 +61,64 @@ const config: Config = {
         error: colors.error,
         info: colors.info,
       },
+      // ── Statusfarben: Flächen und Text getrennt themefähig ──
+      // `colors.*` oben bleibt die statische Skala und bedient alles, was
+      // hier nicht überschrieben wird (ring-, divide-, from-/to-, shadow-).
+      // Darunter wird pro Utility nur das Ende der Skala auf CSS-Variablen
+      // gehoben, das im Dark Mode kippen muss:
+      //   backgroundColor 50–300  Flächen  → dark: dunkle Tönung
+      //   borderColor    100–300  Rahmen   → dark: dunkle Tönung
+      //   textColor      600–900  Text     → dark: heller Ton
+      // Absicht der Trennung: `bg-info-600 text-white` (gefüllter Button)
+      // und `dark:bg-error-900` bleiben statisch und damit dunkel, während
+      // `bg-error-50 text-error-600` in beiden Themes lesbar ist.
+      // Tailwind merged `extend` auf dieser Ebene flach — deshalb muss die
+      // komplette Skala gespreizt werden, nicht nur die geänderten Stufen.
+      backgroundColor: Object.fromEntries(
+        (['success', 'warning', 'error', 'info'] as const).map((name) => [
+          name,
+          {
+            ...colors[name],
+            50: `hsl(var(--${name}-50))`,
+            100: `hsl(var(--${name}-100))`,
+            200: `hsl(var(--${name}-200))`,
+            300: `hsl(var(--${name}-300))`,
+          },
+        ])
+      ),
+      borderColor: Object.fromEntries(
+        (['success', 'warning', 'error', 'info'] as const).map((name) => [
+          name,
+          {
+            ...colors[name],
+            100: `hsl(var(--${name}-100))`,
+            200: `hsl(var(--${name}-200))`,
+            300: `hsl(var(--${name}-300))`,
+          },
+        ])
+      ),
+      textColor: Object.fromEntries(
+        (['success', 'warning', 'error', 'info'] as const).map((name) => [
+          name,
+          {
+            ...colors[name],
+            600: `hsl(var(--${name}-text-600))`,
+            700: `hsl(var(--${name}-text-700))`,
+            800: `hsl(var(--${name}-text-800))`,
+            900: `hsl(var(--${name}-text-900))`,
+          },
+        ])
+      ),
       ringColor: {
         brand: 'hsl(var(--brand-primary) / 0.7)',
       },
       fontFamily: {
         sans: typography.fontFamily.sans,
         display: typography.fontFamily.display,
-        editorial: typography.fontFamily.editorial,
         mono: typography.fontFamily.mono,
       },
       fontSize: {
+        '3xs': typography.fontSize['3xs'],
         '2xs': typography.fontSize['2xs'],
         'display-1': ['3.75rem', { lineHeight: '1.1', fontWeight: '800' }],
         'display-2': ['3rem', { lineHeight: '1.2', fontWeight: '700' }],
@@ -116,15 +156,7 @@ const config: Config = {
           'linear-gradient(135deg, hsl(var(--brand-primary)) 0%, hsl(var(--brand-primary-light)) 100%)',
         'gradient-accent':
           'linear-gradient(135deg, hsl(var(--brand-accent)) 0%, hsl(77 71% 62%) 100%)',
-        'gradient-warm':
-          'linear-gradient(135deg, hsl(var(--brand-accent)) 0%, hsl(var(--brand-primary-light)) 100%)',
         'gradient-hero': gradients.hero,
-        'gradient-mesh': gradients.mesh,
-        'gradient-radial': gradients.primaryRadial,
-        'gradient-card':
-          'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 100%)',
-        'gradient-shine':
-          'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)',
       },
       transitionDuration: {
         '400': '400ms',

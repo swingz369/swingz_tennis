@@ -279,7 +279,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
                         navigate(result.url);
                       }}
                       className={cn(
-                        'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors',
+                        'flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition-colors',
                         active ? 'bg-muted' : 'hover:bg-muted/60'
                       )}
                     >

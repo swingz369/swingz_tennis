@@ -520,8 +520,8 @@ export function Sidebar({
             reine Beschriftung ohne Klickversprechen. */}
         {activeClub && !(isSuperAdmin && hasMultipleClubs) && (
           <div className="mx-3 mb-3 rounded-xl border border-border bg-muted/40 px-3 py-2">
-            <p className="truncate text-[13.5px] font-semibold leading-tight">{activeClub.name}</p>
-            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.13em] text-muted-foreground">
+            <p className="truncate text-sm font-semibold leading-tight">{activeClub.name}</p>
+            <p className="mt-0.5 text-2xs font-semibold uppercase tracking-[0.13em] text-muted-foreground">
               {roleLabel}
             </p>
           </div>
@@ -534,13 +534,13 @@ export function Sidebar({
               onClick={() => setClubSwitcherOpen((prev) => !prev)}
               className="w-full flex flex-col items-stretch px-3 py-2 text-left hover:bg-muted transition-colors"
             >
-              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <span className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 Verein
               </span>
               <span className="mt-0.5 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="truncate text-[13.5px] font-semibold">
+                  <span className="truncate text-sm font-semibold">
                     {activeClub?.name ?? 'Club auswählen'}
                   </span>
                 </div>
@@ -592,7 +592,7 @@ export function Sidebar({
             href={dashboardHref}
             onClick={() => onClose?.()}
             className={cn(
-              'flex items-center gap-3 rounded-xl px-3 py-2 text-[13.5px] font-medium transition-all duration-200',
+              'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200',
               isExactActive(pathname, dashboardHref)
                 ? `${colors.bg} ${colors.text}`
                 : 'text-muted-foreground hover:bg-muted/70 dark:hover:bg-white/[0.06] hover:text-foreground'

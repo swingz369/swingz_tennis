@@ -53,12 +53,7 @@ function Cell({ item }: { item: KpiBandItem }) {
         )}
       </dd>
       {item.sub && (
-        <p
-          className={cn(
-            'mt-2 font-mono text-[11.5px] font-semibold',
-            toneClass[item.tone ?? 'flat']
-          )}
-        >
+        <p className={cn('mt-2 font-mono text-xs font-semibold', toneClass[item.tone ?? 'flat'])}>
           {item.sub}
         </p>
       )}

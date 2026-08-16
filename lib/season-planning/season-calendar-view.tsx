@@ -274,7 +274,7 @@ export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: 
                       <div
                         key={w.monday}
                         className={cn(
-                          'w-10 shrink-0 text-center text-[10px] font-medium border-r py-1',
+                          'w-10 shrink-0 text-center text-2xs font-medium border-r py-1',
                           w.isHolidayWeek
                             ? 'bg-warning-50 text-warning-900'
                             : 'text-muted-foreground'
@@ -308,14 +308,14 @@ export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: 
                         <div className="mt-1 flex items-center gap-1">
                           <Badge
                             variant={activeCount > 0 ? 'default' : 'secondary'}
-                            className="text-[10px] h-4 px-1.5"
+                            className="text-2xs h-4 px-1.5"
                           >
                             {activeCount} aktiv
                           </Badge>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-5 px-2 text-[10px]"
+                            className="h-5 px-2 text-2xs"
                             onClick={() => handleBulkActivate(group, data.weeks, true)}
                             title="Alle Wochen aktivieren"
                           >
@@ -324,7 +324,7 @@ export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: 
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-5 px-2 text-[10px]"
+                            className="h-5 px-2 text-2xs"
                             onClick={() => handleBulkActivate(group, data.weeks, false)}
                             title="Alle Wochen deaktivieren"
                           >

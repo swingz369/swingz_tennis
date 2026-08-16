@@ -75,17 +75,17 @@ function DraggableSlotCard({
       <p className="font-semibold text-[11px] leading-tight truncate pl-2.5">{slot.groupName}</p>
       <div className="flex items-center gap-1 mt-0.5 pl-2.5">
         <Clock size={9} className="opacity-70 flex-shrink-0" />
-        <span className="opacity-80 text-[10px]">
+        <span className="opacity-80 text-2xs">
           {slot.startTime}–{slot.endTime}
         </span>
       </div>
       <div className="flex items-center gap-1 pl-2.5">
         <Users size={9} className="opacity-70 flex-shrink-0" />
-        <span className="opacity-80 text-[10px]">{slot.memberNames.length}M</span>
+        <span className="opacity-80 text-2xs">{slot.memberNames.length}M</span>
         {slot.trainerName && (
           <>
-            <span className="opacity-50 text-[10px]">·</span>
-            <span className="opacity-70 text-[10px] truncate">
+            <span className="opacity-50 text-2xs">·</span>
+            <span className="opacity-70 text-2xs truncate">
               {slot.trainerName.split(' ').pop()}
             </span>
           </>
@@ -142,7 +142,7 @@ function DroppableCell({
       {/* Empty cell drop hint */}
       {isOver && !hasSlots && (
         <div className="absolute inset-1 rounded-md border-2 border-dashed border-primary/30 flex items-center justify-center">
-          <span className="text-[10px] text-primary/50 font-medium">Ablegen</span>
+          <span className="text-2xs text-primary/50 font-medium">Ablegen</span>
         </div>
       )}
 

@@ -1,6 +1,6 @@
 # Theming & Design-Tokens
 
-> Zuletzt verifiziert: 14.08.2026
+> Zuletzt verifiziert: 16.08.2026 (Statusfarben themefähig, `design-tokens.json` entfernt)
 
 > Wie das Branding pro Club funktioniert und wo die Farben herkommen.
 
@@ -23,8 +23,13 @@ Es gibt **eine** Laufzeit-Quelle und **eine** statische Zuliefer-Quelle:
    mappt CSS-Variablen (hsl(var(--…))) und theme.ts-Skalen zu Utilities.
 ```
 
-`design-tokens.json` im Repo-Root ist eine **Referenz/Inventur-Datei**, keine
-Laufzeit-Quelle — sie kann veralten; maßgeblich sind `globals.css` + `theme.ts`.
+Eine vierte Quelle gibt es nicht. `design-tokens.json` lag bis 16.08.2026 im
+Repo-Root und war als „Referenz/Inventur" gedacht — am Ende stimmte kein
+einziger Brand-Wert mehr (sie führte Orange `#FF6B35` und Navy, während die App
+längst Gold und Grün war). Eine Kopie, die niemand generiert und niemand
+pflegt, veraltet zuverlässig; sie wurde deshalb gelöscht. Wer einen
+Token-Export für Design-Werkzeuge braucht, generiert ihn aus `styles/theme.ts`
+und schließt ihn per `.gitignore` aus.
 
 ## 🎨 Brand-Tokens (Clay / Nocturne)
 
@@ -33,11 +38,11 @@ als Grund, tiefes Tennisgrün als einzige Aktionsfarbe.
 
 | Token                   | HSL (Light)   | Hex       | Verwendung                             |
 | ----------------------- | ------------- | --------- | -------------------------------------- |
-| `--brand-primary`       | `152 56% 28%` | `#1F784A` | Forest — Buttons, Links, Aktiv         |
+| `--brand-primary`       | `152 56% 28%` | `#1F6F4A` | Forest — Buttons, Links, Aktiv         |
 | `--brand-primary-light` | `152 40% 42%` | —         | Helles Grün — Gradient-Endpunkt, Glow  |
 | `--brand-dark`          | `162 33% 20%` | —         | Tannen — Sidebar, dunkle Karten        |
 | `--brand-secondary`     | `162 33% 20%` | —         | Tannen — Tiefe, Flächen                |
-| `--brand-accent`        | `44 70% 36%`  | —         | Ocker — Signal (Fortschritt, Eyebrow)  |
+| `--brand-accent`        | `44 70% 28%`  | `#795F15` | Ocker — Signal (Fortschritt, Eyebrow)  |
 | `--brand-accent-2`      | `17 51% 44%`  | —         | Terrakotta — Warteliste, wartet-auf-OK |
 
 Dark-Modus (`.dark`) — Palette **„Nocturne"**: kühle blaugraue Neutrale,
@@ -79,8 +84,27 @@ um, statt an jeder Utility-Klasse eine Sondervariante zu führen:
 shadcn-Basis (`--background`, `--foreground`, `--card`, `--popover`,
 `--primary`, `--secondary`, `--muted`, `--accent`, `--destructive`,
 `--border`, `--input`, `--ring`) kommen aus `globals.css`. Die
-Status-Skalen `success`/`warning`/`error`/`info` kommen als statische
-Skalen aus `styles/theme.ts` (sie entsprechen Tailwinds Default-Skalen).
+Status-Skalen `success`/`warning`/`error`/`info` kommen aus `styles/theme.ts`
+(sie entsprechen Tailwinds Default-Skalen) — **aber nur die Mitte der Skala ist
+noch statisch.** Seit 16.08.2026 sind die Enden themefähig, getrennt nach
+Utility (verdrahtet in `tailwind.config.ts`, Werte in `globals.css`):
+
+| Utility      | Stufen                     | Variable                  | Dark Mode     |
+| ------------ | -------------------------- | ------------------------- | ------------- |
+| `bg-*`       | 50–300                     | `--{status}-{stufe}`      | dunkle Tönung |
+| `border-*`   | 100–300                    | `--{status}-{stufe}`      | dunkle Tönung |
+| `text-*`     | 600–900                    | `--{status}-text-{stufe}` | heller Ton    |
+| alles andere | 400/500, bg/border 600–900 | — (statisch)              | unverändert   |
+
+Grund für die Trennung: `bg-error-50 text-error-600` muss in beiden Themes
+lesbar sein, `bg-info-600 text-white` (gefüllter Button) dagegen in beiden
+dunkel bleiben. Eine durchgehend umgedrehte Skala hätte genau diese Buttons
+und die bestehenden `dark:bg-*-900`-Varianten ins Gegenteil gekippt.
+
+**Praktisch heißt das:** `bg-success-50`, `border-warning-200`,
+`text-error-700` brauchen **keine** `dark:`-Variante mehr. Wer eine setzt,
+sollte auf die statischen Stufen zielen (`dark:bg-error-900`) — sonst
+überschreibt sie das, was ohnehin schon stimmt.
 
 ## 🎨 Per-Club-Branding
 

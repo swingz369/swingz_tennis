@@ -314,7 +314,7 @@ export default function LeaguesClient() {
                   </Button>
                 </div>
 
-                <div className="max-h-80 overflow-y-auto rounded-lg border border-border divide-y divide-border/60">
+                <div className="max-h-80 overflow-y-auto rounded-xl border border-border divide-y divide-border/60">
                   {discovered.map((team) => {
                     const url = team.portraitUrl ?? team.groupUrl;
                     const disabled = !url || team.alreadyImported;
@@ -392,7 +392,7 @@ export default function LeaguesClient() {
                 </div>
 
                 {clubHits.length > 0 && (
-                  <div className="rounded-lg border border-border divide-y divide-border/60">
+                  <div className="rounded-xl border border-border divide-y divide-border/60">
                     {clubHits.map((hit) => (
                       <button
                         key={hit.clubNumber}

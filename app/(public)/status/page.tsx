@@ -50,8 +50,8 @@ async function ermittleZustand() {
 const ANZEIGE: Record<Zustand, { text: string; punkt: string; farbe: string }> = {
   ok: {
     text: 'Betriebsbereit',
-    punkt: 'bg-emerald-500',
-    farbe: 'text-emerald-600 dark:text-emerald-400',
+    punkt: 'bg-success-500',
+    farbe: 'text-success-600',
   },
   gestoert: { text: 'Gestört', punkt: 'bg-destructive', farbe: 'text-destructive' },
   unbekannt: { text: 'Unbekannt', punkt: 'bg-muted-foreground', farbe: 'text-muted-foreground' },
@@ -103,7 +103,7 @@ export default async function StatusPage() {
           : 'Mindestens ein System ist beeinträchtigt — Einzelheiten unten.'}
       </p>
 
-      <div className="mt-8 rounded-lg border border-border bg-card px-5">
+      <div className="mt-8 rounded-xl border border-border bg-card px-5">
         <Zeile
           name="Anwendung"
           beschreibung="Weboberfläche und API"

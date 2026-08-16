@@ -156,7 +156,7 @@ export function AdminSection({
         className={cn(
           // Abschnittsüberschrift ist eine Beschriftung, kein Menüpunkt: enger
           // gesperrt, kleiner, ohne eigene Hover-Fläche über die volle Breite.
-          'w-full flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] transition-colors duration-200',
+          'w-full flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-2xs font-semibold uppercase tracking-[0.15em] transition-colors duration-200',
           hasActiveChild
             ? `${colors.bg} ${colors.text}`
             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -170,7 +170,7 @@ export function AdminSection({
           // Mono und ohne Sperrung — die Kennzahl soll sich von der gesperrten
           // Versalschrift der Beschriftung absetzen und beim Wechsel der Zahl
           // nicht die Breite springen lassen.
-          <span className="shrink-0 rounded bg-muted px-1.5 font-mono text-[10px] font-semibold tracking-normal text-foreground/70 tabular-nums">
+          <span className="shrink-0 rounded bg-muted px-1.5 font-mono text-2xs font-semibold tracking-normal text-foreground/70 tabular-nums">
             {badge}
           </span>
         )}
@@ -199,7 +199,7 @@ export function AdminSection({
                 href={item.href}
                 onClick={() => onClose?.()}
                 className={cn(
-                  'flex items-center justify-between rounded-xl px-3 py-1.5 text-[13.5px] font-medium transition-all duration-150',
+                  'flex items-center justify-between rounded-xl px-3 py-1.5 text-sm font-medium transition-all duration-150',
                   isActive
                     ? `${colors.bg} ${colors.text}`
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'

@@ -64,7 +64,11 @@ export function OwnerClubBanner({
 
         <Link
           href="/owner"
-          className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-warning-800 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-warning-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warning-600 dark:bg-warning-300 dark:text-warning-900 dark:hover:bg-warning-200"
+          // Dark: bewusst die statischen Stufen 400/500 — die Enden der
+          // Statusskala sind seit 16.08.2026 themefähig (bg-*-300 wird im
+          // Dark Mode dunkel, text-*-900 hell), was diesen gefüllten Button
+          // umgedreht hätte. Siehe docs/handbook/dev/theming-design-tokens.md.
+          className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-warning-800 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-warning-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warning-600 dark:bg-warning-400 dark:text-gray-900 dark:hover:bg-warning-500"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Zurück zur Owner-Konsole

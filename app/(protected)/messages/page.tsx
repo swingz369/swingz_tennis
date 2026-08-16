@@ -549,7 +549,7 @@ function MessageList({
                   {person.full_name}
                 </span>
                 {isBroadcast && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-info-50 dark:bg-info-900/20 text-[9px] font-semibold text-info-700 dark:text-info-300 border border-info-100 dark:border-info-700/30">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-info-50 dark:bg-info-900/20 text-3xs font-semibold text-info-700 dark:text-info-300 border border-info-100 dark:border-info-700/30">
                     <Users className="h-2.5 w-2.5" />
                     Rundnachricht
                   </span>

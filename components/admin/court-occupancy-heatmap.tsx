@@ -64,7 +64,7 @@ export function CourtOccupancyHeatmap({ grid }: { grid: OccupancyGrid }) {
             <span
               key={`h-${h}`}
               aria-hidden="true"
-              className="grid place-items-center font-mono text-[9.5px] text-muted-foreground"
+              className="grid place-items-center font-mono text-3xs text-muted-foreground"
             >
               {h}
             </span>
@@ -76,7 +76,7 @@ export function CourtOccupancyHeatmap({ grid }: { grid: OccupancyGrid }) {
           ))}
         </div>
 
-        <div className="mt-3 flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
+        <div className="mt-3 flex items-center gap-1.5 font-mono text-2xs text-muted-foreground">
           <span>frei</span>
           {LEVELS.map((cls, i) => (
             <span key={i} aria-hidden="true" className={cn('block h-2.5 w-4 rounded-[3px]', cls)} />
@@ -92,7 +92,7 @@ export function CourtOccupancyHeatmap({ grid }: { grid: OccupancyGrid }) {
 function Row({ label, cells, hours }: { label: string; cells: number[]; hours: number[] }) {
   return (
     <>
-      <span className="grid place-items-center font-mono text-[9.5px] text-muted-foreground">
+      <span className="grid place-items-center font-mono text-3xs text-muted-foreground">
         {label}
       </span>
       {cells.map((ratio, i) => (
