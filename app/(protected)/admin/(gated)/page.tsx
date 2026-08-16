@@ -35,7 +35,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ScrollReveal } from '@/components/animations';
-import { formatAdminTimeHM } from '@/lib/utils/admin-date';
+import { formatDateTime } from '@/lib/format';
 import { buildSetupChecklist, getSetupCounts } from '@/lib/setup-checklist';
 
 export const dynamic = 'force-dynamic';
@@ -452,7 +452,7 @@ export default async function AdminPage() {
     id: string;
     memberName: string;
     courtName: string;
-    time: string;
+    dateTime: string;
     statusLabel: string;
     statusTone: 'success' | 'error' | 'warning' | 'default';
   };
@@ -465,7 +465,7 @@ export default async function AdminPage() {
         id: b.id as string,
         memberName: (u as Record<string, string>)?.full_name || 'Unbekannt',
         courtName: (court as Record<string, string>)?.name ?? '—',
-        time: formatAdminTimeHM(b.session_start_time as string),
+        dateTime: formatDateTime(b.session_start_time as string),
         statusLabel: bookingStatusLabel[status] ?? status,
         statusTone: bookingStatusTone[status] ?? 'default',
       };
@@ -894,13 +894,11 @@ export default async function AdminPage() {
                           >
                             {b.memberName}
                           </TableCell>
-                          <TableCell
-                            className={cn(
-                              BODY_CELL,
-                              'whitespace-nowrap font-mono text-xs text-muted-foreground'
-                            )}
-                          >
-                            {b.courtName} · {b.time}
+                          <TableCell className={cn(BODY_CELL, 'whitespace-nowrap text-xs')}>
+                            <span className="block font-medium text-foreground">{b.courtName}</span>
+                            <span className="block font-mono text-muted-foreground">
+                              {b.dateTime}
+                            </span>
                           </TableCell>
                           <TableCell className={cn(BODY_CELL, 'whitespace-nowrap text-right')}>
                             <span
