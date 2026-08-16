@@ -60,7 +60,7 @@ export interface Club {
   name: string;
   description?: string;
   maxMembers: number;
-  defaultHourlyRate: number;
+  defaultHourlyRate?: number;
   status: 'active' | 'inactive' | 'suspended';
   address?: string;
   city?: string;
@@ -238,15 +238,7 @@ export interface AnalyticsSummary {
 // ============================================================================
 
 export type AuditAction =
-  | 'create'
-  | 'update'
-  | 'delete'
-  | 'login'
-  | 'logout'
-  | 'approve'
-  | 'reject'
-  | 'cancel'
-  | 'restore';
+  'create' | 'update' | 'delete' | 'login' | 'logout' | 'approve' | 'reject' | 'cancel' | 'restore';
 
 export interface AuditLog {
   id: string;

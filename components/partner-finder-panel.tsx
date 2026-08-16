@@ -278,7 +278,7 @@ export function PartnerFinderPanel({ showAdminBadge }: PartnerFinderPanelProps =
                           >
                             {match.compatibilityScore}
                           </span>
-                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">
+                          <span className="text-3xs text-muted-foreground uppercase tracking-wider">
                             Score
                           </span>
                         </div>
@@ -490,7 +490,7 @@ export function PartnerFinderPanel({ showAdminBadge }: PartnerFinderPanelProps =
                 )}
                 <Badge variant="outline" className="text-2xs gap-1">
                   <Shuffle className="h-3 w-3" />
-                  KI-gestützt
+                  Algorithmus-basiert
                 </Badge>
               </div>
             </div>

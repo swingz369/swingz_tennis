@@ -66,7 +66,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       }
       const result = await db
         .select({
-          default_hourly_rate: clubs.default_hourly_rate,
           bundesland: clubs.bundesland,
           billing_unit_minutes: clubs.billing_unit_minutes,
           tax_rate: clubs.tax_rate,
@@ -80,7 +79,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         .where(eq(clubs.id, id))
         .limit(1);
       const row = result[0];
-      const defaultHourlyRate = row?.default_hourly_rate ? Number(row.default_hourly_rate) : 15.0;
 
       const baseResponse = {
         id: club.getId().getValue(),
@@ -89,7 +87,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         openingHours: club.getOpeningHours(),
         status: club.getStatus(),
         memberCount: club.getMemberCount(),
-        defaultHourlyRate,
         bundesland: row?.bundesland ?? null,
         billing_unit_minutes: row?.billing_unit_minutes ?? 60,
         tax_rate: row?.tax_rate ?? 0,
@@ -209,7 +206,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         // aktuell nicht — diese werden direkt über Drizzle geschrieben.
         // Hier explizit aufzunehmen ist sicherer als auf der Domain zu schummeln.
         const hasExtraUpdates =
-          input.defaultHourlyRate !== undefined ||
           input.bundesland !== undefined ||
           input.billing_unit_minutes !== undefined ||
           input.tax_rate !== undefined ||
@@ -223,9 +219,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           await db
             .update(clubs)
             .set({
-              ...(input.defaultHourlyRate !== undefined && {
-                default_hourly_rate: input.defaultHourlyRate.toFixed(2),
-              }),
               ...(input.bundesland !== undefined && { bundesland: input.bundesland }),
               ...(input.billing_unit_minutes !== undefined && {
                 billing_unit_minutes: input.billing_unit_minutes,

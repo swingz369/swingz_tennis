@@ -72,6 +72,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
+import { useActingAsMemberId } from '@/hooks/use-effective-member';
 import { createClient } from '@/lib/supabase/client';
 import { useCourts } from '@/hooks/use-courts';
 import {
@@ -102,6 +103,7 @@ import {
   CourtCalendarLegend,
 } from '@/components/court-calendar-shared';
 import { apiFetch } from '@/lib/api-fetch';
+import { isDayClosed, CLOSED_DAY_ERROR } from '@/lib/booking/opening-hours';
 import { SessionCancelDialog } from '@/components/session-cancel-dialog';
 
 /* ─────────────────── Types ─────────────────── */
@@ -168,7 +170,8 @@ function findNextFreeSlot(
   courts: { id: string; name: string }[],
   sessions: Session[],
   closures: CourtClosure[],
-  getPlanEntries: (courtId: string, dayOfWeek: number) => (PlanEntry & { court_id: string })[]
+  getPlanEntries: (courtId: string, dayOfWeek: number) => (PlanEntry & { court_id: string })[],
+  openingHours: unknown
 ): { courtId: string; courtName: string; date: Date; timeSlot: string } | null {
   if (courts.length === 0) return null;
   const now = new Date();
@@ -186,7 +189,8 @@ function findNextFreeSlot(
           timeSlot,
           sessions,
           planEntriesForDay,
-          closures
+          closures,
+          openingHours
         );
         return status === 'available';
       });
@@ -239,7 +243,7 @@ function DraggableSessionCard({
       }`}
     >
       {isCancelled && (
-        <div className="text-[9px] font-semibold text-error-600 uppercase tracking-wide mb-0.5">
+        <div className="text-3xs font-semibold text-error-600 uppercase tracking-wide mb-0.5">
           Abgesagt
         </div>
       )}
@@ -268,7 +272,7 @@ function DraggableSessionCard({
             e.stopPropagation();
             onCancelSession(session);
           }}
-          className="mt-1 w-full text-[9px] text-error-500 opacity-0 group-hover:opacity-100 transition-opacity hover:underline text-left"
+          className="mt-1 w-full text-3xs text-error-500 opacity-0 group-hover:opacity-100 transition-opacity hover:underline text-left"
           title="Training absagen"
         >
           Training absagen
@@ -386,7 +390,7 @@ function PositionedSessionBlock({
       }}
     >
       {isCancelledSession && (
-        <div className="text-[9px] font-semibold text-error-600 uppercase tracking-wide mb-0.5">
+        <div className="text-3xs font-semibold text-error-600 uppercase tracking-wide mb-0.5">
           Abgesagt
         </div>
       )}
@@ -450,7 +454,7 @@ function PositionedSessionBlock({
       )}
       {/* Booking count badge */}
       {isBooked && session.currentBookings && session.currentBookings > 0 && (
-        <div className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-warning-600 text-white text-[9px] font-bold shadow-sm">
+        <div className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-warning-600 text-white text-3xs font-bold shadow-sm">
           {session.currentBookings}
         </div>
       )}
@@ -461,7 +465,7 @@ function PositionedSessionBlock({
             e.stopPropagation();
             onCancelSession(session);
           }}
-          className="absolute bottom-1 right-1 text-[9px] text-error-500 opacity-0 group-hover/block:opacity-100 transition-opacity hover:underline"
+          className="absolute bottom-1 right-1 text-3xs text-error-500 opacity-0 group-hover/block:opacity-100 transition-opacity hover:underline"
           title="Training absagen"
         >
           Absagen
@@ -703,11 +707,13 @@ export default function UnifiedCourtCalendar({
 
   // ── User context ──
   const { data: clubData } = useUserClub();
+  const openingHours = clubData?.club?.openingHours ?? null;
   const { data: memberData } = useUserMember();
   const { data: userRoles = [], isLoading: rolesLoading } = useUserRoles();
 
   const clubId = clubData?.clubId ?? initialClubId ?? null;
-  const memberId = memberData?.memberId ?? null;
+  const actingAsMemberId = useActingAsMemberId();
+  const memberId = actingAsMemberId ?? memberData?.memberId ?? null;
   const isAdmin = userRoles.some((r) => r === 'admin' || r === 'superadmin');
   const isTrainer = userRoles.some((r) => r === 'trainer');
 
@@ -728,7 +734,11 @@ export default function UnifiedCourtCalendar({
 
   // ── Data fetching ──
   const { data: courts = [], isLoading: courtsLoading } = useCourts(clubId);
-  const { data: sessions = [], isLoading: sessionsLoading } = useSessions(clubId);
+  const { data: sessions = [], isLoading: sessionsLoading } = useSessions(
+    clubId,
+    undefined,
+    actingAsMemberId
+  );
   const { data: seasonPlanData } = useSeasonPlanGrid(activeSeasonId);
   const planSlots: PlanEntry[] = useMemo(() => seasonPlanData?.slots ?? [], [seasonPlanData]);
 
@@ -907,8 +917,15 @@ export default function UnifiedCourtCalendar({
     [getPlanEntriesForCourtAndDay]
   );
   const nextFreeSlot = useMemo(
-    () => findNextFreeSlot(courts, visibleSessions, courtClosures, getPlanEntriesForNextFree),
-    [courts, visibleSessions, courtClosures, getPlanEntriesForNextFree]
+    () =>
+      findNextFreeSlot(
+        courts,
+        visibleSessions,
+        courtClosures,
+        getPlanEntriesForNextFree,
+        openingHours
+      ),
+    [courts, visibleSessions, courtClosures, getPlanEntriesForNextFree, openingHours]
   );
 
   // ── Direct booking (walk-in) ──
@@ -943,6 +960,11 @@ export default function UnifiedCourtCalendar({
         toast.error('Bitte einloggen um zu buchen');
         return;
       }
+      // Defense in depth: auch offene Sessions an geschlossenen Tagen nicht buchen.
+      if (isDayClosed(openingHours, date)) {
+        toast.error(CLOSED_DAY_ERROR);
+        return;
+      }
       const session = getSessionForSlot(courtId, date, timeSlot, sessions);
       if (session) {
         createBooking.mutate({ memberId, sessionId: session.id, clubId });
@@ -954,7 +976,7 @@ export default function UnifiedCourtCalendar({
         directBookSlot(courtId, dateStr, timeSlot, endTime);
       }
     },
-    [memberId, clubId, sessions, createBooking, directBookSlot]
+    [memberId, clubId, sessions, createBooking, directBookSlot, openingHours]
   );
 
   const handleCancelBooking = useCallback(
@@ -1467,7 +1489,7 @@ export default function UnifiedCourtCalendar({
                   {/* Time slots */}
                   <div className="space-y-0.5">
                     {TIME_SLOTS.map((timeSlot) => {
-                      const { status, session, closure, planEntry } = getSlotStatus(
+                      const { status, session, closure, planEntry, closedDay } = getSlotStatus(
                         court.id,
                         day,
                         timeSlot,
@@ -1475,7 +1497,8 @@ export default function UnifiedCourtCalendar({
                         planEntriesForDay.filter(
                           (e): e is PlanEntry & { court_id: string } => e.court_id !== null
                         ),
-                        courtClosures
+                        courtClosures,
+                        openingHours
                       );
                       const dropTargetId = `${court.id}::${day.toISOString()}::${timeSlot}`;
 
@@ -1483,14 +1506,15 @@ export default function UnifiedCourtCalendar({
                         <DroppableSlot key={timeSlot} id={dropTargetId} isAdmin={isAdmin}>
                           <div
                             className={`group min-h-[44px] rounded-xl text-2xs flex items-center transition-all duration-150 ${
-                              status === 'blocked' && isAdmin
+                              status === 'blocked' && isAdmin && !closedDay
                                 ? SLOT_STATUS_STYLES_ADMIN_BLOCKED
                                 : SLOT_STATUS_STYLES[status]
                             }`}
                             role="button"
                             tabIndex={
                               (!isAdmin && status === 'available') ||
-                              (isAdmin && (status === 'available' || status === 'blocked'))
+                              (isAdmin &&
+                                (status === 'available' || (status === 'blocked' && !closedDay)))
                                 ? 0
                                 : -1
                             }
@@ -1567,6 +1591,11 @@ export default function UnifiedCourtCalendar({
                                   <span className="text-2xs font-semibold">Gesperrt</span>
                                 </div>
                               )
+                            ) : status === 'blocked' && closedDay ? (
+                              <div className="flex items-center gap-1.5 px-2">
+                                <Lock className="h-3 w-3 text-gray-400" />
+                                <span className="text-2xs font-semibold">Geschlossen</span>
+                              </div>
                             ) : session ? (
                               isAdmin ? (
                                 <DraggableSessionCard
@@ -1582,7 +1611,7 @@ export default function UnifiedCourtCalendar({
                                       <span className="text-2xs font-bold truncate text-error-700 block">
                                         Deine Buchung
                                       </span>
-                                      <span className="text-[9px] text-error-500 font-medium">
+                                      <span className="text-3xs text-error-500 font-medium">
                                         {session.startTime}–{session.endTime}
                                       </span>
                                     </div>
@@ -1624,12 +1653,12 @@ export default function UnifiedCourtCalendar({
                                         <span className="text-2xs font-bold truncate text-warning-900 block">
                                           Belegt
                                         </span>
-                                        <span className="text-[9px] text-warning-700 font-semibold">
+                                        <span className="text-3xs text-warning-700 font-semibold">
                                           {session.startTime}–{session.endTime}
                                         </span>
                                       </div>{' '}
                                       {session.currentBookings && session.currentBookings > 0 && (
-                                        <span className="flex-shrink-0 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-warning-600 text-white text-[9px] font-bold">
+                                        <span className="flex-shrink-0 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-warning-600 text-white text-3xs font-bold">
                                           {session.currentBookings}
                                         </span>
                                       )}
@@ -1662,7 +1691,7 @@ export default function UnifiedCourtCalendar({
                                     <span className="truncate text-2xs font-bold text-info-800 block">
                                       {session.trainerName?.substring(0, 12) || 'Trainer'}
                                     </span>
-                                    <span className="text-[9px] text-info-500 font-medium">
+                                    <span className="text-3xs text-info-500 font-medium">
                                       {session.startTime}–{session.endTime}
                                     </span>
                                   </div>
@@ -1683,7 +1712,7 @@ export default function UnifiedCourtCalendar({
                                     {planEntry?.group_name || 'Gruppentraining'}
                                   </span>
                                   {planEntry?.trainer_name && (
-                                    <span className="text-[9px] text-info-500 font-medium truncate block">
+                                    <span className="text-3xs text-info-500 font-medium truncate block">
                                       {planEntry.trainer_name}
                                     </span>
                                   )}
@@ -1789,13 +1818,14 @@ export default function UnifiedCourtCalendar({
         {activeCourtId && (
           <div className="flex flex-col gap-2">
             {TIME_SLOTS.map((timeSlot) => {
-              const { status, session, closure } = getSlotStatus(
+              const { status, session, closure, closedDay } = getSlotStatus(
                 activeCourtId,
                 selectedDate,
                 timeSlot,
                 visibleSessions,
                 planEntriesForDay,
-                courtClosures
+                courtClosures,
+                openingHours
               );
               const [slotH, slotM] = timeSlot.split(':').map(Number);
               const isPast =
@@ -1815,7 +1845,7 @@ export default function UnifiedCourtCalendar({
               const canAct =
                 !isPast && (status === 'available' || (status === 'session' && isMember));
               const canOwnCancel = status === 'own-booking' && session?.bookingId;
-              const canAdminUnblock = isAdmin && status === 'blocked';
+              const canAdminUnblock = isAdmin && status === 'blocked' && !closedDay;
 
               let bar = '';
               let icon = <Plus className="h-3.5 w-3.5" />;
@@ -1848,12 +1878,14 @@ export default function UnifiedCourtCalendar({
               } else if (status === 'blocked') {
                 bar = 'bg-gray-700';
                 icon = <Lock className="h-3.5 w-3.5 text-gray-600" />;
-                label = isAdmin
-                  ? closure
-                    ? closure.description || REASON_LABEL_SHORT[closure.reason] || closure.reason
-                    : session?.notes ||
-                      (session?.sessionType === 'maintenance' ? 'Wartung' : 'Event')
-                  : 'Gesperrt';
+                label = closedDay
+                  ? 'Geschlossen'
+                  : isAdmin
+                    ? closure
+                      ? closure.description || REASON_LABEL_SHORT[closure.reason] || closure.reason
+                      : session?.notes ||
+                        (session?.sessionType === 'maintenance' ? 'Wartung' : 'Event')
+                    : 'Gesperrt';
                 cardClass = 'border-border bg-muted/40 text-muted-foreground';
               } else if (status === 'plan') {
                 bar = 'bg-info-300';
@@ -2151,11 +2183,11 @@ export default function UnifiedCourtCalendar({
                     {court.name}
                   </div>
                   <div className="flex items-center justify-center gap-1 mt-0.5">
-                    <span className="inline-flex items-center px-1 py-0.5 rounded-md bg-muted text-[8px] sm:text-[9px] font-medium text-muted-foreground border border-border/50">
+                    <span className="inline-flex items-center px-1 py-0.5 rounded-md bg-muted text-3xs sm:text-3xs font-medium text-muted-foreground border border-border/50">
                       {getSurfaceLabel(court.surface)}
                     </span>
                     {court.hasIndoor && (
-                      <span className="inline-flex items-center px-1 py-0.5 rounded-md bg-info-50 text-[8px] sm:text-[9px] font-medium text-info-600 border border-info-100">
+                      <span className="inline-flex items-center px-1 py-0.5 rounded-md bg-info-50 text-3xs sm:text-3xs font-medium text-info-600 border border-info-100">
                         Indoor
                       </span>
                     )}

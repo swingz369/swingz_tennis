@@ -166,7 +166,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Fehler beim Löschen');
-      router.push('/admin/tournaments');
+      router.push('/admin/events?tab=tournaments');
     } catch (e) {
       toast.error(getErrorMessage(e));
     }
@@ -188,7 +188,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
     return (
       <div className="space-y-5">
         <Button variant="ghost" size="sm" asChild className="p-1 h-auto">
-          <Link href="/admin/tournaments">
+          <Link href="/admin/events?tab=tournaments">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Zurück
           </Link>
@@ -201,7 +201,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
               {error || 'Das Turnier existiert nicht.'}
             </p>
             <Button variant="outline" asChild className="mt-2">
-              <Link href="/admin/tournaments">Zur Turnier-Übersicht</Link>
+              <Link href="/admin/events?tab=tournaments">Zur Turnier-Übersicht</Link>
             </Button>
           </CardContent>
         </Card>
@@ -226,7 +226,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-start gap-4">
           <Button variant="ghost" size="sm" asChild className="p-1 h-auto mt-1">
-            <Link href="/admin/tournaments">
+            <Link href="/admin/events?tab=tournaments">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>

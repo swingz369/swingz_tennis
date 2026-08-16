@@ -34,16 +34,23 @@ export interface Session {
 
 export function useSessions(
   clubId: string | null,
-  dateRange?: { dateFrom?: string; dateTo?: string }
+  dateRange?: { dateFrom?: string; dateTo?: string },
+  actingAsMemberId?: string | null
 ) {
   return useQuery({
-    queryKey: [...QUERY_KEYS.sessions(clubId || ''), dateRange?.dateFrom, dateRange?.dateTo],
+    queryKey: [
+      ...QUERY_KEYS.sessions(clubId || ''),
+      dateRange?.dateFrom,
+      dateRange?.dateTo,
+      actingAsMemberId,
+    ],
     queryFn: async ({ signal }) => {
       if (!clubId) return [];
 
       const params = new URLSearchParams({ clubId });
       if (dateRange?.dateFrom) params.set('dateFrom', dateRange.dateFrom);
       if (dateRange?.dateTo) params.set('dateTo', dateRange.dateTo);
+      if (actingAsMemberId) params.set('actingAsMemberId', actingAsMemberId);
 
       const res = await apiFetch(`/api/sessions?${params}`, {
         credentials: 'include',

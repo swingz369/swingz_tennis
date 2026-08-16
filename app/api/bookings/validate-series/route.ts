@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
+import { isDayClosed } from '@/lib/booking/opening-hours';
 
 const log = createLogger('api:bookings:validate-series');
 
@@ -47,11 +48,27 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Platz gehört nicht zu diesem Verein' }, { status: 400 });
       }
 
+      // Geschlossene Tage aus den Vereins-Öffnungszeiten sperren.
+      const { data: clubHours } = await supabase
+        .from('clubs')
+        .select('opening_hours')
+        .eq('id', club_id)
+        .maybeSingle();
+
       // Validate each booking
       const results = await Promise.all(
         bookings.map(async (booking) => {
           const startDateTime = new Date(`${booking.date}T${booking.start_time}`);
           const endDateTime = new Date(`${booking.date}T${booking.end_time}`);
+
+          // Geschlossener Tag?
+          if (isDayClosed(clubHours?.opening_hours, startDateTime)) {
+            return {
+              date: booking.date,
+              valid: false,
+              error: 'Tag ist geschlossen',
+            };
+          }
 
           // Check for conflicts
           const { data: conflicts, error } = await supabase

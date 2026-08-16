@@ -5,6 +5,8 @@
 
 Was es in diesem Projekt an Adressen gibt, was sich hinter jeder verbirgt und wo die dazugehörigen Zugangsdaten liegen.
 
+> **Schnellzugriff:** Die Links dieser Datei gibt es klickbar (mit Kopier-Buttons) auf der lokalen Dev-Seite `/dev` — nur im Dev-Modus erreichbar, in Produktion 404.
+
 > **Regel für diese Datei:** Hier stehen **keine Passwörter, Keys oder Tokens** — sie ist in Git. Jeder Eintrag nennt stattdessen den Fundort des Geheimnisses. Wer ein Passwort hier einträgt, veröffentlicht es.
 
 ---

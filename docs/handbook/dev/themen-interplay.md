@@ -62,7 +62,7 @@ sequenceDiagram
     SC->>SC: cron over Wochen notify-team
 ```
 
-**Modules beteiligt:** `seasons` (core), `ai_matchmaking` (optional).
+**Modules beteiligt:** `seasons` (core).
 **Files:** `app/(protected)/admin/(gated)/seasons/[id]/planning/`, `app/api/ai/season-cluster/route.ts`.
 
 ## 💳 3. Member zahlt Rechnung via Stripe

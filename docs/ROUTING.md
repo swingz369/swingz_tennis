@@ -144,7 +144,9 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 /admin/season-plan/[seasonId]    ← Stundenplan-Detail
 /admin/trainers                  ← Trainer & Stunden
 /admin/hours-logs                ← Stundennachweise
-/admin/tournaments               ← Turniere
+/admin/events                   ← Veranstaltungen (Hub: Turniere + Sonderveranstaltungen)
+/admin/tournaments               ← → /admin/events?tab=tournaments (Alt-Einstieg)
+/admin/special-events            ← → /admin/events?tab=special-events (Alt-Einstieg)
 /admin/tournaments/new           ← Neues Turnier
 /admin/tournaments/[id]          ← Turnier-Detail
 /admin/schedules                 ← Zeitpläne
@@ -155,7 +157,7 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 ```
 /admin/courts                    ← Platz-Kalender
 /admin/courts/manage             ← Plätze verwalten
-/admin/ai/matchmaking            ← KI-Matchmaking
+/admin/partner-finder            ← Spielpartner-Suche
 /admin/season-plan               ← Saison-Stundenplan
 ```
 
@@ -459,7 +461,7 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 
 | Methode | Route                      |
 | ------- | -------------------------- |
-| POST    | `/api/ai/matchmaking`      |
+| GET     | `/api/partner-finder`      |
 | POST    | `/api/ai/churn-prediction` |
 | POST    | `/api/schedule/optimize`   |
 
@@ -495,13 +497,15 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 
 ### 9.17 Probetraining
 
-| Methode          | Route                                |
-| ---------------- | ------------------------------------ |
-| GET/POST         | `/api/trial-trainings`               |
-| GET/PATCH/DELETE | `/api/trial-trainings/[id]`          |
-| POST             | `/api/trial-trainings/[id]/convert`  |
-| POST             | `/api/trial-trainings/[id]/reminder` |
-| GET              | `/api/trial-trainings/stats`         |
+| Methode          | Route                                 |
+| ---------------- | ------------------------------------- |
+| GET/POST         | `/api/trial-trainings`                |
+| GET/PATCH/DELETE | `/api/trial-trainings/[id]`           |
+| POST             | `/api/trial-trainings/[id]/convert`   |
+| POST             | `/api/trial-trainings/[id]/reminder`  |
+| GET              | `/api/trial-trainings/stats`          |
+| POST             | `/api/public/trial-training/feedback` |
+| POST             | `/api/public/trial-training/signup`   |
 
 ### 9.18 Sonstige
 
@@ -518,12 +522,13 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 
 ### 9.19 Webhooks & Cron
 
-| Methode | Route                             | Funktion                    |
-| ------- | --------------------------------- | --------------------------- |
-| POST    | `/api/webhooks/stripe`            | Stripe-Webhook              |
-| POST    | `/api/webhooks/zapier`            | Zapier-Webhook              |
-| POST    | `/api/cron/billing-overdue`       | Cron: Mahnungen             |
-| POST    | `/api/reminders/booking-tomorrow` | Cron: Buchungs-Erinnerungen |
+| Methode | Route                             | Funktion                       |
+| ------- | --------------------------------- | ------------------------------ |
+| POST    | `/api/webhooks/stripe`            | Stripe-Webhook                 |
+| POST    | `/api/webhooks/zapier`            | Zapier-Webhook                 |
+| POST    | `/api/cron/billing-overdue`       | Cron: Mahnungen                |
+| GET     | `/api/cron/trial-followup`        | Cron: Trial-Nurture-Follow-ups |
+| POST    | `/api/reminders/booking-tomorrow` | Cron: Buchungs-Erinnerungen    |
 
 ---
 

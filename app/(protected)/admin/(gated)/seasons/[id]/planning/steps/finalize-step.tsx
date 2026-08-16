@@ -452,9 +452,9 @@ export function FinalizeStep() {
                   <div>
                     <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      Kosten pro Mitglied
+                      Rechnungen
                       <Badge variant="secondary" className="text-2xs ml-1">
-                        {billingPreview.memberPreviews.length}
+                        {billingPreview.invoiceCount}
                       </Badge>
                     </h4>
                     <div className="rounded-xl border border-border overflow-hidden max-h-[420px] overflow-y-auto">
@@ -490,7 +490,20 @@ export function FinalizeStep() {
                               } hover:bg-muted/30 transition-colors`}
                             >
                               <td className="px-3 py-2.5 font-medium text-foreground">
-                                {member.memberName}
+                                <span className="inline-flex items-center gap-2">
+                                  {member.memberName}
+                                  {member.collectiveMembers &&
+                                    member.collectiveMembers.length > 1 && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-2xs gap-1"
+                                        title={member.collectiveMembers.join(', ')}
+                                      >
+                                        <Users className="h-3 w-3" />
+                                        Familie
+                                      </Badge>
+                                    )}
+                                </span>
                               </td>
                               <td className="px-3 py-2.5 text-muted-foreground">
                                 {member.groupName}

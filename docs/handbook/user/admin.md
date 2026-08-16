@@ -15,7 +15,7 @@
 - Sessions planen, Bookings verwalten
 - Saison-Planung (Wizard), KI-Clustering
 - Court- und Court-Type-Verwaltung
-- Pricing-Regeln (wenn `dynamic_pricing` aktiv)
+- Preisregeln (Peak/Off-Peak, Saison-Aufschläge)
 - Rechnungen erstellen, Mahnwesen
 - Tournament & Liga-Verwaltung (wenn Modul aktiv)
 - Trainer-Verwaltung: Verfügbarkeiten, Abwesenheiten, Hours-Log, Member-Notes
@@ -44,7 +44,7 @@ Beim Login landest du hier. Das Dashboard zeigt:
 | `/admin/members/[id]/invoices`    | Rechnungs-Tab des Members                                                             |
 | `/admin/members/[id]/preferences` | Spieler-Präferenzen (Niveau, Verfügbarkeiten)                                         |
 | `/admin/members/new`              | Direkt-Anlage (meist lieber via Einladen)                                             |
-| `/admin/members/family`           | Familien-Modus: mehrere Mitglieder einer Familie, Sammel-Rechnung                     |
+| `/admin/members/family`           | Familiengruppen anlegen, Mitglieder zuordnen (Eltern verwalten Kinder)                |
 | `/admin/members/invite`           | E-Mail-Einladung                                                                      |
 
 **Workflow: Mitglied einladen**
@@ -81,6 +81,10 @@ Beim Login landest du hier. Das Dashboard zeigt:
 4. /admin/seasons/[id]/publish → in Produktion nehmen
 5. /admin/seasons/[id]/billing → Rechnungen generieren
 ```
+
+Familien werden dabei zu **einer Sammel-Rechnung an den Erwachsenen** zusammengefasst
+(im Finalize-Schritt als „Familie"-Badge erkennbar); die Kinderpositionen stehen
+aufgeschlüsselt in derselben Rechnung.
 
 ### Sessions & Bookings (`/admin/sessions*`, `/admin/seasons*`)
 
@@ -133,20 +137,13 @@ Plätze sind auch Smart-Court-relevant → IoT-Integration via `/admin/hardware/
 3. Pro Member: LineItem mit Status `pending` → INSERT
 4. Versand via `/api/notifications/dispatch` → E-Mail mit PDF-Attachment
 
-### Pricing (dynamic_pricing Modul)
+### Preisregeln (Preisgestaltung)
 
-`/admin/pricing` → Pricing-Regeln definieren (Peak/Off-Peak, Sonn-/Feiertage, Saison-Aufschläge).
-
-Use:
-
-```ts
-import { isFeatureEnabled } from '@/lib/features';
-if (!(await isFeatureEnabled(clubId, 'dynamic_pricing'))) skip;
-```
+`/admin/pricing` → Preisregeln definieren (Peak/Off-Peak, Sonn-/Feiertage, Saison-Aufschläge). Immer verfügbar — kein Feature-Flag mehr.
 
 ### Turniere & Liga (je nach Modul)
 
-- `/admin/tournaments` — Turnier-Erstellung, Anmeldungen, Spielpläne
+- `/admin/events` — Veranstaltungen-Hub (Tabs „Turniere" + „Sonderveranstaltungen")
 - `/admin/leagues` — Liga-Verwaltung (nuLiga-Sync)
 - `/admin/leagues/[id]` — Tabs: Teams, Spieltage, Kader, Tabelle, Bewirtung
 

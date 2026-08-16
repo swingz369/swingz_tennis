@@ -46,6 +46,7 @@ interface TrialTrainingItem {
   notes?: string;
   createdAt: string;
   clubId?: string;
+  feedback?: { rating: number; comments: string; wouldRecommend: boolean };
 }
 
 interface TrainerOption {
@@ -71,9 +72,9 @@ export default function AdminTrialApprovals() {
   const [courts, setCourts] = useState<CourtOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'requested' | 'scheduled' | 'cancelled' | 'all'>(
-    'requested'
-  );
+  const [filter, setFilter] = useState<
+    'requested' | 'scheduled' | 'cancelled' | 'completed' | 'no_show' | 'all'
+  >('requested');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState(false);
@@ -242,6 +243,24 @@ export default function AdminTrialApprovals() {
     }
   };
 
+  const handleStatusChange = async (id: string, status: 'completed' | 'no_show') => {
+    setProcessing(true);
+    try {
+      const res = await apiFetch(`/api/trial-trainings/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error('Status konnte nicht geändert werden');
+      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleConvertToMember = async () => {
     if (!convertId || !adminClubId) return;
     const trial = requests.find((r) => r.id === convertId);
@@ -316,6 +335,24 @@ export default function AdminTrialApprovals() {
             Abgelehnt
           </Badge>
         );
+      case 'completed':
+        return (
+          <Badge className="bg-info-100 text-info-700 border-info-200 dark:bg-info-900/30 dark:text-info-400 dark:border-info-700/50">
+            Abgeschlossen
+          </Badge>
+        );
+      case 'no_show':
+        return (
+          <Badge className="bg-error-100 text-error-700 border-error-200 dark:bg-error-900/30 dark:text-error-400 dark:border-error-700/50">
+            Nicht erschienen
+          </Badge>
+        );
+      case 'converted':
+        return (
+          <Badge className="bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-700/50">
+            Mitglied geworden
+          </Badge>
+        );
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -341,21 +378,24 @@ export default function AdminTrialApprovals() {
 
       {/* Filter tabs */}
       <div className="flex gap-2 flex-wrap">
-        {(['requested', 'scheduled', 'cancelled', 'all'] as const).map((f) => (
+        {(
+          [
+            ['requested', 'Angefragt'],
+            ['scheduled', 'Geplant'],
+            ['completed', 'Abgeschlossen'],
+            ['no_show', 'Nicht erschienen'],
+            ['cancelled', 'Abgelehnt'],
+            ['all', 'Alle'],
+          ] as const
+        ).map(([key, label]) => (
           <Button
-            key={f}
-            variant={filter === f ? 'default' : 'outline'}
+            key={key}
+            variant={filter === key ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setFilter(f)}
+            onClick={() => setFilter(key)}
           >
-            {f === 'requested'
-              ? 'Angefragt'
-              : f === 'scheduled'
-                ? 'Geplant'
-                : f === 'cancelled'
-                  ? 'Abgelehnt'
-                  : 'Alle'}
-            {f === 'requested' && requestedCount > 0 && (
+            {label}
+            {key === 'requested' && requestedCount > 0 && (
               <span className="ml-1.5 bg-background/20 text-2xs px-1.5 py-0 rounded-full">
                 {requestedCount}
               </span>
@@ -508,7 +548,7 @@ export default function AdminTrialApprovals() {
                       </div>
                     )}
 
-                    {/* Zu Mitglied konvertieren — für geplante/abgeschlossene Probetrainings */}
+                    {/* Abgeschlossen/Nicht erschienen + Zu Mitglied konvertieren */}
                     {(r.status === 'scheduled' || r.status === 'completed') && (
                       <div className="pt-2 flex flex-wrap items-center gap-2">
                         {r.status === 'scheduled' &&
@@ -532,6 +572,28 @@ export default function AdminTrialApprovals() {
                               Erinnerung senden
                             </Button>
                           ))}
+                        {r.status === 'scheduled' && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={processing}
+                              onClick={() => handleStatusChange(r.id, 'completed')}
+                              className="gap-1"
+                            >
+                              <CheckCircle className="h-4 w-4" /> Abgeschlossen
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={processing}
+                              onClick={() => handleStatusChange(r.id, 'no_show')}
+                              className="gap-1"
+                            >
+                              <XCircle className="h-4 w-4" /> Nicht erschienen
+                            </Button>
+                          </>
+                        )}
                         {convertedIds.has(r.id) ? (
                           <Badge className="bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-700/50 gap-1">
                             <CheckCircle className="h-3 w-3" /> Konvertiert
@@ -548,6 +610,34 @@ export default function AdminTrialApprovals() {
                           >
                             <UserPlus className="h-4 w-4" /> Zu Mitglied konvertieren
                           </Button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Feedback des Interessenten */}
+                    {r.feedback && (
+                      <div className="mt-2 p-3 rounded-xl bg-muted/40 border border-border text-sm space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-foreground">Feedback</span>
+                          <span
+                            className="text-warning-500 tracking-tight"
+                            aria-label={`${r.feedback.rating} von 5 Sternen`}
+                          >
+                            {'★'.repeat(Math.min(Math.max(r.feedback.rating, 0), 5))}
+                            <span className="text-muted-foreground/40">
+                              {'★'.repeat(
+                                Math.max(5 - Math.min(Math.max(r.feedback.rating, 0), 5), 0)
+                              )}
+                            </span>
+                          </span>
+                          {r.feedback.wouldRecommend && (
+                            <Badge variant="outline" className="text-xs">
+                              Würde weiterempfehlen
+                            </Badge>
+                          )}
+                        </div>
+                        {r.feedback.comments && (
+                          <p className="text-muted-foreground text-xs">{r.feedback.comments}</p>
                         )}
                       </div>
                     )}

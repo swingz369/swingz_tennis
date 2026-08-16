@@ -113,7 +113,6 @@ interface ClubDetail {
   name: string;
   status: string;
   maxMembers: number;
-  defaultHourlyRate: number;
   bundesland: string | null;
   billing_unit_minutes: number | null;
   tax_rate: number | null;
@@ -135,7 +134,6 @@ interface FormState {
   status: string;
   max_members: number;
   bundesland: string;
-  default_hourly_rate: number;
   billing_unit_minutes: number;
   tax_rate: number;
   default_payment_method: string;
@@ -151,7 +149,6 @@ function toForm(d: ClubDetail): FormState {
     status: d.status ?? 'active',
     max_members: d.maxMembers ?? 100,
     bundesland: d.bundesland ?? '',
-    default_hourly_rate: d.defaultHourlyRate ?? 15,
     billing_unit_minutes: d.billing_unit_minutes ?? 60,
     tax_rate: d.tax_rate ?? 0,
     default_payment_method: d.default_payment_method ?? 'transfer',
@@ -222,12 +219,11 @@ export function ClubDetailSheet({
     try {
       const res = await apiFetch(`/api/clubs/${clubId}`, {
         method: 'PATCH',
-        // API-Schema erwartet camelCase (maxMembers/defaultHourlyRate) — Form-State
-        // ist snake_case, hier explizit gemappt statt Feldnamen zu duplizieren.
+        // API-Schema erwartet camelCase für maxMembers — Form-State ist
+        // snake_case, hier explizit gemappt statt Feldnamen zu duplizieren.
         body: JSON.stringify({
           ...form,
           maxMembers: form.max_members,
-          defaultHourlyRate: form.default_hourly_rate,
         }),
       });
       if (!res.ok) {
@@ -447,42 +443,22 @@ export function ClubDetailSheet({
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="cd-hourly">Std.-Tarif (€)</Label>
-                    <Input
-                      id="cd-hourly"
-                      type="number"
-                      min={0}
-                      max={1000}
-                      step={0.5}
-                      value={form.default_hourly_rate}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          default_hourly_rate: Math.max(0, parseFloat(e.target.value) || 0),
-                        })
-                      }
-                      className="mt-1.5"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="cd-tax">USt. (%)</Label>
-                    <Input
-                      id="cd-tax"
-                      type="number"
-                      min={0}
-                      max={19}
-                      value={form.tax_rate}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          tax_rate: Math.max(0, parseInt(e.target.value, 10) || 0),
-                        })
-                      }
-                      className="mt-1.5"
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="cd-tax">USt. (%)</Label>
+                  <Input
+                    id="cd-tax"
+                    type="number"
+                    min={0}
+                    max={19}
+                    value={form.tax_rate}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        tax_rate: Math.max(0, parseInt(e.target.value, 10) || 0),
+                      })
+                    }
+                    className="mt-1.5"
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>

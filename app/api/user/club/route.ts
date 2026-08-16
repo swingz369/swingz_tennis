@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest) {
     const { data: clubRows, error: clubError } = await auth.supabase
       .from('clubs')
       .select(
-        'id, name, max_members, default_hourly_rate, status, bundesland, billing_unit_minutes, tax_rate, default_payment_method, invoice_number_prefix'
+        'id, name, max_members, status, bundesland, billing_unit_minutes, tax_rate, default_payment_method, invoice_number_prefix, opening_hours'
       )
       .eq('id', targetClubId)
       .limit(1);
@@ -40,13 +40,13 @@ export async function GET(_req: NextRequest) {
       id: string;
       name: string;
       max_members: number;
-      default_hourly_rate: number;
       status: string;
       bundesland: string | null;
       billing_unit_minutes: number | null;
       tax_rate: number | null;
       default_payment_method: string | null;
       invoice_number_prefix: string | null;
+      opening_hours: unknown;
     };
     return NextResponse.json({
       clubId: targetClubId,
@@ -54,13 +54,13 @@ export async function GET(_req: NextRequest) {
         id: club.id,
         name: club.name,
         maxMembers: club.max_members,
-        defaultHourlyRate: club.default_hourly_rate || 15.0,
         status: club.status,
         bundesland: club.bundesland ?? null,
         billingUnitMinutes: club.billing_unit_minutes ?? 60,
         taxRate: club.tax_rate ?? 0,
         defaultPaymentMethod: club.default_payment_method ?? 'transfer',
         invoicePrefix: club.invoice_number_prefix ?? '',
+        openingHours: club.opening_hours ?? null,
       },
     });
   });

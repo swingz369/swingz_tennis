@@ -12,10 +12,12 @@ export interface FamilyMember {
   relationship: string | null;
   dateOfBirth: string | null;
   isMinor: boolean;
+  isSelf: boolean;
 }
 
 export interface FamilyData {
   familyGroupId: string | null;
+  inviteCode: string | null;
   members: FamilyMember[];
   currentUserId: string;
   /** Whether the currently active account belongs to a minor */
@@ -66,6 +68,7 @@ export function useFamilyAccounts() {
         if (res.status === 404) {
           return {
             familyGroupId: null,
+            inviteCode: null,
             members: [],
             currentUserId: '',
             isMinor: false,
@@ -86,6 +89,7 @@ export function useFamilyAccounts() {
         relationship: m.relationship ?? null,
         dateOfBirth: m.dateOfBirth ?? m.date_of_birth ?? null,
         isMinor: computeIsMinor((m.dateOfBirth ?? m.date_of_birth) as string | null),
+        isSelf: Boolean(m.isSelf),
       }));
 
       // Find current user in the family
@@ -95,6 +99,7 @@ export function useFamilyAccounts() {
 
       return {
         familyGroupId: json.familyGroupId ?? null,
+        inviteCode: json.inviteCode ?? null,
         members,
         currentUserId,
         isMinor,
@@ -108,6 +113,7 @@ export function useFamilyAccounts() {
   // Determine effective state
   const familyData = data ?? {
     familyGroupId: null,
+    inviteCode: null,
     members: [],
     currentUserId: '',
     isMinor: false,
@@ -125,6 +131,13 @@ export function useFamilyAccounts() {
   const effectiveIsMinor = isParentViewingChild
     ? (activeChild?.isMinor ?? false)
     : familyData.isMinor;
+
+  // Erwachsener mit einem Familienkonto darf die Familie verwalten (Einladungscode
+  // anzeigen/erneuern). Bewusst altersbasiert statt `role === 'parent'`, weil der
+  // Admin-Pfad alle als 'member' anlegt.
+  const isAdult = !familyData.isMinor;
+  const hasFamily = familyData.familyGroupId !== null;
+  const canManageFamily = isAdult && hasFamily;
 
   // Whether the current logged-in user is a parent (has children in family)
   const isParent =
@@ -157,6 +170,9 @@ export function useFamilyAccounts() {
     isParentViewingChild,
     effectiveIsMinor,
     activeChild,
+    isAdult,
+    hasFamily,
+    canManageFamily,
     switchToChild,
     switchToOwnAccount,
   };

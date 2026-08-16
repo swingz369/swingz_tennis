@@ -72,6 +72,8 @@ const ADMIN_ROUTES: RouteTest[] = [
   { path: '/admin/analytics', expectedContent: /analytics|statistik|auswertung/i },
   { path: '/admin/settings', expectedContent: /einstellung|setting/i },
   { path: '/admin/hours-logs', expectedContent: /stunden|hours/i },
+  { path: '/admin/events', expectedContent: /turnier|veranstaltung|event/i },
+  // Alt-Einstiege — leiten auf /admin/events?tab=… um
   { path: '/admin/tournaments', expectedContent: /turnier|tournament/i },
   { path: '/admin/tournaments/new', expectedContent: /turnier|tournament|erstellen/i },
   { path: '/admin/onboarding', expectedContent: /Schritt|Verein|onboarding/i },

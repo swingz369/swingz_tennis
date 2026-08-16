@@ -65,7 +65,7 @@ test.describe('Admin Workflow Navigation', () => {
   });
 
   test('Admin: Navigate tournament creation flow', async ({ page }) => {
-    await page.goto('/admin/tournaments', { waitUntil: 'networkidle' });
+    await page.goto('/admin/events?tab=tournaments', { waitUntil: 'networkidle' });
     await expect(page.locator('body')).toBeVisible();
 
     // Find "New Tournament" button/link (defensiv — leerer Zustand hat evtl. keinen CTA)

@@ -16,6 +16,7 @@ import {
   ClipboardCheck,
   HardHat,
   MessageSquare,
+  Users,
 } from 'lucide-react';
 import { IconBox } from '@/components/ui/icon-box';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -251,6 +252,16 @@ export default async function MemberPage() {
               ]
             : []),
           { label: 'Rechnungen', href: '/billing', icon: CreditCard, variant: 'purple' },
+          ...(features.family_accounts === true
+            ? [
+                {
+                  label: 'Familienkonto',
+                  href: '/member/family',
+                  icon: Users,
+                  variant: 'teal' as const,
+                },
+              ]
+            : []),
           // Member sehen keine Sidebar (siehe protected-client-layout.tsx) —
           // was hier fehlt, ist für sie faktisch nicht erreichbar. Nachrichten
           // hingen vorher nur an den entfernten Hero-Pills, die eigene

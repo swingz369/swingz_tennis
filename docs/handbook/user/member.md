@@ -13,6 +13,7 @@
 - **Open-Matches** posten (suche Spielpartner)
 - **Profil** pflegen: Foto, Spieler-Niveau (DTB-Lizenz), Präferenzen
 - **SEPA-Lastschrift-Mandat** erteilen (für Beiträge)
+- **Familienkonto** verwalten: Kinderkonten per Einladungscode verknüpfen und für Kinder buchen (wenn Modul aktiv)
 - **Rechnungen** ansehen + per Stripe zahlen
 - **Messaging** mit Trainern
 - **Notifications** (Push + E-Mail) konfigurieren
@@ -45,12 +46,13 @@ Oben-Sektionen:
 
 ### Profil & Stammdaten
 
-| Page                    | Zweck                                                  |
-| ----------------------- | ------------------------------------------------------ |
-| `/member/profile`       | Stammdaten, Foto, Niveau, Spezialisierung              |
-| `/member/preferences`   | Spiel-Präferenzen (Schlägerseite, Lieblings-Reihen, …) |
-| `/member/sepa`          | SEPA-Lastschrift-Mandat                                |
-| `/member/notifications` | Push + E-Mail-Settings                                 |
+| Page                    | Zweck                                                      |
+| ----------------------- | ---------------------------------------------------------- |
+| `/member/profile`       | Stammdaten, Foto, Niveau, Spezialisierung                  |
+| `/member/preferences`   | Spiel-Präferenzen (Schlägerseite, Lieblings-Reihen, …)     |
+| `/member/sepa`          | SEPA-Lastschrift-Mandat                                    |
+| `/member/family`        | Familienkonto: Mitglieder verwalten, Einladungscode teilen |
+| `/member/notifications` | Push + E-Mail-Settings                                     |
 
 ### Finanzen
 
@@ -71,10 +73,10 @@ Oben-Sektionen:
 
 ### Spielpartner
 
-| Page                          | Zweck                      |
-| ----------------------------- | -------------------------- |
-| `/member/matching` (KI-Modul) | KI-Spielpartner-Empfehlung |
-| `/member/open-matches`        | Offene Matches suchen      |
+| Page                   | Zweck                                   |
+| ---------------------- | --------------------------------------- |
+| `/partner-finder`      | Spielpartner-Empfehlung (algorithmisch) |
+| `/member/open-matches` | Offene Matches suchen                   |
 
 ### Persönliches
 
@@ -148,17 +150,36 @@ POST /api/open-matches { date, start_time, end_time, level, court_id }
 Andere Members können "Join" klicken → Notification
 ```
 
-### 5. KI-Spielpartner-Empfehlung
+### 5. Spielpartner-Empfehlung
 
-UI: `/member/matching` (wenn `ai_matchmaking` Modul aktiv)
+UI: `/partner-finder` (wenn `partner_finder` Modul aktiv)
 
 ```
-POST /api/ai/matchmaking { preferences, level, availability_window }
+GET /api/partner-finder
 
-Effekt: Liste von 5-10 empfohlenen Spielpartnern
+Effekt: Liste von bis zu 10 empfohlenen Spielpartnern — deterministisch
+auf Basis von Niveau, Gruppen, gemeinsamen Sessions und Verfügbarkeit,
+ohne KI/LLM.
 ```
 
-### 6. Rechnung bezahlen
+### 6. Familienkonto verwalten
+
+UI: `/member/family` (wenn `family_accounts` Modul aktiv).
+
+```
+POST /api/family-accounts            → Familie erstellen (Elternteil wird parent)
+POST /api/family-accounts { inviteCode } → per Einladungscode beitreten
+PUT  /api/family-accounts            → neuen Einladungscode erzeugen (nur Erwachsene)
+```
+
+- Minderjährige werden anhand des Geburtsdatums erkannt und sehen keine Abrechnung.
+- Ein Elternteil wechselt in der Seitenleiste auf ein Kinderkonto und bucht dann
+  wirklich für das Kind (der Server prüft die Familienbeziehung).
+- In der Saison-Abrechnung wird eine Familie zu **einer Sammel-Rechnung an den
+  Erwachsenen** zusammengefasst; die Kinderpositionen sind je Familienmitglied
+  aufgeschlüsselt (`Kind: Position`).
+
+### 7. Rechnung bezahlen
 
 UI: `/member/billing/invoice/[id]` → "Jetzt zahlen" → Stripe-Checkout
 
@@ -184,7 +205,7 @@ POST /api/stripe/checkout { invoice_id: 'inv-123' }
 1. **DSGVO-Daten-Export**: Fordere 1× pro Jahr an, damit du weißt was über dich gespeichert ist.
 2. **SEPA-Lastschrift**: Prüfe monatlich Konto-Auszüge auf fehlerhafte Abbuchungen.
 3. **Push-Benachrichtigungen**: Browser fragt 1× pro Domain — verweigert du, siehst du keine Live-Changes.
-4. **Spielpartner-Suche**: Respektiere andere Levels; KI-Matching bevorzugt ähnliche Stärke.
+4. **Spielpartner-Suche**: Respektiere andere Levels; das Scoring bevorzugt ähnliche Stärke.
 
 ## 🧪 Tests
 

@@ -159,7 +159,7 @@ Flächendeckend im Einsatz — 30+ Stellen vereinheitlicht. Hat das frühere man
 
 ### 5.5 KI-Feature-Indikator ✅
 
-Einheitliches Pattern für KI-gestützte Features (Saisonplaner, Scheduler, Matchmaking):
+Einheitliches Pattern für KI-gestützte Features (Saisonplaner, Scheduler):
 
 - **Badge:** `bg-brand-accent/10 text-brand-accent border-brand-accent/20` + `Sparkles`-Icon (lucide-react)
 - **Glow:** `shadow-glow-accent` auf Hover

@@ -134,6 +134,20 @@ describe('getSlotStatus', () => {
     expect(result.session).toBeUndefined();
   });
 
+  it('returns "blocked" with closedDay flag for a closed weekday', () => {
+    // 2026-06-08 is a Monday (getDay() === 1).
+    const openingHours = { monday: { open: '08:00', close: '22:00', closed: true } };
+    const result = getSlotStatus(COURT_A, june8Berlin, '11:00', [], [], [], openingHours);
+    expect(result.status).toBe('blocked');
+    expect(result.closedDay).toBe(true);
+  });
+
+  it('keeps "available" when openingHours is empty/legacy (no closed flag)', () => {
+    const result = getSlotStatus(COURT_A, june8Berlin, '11:00', [], [], [], {});
+    expect(result.status).toBe('available');
+    expect(result.closedDay).toBeUndefined();
+  });
+
   it('returns "session" for a training session with no booking', () => {
     const s = makeSession({ bookedByUser: false, hasActiveBooking: false });
     const result = getSlotStatus(COURT_A, june8Berlin, '11:00', [s], []);

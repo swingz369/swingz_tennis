@@ -707,6 +707,9 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
             value={ctForm.hourly_rate}
             onChange={(e) => setCtForm({ ...ctForm, hourly_rate: parseFloat(e.target.value) || 0 })}
           />
+          <p className="text-xs text-muted-foreground">
+            Basispreis pro Buchungsstunde — 0 = kostenlos (z. B. Sommerplatz für Mitglieder).
+          </p>
         </div>
       </div>
       <label className="flex items-center gap-2 cursor-pointer">

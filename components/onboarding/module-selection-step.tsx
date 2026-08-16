@@ -10,6 +10,7 @@ import {
   Lock,
   CheckCircle2,
   ShoppingBag,
+  Shuffle,
   Trophy,
   FlaskConical,
   Users,
@@ -46,6 +47,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   ShoppingBag,
   Trophy,
   FlaskConical,
+  Shuffle,
   Sparkles,
 };
 

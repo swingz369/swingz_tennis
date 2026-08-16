@@ -12,6 +12,8 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
+import { isDayClosed, CLOSED_DAY_ERROR } from '@/lib/booking/opening-hours';
+import { resolveEffectiveMemberId } from '@/lib/family/family-auth';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:bookings:direct');
@@ -27,12 +29,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
 
-    const { courtId, date, startTime, endTime, clubId } = body as {
+    const { courtId, date, startTime, endTime, clubId, memberId } = body as {
       courtId?: string;
       date?: string;
       startTime?: string;
       endTime?: string;
       clubId?: string;
+      memberId?: string;
     };
 
     if (!courtId || !date || !startTime || !endTime || !clubId) {
@@ -41,6 +44,14 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // memberId darf nur der eigene User sein — oder ein minderjähriges Kind
+    // derselben Familiengruppe (Eltern buchen für ihre Kinder).
+    const resolution = await resolveEffectiveMemberId(auth.user.id, memberId);
+    if (resolution.error) {
+      return NextResponse.json({ error: resolution.error }, { status: 403 });
+    }
+    const effectiveMemberId = resolution.effectiveMemberId;
 
     // Build timestamps
     const timeslotStart = new Date(`${date}T${startTime}:00`);
@@ -57,6 +68,17 @@ export async function POST(req: NextRequest) {
     // Use service client for ad-hoc session creation (bypasses RLS on sessions)
     // Auth and role checks are already done above.
     const serviceClient = createServiceClient();
+
+    // Geschlossene Tage aus den Vereins-Öffnungszeiten sperren.
+    const { data: clubHours } = await serviceClient
+      .from('clubs')
+      .select('opening_hours')
+      .eq('id', clubId)
+      .maybeSingle();
+
+    if (isDayClosed(clubHours?.opening_hours, timeslotStart)) {
+      return NextResponse.json({ error: CLOSED_DAY_ERROR }, { status: 409 });
+    }
 
     // 1. Find the club's active schedule
     const { data: schedule, error: scheduleError } = await serviceClient
@@ -96,7 +118,7 @@ export async function POST(req: NextRequest) {
       const { count: weekBookings } = await serviceClient
         .from('bookings')
         .select('id', { count: 'exact', head: true })
-        .eq('member_id', auth.user.id)
+        .eq('member_id', effectiveMemberId)
         .eq('club_id', clubId)
         .in('status', ['confirmed', 'pending'])
         .gte('session_start_time', weekStart.toISOString())
@@ -154,7 +176,7 @@ export async function POST(req: NextRequest) {
       .from('bookings')
       .insert({
         club_id: clubId,
-        member_id: auth.user.id,
+        member_id: effectiveMemberId,
         schedule_id: schedule.id,
         session_id: session.id,
         court_id: courtId,
@@ -186,7 +208,7 @@ export async function POST(req: NextRequest) {
       {
         bookingId: booking.id,
         sessionId: session.id,
-        memberId: auth.user.id,
+        memberId: effectiveMemberId,
         status: 'confirmed',
         payment_status: requiresPayment ? 'pending' : null,
         requiresPayment,

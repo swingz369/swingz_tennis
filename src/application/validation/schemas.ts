@@ -32,39 +32,41 @@ export const createClubSchema = z.object({
     .int()
     .positive('Max members must be positive')
     .max(10000, 'Max members cannot exceed 10000'),
-  defaultHourlyRate: z.coerce
-    .number()
-    .nonnegative('Hourly rate cannot be negative')
-    .max(1000, 'Hourly rate cannot exceed 1000')
-    .optional(),
   openingHours: z.object({
     monday: z.object({
       open: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
       close: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+      closed: z.boolean().optional(),
     }),
     tuesday: z.object({
       open: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
       close: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+      closed: z.boolean().optional(),
     }),
     wednesday: z.object({
       open: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
       close: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+      closed: z.boolean().optional(),
     }),
     thursday: z.object({
       open: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
       close: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+      closed: z.boolean().optional(),
     }),
     friday: z.object({
       open: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
       close: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+      closed: z.boolean().optional(),
     }),
     saturday: z.object({
       open: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
       close: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+      closed: z.boolean().optional(),
     }),
     sunday: z.object({
       open: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
       close: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+      closed: z.boolean().optional(),
     }),
   }),
 });

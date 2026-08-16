@@ -5,16 +5,18 @@
 
 ## Übersicht
 
-Du siehst alle eingegangenen Probetraining-Anfragen aus dem Public-Formular. Drei Status-Gruppen:
+Du siehst alle eingegangenen Probetraining-Anfragen aus dem Public-Formular. Status-Gruppen:
 
 - **Angefragt** (`requested`): Standard nach Public-Submit.
 - **Geplant** (`scheduled`): Nach deiner Bestätigung mit Trainer + Platz.
 - **Abgelehnt** (`cancelled`): Nach deiner Ablehnung mit Notiz.
-- **Alle**: alle + abgeschlossene (`completed`).
+- **Abgeschlossen** (`completed`): Training fand statt — startet den Nurture-Flow.
+- **Nicht erschienen** (`no_show`): kein Follow-up.
+- **Alle**: alle Gruppen.
 
 ## Schritt 1 — Filter
 
-Vier Pill-Buttons oben: **Angefragt** | **Geplant** | **Abgelehnt** | **Alle**. Default = „Angefragt" mit Badge „N ausstehend".
+Pill-Buttons oben: **Angefragt** | **Geplant** | **Abgelehnt** | **Abgeschlossen** | **Nicht erschienen** | **Alle**. Default = „Angefragt" mit Badge „N ausstehend".
 
 ## Schritt 2 — Liste prüfen
 
@@ -115,6 +117,15 @@ Klick → Modal **„Zu Mitglied konvertieren"**:
 - Bei Fehler: rote Error-Banner innerhalb des Modals mit `data.error`.
 
 > ⚠️ Konvertierte Personen können sich jetzt mit ihrer E-Mail einloggen (Passwort-Reset-Mail beim ersten Login, sofern implementiert).
+
+## Schritt 6 — Abgeschlossen / Nicht erschienen
+
+Bei `status === 'scheduled' || status === 'completed'` stehen zwei Aktionen zur Verfügung:
+
+- **„Abgeschlossen"** (CheckCircle) → `PATCH /api/trial-trainings/{id}` mit `{ "status": "completed" }`. Startet den Nurture-Flow (Danke-Mail mit Feedback- und Anmeldelink).
+- **„Nicht erschienen"** (XCircle) → `{ "status": "no_show" }`. Kein Follow-up.
+
+Abgegebenes Feedback wird direkt in der Card angezeigt: Sternwertung, „Würde weiterempfehlen"-Badge und Kommentar.
 
 ## Bulk-Konvertierung
 

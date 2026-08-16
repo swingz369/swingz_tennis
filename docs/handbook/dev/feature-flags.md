@@ -20,20 +20,19 @@ features: jsonb('features').$type<Record<string, boolean>>().notNull().default({
   finance: true,             // CORE — unveränderlich
   shop: false,
   tournaments: false,
-  trial_training: false,
-  ai_matchmaking: false,
+  trial_training: true,
+  partner_finder: false,
   weather_integration: false,
   league_lineup: false,
   work_duty: false,
-  dynamic_pricing: false,
 }),
 ```
 
-Die 13 Schlüssel müssen exakt der `CLUB_FEATURES`-Liste in `lib/features.ts` entsprechen.
+Die Schlüssel müssen exakt der `CLUB_FEATURES`-Liste in `lib/features.ts` entsprechen.
 
 ---
 
-## Modul-Registry (13 Module, verbatim aus `lib/features.ts:21-138`)
+## Modul-Registry (verbatim aus `lib/features.ts`)
 
 ### Core (4 — immer aktiv, nicht togglebar)
 
@@ -44,19 +43,18 @@ Die 13 Schlüssel müssen exakt der `CLUB_FEATURES`-Liste in `lib/features.ts` e
 | 3   | `seasons`  | Saisonplanung        | Saisonen, KI-Clustering und Stundenpläne für Trainingsgruppen.  | `CalendarDays`  | `seasons`       |
 | 4   | `finance`  | Finanzen             | Abrechnung, Beitragskategorien, Rechnungen und Mahnwesen.       | `DollarSign`    | `finance`       |
 
-### Optional (9 — togglebar über `useClubFeatures` Hook + Settings)
+### Optional (togglebar über `useClubFeatures` Hook + Settings)
 
-| #   | Key                   | Label                      | Beschreibung (de, verbatim)                                                                     | Icon           | Sidebar-Section       | Notes                         |
-| --- | --------------------- | -------------------------- | ----------------------------------------------------------------------------------------------- | -------------- | --------------------- | ----------------------------- |
-| 5   | `shop`                | Shop                       | Verkauf von Vereinsartikeln, Bällen und Zubehör direkt an Mitglieder.                           | `ShoppingBag`  | `shop`                | —                             |
-| 6   | `tournaments`         | Turniere                   | Organisation von Vereinsturnieren, Anmeldungen und Spielplänen.                                 | `Trophy`       | `tournaments`         | —                             |
-| 7   | `trial_training`      | Probetrainings             | Online-Anmeldeformular und Verwaltung von Schnupperstunden.                                     | `FlaskConical` | `trial_training`      | öffentlich zugänglich         |
-| 8   | `ai_matchmaking`      | KI-Matchmaking             | Spielpartner-Matching auf Basis von Niveau und Verfügbarkeit.                                   | `Sparkles`     | `ai_matchmaking`      | Cost-Passthrough per ADR-003  |
-| 9   | `weather_integration` | Wetter-Integration         | Automatische Platzsperren bei Regen und Schlechtwetter.                                         | `CloudRain`    | `weather_integration` | —                             |
-| 10  | `league_lineup`       | Liga & Mannschaft          | Mannschaftsaufstellung, Liga-Verwaltung und Spieltag-Planung.                                   | `Flag`         | `league_lineup`       | —                             |
-| 11  | `work_duty`           | Arbeitsdienst              | Gemeinschaftsdienst-Verwaltung mit Zuweisung und Nachverfolgung.                                | `HardHat`      | `work_duty`           | —                             |
-| 12  | `smart_court`         | Smart Court                | Automatische Platzkontrolle via Hardware-Integration (Nuki, Shelly, Loxone). Add-On € 79/Monat. | `Wifi`         | `smart_court`         | **separates Add-On** (Tier-3) |
-| 13  | `dynamic_pricing`     | Dynamische Preisgestaltung | Zeitbasierte Preise für Plätze: Peak/Off-Peak, Tagespreise und Saison-Aufschläge.               | `TrendingUp`   | `pricing`             | —                             |
+| #   | Key                   | Label              | Beschreibung (de, verbatim)                                                                         | Icon           | Sidebar-Section       | Notes                                                     |
+| --- | --------------------- | ------------------ | --------------------------------------------------------------------------------------------------- | -------------- | --------------------- | --------------------------------------------------------- |
+| 5   | `shop`                | Shop               | Verkauf von Vereinsartikeln, Bällen und Zubehör direkt an Mitglieder.                               | `ShoppingBag`  | `shop`                | —                                                         |
+| 6   | `tournaments`         | Turniere           | Organisation von Vereinsturnieren, Anmeldungen und Spielplänen.                                     | `Trophy`       | `tournaments`         | —                                                         |
+| 7   | `trial_training`      | Probetrainings     | Online-Anmeldeformular und Verwaltung von Schnupperstunden.                                         | `FlaskConical` | `trial_training`      | öffentlich zugänglich · Standard aktiv (`defaultEnabled`) |
+| 8   | `partner_finder`      | Spielpartner-Suche | Spielpartner-Matching auf Basis von Niveau und Verfügbarkeit (deterministisches Scoring, kein LLM). | `Shuffle`      | `play`                | Cost-Passthrough per ADR-003                              |
+| 9   | `weather_integration` | Wetter-Integration | Automatische Platzsperren bei Regen und Schlechtwetter.                                             | `CloudRain`    | `weather_integration` | —                                                         |
+| 10  | `league_lineup`       | Liga & Mannschaft  | Mannschaftsaufstellung, Liga-Verwaltung und Spieltag-Planung.                                       | `Flag`         | `league_lineup`       | —                                                         |
+| 11  | `work_duty`           | Arbeitsdienst      | Gemeinschaftsdienst-Verwaltung mit Zuweisung und Nachverfolgung.                                    | `HardHat`      | `work_duty`           | —                                                         |
+| 12  | `smart_court`         | Smart Court        | Automatische Platzkontrolle via Hardware-Integration (Nuki, Shelly, Loxone). Add-On € 79/Monat.     | `Wifi`         | `smart_court`         | **separates Add-On** (Tier-3)                             |
 
 **Comment im Code** (lib/features.ts:111):
 
@@ -74,7 +72,7 @@ Dies bezieht sich auf `smart_court` — es ist NICHT in `lib/hooks/use-club-feat
 | `CORE_FEATURE_KEYS`                  | `readonly FeatureKey[]`                                                          | `'members' \| 'trainers' \| 'seasons' \| 'finance'`                   |
 | `OPTIONAL_FEATURE_KEYS`              | `readonly FeatureKey[]`                                                          | alle 9 optionalen Keys                                                |
 | `ALL_FEATURE_KEYS`                   | `readonly FeatureKey[]`                                                          | alle 13                                                               |
-| `getDefaultFeatures()`               | `() => Record<string, boolean>`                                                  | Defaults: core=true, optional=false                                   |
+| `getDefaultFeatures()`               | `() => Record<string, boolean>`                                                  | Defaults: core=true, optional=false, `defaultEnabled`-Module=true     |
 | `sanitizeFeatureFlags(raw)`          | `(raw: Record<string, unknown> \| null \| undefined) => Record<string, boolean>` | Validiert DB-Wert; erzwingt Core-Immutability + Dependency-Resolution |
 | `getFeature(key)`                    | `(key: string) => ClubFeature \| undefined`                                      | Lookup mit `key`                                                      |
 | `getHiddenSidebarSections(features)` | `(features) => Set<string>`                                                      | Welche Sidebar-Sektionen sind versteckt                               |
@@ -122,13 +120,6 @@ Datei: [`hooks/use-club-features.ts`](../../../hooks/use-club-features.ts)
 const saved = sanitizeFeatureFlags(data?.features);
 ```
 
-### Dynamic-Pricing-Gate
-
-```ts
-// app/api/bookings/route.ts (siehe q2.0.4-Patch-Doku):
-if (!features.dynamic_pricing) return standardPrice;
-```
-
 ### Hardware-Vendor (Smart-Court-Tier)
 
 ```ts
@@ -151,7 +142,7 @@ if (!features.dynamic_pricing) return standardPrice;
 
 ## ⚠️ Bekannte Limitierungen (aus dem Code ableitbar)
 
-1. **`useClubFeatures`-API-Toggle-UI aktuell nur für `dynamic_pricing`** (siehe `app/(protected)/admin/(gated)/pricing/`) — die anderen 8 optionalen Features haben KEIN dediziertes Toggle-UI, nur globale Onboarding-Wizard-Auswahl.
+1. **Kein dediziertes Toggle-UI pro Feature** — optionale Features werden über den Onboarding-Wizard und Settings → Module geschaltet. (Das frühere Einzel-Toggle für `dynamic_pricing` in `/admin/pricing` wurde entfernt; Preisregeln sind jetzt ein fester Finanz-Bereich.)
 2. **`dependsOn` nicht aktiv** — kein Single-Feature hat aktuell eine Abhängigkeit definiert (Platzhalter-Logik in `sanitizeFeatureFlags` ist tot).
 3. **Owner-handling**: `clubs.features` ist per-Club; Owner-Accounts haben kein Club-Binding. Siehe [`lib/auth-common.ts`](../../../lib/auth-common.ts) und eigenes Owner-Kapitel.
 

@@ -30,6 +30,24 @@ export async function GET(_req: NextRequest) {
       .eq('id', auth.user.id)
       .maybeSingle();
 
+    // Trainingskosten-Schätzung für member-billing: Preis pro Session ergibt
+    // sich aus der Fee-Configuration des Mitglieds (amount × billing_unit_count),
+    // nicht mehr aus dem früheren globalen Vereins-Stundenpreis.
+    let trainingFeePerSession = 0;
+    if (auth.clubId) {
+      const { data: membership } = await (auth.supabase as any)
+        .from('user_club_memberships')
+        .select('fee_configuration_id, fee_configurations(amount, billing_unit_count)')
+        .eq('user_id', auth.user.id)
+        .eq('club_id', auth.clubId)
+        .eq('is_active', true)
+        .maybeSingle();
+      const feeConfig = membership?.fee_configurations;
+      const amount = Number(feeConfig?.amount ?? 0);
+      const units = Number(feeConfig?.billing_unit_count ?? 1);
+      trainingFeePerSession = amount * units;
+    }
+
     return NextResponse.json({
       memberId: auth.user.id,
       fullName: userProfile?.full_name || auth.user.user_metadata?.full_name || '',
@@ -44,6 +62,7 @@ export async function GET(_req: NextRequest) {
       emergencyPhone: userProfile?.emergency_phone || '',
       dateOfBirth: userProfile?.date_of_birth || '',
       dtbId: userProfile?.dtb_id || '',
+      trainingFeePerSession,
     });
   });
 }

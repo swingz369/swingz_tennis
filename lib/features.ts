@@ -56,6 +56,12 @@ export interface ClubFeature {
   nav?: AdminNavPlacement | null;
   /** Optional dependency on another feature. The dependent feature is only available if the dependency is enabled. */
   dependsOn?: string;
+  /**
+   * Optionales Modul, das für neue Vereine standardmäßig aktiv ist (weiterhin
+   * abschaltbar). Probetraining ist z. B. der primäre Mitglieder-Zulauf eines
+   * Tennisvereins — es soll niemand erst einschalten müssen.
+   */
+  defaultEnabled?: boolean;
   /** Display order in wizard and settings (asc). */
   order: number;
 }
@@ -111,6 +117,9 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     icon: 'FlaskConical',
     category: 'optional',
     nav: { section: 'members', label: 'Probetrainings', href: '/admin/trial-training' },
+    // Standard aktiv: Probetraining ist der primäre Neukunden-Zulauf — ein
+    // Verein soll es nicht erst entdecken und einschalten müssen.
+    defaultEnabled: true,
     order: 5,
   },
   {
@@ -149,7 +158,10 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Organisation von Vereinsturnieren, Anmeldungen und Spielplänen.',
     icon: 'Trophy',
     category: 'optional',
-    nav: { section: 'play', label: 'Turniere', href: '/admin/tournaments' },
+    // Kein eigener Admin-Link mehr: „Turniere" ist ein Tab im immer sichtbaren
+    // Veranstaltungen-Hub (/admin/events). Dieses Flag schaltet nur den Tab
+    // und die Mitglieder-Sicht (/member/tournaments).
+    nav: null,
     order: 9,
   },
   {
@@ -167,20 +179,10 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     order: 10,
   },
   {
-    key: 'dynamic_pricing',
-    label: 'Dynamische Preisgestaltung',
-    description:
-      'Zeitbasierte Preise für Plätze: Peak/Off-Peak, Tagespreise und Saison-Aufschläge.',
-    icon: 'TrendingUp',
-    category: 'optional',
-    nav: { section: 'finance', label: 'Preisregeln', href: '/admin/pricing' },
-    order: 11,
-  },
-  {
     key: 'partner_finder',
     label: 'Spielpartner-Suche',
     description: 'Spielpartner-Matching auf Basis von Niveau und Verfügbarkeit.',
-    icon: 'Sparkles',
+    icon: 'Shuffle',
     category: 'optional',
     nav: { section: 'play', label: 'Spielpartner-Suche', href: '/admin/partner-finder' },
     order: 12,
@@ -245,9 +247,11 @@ export const OPTIONAL_FEATURE_KEYS: readonly FeatureKey[] = CLUB_FEATURES.filter
 /** All keys as a tuple, useful for zod / runtime validation. */
 export const ALL_FEATURE_KEYS: readonly FeatureKey[] = CLUB_FEATURES.map((f) => f.key);
 
-/** Default enabled map — core on, optional off. */
+/** Default enabled map — core on, optional off, defaultEnabled-optionale on. */
 export function getDefaultFeatures(): Record<string, boolean> {
-  return Object.fromEntries(CLUB_FEATURES.map((f) => [f.key, f.category === 'core']));
+  return Object.fromEntries(
+    CLUB_FEATURES.map((f) => [f.key, f.category === 'core' || f.defaultEnabled === true])
+  );
 }
 
 /**

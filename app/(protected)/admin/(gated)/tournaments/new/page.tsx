@@ -66,7 +66,7 @@ export default function NewTournamentPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(extractErrorMessage(data) ?? 'Fehler beim Erstellen');
-      router.push('/admin/tournaments');
+      router.push('/admin/events?tab=tournaments');
     } catch (e) {
       setError(getErrorMessage(e));
     } finally {
@@ -78,7 +78,7 @@ export default function NewTournamentPage() {
     <div className="space-y-5">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" asChild className="p-1 h-auto">
-          <Link href="/admin/tournaments">
+          <Link href="/admin/events?tab=tournaments">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -245,7 +245,7 @@ export default function NewTournamentPage() {
 
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="outline" className="flex-1" asChild disabled={loading}>
-                <Link href="/admin/tournaments">Abbrechen</Link>
+                <Link href="/admin/events?tab=tournaments">Abbrechen</Link>
               </Button>
               <Button
                 type="submit"

@@ -21,6 +21,7 @@ import {
 import { toast } from 'sonner';
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import { useFamilyAccounts } from '@/hooks/use-family-accounts';
+import { useActingAsMemberId } from '@/hooks/use-effective-member';
 import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
 import type { Invoice, InvoiceItem } from '@/lib/invoice-pdf';
@@ -40,10 +41,14 @@ export default function MemberBilling() {
   const { data: clubData } = useUserClub();
   const { data: memberData } = useUserMember();
   const family = useFamilyAccounts();
-  const isMinorAccount = family.effectiveIsMinor;
+  const actingAsMemberId = useActingAsMemberId();
+  // Nur sperren, wenn das EINGELOGGTE Konto selbst minderjährig ist. Ein
+  // Elternteil, der in der Seitenleiste auf ein Kind gewechselt hat, darf
+  // dessen Abrechnung sehen — vorher traf die Sperre auch den Elternteil.
+  const isMinorAccount = family.isMinor;
 
   const clubId = clubData?.clubId ?? null;
-  const memberId = memberData?.memberId ?? null;
+  const memberId = actingAsMemberId ?? memberData?.memberId ?? null;
 
   // Show payment success/cancel notification on return from Stripe
   useEffect(() => {
@@ -58,7 +63,7 @@ export default function MemberBilling() {
     }
   }, [searchParams]);
 
-  const { data: sessions = [], isLoading } = useSessions(clubId);
+  const { data: sessions = [], isLoading } = useSessions(clubId, undefined, actingAsMemberId);
 
   // Fetch persisted invoices from the API on mount and whenever memberId changes
   useEffect(() => {
@@ -208,9 +213,11 @@ export default function MemberBilling() {
     return ['open', 'sent', 'partially_paid', 'overdue'].includes(invoice.status ?? '');
   };
 
-  const hourlyRate = clubData?.club?.defaultHourlyRate ?? 15.0;
+  // Trainingskosten je Session kommen aus der Fee-Configuration des Mitglieds
+  // (amount × billing_unit_count), nicht mehr aus einem globalen Vereins-Stundenpreis.
+  const feePerSession = memberData?.trainingFeePerSession ?? 0;
   const calculateMonthlyTotal = () => {
-    return monthSessions.length * hourlyRate;
+    return monthSessions.length * feePerSession;
   };
 
   const monthlyTotal = calculateMonthlyTotal();
@@ -347,7 +354,7 @@ export default function MemberBilling() {
             const seasonCosts = monthInvoices
               .filter(isSeasonInvoice)
               .reduce((sum, inv) => sum + inv.subtotal, 0);
-            const trainingCosts = monthSessions.length * hourlyRate;
+            const trainingCosts = monthSessions.length * feePerSession;
             const otherCosts = monthInvoices
               .filter((inv) => !isMembershipInvoice(inv) && !isSeasonInvoice(inv))
               .reduce((sum, inv) => sum + inv.subtotal, 0);
@@ -389,7 +396,7 @@ export default function MemberBilling() {
                         <div>
                           <div className="font-medium text-sm">Training</div>
                           <div className="text-xs text-muted-foreground">
-                            {monthSessions.length} Sessions × €{hourlyRate.toFixed(2)}
+                            {monthSessions.length} Sessions × €{feePerSession.toFixed(2)}
                           </div>
                         </div>
                       </div>

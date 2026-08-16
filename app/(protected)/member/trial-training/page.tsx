@@ -109,6 +109,9 @@ export default async function MemberTrialTrainingPage() {
 
   const email = profile?.email ?? user.email ?? null;
   const clubId = memberships?.[0]?.club_id ?? null;
+  // Ohne ?club=<clubId> würde die Anfrage mit leerer club_id gespeichert und
+  // tauchte bei keinem Verein auf — der Link muss den Vereins-Kontext tragen.
+  const publicTrialUrl = clubId ? `/trial-training?club=${clubId}` : '/trial-training';
 
   let trainings: TrialTrainingRow[] = [];
 
@@ -138,7 +141,7 @@ export default async function MemberTrialTrainingPage() {
             Lade Freunde und Familie zu einem kostenlosen Schnuppertermin ein
           </p>
         </div>
-        <Link href="/trial-training">
+        <Link href={publicTrialUrl}>
           <Button className="gap-2">
             <Sparkles className="h-4 w-4" />
             Freunde einladen
@@ -156,7 +159,7 @@ export default async function MemberTrialTrainingPage() {
               Noch keine Probetraining-Anfrage vorhanden. Lade Freunde oder Familie zu einem
               kostenlosen Schnuppertermin ein!
             </p>
-            <Link href="/trial-training">
+            <Link href={publicTrialUrl}>
               <Button className="gap-2">
                 <Calendar className="h-4 w-4" />
                 Probetraining anfragen

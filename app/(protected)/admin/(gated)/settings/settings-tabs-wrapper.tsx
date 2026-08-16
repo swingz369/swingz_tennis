@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/ui/page-header';
-import { Settings, Building2, Zap, Palette, ShieldAlert, BookOpen } from 'lucide-react';
+import { Settings, Building2, Zap, Palette, ShieldAlert, Landmark } from 'lucide-react';
 import {
   ClubSettingsContent,
   SystemSettingsContent,
@@ -32,7 +32,7 @@ export function SettingsTabsWrapper({
     <div className="space-y-6">
       <PageHeader
         title="Vereinseinstellungen"
-        description="Grundlegende Konfiguration deines Vereins"
+        description="Konfiguration, Branding und Sicherheit deines Vereins"
       />
 
       <Tabs defaultValue="club" className="space-y-6">
@@ -56,7 +56,7 @@ export function SettingsTabsWrapper({
             Branding
           </TabsTrigger>
           <TabsTrigger value="legal" className={TRIGGER_CLASS}>
-            <BookOpen className="h-4 w-4" />
+            <Landmark className="h-4 w-4" />
             Vereinsregister
           </TabsTrigger>
           <TabsTrigger value="audit-logs" className={TRIGGER_CLASS}>

@@ -95,7 +95,7 @@ export function TournamentsClient({ initialTournaments, pagination }: Tournament
         <PaginationNav
           meta={pagination}
           compact
-          onPageChange={(p) => router.push(`/admin/tournaments?page=${p}`)}
+          onPageChange={(p) => router.push(`/admin/events?tab=tournaments&page=${p}`)}
         />
       )}
     </div>

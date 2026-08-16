@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
+import { isDayClosed } from '@/lib/booking/opening-hours';
 
 interface RecurringPattern {
   frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
@@ -94,12 +95,28 @@ export async function POST(request: NextRequest) {
       if (bookings.length >= 52) break;
     }
 
+    // Geschlossene Tage aus den Vereins-Öffnungszeiten sperren.
+    const { data: clubHours } = await supabase
+      .from('clubs')
+      .select('opening_hours')
+      .eq('id', club_id)
+      .maybeSingle();
+
     // Create all bookings
     const bookingIds: string[] = [];
     const errors: Array<{ date: string; error: string }> = [];
 
     for (const booking of bookings) {
       try {
+        // Geschlossener Tag?
+        if (isDayClosed(clubHours?.opening_hours, booking.start_time)) {
+          errors.push({
+            date: booking.start_time.toISOString(),
+            error: 'Tag ist geschlossen',
+          });
+          continue;
+        }
+
         // Check availability
         const { data: conflicts } = await supabase
           .from('bookings')

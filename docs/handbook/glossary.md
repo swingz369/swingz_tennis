@@ -89,7 +89,7 @@ Prozess: Rechnung wird nicht fristgerecht bezahlt → Mahnstufe 1 (1 Tag nach F�
 
 ### Dynamic-Pricing
 
-Feature-Flag `dynamic_pricing`. Migration `20260725_dynamic_pricing_rules.sql` + `useClubFeatures`-Hook. Erlaubt zeitbasierte Preise: Peak/Off-Peak, Tagespreise, Saison-Aufschläge.
+Zeitbasierte Preise: Peak/Off-Peak, Tagespreise, Saison-Aufschläge. Migration `20260725_dynamic_pricing_rules.sql`. Immer verfügbar unter `/admin/pricing` (früher hinter dem Feature-Flag `dynamic_pricing`, das inzwischen entfernt wurde).
 
 ## E
 
@@ -117,7 +117,7 @@ Verhindert versehentliche Mutationen: `Object.freeze()` an Stellen, wo Konfig-Ob
 
 ### Gemini Flash
 
-LLM aktiv für KI-Matchmaking und Saison-Clustering. Provider: Google. Konfiguration via `GOOGLE_GENERATIVE_AI_API_KEY` in `lib/env.ts`. **Achtung**: kein Timeout/Rate-Limit im Code → P1-Finding (Kostenkontrolle fehlt).
+LLM für die KI-Saisonplanung. Provider: Google. Konfiguration via `GOOGLE_GENERATIVE_AI_API_KEY` in `lib/env.ts`. **Achtung**: kein Timeout/Rate-Limit im Code → P1-Finding (Kostenkontrolle fehlt). Die Spielpartner-Suche ist davon unabhängig und nutzt kein LLM.
 
 ### GoBD
 
@@ -145,9 +145,9 @@ JSON Web Token. Wird für ICS-Calendar-Subscription-URLs signiert (nicht für Au
 
 ## K
 
-### KI-Matchmaking
+### KI-Matchmaking (veraltet)
 
-KI-Modul (Gemini). Empfehlung von Spielpartnern auf Basis Niveau + Verfügbarkeit. UI: `/admin/ai/matchmaking`. Feature-Flag `ai_matchmaking`. Siehe `user/admin.md`.
+Veralteter Name der **Spielpartner-Suche**. Kein KI-/LLM-Modul: das Matching ist deterministisches Scoring (Niveau, Gruppen, gemeinsame Sessions, wöchentliche Verfügbarkeit). API: `GET /api/partner-finder`. UI: `/partner-finder` (Admin: `/admin/partner-finder`). Feature-Flag `partner_finder`. Siehe `user/admin.md`.
 
 ## L
 
@@ -201,11 +201,11 @@ Standard: `getPagination()` + `buildPaginationMeta()` aus `lib/pagination.ts`. *
 
 ### Pricing-Rule
 
-Dynamische Preisregel. Migration `20260725_dynamic_pricing_rules.sql`. UI im Admin unter `/admin/pricing`. Aktivierbar via `dynamic_pricing`-Feature.
+Dynamische Preisregel. Migration `20260725_dynamic_pricing_rules.sql`. UI im Admin unter `/admin/pricing` — immer verfügbar, kein Feature-Flag mehr.
 
 ### Probetraining (Trial-Training)
 
-Öffentliche Anmeldung ohne Login. URL `/trial-training`. Speichert in `trial_trainings`-Tabelle (Migration `20260506280000_trial_trainings_table.sql`). Siehe [`user/public-trial.md`](./user/public-trial.md).
+Öffentliche Anmeldung ohne Login. URL `/trial-training`. Standard-aktiv (kein Toggle nötig). Speichert in `trial_trainings`-Tabelle (Migration `20260506280000_trial_trainings_table.sql`). Nach Abschluss greift der Nurture-Flow: Feedback-Seite, Self-Service-Anmeldung und automatisierte Follow-up-Mails (Migration `20260816203000_trial_training_followup.sql`). Siehe [`user/public-trial.md`](./user/public-trial.md).
 
 ## Q
 

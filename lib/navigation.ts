@@ -101,7 +101,9 @@ export function adminSidebarSections(hidden: Hidden, belongsToTennisschule = fal
       items: [
         { name: 'Saisonplanung', href: '/admin/seasons' },
         { name: 'Plätze', href: '/admin/courts' },
-        { name: 'Sonderveranstaltungen', href: '/admin/special-events' },
+        // Turniere + Sonderveranstaltungen sind Tabs derselben Seite
+        // (Veranstaltungen-Hub) statt zweier Einträge.
+        { name: 'Veranstaltungen', href: '/admin/events' },
       ],
     },
     {
@@ -111,6 +113,9 @@ export function adminSidebarSections(hidden: Hidden, belongsToTennisschule = fal
       feature: 'finance',
       items: [
         { name: 'Abrechnung', href: '/admin/billing' },
+        // Preisregeln sind ein fester Bestandteil der Finanzen (früher hinter
+        // dem `dynamic_pricing`-Flag) — Admins sehen und verwalten sie immer.
+        { name: 'Preisregeln', href: '/admin/pricing' },
         // Vereine, die zu einer Tennisschule gehören, verwalten ihr Abo auf
         // Ebene der Tennisschule (Superadmin) — nicht pro Einzelverein.
         ...(!belongsToTennisschule ? [{ name: 'Abonnement', href: '/admin/subscription' }] : []),

@@ -10,6 +10,8 @@ import { errorResponse, internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createBookingSafe } from '@/lib/booking/safe-booking';
+import { isDayClosed, CLOSED_DAY_ERROR } from '@/lib/booking/opening-hours';
+import { resolveEffectiveMemberId } from '@/lib/family/family-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { DrizzlePricingRuleRepository } from '@/infrastructure/persistence/repositories/pricing-rule.repository';
 import { ClubId, CourtId } from '@/domain/value-objects';
@@ -44,7 +46,14 @@ export async function POST(req: NextRequest) {
     }
     const { sessionId, memberId, clubId } = validation.data;
 
-    const userId = memberId || auth.user.id;
+    // memberId darf nur der eigene User sein — oder ein minderjähriges Kind
+    // derselben Familiengruppe (Eltern buchen für ihre Kinder). Vorher wurde
+    // jede fremde memberId ungeprüft übernommen (IDOR).
+    const resolution = await resolveEffectiveMemberId(auth.user.id, memberId);
+    if (resolution.error) {
+      return NextResponse.json({ error: resolution.error }, { status: 403 });
+    }
+    const userId = resolution.effectiveMemberId;
     const supabase = auth.supabase;
 
     // Check session exists and get details
@@ -56,6 +65,17 @@ export async function POST(req: NextRequest) {
 
     if (sessionError || !session) {
       return NextResponse.json({ error: 'Session nicht gefunden' }, { status: 404 });
+    }
+
+    // Geschlossene Tage aus den Vereins-Öffnungszeiten sperren.
+    const { data: clubHours } = await supabase
+      .from('clubs')
+      .select('opening_hours')
+      .eq('id', clubId)
+      .maybeSingle();
+
+    if (isDayClosed(clubHours?.opening_hours, new Date(session.timeslot_start))) {
+      return NextResponse.json({ error: CLOSED_DAY_ERROR }, { status: 409 });
     }
 
     // Check booking_rules — how many bookings this week + payment required?
@@ -165,43 +185,45 @@ export async function POST(req: NextRequest) {
       }
     })();
 
-    // Calculate dynamic price only if the club has dynamic_pricing feature enabled
+    // Preisermittlung: Basis = Preis des Platztyps (0 = kostenlos, z. B. Sommer).
+    // Darüber werden aktive pricing_rules IMMER angewendet (z. B. Winter-Zuschlag).
+    // Der frühere Vereins-Stundenpreis (clubs.default_hourly_rate) wird nicht mehr gelesen.
     let priceInfo: { pricePerHour: number; effectivePricePerHour: number; source: string } | null =
       null;
     try {
-      const { data: clubData } = await supabase
-        .from('clubs')
-        .select('features, default_hourly_rate')
-        .eq('id', clubId)
-        .single();
+      const sessionStart = new Date(session.timeslot_start);
+      const sessionEnd = new Date(session.timeslot_end);
+      const bookingHours = (sessionEnd.getTime() - sessionStart.getTime()) / 3_600_000;
 
-      const features = clubData?.features as Record<string, unknown> | null;
-      const dynamicPricingEnabled = features?.dynamic_pricing === true;
-
-      if (dynamicPricingEnabled) {
-        const sessionStart = new Date(session.timeslot_start);
-        const sessionEnd = new Date(session.timeslot_end);
-        const bookingHours = (sessionEnd.getTime() - sessionStart.getTime()) / 3_600_000;
-        const result = await pricingRepo.calculatePrice(ClubId.fromString(clubId), {
-          courtId: session.court_id ? CourtId.fromString(session.court_id) : undefined,
-          startTime: sessionStart,
-          dayOfWeek: sessionStart.getDay(),
-          bookingHours,
-        });
-        priceInfo = {
-          pricePerHour: result.pricePerHour,
-          effectivePricePerHour: +(result.pricePerHour * result.multiplier).toFixed(2),
-          source: result.source,
-        };
-      } else {
-        // Default: uniform price from club's default_hourly_rate
-        const defaultRate = clubData?.default_hourly_rate ?? 15;
-        priceInfo = {
-          pricePerHour: Number(defaultRate),
-          effectivePricePerHour: Number(defaultRate),
-          source: 'default',
-        };
+      let basePricePerHour = 0;
+      if (session.court_id) {
+        const { data: court } = await supabase
+          .from('courts')
+          .select('court_type_id')
+          .eq('id', session.court_id)
+          .maybeSingle();
+        if (court?.court_type_id) {
+          const { data: courtType } = await supabase
+            .from('court_types')
+            .select('hourly_rate')
+            .eq('id', court.court_type_id)
+            .maybeSingle();
+          basePricePerHour = Number(courtType?.hourly_rate ?? 0);
+        }
       }
+
+      const result = await pricingRepo.calculatePrice(ClubId.fromString(clubId), {
+        courtId: session.court_id ? CourtId.fromString(session.court_id) : undefined,
+        startTime: sessionStart,
+        dayOfWeek: sessionStart.getDay(),
+        bookingHours,
+        basePricePerHour,
+      });
+      priceInfo = {
+        pricePerHour: result.pricePerHour,
+        effectivePricePerHour: +(result.pricePerHour * result.multiplier).toFixed(2),
+        source: result.source,
+      };
     } catch {
       // Non-blocking: price calculation failure should not prevent booking
       log.warn('[Bookings] Price calculation failed (non-blocking)');

@@ -4,6 +4,7 @@ import { internalErrorResponse } from '@/lib/api-error';
 import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { sendFollowupEmail } from '@/lib/trial-training/followup';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:trial-training');
@@ -127,6 +128,47 @@ export async function PATCH(
         } catch (joinErr) {
           // Non-fatal: log but don't fail the trial training update
           log.error('Auto-join failed', joinErr instanceof Error ? joinErr : undefined);
+        }
+      }
+
+      // Nurture-Flow: Abschlusszeit + Fortschritt setzen und die „Danke"-Mail
+      // (Feedback-Link + Anmeldelink) sofort senden. Erinnerung/letzter Anstoß
+      // kommen später aus dem Cron (/api/cron/trial-followup).
+      if (status === 'completed' && updated.participant?.email) {
+        try {
+          const { data: ttRow } = await auth.supabase
+            .from('trial_trainings')
+            .select(
+              'club_id, participant_id, participant_email, participant_first_name, followup_stage'
+            )
+            .eq('id', id)
+            .maybeSingle();
+
+          // Idempotent: nur beim ersten Abschluss „Danke" senden.
+          if (ttRow && ttRow.followup_stage === 0) {
+            await auth.supabase
+              .from('trial_trainings')
+              .update({ completed_at: new Date().toISOString(), followup_stage: 1 })
+              .eq('id', id);
+
+            const { data: clubRow } = await auth.supabase
+              .from('clubs')
+              .select('name')
+              .eq('id', ttRow.club_id)
+              .maybeSingle();
+
+            void sendFollowupEmail({
+              to: ttRow.participant_email,
+              name: ttRow.participant_first_name,
+              clubName: clubRow?.name ?? 'Dein Tennisverein',
+              kind: 'thanks',
+              participantId: ttRow.participant_id,
+            }).catch(() => {
+              // Mail ist nicht kritisch — nicht den Statuswechsel blockieren.
+            });
+          }
+        } catch (nurtureErr) {
+          log.warn('Nurture setup failed (non-blocking)', nurtureErr);
         }
       }
 

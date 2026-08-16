@@ -122,6 +122,7 @@ export class DrizzlePricingRuleRepository {
       startTime?: Date;
       dayOfWeek?: number;
       seasonId?: string;
+      basePricePerHour?: number;
     }
   ): Promise<{ pricePerHour: number; multiplier: number; ruleId?: string; source: string }> {
     const rule = await this.findBestMatch(
@@ -137,7 +138,7 @@ export class DrizzlePricingRuleRepository {
     );
 
     if (!rule) {
-      return { pricePerHour: 15.0, multiplier: 1.0, source: 'default' };
+      return { pricePerHour: opts.basePricePerHour ?? 15.0, multiplier: 1.0, source: 'default' };
     }
 
     let multiplier = 1.0;

@@ -5803,6 +5803,7 @@ export type Database = {
       trial_trainings: {
         Row: {
           club_id: string;
+          completed_at: string | null;
           converted_to_member_id: string | null;
           court_id: string;
           court_name: string;
@@ -5811,6 +5812,7 @@ export type Database = {
           feedback_comments: string | null;
           feedback_rating: number | null;
           feedback_would_recommend: boolean | null;
+          followup_stage: number;
           id: string;
           notes: string | null;
           participant_date_of_birth: string;
@@ -5828,6 +5830,7 @@ export type Database = {
         };
         Insert: {
           club_id: string;
+          completed_at?: string | null;
           converted_to_member_id?: string | null;
           court_id: string;
           court_name: string;
@@ -5836,6 +5839,7 @@ export type Database = {
           feedback_comments?: string | null;
           feedback_rating?: number | null;
           feedback_would_recommend?: boolean | null;
+          followup_stage?: number;
           id?: string;
           notes?: string | null;
           participant_date_of_birth: string;
@@ -5853,6 +5857,7 @@ export type Database = {
         };
         Update: {
           club_id?: string;
+          completed_at?: string | null;
           converted_to_member_id?: string | null;
           court_id?: string;
           court_name?: string;
@@ -5861,6 +5866,7 @@ export type Database = {
           feedback_comments?: string | null;
           feedback_rating?: number | null;
           feedback_would_recommend?: boolean | null;
+          followup_stage?: number;
           id?: string;
           notes?: string | null;
           participant_date_of_birth?: string;

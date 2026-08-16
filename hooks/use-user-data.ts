@@ -10,13 +10,13 @@ export interface UserClubData {
     id: string;
     name: string;
     maxMembers: number;
-    defaultHourlyRate: number;
     taxRate: number;
     status: string;
     bundesland: string | null;
     billingUnitMinutes: number;
     defaultPaymentMethod: string;
     invoicePrefix: string;
+    openingHours?: Record<string, unknown> | null;
   } | null;
 }
 
@@ -42,6 +42,7 @@ export interface UserMemberData {
   membershipEnd?: string;
   trainingGroup?: string;
   notes?: string;
+  trainingFeePerSession?: number;
 }
 
 const ROLE_HIERARCHY: Record<UserRole, number> = {

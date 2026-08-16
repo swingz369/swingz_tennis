@@ -8,6 +8,7 @@
 
 import { setHours, setMinutes, isSameDay, isBefore, isAfter } from 'date-fns';
 import type { Session } from '@/hooks/use-sessions';
+import { isDayClosed } from '@/lib/booking/opening-hours';
 
 /** Standard hourly time slots for court booking views (08:00–22:00) */
 export const CALENDAR_TIME_SLOTS = [
@@ -126,12 +127,14 @@ export function getSlotStatus(
   timeSlot: string,
   sessions: Session[],
   planEntries: CalendarPlanEntry[],
-  closures: CourtClosure[] = []
+  closures: CourtClosure[] = [],
+  openingHours: unknown = null
 ): {
   status: SlotStatus;
   session?: Session;
   closure?: CourtClosure;
   planEntry?: CalendarPlanEntry;
+  closedDay?: boolean;
 } {
   const session = getSessionForSlot(courtId, date, timeSlot, sessions);
   if (session) {
@@ -155,6 +158,10 @@ export function getSlotStatus(
     (e) => e.court_id === courtId && e.start_time <= timeSlot && e.end_time > timeSlot
   );
   if (planEntry) return { status: 'plan', planEntry };
+
+  // Geschlossener Tag (Öffnungszeiten): freie Slots als gesperrt anzeigen,
+  // statt erst beim Buchungsversuch mit "Tag ist geschlossen" zu scheitern.
+  if (isDayClosed(openingHours, date)) return { status: 'blocked', closedDay: true };
 
   return { status: 'available' };
 }

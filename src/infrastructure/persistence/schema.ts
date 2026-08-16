@@ -73,12 +73,11 @@ export const clubs = pgTable(
       finance: true,
       shop: false,
       tournaments: false,
-      trial_training: false,
+      trial_training: true,
       partner_finder: false,
       weather_integration: false,
       league_lineup: false,
       work_duty: false,
-      dynamic_pricing: false,
     }),
     status: varchar('status', { length: 20 }).notNull().default('active'),
     // Phase 1 Soft-Delete: deleted_at/deleted_by/deletion_reason über
@@ -1955,6 +1954,9 @@ export const trialTrainings = pgTable(
     feedback_would_recommend: boolean('feedback_would_recommend'),
     // Conversion
     converted_to_member_id: uuid('converted_to_member_id'),
+    // Nurture-Flow (Follow-up-Mails nach Abschluss) — 20260816203000_trial_training_followup.sql
+    completed_at: timestamp('completed_at', { withTimezone: true }),
+    followup_stage: integer('followup_stage').notNull().default(0),
     // Marketing consent (double opt-in) — see 20260730_trial_training_marketing_consent.sql
     marketing_consent: boolean('marketing_consent').notNull().default(false),
     marketing_consent_token: text('marketing_consent_token'),

@@ -76,11 +76,19 @@ describe('getDefaultFeatures', () => {
     }
   });
 
-  it('disables all optional features by default', () => {
+  it('disables all optional features by default (except defaultEnabled ones)', () => {
     const defaults = getDefaultFeatures();
-    for (const key of OPTIONAL_FEATURE_KEYS) {
-      expect(defaults[key]).toBe(false);
+    for (const f of CLUB_FEATURES) {
+      if (f.category !== 'optional') continue;
+      expect(defaults[f.key]).toBe(f.defaultEnabled === true);
     }
+  });
+
+  it('enables Probetraining by default (Neukunden-Zulauf ist Standard)', () => {
+    const defaults = getDefaultFeatures();
+    expect(defaults.trial_training).toBe(true);
+    const feature = CLUB_FEATURES.find((f) => f.key === 'trial_training');
+    expect(feature?.defaultEnabled).toBe(true);
   });
 
   it('returns a fresh object on each call (no shared state)', () => {

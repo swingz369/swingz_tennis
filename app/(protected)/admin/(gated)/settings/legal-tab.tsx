@@ -1,10 +1,11 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import { Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 
@@ -23,11 +24,25 @@ interface LegalInfo {
 export function LegalTab({ clubId }: { clubId: string }) {
   const [info, setInfo] = useState<LegalInfo>({});
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     apiFetch(`/api/clubs/${clubId}/legal`)
-      .then((r) => r.json())
-      .then((d) => setInfo(d.legal_info ?? {}));
+      .then((r) => {
+        if (!r.ok) throw new Error('load failed');
+        return r.json();
+      })
+      .then((d) => {
+        if (!cancelled) setInfo(d.legal_info ?? {});
+      })
+      .catch(() => toast.error('Vereinsregisterdaten konnten nicht geladen werden'))
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [clubId]);
 
   const set = (key: keyof LegalInfo, val: string) => setInfo((p) => ({ ...p, [key]: val }));
@@ -63,11 +78,20 @@ export function LegalTab({ clubId }: { clubId: string }) {
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-light" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Vereinsregister</CardTitle>
+        <CardHeader>
+          <CardTitle>Vereinsregister</CardTitle>
+          <CardDescription>Amtsgericht, Registernummer und Vorstand deines Vereins</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {field('Amtsgericht', 'amtsgericht', 'Amtsgericht Köln')}
@@ -75,23 +99,28 @@ export function LegalTab({ clubId }: { clubId: string }) {
           {field('Gründungsjahr', 'gruendungsjahr', '1965')}
           {field('1. Vorsitzender', 'vorsitzender', 'Max Mustermann')}
           {field('Kassenwart', 'kassenwart', 'Maria Muster')}
+          {field('Steuernummer', 'steuernummer', '222/5700/0352')}
         </CardContent>
       </Card>
+
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Bankverbindung</CardTitle>
+        <CardHeader>
+          <CardTitle>Bankverbindung</CardTitle>
+          <CardDescription>Kontodaten für Lastschriften und Überweisungen</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {field('Bank', 'bank', 'Sparkasse Köln')}
           {field('IBAN', 'iban', 'DE12 3456 7890 1234 5678 90')}
           {field('BIC', 'bic', 'COLSDE33')}
-          {field('Steuernummer', 'steuernummer', '222/5700/0352')}
         </CardContent>
       </Card>
-      <Button onClick={save} disabled={saving} className="gap-2">
-        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-        Speichern
-      </Button>
+
+      <div className="flex justify-end border-t border-border pt-5">
+        <Button onClick={save} disabled={saving} className="gap-2">
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {saving ? 'Wird gespeichert…' : 'Speichern'}
+        </Button>
+      </div>
     </div>
   );
 }

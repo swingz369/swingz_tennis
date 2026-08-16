@@ -35,6 +35,7 @@
 
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import { mergeFamilyMemberPreviews, type FamilyMember } from './family-invoice-merge';
 
 const log = createLogger('billing:season');
 
@@ -72,6 +73,8 @@ export interface MemberBillingPreview {
   memberId: string;
   memberName: string;
   groupName: string;
+  /** Namen aller in dieser (Sammel-)Rechnung enthaltenen Familienmitglieder. */
+  collectiveMembers?: string[];
   trainingCost: number;
   membershipFee: number;
   additionalFees: number;
@@ -102,6 +105,8 @@ export interface SeasonBillingPreview {
   totalTaxAmount: number;
   grandTotal: number;
   memberCount: number;
+  /** Anzahl der Rechnungen nach Familien-Zusammenfassung (= memberPreviews.length). */
+  invoiceCount: number;
   groupCount: number;
 }
 
@@ -357,14 +362,18 @@ export class SeasonBillingService {
     }
 
     const memberNameMap = new Map<string, string>();
+    const memberDobMap = new Map<string, string | null>();
     if (allMemberIds.size > 0) {
       const { data: users } = await this.supabase
         .from('users')
-        .select('id, full_name')
+        .select('id, full_name, date_of_birth')
         .in('id', [...allMemberIds]);
 
       if (users) {
-        for (const u of users) memberNameMap.set(u.id, u.full_name || u.id);
+        for (const u of users) {
+          memberNameMap.set(u.id, u.full_name || u.id);
+          memberDobMap.set(u.id, (u as { date_of_birth?: string | null }).date_of_birth ?? null);
+        }
       }
     }
 
@@ -514,27 +523,37 @@ export class SeasonBillingService {
       });
     }
 
-    memberPreviews.sort((a, b) => a.memberName.localeCompare(b.memberName));
+    // Familien zusammenfassen: eine Sammel-Rechnung an den Erwachsenen der Gruppe.
+    const familyRoster = await this.loadFamilyRoster(
+      [...allMemberIds],
+      memberNameMap,
+      memberDobMap
+    );
+    const merged = mergeFamilyMemberPreviews(memberPreviews, familyRoster);
+    const billingPreviews = merged.previews;
 
-    const totalTrainingCost = memberPreviews.reduce((s, m) => s + m.trainingCost, 0);
-    const totalMembershipFees = memberPreviews.reduce((s, m) => s + m.membershipFee, 0);
-    const totalAdditionalFees = memberPreviews.reduce((s, m) => s + m.additionalFees, 0);
-    const subtotalAmount = memberPreviews.reduce((s, m) => s + m.subtotalAmount, 0);
-    const totalTaxAmount = memberPreviews.reduce((s, m) => s + m.taxAmount, 0);
+    billingPreviews.sort((a, b) => a.memberName.localeCompare(b.memberName));
+
+    const totalTrainingCost = billingPreviews.reduce((s, m) => s + m.trainingCost, 0);
+    const totalMembershipFees = billingPreviews.reduce((s, m) => s + m.membershipFee, 0);
+    const totalAdditionalFees = billingPreviews.reduce((s, m) => s + m.additionalFees, 0);
+    const subtotalAmount = billingPreviews.reduce((s, m) => s + m.subtotalAmount, 0);
+    const totalTaxAmount = billingPreviews.reduce((s, m) => s + m.taxAmount, 0);
 
     return {
       seasonId,
       seasonName: season.name,
       config,
       groupBreakdown,
-      memberPreviews,
+      memberPreviews: billingPreviews,
       totalTrainingCost: this.roundCurrency(totalTrainingCost),
       totalMembershipFees: this.roundCurrency(totalMembershipFees),
       totalAdditionalFees: this.roundCurrency(totalAdditionalFees),
       subtotalAmount: this.roundCurrency(subtotalAmount),
       totalTaxAmount: this.roundCurrency(totalTaxAmount),
       grandTotal: this.roundCurrency(subtotalAmount + totalTaxAmount),
-      memberCount: memberPreviews.length,
+      memberCount: merged.memberCount,
+      invoiceCount: billingPreviews.length,
       groupCount: groupBreakdown.length,
     };
   }
@@ -860,6 +879,66 @@ export class SeasonBillingService {
   }
 
   /**
+   * Lädt die vollständige Familiengruppen-Roster für alle abrechenbaren
+   * Mitglieder. Degradiert bei fehlender Tabelle/Feature aus (leere Map =
+   * keine Zusammenfassung), damit die Saison-Abrechnung nie an Familienkonten
+   * scheitert.
+   */
+  private async loadFamilyRoster(
+    billableMemberIds: string[],
+    nameMap: Map<string, string>,
+    dobMap: Map<string, string | null>
+  ): Promise<Map<string, FamilyMember[]>> {
+    const roster = new Map<string, FamilyMember[]>();
+    if (billableMemberIds.length === 0) return roster;
+
+    try {
+      // 1. Gruppenzugehörigkeit der abrechenbaren Mitglieder.
+      const { data: links } = await this.supabase
+        .from('family_accounts')
+        .select('user_id, family_group_id')
+        .in('user_id', billableMemberIds);
+
+      const groupIds = [...new Set((links ?? []).map((l) => l.family_group_id as string))];
+      if (groupIds.length === 0) return roster;
+
+      // 2. Vollständige Roster dieser Gruppen (inkl. Erwachsener ohne eigene
+      //    Positionen, die als Rechnungsempfänger dienen).
+      const { data: members } = await this.supabase
+        .from('family_accounts')
+        .select('user_id, family_group_id, relationship')
+        .in('family_group_id', groupIds);
+
+      const userIds = [...new Set((members ?? []).map((m) => m.user_id as string))];
+      const { data: users } = await this.supabase
+        .from('users')
+        .select('id, full_name, date_of_birth')
+        .in('id', userIds);
+
+      const userMap = new Map(
+        (users ?? []).map((u) => [u.id, u as { full_name?: string; date_of_birth?: string | null }])
+      );
+
+      for (const m of members ?? []) {
+        const memberId = m.user_id as string;
+        const groupId = m.family_group_id as string;
+        const user = userMap.get(memberId);
+        if (!roster.has(groupId)) roster.set(groupId, []);
+        roster.get(groupId)!.push({
+          memberId,
+          name: user?.full_name ?? nameMap.get(memberId) ?? memberId,
+          relationship: (m.relationship as string | null) ?? null,
+          dateOfBirth: user?.date_of_birth ?? dobMap.get(memberId) ?? null,
+        });
+      }
+    } catch (err) {
+      log.warn('[SeasonBilling] Familien-Roster nicht lesbar, keine Sammel-Rechnung:', err);
+    }
+
+    return roster;
+  }
+
+  /**
    * Create a single invoice + line items for one member.
    * Tax is applied at the line-item level (consistent with billing engine).
    * The `tax_amount` column on the parent invoice is the sum of all line taxes.
@@ -955,6 +1034,7 @@ export class SeasonBillingService {
       totalTaxAmount: 0,
       grandTotal: 0,
       memberCount: 0,
+      invoiceCount: 0,
       groupCount: 0,
     };
   }

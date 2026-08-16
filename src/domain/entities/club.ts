@@ -35,13 +35,13 @@ export class Club {
   private courts: Court[];
   private maxMembers: number;
   private openingHours: {
-    monday: { open: string; close: string };
-    tuesday: { open: string; close: string };
-    wednesday: { open: string; close: string };
-    thursday: { open: string; close: string };
-    friday: { open: string; close: string };
-    saturday: { open: string; close: string };
-    sunday: { open: string; close: string };
+    monday: { open: string; close: string; closed?: boolean };
+    tuesday: { open: string; close: string; closed?: boolean };
+    wednesday: { open: string; close: string; closed?: boolean };
+    thursday: { open: string; close: string; closed?: boolean };
+    friday: { open: string; close: string; closed?: boolean };
+    saturday: { open: string; close: string; closed?: boolean };
+    sunday: { open: string; close: string; closed?: boolean };
   };
   private status: ClubStatus;
   private createdAt: Date;

@@ -41,6 +41,7 @@ import {
 import { toast } from 'sonner';
 import { exportBookingsCSV } from '@/lib/csv-export';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
+import { useActingAsMemberId } from '@/hooks/use-effective-member';
 import {
   useSessions,
   useCreateBooking,
@@ -96,9 +97,14 @@ function BookingsContent() {
   const { data: userRoles = [] } = useUserRoles();
 
   const clubId = clubData?.clubId ?? null;
-  const memberId = memberData?.memberId ?? null;
+  const actingAsMemberId = useActingAsMemberId();
+  const memberId = actingAsMemberId ?? memberData?.memberId ?? null;
 
-  const { data: sessions = [], isLoading, error: sessionsError } = useSessions(clubId);
+  const {
+    data: sessions = [],
+    isLoading,
+    error: sessionsError,
+  } = useSessions(clubId, undefined, actingAsMemberId);
 
   const createBooking = useCreateBooking();
   const cancelBooking = useCancelBooking();

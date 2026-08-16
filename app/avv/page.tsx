@@ -13,7 +13,7 @@ export const metadata = {
 };
 
 export default function AVVPage() {
-  const lastUpdated = '2. Juli 2026';
+  const lastUpdated = '16. August 2026';
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -232,7 +232,7 @@ export default function AVVPage() {
                 </tr>
                 <tr>
                   <td>Google (Gemini API)</td>
-                  <td>KI-Matchmaking (Partner-Finder)</td>
+                  <td>KI-Saisonplanung (Trainingsplan-Optimierung)</td>
                   <td>SCC-abgesichert; keine Übermittlung von Zahlungsdaten</td>
                 </tr>
                 <tr>

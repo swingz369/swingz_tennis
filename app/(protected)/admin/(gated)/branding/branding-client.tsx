@@ -120,7 +120,13 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
 
         <TabsContent value="colors" className="space-y-4">
           <Card className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <h3 className="text-sm font-semibold">Farben deines Vereins</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Primär-, Sekundär- und Akzentfarbe prägen das Erscheinungsbild deines Studios.
+              </p>
+            </div>
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <Label>Primärfarbe</Label>
                 <div className="flex gap-2">
@@ -170,12 +176,12 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
                 </div>
               </div>
             </div>
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 flex justify-end gap-2 border-t border-border pt-5">
               <Button variant="outline" onClick={resetColorsToDefault} disabled={saving}>
                 Auf Standard zurücksetzen
               </Button>
               <Button onClick={saveBranding} disabled={saving}>
-                {saving ? 'Wird gespeichert...' : 'Speichern'}
+                {saving ? 'Wird gespeichert…' : 'Speichern'}
               </Button>
             </div>
           </Card>
@@ -247,9 +253,9 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
                 muss auf swingz.cloud zeigen.
               </p>
             </div>
-            <div className="mt-4 flex justify-end">
+            <div className="mt-4 flex justify-end border-t border-border pt-5">
               <Button onClick={saveBranding} disabled={saving}>
-                {saving ? 'Wird gespeichert...' : 'Speichern'}
+                {saving ? 'Wird gespeichert…' : 'Speichern'}
               </Button>
             </div>
           </Card>

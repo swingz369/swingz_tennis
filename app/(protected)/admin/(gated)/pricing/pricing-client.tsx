@@ -27,20 +27,8 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
-import { useClubFeatures } from '@/hooks/use-club-features';
 import { PageHeader } from '@/components/ui/page-header';
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Clock,
-  Calendar,
-  DollarSign,
-  Loader2,
-  Sun,
-  ToggleLeft,
-  ToggleRight,
-} from 'lucide-react';
+import { Plus, Edit, Trash2, Clock, Calendar, DollarSign, Loader2, Sun } from 'lucide-react';
 
 // Types
 interface TimeRange {
@@ -137,9 +125,6 @@ interface PricingClientProps {
 }
 
 export function PricingClient({ clubId }: PricingClientProps) {
-  const { isEnabled, toggle: toggleFeature, saving: featureSaving } = useClubFeatures(clubId);
-  const dynamicPricingEnabled = isEnabled('dynamic_pricing');
-
   const [rules, setRules] = useState<PricingRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -188,11 +173,9 @@ export function PricingClient({ clubId }: PricingClientProps) {
   }, [clubId]);
 
   useEffect(() => {
-    if (dynamicPricingEnabled) {
-      loadRules();
-      loadRefData();
-    }
-  }, [loadRules, loadRefData, dynamicPricingEnabled]);
+    loadRules();
+    loadRefData();
+  }, [loadRules, loadRefData]);
 
   const resetForm = () => setForm(emptyForm);
 
@@ -594,62 +577,18 @@ export function PricingClient({ clubId }: PricingClientProps) {
           description="Zeitbasierte Preise, Saison-Aufschläge und Tagespreise für Plätze"
         />
         <div className="flex items-center gap-3">
-          {/* Enable/Disable Toggle */}
-          <button
-            type="button"
-            disabled={featureSaving}
-            onClick={() => toggleFeature('dynamic_pricing')}
-            className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all',
-              dynamicPricingEnabled
-                ? 'bg-success-50 border-success-300 text-success-800 hover:bg-success-100 dark:bg-success-900 dark:border-success-700 dark:text-success-300'
-                : 'bg-muted border-border text-muted-foreground hover:bg-muted/80'
-            )}
+          <Button
+            className="gap-2"
+            onClick={() => {
+              resetForm();
+              setShowForm('create');
+            }}
           >
-            {dynamicPricingEnabled ? (
-              <>
-                <ToggleRight className="h-5 w-5" />
-                {featureSaving ? 'Wird gespeichert…' : 'Aktiviert'}
-              </>
-            ) : (
-              <>
-                <ToggleLeft className="h-5 w-5" />
-                {featureSaving ? 'Wird gespeichert…' : 'Deaktiviert'}
-              </>
-            )}
-          </button>
-          {dynamicPricingEnabled && (
-            <Button
-              className="gap-2"
-              onClick={() => {
-                resetForm();
-                setShowForm('create');
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              Neue Preisregel
-            </Button>
-          )}
+            <Plus className="h-4 w-4" />
+            Neue Preisregel
+          </Button>
         </div>
       </div>
-
-      {/* Disabled Banner */}
-      {!dynamicPricingEnabled && (
-        <Card className="bg-warning-50 border-warning-200 dark:bg-warning-900 dark:border-warning-800">
-          <CardContent className="p-6 text-center">
-            <DollarSign className="h-12 w-12 mx-auto text-warning-500 mb-3" />
-            <h3 className="text-lg font-semibold text-warning-900 dark:text-warning-100 mb-2">
-              Dynamische Preisgestaltung ist deaktiviert
-            </h3>
-            <p className="text-sm text-warning-700 dark:text-warning-300 max-w-lg mx-auto">
-              Aktiviere diese Funktion, um zeitbasierte Preise (Peak/Off-Peak), Tagespreise und
-              Saison-Aufschläge für Platzbuchungen zu konfigurieren. Solange die Funktion
-              deaktiviert ist, gilt für alle Buchungen der einheitliche Standard-Stundensatz des
-              Vereins.
-            </p>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Explanation Cards */}
       {!showForm && rules.length === 0 && !loading && (

@@ -10,6 +10,7 @@ import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
+import { resolveEffectiveMemberId } from '@/lib/family/family-auth';
 import type { Database } from '@/types/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '@/lib/logger';
@@ -42,6 +43,16 @@ export async function GET(req: NextRequest) {
 
     const supabase = auth.supabase as SupabaseClient<Database>;
     const userId = auth.user.id;
+
+    // Ein Elternteil kann per ?actingAsMemberId= die Sicht eines minderjährigen
+    // Kindes derselben Familiengruppe anfordern — "bookedByUser" und RSVP werden
+    // dann für das Kind aufgelöst statt für den Elternteil.
+    const actingAsParam = url.searchParams.get('actingAsMemberId');
+    const resolution = await resolveEffectiveMemberId(auth.user.id, actingAsParam);
+    if (resolution.error) {
+      return NextResponse.json({ error: resolution.error }, { status: 403 });
+    }
+    const effectiveUserId = resolution.effectiveMemberId;
 
     try {
       // Fetch upcoming sessions for this club (via schedule)
@@ -180,7 +191,7 @@ export async function GET(req: NextRequest) {
       // Build current-user booking map
       const bookingsMap = new Map<string, { bookingId: string; status: string }>();
       typedBookings
-        .filter((b) => b.member_id === userId)
+        .filter((b) => b.member_id === effectiveUserId)
         .forEach((b) => {
           bookingsMap.set(b.session_id, { bookingId: b.id, status: b.status });
         });
@@ -191,7 +202,7 @@ export async function GET(req: NextRequest) {
         const { data: rsvps, error: rsvpError } = await supabase
           .from('session_rsvps')
           .select('session_id, status, member_id')
-          .eq('member_id', userId)
+          .eq('member_id', effectiveUserId)
           .in('session_id', sessionIds);
 
         if (rsvpError) {

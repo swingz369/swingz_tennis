@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AnimatedCounter, ScrollReveal } from '@/components/animations';
-import { Shuffle, Users, Target, BarChart3, RefreshCw, Sparkles, Activity } from 'lucide-react';
+import { Shuffle, Users, Target, BarChart3, RefreshCw, Activity } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 
 interface MatchStats {
@@ -90,7 +90,7 @@ export default function PartnerFinderPage() {
           <div className="relative">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-white/70 mb-1">KI-Verwaltung</p>
+                <p className="text-sm font-medium text-white/70 mb-1">Spielbetrieb</p>
                 <h1 className="text-2xl font-bold tracking-tight">Spielpartner-Suche</h1>
                 <p className="text-white/70 mt-2">
                   Übersicht über Spielpartner-Matching und Niveau-Verteilung
@@ -99,8 +99,8 @@ export default function PartnerFinderPage() {
               <div className="flex items-center gap-2">
                 {stats && (
                   <Badge className="bg-white/15 backdrop-blur-sm border-white/20 text-white gap-1.5 px-3 py-1.5">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    KI-gestützt
+                    <Shuffle className="h-3.5 w-3.5" />
+                    Algorithmus-basiert
                   </Badge>
                 )}
                 <Button

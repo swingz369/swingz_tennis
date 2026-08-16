@@ -1,6 +1,6 @@
 # SwingZ — Master-Handbuch
 
-> Zuletzt aktualisiert: 21.07.2026 (Stand der letzten Code-Änderung an diesem Dokument)
+> Zuletzt aktualisiert: 16.08.2026 (Stand der letzten Code-Änderung an diesem Dokument)
 
 > **Zentrale Doku für alle Rollen, alle Features, alle Schichten.** Lies hier, wenn du nicht weißt wo anfangen.
 
@@ -60,13 +60,12 @@ Vereine aktivieren Module auf zwei Ebenen: beim **Onboarding-Wizard** und späte
 | 4   | Finanzen                    | **core**  | finance             | Abrechnung, Mahnwesen (inkl. Stufen 0/1/2/3)     |
 | 5   | Shop                        | optional  | shop                | Vereinsartikel                                   |
 | 6   | Turniere                    | optional  | tournaments         | Anmeldung, Spielpläne                            |
-| 7   | Probetrainings              | optional  | trial_training      | Öffentliches Anmeldeformular                     |
-| 8   | KI-Matchmaking              | optional  | ai_matchmaking      | Spielpartner-Matching                            |
+| 7   | Probetrainings              | optional  | trial_training      | Standard aktiv — Anmeldeformular + Nurture-Flow  |
+| 8   | Spielpartner-Suche          | optional  | partner_finder      | Spielpartner-Matching (algorithmisch)            |
 | 9   | Wetter-Integration          | optional  | weather_integration | Open-Meteo, automatische Platzsperre             |
 | 10  | Liga & Mannschaft           | optional  | league_lineup       | nuLiga-Sync                                      |
 | 11  | Arbeitsdienst               | optional  | work_duty           | Gemeinschaftsstunden                             |
 | 12  | Smart Court (Add-On €79/M.) | optional  | smart_court         | Hardware-Vendor-Integration (Nuki/Shelly/Loxone) |
-| 13  | Dynamische Preisgestaltung  | optional  | pricing             | Peak/Off-Peak Pricing                            |
 
 Details: [`dev/feature-flags.md`](./handbook/dev/feature-flags.md). Master-Registry: [`lib/features.ts`](../lib/features.ts).
 

@@ -6,6 +6,7 @@ import { billingEngine } from '@/lib/billing-engine';
 import type { InvoiceStatus } from '@/lib/types/billing';
 import { createLogger } from '@/lib/logger';
 import { isMemberVisibleInvoiceStatus } from '@/lib/billing/invoice-visibility';
+import { resolveEffectiveMemberId } from '@/lib/family/family-auth';
 
 const log = createLogger('api:billing:invoices:overview');
 
@@ -29,6 +30,19 @@ export async function GET(_request: NextRequest) {
 
       const clubId = searchParams.get('clubId');
       const memberId = searchParams.get('memberId');
+
+      // Mitglieder dürfen nur die eigenen Rechnungen sehen — oder die eines
+      // minderjährigen Kindes derselben Familiengruppe (Eltern verwalten die
+      // Abrechnung ihrer Kinder). Vorher wurde jede memberId ungeprüft gelesen.
+      let effectiveMemberId = memberId;
+      if (memberId && auth.role === 'member') {
+        const resolution = await resolveEffectiveMemberId(auth.user.id, memberId);
+        if (resolution.error) {
+          return NextResponse.json({ error: resolution.error }, { status: 403 });
+        }
+        effectiveMemberId = resolution.effectiveMemberId;
+      }
+
       const status = searchParams.get('status') as InvoiceStatus | null;
       const startDate = searchParams.get('startDate');
       const endDate = searchParams.get('endDate');
@@ -50,8 +64,8 @@ export async function GET(_request: NextRequest) {
           limit,
           offset,
         });
-      } else if (memberId) {
-        invoices = await billingEngine.getInvoicesByMember(memberId, {
+      } else if (effectiveMemberId) {
+        invoices = await billingEngine.getInvoicesByMember(effectiveMemberId, {
           ...(status != null ? { status } : {}),
           limit,
           offset,

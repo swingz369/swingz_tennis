@@ -53,13 +53,15 @@ Submit-Route: `POST /api/public/trial-training` (kein Auth, IP-Rate-Limited).
 
 ## 🤝 Zusammenspiel mit anderen Rollen
 
-| Edge-Case                      | Was passiert?                 | Folge                                                   |
-| ------------------------------ | ----------------------------- | ------------------------------------------------------- |
-| Bekannter Member-User          | E-Mail existiert bereits      | System warnt: "Du bist schon Mitglied — logge dich ein" |
-| Admin lehnt ab                 | Status → 'rejected' mit Grund | E-Mail an Applicant: "Leider kein Platz"                |
-| Admin bestätigt                | Status → 'approved'           | E-Mail: "Probetraining gebucht am DD.MM.YYYY Uhr"       |
-| Wunsch-Trainer verfügbar       | Auto-Match                    | Trainer sieht Slot in `/trainer/sessions`               |
-| Wunsch-Trainer NICHT verfügbar | Admin bekommt Hinweis         | Admin wählt Substitute                                  |
+| Edge-Case                      | Was passiert?                  | Folge                                                        |
+| ------------------------------ | ------------------------------ | ------------------------------------------------------------ |
+| Bekannter Member-User          | E-Mail existiert bereits       | System warnt: "Du bist schon Mitglied — logge dich ein"      |
+| Admin lehnt ab                 | Status → 'cancelled' mit Grund | E-Mail an Applicant: "Leider kein Platz"                     |
+| Admin bestätigt                | Status → 'scheduled'           | E-Mail: "Probetraining gebucht am DD.MM.YYYY Uhr"            |
+| Admin schließt ab              | Status → 'completed'           | Nurture-Flow startet: Danke-Mail mit Feedback- + Anmeldelink |
+| Interessent erscheint nicht    | Status → 'no_show'             | kein Follow-up                                               |
+| Wunsch-Trainer verfügbar       | Auto-Match                     | Trainer sieht Slot in `/trainer/sessions`                    |
+| Wunsch-Trainer NICHT verfügbar | Admin bekommt Hinweis          | Admin wählt Substitute                                       |
 
 ## ⚠️ Pflichten & Datenschutz
 
@@ -68,16 +70,28 @@ Submit-Route: `POST /api/public/trial-training` (kein Auth, IP-Rate-Limited).
 3. **Double-Opt-In**: Aktuell **KEIN Double-Opt-In** (P2-Finding). Bestätigungs-E-Mail ist einseitig.
 4. **Cookie-Usage**: Public Trial nutzt **keine Cookies** (kein Tracking für Interessenten).
 
-## 🆙 Vom Interessent zum Mitglied
+## 🆙 Nach dem Probetraining (Nurture-Flow)
+
+Sobald der Admin das Probetraining als **abgeschlossen** (`completed`) markiert, übernimmt ein automatisierter Nurture-Flow die Neukunden-Gewinnung — niemand muss darauf warten, dass der Interessent von sich aus reagiert:
+
+1. **Danke-Mail** (sofort beim Abschluss): mit Link zur Feedback-Seite und zur direkten Anmeldung.
+2. **Feedback** (`/trial-training/feedback?p=<participant_id>`): der Interessent bewertet das Training (1–5 Sterne + Kommentar + „würdest du weiterempfehlen") — ohne Login, geschützt über die nicht erratbare `participant_id`.
+3. **Erinnerung** (nach 2 Tagen, via Cron `/api/cron/trial-followup`): „Noch unentschlossen? Werde Mitglied".
+4. **Letzter Anstoß** (nach 7 Tagen): „Dein Platz wartet auf dich".
+
+## 🆙 Vom Interessent zum Mitglied (Self-Service)
+
+Statt auf einen Admin-Klick zu warten, kann sich der Interessent über den Link in der Mail **selbst** anmelden (`/trial-training/anmeldung?p=<participant_id>`):
 
 ```
-1. Trial approved → E-Mail mit Magic-Link (optional, wenn Verein will)
-2. Interessent klickt → Supabase OAuth Signup (oder direkter Password-Setup)
-3. Auth-User erstellt
-4. INSERT user_club_memberships { role: 'member', club_id: X, is_active: true } (oder 'pending', dann Admin manuell approve)
-5. INSERT members { user_id, default_niveau, … }
-6. Welcome-E-Mail mit Onboarding-Checklist (Membership-Approval Variante)
+1. Interessent legt selbst ein Passwort fest (min. 8 Zeichen).
+2. Auth-User wird erstellt (oder ein bestehender User mit derselben E-Mail genutzt).
+3. INSERT user_club_memberships { role: 'member', club_id, is_active: true }.
+4. Das Probetraining wird als 'converted' markiert.
+5. Willkommens-Notification an den neuen Mitglieder-Account.
 ```
+
+Der klassische Admin-Weg bleibt bestehen („Zu Mitglied konvertieren", siehe [`admin-trial-approvals.md`](./tutorials/admin-trial-approvals.md)).
 
 ## 🧪 Tests
 

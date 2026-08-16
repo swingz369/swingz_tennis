@@ -34,7 +34,7 @@ export default async function PartnerFinderPage() {
     <div className="space-y-6">
       <div>
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
-          KI-gestützt
+          Algorithmus-basiert
         </p>
         <PageHeader
           title="Spielpartner-Suche"

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
 import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
+import { isMinor } from '@/lib/family/family-auth';
 
 const log = createLogger('api:family-accounts');
 
@@ -168,7 +169,7 @@ export async function PUT(request: NextRequest) {
 
     const { data: familyLink } = await (supabase as any)
       .from('family_accounts')
-      .select('family_group_id, role')
+      .select('family_group_id, role, users(date_of_birth)')
       .eq('user_id', user.id)
       .maybeSingle();
 
@@ -176,9 +177,12 @@ export async function PUT(request: NextRequest) {
       log.warn('No family account found for user', { userId: user.id });
       return NextResponse.json({ error: 'Kein Familienkonto vorhanden' }, { status: 404 });
     }
-    if (familyLink.role !== 'parent') {
+    // Bewusst altersbasiert statt `role === 'parent'`: der Admin-Pfad legt alle
+    // als 'member' an, sodass die Rollen-Spalte keine verlässliche Aussage ist.
+    const dob = (familyLink.users as any)?.date_of_birth ?? null;
+    if (isMinor(dob)) {
       return NextResponse.json(
-        { error: 'Nur Elternteile können neue Codes erstellen' },
+        { error: 'Nur Erwachsene können neue Einladungscodes erstellen' },
         { status: 403 }
       );
     }
