@@ -52,114 +52,6 @@ import { SeasonPlanningTabs } from '@/components/admin/season-planning-tabs';
 import { apiFetch } from '@/lib/api-fetch';
 import { SeasonCalendarTab } from '@/components/admin/season-calendar-tab';
 
-function SeasonInvoiceGenerator({ seasonId, clubId }: { seasonId: string; clubId: string }) {
-  const [installmentCount, setInstallmentCount] = useState(1);
-  const [dueDates, setDueDates] = useState<string[]>(['']);
-  const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState<{ created: number; errors: string[] } | null>(null);
-
-  useEffect(() => {
-    setDueDates((prev) => {
-      const arr = [...prev];
-      while (arr.length < installmentCount) arr.push('');
-      return arr.slice(0, installmentCount);
-    });
-  }, [installmentCount]);
-
-  const handleGenerate = async () => {
-    setGenerating(true);
-    setResult(null);
-    try {
-      const res = await apiFetch('/api/billing/generate-season-invoices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          club_id: clubId,
-          season_id: seasonId,
-          installment_count: installmentCount,
-          installment_due_dates: installmentCount > 1 ? dueDates : [],
-          due_date: dueDates[0] ?? '',
-        }),
-      });
-      const data = await res.json();
-      setResult(data);
-    } catch {
-      setResult({ created: 0, errors: ['Netzwerkfehler'] });
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Saison-Rechnungen</CardTitle>
-        <CardDescription>Rechnungen für alle Mitglieder dieser Saison generieren</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-4">
-          <div>
-            <Label htmlFor="installment_count">Raten</Label>
-            <Select
-              value={String(installmentCount)}
-              onValueChange={(v) => setInstallmentCount(Number(v))}
-            >
-              <SelectTrigger id="installment_count" className="mt-1 w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1 Rate</SelectItem>
-                <SelectItem value="2">2 Raten</SelectItem>
-                <SelectItem value="3">3 Raten</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          {dueDates.map((date, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <Label htmlFor={`due_date_${i}`} className="w-32 shrink-0">
-                {installmentCount === 1 ? 'Fälligkeitsdatum' : `Rate ${i + 1} fällig`}
-              </Label>
-              <Input
-                id={`due_date_${i}`}
-                type="date"
-                value={date}
-                onChange={(e) => {
-                  const updated = [...dueDates];
-                  updated[i] = e.target.value;
-                  setDueDates(updated);
-                }}
-                className="max-w-xs"
-              />
-            </div>
-          ))}
-        </div>
-
-        <Button onClick={handleGenerate} disabled={generating || !dueDates[0]}>
-          {generating ? 'Generiere…' : 'Rechnungen generieren'}
-        </Button>
-
-        {result && (
-          <div className="mt-2 space-y-1">
-            <p className="text-sm font-medium text-success-600">
-              {result.created} Rechnung{result.created !== 1 ? 'en' : ''} erstellt
-            </p>
-            {result.errors && result.errors.length > 0 && (
-              <ul className="text-sm text-error-600 space-y-0.5">
-                {result.errors.map((e, i) => (
-                  <li key={i}>{e}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 interface TrainingGroup {
   id: string;
   name: string;
@@ -168,6 +60,7 @@ interface TrainingGroup {
 }
 
 function GroupChangeDialog({
+  seasonId,
   memberId,
   currentGroupId,
   currentGroupName,
@@ -175,6 +68,7 @@ function GroupChangeDialog({
   groups,
   onSuccess,
 }: {
+  seasonId: string;
   memberId: string;
   currentGroupId: string;
   currentGroupName: string;
@@ -201,6 +95,7 @@ function GroupChangeDialog({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           club_id: clubId,
+          season_id: seasonId,
           member_id: memberId,
           old_group_id: currentGroupId,
           new_group_id: newGroupId,
@@ -349,6 +244,7 @@ function GroupMemberList({
         <li key={m.id} className="flex items-center justify-between py-2">
           <span className="text-sm">{m.name}</span>
           <GroupChangeDialog
+            seasonId={seasonId}
             memberId={m.id}
             currentGroupId={group.id}
             currentGroupName={group.name}
@@ -365,6 +261,7 @@ function GroupMemberList({
 function GroupMembersPanel({ seasonId, clubId }: { seasonId: string; clubId: string }) {
   const [groups, setGroups] = useState<TrainingGroup[]>([]);
   const [loadingGroups, setLoadingGroups] = useState(true);
+  const [groupsError, setGroupsError] = useState<string | null>(null);
   // Nach einem Wechsel alle Gruppenlisten neu laden (Quell- UND Zielgruppe ändern sich)
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -372,10 +269,17 @@ function GroupMembersPanel({ seasonId, clubId }: { seasonId: string; clubId: str
     const load = async () => {
       try {
         const res = await apiFetch(`/api/seasons/${seasonId}/groups?clubId=${clubId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setGroups(data.groups ?? []);
+        const data = await res.json();
+        // Ein Fehler der Abfrage wurde hier bis zum 16.08.2026 verschluckt und
+        // als "keine Gruppen vorhanden" angezeigt — die Meldung schickte die
+        // Suche zur Planung statt zur eigentlichen Ursache.
+        if (!res.ok) {
+          setGroupsError(extractErrorMessage(data) ?? 'Gruppen konnten nicht geladen werden');
+          return;
         }
+        setGroups(data.groups ?? []);
+      } catch {
+        setGroupsError('Netzwerkfehler beim Laden der Gruppen');
       } finally {
         setLoadingGroups(false);
       }
@@ -385,6 +289,10 @@ function GroupMembersPanel({ seasonId, clubId }: { seasonId: string; clubId: str
 
   if (loadingGroups) {
     return <p className="text-sm text-muted-foreground">Lade Gruppen…</p>;
+  }
+
+  if (groupsError) {
+    return <p className="text-sm text-error-600">{groupsError}</p>;
   }
 
   if (groups.length === 0) {
@@ -966,8 +874,6 @@ function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: s
             )}
           </CardContent>
         </Card>
-
-        <SeasonInvoiceGenerator seasonId={seasonId} clubId={season.club_id ?? ''} />
       </TabsContent>
 
       {isPublished && (
