@@ -304,6 +304,8 @@ export class SeasonClusteringEngine {
   private _cachedMembers: (MemberWithDetails & { _unassignedReason?: string })[] | null = null;
   private _cachedTrainers: TrainerWithDetails[] | null = null;
   private _cachedCourts: CourtInfo[] | null = null;
+  /** Wintersaison plant nur auf Hallenplätzen — für die Begründung unten wichtig. */
+  private _istWinter = false;
   private _cachedGroups: GroupInfo[] | null = null;
   private _cachedSlotFailureRates: Record<string, number> | null = null;
   private _cachedHistoricGroups: Map<
@@ -448,7 +450,7 @@ export class SeasonClusteringEngine {
           unassigned: unassigned.map((m) => ({
             memberId: m.id,
             memberName: m.name,
-            reason: m._unassignedReason || 'Keine passende Gruppe gefunden',
+            reason: m._unassignedReason || this.kapazitaetsHinweis(),
           })),
           waitlistSummary: waitlistResult.summary,
           metrics,
@@ -1030,6 +1032,23 @@ export class SeasonClusteringEngine {
     return loadedTrainers;
   }
 
+  /**
+   * Begründung für Mitglieder, die ohne Gruppe bleiben, wenn die Engine keinen
+   * spezifischen Grund gesetzt hat.
+   *
+   * Vorher stand hier "Keine passende Gruppe gefunden". Das liest sich wie ein
+   * Zuordnungsfehler und hat die Fehlersuche in die Irre geführt — tatsächlich
+   * ist es fast immer die Platzkapazität. In einer Wintersaison plant die Engine
+   * ausschliesslich auf Hallenplätzen; bei TC Rheinland sind das 2 von 6.
+   */
+  private kapazitaetsHinweis(): string {
+    const plaetze = this._cachedCourts?.length ?? 0;
+    const trainer = this._cachedTrainers?.length ?? 0;
+    const platzWort = plaetze === 1 ? '1 nutzbarer Platz' : `${plaetze} nutzbare Plätze`;
+    const winter = this._istWinter ? ' (Wintersaison: nur Hallenplätze)' : '';
+    return `Keine freie Kapazität — ${platzWort}${winter} und ${trainer} Trainer sind ausgelastet`;
+  }
+
   private async loadCourts(): Promise<CourtInfo[]> {
     if (this._cachedCourts) return this._cachedCourts;
 
@@ -1039,6 +1058,7 @@ export class SeasonClusteringEngine {
       .from(seasons)
       .where(eq(seasons.id, this.seasonId));
     const isWinter = currentSeason?.season_type === 'winter';
+    this._istWinter = isWinter;
 
     const filter = isWinter
       ? and(
