@@ -25,6 +25,24 @@ Auf Produktion ist die Baseline als `baselined` markiert (16.08.2026,
 `MIGRATE_ENV=prod npx tsx scripts/migrate.ts baseline` — nur die Tracking-Zeile, kein DDL).
 `npm run db:status:prod` meldet seitdem 178 angewendet, 0 offen.
 
+### Nachtrag 16.08.2026 — zwei Post-Baseline-Migrationen lagen im Archiv
+
+`20260816200000_ops_heartbeats.sql` und `20260816203000_trial_training_followup.sql` entstanden
+**nach** der Baseline, waren aber nach `supabase/migrations/archive/` verschoben worden. Wirkung:
+
+- `npm run db:status` meldete „1 Dateien, 3 angewendet, 0 offen" — mehr angewendet als
+  vorhanden, und trotzdem kein Hinweis auf ein Problem.
+- Der CI-Job `migrations-from-scratch` (`supabase db reset`) blieb grün, **erzeugte aber eine
+  Datenbank ohne `public.ops_heartbeats` und ohne `trial_trainings.completed_at` /
+  `.followup_stage`.** Er prüft, dass die Migrationen durchlaufen, nicht dass das Ergebnis zum
+  Code passt — `/api/health`, `/status` und der Nurture-Cron wären auf einer frischen DB
+  aufgelaufen. Das ist exakt die Lücke, welche die Baseline schliessen sollte.
+
+Beide Dateien liegen wieder in `supabase/migrations/`. Die Checksummen stimmen mit den
+angewendeten überein, lokal war also nichts nachzuziehen. **Merksatz:** ins Archiv gehört nur,
+was **vor** der Baseline lag — eine spätere Migration dorthin zu schieben löscht sie faktisch,
+ohne dass ein Werkzeug anschlägt.
+
 Ein PR-Job in `.github/workflows/ci.yml` prüft ab jetzt bei jeder Änderung an
 `supabase/migrations/`, dass eine leere DB daraus aufgebaut werden kann.
 
