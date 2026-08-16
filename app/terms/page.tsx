@@ -76,7 +76,7 @@ export default function TermsPage() {
               Nutzung der SaaS-Plattform SWINGZ (nachfolgend „Plattform") geschlossen werden. Die
               Plattform dient der Verwaltung von Tennis- und Sportvereinen, einschließlich
               Mitgliederverwaltung, Trainingsplanung, Buchungssystem, Zahlungsabwicklung und
-              KI-gestützter Saisonplanung.
+              automatischer Saisonplanung.
             </p>
             <p>
               Abweichende, entgegenstehende oder ergänzende Allgemeine Geschäftsbedingungen des
@@ -122,7 +122,7 @@ export default function TermsPage() {
                 Rechnungen
               </li>
               <li>
-                <strong>Enterprise:</strong> Unbegrenzte Mitglieder, KI-Planung,
+                <strong>Enterprise:</strong> Unbegrenzte Mitglieder, automatische Saisonplanung,
                 Multi-Club-Verwaltung, API-Zugang
               </li>
             </ul>

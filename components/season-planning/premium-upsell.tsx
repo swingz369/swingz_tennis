@@ -111,8 +111,8 @@ export function PremiumUpsell({
           </span>
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed mt-1">
-          Mit der KI-Planung sparst du im Vergleich zur manuellen Saisonplanung ungefähr so viel
-          Verwaltungszeit.
+          Mit der automatischen Saisonplanung sparst du im Vergleich zur manuellen Saisonplanung
+          ungefähr so viel Verwaltungszeit.
         </p>
       </div>
 

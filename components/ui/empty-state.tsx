@@ -394,7 +394,7 @@ export function NoSeasonsBrandedEmptyState({ onCreate }: { onCreate: () => void 
   return (
     <TennisBallEmptyState
       title="Noch keine Saison"
-      description="Lege deine erste Saison an und starte die KI-gestützte Trainingsplanung."
+      description="Lege deine erste Saison an und starte die automatische Trainingsplanung."
       action={{ label: 'Saison anlegen', onClick: onCreate }}
     />
   );

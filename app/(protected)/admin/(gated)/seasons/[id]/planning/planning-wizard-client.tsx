@@ -170,7 +170,7 @@ function WizardContent({
                 {seasonYear}
               </Badge>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">KI-gestützte Saisonplanung</p>
+            <p className="text-sm text-muted-foreground mt-1">Automatische Saisonplanung</p>
           </div>
         </div>
       </div>

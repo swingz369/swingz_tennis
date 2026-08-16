@@ -82,11 +82,35 @@ ssh -N -L 8011:127.0.0.1:8011 deploy@178.254.37.110   # Tunnel offen lassen
 
 ---
 
-## 5. Beobachtung: der Pooler steht offen im Netz
+## 5. Netzzugang zum VPS
 
-`supabase-pooler` bindet auf dem VPS an `0.0.0.0:5432` und `0.0.0.0:6543` — Postgres ist damit aus dem gesamten Internet erreichbar, geschützt nur durch das Passwort. In den Logs tauchte deshalb schon Port-Scanner-Rauschen auf.
+Stand 16.08.2026 nach der Härtung. Begründung und verworfene Alternativen: [`decisions/adr-004-netzzugang-vps.md`](decisions/adr-004-netzzugang-vps.md).
 
-Solange die App von Vercel aus verbindet, braucht es die öffentliche Bindung; Vercel-Funktionen haben keine festen IP-Adressen, die man freischalten könnte. Wer das enger ziehen will, hat zwei Wege: die Vercel-IP-Bereiche in der Firewall führen (aufwendig, ändert sich) oder eine Tailscale-/WireGuard-Verbindung zwischen Vercel und VPS. Beides ist erst dann verhältnismäßig, wenn echte Vereinsdaten in der DB liegen — dann aber zügig.
+| Port               | Zustand                                                              | Warum                                                                                                                        |
+| ------------------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 6543 (Transaction) | **öffentlich**, begrenzt auf 30 neue Verbindungen/Minute je Quell-IP | Vercel-Funktionen haben keine festen IP-Adressen und können keinem Tailnet beitreten — ohne diesen Port läuft die App nicht. |
+| 5432 (Session)     | **geschlossen**, nur noch `127.0.0.1`                                | Die App nutzt ausschliesslich 6543. Der zweite Port war reine Angriffsfläche.                                                |
+| 22 (SSH)           | öffentlich, fail2ban aktiv                                           | Bleibt offen, bis die Dev-Maschine im Tailnet ist — sonst sperrt man sich selbst aus.                                        |
+| 80/443             | öffentlich (Caddy)                                                   | Kong/Supabase-Gateway und Studio-Weiterleitung.                                                                              |
+
+> **Falle, über die man hier stolpert:** `ufw` ist aktiv, hatte aber **nie** eine Regel für 5432 oder 6543 — die Ports waren trotzdem offen. Docker schreibt seine Portfreigaben direkt in die `nat`-Tabelle und umgeht ufw vollständig. Eine ufw-Regel für einen von Docker veröffentlichten Port hat keine Wirkung; sie gehört in die Kette `DOCKER-USER`. Wer das nicht weiss, hält den Server für dichter, als er ist.
+
+Die Ratenbegrenzung steht deshalb in `DOCKER-USER` und wird nach jedem Neustart von der systemd-Unit `supavisor-ratelimit.service` neu gesetzt (die Kette ist beim Booten leer). Bewusst kein `iptables-persistent`: das würde Dockers dynamische Regeln mit einfrieren.
+
+### Tailscale
+
+Der VPS ist als **`swingz-vps`** (`100.117.232.25`) im Tailnet. Gedacht ist es für den Administrationsweg — SSH, Prod-Studio, `psql`, Migrationen —, nicht für die App: Vercels Serverless-Funktionen können einem Tailnet nicht beitreten.
+
+```bash
+# Weiteren Rechner aufnehmen (Auth-Key aus der Tailscale-Konsole, Settings → Keys):
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up --hostname=<name>
+
+# Prod-Studio danach ohne öffentlichen Umweg:
+ssh -N -L 8011:127.0.0.1:8011 swingz-vps
+```
+
+**Nächster Schritt:** Sobald die Dev-Maschine im Tailnet ist, kann SSH auf dem VPS auf das Tailnet-Interface beschränkt werden (`ufw delete allow OpenSSH`, `tailscale up --ssh`). Vorher nicht — dann ist der Server nur noch über die manitu-Konsole erreichbar.
 
 ---
 

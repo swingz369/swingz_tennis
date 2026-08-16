@@ -109,7 +109,7 @@ export default function AVVPage() {
           >
             <p>
               <strong>Zweck:</strong> Bereitstellung einer SaaS-Plattform zur Verwaltung von
-              Mitgliedern, Trainingsangeboten, Platzbuchungen, Beitragsabrechnung und KI-gestützter
+              Mitgliedern, Trainingsangeboten, Platzbuchungen, Beitragsabrechnung und automatischer
               Saisonplanung.
             </p>
             <p>
@@ -232,7 +232,7 @@ export default function AVVPage() {
                 </tr>
                 <tr>
                   <td>Google (Gemini API)</td>
-                  <td>KI-gestützte Saisonplanung/Matchmaking</td>
+                  <td>KI-Matchmaking (Partner-Finder)</td>
                   <td>SCC-abgesichert; keine Übermittlung von Zahlungsdaten</td>
                 </tr>
                 <tr>

@@ -162,7 +162,7 @@ export default function AboutPage() {
                 icon: Brain,
                 title: 'Intelligente Automatisierung',
                 description:
-                  'Jeder Tennisclub soll Zugang zu KI-gestützter Planung haben — unabhängig von der Größe oder dem Budget.',
+                  'Jeder Tennisclub soll Zugang zu automatischer Saisonplanung haben — unabhängig von der Größe oder dem Budget.',
               },
               {
                 icon: Users,

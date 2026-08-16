@@ -47,7 +47,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://swingz.cloud'),
   title: 'SWINGZ - Premium Tennis Club Management',
-  description: 'KI-gestützte Trainingplanung für Tennisclubs',
+  description: 'Automatische Trainingsplanung für Tennisclubs',
   icons: {
     icon: '/favicon.svg',
   },
