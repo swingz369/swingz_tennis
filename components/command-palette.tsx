@@ -52,7 +52,7 @@ export function CommandPalette({ roles, selectedClubId, clubs }: CommandPaletteP
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const { isAdmin, isSuperAdmin } = useUserRole(roles);
+  const { isAdmin, isSuperAdmin, isTrainer } = useUserRole(roles);
   const activeClubId = selectedClubId ?? clubs?.[0]?.id;
   const { features } = useClubFeatures(activeClubId);
   const hiddenSections = new Set(
@@ -60,6 +60,9 @@ export function CommandPalette({ roles, selectedClubId, clubs }: CommandPaletteP
       .filter(([, enabled]) => !enabled)
       .map(([key]) => key)
   );
+  // Member-only-Einträge (Trainingspräferenzen, Arbeitsdienste) nur, wenn die
+  // Person wirklich Member ist — deckungsgleich mit der Sidebar-Logik.
+  const includeMemberOnly = !isTrainer || (roles?.includes('member') ?? false);
 
   // Keyboard shortcut Cmd/Ctrl + K
   useEffect(() => {
@@ -118,7 +121,7 @@ export function CommandPalette({ roles, selectedClubId, clubs }: CommandPaletteP
     icon: React.ElementType;
     shortcut?: string;
     roles?: string[];
-  }> = paletteNavItems(hiddenSections).map((item) => ({
+  }> = paletteNavItems(hiddenSections, includeMemberOnly).map((item) => ({
     label: item.name,
     href: item.href,
     icon: item.icon ?? Search,
@@ -130,7 +133,7 @@ export function CommandPalette({ roles, selectedClubId, clubs }: CommandPaletteP
     label: string;
     href: string;
     icon: React.ElementType;
-  }> = paletteAdminNavItems(hiddenSections).map((item) => ({
+  }> = paletteAdminNavItems(hiddenSections, isSuperAdmin).map((item) => ({
     label: item.name,
     href: item.href,
     icon: item.icon ?? Search,
@@ -259,22 +262,27 @@ export function CommandPalette({ roles, selectedClubId, clubs }: CommandPaletteP
         {/* Navigation */}
         {query.length === 0 && (
           <>
-            <CommandGroup heading="Navigation">
-              {filteredNavItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <CommandItem
-                    key={item.href}
-                    onSelect={() => navigate(item.href)}
-                    className="cursor-pointer"
-                  >
-                    <Icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {item.label}
-                    {item.shortcut && <CommandShortcut>{item.shortcut}</CommandShortcut>}
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
+            {/* Mitglied/Trainer-Navigation. Admins & Superadmins sehen unten
+                ihre Admin-Gruppe statt dieser Liste — deckungsgleich mit der
+                rollenabhängigen Sidebar, die auch nur eine Navigation zeigt. */}
+            {!isAdmin && !isSuperAdmin && filteredNavItems.length > 0 && (
+              <CommandGroup heading="Navigation">
+                {filteredNavItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <CommandItem
+                      key={item.href}
+                      onSelect={() => navigate(item.href)}
+                      className="cursor-pointer"
+                    >
+                      <Icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                      {item.label}
+                      {item.shortcut && <CommandShortcut>{item.shortcut}</CommandShortcut>}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            )}
 
             {filteredAdminNav.length > 0 && (
               <CommandGroup heading="Admin">

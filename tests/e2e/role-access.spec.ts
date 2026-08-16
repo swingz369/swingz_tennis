@@ -44,7 +44,7 @@ test.describe('Superadmin', () => {
     // Club-scoped Admin-Sektionen dürfen nicht auftauchen
     await expect(sidebar.getByText('Alle Mitglieder')).not.toBeVisible();
     await expect(sidebar.getByRole('button', { name: /Spielbetrieb/i })).not.toBeVisible();
-    await expect(sidebar.getByRole('button', { name: /Vereinsführung/i })).not.toBeVisible();
+    await expect(sidebar.getByRole('button', { name: /Verein/i })).not.toBeVisible();
   });
 
   test('Verwaltung-Sektion zeigt Statistiken + Einstellungen', async ({ page }) => {
@@ -79,13 +79,7 @@ test.describe('Admin', () => {
     const sidebar = page.locator(SIDEBAR);
     await expect(sidebar).toBeVisible({ timeout: 10000 });
 
-    for (const section of [
-      'Mitglieder',
-      'Training',
-      'Spielbetrieb',
-      'Finanzen',
-      'Vereinsführung',
-    ]) {
+    for (const section of ['Mitglieder', 'Trainer', 'Spielbetrieb', 'Finanzen', 'Verein']) {
       await expect(sidebar.getByRole('button', { name: new RegExp(section, 'i') })).toBeVisible();
     }
     // Superadmin-Sektionen dürfen nicht auftauchen

@@ -11,6 +11,31 @@
 
 export type FeatureCategory = 'core' | 'optional';
 
+/**
+ * Admin-Sidebar-Sektionen. Feste Reihenfolge im Vereins-Workflow
+ * (wer ist drin → wer unterrichtet → was läuft → wer zahlt → Verein).
+ * Die Sektionen selbst (Label, Icon, Pflicht-Links) stehen in
+ * lib/navigation.ts; hierher gehört nur, in welche Sektion ein optionales
+ * Modul seinen Link einhängt.
+ */
+export type AdminSectionKey = 'members' | 'trainers' | 'play' | 'finance' | 'club';
+
+/**
+ * Wo ein optionales Modul in der Admin-Sidebar erscheint.
+ *
+ * `nav: null` heisst bewusst: dieses Modul hat KEINEN eigenen Admin-Link —
+ * entweder ist es ein Widget auf einer bestehenden Seite (Wetter) oder eine
+ * reine Mitglieder-Funktion (Board-Beschlüsse, Wallet, Gamification). Ein
+ * explizites `null` statt des blossen Weglassens verhindert, dass ein Modul
+ * „still" nirgends auftaucht und der nächste Agent den Link doppelt erfindet.
+ */
+export interface AdminNavPlacement {
+  section: AdminSectionKey;
+  /** Link-Beschriftung in der Sidebar — deckungsgleich mit dem Seiteninhalt. */
+  label: string;
+  href: string;
+}
+
 export interface ClubFeature {
   /** Stable feature key, used in DB and URL queries. Never rename without a migration. */
   key: string;
@@ -22,8 +47,13 @@ export interface ClubFeature {
   icon: string;
   /** Whether the feature is always-on. Core features cannot be disabled. */
   category: FeatureCategory;
-  /** Sidebar section key — when a section's primary feature is disabled, the section hides. */
-  sidebarSection?: string;
+  /**
+   * Admin-Navigation des Moduls. Nur optionale Module setzen das:
+   * `{ section, label, href }` = Sidebar-Link, `null` = bewusst kein
+   * Admin-Link. Core-Module lassen es weg — ihre Links sind die festen
+   * Sektionen in lib/navigation.ts.
+   */
+  nav?: AdminNavPlacement | null;
   /** Optional dependency on another feature. The dependent feature is only available if the dependency is enabled. */
   dependsOn?: string;
   /** Display order in wizard and settings (asc). */
@@ -36,14 +66,12 @@ export interface ClubFeature {
  */
 export const CLUB_FEATURES: readonly ClubFeature[] = [
   // ── Core (always on) ────────────────────────────────────────────────────
-  // ── Core (always on) ────────────────────────────────────────────────────
   {
     key: 'members',
     label: 'Mitgliederverwaltung',
     description: 'Verwalte Mitglieder, Einladungen, Genehmigungen und Stammdaten.',
     icon: 'Users',
     category: 'core',
-    sidebarSection: 'members',
     order: 1,
   },
   {
@@ -52,7 +80,6 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Trainerprofile, Verfügbarkeiten und Stundenerfassung.',
     icon: 'GraduationCap',
     category: 'core',
-    sidebarSection: 'trainers',
     order: 2,
   },
   {
@@ -61,7 +88,6 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Saisonen, automatisches Clustering und Stundenpläne für Trainingsgruppen.',
     icon: 'CalendarDays',
     category: 'core',
-    sidebarSection: 'seasons',
     order: 3,
   },
   {
@@ -70,7 +96,6 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Abrechnung, Beitragskategorien, Rechnungen und Mahnwesen.',
     icon: 'DollarSign',
     category: 'core',
-    sidebarSection: 'finance',
     order: 4,
   },
 
@@ -85,7 +110,7 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Online-Anmeldeformular und Verwaltung von Schnupperstunden.',
     icon: 'FlaskConical',
     category: 'optional',
-    sidebarSection: 'trial_training',
+    nav: { section: 'members', label: 'Probetrainings', href: '/admin/trial-training' },
     order: 5,
   },
   {
@@ -94,7 +119,7 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Eltern verwalten mehrere Kinderkonten unter einem Login.',
     icon: 'Users',
     category: 'optional',
-    sidebarSection: 'family_accounts',
+    nav: { section: 'members', label: 'Familienkonten', href: '/admin/members/family' },
     order: 6,
   },
   {
@@ -103,7 +128,10 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Gemeinschaftsdienst-Verwaltung mit Zuweisung und Nachverfolgung.',
     icon: 'HardHat',
     category: 'optional',
-    sidebarSection: 'work_duty',
+    // Ein Link statt zwei („Arbeitsdienste" + „Zuweisungen"): Dienste und
+    // Zuweisungen sind zwei Sichten derselben Daten und liegen jetzt als
+    // Tabs auf /admin/work-duties.
+    nav: { section: 'members', label: 'Arbeitsdienste', href: '/admin/work-duties' },
     order: 7,
   },
   {
@@ -112,7 +140,7 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Mannschaftsaufstellung, Liga-Verwaltung und Spieltag-Planung.',
     icon: 'Flag',
     category: 'optional',
-    sidebarSection: 'league_lineup',
+    nav: { section: 'play', label: 'Ligen & Mannschaften', href: '/admin/leagues' },
     order: 8,
   },
   {
@@ -121,7 +149,7 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Organisation von Vereinsturnieren, Anmeldungen und Spielplänen.',
     icon: 'Trophy',
     category: 'optional',
-    sidebarSection: 'tournaments',
+    nav: { section: 'play', label: 'Turniere', href: '/admin/tournaments' },
     order: 9,
   },
   {
@@ -133,7 +161,9 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
       'Zeigt die aktuelle Wetterlage neben den Platzsperren, damit die Entscheidung zum Sperren auf einer Zahl statt auf dem Blick aus dem Fenster beruht.',
     icon: 'CloudRain',
     category: 'optional',
-    sidebarSection: 'weather_integration',
+    // Kein eigener Link: ein Widget innerhalb des Plätze-Hubs
+    // (/admin/courts?view=manage&tab=closures).
+    nav: null,
     order: 10,
   },
   {
@@ -143,7 +173,7 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
       'Zeitbasierte Preise für Plätze: Peak/Off-Peak, Tagespreise und Saison-Aufschläge.',
     icon: 'TrendingUp',
     category: 'optional',
-    sidebarSection: 'pricing',
+    nav: { section: 'finance', label: 'Preisregeln', href: '/admin/pricing' },
     order: 11,
   },
   {
@@ -152,7 +182,7 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Spielpartner-Matching auf Basis von Niveau und Verfügbarkeit.',
     icon: 'Sparkles',
     category: 'optional',
-    sidebarSection: 'partner_finder',
+    nav: { section: 'play', label: 'Spielpartner-Suche', href: '/admin/partner-finder' },
     order: 12,
   },
   // ── Optional (toggleable) ───────────────────────────────────────────────
@@ -162,7 +192,7 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Verkauf von Vereinsartikeln, Bällen und Zubehör direkt an Mitglieder.',
     icon: 'ShoppingBag',
     category: 'optional',
-    sidebarSection: 'shop',
+    nav: { section: 'finance', label: 'Shop', href: '/admin/shop' },
     order: 13,
   },
   {
@@ -171,7 +201,9 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Digitale Beschlussfassung und Abstimmungen für den Vorstand.',
     icon: 'Gavel',
     category: 'optional',
-    sidebarSection: 'decisions',
+    // Reine Mitglieder-Funktion (/decisions); eine eigene Admin-Seite gibt es
+    // aktuell nicht — der Link unter Mitgliedern existiert trotzdem.
+    nav: null,
     order: 14,
   },
   // Testbudget, standardmäßig aus. Nicht gelöscht, nur per Flag verborgen.
@@ -181,7 +213,8 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Punkte, Abzeichen und Ranglisten für Mitglieder.',
     icon: 'Trophy',
     category: 'optional',
-    sidebarSection: 'gamification',
+    // Reine Mitglieder-Funktion (/gamification), standardmäßig aus.
+    nav: null,
     order: 15,
   },
   {
@@ -190,7 +223,9 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Apple/Google-Wallet-Mitgliedsausweise.',
     icon: 'Wallet',
     category: 'optional',
-    sidebarSection: 'wallet_passes',
+    // Reine Mitglieder-Funktion (Ausweis auf dem eigenen Gerät), keine
+    // Admin-Seite.
+    nav: null,
     order: 16,
   },
 ] as const;
@@ -245,19 +280,4 @@ export function sanitizeFeatureFlags(
 /** Lookup helper. */
 export function getFeature(key: string): ClubFeature | undefined {
   return CLUB_FEATURES.find((f) => f.key === key);
-}
-
-/**
- * Returns the subset of sidebar sections that should be hidden for a given
- * feature-flag map. A section is hidden if its `sidebarSection` matches the
- * key of a disabled feature.
- */
-export function getHiddenSidebarSections(features: Record<string, boolean>): Set<string> {
-  const hidden = new Set<string>();
-  for (const feature of CLUB_FEATURES) {
-    if (feature.sidebarSection && !features[feature.key]) {
-      hidden.add(feature.sidebarSection);
-    }
-  }
-  return hidden;
 }

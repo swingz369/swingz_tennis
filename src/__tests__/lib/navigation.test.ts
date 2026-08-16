@@ -4,6 +4,8 @@ import {
   memberSidebarSections,
   mobileNavItems,
   ownerSidebarSections,
+  paletteAdminNavItems,
+  paletteNavItems,
   superadminSidebarSections,
   trainerSidebarSections,
   type NavSection,
@@ -74,6 +76,34 @@ describe('Sidebar-Sektionen', () => {
       const withoutModule = adminSidebarSections(new Set([key]));
       const all = adminSidebarSections(NO_FLAGS);
       expect(withoutModule.length, `Modul "${key}" blendet keine Sektion aus`).toBe(all.length - 1);
+    }
+  });
+});
+
+describe('Command-Palette', () => {
+  it('admin: trägt für jedes Sidebar-Ziel denselben Namen', () => {
+    const paletteByName = new Map(
+      paletteAdminNavItems(NO_FLAGS, false).map((i) => [i.href, i.name])
+    );
+    for (const item of adminSidebarSections(NO_FLAGS, false).flatMap((s) => s.items)) {
+      expect(paletteByName.get(item.href), `${item.href} weicht ab`).toBe(item.name);
+    }
+  });
+
+  it('mitglied: trägt für jedes Sidebar-Ziel denselben Namen', () => {
+    const paletteByName = new Map(paletteNavItems(NO_FLAGS, true).map((i) => [i.href, i.name]));
+    for (const item of memberSidebarSections(NO_FLAGS, true).flatMap((s) => s.items)) {
+      expect(paletteByName.get(item.href), `${item.href} weicht ab`).toBe(item.name);
+    }
+  });
+
+  it('verlinkt kein Ziel doppelt', () => {
+    for (const palette of [
+      paletteAdminNavItems(NO_FLAGS, false),
+      paletteNavItems(NO_FLAGS, true),
+    ]) {
+      const hrefs = palette.map((i) => i.href);
+      expect(hrefs).toHaveLength(new Set(hrefs).size);
     }
   });
 });

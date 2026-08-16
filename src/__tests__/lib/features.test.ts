@@ -7,7 +7,6 @@ import {
   getDefaultFeatures,
   sanitizeFeatureFlags,
   getFeature,
-  getHiddenSidebarSections,
   type FeatureKey,
 } from '@/lib/features';
 
@@ -180,48 +179,27 @@ describe('getFeature', () => {
   });
 });
 
-describe('getHiddenSidebarSections', () => {
-  it('returns an empty Set when all features are enabled', () => {
-    const allOn = Object.fromEntries(ALL_FEATURE_KEYS.map((k) => [k, true]));
-    const hidden = getHiddenSidebarSections(allOn);
-    expect(hidden.size).toBe(0);
+describe('nav placement (Single Source of Truth)', () => {
+  it('every optional feature declares its admin nav (object or explicit null)', () => {
+    for (const f of CLUB_FEATURES) {
+      if (f.category !== 'optional') continue;
+      expect(f.nav !== undefined, `Modul "${f.key}" braucht nav (Objekt oder null)`).toBe(true);
+    }
   });
 
-  it('hides the sidebar section of every disabled feature', () => {
-    const input: Record<string, boolean> = Object.fromEntries(
-      ALL_FEATURE_KEYS.map((k) => [k, true])
-    );
-    input.shop = false;
-    input.tournaments = false;
-    input.trial_training = false;
-    input.partner_finder = false;
-    const hidden = getHiddenSidebarSections(input);
-    expect(hidden.has('shop')).toBe(true);
-    expect(hidden.has('tournaments')).toBe(true);
-    expect(hidden.has('trial_training')).toBe(true);
-    expect(hidden.has('partner_finder')).toBe(true);
+  it('every nav placement points to a known section and a non-query href', () => {
+    const knownSections = ['members', 'trainers', 'play', 'finance', 'club'];
+    for (const f of CLUB_FEATURES) {
+      if (!f.nav) continue;
+      expect(knownSections).toContain(f.nav.section);
+      expect(f.nav.href.startsWith('/')).toBe(true);
+      expect(f.nav.href).not.toContain('?');
+    }
   });
 
-  it('does not hide core-feature sections', () => {
-    const input: Record<string, boolean> = Object.fromEntries(
-      ALL_FEATURE_KEYS.map((k) => [k, true])
-    );
-    // Try to disable core features (sanity — they should still be in the result map as true)
-    // but the function does not re-sanitize, it just looks at the input.
-    input.members = false;
-    input.trainers = false;
-    const hidden = getHiddenSidebarSections(input);
-    expect(hidden.has('members')).toBe(true);
-    expect(hidden.has('trainers')).toBe(true);
-    // Note: in real usage, sanitizeFeatureFlags is called first to force these to true.
-  });
-
-  it('returns a Set (not an array) for O(1) lookup', () => {
-    const input: Record<string, boolean> = Object.fromEntries(
-      ALL_FEATURE_KEYS.map((k) => [k, false])
-    );
-    const hidden = getHiddenSidebarSections(input);
-    expect(hidden).toBeInstanceOf(Set);
+  it('no two optional modules declare the same admin href', () => {
+    const hrefs = CLUB_FEATURES.filter((f) => f.nav).map((f) => f.nav!.href);
+    expect(new Set(hrefs).size).toBe(hrefs.length);
   });
 });
 

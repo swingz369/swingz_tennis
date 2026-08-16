@@ -167,7 +167,7 @@ export function Sidebar({
         return navCounts.members !== null ? String(navCounts.members) : null;
       case 'Finanzen':
         return navCounts.openInvoices ? String(navCounts.openInvoices) : null;
-      case 'Saison & Plätze':
+      case 'Spielbetrieb':
         return navCounts.preferencesPct !== null ? `${navCounts.preferencesPct} %` : null;
       default:
         return null;

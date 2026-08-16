@@ -7,7 +7,7 @@ import { loginAsRoleAware } from '../helpers/auth';
  * Tests critical user journeys through the application with ECHTEN Logins
  * (client-seitiges API-Mocking kommt an der server-seitigen Auth nicht vorbei):
  * - Dashboard-Dispatch pro Rolle
- * - Admin-Sidebar-Navigation (Training → Wochenstundenplan, Spielbetrieb → Platzverwaltung)
+ * - Admin-Sidebar-Navigation (Spielbetrieb → Plätze/Saisonplanung)
  * - Superadmin overview
  * - Cross-Role-Redirects
  */
@@ -25,29 +25,18 @@ test.describe('Dashboard Navigation Flows', () => {
     expect(page.url()).toContain('/admin');
   });
 
-  test('Admin: Sidebar Training → Wochenstundenplan', async ({ page }) => {
+  test('Admin: Sidebar Spielbetrieb → Plätze (Kalender + Verwaltung)', async ({ page }) => {
     await page.goto('/admin/members', { waitUntil: 'networkidle' });
     const sidebar = page.locator(SIDEBAR);
     await expect(sidebar).toBeVisible({ timeout: 10000 });
 
-    // Training-Sektion aufklappen (nicht defaultOpen), dann Wochenstundenplan
-    // (getByText — unabhängig von der Link-Rolle stabil)
-    const training = sidebar.getByRole('button', { name: /Training/i });
-    if ((await training.getAttribute('aria-expanded')) !== 'true') {
-      await training.click();
-    }
-    await sidebar.getByText('Wochenstundenplan').click();
-    await expect(page).toHaveURL(/\/scheduler/, { timeout: 10000 });
-  });
-
-  test('Admin: Sidebar Spielbetrieb → Platzverwaltung', async ({ page }) => {
-    await page.goto('/admin/members', { waitUntil: 'networkidle' });
-    const sidebar = page.locator(SIDEBAR);
-    await expect(sidebar).toBeVisible({ timeout: 10000 });
-
-    // Spielbetrieb ist defaultOpen — Item direkt klickbar
-    await sidebar.getByText('Platzverwaltung').click();
+    // Spielbetrieb ist defaultOpen — Plätze direkt klickbar
+    await sidebar.getByText('Plätze').click();
     await expect(page).toHaveURL(/\/admin\/courts/, { timeout: 10000 });
+
+    // Hub zeigt beide Sichten: Kalender (default) und Verwaltung
+    await expect(page.getByRole('tab', { name: /Kalender/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('tab', { name: /Verwaltung/i })).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -70,11 +59,7 @@ test.describe('Admin Workflow Navigation', () => {
     const sidebar = page.locator(SIDEBAR);
     await expect(sidebar).toBeVisible({ timeout: 10000 });
 
-    // Training-Sektion aufklappen → Saisonplanung
-    const training = sidebar.getByRole('button', { name: /Training/i });
-    if ((await training.getAttribute('aria-expanded')) !== 'true') {
-      await training.click();
-    }
+    // Spielbetrieb ist defaultOpen → Saisonplanung direkt klickbar
     await sidebar.getByText('Saisonplanung').click();
     await expect(page).toHaveURL(/\/admin\/seasons/, { timeout: 10000 });
   });

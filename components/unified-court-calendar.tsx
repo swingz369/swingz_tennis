@@ -2492,7 +2492,7 @@ export default function UnifiedCourtCalendar({
               </Badge>
             )}
             <Link
-              href="/admin/courts?tab=closures"
+              href="/admin/courts?view=manage&tab=closures"
               className="text-xs font-medium text-muted-foreground hover:text-brand-light transition-colors whitespace-nowrap"
             >
               Details →

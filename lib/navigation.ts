@@ -10,7 +10,6 @@ import type { ComponentType } from 'react';
 import {
   BarChart3,
   Bell,
-  Blocks,
   Building2,
   Calendar,
   CalendarDays,
@@ -19,12 +18,9 @@ import {
   Clock,
   CreditCard,
   DollarSign,
-  FileText,
   GraduationCap,
   Home,
   Landmark,
-  MapPin,
-  MessageSquare,
   ScrollText,
   Search,
   Settings,
@@ -33,6 +29,7 @@ import {
   User,
   Users,
 } from 'lucide-react';
+import { CLUB_FEATURES, type AdminSectionKey, type FeatureKey } from '@/lib/features';
 
 export type NavIcon = ComponentType<{
   className?: string | undefined;
@@ -57,116 +54,99 @@ type Hidden = Set<string>;
 // ── Sidebar: Admin ───────────────────────────────────────────────────
 
 /**
- * Sektion → Kernmodul aus `lib/features.ts`. Die vier Core-Module haben je
- * genau eine Sektion; `features.ts` deklariert dieselben Keys als
- * `sidebarSection`. Wer hier eine Sektion umbenennt, zieht dort nach.
- */
-const ADMIN_SECTION_FEATURE: Record<string, string> = {
-  Mitglieder: 'members',
-  Trainer: 'trainers',
-  'Saison & Plätze': 'seasons',
-  Finanzen: 'finance',
-};
-
-/**
- * Reihenfolge = Arbeitsablauf des Vereinsjahres, nicht Objekt-Taxonomie:
- * wer ist drin → wer unterrichtet → was läuft → wer zahlt. Sie entspricht
- * damit exakt der `order` der Core-Features in `lib/features.ts`.
+ * Sektion → Kernmodul. Die vier Core-Module tragen je genau eine Sektion;
+ * `feature` blendet die ganze Sektion aus, falls das Core-Modul deaktiviert
+ * ist. Die Link-Platzierung der OPTIONALEN Module kommt aus `lib/features.ts`
+ * (`nav`-Feld) — einzige Quelle, kein verstreutes `hidden.has()` mehr.
  *
- * Optionale Module stehen gesammelt unten statt verstreut in den
- * Kernsektionen — sonst steht dieselbe Kernfunktion bei jedem Verein an
- * einer anderen Stelle, je nachdem was gebucht ist.
+ * Reihenfolge = Arbeitsablauf des Vereinsjahres, nicht Objekt-Taxonomie:
+ * wer ist drin → wer unterrichtet → was läuft → wer zahlt → Verein.
  */
 export function adminSidebarSections(hidden: Hidden, belongsToTennisschule = false): NavSection[] {
-  const sections: NavSection[] = [
+  type Def = {
+    key: AdminSectionKey;
+    label: string;
+    icon: NavIcon;
+    feature?: FeatureKey;
+    items: NavItem[];
+  };
+
+  const defs: Def[] = [
     {
+      key: 'members',
       label: 'Mitglieder',
       icon: Users,
-      items: [
-        { name: 'Alle Mitglieder', href: '/admin/members' },
-        ...(!hidden.has('family_accounts')
-          ? [{ name: 'Familienkonten', href: '/admin/members/family' }]
-          : []),
-        ...(!hidden.has('trial_training')
-          ? [{ name: 'Probetrainings', href: '/admin/trial-training' }]
-          : []),
-        ...(!hidden.has('work_duty')
-          ? [
-              { name: 'Arbeitsdienste', href: '/admin/work-duties' },
-              { name: 'Arbeitsdienst-Zuweisungen', href: '/admin/work-duties/assignments' },
-            ]
-          : []),
-      ],
+      feature: 'members',
+      items: [{ name: 'Alle Mitglieder', href: '/admin/members' }],
     },
     {
+      key: 'trainers',
       label: 'Trainer',
       icon: GraduationCap,
+      feature: 'trainers',
       items: [
         { name: 'Trainer-Profile', href: '/admin/trainers' },
         { name: 'Stundennachweise', href: '/admin/hours-logs' },
       ],
     },
     {
-      // Plätze stehen hier und nicht unter „Spielbetrieb": sie sind die
-      // Ressource, die die Saisonplanung verplant — ohne angelegte Plätze
-      // läuft der Wizard nicht. Der Admin sucht sie genau hier.
-      label: 'Saison & Plätze',
+      // Plätze stehen hier: sie sind die Ressource, die die Saisonplanung
+      // verplant — ohne angelegte Plätze läuft der Wizard nicht. Der Admin
+      // sucht sie genau hier, neben Saisonplanung und Ligen. Kalender und
+      // Verwaltung sind eine Seite mit Tabs (Plätze-Hub).
+      key: 'play',
+      label: 'Spielbetrieb',
       icon: CalendarDays,
+      feature: 'seasons',
       items: [
         { name: 'Saisonplanung', href: '/admin/seasons' },
-        { name: 'Platzkalender', href: '/scheduler' },
-        { name: 'Platzverwaltung', href: '/admin/courts' },
-        // Medenspiele gehören hierher und nicht in eine Modul-Restekiste: sie
-        // sind Spielbetrieb auf den eigenen Plätzen, ein Heimspieltag sperrt
-        // sie sogar (court_closures.match_day_id). Der Sportwart sucht sie
-        // neben Saisonplanung und Platzkalender, nicht unter „Weitere Module".
-        ...(!hidden.has('league_lineup')
-          ? [{ name: 'Ligen & Mannschaften', href: '/admin/leagues' }]
-          : []),
+        { name: 'Plätze', href: '/admin/courts' },
         { name: 'Sonderveranstaltungen', href: '/admin/special-events' },
       ],
     },
     {
+      key: 'finance',
       label: 'Finanzen',
       icon: DollarSign,
+      feature: 'finance',
       items: [
         { name: 'Abrechnung', href: '/admin/billing' },
-        ...(!hidden.has('dynamic_pricing')
-          ? [{ name: 'Preisregeln', href: '/admin/pricing' }]
-          : []),
         // Vereine, die zu einer Tennisschule gehören, verwalten ihr Abo auf
         // Ebene der Tennisschule (Superadmin) — nicht pro Einzelverein.
         ...(!belongsToTennisschule ? [{ name: 'Abonnement', href: '/admin/subscription' }] : []),
       ],
     },
     {
+      key: 'club',
       label: 'Verein',
       icon: Landmark,
       items: [
         { name: 'Nachrichten', href: '/messages' },
         { name: 'Vereinseinstellungen', href: '/admin/settings' },
-        { name: 'Auswertungen & Berichte', href: '/admin/analytics' },
+        { name: 'Auswertungen', href: '/admin/analytics' },
         { name: 'Dokumente', href: '/admin/documents' },
-      ],
-    },
-    {
-      label: 'Weitere Module',
-      icon: Blocks,
-      items: [
-        ...(!hidden.has('tournaments') ? [{ name: 'Turniere', href: '/admin/tournaments' }] : []),
-        ...(!hidden.has('partner_finder')
-          ? [{ name: 'Spielpartner-Suche', href: '/admin/partner-finder' }]
-          : []),
-        ...(!hidden.has('shop') ? [{ name: 'Shop', href: '/admin/shop' }] : []),
       ],
     },
   ];
 
-  return sections.filter((section) => {
-    const feature = ADMIN_SECTION_FEATURE[section.label];
-    if (feature && hidden.has(feature)) return false;
-    return section.items.length > 0;
-  });
+  // Optionale Module hängen ihren Link an der deklarierten Sektion ein —
+  // Reihenfolge aus CLUB_FEATURES (Nutzen für den Verein).
+  const moduleItems = new Map<AdminSectionKey, NavItem[]>();
+  for (const feature of CLUB_FEATURES) {
+    if (feature.category !== 'optional' || !feature.nav || hidden.has(feature.key)) continue;
+    const list = moduleItems.get(feature.nav.section) ?? [];
+    list.push({ name: feature.nav.label, href: feature.nav.href });
+    moduleItems.set(feature.nav.section, list);
+  }
+
+  return defs
+    .filter((def) => !(def.feature && hidden.has(def.feature)))
+    .map((def) => ({
+      label: def.label,
+      icon: def.icon,
+      items: [...def.items, ...(moduleItems.get(def.key) ?? [])],
+    }))
+    .filter((section) => section.items.length > 0);
 }
 
 // ── Sidebar: Mitglied (auch Trainer sieht diese Sektionen) ──────────
@@ -393,38 +373,53 @@ export function mobileNavItems(
 
 // ── Command-Palette (Cmd+K) ──────────────────────────────────────────
 
-export function paletteNavItems(hidden: Hidden = new Set()): NavItem[] {
+/**
+ * Flacht Sidebar-Sektionen zu einer Liste ab. Items ohne eigenes Icon erben
+ * das ihrer Sektion — so bleibt die Palette optisch an die Sidebar-
+ * Gruppierung gebunden, ohne dass jeder Eintrag ein Icon pflegt.
+ */
+function flattenSections(sections: NavSection[]): NavItem[] {
+  return sections.flatMap((section) =>
+    section.items.map((item) => ({
+      name: item.name,
+      href: item.href,
+      icon: item.icon ?? section.icon,
+      badge: item.badge,
+    }))
+  );
+}
+
+/**
+ * Palette für Mitglied & Trainer. Leitet sich aus `memberSidebarSections`
+ * ab — dieselbe Quelle wie die Sidebar, Namen und Ziele können nicht mehr
+ * auseinanderlaufen. Ergänzt um Palette-only-Einträge (Dashboard-Dispatch,
+ * Benachrichtigungen, erweiterte Suche, Profil), die in der Sidebar bewusst
+ * fehlen.
+ */
+export function paletteNavItems(hidden: Hidden = new Set(), includeMemberOnly = true): NavItem[] {
   return [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Buchungen', href: '/bookings', icon: Calendar },
-    { name: 'Nachrichten', href: '/messages', icon: MessageSquare },
-    { name: 'Rechnungen', href: '/billing', icon: CreditCard },
-    { name: 'Mein Trainingsplan', href: '/training-schedule', icon: ClipboardCheck },
-    { name: 'Platzkalender', href: '/scheduler', icon: Calendar },
+    ...flattenSections(memberSidebarSections(hidden, includeMemberOnly)),
     { name: 'Benachrichtigungen', href: '/notifications', icon: Bell },
     // /news leitet nur auf /messages weiter (News & Nachrichten wurden
     // zusammengeführt) — kein eigener Palette-Eintrag mehr nötig.
     { name: 'Erweiterte Suche', href: '/search', icon: Search },
-    // Ohne dieses Gate bot die Palette Gamification auch Vereinen an, die das
-    // Modul nicht gebucht haben — dort antwortet die Seite mit 403.
-    ...(!hidden.has('gamification')
-      ? [{ name: 'Erfolge & Ranglisten', href: '/gamification', icon: Trophy }]
-      : []),
     { name: 'Profil', href: '/profile', icon: User },
   ];
 }
 
-export function paletteAdminNavItems(hidden: Hidden = new Set()): NavItem[] {
+/**
+ * Palette für Admin/Superadmin. Leitet sich aus `adminSidebarSections` ab —
+ * gleiche Namen, gleiche Ziele, gleiche Feature-Gates wie die Sidebar.
+ * „Dashboard" steht vorne, weil es in der Sidebar ein eigener Link oberhalb
+ * der Sektionen ist und dort keine eigene Sektion hat.
+ */
+export function paletteAdminNavItems(
+  hidden: Hidden = new Set(),
+  belongsToTennisschule = false
+): NavItem[] {
   return [
-    { name: 'Admin Dashboard', href: '/admin', icon: Home },
-    { name: 'Mitglieder', href: '/admin/members', icon: Users },
-    { name: 'Trainer', href: '/admin/trainers', icon: GraduationCap },
-    { name: 'Plätze', href: '/admin/courts', icon: MapPin },
-    { name: 'Abrechnung', href: '/admin/billing', icon: FileText },
-    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-    { name: 'Einstellungen', href: '/admin/settings', icon: Settings },
-    ...(!hidden.has('tournaments')
-      ? [{ name: 'Turniere', href: '/admin/tournaments', icon: Trophy }]
-      : []),
+    { name: 'Dashboard', href: '/admin', icon: Home },
+    ...flattenSections(adminSidebarSections(hidden, belongsToTennisschule)),
   ];
 }

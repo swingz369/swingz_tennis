@@ -2,9 +2,8 @@ import { requireAuth } from '@/lib/auth';
 import { requireAdminClub } from '@/lib/admin-context';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui/page-header';
-import { getHiddenSidebarSections } from '@/lib/features';
 import { createLogger } from '@/lib/logger';
-import { CourtsHubTabs } from './courts-hub-tabs';
+import { PlacesHubTabs } from './places-hub-tabs';
 import type { Court } from '@/lib/types/court-booking';
 
 const log = createLogger('admin:courts:page');
@@ -39,16 +38,18 @@ export default async function AdminCourtsPage() {
   if (clubErr)
     log.error('Failed to load club features', { club_id: clubId, error: clubErr.message });
 
-  const features = (club?.features ?? {}) as Record<string, unknown>;
-  const hidden = getHiddenSidebarSections(features as Record<string, boolean>);
+  const features = (club?.features ?? {}) as Record<string, boolean>;
+  // Wetter-Widget: direktes Flag statt Umweg über eine Sidebar-Sektions-
+  // Logik — weather_integration hat keinen eigenen Sidebar-Link.
+  const showWeather = features.weather_integration !== false;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Platzverwaltung"
-        description="Plätze, Wartung und Platzsperren an einem Ort"
+        title="Plätze"
+        description="Kalender, Plätze, Wartung und Platzsperren an einem Ort"
       />
-      <CourtsHubTabs
+      <PlacesHubTabs
         clubId={clubId}
         initialCourts={(courts ?? []) as Court[]}
         courtTypes={(courtTypes ?? []).map((t) => ({
@@ -56,7 +57,7 @@ export default async function AdminCourtsPage() {
           name: t.name,
           surface: t.surface_type ?? '',
         }))}
-        showWeather={!hidden.has('weather_integration')}
+        showWeather={showWeather}
       />
     </div>
   );

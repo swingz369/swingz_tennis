@@ -36,7 +36,7 @@ test.describe('Sidebar Component - Role-based Navigation', () => {
     // Sektions-Labels — die vier Kernmodule aus lib/features.ts, 1:1
     expect(navCode).toContain("'Mitglieder'");
     expect(navCode).toContain("'Trainer'");
-    expect(navCode).toContain("'Saison & Plätze'");
+    expect(navCode).toContain("'Spielbetrieb'");
     expect(navCode).toContain("'Finanzen'");
   });
 
