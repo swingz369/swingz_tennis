@@ -307,20 +307,34 @@ export default async function AdminPage() {
       .from('seasons')
       .select('id, name, planning_status, preferences_deadline, start_date, end_date')
       .eq('club_id', clubId)
-      .order('year', { ascending: false })
       .order('start_date', { ascending: false })
-      .limit(1)
+      .limit(10)
   );
-  const season = (currentSeason ?? [])[0] as
-    | {
-        id: string;
-        name: string;
-        planning_status: string;
-        preferences_deadline: string | null;
-        start_date: string | null;
-        end_date: string | null;
-      }
-    | undefined;
+
+  type SeasonRow = {
+    id: string;
+    name: string;
+    planning_status: string;
+    preferences_deadline: string | null;
+    start_date: string | null;
+    end_date: string | null;
+  };
+
+  // Die Karte zeigte bisher die Saison mit dem spätesten Startdatum — im
+  // August also bereits die Wintersaison, die erst im Oktober beginnt, samt
+  // Fortschritt "KW 1 läuft". Maßgeblich ist die Saison, die heute läuft;
+  // erst wenn keine läuft, ist die nächste anstehende die richtige Antwort.
+  const seasonRows = (currentSeason ?? []) as SeasonRow[];
+  const heute = new Date().toISOString().slice(0, 10);
+  const season =
+    seasonRows.find(
+      (s) => s.start_date && s.end_date && s.start_date <= heute && heute <= s.end_date
+    ) ??
+    // aufsteigend: die nächste, die beginnt — nicht die fernste
+    [...seasonRows]
+      .filter((s) => s.start_date && s.start_date > heute)
+      .sort((a, b) => (a.start_date! < b.start_date! ? -1 : 1))[0] ??
+    seasonRows[0];
 
   const { count: preferenceCount } = season
     ? await safe(
