@@ -53,7 +53,6 @@ export function FinalizeStep() {
   const { state, dispatch, confirmPlan, detectConflicts, goToStep } = useWizard();
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  const [isGeneratingInvoices, setIsGeneratingInvoices] = useState(false);
   const [hasRunCheck, setHasRunCheck] = useState(false);
 
   // Reset hasRunCheck when the plan changes (user went back to step 2)
@@ -175,31 +174,6 @@ export function FinalizeStep() {
         .finally(() => setBillingLoading(false));
     }
   }, [state.isConfirmed, state.clusteringResult, billingFetched, state.seasonId]);
-
-  const handleGenerateInvoices = async () => {
-    setIsGeneratingInvoices(true);
-    try {
-      const res = await apiFetch(`/api/seasons/${state.seasonId}/billing`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        const created = data.created?.length ?? 0;
-        const skipped = data.skipped?.length ?? 0;
-        toast.success(
-          `${created} Rechnung(en) erstellt${skipped > 0 ? `, ${skipped} bereits vorhanden` : ''}`
-        );
-      } else {
-        toast.error(extractErrorMessage(data) ?? 'Fehler beim Erstellen der Rechnungen');
-      }
-    } catch {
-      toast.error('Netzwerkfehler');
-    } finally {
-      setIsGeneratingInvoices(false);
-    }
-  };
 
   // === POST-CONFIRMATION SUCCESS STATE ===
   if (state.isConfirmed) {
@@ -565,29 +539,20 @@ export function FinalizeStep() {
                     </p>
                   </div>
 
-                  {/* ▸ Generate Invoices Button */}
-                  <div className="flex items-center gap-3">
-                    <Button
-                      size="lg"
-                      className="gap-2 bg-primary hover:bg-primary/90 text-white"
-                      disabled={isGeneratingInvoices}
-                      onClick={handleGenerateInvoices}
-                    >
-                      {isGeneratingInvoices ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Erstelle Rechnungen...
-                        </>
-                      ) : (
-                        <>
-                          <Receipt className="h-4 w-4" />
-                          {billingPreview.memberCount} Rechnungen generieren
-                        </>
-                      )}
-                    </Button>
+                  {/* ▸ Rechnungsstatus — die Rechnungen entstehen beim Veröffentlichen
+                       automatisch als Entwurf. Hier stand früher ein zweiter
+                       "Rechnungen generieren"-Button, der nur noch
+                       "0 erstellt, N bereits vorhanden" melden konnte. */}
+                  <div className="flex flex-wrap items-center gap-3 rounded-xl border border-info-200 bg-info-50/50 px-4 py-3">
+                    <Info className="h-4 w-4 shrink-0 text-info-500" />
+                    <p className="text-sm text-muted-foreground">
+                      Die Rechnungen wurden beim Veröffentlichen als{' '}
+                      <span className="font-medium text-foreground">Entwurf</span> erstellt — für
+                      Mitglieder erst sichtbar, wenn sie in der Abrechnung versendet werden.
+                    </p>
                     <Link
                       href="/admin/billing"
-                      className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
                     >
                       Zur Abrechnung
                       <ChevronRight className="h-3.5 w-3.5" />
