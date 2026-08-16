@@ -93,6 +93,7 @@ export interface GenerateSeasonInvoiceParams {
 
 export interface GroupChangeParams {
   club_id: string;
+  season_id: string;
   member_id: string;
   old_group_id: string;
   new_group_id: string;

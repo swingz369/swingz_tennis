@@ -10,6 +10,7 @@ const log = createLogger('api:billing:group-change');
 
 const Schema = z.object({
   club_id: z.string().uuid(),
+  season_id: z.string().uuid(),
   member_id: z.string().uuid(),
   old_group_id: z.string().uuid(),
   new_group_id: z.string().uuid(),

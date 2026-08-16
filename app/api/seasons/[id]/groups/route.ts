@@ -32,8 +32,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
   if (groupIds.length === 0) return NextResponse.json({ groups: [] });
 
+  // `season_plan_entries.group_id` zeigt auf `groups` (die von der
+  // Clustering-Engine erzeugten Saison-Gruppen), NICHT auf die alte Tabelle
+  // `training_groups` (fixe Stundenpläne, `schedule_id NOT NULL`). Die stand
+  // hier bis zum 16.08.2026 — sie ist leer, die Abfrage lieferte immer eine
+  // leere Liste, und die Oberfläche schloss daraus "Bitte zuerst eine Planung
+  // veröffentlichen", obwohl die Saison längst veröffentlicht war.
   const { data: groups, error: gErr } = await (supabase as any)
-    .from('training_groups')
+    .from('groups')
     .select('id, name, age_group, level')
     .in('id', groupIds)
     .eq('club_id', clubId)

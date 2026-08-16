@@ -11,20 +11,28 @@ interface RouteContext {
 export async function GET(request: NextRequest, context: RouteContext) {
   const auth = await requireAuth(request);
   if (!auth.user) return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
-  const { groupId } = await context.params;
+  const { id: seasonId, groupId } = await context.params;
   const clubId = request.nextUrl.searchParams.get('clubId');
   if (!clubId) return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
 
-  const { data: memberships, error } = await (auth.supabase as any)
-    .from('training_group_memberships')
-    .select('member_id')
-    .eq('training_group_id', groupId)
+  // Wer in einer Saison-Gruppe ist, steht in `season_plan_entries.expected_participants`
+  // — daran hängen Abrechnung, Buchungen und die Mitglieder-Ansicht. Die frühere
+  // Quelle `training_group_memberships` hat in dieser Datenbank keine einzige
+  // Zeile; die Liste blieb deshalb immer leer.
+  const { data: entries, error } = await (auth.supabase as any)
+    .from('season_plan_entries')
+    .select('expected_participants')
+    .eq('season_id', seasonId)
     .eq('club_id', clubId)
-    .is('left_at', null);
+    .eq('group_id', groupId);
   if (error) return internalErrorResponse();
 
   const memberIds: string[] = [
-    ...new Set<string>((memberships ?? []).map((m: any) => m.member_id as string)),
+    ...new Set<string>(
+      (entries ?? []).flatMap((e: any) =>
+        Array.isArray(e.expected_participants) ? (e.expected_participants as string[]) : []
+      )
+    ),
   ];
   if (memberIds.length === 0) return NextResponse.json({ members: [] });
 
