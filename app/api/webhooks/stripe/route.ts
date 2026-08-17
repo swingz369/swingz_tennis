@@ -212,7 +212,12 @@ async function handleInvoicePayment(session: Stripe.Checkout.Session, invoiceId:
           subject: `Zahlung eingegangen – Rechnung #${invoiceId}`,
           html: `<p>Hallo ${memberData.full_name ?? ''},</p><p>deine Zahlung von ${amount} € wurde erfolgreich verarbeitet. Danke!</p><p>Dein SwingZ-Team</p>`,
         })
-        .catch(() => {}); // fire-and-forget
+        .catch((err) =>
+          log.warn(
+            'Zahlungsbestätigungs-Mail fehlgeschlagen',
+            err instanceof Error ? err : undefined
+          )
+        );
     }
   }
 }
@@ -283,7 +288,12 @@ async function handleBookingPayment(session: Stripe.Checkout.Session, bookingId:
           subject: 'Buchungsbestätigung – SwingZ',
           html: `<p>Hallo ${userData.full_name ?? ''},</p><p>deine Buchung wurde erfolgreich bezahlt und ist jetzt bestätigt.</p><p>Bis bald auf dem Platz!</p><p>Dein SwingZ-Team</p>`,
         })
-        .catch(() => {}); // fire-and-forget
+        .catch((err) =>
+          log.warn(
+            'Buchungsbestätigungs-Mail fehlgeschlagen',
+            err instanceof Error ? err : undefined
+          )
+        );
     }
   } else if (userId && isAsyncBooking) {
     await supabase.from('notifications').insert({
@@ -577,7 +587,12 @@ async function handleSaasInvoicePaymentFailed(invoice: Stripe.Invoice) {
         subject: 'Zahlung fehlgeschlagen – SwingZ Abonnement',
         html: `<p>Hallo ${userData.full_name ?? ''},</p><p>die Zahlung für dein SwingZ-Abonnement ist fehlgeschlagen. Bitte aktualisiere deine Zahlungsmethode im Kundenportal, um deinen Zugriff nicht zu verlieren.</p><p>Dein SwingZ-Team</p>`,
       })
-      .catch(() => {});
+      .catch((err) =>
+        log.warn(
+          'Fehlgeschlagenen-Zahlungs-Mail konnte nicht versendet werden',
+          err instanceof Error ? err : undefined
+        )
+      );
   }
 
   log.warn('SaaS invoice payment failed', { userId: userData.id, customerId });

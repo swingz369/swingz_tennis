@@ -60,7 +60,9 @@ function PreferencesStatusCard({
         setSummary(data.summary);
         onSummary(data.summary);
       })
-      .catch(() => {})
+      .catch((err) => {
+        console.error('Trainings-Präferenzen konnten nicht geladen werden', err);
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });

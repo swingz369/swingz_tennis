@@ -23,6 +23,7 @@ export default function ProtectedError({
         .then((Sentry) => {
           Sentry.captureException(error);
         })
+        // Sentry ist optional — schlägt der Import fehl, wird nur das Log unten genutzt.
         .catch(() => {});
     }
     log.error('Protected route error:', error);

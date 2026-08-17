@@ -775,7 +775,9 @@ function ComposeDialog({
           setReceiverId(targetId);
         }
       })
-      .catch(() => {})
+      .catch((err) => {
+        console.error('Mitgliederliste konnte nicht geladen werden', err);
+      })
       .finally(() => setMembersLoading(false));
   }, [clubId, recipientMode, replyTo?.sender_id, initialReceiverId]);
 

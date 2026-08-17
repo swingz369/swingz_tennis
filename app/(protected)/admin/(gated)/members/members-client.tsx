@@ -101,7 +101,9 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
     apiFetch('/api/admin/approvals/count', { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => setApprovalCount(data?.count ?? 0))
-      .catch(() => {});
+      .catch((err) => {
+        console.error('Anzahl offener Beitrittsanfragen konnte nicht geladen werden', err);
+      });
     return () => controller.abort();
   }, []);
   const [roleFilter, setRoleFilter] = useState<string>('all');
