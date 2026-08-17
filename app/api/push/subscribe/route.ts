@@ -7,12 +7,23 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { pushNotificationService } from '@/lib/push-notification.service';
 
 // ─── POST /api/push/subscribe ─────────────────────────────────────────
+
+const subscribeBodySchema = z.object({
+  endpoint: z.string().url('endpoint muss eine gültige URL sein').max(500),
+  p256dh: z.string().min(1).max(500),
+  auth: z.string().min(1).max(500),
+});
+
+const unsubscribeBodySchema = z.object({
+  endpoint: z.string().url().max(500),
+});
 
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -23,17 +34,15 @@ export async function POST(req: NextRequest) {
     if (rateLimitError) return rateLimitError;
 
     const body = await req.json().catch(() => null);
-    if (!body) {
-      return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
-    }
-
-    const { endpoint, p256dh, auth: authKey } = body;
-    if (!endpoint || !p256dh || !authKey) {
+    const parsed = subscribeBodySchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'endpoint, p256dh und auth sind erforderlich' },
+        { error: 'Ungültiger Request-Body', details: parsed.error.flatten() },
         { status: 400 }
       );
     }
+
+    const { endpoint, p256dh, auth: authKey } = parsed.data;
 
     // Determine clubId
     let clubId = auth.clubId;
@@ -80,11 +89,15 @@ export async function DELETE(req: NextRequest) {
     if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
     const body = await req.json().catch(() => null);
-    if (!body?.endpoint) {
-      return NextResponse.json({ error: 'endpoint ist erforderlich' }, { status: 400 });
+    const parsed = unsubscribeBodySchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'endpoint ist erforderlich', details: parsed.error.flatten() },
+        { status: 400 }
+      );
     }
 
-    const result = await pushNotificationService.unsubscribe(body.endpoint);
+    const result = await pushNotificationService.unsubscribe(parsed.data.endpoint);
 
     if (!result.success) {
       return internalErrorResponse();
