@@ -61,14 +61,15 @@ export class DrizzleMemberRepository implements MemberRepository {
       await db.update(users).set(userData).where(eq(users.id, member.id.getValue()));
     } else {
       await db.insert(users).values(userData);
-      for (const clubId of member.clubIds) {
-        await db.insert(userClubMemberships).values({
+      // Ein Statement statt einem Insert pro Club (Drizzle nimmt ein Array).
+      await db.insert(userClubMemberships).values(
+        member.clubIds.map((clubId) => ({
           club_id: clubId.getValue(),
           user_id: member.id.getValue(),
           joined_at: now,
           is_active: true,
-        });
-      }
+        }))
+      );
     }
   }
 

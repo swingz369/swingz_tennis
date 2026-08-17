@@ -107,13 +107,14 @@ export class DrizzleTrainerRepository implements TrainerRepository {
 
     // Update trainer-club relationships
     await db.delete(trainerClubs).where(eq(trainerClubs.trainer_id, trainer.trainerId.getValue()));
-    for (const clubId of trainer.clubIds) {
-      await db.insert(trainerClubs).values({
+    // Ein Statement statt eines Inserts pro Club (Drizzle nimmt ein Array).
+    await db.insert(trainerClubs).values(
+      trainer.clubIds.map((clubId) => ({
         trainer_id: trainer.trainerId.getValue(),
         club_id: clubId.getValue(),
         created_at: now,
-      });
-    }
+      }))
+    );
   }
 
   async exists(id: TrainerId): Promise<boolean> {
