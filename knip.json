@@ -27,21 +27,6 @@
     ".tours/**/*.tour",
     ".agents/**/*.md"
   ],
-  "project": [
-    "src/infrastructure/persistence/schema.ts",
-    "supabase-types.ts",
-    "types.ts",
-    "components/ui/index.ts",
-    "lib/index.ts",
-    "src/index.ts"
-  ],
-  "paths": {
-    "@/*": ["./*"],
-    "@/domain/*": ["./src/domain/*"],
-    "@/application/*": ["./src/application/*"],
-    "@/infrastructure/*": ["./src/infrastructure/*"],
-    "@/presentation/*": ["./src/presentation/*"]
-  },
   "ignore": [
     "drizzle/**",
     ".next/**",
@@ -53,6 +38,7 @@
     "midscene_run/**",
     ".claude/**",
     "supabase/.branches/**",
+    "supabase/functions/**",
     "next-env.d.ts",
     "**/*.d.ts",
     "**/*.spec.ts",
