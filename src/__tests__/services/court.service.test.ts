@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 
 // ── Mock Supabase client ──
 // CourtService creates the client at module scope via createServiceClient(),
@@ -17,7 +17,15 @@ let mockRangeData: unknown[] = [];
 let mockRangeCount: number | null = 0;
 let mockRangeError: { message: string } | null = null;
 
-function makeChainable() {
+type MockChain = {
+  select: Mock;
+  eq: Mock;
+  order: Mock;
+  range: Mock;
+  then: Mock;
+};
+
+function makeChainable(): MockChain {
   const chain: Record<string, unknown> = {};
   chain.select = vi.fn(() => chain);
   chain.eq = vi.fn(() => chain);
@@ -29,7 +37,7 @@ function makeChainable() {
     resolve({ count: mockRangeCount });
     return chain;
   });
-  return chain;
+  return chain as unknown as MockChain;
 }
 
 let mockChain = makeChainable();

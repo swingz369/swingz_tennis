@@ -259,13 +259,6 @@ describe('PRESET_STARTS constant', () => {
 
 /* ── Helpers ── */
 
-function slotDate(weekStart: Date, weekday: number): string {
-  const d = new Date(weekStart);
-  const offset = weekday === 0 ? 6 : weekday - 1;
-  d.setDate(d.getDate() + offset);
-  return format(d, 'yyyy-MM-dd');
-}
-
 function mockResponse(status: number, body: unknown): Response {
   return {
     ok: status >= 200 && status < 300,

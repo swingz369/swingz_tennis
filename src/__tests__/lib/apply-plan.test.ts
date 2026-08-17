@@ -31,27 +31,30 @@ const loadEntries = (id: string) =>
 
 /** Baut die Slots so, wie das Wizard-Grid sie liefert: id = group_id, Zeit als HH:MM. */
 function toSlots(entries: Awaited<ReturnType<typeof loadEntries>>): ScheduleSlot[] {
-  return entries.map((e) => ({
-    id: e.group_id!,
-    groupName: 'Test',
-    groupColor: '#000',
-    trainerId: 'kein-uuid', // muss ignoriert werden, sonst kippt der FK den Save
-    trainerName: '',
-    dayOfWeek: e.day_of_week,
-    startTime: e.start_time.slice(0, 5),
-    endTime: e.end_time.slice(0, 5),
-    durationMin: e.duration_minutes,
-    courtId: e.court_id,
-    courtName: null,
-    memberIds: (e.expected_participants as string[]) ?? [],
-    memberNames: [],
-  }));
+  return entries
+    .filter((e) => e.group_id)
+    .map((e) => ({
+      id: e.group_id!,
+      groupName: 'Test',
+      groupColor: '#000',
+      trainerId: 'kein-uuid', // muss ignoriert werden, sonst kippt der FK den Save
+      trainerName: '',
+      dayOfWeek: e.day_of_week,
+      startTime: e.start_time.slice(0, 5),
+      endTime: e.end_time.slice(0, 5),
+      durationMin: e.duration_minutes,
+      courtId: e.court_id,
+      courtName: null,
+      memberIds: (e.expected_participants as string[]) ?? [],
+      memberNames: [],
+    }));
 }
 
 describe('applySlotsToPlanEntries', () => {
   it('schreibt eine Verschiebung in season_plan_entries und dreht sie wieder zurück', async () => {
     if (!seasonId) return; // keine bestückte Sandbox-Saison vorhanden
-    const before = await loadEntries(seasonId);
+    const before = (await loadEntries(seasonId)).filter((e) => e.group_id);
+    if (before.length === 0) return; // keine verschiebbaren Einträge vorhanden
     const target = before[0];
     const movedDay = (target.day_of_week + 1) % 6;
 

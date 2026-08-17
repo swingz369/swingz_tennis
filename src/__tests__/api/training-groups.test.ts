@@ -6,7 +6,6 @@
  */
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import type { withApiAuth as WithApiAuth } from '@/lib/api-auth';
 
 // ════════════════════════════════════════════════════════════
 // TEST CONSTANTS
@@ -41,11 +40,7 @@ const mockForbiddenResponse = vi.fn(
 // ── Module mocks ────────────────────────────────────────────
 
 vi.mock('@/lib/api-auth', () => ({
-  // The real withApiAuth has a stricter signature; cast is intentional for
-  // the test mock (we always resolve with mockAuthCtx regardless of _req).
-  withApiAuth: vi.fn((_req: unknown, fn: (auth: unknown) => Promise<Response>) =>
-    fn(mockAuthCtx)
-  ) as unknown as WithApiAuth,
+  withApiAuth: vi.fn((_req: unknown, fn: (auth: unknown) => Promise<Response>) => fn(mockAuthCtx)),
   verifyRole: (...args: unknown[]) => mockVerifyRole(...args) as never,
   forbiddenResponse: (...args: unknown[]) => mockForbiddenResponse(...args) as never,
 }));

@@ -251,10 +251,7 @@ describe('GET /api/clubs', () => {
   // filter MUST be applied for a superadmin too.
   it('scopes clubs for superadmin to their own memberships (.in() filter applied)', async () => {
     mockAuthCtx.role = 'superadmin';
-    mockAuthCtx.memberships = [
-      { club_id: 'c1', role: 'superadmin' },
-      { club_id: 'c2', role: 'superadmin' },
-    ];
+    mockAuthCtx.memberships = [{ club_id: 'c1' }, { club_id: 'c2' }];
 
     const clubs = [
       { id: 'c1', name: 'TC Alpha', status: 'active', max_members: 100 },

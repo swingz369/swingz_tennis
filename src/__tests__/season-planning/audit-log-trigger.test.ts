@@ -2,7 +2,8 @@
  * Vitest regression test for ticket 3.7.3 — Season Planning 23514 Trigger-Channel.
  *
  * Validates the static content of migration
- * `supabase/migrations/20260701_widen_season_planning_history_action_type_check.sql`.
+ * `supabase/migrations/archive/20260701010000_widen_season_planning_history_action_type_check.sql`
+ * (seit der Baseline-Konsolidierung 2026-08-16 liegen Pre-Baseline-Migrationen im Archiv).
  *
  * Bug background (live-DB-Probe 2026-07-01):
  *   The Postgres CHECK constraint `season_planning_history_action_type_check` rejected
@@ -40,6 +41,7 @@ const MIGRATION_PATH = path.join(
   '..',
   'supabase',
   'migrations',
+  'archive',
   '20260701010000_widen_season_planning_history_action_type_check.sql'
 );
 

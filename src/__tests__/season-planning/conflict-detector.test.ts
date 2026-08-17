@@ -13,6 +13,7 @@ import {
 } from '@/lib/season-planning/conflict-utils';
 import type { ExistingPlanEntry, ConflictMemberInfo } from '@/lib/season-planning/conflict-utils';
 import type { GroupAssignment } from '@/lib/season-planning/types';
+import type { DayOfWeek } from '@/lib/types/season-planning';
 
 // ============================================
 // FIXTURES
@@ -323,7 +324,7 @@ describe('detectTrainerOverLimit', () => {
       makeAssignment({
         groupId: `g${i}`,
         groupName: `Group ${i}`,
-        dayOfWeek: i % 7,
+        dayOfWeek: (i % 7) as DayOfWeek,
         memberIds: [`m${i}`],
       })
     );
@@ -339,7 +340,7 @@ describe('detectTrainerOverLimit', () => {
   it('should pass when trainer is within limits', () => {
     // 10 sessions à 1.5h = 15h ≤ 16h
     const assignments = Array.from({ length: 10 }, (_, i) =>
-      makeAssignment({ groupId: `g${i}`, dayOfWeek: i % 7, memberIds: [`m${i}`] })
+      makeAssignment({ groupId: `g${i}`, dayOfWeek: (i % 7) as DayOfWeek, memberIds: [`m${i}`] })
     );
     const trainers = [{ id: 't1', name: 'Trainer A', max_hours_per_week: 20 }];
 
@@ -349,7 +350,7 @@ describe('detectTrainerOverLimit', () => {
   it('should respect configured slot duration (60min slots)', () => {
     // 10 sessions à 1h = 10h > 10h * 80% = 8h
     const assignments = Array.from({ length: 10 }, (_, i) =>
-      makeAssignment({ groupId: `g${i}`, dayOfWeek: i % 7, memberIds: [`m${i}`] })
+      makeAssignment({ groupId: `g${i}`, dayOfWeek: (i % 7) as DayOfWeek, memberIds: [`m${i}`] })
     );
     const trainers = [{ id: 't1', name: 'Trainer A', max_hours_per_week: 10 }];
 

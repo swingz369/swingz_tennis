@@ -132,6 +132,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
       const { data, error } = await serviceRoleClient
         .from('billing_periods')
         .insert({
+          club_id: testClubId,
           start_date: '2026-07-01',
           end_date: '2026-07-31',
           status: 'open',
@@ -147,6 +148,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
       const { data: period } = await serviceRoleClient
         .from('billing_periods')
         .insert({
+          club_id: testClubId,
           start_date: '2026-08-01',
           end_date: '2026-08-31',
           status: 'open',
@@ -166,6 +168,7 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
       const { data: period } = await serviceRoleClient
         .from('billing_periods')
         .insert({
+          club_id: testClubId,
           start_date: '2026-09-01',
           end_date: '2026-09-30',
           status: 'open',
@@ -189,12 +192,14 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
       const { data } = await serviceRoleClient
         .from('billing_periods')
         .insert({
+          club_id: testClubId,
           start_date: '2026-06-01',
           end_date: '2026-06-30',
           status: 'open',
         })
         .select()
         .single();
+      if (!data) throw new Error('Failed to create billing period');
       billingPeriodId = data.id;
     });
 

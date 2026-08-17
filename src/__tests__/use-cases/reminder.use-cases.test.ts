@@ -42,7 +42,13 @@ const MEMBER = { email: 'max@test.com', full_name: 'Max Mustermann' };
 // ════════════════════════════════════════════════════════════
 
 function createService() {
-  const emailService = { sendBookingReminder: vi.fn().mockResolvedValue(undefined) };
+  const emailService = {
+    sendBookingConfirmation: vi.fn().mockResolvedValue(undefined),
+    sendBookingCancellation: vi.fn().mockResolvedValue(undefined),
+    sendBookingReminder: vi.fn().mockResolvedValue(undefined),
+    sendEmail: vi.fn().mockResolvedValue(undefined),
+    sendBatchEmails: vi.fn().mockResolvedValue(undefined),
+  };
   const auditService = { log: vi.fn().mockResolvedValue(undefined) };
   const sessionRepository = { findSessionsForDateRange: vi.fn() };
   const bookingRepository = { findConfirmedBookingsForSessions: vi.fn() };

@@ -14,8 +14,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const DOCS = 'docs';
-/** Unterordner mit eigenen Regeln — nicht als "lebendes Dokument" behandeln. */
-const SUBDIRS = ['ARCHIV', 'decisions', 'handbook', 'tickets'];
 /** Generierte Artefakte (AGENTS.md Regel 5) — kein Doku-Content. */
 const GENERATED = ['TEST-CREDENTIALS.md'];
 /** Dateinamen-Muster, die auf eine Parallel-Datei statt eines Updates hindeuten. */

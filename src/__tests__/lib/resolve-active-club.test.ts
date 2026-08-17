@@ -281,11 +281,11 @@ describe('resolveActiveClub — club-exists strategy (api-auth)', () => {
     // This test is a compile-time check only — runtime just verifies the type compiles.
     // If you see this test break, the discriminated union was removed.
     type _Check = Parameters<typeof resolveActiveClub>[0];
-    // @ts-expect-error — must provide clubExists when type='club-exists'
     const _bad: _Check = {
       cookieValue: null,
       memberships: [],
       highestRole: 'owner',
+      // @ts-expect-error — must provide clubExists when type='club-exists'
       strategy: { type: 'club-exists' },
     };
     void _bad;
