@@ -7820,6 +7820,10 @@ export type Database = {
         Args: { target_user_id: string };
         Returns: boolean;
       };
+      shift_session_waitlist_positions: {
+        Args: { p_session_id: string };
+        Returns: undefined;
+      };
       start_job: { Args: { p_job_id: string }; Returns: boolean };
       timeslots_overlap: {
         Args: {

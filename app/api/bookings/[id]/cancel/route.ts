@@ -144,7 +144,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     // Warteliste: Ersten Eintrag nachrücken lassen (non-fatal)
-    // Note: session_waitlist not yet in generated types — using (svc)
     if (booking.session_id) {
       try {
         const serviceClient = createServiceClient();
@@ -183,18 +182,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
             // Wartelisten-Eintrag entfernen
             await svc.from('session_waitlist').delete().eq('id', next.id);
 
-            // Positionen der verbleibenden Einträge aktualisieren
-            const { data: remaining } = await svc
-              .from('session_waitlist')
-              .select('id, position')
-              .eq('session_id', booking.session_id)
-              .order('position', { ascending: true });
-
-            for (const r of (remaining ?? []) as Array<{ id: string; position: number }>) {
-              await svc
-                .from('session_waitlist')
-                .update({ position: r.position - 1 })
-                .eq('id', r.id);
+            // Positionen der verbleibenden Einträge in EINER Query dekrementieren —
+            // RPC statt N Einzel-Updates (die Supabase-API kann kein
+            // SET position = position - 1, das ist eine Mengen-Operation).
+            const { error: shiftErr } = await svc.rpc('shift_session_waitlist_positions', {
+              p_session_id: booking.session_id,
+            });
+            if (shiftErr) {
+              log.error(
+                'Warteliste: Positions-Update fehlgeschlagen',
+                shiftErr instanceof Error ? shiftErr : undefined
+              );
             }
 
             // Benachrichtigung an nachgerücktes Mitglied senden
