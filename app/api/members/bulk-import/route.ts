@@ -170,40 +170,17 @@ export async function POST(request: NextRequest) {
       errors: [],
     };
 
-    // Process each valid record
-    for (const record of valid) {
-      try {
-        const existingUser = existingUsersByEmail.get(record.email);
+    // ── Phase 1: Fehlende Auth-Nutzer anlegen ──────────────────────────────
+    // Die Auth-Admin-API hat keinen Batch — createUser bleibt einzeln, aber in
+    // Chunks parallel statt seriell im Loop. Fehler zählen pro Datensatz.
+    const usersWithoutAccount = valid.filter((r) => !existingUsersByEmail.has(r.email));
+    const createdUserByEmail = new Map<string, string>();
+    const CHUNK_SIZE = 10;
 
-        let userId: string;
-
-        if (existingUser) {
-          // User already exists — use existing ID
-          userId = existingUser.id;
-
-          // Check if already member of this club
-          if (existingMemberIds.has(userId)) {
-            result.skipped++;
-            continue;
-          }
-
-          const dob = normalizeDate(record.dateOfBirth);
-          // Ensure user is in public.users table (may be missing if found only in auth)
-          await adminSupabase.from('users').upsert({
-            id: userId,
-            email: record.email,
-            full_name: record.fullName,
-            ...(record.phone ? { phone: record.phone } : {}),
-            ...(dob ? { date_of_birth: dob } : {}),
-            ...(record.street ? { address: record.street } : {}),
-            ...(record.postalCode ? { postal_code: record.postalCode } : {}),
-            ...(record.city ? { city: record.city } : {}),
-            ...(record.emergencyContact ? { emergency_contact: record.emergencyContact } : {}),
-            ...(record.emergencyPhone ? { emergency_phone: record.emergencyPhone } : {}),
-            updated_at: new Date().toISOString(),
-          });
-        } else {
-          // Create new user via Supabase Admin API (without sending invite email)
+    for (let i = 0; i < usersWithoutAccount.length; i += CHUNK_SIZE) {
+      const chunk = usersWithoutAccount.slice(i, i + CHUNK_SIZE);
+      const results = await Promise.all(
+        chunk.map(async (record) => {
           const { data: newUser, error: createError } = await adminSupabase.auth.admin.createUser({
             email: record.email,
             email_confirm: true,
@@ -211,92 +188,116 @@ export async function POST(request: NextRequest) {
               full_name: record.fullName,
             },
           });
-
-          if (createError || !newUser?.user) {
-            result.failed++;
-            result.errors.push({
-              record,
-              error: createError?.message || 'User-Erstellung fehlgeschlagen',
-            });
-            continue;
-          }
-
-          userId = newUser.user.id;
-
-          const dob = normalizeDate(record.dateOfBirth);
-          // Ensure user is in public.users table
-          await adminSupabase.from('users').upsert({
-            id: userId,
-            email: record.email,
-            full_name: record.fullName,
-            ...(record.phone ? { phone: record.phone } : {}),
-            ...(dob ? { date_of_birth: dob } : {}),
-            ...(record.street ? { address: record.street } : {}),
-            ...(record.postalCode ? { postal_code: record.postalCode } : {}),
-            ...(record.city ? { city: record.city } : {}),
-            ...(record.emergencyContact ? { emergency_contact: record.emergencyContact } : {}),
-            ...(record.emergencyPhone ? { emergency_phone: record.emergencyPhone } : {}),
-            updated_at: new Date().toISOString(),
-          });
-        }
-
-        // Create membership
-        const { error: membershipError } = await adminSupabase
-          .from('user_club_memberships')
-          .insert({
-            user_id: userId,
-            club_id: targetClubId,
-            role: record.role,
-            is_active: true,
-            status: 'active',
-            ...(normalizeDate(record.joinedAt)
-              ? { joined_at: normalizeDate(record.joinedAt) }
-              : {}),
-          });
-
-        if (membershipError) {
+          return { record, userId: newUser?.user?.id ?? null, createError };
+        })
+      );
+      for (const { record, userId, createError } of results) {
+        if (createError || !userId) {
           result.failed++;
           result.errors.push({
             record,
-            error: `Membership-Erstellung fehlgeschlagen: ${membershipError.message}`,
+            error: createError?.message || 'User-Erstellung fehlgeschlagen',
           });
-          continue;
+        } else {
+          createdUserByEmail.set(record.email, userId);
         }
-
-        // If role is trainer, ensure trainers record exists
-        if (record.role === 'trainer') {
-          const { data: existingTrainer } = await adminSupabase
-            .from('trainers')
-            .select('id')
-            .eq('id', userId)
-            .maybeSingle();
-
-          if (!existingTrainer) {
-            await adminSupabase.from('trainers').upsert({
-              id: userId,
-              // Siehe app/api/members/invite/route.ts: ohne user_id findet die
-              // Saisonplanung die Präferenzen dieses Trainers nie.
-              user_id: userId,
-              email: record.email,
-              name: record.fullName,
-              specialties: [],
-              max_hours_per_week: 30,
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            });
-          }
-        }
-
-        result.imported++;
-      } catch (_err) {
-        result.failed++;
-        result.errors.push({
-          record,
-          error: 'Import fehlgeschlagen',
-        });
       }
     }
+
+    // ── Phase 2: Verarbeitbare Datensätze bestimmen (Skip = schon Mitglied) ──
+    const rowsToProcess = [];
+    for (const record of valid) {
+      const userId =
+        existingUsersByEmail.get(record.email)?.id ?? createdUserByEmail.get(record.email);
+      if (!userId) continue; // Fehler wurde in Phase 1 gezählt
+      if (existingMemberIds.has(userId)) {
+        result.skipped++;
+        continue;
+      }
+      rowsToProcess.push({ record, userId });
+    }
+
+    // ── Phase 3: DB-Writes gebatcht statt N Einzel-Queries ──────────────────
+    const now = new Date().toISOString();
+
+    // Alle Nutzer in EINEM Upsert synchronisieren (id = Primärschlüssel).
+    const userRows = rowsToProcess.map(({ record, userId }) => {
+      const dob = normalizeDate(record.dateOfBirth);
+      return {
+        id: userId,
+        email: record.email,
+        full_name: record.fullName,
+        ...(record.phone ? { phone: record.phone } : {}),
+        ...(dob ? { date_of_birth: dob } : {}),
+        ...(record.street ? { address: record.street } : {}),
+        ...(record.postalCode ? { postal_code: record.postalCode } : {}),
+        ...(record.city ? { city: record.city } : {}),
+        ...(record.emergencyContact ? { emergency_contact: record.emergencyContact } : {}),
+        ...(record.emergencyPhone ? { emergency_phone: record.emergencyPhone } : {}),
+        updated_at: now,
+      };
+    });
+
+    if (userRows.length > 0) {
+      const { error: usersErr } = await adminSupabase.from('users').upsert(userRows, {
+        onConflict: 'id',
+      });
+      if (usersErr) throw new Error(`Profil-Sync fehlgeschlagen: ${usersErr.message}`);
+    }
+
+    // Alle Mitgliedschaften in EINEM Insert.
+    const membershipRows = rowsToProcess.map(({ record, userId }) => ({
+      user_id: userId,
+      club_id: targetClubId,
+      role: record.role,
+      is_active: true,
+      status: 'active',
+      ...(normalizeDate(record.joinedAt) ? { joined_at: normalizeDate(record.joinedAt) } : {}),
+    }));
+
+    if (membershipRows.length > 0) {
+      const { error: membershipError } = await adminSupabase
+        .from('user_club_memberships')
+        .insert(membershipRows);
+      if (membershipError)
+        throw new Error(`Membership-Erstellung fehlgeschlagen: ${membershipError.message}`);
+    }
+
+    // ── Phase 4: Trainer-Records in EINEM Upsert nachziehen ──────────────────
+    const trainerTargets = rowsToProcess.filter(({ record }) => record.role === 'trainer');
+    if (trainerTargets.length > 0) {
+      const trainerIds = trainerTargets.map(({ userId }) => userId);
+      const { data: existingTrainers } = await adminSupabase
+        .from('trainers')
+        .select('id')
+        .in('id', trainerIds);
+
+      const existingTrainerIds = new Set((existingTrainers ?? []).map((t) => t.id));
+      const trainerRows = trainerTargets
+        .filter(({ userId }) => !existingTrainerIds.has(userId))
+        .map(({ record, userId }) => ({
+          id: userId,
+          // Siehe app/api/members/invite/route.ts: ohne user_id findet die
+          // Saisonplanung die Präferenzen dieses Trainers nie.
+          user_id: userId,
+          email: record.email,
+          name: record.fullName,
+          specialties: [],
+          max_hours_per_week: 30,
+          is_active: true,
+          created_at: now,
+          updated_at: now,
+        }));
+
+      if (trainerRows.length > 0) {
+        const { error: trainerErr } = await adminSupabase
+          .from('trainers')
+          .upsert(trainerRows, { onConflict: 'id' });
+        if (trainerErr) throw new Error(`Trainer-Record fehlgeschlagen: ${trainerErr.message}`);
+      }
+    }
+
+    result.imported = rowsToProcess.length;
 
     // Audit log
     if (result.imported > 0) {
