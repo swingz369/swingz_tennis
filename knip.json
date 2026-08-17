@@ -33,12 +33,18 @@
     "graphify-out/**",
     "ds-bundle/**",
     ".ds-sync/**",
+    ".design-sync/**",
     ".audit-captures/**",
     "playwright-report/**",
     "midscene_run/**",
     ".claude/**",
     "supabase/.branches/**",
     "supabase/functions/**",
+    "types/supabase.ts",
+    // Test-Infrastruktur: vitest-Alias (server-only) bzw. vom ignored-Test-Suites
+    // genutzte Helfer (web-test) — knip zählt Importe aus *.test.ts nicht.
+    "src/__tests__/mocks/server-only.ts",
+    "tests/helpers/web-test.ts",
     "next-env.d.ts",
     "**/*.d.ts",
     "**/*.spec.ts",
@@ -47,7 +53,13 @@
     "**/*.test.tsx"
   ],
   "ignoreExportsUsedInFile": true,
-  "ignoreDependencies": ["@anthropic-ai/sdk"],
+  "ignoreDependencies": [
+    "@anthropic-ai/sdk",
+    // eslint-plugin-jsx-a11y wird in eslint.config.ts referenziert (Flat Config),
+    // tsx wird von npm-Scripts benötigt (devDependency, z. B. seed/restore-backup).
+    "eslint-plugin-jsx-a11y",
+    "tsx"
+  ],
   "includeEntryExports": true,
   "exclude": []
 }
