@@ -42,7 +42,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       if (!access.ok) return access.response;
 
       // 1. Plan-Einträge laden (Teilnehmer je Eintrag)
-      const { data: entries, error: entriesError } = await (auth.supabase as any)
+      const { data: entries, error: entriesError } = await auth.supabase
         .from('season_plan_entries')
         .select('id, group_id, expected_participants')
         .eq('season_id', seasonId);

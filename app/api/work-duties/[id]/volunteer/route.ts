@@ -23,7 +23,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Verify duty exists, belongs to club, and is open for volunteers
-    const { data: duty, error: dutyError } = await (auth.supabase as any)
+    const { data: duty, error: dutyError } = await auth.supabase
       .from('work_duties')
       .select('id, status, max_participants, club_id')
       .eq('id', id)
@@ -42,18 +42,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Check current assignment count
-    const { count } = await (auth.supabase as any)
+    const { count } = await auth.supabase
       .from('work_duty_assignments')
       .select('*', { count: 'exact', head: true })
       .eq('duty_id', id);
 
     const currentCount = count ?? 0;
-    if (currentCount >= duty.max_participants) {
+    if (duty.max_participants !== null && currentCount >= duty.max_participants) {
       return NextResponse.json({ error: 'Alle Plätze sind bereits belegt' }, { status: 400 });
     }
 
     // Check if already assigned
-    const { data: existing } = await (auth.supabase as any)
+    const { data: existing } = await auth.supabase
       .from('work_duty_assignments')
       .select('id')
       .eq('duty_id', id)
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Assign the member
-    const { data: assignment, error: assignError } = await (auth.supabase as any)
+    const { data: assignment, error: assignError } = await auth.supabase
       .from('work_duty_assignments')
       .insert({
         duty_id: id,
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Update duty status to assigned if it was still open
     if (duty.status === 'open') {
-      await (auth.supabase as any)
+      await auth.supabase
         .from('work_duties')
         .update({ status: 'assigned', updated_at: new Date().toISOString() })
         .eq('id', id);
@@ -110,7 +110,7 @@ export async function DELETE(
     const userId = auth.user.id;
 
     // Find and delete the member's own assignment
-    const { data: assignment, error: findError } = await (auth.supabase as any)
+    const { data: assignment, error: findError } = await auth.supabase
       .from('work_duty_assignments')
       .select('id, status')
       .eq('duty_id', id)
@@ -131,7 +131,7 @@ export async function DELETE(
       );
     }
 
-    const { error: deleteError } = await (auth.supabase as any)
+    const { error: deleteError } = await auth.supabase
       .from('work_duty_assignments')
       .delete()
       .eq('id', assignment.id);
@@ -142,13 +142,13 @@ export async function DELETE(
     }
 
     // Reset duty status to open if no more assignments
-    const { count } = await (auth.supabase as any)
+    const { count } = await auth.supabase
       .from('work_duty_assignments')
       .select('*', { count: 'exact', head: true })
       .eq('duty_id', id);
 
     if ((count ?? 0) === 0) {
-      await (auth.supabase as any)
+      await auth.supabase
         .from('work_duties')
         .update({ status: 'open', updated_at: new Date().toISOString() })
         .eq('id', id);

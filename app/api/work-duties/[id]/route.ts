@@ -13,8 +13,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (!hasRole) return forbiddenResponse('Anmeldung erforderlich');
 
     const { id } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
 
-    const { data: duty, error } = await (auth.supabase as any)
+    const { data: duty, error } = await auth.supabase
       .from('work_duties')
       .select('*, work_duty_assignments(id, member_id, status, completed_at)')
       .eq('id', id)
@@ -60,9 +63,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
     const body = await request.json();
 
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('work_duties')
       .update({ ...body, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -90,8 +96,11 @@ export async function DELETE(
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
 
-    const { error } = await (auth.supabase as any)
+    const { error } = await auth.supabase
       .from('work_duties')
       .delete()
       .eq('id', id)

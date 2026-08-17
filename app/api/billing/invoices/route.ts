@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   const clubId = searchParams.get('clubId');
   if (!clubId) return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
 
-  const { data: membership } = await (supabase as any)
+  const { data: membership } = await supabase
     .from('user_club_memberships')
     .select('role')
     .eq('user_id', user.id)
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     .maybeSingle();
   if (!membership) return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
-  let query = (supabase as any)
+  let query = supabase
     .from('invoices')
     .select('*, invoice_items(*), invoice_installments(*)')
     .eq('club_id', clubId);

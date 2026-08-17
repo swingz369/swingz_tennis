@@ -68,13 +68,13 @@ export async function POST(_request: NextRequest) {
       void (async () => {
         try {
           const svc = createServiceClient();
-          const { data: existing } = await (svc as any)
+          const { data: existing } = await svc
             .from('gamification_points')
             .select('points')
             .eq('user_id', participantId)
             .maybeSingle();
           const current = existing?.points ?? 0;
-          await (svc as any)
+          await svc
             .from('gamification_points')
             .upsert({ user_id: participantId, points: current + 5 }, { onConflict: 'user_id' });
         } catch {

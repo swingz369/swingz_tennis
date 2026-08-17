@@ -14,14 +14,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
   const { supabase, user } = await requireAuth(request);
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('invoices')
     .select('*, invoice_items(*), invoice_installments(*)')
     .eq('id', id)
     .single();
   if (error) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
 
-  const { data: membership } = await (supabase as any)
+  const { data: membership } = await supabase
     .from('user_club_memberships')
     .select('role')
     .eq('user_id', user.id)
@@ -42,14 +42,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const parsed = UpdateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { data: invoice, error: fetchErr } = await (supabase as any)
+  const { data: invoice, error: fetchErr } = await supabase
     .from('invoices')
     .select('club_id, status')
     .eq('id', id)
     .single();
   if (fetchErr || !invoice) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
 
-  const { data: membership } = await (supabase as any)
+  const { data: membership } = await supabase
     .from('user_club_memberships')
     .select('role')
     .eq('user_id', user.id)
@@ -66,9 +66,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     updates.cancellation_reason = parsed.data.cancellation_reason ?? null;
   }
 
-  const { data: updated, error: updateErr } = await (supabase as any)
+  const { data: updated, error: updateErr } = await supabase
     .from('invoices')
-    .update(updates)
+    .update(updates as never)
     .eq('id', id)
     .select()
     .single();
@@ -84,7 +84,7 @@ export async function DELETE(
   const { supabase, user } = await requireAuth(request);
 
   // Fetch invoice to check ownership and status
-  const { data: invoice, error: fetchErr } = await (supabase as any)
+  const { data: invoice, error: fetchErr } = await supabase
     .from('invoices')
     .select('club_id, status')
     .eq('id', id)
@@ -92,7 +92,7 @@ export async function DELETE(
   if (fetchErr || !invoice) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
 
   // Only admin/superadmin can delete
-  const { data: membership } = await (supabase as any)
+  const { data: membership } = await supabase
     .from('user_club_memberships')
     .select('role')
     .eq('user_id', user.id)

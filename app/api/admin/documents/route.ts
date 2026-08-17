@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const clubId = auth.clubId;
     if (!clubId) return NextResponse.json({ documents: [] });
 
-    const { data } = await (auth.supabase as any)
+    const { data } = await auth.supabase
       .from('club_documents')
       .select('id, name, category, file_url, file_size_bytes, mime_type, created_at')
       .eq('club_id', clubId)
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       data: { publicUrl },
     } = sb.storage.from(BUCKET).getPublicUrl(filePath);
 
-    const { data: doc, error: dbErr } = await (sb as any)
+    const { data: doc, error: dbErr } = await sb
       .from('club_documents')
       .insert({
         club_id: clubId,

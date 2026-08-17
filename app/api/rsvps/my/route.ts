@@ -20,9 +20,12 @@ export async function GET(req: NextRequest) {
     if (rateLimitError) return rateLimitError;
 
     const supabase = await createClient();
-    const sb = supabase as any;
+    const sb = supabase;
     const userId = auth.user.id;
     const clubId = auth.clubId;
+    if (!clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
 
     try {
       const now = new Date().toISOString();

@@ -10,6 +10,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, verifyOffice, forbiddenResponse } from '@/lib/api-auth';
+import type { AuthContext } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
 import { berlinWallClock } from '@/lib/berlin-time';
 
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     const { id: leagueId, matchdayId } = await params;
 
-    const { data: league } = await (auth.supabase as any)
+    const { data: league } = await auth.supabase
       .from('leagues')
       .select('id, name')
       .eq('id', leagueId)
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       .maybeSingle();
     if (!league) return NextResponse.json({ error: 'Liga nicht gefunden' }, { status: 404 });
 
-    const { data: matchDay } = await (auth.supabase as any)
+    const { data: matchDay } = await auth.supabase
       .from('match_days')
       .select('id, opponent, is_home, scheduled_date')
       .eq('id', matchdayId)
@@ -58,15 +59,16 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
 
     // Schon gesperrt? Dann nichts doppelt anlegen.
-    const { data: existing } = await (auth.supabase as any)
+    const { data: existing } = await auth.supabase
       .from('court_closures')
       .select('id')
       .eq('match_day_id', matchdayId);
-    if ((existing ?? []).length > 0) {
-      return NextResponse.json({ success: true, created: 0, alreadyBlocked: existing.length });
+    const existingCount = (existing ?? []).length;
+    if (existingCount > 0) {
+      return NextResponse.json({ success: true, created: 0, alreadyBlocked: existingCount });
     }
 
-    const { data: courts } = await (auth.supabase as any)
+    const { data: courts } = await auth.supabase
       .from('courts')
       .select('id')
       .eq('club_id', clubId)
@@ -95,7 +97,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       created_by: auth.user.id,
     }));
 
-    const { error } = await (auth.supabase as any).from('court_closures').insert(rows);
+    const { error } = await auth.supabase.from('court_closures').insert(rows);
     if (error) {
       log.error('Platzsperre fehlgeschlagen', { matchdayId, error: error.message });
       return NextResponse.json({ error: 'Plätze konnten nicht gesperrt werden' }, { status: 500 });
@@ -119,7 +121,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
     const { matchdayId } = await params;
 
-    const { error } = await (auth.supabase as any)
+    const { error } = await auth.supabase
       .from('court_closures')
       .delete()
       .eq('match_day_id', matchdayId)
@@ -133,14 +135,14 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 }
 
 async function notifyMembers(
-  auth: { supabase: unknown },
+  auth: AuthContext,
   clubId: string,
   leagueName: string,
   opponent: string,
   start: Date
 ): Promise<void> {
   try {
-    const sb = auth.supabase as any;
+    const sb = auth.supabase;
     const { data: members } = await sb
       .from('user_club_memberships')
       .select('user_id')

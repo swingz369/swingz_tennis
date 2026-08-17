@@ -194,7 +194,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       const supabase = await createClient();
 
       // Fetch the session to check permissions
-      const { data: sessionRaw2, error: fetchErr } = await (supabase as any)
+      const { data: sessionRaw2, error: fetchErr } = await supabase
         .from('sessions')
         .select('id, trainer_id, club_id')
         .eq('id', id)

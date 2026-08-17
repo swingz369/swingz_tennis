@@ -25,7 +25,7 @@ type Role = 'receiver' | 'sender';
 
 /** Lädt die Nachricht und stellt fest, in welcher Rolle der Aufrufer sie sieht. */
 async function loadOwnMessage(auth: any, id: string) {
-  const { data } = await (auth.supabase as any)
+  const { data } = await auth.supabase
     .from('messages')
     .select('id, sender_id, receiver_id')
     .eq('id', id)
@@ -72,9 +72,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: 'Keine Änderung angegeben' }, { status: 400 });
     }
 
-    const { error } = await (auth.supabase as any)
+    const { error } = await auth.supabase
       .from('messages')
-      .update(patch)
+      .update(patch as never)
       .eq('id', id)
       .eq('receiver_id', auth.user.id);
 
@@ -106,7 +106,10 @@ export async function DELETE(
     if (own.roles.includes('receiver')) patch.deleted_at = now;
     if (own.roles.includes('sender')) patch.sender_deleted_at = now;
 
-    const { error } = await (auth.supabase as any).from('messages').update(patch).eq('id', id);
+    const { error } = await auth.supabase
+      .from('messages')
+      .update(patch as never)
+      .eq('id', id);
 
     if (error) {
       log.error('Nachricht konnte nicht gelöscht werden', { id, error: error.message });

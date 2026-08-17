@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Coupon-Code erforderlich' }, { status: 400 });
     }
 
-    const { data: coupon, error } = await (supabase as any)
+    const { data: coupon, error } = await supabase
       .from('coupons')
       .select('*')
       .eq('code', code.toUpperCase().trim())
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check usage limit
-    if (coupon.max_uses && coupon.used_count >= coupon.max_uses) {
+    if (coupon.max_uses && (coupon.used_count ?? 0) >= coupon.max_uses) {
       return NextResponse.json({ valid: false, message: 'Coupon-Limit erreicht' });
     }
 
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { error } = await (supabase as any).from('coupons').insert({
+    const { error } = await supabase.from('coupons').insert({
       club_id: auth.clubId,
       code: code.toUpperCase().trim(),
       discount_type: discountType,

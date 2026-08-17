@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
-    const sb = auth.supabase as any;
+    const sb = auth.supabase;
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '50', 10) || 50));
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
-    const sb = auth.supabase as any;
+    const sb = auth.supabase;
     const body = await request.json();
 
     // Validate required fields
@@ -105,7 +105,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
-    const sb = auth.supabase as any;
+    const sb = auth.supabase;
     const body = await request.json();
 
     if (!body.id) {
@@ -136,7 +136,7 @@ export async function PUT(request: NextRequest) {
 
     const { data, error } = await sb
       .from('shop_products')
-      .update(updateData)
+      .update(updateData as never)
       .eq('id', body.id)
       .select()
       .single();
@@ -159,7 +159,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
-    const sb = auth.supabase as any;
+    const sb = auth.supabase;
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 

@@ -18,7 +18,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const userId = auth.user.id;
 
     // Find the member's own assignment
-    const { data: assignment, error: findError } = await (auth.supabase as any)
+    const { data: assignment, error: findError } = await auth.supabase
       .from('work_duty_assignments')
       .select('id, status')
       .eq('duty_id', id)
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Mark assignment as completed
-    const { error: updateError } = await (auth.supabase as any)
+    const { error: updateError } = await auth.supabase
       .from('work_duty_assignments')
       .update({
         status: 'completed',
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Check if all assignments for this duty are completed
-    const { data: allAssignments } = await (auth.supabase as any)
+    const { data: allAssignments } = await auth.supabase
       .from('work_duty_assignments')
       .select('status')
       .eq('duty_id', id);
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // If all assignments completed, mark the duty as completed
     if (allCompleted && (allAssignments ?? []).length > 0) {
-      await (auth.supabase as any)
+      await auth.supabase
         .from('work_duties')
         .update({ status: 'completed', updated_at: new Date().toISOString() })
         .eq('id', id);
@@ -82,6 +82,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (!hasRole) return forbiddenResponse('Admin-Zugriff erforderlich');
 
     const { id } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
     const body = await request.json();
     const { assignment_id, action } = body;
 
@@ -90,7 +93,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     // Verify duty belongs to club
-    const { data: duty } = await (auth.supabase as any)
+    const { data: duty } = await auth.supabase
       .from('work_duties')
       .select('id')
       .eq('id', id)
@@ -103,7 +106,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     if (action === 'confirm') {
       // Verify assignment belongs to this duty
-      const { data: target } = await (auth.supabase as any)
+      const { data: target } = await auth.supabase
         .from('work_duty_assignments')
         .select('id')
         .eq('id', assignment_id)
@@ -118,7 +121,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     // Reject — reset to assigned (verify assignment belongs to this duty)
-    const { error } = await (auth.supabase as any)
+    const { error } = await auth.supabase
       .from('work_duty_assignments')
       .update({ status: 'assigned', completed_at: null })
       .eq('id', assignment_id)
@@ -129,7 +132,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     // If duty was completed, reopen it
-    await (auth.supabase as any)
+    await auth.supabase
       .from('work_duties')
       .update({ status: 'assigned', updated_at: new Date().toISOString() })
       .eq('id', id)

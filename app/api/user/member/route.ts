@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest) {
     // Fetch full user profile from users table
     // Note: Some columns (address, city, postal_code, bio, emergency_contact, emergency_phone, date_of_birth)
     // may not exist in the generated Database type yet — cast needed for dynamic columns
-    const { data: userProfile } = await (auth.supabase as any)
+    const { data: userProfile } = await auth.supabase
       .from('users')
       .select(
         'id, full_name, email, phone, address, city, postal_code, bio, emergency_contact, emergency_phone, date_of_birth, avatar_url, dtb_id'
@@ -35,7 +35,7 @@ export async function GET(_req: NextRequest) {
     // nicht mehr aus dem früheren globalen Vereins-Stundenpreis.
     let trainingFeePerSession = 0;
     if (auth.clubId) {
-      const { data: membership } = await (auth.supabase as any)
+      const { data: membership } = await auth.supabase
         .from('user_club_memberships')
         .select('fee_configuration_id, fee_configurations(amount, billing_unit_count)')
         .eq('user_id', auth.user.id)
@@ -104,9 +104,9 @@ export async function PATCH(_req: NextRequest) {
       if (emergencyPhone !== undefined) updateData.emergency_phone = emergencyPhone;
       if (dtbId !== undefined) updateData.dtb_id = dtbId || null;
 
-      const { error } = await (auth.supabase as any)
+      const { error } = await auth.supabase
         .from('users')
-        .update(updateData)
+        .update(updateData as never)
         .eq('id', auth.user.id);
 
       if (error) {

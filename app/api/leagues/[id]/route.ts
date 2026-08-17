@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params;
 
     // Fetch league (separate queries to avoid deep type instantiation on new tables)
-    const { data: league, error } = await (auth.supabase as any)
+    const { data: league, error } = await auth.supabase
       .from('leagues')
       .select('*')
       .eq('id', id)
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Fetch teams for this league
-    const { data: teams } = await (auth.supabase as any)
+    const { data: teams } = await auth.supabase
       .from('teams')
       .select(
         'id, name, captain_id, position, points, matches_played, matches_won, matches_lost, matches_drawn, notes'
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const teamIds = (teams ?? []).map((t: any) => t.id);
     let teamMembers: any[] = [];
     if (teamIds.length > 0) {
-      const { data: members } = await (auth.supabase as any)
+      const { data: members } = await auth.supabase
         .from('team_members')
         .select('id, team_id, member_id, role, position_number, is_active')
         .in('team_id', teamIds);
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Fetch match days
-    const { data: matchDays } = await (auth.supabase as any)
+    const { data: matchDays } = await auth.supabase
       .from('match_days')
       .select(
         'id, matchday_number, scheduled_date, opponent, is_home, venue, result, score_home, score_away, status, notes, nuliga_report_url'
@@ -56,13 +56,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Kader (Meldeliste) und bestehende Platzsperren je Spieltag.
     const matchDayIds = (matchDays ?? []).map((m: any) => m.id);
     const [rosterRes, closuresRes] = await Promise.all([
-      (auth.supabase as any)
+      auth.supabase
         .from('league_players')
         .select('id, name, lk, position_number, member_id, synced_at')
         .eq('league_id', id)
         .order('position_number', { ascending: true, nullsFirst: false }),
       matchDayIds.length > 0
-        ? (auth.supabase as any)
+        ? auth.supabase
             .from('court_closures')
             .select('id, match_day_id')
             .in('match_day_id', matchDayIds)
@@ -71,6 +71,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const blockedCourts: Record<string, number> = {};
     for (const c of closuresRes.data ?? []) {
+      if (!c.match_day_id) continue;
       blockedCourts[c.match_day_id] = (blockedCourts[c.match_day_id] ?? 0) + 1;
     }
     const enrichedMatchDays = (matchDays ?? []).map((m: any) => ({
@@ -87,7 +88,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     let memberNames: Record<string, string> = {};
     let memberDtbIds: Record<string, string | null> = {};
     if (allMemberIds.size > 0) {
-      const { data: users } = await (auth.supabase as any)
+      const { data: users } = await auth.supabase
         .from('users')
         .select('id, full_name, dtb_id')
         .in('id', [...allMemberIds]);
@@ -128,9 +129,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
     const body = await request.json();
 
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('leagues')
       .update({ ...body, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -153,12 +157,15 @@ export async function DELETE(
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
 
     // `.select()` erzwingt, dass wir die betroffenen Zeilen sehen. Ohne das
     // meldet Supabase auch dann keinen Fehler, wenn RLS oder der club_id-Filter
     // alles weggeschnitten haben — die UI hätte "gelöscht" gemeldet und beim
     // Neuladen wäre die Liga wieder da gewesen.
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('leagues')
       .delete()
       .eq('id', id)

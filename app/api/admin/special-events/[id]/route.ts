@@ -8,16 +8,13 @@ interface Ctx {
   params: Promise<{ id: string }>;
 }
 
-// ponytail: cast until `supabase gen types` re-runs with the new migration
-
-const from = (sb: Awaited<ReturnType<typeof createClient>>, t: string) => (sb as any).from(t);
-
 export async function GET(req: NextRequest, { params }: Ctx) {
   return withApiAuth(req, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse();
     const { id } = await params;
     const sb = await createClient();
-    const { data, error } = await from(sb, 'special_event_registrations')
+    const { data, error } = await sb
+      .from('special_event_registrations')
       .select('*, user:users(id, full_name, email)')
       .eq('event_id', id);
     if (error) return internalErrorResponse();
@@ -31,7 +28,8 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     const { id } = await params;
     const body = await req.json();
     const sb = await createClient();
-    const { data, error } = await from(sb, 'special_events')
+    const { data, error } = await sb
+      .from('special_events')
       .update({ ...body, updated_at: new Date().toISOString() })
       .eq('id', id)
       .eq('club_id', auth.clubId!)
@@ -47,7 +45,8 @@ export async function DELETE(req: NextRequest, { params }: Ctx) {
     if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse();
     const { id } = await params;
     const sb = await createClient();
-    const { error } = await from(sb, 'special_events')
+    const { error } = await sb
+      .from('special_events')
       .delete()
       .eq('id', id)
       .eq('club_id', auth.clubId!);

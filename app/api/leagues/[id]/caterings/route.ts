@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const matchDayIds = (matchDays ?? []).map((m) => m.id);
     if (matchDayIds.length === 0) return NextResponse.json({ caterings: [] });
 
-    const { data, error } = await (sb as any)
+    const { data, error } = await sb
       .from('match_caterings')
       .select('*')
       .in('match_day_id', matchDayIds);
@@ -71,10 +71,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const sb = createServiceClient();
-    const { data, error } = await (sb as any)
+    const { data, error } = await sb
       .from('match_caterings')
       .upsert(
-        { match_day_id, club_id: auth.clubId, status: 'not_planned' },
+        { match_day_id, club_id: auth.clubId!, status: 'not_planned' },
         { onConflict: 'match_day_id', ignoreDuplicates: true }
       )
       .select()

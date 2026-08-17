@@ -12,7 +12,7 @@ const log = createLogger('api:approvals');
 
 /**
  * Note: 'registration_requests' is not in the generated Database type.
- * (supabase as any) is used only for that untyped table. auth.supabase is
+ * (supabase) is used only for that untyped table. auth.supabase is
  * the user-scoped anon-key client so RLS is still enforced.
  */
 
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
-    const sb = auth.supabase as any;
+    const sb = auth.supabase;
 
     const { data, error } = await sb
       .from('registration_requests')
@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
-    const sb = auth.supabase as any;
+    const sb = auth.supabase;
     const user = auth.user;
 
     const { id, status, rejectionReason } = await request.json();
@@ -62,7 +62,10 @@ export async function PATCH(request: NextRequest) {
       updateData.rejection_reason = rejectionReason;
     }
 
-    const { error } = await sb.from('registration_requests').update(updateData).eq('id', id);
+    const { error } = await sb
+      .from('registration_requests')
+      .update(updateData as never)
+      .eq('id', id);
 
     if (error) {
       return internalErrorResponse();
@@ -131,14 +134,14 @@ export async function PATCH(request: NextRequest) {
         // 2. Insert into users table (idempotent)
         if (newUserId) {
           try {
-            const { data: existingPublicUser } = await (adminClient as any)
+            const { data: existingPublicUser } = await adminClient
               .from('users')
               .select('id')
               .eq('id', newUserId)
               .maybeSingle();
 
             if (!existingPublicUser) {
-              const { data: ghostProfile } = await (adminClient as any)
+              const { data: ghostProfile } = await adminClient
                 .from('users')
                 .select('id')
                 .eq('email', registration.email)
@@ -149,14 +152,14 @@ export async function PATCH(request: NextRequest) {
                   ghostId: ghostProfile.id,
                   authUserId: newUserId,
                 });
-                await (adminClient as any)
+                await adminClient
                   .from('user_club_memberships')
                   .update({ user_id: newUserId })
                   .eq('user_id', ghostProfile.id);
-                await (adminClient as any).from('users').delete().eq('id', ghostProfile.id);
+                await adminClient.from('users').delete().eq('id', ghostProfile.id);
               }
 
-              const { error: userInsertError } = await (adminClient as any).from('users').insert({
+              const { error: userInsertError } = await adminClient.from('users').insert({
                 id: newUserId,
                 email: registration.email,
                 full_name:
@@ -178,7 +181,7 @@ export async function PATCH(request: NextRequest) {
           try {
             const clubId = registration.club_id || auth.clubId;
             if (clubId) {
-              const { error: membershipError } = await (adminClient as any)
+              const { error: membershipError } = await adminClient
                 .from('user_club_memberships')
                 .insert({ user_id: newUserId, club_id: clubId, role: 'member', is_active: true });
               if (membershipError) {

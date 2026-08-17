@@ -12,9 +12,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
     const body = await request.json();
 
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('court_closures')
       .update({ ...body, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -42,9 +45,12 @@ export async function DELETE(
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
 
     // Soft delete: set is_active = false
-    const { error } = await (auth.supabase as any)
+    const { error } = await auth.supabase
       .from('court_closures')
       .update({ is_active: false, updated_at: new Date().toISOString() })
       .eq('id', id)

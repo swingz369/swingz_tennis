@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const clubId = auth.clubId;
     if (!clubId) return NextResponse.json({ items: [] });
 
-    const { data } = await (auth.supabase as any)
+    const { data } = await auth.supabase
       .from('court_maintenance')
       .select('id, title, description, start_date, end_date, status, court_id, courts(name)')
       .eq('club_id', clubId)
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
 
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('court_maintenance')
       .insert({
         club_id: clubId,

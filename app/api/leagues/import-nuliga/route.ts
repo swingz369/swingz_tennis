@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Keine Mannschaft ausgewählt' }, { status: 400 });
     }
 
-    const { data: club } = await (auth.supabase as any)
+    const { data: club } = await auth.supabase
       .from('clubs')
       .select('id, nuliga_club_url')
       .eq('id', clubId)
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Schon vorhandene Ligen überspringen statt Dubletten anzulegen.
-    const { data: existing } = await (auth.supabase as any)
+    const { data: existing } = await auth.supabase
       .from('leagues')
       .select('nuliga_url, nuliga_roster_url')
       .eq('club_id', clubId);
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ created: 0, skipped: selected.length });
     }
 
-    const { data: created, error } = await (auth.supabase as any)
+    const { data: created, error } = await auth.supabase
       .from('leagues')
       .insert(rows)
       .select('id, name');

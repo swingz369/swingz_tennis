@@ -30,7 +30,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         .maybeSingle();
 
       if (!data) return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
-      return NextResponse.json({ features: sanitizeFeatureFlags(data.features) });
+      return NextResponse.json({
+        features: sanitizeFeatureFlags(data.features as Record<string, unknown> | null | undefined),
+      });
     } catch (error) {
       log.error('Error getting club features', error instanceof Error ? error : undefined);
       return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });

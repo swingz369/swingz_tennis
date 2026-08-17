@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
           notes: template.notes ?? null,
         }));
 
-        const { data, error } = await (auth.supabase as any)
+        const { data, error } = await auth.supabase
           .from('work_duties')
           .insert(rows)
           .select('id, scheduled_date');
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             created: data?.length ?? 0,
-            dates: (data ?? []).map((r: { scheduled_date: string }) => r.scheduled_date),
+            dates: (data ?? []).map((r: { scheduled_date: string | null }) => r.scheduled_date),
           },
           { status: 201 }
         );

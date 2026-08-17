@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
   const { club_id, season_id, installment_count, installment_due_dates, due_date } = parsed.data;
 
-  const { data: membership } = await (supabase as any)
+  const { data: membership } = await supabase
     .from('user_club_memberships')
     .select('role')
     .eq('user_id', user.id)
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
   if (!membership || !['admin', 'superadmin'].includes(membership.role))
     return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
-  const { data: members } = await (supabase as any)
+  const { data: members } = await supabase
     .from('user_club_memberships')
     .select('user_id, fee_configuration_id')
     .eq('club_id', club_id)

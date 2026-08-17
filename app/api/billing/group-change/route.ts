@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   const parsed = Schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { data: membership } = await (supabase as any)
+  const { data: membership } = await supabase
     .from('user_club_memberships')
     .select('role')
     .eq('user_id', user.id)

@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for duplicate check-in
-    const { data: existingCheckin } = await (supabase as any)
+    const { data: existingCheckin } = await supabase
       .from('qr_checkins')
       .select('id')
       .eq('session_id', resolvedSessionId)
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Record check-in
-    const { error } = await (supabase as any).from('qr_checkins').insert({
+    const { error } = await supabase.from('qr_checkins').insert({
       session_id: resolvedSessionId,
       user_id: user.id,
       booking_id: booking.id,

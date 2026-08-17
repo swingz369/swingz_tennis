@@ -42,9 +42,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const supabase = await createClient();
-    const sb = supabase as any;
+    const sb = supabase;
     const userId = auth.user.id;
     const clubId = auth.clubId;
+    if (!clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
 
     try {
       // Verify the session exists
@@ -121,7 +124,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const supabase = await createClient();
-    const sb = supabase as any;
+    const sb = supabase;
 
     try {
       // Herleitung siehe lib/session-participants.ts — dort steht die einzige

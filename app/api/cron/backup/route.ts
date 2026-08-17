@@ -23,6 +23,37 @@ interface BackupMetadata {
   errors?: string[];
 }
 
+type BackupRow = Record<string, unknown>;
+
+interface BackupQueryResult {
+  data: BackupRow[] | null;
+  error: { message: string } | null;
+  count: number | null;
+}
+
+/**
+ * Liest eine Seite aus einer beliebigen Tabelle. Die Tabellennamen stammen aus
+ * einer Laufzeit-Liste (BACKUP_TABLES), der generische Per-Tabelle-Query-Builder
+ * von supabase-js kann hier also nicht greifen. Ein einmaliger, lokal begrenzter
+ * Cast auf eine dynamische Query-Signatur statt `as any`.
+ */
+async function readTablePage(
+  supabase: ReturnType<typeof createServiceClient>,
+  table: string,
+  from: number,
+  to: number
+): Promise<BackupQueryResult> {
+  const dynamic = supabase.from as unknown as (table: string) => {
+    select: (
+      columns: string,
+      opts: { count: 'exact' }
+    ) => {
+      range: (from: number, to: number) => Promise<BackupQueryResult>;
+    };
+  };
+  return dynamic(table).select('*', { count: 'exact' }).range(from, to);
+}
+
 /**
  * Get the list of tables to back up.
  *
@@ -126,10 +157,12 @@ export async function GET(request: NextRequest) {
 
         // Paginate through large tables
         while (hasMore) {
-          const { data, error, count } = await supabase
-            .from(table)
-            .select('*', { count: 'exact' })
-            .range(from, from + pageSize - 1);
+          const { data, error, count } = await readTablePage(
+            supabase,
+            table,
+            from,
+            from + pageSize - 1
+          );
 
           if (error) {
             // Table might not exist or have RLS issues

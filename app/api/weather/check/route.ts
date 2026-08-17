@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       .eq('has_indoor', false);
 
     // Get active weather closures (new table — cast needed)
-    const { data: activeClosures } = await (supabase as any)
+    const { data: activeClosures } = await supabase
       .from('court_closures')
       .select(
         'id, court_id, reason, weather_condition, start_date, end_date, description, auto_generated'

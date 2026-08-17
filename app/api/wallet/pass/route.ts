@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const features = await getClubFeatures(auth.supabase, clubId);
     if (!features.wallet_passes) return featureDisabledResponse('wallet_passes');
 
-    const sb = auth.supabase as any;
+    const sb = auth.supabase;
     const { data: m } = await sb
       .from('user_club_memberships')
       .select('id, created_at, role, clubs(name)')

@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params;
 
     // Fetch league name
-    const { data: league } = await (auth.supabase as any)
+    const { data: league } = await auth.supabase
       .from('leagues')
       .select('name, season_year, division')
       .eq('id', id)
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Fetch match days
-    const { data: matchDays } = await (auth.supabase as any)
+    const { data: matchDays } = await auth.supabase
       .from('match_days')
       .select(
         'matchday_number, scheduled_date, opponent, is_home, venue, result, score_home, score_away, status, notes'

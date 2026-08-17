@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const clubId = auth.clubId;
     if (!clubId) return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
 
-    const { data: leagues, error } = await (auth.supabase as any)
+    const { data: leagues, error } = await auth.supabase
       .from('leagues')
       .select('*')
       .eq('club_id', clubId)
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     const leagueIds = (leagues ?? []).map((l: any) => l.id);
     const teamsByLeague: Record<string, any[]> = {};
     if (leagueIds.length > 0) {
-      const { data: teams } = await (auth.supabase as any)
+      const { data: teams } = await auth.supabase
         .from('teams')
         .select('id, league_id, name, points, matches_played, matches_won, matches_lost, position')
         .in('league_id', leagueIds);
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name und Saisonjahr erforderlich' }, { status: 400 });
     }
 
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('leagues')
       .insert({
         club_id: clubId,

@@ -14,9 +14,12 @@ export async function DELETE(
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id, assignmentId } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
 
     // Verify the duty belongs to the club
-    const { data: duty } = await (auth.supabase as any)
+    const { data: duty } = await auth.supabase
       .from('work_duties')
       .select('id')
       .eq('id', id)
@@ -27,7 +30,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Dienst nicht gefunden' }, { status: 404 });
     }
 
-    const { error } = await (auth.supabase as any)
+    const { error } = await auth.supabase
       .from('work_duty_assignments')
       .delete()
       .eq('id', assignmentId)

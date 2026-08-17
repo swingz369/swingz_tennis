@@ -11,7 +11,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse('Zugriff nur für Admins');
 
     const sb = createServiceClient();
-    const { data: doc } = await (sb as any)
+    const { data: doc } = await sb
       .from('club_documents')
       .select('id, club_id, file_path')
       .eq('id', id)
@@ -21,7 +21,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (doc.club_id !== auth.clubId) return forbiddenResponse();
 
     await sb.storage.from(BUCKET).remove([doc.file_path]);
-    await (sb as any).from('club_documents').delete().eq('id', id);
+    await sb.from('club_documents').delete().eq('id', id);
 
     return NextResponse.json({ success: true });
   });

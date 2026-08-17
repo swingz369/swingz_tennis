@@ -33,6 +33,9 @@ export async function PATCH(
 ) {
   return withApiAuth(req, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse('Admin-Zugriff erforderlich');
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
 
     const { memberId } = await params;
     const body = await req.json();
@@ -74,6 +77,9 @@ export async function PATCH(
 export async function GET(req: NextRequest, { params }: { params: Promise<{ memberId: string }> }) {
   return withApiAuth(req, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse('Admin-Zugriff erforderlich');
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
 
     const { memberId } = await params;
     const sb = createServiceClient();

@@ -15,6 +15,9 @@ export async function POST(
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { teamId } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
     const body = await request.json();
     const { member_ids, role, position_number } = body;
 
@@ -23,7 +26,7 @@ export async function POST(
     }
 
     // Verify team belongs to the club
-    const { data: team } = await (auth.supabase as any)
+    const { data: team } = await auth.supabase
       .from('teams')
       .select('id')
       .eq('id', teamId)
@@ -41,7 +44,7 @@ export async function POST(
       position_number: position_number ?? null,
     }));
 
-    const { data, error } = await (auth.supabase as any).from('team_members').insert(rows).select();
+    const { data, error } = await auth.supabase.from('team_members').insert(rows).select();
 
     if (error) {
       if (error.code === '23505') {
@@ -73,7 +76,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'member_id erforderlich' }, { status: 400 });
     }
 
-    const { error } = await (auth.supabase as any)
+    const { error } = await auth.supabase
       .from('team_members')
       .delete()
       .eq('team_id', teamId)

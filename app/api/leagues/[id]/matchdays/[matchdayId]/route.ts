@@ -15,10 +15,13 @@ export async function PATCH(
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id: leagueId, matchdayId } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
     const body = await request.json();
 
     // Verify league belongs to club
-    const { data: league } = await (auth.supabase as any)
+    const { data: league } = await auth.supabase
       .from('leagues')
       .select('id')
       .eq('id', leagueId)
@@ -29,7 +32,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Liga nicht gefunden' }, { status: 404 });
     }
 
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('match_days')
       .update({ ...body, updated_at: new Date().toISOString() })
       .eq('id', matchdayId)
@@ -57,9 +60,12 @@ export async function DELETE(
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id: leagueId, matchdayId } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
 
     // Verify league belongs to club
-    const { data: league } = await (auth.supabase as any)
+    const { data: league } = await auth.supabase
       .from('leagues')
       .select('id')
       .eq('id', leagueId)
@@ -70,7 +76,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Liga nicht gefunden' }, { status: 404 });
     }
 
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('match_days')
       .delete()
       .eq('id', matchdayId)

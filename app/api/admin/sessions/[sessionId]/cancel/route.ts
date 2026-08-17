@@ -38,10 +38,10 @@ export async function POST(
     // Service-Client: bypasses RLS für Benachrichtigungen
     const supabase = createServiceClient();
 
-    // Session laden mit club_id und Trainer-Info
+    // Session laden mit Trainer-Info; Verein kommt über schedule_id → schedules
     const { data: session, error: sessionErr } = await supabase
       .from('sessions')
-      .select('id, trainer_id, club_id, timeslot_start, timeslot_end, cancelled_at')
+      .select('id, trainer_id, timeslot_start, timeslot_end, cancelled_at, schedules(club_id)')
       .eq('id', sessionId)
       .single();
 
@@ -59,7 +59,8 @@ export async function POST(
     }
 
     // Admin muss zum gleichen Verein gehören
-    if (isAdmin && auth.role !== 'superadmin' && session.club_id !== auth.clubId) {
+    const sessionClubId = session.schedules?.club_id ?? null;
+    if (isAdmin && auth.role !== 'superadmin' && sessionClubId !== auth.clubId) {
       return forbiddenResponse('Keine Berechtigung für diese Session');
     }
 
@@ -113,7 +114,7 @@ export async function POST(
     // Notifications einfügen (einer pro Mitglied)
     const notificationInserts = bookingList.map((b) => ({
       user_id: b.member_id,
-      club_id: b.club_id ?? session.club_id,
+      club_id: b.club_id ?? sessionClubId,
       type: 'session_cancelled',
       title: 'Training abgesagt',
       message: notificationMessage,

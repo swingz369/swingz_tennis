@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const { id } = await params;
 
-    const { data: teams, error } = await (auth.supabase as any)
+    const { data: teams, error } = await auth.supabase
       .from('teams')
       .select(
         'id, name, captain_id, position, points, matches_played, matches_won, matches_lost, matches_drawn, notes, league_id'
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const teamIds = (teams ?? []).map((t: any) => t.id);
     let teamMembers: any[] = [];
     if (teamIds.length > 0) {
-      const { data: members } = await (auth.supabase as any)
+      const { data: members } = await auth.supabase
         .from('team_members')
         .select('id, team_id, member_id, role, position_number, is_active')
         .in('team_id', teamIds);
@@ -78,6 +78,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
     const body = await request.json();
     const { name, captain_id, position, notes } = body;
 
@@ -86,7 +89,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Verify league belongs to club
-    const { data: league } = await (auth.supabase as any)
+    const { data: league } = await auth.supabase
       .from('leagues')
       .select('id')
       .eq('id', id)
@@ -97,7 +100,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Liga nicht gefunden' }, { status: 404 });
     }
 
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('teams')
       .insert({
         league_id: id,

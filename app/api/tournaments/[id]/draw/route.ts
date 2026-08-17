@@ -13,10 +13,13 @@ import type { DrawEntry } from '@/lib/tournament/draw';
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse('Admin erforderlich');
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
 
     const { id: tournamentId } = await params;
     const { format = 'ko' } = await request.json();
-    const sb = auth.supabase as any;
+    const sb = auth.supabase;
 
     const { data: tournament } = await sb
       .from('tournaments')
@@ -61,7 +64,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       status: 'scheduled',
     }));
 
-    const { error: insertErr } = await sb.from('tournament_matches').insert(rows);
+    const { error: insertErr } = await sb.from('tournament_matches').insert(rows as never);
     if (insertErr) return internalErrorResponse();
 
     await sb.from('tournaments').update({ status: 'in_progress' }).eq('id', tournamentId);

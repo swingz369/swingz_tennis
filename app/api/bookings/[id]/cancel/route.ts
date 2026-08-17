@@ -102,7 +102,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // rückgängig machen.
     if (booking.session_id) {
       try {
-        const svc = createServiceClient() as any;
+        const svc = createServiceClient();
         const { data: session } = await svc
           .from('sessions')
           .select('trainer_id, timeslot_start')
@@ -144,11 +144,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     // Warteliste: Ersten Eintrag nachrücken lassen (non-fatal)
-    // Note: session_waitlist not yet in generated types — using (svc as any)
+    // Note: session_waitlist not yet in generated types — using (svc)
     if (booking.session_id) {
       try {
         const serviceClient = createServiceClient();
-        const svc = serviceClient as any;
+        const svc = serviceClient;
 
         // Ersten Wartelisten-Eintrag holen
         const { data: nextInLine } = await svc

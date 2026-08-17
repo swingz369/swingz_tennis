@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for existing registration
-    const { data: existing } = await (supabase as any)
+    const { data: existing } = await supabase
       .from('registration_requests')
       .select('id')
       .eq('email', email.trim().toLowerCase())
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert registration request
-    const { error: insertError } = await (supabase as any).from('registration_requests').insert({
+    const { error: insertError } = await supabase.from('registration_requests').insert({
       first_name: firstName.trim(),
       last_name: lastName.trim(),
       email: email.trim().toLowerCase(),

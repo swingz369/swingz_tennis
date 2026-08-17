@@ -4,7 +4,7 @@
  * DELETE /api/sessions/[id]/waitlist  — Von Warteliste entfernen
  *
  * Note: session_waitlist table types not yet in generated Supabase types —
- * using (supabase as any) casts until types are regenerated after migration.
+ * using (supabase) casts until types are regenerated after migration.
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!hasPermission) return forbiddenResponse('Authentifizierung erforderlich');
 
     const { id } = await params;
-    const db = auth.supabase as any;
+    const db = auth.supabase;
 
     const { data, error } = await db
       .from('session_waitlist')
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const { id } = await params;
     const supabase = auth.supabase;
-    const db = supabase as any;
+    const db = supabase;
     const body = await req.json().catch(() => ({}));
     const clubId = body.clubId as string | undefined;
 
@@ -159,7 +159,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (!hasPermission) return forbiddenResponse('Authentifizierung erforderlich');
 
     const { id } = await params;
-    const db = auth.supabase as any;
+    const db = auth.supabase;
 
     // Eintrag prüfen
     const { data: entry, error: fetchError } = await db

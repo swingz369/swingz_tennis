@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
 
-    let query = (auth.supabase as any)
+    let query = auth.supabase
       .from('work_duties')
       .select('*, work_duty_assignments(id, member_id, status, completed_at)')
       .eq('club_id', clubId)
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Titel und Diensttyp erforderlich' }, { status: 400 });
     }
 
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('work_duties')
       .insert({
         club_id: clubId,

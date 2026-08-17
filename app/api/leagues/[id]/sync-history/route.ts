@@ -19,7 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const url = new URL(request.url);
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10) || 20, 100);
 
-    const { data: logs, error } = await (auth.supabase as any)
+    const { data: logs, error } = await auth.supabase
       .from('nuliga_sync_log')
       .select('*')
       .eq('league_id', id)

@@ -15,10 +15,13 @@ export async function PATCH(
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id: leagueId, teamId } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
     const body = await request.json();
 
     // Verify league belongs to club
-    const { data: league } = await (auth.supabase as any)
+    const { data: league } = await auth.supabase
       .from('leagues')
       .select('id')
       .eq('id', leagueId)
@@ -29,7 +32,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Liga nicht gefunden' }, { status: 404 });
     }
 
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('teams')
       .update({ ...body, updated_at: new Date().toISOString() })
       .eq('id', teamId)
@@ -57,10 +60,13 @@ export async function DELETE(
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { teamId } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
 
     // `.select()`: ohne das meldet ein Delete, das RLS oder der club_id-Filter
     // auf null Zeilen reduziert hat, trotzdem Erfolg — die UI log dann.
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('teams')
       .delete()
       .eq('id', teamId)

@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const activeOnly = searchParams.get('active') === 'true';
 
-    let query = (auth.supabase as any)
+    let query = auth.supabase
       .from('court_closures')
       .select('*, courts(name, surface)')
       .eq('club_id', clubId)
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
     }
 
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('court_closures')
       .insert({
         club_id: clubId,

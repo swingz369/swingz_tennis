@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         description: 'Demonstrationsverein für Sales-Demos und Tests.',
         max_members: 150,
         opening_hours: OPENING_HOURS,
-        default_hourly_rate: '18.00',
+        default_hourly_rate: 18,
         bundesland: 'Bayern',
         founding_date: '1985-04-12',
         status: 'active',

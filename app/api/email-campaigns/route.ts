@@ -10,8 +10,6 @@ import { createLogger } from '@/lib/logger';
 const log = createLogger('email-campaigns');
 
 /**
- * Note: 'email_campaigns' and 'email_queue' are not in the generated
- * Database type, so (db as any) is used for those specific calls.
  * Uses the service client throughout: the RLS policy that lets admins
  * read other members' `users` rows depends on a users.role column that
  * no longer exists (see work-duties fix), so it silently blocks this join.
@@ -32,7 +30,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
-    const db = createServiceClient() as any;
+    const db = createServiceClient();
     const user = auth.user;
 
     if (!auth.clubId) {
@@ -108,10 +106,10 @@ export async function POST(request: NextRequest) {
     const { data: queueRows, error: queueError } = await db
       .from('email_queue')
       .insert(
-        emailEntries.map((e: { email: string; name: string }) => ({
+        emailEntries.map((e: { email: string | undefined; name: string }) => ({
           club_id: auth.clubId,
           campaign_id: campaign.id,
-          recipient_email: e.email,
+          recipient_email: e.email!,
           recipient_name: e.name,
           subject,
           body,
@@ -216,7 +214,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
-    const db = createServiceClient() as any;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Club zugewiesen' }, { status: 400 });
+    }
+    const db = createServiceClient();
 
     const { data, error } = await db
       .from('email_campaigns')

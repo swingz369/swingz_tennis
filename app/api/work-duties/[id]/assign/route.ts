@@ -11,6 +11,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
     const body = await request.json();
     const { member_ids } = body;
 
@@ -19,7 +22,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Check duty exists and belongs to club
-    const { data: duty } = await (auth.supabase as any)
+    const { data: duty } = await auth.supabase
       .from('work_duties')
       .select('id, max_participants')
       .eq('id', id)
@@ -31,13 +34,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Check current assignment count
-    const { count } = await (auth.supabase as any)
+    const { count } = await auth.supabase
       .from('work_duty_assignments')
       .select('*', { count: 'exact', head: true })
       .eq('duty_id', id);
 
     const currentCount = count ?? 0;
-    const remainingSlots = duty.max_participants - currentCount;
+    const maxParticipants = duty.max_participants ?? Number.MAX_SAFE_INTEGER;
+    const remainingSlots = maxParticipants - currentCount;
 
     if (member_ids.length > remainingSlots) {
       return NextResponse.json(
@@ -53,10 +57,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       status: 'assigned',
     }));
 
-    const { data, error } = await (auth.supabase as any)
-      .from('work_duty_assignments')
-      .insert(rows)
-      .select();
+    const { data, error } = await auth.supabase.from('work_duty_assignments').insert(rows).select();
 
     if (error) {
       if (error.code === '23505') {
@@ -70,8 +71,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Update duty status if fully assigned
     const newTotal = currentCount + member_ids.length;
-    if (newTotal >= duty.max_participants) {
-      await (auth.supabase as any)
+    if (newTotal >= maxParticipants) {
+      await auth.supabase
         .from('work_duties')
         .update({ status: 'assigned', updated_at: new Date().toISOString() })
         .eq('id', id);

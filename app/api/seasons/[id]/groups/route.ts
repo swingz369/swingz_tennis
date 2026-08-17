@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   if (!clubId) return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
 
   // Fetch distinct groups used in plan entries for this season
-  const { data: entries, error } = await (supabase as any)
+  const { data: entries, error } = await supabase
     .from('season_plan_entries')
     .select('group_id')
     .eq('season_id', seasonId)
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   // hier bis zum 16.08.2026 — sie ist leer, die Abfrage lieferte immer eine
   // leere Liste, und die Oberfläche schloss daraus "Bitte zuerst eine Planung
   // veröffentlichen", obwohl die Saison längst veröffentlicht war.
-  const { data: groups, error: gErr } = await (supabase as any)
+  const { data: groups, error: gErr } = await supabase
     .from('groups')
     .select('id, name, age_group, level')
     .in('id', groupIds)

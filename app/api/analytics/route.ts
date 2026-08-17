@@ -108,9 +108,9 @@ export async function GET(_request: NextRequest) {
           : 0;
 
       const topGroups = (groupsData ?? [])
-        .map((g: { name: string; member_ids: string[] | null }) => ({
+        .map((g) => ({
           name: g.name,
-          count: g.member_ids?.length ?? 0,
+          count: Array.isArray(g.member_ids) ? g.member_ids.length : 0,
         }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);

@@ -10,13 +10,13 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   return withApiAuth(req, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse();
     const body = await req.json();
-    const { data: ex } = await (auth.supabase as any)
+    const { data: ex } = await auth.supabase
       .from('court_maintenance')
       .select('club_id')
       .eq('id', id)
       .maybeSingle();
     if (!ex || ex.club_id !== auth.clubId) return forbiddenResponse();
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('court_maintenance')
       .update(body)
       .eq('id', id)
@@ -31,13 +31,13 @@ export async function DELETE(_req: NextRequest, { params }: Ctx) {
   const { id } = await params;
   return withApiAuth(_req, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse();
-    const { data: ex } = await (auth.supabase as any)
+    const { data: ex } = await auth.supabase
       .from('court_maintenance')
       .select('club_id')
       .eq('id', id)
       .maybeSingle();
     if (!ex || ex.club_id !== auth.clubId) return forbiddenResponse();
-    await (auth.supabase as any).from('court_maintenance').delete().eq('id', id);
+    await auth.supabase.from('court_maintenance').delete().eq('id', id);
     return NextResponse.json({ success: true });
   });
 }

@@ -13,21 +13,21 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user points
-    const { data: pointsData } = await (supabase as any)
+    const { data: pointsData } = await supabase
       .from('gamification_points')
       .select('points')
       .eq('user_id', user.id)
       .maybeSingle();
 
     // Get user badges
-    const { data: badges } = await (supabase as any)
+    const { data: badges } = await supabase
       .from('gamification_badges')
       .select('id, name, description, icon, earned_at')
       .eq('user_id', user.id)
       .order('earned_at', { ascending: false });
 
     // Get streak
-    const { data: streakData } = await (supabase as any)
+    const { data: streakData } = await supabase
       .from('attendance_records')
       .select('created_at')
       .eq('participant_id', user.id)
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get leaderboard (top 10)
-    const { data: leaderboard } = await (supabase as any)
+    const { data: leaderboard } = await supabase
       .from('gamification_points')
       .select('user_id, points, users(full_name)')
       .order('points', { ascending: false })

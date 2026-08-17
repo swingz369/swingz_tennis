@@ -19,7 +19,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   // — daran hängen Abrechnung, Buchungen und die Mitglieder-Ansicht. Die frühere
   // Quelle `training_group_memberships` hat in dieser Datenbank keine einzige
   // Zeile; die Liste blieb deshalb immer leer.
-  const { data: entries, error } = await (auth.supabase as any)
+  const { data: entries, error } = await auth.supabase
     .from('season_plan_entries')
     .select('expected_participants')
     .eq('season_id', seasonId)
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   ];
   if (memberIds.length === 0) return NextResponse.json({ members: [] });
 
-  const { data: users, error: uErr } = await (auth.supabase as any)
+  const { data: users, error: uErr } = await auth.supabase
     .from('users')
     .select('id, full_name, email')
     .in('id', memberIds);
@@ -58,7 +58,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   const { member_ids } = await request.json();
   if (!Array.isArray(member_ids))
     return NextResponse.json({ error: 'member_ids muss ein Array sein' }, { status: 400 });
-  const { data, error } = await (auth.supabase as any)
+  const { data, error } = await auth.supabase
     .from('groups')
     .update({ member_ids, updated_at: new Date().toISOString() })
     .eq('id', groupId)

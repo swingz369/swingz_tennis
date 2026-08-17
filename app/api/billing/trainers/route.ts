@@ -54,7 +54,7 @@ export async function POST(_request: NextRequest) {
       const currentYear = new Date().getFullYear();
       const { supabase } = auth;
       // ponytail: cast as any — tax_free_amount added via migration, not yet in generated types
-      const { data: existingBillings } = await (supabase as any)
+      const { data: existingBillings } = await supabase
         .from('trainer_billings')
         .select('tax_free_amount, created_at')
         .eq('trainer_id', trainerId)

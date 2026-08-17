@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     if (!(await verifyRole(auth, 'member'))) return forbiddenResponse();
     if (!auth.clubId) return NextResponse.json({ teams: [] });
 
-    const sb = auth.supabase as any;
+    const sb = auth.supabase;
 
     const { data: entries, error } = await sb
       .from('league_players')

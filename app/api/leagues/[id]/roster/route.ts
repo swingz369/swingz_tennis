@@ -31,7 +31,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (!auth.clubId) return forbiddenResponse('Vereinskontext erforderlich');
 
     const { id } = await params;
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('league_players')
       .select('id, name, lk, position_number, member_id, synced_at, source_url')
       .eq('league_id', id)
@@ -71,7 +71,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // Das Mitglied muss im selben Verein aktiv sein — sonst ließe sich ein
     // Kaderplatz an eine beliebige User-ID hängen.
     if (memberId) {
-      const { data: membership } = await (auth.supabase as any)
+      const { data: membership } = await auth.supabase
         .from('user_club_memberships')
         .select('user_id')
         .eq('user_id', memberId)
@@ -86,7 +86,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('league_players')
       .update({ member_id: memberId })
       .eq('id', playerId)
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { id } = await params;
 
-    const { data: league } = await (auth.supabase as any)
+    const { data: league } = await auth.supabase
       .from('leagues')
       .select('id, name, club_id, nuliga_url, nuliga_roster_url')
       .eq('id', id)
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Vereins stehen. Tabelle und Spielplan fremder Mannschaften bleiben
     // sichtbar (dort stehen nur Mannschaftsnamen) — Personendaten importieren
     // wir ausschließlich für die eigenen Mannschaften.
-    const { data: ownClub } = await (auth.supabase as any)
+    const { data: ownClub } = await auth.supabase
       .from('clubs')
       .select('nuliga_club_url')
       .eq('id', clubId)
@@ -230,10 +230,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // URL merken, damit der nächste Abruf ohne Eingabe läuft.
     if (!league.nuliga_roster_url) {
-      await (auth.supabase as any)
-        .from('leagues')
-        .update({ nuliga_roster_url: rosterUrl })
-        .eq('id', id);
+      await auth.supabase.from('leagues').update({ nuliga_roster_url: rosterUrl }).eq('id', id);
     }
 
     return NextResponse.json({

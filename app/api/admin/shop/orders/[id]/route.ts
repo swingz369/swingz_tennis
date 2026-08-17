@@ -31,7 +31,7 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const sb = auth.supabase as any;
+    const sb = auth.supabase;
 
     let body: { status?: string };
     try {
@@ -58,7 +58,7 @@ export async function PATCH(
 
     // Club-ownership: only allow if order contains products from admin's club
     if (auth.role !== 'superadmin' && auth.clubId) {
-      const items: any[] = order.items ?? [];
+      const items: any[] = Array.isArray(order.items) ? order.items : [];
       const productIds = items.map((i: any) => i.product_id).filter(Boolean);
 
       if (productIds.length > 0) {

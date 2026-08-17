@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const clubId = auth.clubId;
     if (!clubId) return NextResponse.json({ meetings: [] });
 
-    const { data } = await (auth.supabase as any)
+    const { data } = await auth.supabase
       .from('member_meetings')
       .select('id, title, meeting_date, location, description, status, agenda, created_at')
       .eq('club_id', clubId)
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     if (!title || !meeting_date)
       return NextResponse.json({ error: 'Titel und Datum erforderlich' }, { status: 400 });
 
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('member_meetings')
       .insert({
         club_id: clubId,

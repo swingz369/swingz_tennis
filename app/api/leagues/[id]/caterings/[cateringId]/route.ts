@@ -26,11 +26,11 @@ export async function PATCH(
     }
 
     const sb = createServiceClient();
-    const { data, error } = await (sb as any)
+    const { data, error } = await sb
       .from('match_caterings')
       .update({ ...parsed.data, updated_at: new Date().toISOString() })
       .eq('id', cateringId)
-      .eq('club_id', auth.clubId)
+      .eq('club_id', auth.clubId!)
       .select()
       .single();
 

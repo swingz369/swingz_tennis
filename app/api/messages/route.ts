@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
  * Query params: ?folder=inbox|sent
  *
  * Note: 'messages' table is not in the generated Database type, so we
- * cast via (supabase as any) only for that table. RLS is enforced because
+ * cast via (supabase) only for that table. RLS is enforced because
  * auth.supabase is the user-scoped anon-key client.
  */
 export async function GET(request: NextRequest) {
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const folder = searchParams.get('folder') || 'inbox';
     const countOnly = searchParams.get('countOnly') === 'true';
-    const sb = auth.supabase as any;
+    const sb = auth.supabase;
     const user = auth.user;
 
     const column = folder === 'sent' ? 'sender_id' : 'receiver_id';
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
     const sb =
       broadcastType || (receiverIds && receiverIds.length > 1)
         ? createServiceClient()
-        : (auth.supabase as any);
+        : auth.supabase;
 
     // ── Multi-recipient message ──
     if (receiverIds && receiverIds.length > 0 && !broadcastType) {
@@ -293,7 +293,7 @@ export async function POST(request: NextRequest) {
       if (broadcastType === 'trainers') {
         // Get trainer user_ids from trainer_club table
         const { data: trainers } = await serviceSb
-          .from('trainer_clubs')
+          .from('trainer_club')
           .select('trainer_id, trainers!inner(user_id)')
           .eq('club_id', resolvedClubId);
 

@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
-    const sb = auth.supabase as any;
+    const sb = auth.supabase;
     const user = auth.user;
 
     const { error } = await sb

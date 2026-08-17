@@ -16,7 +16,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const parsed = MarkPaidSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { data: installment, error: fetchErr } = await (supabase as any)
+  const { data: installment, error: fetchErr } = await supabase
     .from('invoice_installments')
     .select('*, invoices(club_id, member_id, amount)')
     .eq('id', id)
@@ -25,7 +25,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
 
   const clubId = installment.invoices?.club_id;
-  const { data: membership } = await (supabase as any)
+  const { data: membership } = await supabase
     .from('user_club_memberships')
     .select('role')
     .eq('user_id', user.id)
@@ -37,21 +37,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const paidAt = parsed.data.paid_at ?? new Date().toISOString();
 
-  const { error: markErr } = await (supabase as any)
+  const { error: markErr } = await supabase
     .from('invoice_installments')
     .update({ status: 'paid', paid_at: paidAt })
     .eq('id', id);
   if (markErr) return internalErrorResponse();
 
   // Check if all installments paid
-  const { data: remaining } = await (supabase as any)
+  const { data: remaining } = await supabase
     .from('invoice_installments')
     .select('status')
     .eq('invoice_id', installment.invoice_id)
     .neq('status', 'paid');
 
   if (!remaining?.length) {
-    await (supabase as any)
+    await supabase
       .from('invoices')
       .update({
         status: 'paid',

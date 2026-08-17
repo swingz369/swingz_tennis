@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check booking_rules — how many bookings this week + payment required?
-    const { data: rules } = await (supabase as any)
+    const { data: rules } = await supabase
       .from('booking_rules')
       .select('max_bookings_per_week, cancellation_hours_before, require_payment')
       .eq('club_id', clubId)
@@ -171,13 +171,13 @@ export async function POST(req: NextRequest) {
     void (async () => {
       try {
         const svc = createServiceClient();
-        const { data: existing } = await (svc as any)
+        const { data: existing } = await svc
           .from('gamification_points')
           .select('points')
           .eq('user_id', userId)
           .maybeSingle();
         const current = existing?.points ?? 0;
-        await (svc as any)
+        await svc
           .from('gamification_points')
           .upsert({ user_id: userId, points: current + 10 }, { onConflict: 'user_id' });
       } catch {

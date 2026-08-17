@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ members: null, openInvoices: null, preferencesPct: null });
     }
 
-    const sb = auth.supabase as any;
+    const sb = auth.supabase;
 
     const [membersRes, invoicesRes, seasonRes] = await Promise.all([
       sb

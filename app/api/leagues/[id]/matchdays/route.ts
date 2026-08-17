@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const { id } = await params;
 
-    const { data: matchDays, error } = await (auth.supabase as any)
+    const { data: matchDays, error } = await auth.supabase
       .from('match_days')
       .select('*')
       .eq('league_id', id)
@@ -41,6 +41,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
     const { id } = await params;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
     const body = await request.json();
     const { matchday_number, scheduled_date, opponent, is_home, venue, notes } = body;
 
@@ -52,7 +55,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Verify league belongs to club
-    const { data: league } = await (auth.supabase as any)
+    const { data: league } = await auth.supabase
       .from('leagues')
       .select('id')
       .eq('id', id)
@@ -63,7 +66,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Liga nicht gefunden' }, { status: 404 });
     }
 
-    const { data, error } = await (auth.supabase as any)
+    const { data, error } = await auth.supabase
       .from('match_days')
       .insert({
         league_id: id,
@@ -87,10 +90,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       void (async () => {
         try {
           const sb = createServiceClient();
-          await (sb as any)
+          await sb
             .from('match_caterings')
             .upsert(
-              { match_day_id: data.id, club_id: auth.clubId, status: 'not_planned' },
+              { match_day_id: data.id, club_id: auth.clubId!, status: 'not_planned' },
               { onConflict: 'match_day_id', ignoreDuplicates: true }
             );
         } catch (hookErr) {

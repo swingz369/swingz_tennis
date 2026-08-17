@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
   const isSelf = memberId === user.id;
   if (!isSelf) {
-    const { data: membership } = await (supabase as any)
+    const { data: membership } = await supabase
       .from('user_club_memberships')
       .select('role')
       .eq('user_id', user.id)
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
   }
 
-  const balance = await getMemberBalance(supabase as any, memberId, clubId);
-  const entries = balance ? await getMemberBalanceHistory(supabase as any, memberId, clubId) : [];
+  const balance = await getMemberBalance(supabase, memberId, clubId);
+  const entries = balance ? await getMemberBalanceHistory(supabase, memberId, clubId) : [];
   return NextResponse.json({ data: { balance, entries } });
 }

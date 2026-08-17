@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Zugriff nur für Admins' }, { status: 403 });
     }
 
-    let query = (auth.supabase as any)
+    let query = auth.supabase
       .from('registration_requests')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending');

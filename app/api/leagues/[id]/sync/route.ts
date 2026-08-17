@@ -18,7 +18,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { id } = await params;
 
-    const { data: league, error: leagueError } = await (auth.supabase as any)
+    const { data: league, error: leagueError } = await auth.supabase
       .from('leagues')
       .select('id, name, nuliga_url, own_team_name, club_id')
       .eq('id', id)
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       result = await syncLeagueFromNuliga(auth.supabase, league, nuligaUrl);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
-      await (auth.supabase as any).from('nuliga_sync_log').insert({
+      await auth.supabase.from('nuliga_sync_log').insert({
         league_id: id,
         club_id: league.club_id,
         status: 'failed',
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const completedAt = new Date();
-    await (auth.supabase as any)
+    await auth.supabase
       .from('leagues')
       .update({
         last_synced_at: completedAt.toISOString(),
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // angehängtes `.catch()` wirft "is not a function" und riss vorher den
     // ganzen Sync mit sich. Deshalb echtes await in try/catch.
     try {
-      await (auth.supabase as any).from('nuliga_sync_log').insert({
+      await auth.supabase.from('nuliga_sync_log').insert({
         league_id: id,
         club_id: league.club_id,
         status: 'success',

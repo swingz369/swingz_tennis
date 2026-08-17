@@ -181,7 +181,7 @@ export async function PATCH(
         if (Object.keys(userUpdate).length > 0) {
           const { error: userUpdateError } = await serviceClient
             .from('users')
-            .update(userUpdate)
+            .update(userUpdate as never)
             .eq('id', membership.user_id);
 
           if (userUpdateError) {

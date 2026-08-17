@@ -10,7 +10,7 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
   return withApiAuth(_req, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse();
     if (auth.role !== 'owner' && auth.clubId !== id) return forbiddenResponse();
-    const { data } = await (auth.supabase as any)
+    const { data } = await auth.supabase
       .from('clubs')
       .select('legal_info')
       .eq('id', id)
@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse();
     if (auth.role !== 'owner' && auth.clubId !== id) return forbiddenResponse();
     const { legal_info } = await req.json();
-    const { error } = await (auth.supabase as any)
+    const { error } = await auth.supabase
       .from('clubs')
       .update({ legal_info, updated_at: new Date().toISOString() })
       .eq('id', id);

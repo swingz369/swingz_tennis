@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Betreff und Nachricht erforderlich' }, { status: 400 });
     }
 
-    const db = createServiceClient() as any;
+    const db = createServiceClient();
 
     // Only allow sending to a real, active member of the admin's own club —
     // never trust a client-supplied email address directly.

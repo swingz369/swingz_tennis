@@ -44,7 +44,7 @@ export async function POST(_request: NextRequest) {
     const supabase = createServiceClient();
     try {
       // Cast needed until stripe_events table is in generated Supabase types
-      const { data: isNew } = await (supabase as any)
+      const { data: isNew } = await supabase
         .rpc('check_and_record_stripe_event', {
           p_event_id: event.id,
           p_event_type: event.type,
@@ -348,13 +348,13 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, orderId:
     for (const item of items) {
       if (!item.product_id || !item.quantity) continue;
       const { data: product } = await supabase
-        .from('shop_products' as any)
+        .from('shop_products')
         .select('stock')
         .eq('id', item.product_id)
         .single();
-      if (product && product.stock >= item.quantity) {
+      if (product && product.stock != null && product.stock >= item.quantity) {
         await supabase
-          .from('shop_products' as any)
+          .from('shop_products')
           .update({ stock: product.stock - item.quantity })
           .eq('id', item.product_id)
           .gte('stock', item.quantity);
@@ -536,7 +536,10 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
   };
   if (tier) update.subscription_tier = tier;
 
-  await supabase.from('users').update(update).eq('stripe_customer_id', customerId);
+  await supabase
+    .from('users')
+    .update(update as never)
+    .eq('stripe_customer_id', customerId);
   log.info('SaaS subscription updated', { customerId, tier, status: sub.status });
 }
 

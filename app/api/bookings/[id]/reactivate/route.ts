@@ -24,7 +24,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!isMember) return forbiddenResponse('Zugriff nur für Mitglieder');
 
     const { id } = await params;
-    const sb = createServiceClient() as any;
+    const sb = createServiceClient();
 
     const { data: booking } = await sb
       .from('bookings')

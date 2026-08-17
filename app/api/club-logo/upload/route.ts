@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
       // Update club branding in DB
       const { error: updateError } = await supabase
         .from('clubs')
-        .update({ [dbColumn]: urlData.publicUrl, updated_at: new Date().toISOString() })
+        .update({ [dbColumn]: urlData.publicUrl, updated_at: new Date().toISOString() } as never)
         .eq('id', clubId);
 
       if (updateError) {
@@ -223,7 +223,7 @@ export async function DELETE(request: NextRequest) {
 
       await supabase
         .from('clubs')
-        .update({ [dbColumn]: null, updated_at: new Date().toISOString() })
+        .update({ [dbColumn]: null, updated_at: new Date().toISOString() } as never)
         .eq('id', clubId);
 
       return NextResponse.json({ success: true });

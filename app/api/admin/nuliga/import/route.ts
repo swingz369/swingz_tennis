@@ -47,10 +47,10 @@ export async function POST(req: NextRequest) {
         const csv = await readFilePart(standingsFile);
         const rows = parseStandingsCsv(csv);
         for (const row of rows) {
-          const { error } = await (sb as any).from('teams').upsert(
+          const { error } = await sb.from('teams').upsert(
             {
               league_id: leagueId,
-              club_id: auth.clubId,
+              club_id: auth.clubId!,
               name: row.name,
               position: row.rank,
               matches_played: row.matchesPlayed,
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
         const csv = await readFilePart(matchesFile);
         const rows = parseMatchesCsv(csv, teamName);
         for (const row of rows) {
-          const { error } = await (sb as any).from('match_days').upsert(
+          const { error } = await sb.from('match_days').upsert(
             {
               league_id: leagueId,
               matchday_number: row.matchdayNumber,
@@ -92,12 +92,15 @@ export async function POST(req: NextRequest) {
 
       void (async () => {
         try {
-          await (sb as any).from('nuliga_sync_log').insert({
+          await sb.from('nuliga_sync_log').insert({
             league_id: leagueId,
-            club_id: auth.clubId,
+            club_id: auth.clubId!,
             trigger: 'csv_import',
             status: 'success',
-            details: { standingsImported, matchesImported, actor_id: auth.user.id },
+            teams_created: standingsImported,
+            matches_created: matchesImported,
+            nuliga_url: '',
+            started_at: new Date().toISOString(),
           });
         } catch (err) {
           log.error('sync_log insert failed', err instanceof Error ? err : undefined);

@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Mannschaften einer Vereinsseite ───────────────────────────────
-    const { data: club } = await (auth.supabase as any)
+    const { data: club } = await auth.supabase
       .from('clubs')
       .select('id, nuliga_club_url')
       .eq('id', clubId)
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
 
     // Bereits angelegte Ligen markieren, damit die Oberfläche keine Dubletten
     // zum Anlegen anbietet.
-    const { data: existing } = await (auth.supabase as any)
+    const { data: existing } = await auth.supabase
       .from('leagues')
       .select('id, nuliga_url, nuliga_roster_url, own_team_name, season_year')
       .eq('club_id', clubId);
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
     // Vereinsseite hinterlegt" ab, ohne dass ein erneuter Versuch daran etwas
     // geändert hätte. Deshalb: immer schreiben, Fehler melden.
     if (club?.nuliga_club_url !== result.sourceUrl) {
-      const { data: saved, error: saveError } = await (auth.supabase as any)
+      const { data: saved, error: saveError } = await auth.supabase
         .from('clubs')
         .update({ nuliga_club_url: result.sourceUrl })
         .eq('id', clubId)

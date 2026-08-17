@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const clubId = new URL(request.url).searchParams.get('clubId');
   if (!clubId) return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
 
-  const { data: membership } = await (supabase as any)
+  const { data: membership } = await supabase
     .from('user_club_memberships')
     .select('role')
     .eq('user_id', user.id)
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     .maybeSingle();
   if (!membership) return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('fee_configurations')
     .select('*')
     .eq('club_id', clubId)
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
   if (!club_id || !name || !type || amount === undefined)
     return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
 
-  const { data: membership } = await (supabase as any)
+  const { data: membership } = await supabase
     .from('user_club_memberships')
     .select('role')
     .eq('user_id', user.id)
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
   if (!membership || !['admin', 'superadmin'].includes(membership.role))
     return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('fee_configurations')
     .insert({ club_id, name, type, amount, billing_cycle, billing_unit_count, currency: 'EUR' })
     .select()

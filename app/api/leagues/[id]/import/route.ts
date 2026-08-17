@@ -19,11 +19,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { id } = await params;
 
     // Verify league exists
-    const { data: league } = await (auth.supabase as any)
-      .from('leagues')
-      .select('id')
-      .eq('id', id)
-      .single();
+    const { data: league } = await auth.supabase.from('leagues').select('id').eq('id', id).single();
 
     if (!league) {
       return NextResponse.json({ error: 'Liga nicht gefunden' }, { status: 404 });
@@ -80,7 +76,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const errors: string[] = [];
 
     // Fetch existing match days for this league
-    const { data: existingMatchDays } = await (auth.supabase as any)
+    const { data: existingMatchDays } = await auth.supabase
       .from('match_days')
       .select('id, matchday_number')
       .eq('league_id', id);
@@ -145,9 +141,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         const existingId = existingByNumber.get(matchdayNumber);
         if (existingId) {
           // Update existing
-          const { error } = await (auth.supabase as any)
+          const { error } = await auth.supabase
             .from('match_days')
-            .update(rowData)
+            .update(rowData as never)
             .eq('id', existingId);
 
           if (error) {
@@ -157,9 +153,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           updated++;
         } else {
           // Create new
-          const { error } = await (auth.supabase as any)
+          const { error } = await auth.supabase
             .from('match_days')
-            .insert({ ...rowData, league_id: id });
+            .insert({ ...rowData, league_id: id } as never);
 
           if (error) {
             errors.push(`Zeile ${i + 2}: Erstellen fehlgeschlagen — ${error.message}`);

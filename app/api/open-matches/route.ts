@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     const supabase = auth.supabase;
 
     // Fetch matches with creator info
-    const { data: matches, error } = await (supabase as any)
+    const { data: matches, error } = await supabase
       .from('open_matches')
       .select(
         `
@@ -72,17 +72,17 @@ export async function GET(req: NextRequest) {
 
     const [usersResult, participantsResult, myParticipationResult] = await Promise.all([
       creatorIds.length > 0
-        ? (supabase as any).from('users').select('id, full_name').in('id', creatorIds)
+        ? supabase.from('users').select('id, full_name').in('id', creatorIds)
         : { data: [] },
       matchIds.length > 0
-        ? (supabase as any)
+        ? supabase
             .from('open_match_participants')
             .select('match_id, user_id, role, status')
             .in('match_id', matchIds)
             .eq('status', 'joined')
         : { data: [] },
       matchIds.length > 0
-        ? (supabase as any)
+        ? supabase
             .from('open_match_participants')
             .select('match_id, status')
             .in('match_id', matchIds)

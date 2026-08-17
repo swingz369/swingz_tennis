@@ -98,10 +98,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     let sourceGroups: Array<{
       id: string;
       name: string;
-      description: string | null;
       level: string;
       age_group: string;
-      member_ids: string[];
       club_id: string;
       schedule_id: string;
     }> = [];
@@ -109,7 +107,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (scheduleIds.length > 0) {
       const { data: groups, error: groupsErr } = await supabase
         .from('training_groups')
-        .select('id, name, description, level, age_group, member_ids, club_id, schedule_id')
+        .select('id, name, level, age_group, club_id, schedule_id')
         .eq('club_id', sourceSeason.club_id)
         .in('schedule_id', scheduleIds);
 
@@ -145,18 +143,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     // Neue Gruppen erstellen
-    const now = new Date().toISOString();
     const newGroups = sourceGroups.map((g) => ({
       club_id: targetSeason.club_id,
       schedule_id: targetScheduleId,
       name: g.name,
-      description: g.description,
       level: g.level,
       age_group: g.age_group,
-      member_ids: g.member_ids ?? [],
       is_active: true,
-      created_at: now,
-      updated_at: now,
     }));
 
     const { data: inserted, error: insertErr } = await supabase
@@ -170,7 +163,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const copiedGroups = inserted?.length ?? 0;
-    const copiedMembers = sourceGroups.reduce((sum, g) => sum + (g.member_ids?.length ?? 0), 0);
+    // Mitglieder liegen in training_group_memberships und werden hier nicht kopiert.
+    const copiedMembers = 0;
 
     log.info('Gruppen kopiert', {
       sourceSeasonId,
