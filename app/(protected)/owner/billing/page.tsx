@@ -58,6 +58,7 @@ export default async function OwnerBillingPage() {
   const userMap = Object.fromEntries((adminUsers ?? []).map((u) => [u.id, u]));
   const clubAdminMap: Record<string, string> = {};
   for (const m of adminMemberships ?? []) {
+    if (!m.club_id) continue;
     if (!clubAdminMap[m.club_id]) clubAdminMap[m.club_id] = m.user_id;
   }
 
@@ -71,6 +72,7 @@ export default async function OwnerBillingPage() {
 
   const memberCountByClub: Record<string, number> = {};
   for (const m of allMembers ?? []) {
+    if (!m.club_id) continue;
     memberCountByClub[m.club_id] = (memberCountByClub[m.club_id] ?? 0) + 1;
   }
   const totalMembers = Object.values(memberCountByClub).reduce((a, b) => a + b, 0);

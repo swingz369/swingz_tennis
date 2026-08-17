@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import type { Json } from '@/types/supabase';
 import type {
   BoardDecision,
   CreateDecisionInput,
@@ -153,7 +154,7 @@ export class DecisionService {
       .update({
         ...input,
         updated_at: new Date().toISOString(),
-      })
+      } as never)
       .eq('id', decisionId)
       .select()
       .single();
@@ -267,10 +268,7 @@ export class DecisionService {
     votersCount: number;
     requiredMin: number;
     mode:
-      | 'mv_default_always_quorate'
-      | 'mv_pct_threshold'
-      | 'board_min_members'
-      | 'fallback_one_vote';
+      'mv_default_always_quorate' | 'mv_pct_threshold' | 'board_min_members' | 'fallback_one_vote';
   }> {
     // Einladungen laden
     const { data: invitations } = await supabase
@@ -440,9 +438,9 @@ export class DecisionService {
         action: record.action,
         actor_id: record.actorId,
         actor_label_snapshot: actorLabel,
-        old_values: record.oldValues ?? null,
-        new_values: record.newValues ?? null,
-        details: record.details ?? null,
+        old_values: (record.oldValues ?? null) as Json,
+        new_values: (record.newValues ?? null) as Json,
+        details: (record.details ?? null) as Json,
       });
       if (error) {
         log.warn('decision_changes insertion failed', {

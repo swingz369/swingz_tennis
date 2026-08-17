@@ -453,7 +453,9 @@ export class SeasonConfirmationEmailService {
     // Default name maps if not provided
     const groupNameMap = options.groupNameMap ?? new Map<string, string>();
     if (groupNameMap.size === 0) {
-      const allGroupIds = Array.from(new Set(planEntries.map((e) => e.group_id).filter(Boolean)));
+      const allGroupIds = Array.from(
+        new Set(planEntries.map((e) => e.group_id).filter((g): g is string => Boolean(g)))
+      );
       if (allGroupIds.length > 0) {
         const { data: groups } = await supabase
           .from('groups')

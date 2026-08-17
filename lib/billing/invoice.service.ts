@@ -8,14 +8,6 @@ async function generateUniqueInvoiceNumber(clubId: string | undefined): Promise<
   const safeId = (clubId || 'UNKNOWN').slice(0, 8);
   const prefix = safeId.toUpperCase();
   const year = new Date().getFullYear();
-  try {
-    const { data, error } = await supabase.rpc('next_invoice_sequence', { p_club_id: clubId });
-    if (!error && data) {
-      return `INV-${prefix}-${year}-${String(data).padStart(5, '0')}`;
-    }
-  } catch {
-    // RPC not available — fall through
-  }
   // Fallback: base-36 timestamp + random suffix eliminates the Date.now()%100000 collision window
   const ts = Date.now().toString(36).toUpperCase();
   const rnd = Math.floor(Math.random() * 1000)
@@ -201,7 +193,7 @@ export class InvoiceService {
 
     const { data, error } = await supabase
       .from('invoices')
-      .update(updateData)
+      .update(updateData as never)
       .eq('id', invoiceId)
       .select()
       .single();

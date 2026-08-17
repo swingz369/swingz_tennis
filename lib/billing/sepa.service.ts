@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service';
+import type { Json } from '@/types/supabase';
 import type { SepaMandate, Payment, CreateSepaMandate } from '../types/billing';
 import type { SepaDirectDebitTransaction, SepaPain008Config } from '../sepa/pain008-generator';
 import { generatePain008Xml } from '../sepa/pain008-generator';
@@ -39,7 +40,7 @@ export class SepaService {
         bic: data.bic ?? 'NOTPROVIDED',
         account_holder: data.account_holder,
         bank_name: data.bank_name || 'Unknown',
-        address: data.address || {},
+        address: (data.address || {}) as Json,
         signature_date: data.signature_date || new Date().toISOString().split('T')[0],
         is_active: true,
       })

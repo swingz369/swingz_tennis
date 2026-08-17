@@ -177,7 +177,7 @@ export class SeasonBillingService {
       .single();
 
     if (error) throw new Error(`Failed to upsert billing config: ${error.message}`);
-    return data as SeasonBillingConfig;
+    return data as unknown as SeasonBillingConfig;
   }
 
   /**
@@ -341,7 +341,9 @@ export class SeasonBillingService {
     }
 
     // 6. Group names
-    const groupIds = [...new Set(entries.map((e) => e.group_id).filter(Boolean))];
+    const groupIds = [
+      ...new Set(entries.map((e) => e.group_id).filter((g): g is string => Boolean(g))),
+    ];
     const groupNameMap = new Map<string, string>();
     if (groupIds.length > 0) {
       const { data: groups } = await this.supabase

@@ -16,6 +16,9 @@
  * Tabellen erneut selbst auszuwerten.
  */
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/supabase';
+
 export type SessionParticipant = {
   id: string;
   sessionId: string;
@@ -47,16 +50,17 @@ type SupabaseLike = {
 };
 
 export async function getSessionParticipants(
-  supabase: SupabaseLike,
+  supabase: SupabaseClient<Database> | SupabaseLike,
   sessionId: string
 ): Promise<SessionParticipant[]> {
-  const { data: bookingData, error: bookingError } = await supabase
+  const db = supabase as unknown as SupabaseLike;
+  const { data: bookingData, error: bookingError } = await db
     .from('bookings')
     .select('id, member_id, status')
     .eq('session_id', sessionId);
   if (bookingError) throw bookingError;
 
-  const { data: rsvpData, error: rsvpError } = await supabase
+  const { data: rsvpData, error: rsvpError } = await db
     .from('session_rsvps')
     .select('id, session_id, member_id, status, responded_at, notes, created_at')
     .eq('session_id', sessionId);
@@ -70,7 +74,7 @@ export async function getSessionParticipants(
   ].filter(Boolean);
 
   const { data: userData } = memberIds.length
-    ? await supabase.from('users').select('id, full_name').in('id', memberIds)
+    ? await db.from('users').select('id, full_name').in('id', memberIds)
     : { data: [] };
   const names = Object.fromEntries(
     ((userData ?? []) as { id: string; full_name: string | null }[]).map((u) => [

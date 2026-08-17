@@ -20,6 +20,25 @@ import { createServiceClient } from '@/lib/supabase/service';
 const STORAGE_BUCKET = 'swingz-files';
 const BACKUP_PREFIX = 'backups';
 
+/**
+ * Upsert rows into a table whose name comes from the backup file at runtime —
+ * der Per-Tabelle-Query-Builder kann hier nicht greifen (gleiche Begründung wie
+ * beim Backup-Cron). Einmaliger, lokal begrenzter Cast statt `as any`.
+ */
+async function restoreTable(
+  sb: ReturnType<typeof createServiceClient>,
+  table: string,
+  rows: Record<string, unknown>[]
+): Promise<{ error: { message: string } | null }> {
+  const dynamic = sb.from as unknown as (table: string) => {
+    upsert: (
+      rows: Record<string, unknown>[],
+      opts: { onConflict: string }
+    ) => Promise<{ error: { message: string } | null }>;
+  };
+  return dynamic(table).upsert(rows, { onConflict: 'id' });
+}
+
 function parseArgs(argv: string[]) {
   const args = { list: false, file: '', tables: null as string[] | null, confirm: false };
   for (let i = 0; i < argv.length; i++) {
@@ -84,7 +103,7 @@ async function main() {
       continue;
     }
     if (rows.length === 0) continue;
-    const { error } = await sb.from(table).upsert(rows, { onConflict: 'id' });
+    const { error } = await restoreTable(sb, table, rows);
     if (error) {
       console.error(`  [FAIL] "${table}": ${error.message}`);
     } else {

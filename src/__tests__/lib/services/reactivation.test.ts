@@ -267,7 +267,7 @@ function makeMembership(userId: string, name: string, extras: Record<string, any
 function makeBooking(userId: string, daysAgo: number) {
   return {
     member_id: userId,
-    created_at: new Date(NOW.getTime() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
+    booked_at: new Date(NOW.getTime() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
   };
 }
 

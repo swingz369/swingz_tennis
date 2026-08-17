@@ -5,6 +5,7 @@
  *   await runJob('billing-overdue', {}, async () => { ...logic... });
  */
 import { createServiceClient } from '@/lib/supabase/service';
+import type { Json } from '@/types/supabase';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('jobs:runner');
@@ -21,7 +22,7 @@ export async function runJob(
   const { data: claimed, error: claimErr } = await sb.rpc('claim_background_job', {
     p_job_name: jobName,
     p_job_type: 'recurring',
-    p_payload: payload,
+    p_payload: payload as Json,
   });
 
   if (claimErr) {
@@ -41,7 +42,7 @@ export async function runJob(
       .update({
         status: 'completed',
         completed_at: new Date().toISOString(),
-        result: { output: result ?? null },
+        result: { output: result ?? null } as Json,
         error_message: null,
       })
       .eq('id', job.id);

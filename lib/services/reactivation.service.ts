@@ -238,9 +238,9 @@ export class ReactivationService {
 
     const { data: bookings, error: bookingsError } = await supabase
       .from('bookings')
-      .select('member_id, created_at')
+      .select('member_id, booked_at')
       .in('member_id', userIds)
-      .gte('created_at', lookbackCutoff)
+      .gte('booked_at', lookbackCutoff)
       .in('status', ['confirmed', 'completed']);
 
     if (bookingsError) throw bookingsError;
@@ -249,8 +249,8 @@ export class ReactivationService {
     const lastBookingByUser = new Map<string, string>();
     for (const b of bookings ?? []) {
       const existing = lastBookingByUser.get(b.member_id);
-      if (!existing || b.created_at > existing) {
-        lastBookingByUser.set(b.member_id, b.created_at);
+      if (!existing || b.booked_at > existing) {
+        lastBookingByUser.set(b.member_id, b.booked_at);
       }
     }
 
@@ -270,7 +270,7 @@ export class ReactivationService {
 
       inactive.push({
         userId: m.user_id,
-        clubId: m.club_id,
+        clubId: m.club_id ?? '',
         fullName: user?.full_name ?? null,
         daysSinceLastBooking,
         lastReactivationSentAt: m.last_reactivation_sent_at,

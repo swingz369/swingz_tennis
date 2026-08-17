@@ -23,7 +23,7 @@ export class PaymentService {
     const { data: payment, error } = await supabase
       .from('payments')
       .insert({
-        invoice_id: data.invoice_id ?? null,
+        invoice_id: data.invoice_id!,
         amount: data.amount,
         currency: 'EUR',
         payment_method: data.payment_method,
@@ -49,7 +49,7 @@ export class PaymentService {
 
     const { data, error } = await supabase
       .from('payments')
-      .update(updateData)
+      .update(updateData as never)
       .eq('id', paymentId)
       .select()
       .single();

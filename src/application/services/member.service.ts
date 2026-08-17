@@ -212,7 +212,10 @@ export class MemberService {
       }
       if (input.notes) userUpdate.bio = input.notes;
 
-      await db.from('users').update(userUpdate).eq('id', input.userId);
+      await db
+        .from('users')
+        .update(userUpdate as never)
+        .eq('id', input.userId);
     }
 
     return this.mapToMember(data);
@@ -457,7 +460,10 @@ export class MemberService {
       }
       if (input.notes !== undefined) userUpdate.bio = input.notes;
 
-      await db.from('users').update(userUpdate).eq('id', existing.userId);
+      await db
+        .from('users')
+        .update(userUpdate as never)
+        .eq('id', existing.userId);
     }
 
     // Update membership fields
@@ -478,7 +484,10 @@ export class MemberService {
       if (input.membershipEnd !== undefined) membershipUpdate.deactivated_at = input.membershipEnd;
       // Note: trainingGroup is stored in training_group_memberships, not here
 
-      await db.from('user_club_memberships').update(membershipUpdate).eq('id', id);
+      await db
+        .from('user_club_memberships')
+        .update(membershipUpdate as never)
+        .eq('id', id);
     }
 
     // Re-fetch to return updated entity

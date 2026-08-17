@@ -1123,7 +1123,7 @@ export class SeasonClusteringEngine {
       id: g.id,
       name: g.name,
       level: g.level as SkillLevel,
-      ageGroup: g.age_group,
+      ageGroup: g.age_group ?? '',
       // Q2-Audit (Punkt 11): individuelle Gruppenkapazität, falls in der DB gesetzt.
       maxSize: g.max_size ?? null,
     }));

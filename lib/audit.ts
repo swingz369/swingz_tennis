@@ -107,7 +107,9 @@ export async function logAudit(entry: AuditEntry | AuditEntry[]): Promise<void> 
   if (rows.length === 0) return;
 
   try {
-    const { error } = await createServiceClient().from('audit_logs').insert(rows);
+    const { error } = await createServiceClient()
+      .from('audit_logs')
+      .insert(rows as never);
     if (error) throw new Error(`${error.code ?? ''} ${error.message}`.trim());
   } catch (err) {
     log.error(

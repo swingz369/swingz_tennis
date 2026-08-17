@@ -151,7 +151,7 @@ export class BillingService {
 
     const { data, error } = await supabase
       .from('trainer_billings')
-      .update(patch)
+      .update(patch as never)
       .eq('id', id)
       .select()
       .maybeSingle();
