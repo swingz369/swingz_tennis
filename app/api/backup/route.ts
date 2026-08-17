@@ -5,6 +5,7 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 import { withCSRFProtection } from '@/lib/csrf';
+import { appBaseUrl } from '@/lib/app-url';
 
 const log = createLogger('api:backup');
 
@@ -94,10 +95,13 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Call the cron backup logic (reuse the same function)
-        const backupUrl = new URL('/api/cron/backup', request.url);
+        // Call the cron backup logic (reuse the same function). Ziel aus
+        // appBaseUrl() statt request.url: request.url leitet sich vom Host-Header
+        // ab — ein manipulierter Host würde den Selbst-Aufruf samt CRON_SECRET
+        // im Authorization-Header auf einen fremden Server umlenken (SSRF).
+        const backupUrl = `${appBaseUrl()}/api/cron/backup`;
 
-        const response = await fetch(backupUrl.toString(), {
+        const response = await fetch(backupUrl, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${cronSecret}`,
