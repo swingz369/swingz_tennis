@@ -3,7 +3,6 @@ export { DrizzleScheduleRepository } from './schedule.repository';
 export { DrizzleBookingRepository } from './booking.repository';
 export { DrizzleMemberRepository } from './member.repository';
 export { DrizzleTrainerRepository } from './trainer.repository';
-export { DrizzleBillingPeriodRepository } from './billing-period.repository';
 export { DrizzleTrainerBillingRepository } from './trainer-billing.repository';
 export { DrizzleBillingLineItemRepository } from './billing-line-item.repository';
 export { DrizzleHoursLogRepository } from './hours-log.repository';

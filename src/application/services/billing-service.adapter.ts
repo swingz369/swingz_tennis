@@ -7,12 +7,11 @@
  * ```typescript
  * import { billingService } from '@/application/services/billing-service.adapter';
  *
- * const periods = await billingService.getAllBillingPeriods();
+ * const billings = await billingService.getAllTrainerBillings();
  * ```
  */
 
 import type {
-  BillingPeriod,
   TrainerBilling,
   BillingLineItem,
   CreateTrainerBillingInput,
@@ -20,49 +19,12 @@ import type {
   BillingSummary,
 } from '@/domain/entities/billing.entity';
 
-import { DrizzleBillingPeriodRepository } from '@/infrastructure/persistence/repositories/billing-period.repository';
 import { DrizzleTrainerBillingRepository } from '@/infrastructure/persistence/repositories/trainer-billing.repository';
 import { DrizzleBillingLineItemRepository } from '@/infrastructure/persistence/repositories/billing-line-item.repository';
 
 class BillingServiceAdapter {
-  private periodRepo = new DrizzleBillingPeriodRepository();
   private billingRepo = new DrizzleTrainerBillingRepository();
   private lineItemRepo = new DrizzleBillingLineItemRepository();
-
-  /**
-   * Create a new billing period
-   */
-  async createBillingPeriod(startDate: string, endDate: string): Promise<BillingPeriod> {
-    return this.periodRepo.create(new Date(startDate), new Date(endDate));
-  }
-
-  /**
-   * Get billing period by ID
-   */
-  async getBillingPeriodById(id: string): Promise<BillingPeriod | null> {
-    return this.periodRepo.findById(id);
-  }
-
-  /**
-   * Get all billing periods
-   */
-  async getAllBillingPeriods(): Promise<BillingPeriod[]> {
-    return this.periodRepo.findAll();
-  }
-
-  /**
-   * Get current billing period
-   */
-  async getCurrentBillingPeriod(): Promise<BillingPeriod | null> {
-    return this.periodRepo.findCurrent();
-  }
-
-  /**
-   * Close billing period
-   */
-  async closeBillingPeriod(id: string): Promise<BillingPeriod | null> {
-    return this.periodRepo.close(id);
-  }
 
   /**
    * Create trainer billing

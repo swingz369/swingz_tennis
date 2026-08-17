@@ -1058,11 +1058,10 @@ export const billingPeriods = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     // Pro Verein (fachliche Entscheidung 2026-08-15, siehe Migration
-    // 20260815180000_billing_tables_club_scoping.sql). In der DB NOT NULL;
-    // hier nullable, weil der tote Schreibpfad (DrizzleBillingPeriodRepository)
-    // club_id noch nicht setzt — wird beim Wiederaufbau der Trainer-Abrechnung
-    // auf notNull() angehoben.
-    club_id: uuid('club_id').references(() => clubs.id, { onDelete: 'cascade' }),
+    // 20260815180000_billing_tables_club_scoping.sql).
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
     start_date: timestamp('start_date', { withTimezone: true }).notNull(),
     end_date: timestamp('end_date', { withTimezone: true }).notNull(),
     status: varchar('status', { length: 20 }).notNull().default('open'),

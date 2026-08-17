@@ -1,6 +1,5 @@
 // Import and export types for use in implementations
 import type {
-  BillingPeriod,
   TrainerBilling,
   BillingLineItem,
   CreateTrainerBillingInput,
@@ -9,48 +8,12 @@ import type {
 } from '../entities/billing.entity';
 
 export type {
-  BillingPeriod,
   TrainerBilling,
   BillingLineItem,
   CreateTrainerBillingInput,
   UpdateTrainerBillingInput,
   BillingSummary,
 } from '../entities/billing.entity';
-
-/**
- * Repository interface for billing periods
- */
-export interface BillingPeriodRepository {
-  /**
-   * Create a new billing period
-   */
-  create(startDate: Date, endDate: Date): Promise<BillingPeriod>;
-
-  /**
-   * Find billing period by ID
-   */
-  findById(id: string): Promise<BillingPeriod | null>;
-
-  /**
-   * Get all billing periods
-   */
-  findAll(): Promise<BillingPeriod[]>;
-
-  /**
-   * Get current open billing period
-   */
-  findCurrent(): Promise<BillingPeriod | null>;
-
-  /**
-   * Close a billing period
-   */
-  close(id: string): Promise<BillingPeriod | null>;
-
-  /**
-   * Delete a billing period (soft delete)
-   */
-  delete(id: string): Promise<void>;
-}
 
 /**
  * Repository interface for trainer billings

@@ -1,6 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import type {
-  BillingPeriod,
   TrainerBilling,
   BillingLineItem,
   CreateTrainerBillingInput,
@@ -11,17 +10,6 @@ import type {
 const supabase = createServiceClient();
 
 // ── row-to-domain mappers ──────────────────────────────────────────────────
-
-function rowToBillingPeriod(row: Record<string, unknown>): BillingPeriod {
-  return {
-    id: row.id as string,
-    startDate: row.start_date as string,
-    endDate: row.end_date as string,
-    status: row.status as BillingPeriod['status'],
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  };
-}
 
 function rowToTrainerBilling(row: Record<string, unknown>): TrainerBilling {
   return {
@@ -62,81 +50,6 @@ function rowToBillingLineItem(row: Record<string, unknown>): BillingLineItem {
 // ── service ───────────────────────────────────────────────────────────────
 
 export class BillingService {
-  /**
-   * Create a new billing period
-   */
-  static async createBillingPeriod(startDate: string, endDate: string): Promise<BillingPeriod> {
-    const { data, error } = await supabase
-      .from('billing_periods')
-      .insert({ start_date: startDate, end_date: endDate, status: 'open' })
-      .select()
-      .single();
-
-    if (error || !data) {
-      throw new Error(`Failed to create billing period: ${error?.message}`);
-    }
-    return rowToBillingPeriod(data as Record<string, unknown>);
-  }
-
-  /**
-   * Get billing period by ID
-   */
-  static async getBillingPeriodById(id: string): Promise<BillingPeriod | null> {
-    const { data, error } = await supabase
-      .from('billing_periods')
-      .select()
-      .eq('id', id)
-      .maybeSingle();
-
-    if (error) throw new Error(`Failed to get billing period: ${error.message}`);
-    return data ? rowToBillingPeriod(data as Record<string, unknown>) : null;
-  }
-
-  /**
-   * Get all billing periods
-   */
-  static async getAllBillingPeriods(): Promise<BillingPeriod[]> {
-    const { data, error } = await supabase
-      .from('billing_periods')
-      .select()
-      .order('start_date', { ascending: false });
-
-    if (error) throw new Error(`Failed to get billing periods: ${error.message}`);
-    return (data ?? []).map((r) => rowToBillingPeriod(r as Record<string, unknown>));
-  }
-
-  /**
-   * Get current billing period
-   */
-  static async getCurrentBillingPeriod(): Promise<BillingPeriod | null> {
-    const now = new Date().toISOString();
-    const { data, error } = await supabase
-      .from('billing_periods')
-      .select()
-      .eq('status', 'open')
-      .lte('start_date', now)
-      .gte('end_date', now)
-      .maybeSingle();
-
-    if (error) throw new Error(`Failed to get current billing period: ${error.message}`);
-    return data ? rowToBillingPeriod(data as Record<string, unknown>) : null;
-  }
-
-  /**
-   * Close billing period
-   */
-  static async closeBillingPeriod(id: string): Promise<BillingPeriod | null> {
-    const { data, error } = await supabase
-      .from('billing_periods')
-      .update({ status: 'closed', updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .maybeSingle();
-
-    if (error) throw new Error(`Failed to close billing period: ${error.message}`);
-    return data ? rowToBillingPeriod(data as Record<string, unknown>) : null;
-  }
-
   /**
    * Create trainer billing
    */
