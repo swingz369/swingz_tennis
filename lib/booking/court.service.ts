@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service';
-import type { Court, CourtType, CreateCourt, CourtStatus } from '../types/court-booking';
+import type { CourtType } from '../types/court-booking';
 
 import { createLogger } from '@/lib/logger';
 
@@ -17,90 +17,6 @@ export class CourtService {
       CourtService.instance = new CourtService();
     }
     return CourtService.instance;
-  }
-
-  async createCourt(data: CreateCourt): Promise<Court> {
-    const { data: court, error } = await supabase
-      .from('courts')
-      .insert({
-        club_id: data.club_id,
-        court_type_id: data.court_type_id,
-        name: data.name,
-        number: data.number,
-        location: data.location,
-        description: data.description,
-        has_lighting: data.has_lighting,
-        lighting_hours_start: data.lighting_hours_start,
-        lighting_hours_end: data.lighting_hours_end,
-        status: 'available',
-        is_active: true,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to create court: ${error.message}`);
-    }
-
-    return court;
-  }
-
-  async getCourtById(courtId: string): Promise<Court | null> {
-    const { data: court, error } = await supabase
-      .from('courts')
-      .select('*')
-      .eq('id', courtId)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return null;
-      }
-      throw new Error(`Failed to get court: ${error.message}`);
-    }
-
-    return court;
-  }
-
-  async getCourtsByClub(
-    clubId: string,
-    filters?: {
-      status?: CourtStatus;
-      isActive?: boolean;
-    }
-  ): Promise<Court[]> {
-    let query = supabase.from('courts').select('*').eq('club_id', clubId);
-
-    if (filters?.status) {
-      query = query.eq('status', filters.status);
-    }
-
-    if (filters?.isActive !== undefined) {
-      query = query.eq('is_active', filters.isActive);
-    }
-
-    const { data, error } = await query.order('number', { ascending: true });
-
-    if (error) {
-      throw new Error(`Failed to get courts: ${error.message}`);
-    }
-
-    return data || [];
-  }
-
-  async updateCourtStatus(courtId: string, status: CourtStatus): Promise<Court> {
-    const { data, error } = await supabase
-      .from('courts')
-      .update({ status })
-      .eq('id', courtId)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to update court status: ${error.message}`);
-    }
-
-    return data;
   }
 
   // Alle court_types-Queries filtern auf club_id: die Tabelle ist mandantengetrennt,
@@ -206,7 +122,7 @@ export class CourtService {
   ): Promise<CourtType | null> {
     const { data: courtType, error } = await supabase
       .from('court_types')
-      .update(updates as Record<string, unknown>)
+      .update(updates)
       .eq('id', id)
       .eq('club_id', clubId)
       .select()
@@ -237,53 +153,6 @@ export class CourtService {
     }
 
     return { success: true };
-  }
-
-  async updateCourt(courtId: string, updates: Partial<Court>): Promise<Court | null> {
-    // Build update object with snake_case keys for Supabase
-    const dbUpdates: Record<string, unknown> = {};
-
-    if (updates.club_id !== undefined) dbUpdates.club_id = updates.club_id;
-    if (updates.court_type_id !== undefined) dbUpdates.court_type_id = updates.court_type_id;
-    if (updates.name !== undefined) dbUpdates.name = updates.name;
-    if (updates.number !== undefined) dbUpdates.number = updates.number;
-    if (updates.location !== undefined) dbUpdates.location = updates.location;
-    if (updates.description !== undefined) dbUpdates.description = updates.description;
-    if (updates.status !== undefined) dbUpdates.status = updates.status;
-    if (updates.has_lighting !== undefined) dbUpdates.has_lighting = updates.has_lighting;
-    if (updates.lighting_hours_start !== undefined)
-      dbUpdates.lighting_hours_start = updates.lighting_hours_start;
-    if (updates.lighting_hours_end !== undefined)
-      dbUpdates.lighting_hours_end = updates.lighting_hours_end;
-    if (updates.is_active !== undefined) dbUpdates.is_active = updates.is_active;
-
-    // Include updated_at trigger? DB handles it.
-
-    const { data: court, error } = await supabase
-      .from('courts')
-      .update(dbUpdates)
-      .eq('id', courtId)
-      .select()
-      .single();
-
-    if (error) {
-      log.error('Failed to update court:', error);
-      return null;
-    }
-
-    return court;
-  }
-
-  async deleteCourt(courtId: string): Promise<boolean> {
-    // Soft delete: set is_active = false
-    const { error } = await supabase.from('courts').update({ is_active: false }).eq('id', courtId);
-
-    if (error) {
-      log.error('Failed to delete court:', error);
-      return false;
-    }
-
-    return true;
   }
 }
 
