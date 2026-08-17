@@ -7,6 +7,8 @@
  * Auswärtsspielen stand der eigene Verein in der Gegner-Spalte.
  */
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/supabase';
 import type { NuligaGroupPage, NuligaStanding } from '@/lib/services/nuliga-scraper';
 import type * as NuligaScraperModule from '@/lib/services/nuliga-scraper';
 
@@ -37,7 +39,11 @@ function standing(rank: number, teamName: string): NuligaStanding {
   };
 }
 
-/** Minimaler Supabase-Stub: merkt sich Inserts/Updates, liefert leere Tabellen. */
+/**
+ * Minimaler Supabase-Stub: merkt sich Inserts/Updates (Einzelzeilen ODER
+ * Batches), liefert leere Tabellen. Entspricht dem typisierten
+ * `SupabaseClient<Database>`-Kontrakt, den `nuliga-sync` jetzt erwartet.
+ */
 function fakeSupabase(clubName = 'TC Rheinland') {
   const inserted: Record<string, Record<string, unknown>[]> = {};
   const updated: Record<string, Record<string, unknown>[]> = {};
@@ -45,6 +51,11 @@ function fakeSupabase(clubName = 'TC Rheinland') {
   const builder = (table: string) => {
     const q: Record<string, unknown> = {};
     const chain = () => q;
+    const collect = (target: Record<string, Record<string, unknown>[]>) => (row: unknown) => {
+      for (const r of Array.isArray(row) ? row : [row]) {
+        (target[table] ??= []).push(r as Record<string, unknown>);
+      }
+    };
     Object.assign(q, {
       select: chain,
       eq: chain,
@@ -54,12 +65,16 @@ function fakeSupabase(clubName = 'TC Rheinland') {
       delete: chain,
       single: () => Promise.resolve({ data: { name: clubName } }),
       maybeSingle: () => Promise.resolve({ data: { name: clubName } }),
-      insert: (row: Record<string, unknown>) => {
-        (inserted[table] ??= []).push(row);
+      insert: (row: unknown) => {
+        collect(inserted)(row);
         return Promise.resolve({ data: null, error: null });
       },
-      update: (row: Record<string, unknown>) => {
-        (updated[table] ??= []).push(row);
+      upsert: (row: unknown) => {
+        collect(inserted)(row);
+        return Promise.resolve({ data: null, error: null });
+      },
+      update: (row: unknown) => {
+        collect(updated)(row);
         return q;
       },
       // Awaitable: eine Query ohne .single() liefert eine leere Trefferliste.
@@ -68,7 +83,11 @@ function fakeSupabase(clubName = 'TC Rheinland') {
     return q;
   };
 
-  return { sb: { from: builder }, inserted, updated };
+  return {
+    sb: { from: builder } as unknown as SupabaseClient<Database>,
+    inserted,
+    updated,
+  };
 }
 
 const league = { id: 'lg1', club_id: 'club1', name: 'Herren 40' };

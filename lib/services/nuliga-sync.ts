@@ -18,6 +18,8 @@
 
 import { createLogger } from '@/lib/logger';
 import { berlinWallClock } from '@/lib/berlin-time';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/supabase';
 import {
   fetchNuligaGroupPage,
   fetchNuligaTeamPortrait,
@@ -31,9 +33,13 @@ import {
 
 const log = createLogger('nuliga-sync');
 
-/** Supabase-Client (User- oder Service-Kontext). Beide Aufrufer geben je einen anderen. */
+/**
+ * Supabase-Client (User- oder Service-Kontext). Beide Aufrufer geben je einen
+ * anderen: `auth.supabase` (SSR, RLS aktiv) bzw. `createServiceClient()`. Beide
+ * erfüllen `SupabaseClient<Database>` — damit sind alle Queries hier typisiert.
+ */
 
-type Sb = any;
+type Sb = SupabaseClient<Database>;
 
 export interface SyncableLeague {
   id: string;
@@ -255,20 +261,36 @@ async function upsertStandings(
   league: SyncableLeague,
   standings: NuligaStanding[]
 ): Promise<{ created: number; updated: number }> {
+  type TeamRow = Database['public']['Tables']['teams']['Row'];
+  type SelectedTeam = Pick<
+    TeamRow,
+    | 'id'
+    | 'club_id'
+    | 'league_id'
+    | 'name'
+    | 'position'
+    | 'points'
+    | 'matches_played'
+    | 'matches_won'
+    | 'matches_lost'
+    | 'matches_drawn'
+  >;
+
   const { data: existingTeams } = await sb
     .from('teams')
-    .select('id, name, position, points, matches_played, matches_won, matches_lost, matches_drawn')
+    .select(
+      'id, club_id, league_id, name, position, points, matches_played, matches_won, matches_lost, matches_drawn'
+    )
     .eq('league_id', league.id);
 
-  const teamByName = new Map<string, Record<string, unknown> & { id: string }>(
-    (existingTeams ?? []).map((t: { name: string }) => [normalizeTeamName(t.name), t]) as [
-      string,
-      Record<string, unknown> & { id: string },
-    ][]
+  const teamByName = new Map<string, SelectedTeam>(
+    (existingTeams ?? []).map((t) => [normalizeTeamName(t.name), t])
   );
 
-  let created = 0;
-  let updated = 0;
+  // Statt N Einzel-Queries: neue Mannschaften sammeln und in EINEM Insert
+  // schreiben, geänderte als EINEN Upsert über den Primärschlüssel id.
+  const toInsert: Database['public']['Tables']['teams']['Insert'][] = [];
+  const toUpdate: Database['public']['Tables']['teams']['Insert'][] = [];
 
   for (const standing of standings) {
     const existing = teamByName.get(normalizeTeamName(standing.teamName));
@@ -282,19 +304,43 @@ async function upsertStandings(
     };
 
     if (existing) {
-      if (Object.entries(row).some(([k, v]) => existing[k] !== v)) {
-        await sb.from('teams').update(row).eq('id', existing.id);
-        updated++;
+      const changed =
+        existing.position !== row.position ||
+        existing.points !== row.points ||
+        existing.matches_played !== row.matches_played ||
+        existing.matches_won !== row.matches_won ||
+        existing.matches_lost !== row.matches_lost ||
+        existing.matches_drawn !== row.matches_drawn;
+
+      if (changed) {
+        toUpdate.push({
+          id: existing.id,
+          club_id: existing.club_id,
+          league_id: existing.league_id,
+          name: existing.name,
+          ...row,
+        });
       }
     } else {
-      await sb
-        .from('teams')
-        .insert({ club_id: league.club_id, league_id: league.id, name: standing.teamName, ...row });
-      created++;
+      toInsert.push({
+        club_id: league.club_id,
+        league_id: league.id,
+        name: standing.teamName,
+        ...row,
+      });
     }
   }
 
-  return { created, updated };
+  if (toUpdate.length > 0) {
+    const { error } = await sb.from('teams').upsert(toUpdate, { onConflict: 'id' });
+    if (error) throw new Error(`Tabellenstand konnte nicht aktualisiert werden: ${error.message}`);
+  }
+  if (toInsert.length > 0) {
+    const { error } = await sb.from('teams').insert(toInsert);
+    if (error) throw new Error(`Mannschaften konnten nicht angelegt werden: ${error.message}`);
+  }
+
+  return { created: toInsert.length, updated: toUpdate.length };
 }
 
 async function upsertMatches(
@@ -303,27 +349,40 @@ async function upsertMatches(
   ownTeam: string,
   matches: NuligaMatch[]
 ): Promise<{ created: number; updated: number; skipped: number }> {
+  type MatchDayRow = Database['public']['Tables']['match_days']['Row'];
+  type SelectedMatchDay = Pick<
+    MatchDayRow,
+    | 'id'
+    | 'matchday_number'
+    | 'opponent'
+    | 'is_home'
+    | 'scheduled_date'
+    | 'status'
+    | 'score_home'
+    | 'score_away'
+    | 'result'
+    | 'nuliga_report_url'
+  >;
+
   const own = normalizeTeamName(ownTeam);
 
   const { data: existingMatchDays } = await sb
     .from('match_days')
     .select(
-      'id, matchday_number, opponent, is_home, scheduled_date, status, score_home, score_away, nuliga_report_url'
+      'id, matchday_number, opponent, is_home, scheduled_date, status, score_home, score_away, result, nuliga_report_url'
     )
     .eq('league_id', league.id);
 
   // Altlast aus dem fehlerhaften Sync: Zeilen, in denen die eigene Mannschaft
   // als Gegner steht, sind fachlich unmöglich.
-  const bogus = (existingMatchDays ?? []).filter(
-    (md: { opponent: string }) => normalizeTeamName(md.opponent) === own
-  );
+  const bogus = (existingMatchDays ?? []).filter((md) => normalizeTeamName(md.opponent) === own);
   if (bogus.length > 0) {
     await sb
       .from('match_days')
       .delete()
       .in(
         'id',
-        bogus.map((md: { id: string }) => md.id)
+        bogus.map((md) => md.id)
       );
     log.info('Fehlerhafte Spieltage entfernt (Gegner = eigene Mannschaft)', {
       leagueId: league.id,
@@ -337,14 +396,16 @@ async function upsertMatches(
   const matchKey = (opponent: string, isHome: boolean) =>
     `${normalizeTeamName(opponent)}|${isHome ? 'h' : 'a'}`;
 
-  const existingByKey = new Map<string, Record<string, unknown> & { id: string }>();
+  const existingByKey = new Map<string, SelectedMatchDay>();
   for (const md of existingMatchDays ?? []) {
-    if (bogus.some((b: { id: string }) => b.id === md.id)) continue;
+    if (bogus.some((b) => b.id === md.id)) continue;
     existingByKey.set(matchKey(md.opponent, md.is_home), md);
   }
 
-  let created = 0;
-  let updated = 0;
+  // Statt N Einzel-Queries: neue Spieltage sammeln und in EINEM Insert
+  // schreiben, geänderte als EINEN Upsert über den Primärschlüssel id.
+  const toInsert: Database['public']['Tables']['match_days']['Insert'][] = [];
+  const toUpdate: Database['public']['Tables']['match_days']['Insert'][] = [];
   let skipped = 0;
   let matchdayNumber = 0;
 
@@ -386,32 +447,43 @@ async function upsertMatches(
     const existing = existingByKey.get(matchKey(opponent, isOwnHome));
 
     if (existing) {
-      const changed = Object.entries(row).some(([k, v]) => {
-        if (k === 'scheduled_date') {
-          const before = existing.scheduled_date
-            ? new Date(existing.scheduled_date as string).getTime()
-            : null;
-          const after = v ? new Date(v as string).getTime() : null;
-          return before !== after;
-        }
-        return existing[k] !== v;
-      });
+      const scheduledChanged =
+        (existing.scheduled_date ? new Date(existing.scheduled_date).getTime() : null) !==
+        (row.scheduled_date ? new Date(row.scheduled_date).getTime() : null);
+      const changed =
+        scheduledChanged ||
+        existing.opponent !== row.opponent ||
+        existing.is_home !== row.is_home ||
+        existing.result !== row.result ||
+        existing.score_home !== row.score_home ||
+        existing.score_away !== row.score_away ||
+        existing.status !== row.status ||
+        existing.nuliga_report_url !== row.nuliga_report_url;
+
       if (changed) {
-        await sb
-          .from('match_days')
-          .update({ ...row, updated_at: new Date().toISOString() })
-          .eq('id', existing.id);
-        updated++;
+        toUpdate.push({
+          id: existing.id,
+          league_id: league.id,
+          matchday_number: existing.matchday_number,
+          ...row,
+          updated_at: new Date().toISOString(),
+        });
       }
     } else {
-      await sb
-        .from('match_days')
-        .insert({ league_id: league.id, matchday_number: matchdayNumber, ...row });
-      created++;
+      toInsert.push({ league_id: league.id, matchday_number: matchdayNumber, ...row });
     }
   }
 
-  return { created, updated, skipped };
+  if (toUpdate.length > 0) {
+    const { error } = await sb.from('match_days').upsert(toUpdate, { onConflict: 'id' });
+    if (error) throw new Error(`Spieltage konnten nicht aktualisiert werden: ${error.message}`);
+  }
+  if (toInsert.length > 0) {
+    const { error } = await sb.from('match_days').insert(toInsert);
+    if (error) throw new Error(`Spieltage konnten nicht angelegt werden: ${error.message}`);
+  }
+
+  return { created: toInsert.length, updated: toUpdate.length, skipped };
 }
 
 /**
