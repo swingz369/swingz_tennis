@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get family group for this user
-    const { data: familyLink } = await (supabase as any)
+    const { data: familyLink } = await supabase
       .from('family_accounts')
       .select('family_group_id')
       .eq('user_id', user.id)
@@ -33,14 +33,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all members in the family group, including user details and role
-    const { data: familyMembers } = await (supabase as any)
+    const { data: familyMembers } = await supabase
       .from('family_accounts')
       .select('user_id, relationship, role, users(full_name, email, date_of_birth)')
       .eq('family_group_id', familyLink.family_group_id)
       .order('created_at');
 
     // Get active invite code for this family group
-    const { data: invite } = await (supabase as any)
+    const { data: invite } = await supabase
       .from('family_invites')
       .select('code')
       .eq('family_group_id', familyLink.family_group_id)
@@ -53,13 +53,13 @@ export async function GET(request: NextRequest) {
       familyGroupId: familyLink.family_group_id,
       inviteCode: invite?.code ?? null,
       currentUserId: user.id,
-      members: (familyMembers || []).map((m: any) => ({
+      members: (familyMembers || []).map((m) => ({
         userId: m.user_id,
-        fullName: (m.users as any)?.full_name || 'Unbekannt',
-        email: (m.users as any)?.email || '',
+        fullName: m.users?.full_name || 'Unbekannt',
+        email: m.users?.email || '',
         role: m.role || 'member',
         relationship: m.relationship,
-        dateOfBirth: (m.users as any)?.date_of_birth ?? null,
+        dateOfBirth: m.users?.date_of_birth ?? null,
         isSelf: m.user_id === user.id,
       })),
     });
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
 
     if (inviteCode) {
       // Joining via invite code
-      const { data: invite } = await (supabase as any)
+      const { data: invite } = await supabase
         .from('family_invites')
         .select('*')
         .eq('code', inviteCode.toUpperCase().trim())
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       const isMinor = dob
         ? (Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000) < 18
         : false;
-      await (supabase as any).from('family_accounts').insert({
+      await supabase.from('family_accounts').insert({
         family_group_id: invite.family_group_id,
         user_id: user.id,
         relationship: 'family',
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Mark invite as used
-      await (supabase as any)
+      await supabase
         .from('family_invites')
         .update({ is_used: true, used_by: user.id })
         .eq('id', invite.id);
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Creating a new family group
-    const { data: existingLink } = await (supabase as any)
+    const { data: existingLink } = await supabase
       .from('family_accounts')
       .select('family_group_id')
       .eq('user_id', user.id)
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
 
     // Create family group and add self as parent
     const familyGroupId = crypto.randomUUID();
-    await (supabase as any).from('family_accounts').insert({
+    await supabase.from('family_accounts').insert({
       family_group_id: familyGroupId,
       user_id: user.id,
       relationship: 'primary',
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
 
     // Generate invite code
     const newInviteCode = `FAM${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-    await (supabase as any).from('family_invites').insert({
+    await supabase.from('family_invites').insert({
       family_group_id: familyGroupId,
       code: newInviteCode,
       created_by: user.id,
@@ -167,7 +167,7 @@ export async function PUT(request: NextRequest) {
       if (!features.family_accounts) return featureDisabledResponse('family_accounts');
     }
 
-    const { data: familyLink } = await (supabase as any)
+    const { data: familyLink } = await supabase
       .from('family_accounts')
       .select('family_group_id, role, users(date_of_birth)')
       .eq('user_id', user.id)
@@ -179,7 +179,7 @@ export async function PUT(request: NextRequest) {
     }
     // Bewusst altersbasiert statt `role === 'parent'`: der Admin-Pfad legt alle
     // als 'member' an, sodass die Rollen-Spalte keine verlässliche Aussage ist.
-    const dob = (familyLink.users as any)?.date_of_birth ?? null;
+    const dob = familyLink.users?.date_of_birth ?? null;
     if (isMinor(dob)) {
       return NextResponse.json(
         { error: 'Nur Erwachsene können neue Einladungscodes erstellen' },
@@ -188,14 +188,14 @@ export async function PUT(request: NextRequest) {
     }
 
     // Invalidate existing unused codes
-    await (supabase as any)
+    await supabase
       .from('family_invites')
       .update({ is_used: true })
       .eq('family_group_id', familyLink.family_group_id)
       .eq('is_used', false);
 
     const newCode = `FAM${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-    await (supabase as any).from('family_invites').insert({
+    await supabase.from('family_invites').insert({
       family_group_id: familyLink.family_group_id,
       code: newCode,
       created_by: user.id,
