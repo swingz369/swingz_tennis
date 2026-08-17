@@ -1,5 +1,7 @@
 # Admin — Vereins-Administrator
 
+> Zuletzt verifiziert: 16.08.2026
+
 > Wer bist du? Du bist Hauptverantwortliche:r **eines Vereins**. Dein Verein hat eine `club_id`, du bist genau diesem Verein zugeordnet. Du hast **alle Funktionen für deinen Verein** — aber keine Quer-Sicht auf andere Vereine.
 
 **Dashboard:** `/admin/members` (Standard-Dispatch) · **Rolle in Hierarchie:** Stufe 3 · **club_id:** gesetzt (genau 1)
@@ -219,13 +221,14 @@ Stufe 3: Inkasso (45 Tage) → ggf. Member-Account-Sperre
 
 ## 🤝 Zusammenspiel mit anderen Rollen
 
-| Edge-Case                                 | Was passiert?                                                           | Wie handelst du?                                                      |
-| ----------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Member verlässt Verein                    | Membership `is_active=false`, NICHT gelöscht (DSGVO-Audit-Trail bleibt) | "Re-Activate"-Button oder anonymisieren (via Owner)                   |
-| Trainer wechselt zwischen Vereinen        | Mehrfach-Membership in `user_club_memberships`                          | Du verwaltest **deinen** Eintrag, andere Vereine handle andere Admins |
-| Saison-Plan berührt PLANS-Wizard          | Genehmigung deinerseits, dann Publish                                   | /admin/seasons/[id]/publish                                           |
-| Member hat SEPA-Lastschrift → Rückbuchung | Stripe-Chargeback-Notification → Du siehst es im Audit-Log              | Mit Bank klären, ggf. manuell korrigieren                             |
-| Smart-Court Hardware-Problem              | IoT schickt Status-Update                                               | /admin/hardware/\* zeigt Status, manuelles Override                   |
+| Edge-Case                                 | Was passiert?                                                                                                                           | Wie handelst du?                                                                                        |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Member verlässt Verein                    | Membership `is_active=false`, NICHT gelöscht (DSGVO-Audit-Trail bleibt)                                                                 | "Re-Activate"-Button oder anonymisieren (via Owner)                                                     |
+| Trainer wechselt zwischen Vereinen        | Mehrfach-Membership in `user_club_memberships`                                                                                          | Du verwaltest **deinen** Eintrag, andere Vereine handle andere Admins                                   |
+| Du spielst selbst im Verein               | Du bist bereits Mitglied (eine Zeile pro Verein) → Sidebar-Schalter „Verwalten (Admin)" ↔ „Spielen (Mitglied)", kein Freischalten nötig | Persönliche Suche unter `/partner-finder`; die Admin-Seite `/admin/partner-finder` bleibt nur Übersicht |
+| Saison-Plan berührt PLANS-Wizard          | Genehmigung deinerseits, dann Publish                                                                                                   | /admin/seasons/[id]/publish                                                                             |
+| Member hat SEPA-Lastschrift → Rückbuchung | Stripe-Chargeback-Notification → Du siehst es im Audit-Log                                                                              | Mit Bank klären, ggf. manuell korrigieren                                                               |
+| Smart-Court Hardware-Problem              | IoT schickt Status-Update                                                                                                               | /admin/hardware/\* zeigt Status, manuelles Override                                                     |
 
 ## ⚠️ Pflichten & Risiken
 

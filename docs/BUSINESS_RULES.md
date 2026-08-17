@@ -1,9 +1,8 @@
 # SwingZ — Business Rules
 
-> Zuletzt aktualisiert: 13.08.2026 (Stand der letzten Code-Änderung an diesem Dokument)
+> Zuletzt aktualisiert: 16.08.2026 (Stand der letzten Code-Änderung an diesem Dokument)
 
 > Verbindliche Produktregeln. Bei Widersprüchen zwischen Code und diesem Dokument gilt dieses Dokument als Referenz.
-> Letzte Aktualisierung: 17. Juni 2026
 
 ---
 
@@ -32,6 +31,17 @@ Ein Benutzer mit Rolle `admin` darf **nur einem einzigen Verein** zugeordnet sei
 ### Trainer & Member: Mehrfachmitgliedschaft erlaubt
 
 Trainer und Mitglieder können in mehreren Vereinen gleichzeitig aktiv sein (z.B. Gasttrainer, Doppelmitgliedschaft).
+
+### Admin ist selbst Mitglied (Oberflächen-Trennung)
+
+Die DB erlaubt **eine** Membership-Zeile pro `(user, club)` (UNIQUE-Constraint
+`user_club_memberships_user_club_unique`). Ein Admin ist deshalb **bereits Mitglied** seines
+Vereins — es gibt **keine** zweite „member"-Rolle zu vergeben und bewusst **keinen** zweiten
+Account. **Eine Person, ein Login, eine Rolle pro Verein.**
+
+- **Trennung der Oberflächen:** Admin-Konsole (`/admin/…`) = verwalten; Mitglieder-Oberfläche (`/partner-finder`, `/member/…`) = spielen.
+- **Rollen-Switcher:** Admins sehen in der Sidebar einen Schalter „Verwalten (Admin)" ↔ „Spielen (Mitglied)" — ohne dass jemand (schon gar kein fremder Admin) etwas freischaltet. Der Modus ist eine reine UI-Präferenz, **keine** Sicherheitsgrenze — autorisiert wird über die echte `user_club_memberships`-Zeile. Persistiert als Cookie (`swingz_role_mode`), damit auch die serverseitigen Guards (z. B. `member/layout.tsx`) denselben Modus sehen und Admins im Spieler-Modus nicht nach `/admin` zurückwerfen.
+- **Konsequenz Spielpartner-Suche:** `/admin/partner-finder` ist nur eine **Übersicht** (Kennzahlen, Niveau-Verteilung). Die persönliche Suche (`/partner-finder`) erlaubt echte Vereinsmitglieder (`member`/`trainer`/`admin`); Plattform-Staff (`owner`/`superadmin`) ohne eigene Mitgliedschaft erhält keine persönlichen Matches.
 
 ---
 

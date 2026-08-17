@@ -184,7 +184,10 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     description: 'Spielpartner-Matching auf Basis von Niveau und Verfügbarkeit.',
     icon: 'Shuffle',
     category: 'optional',
-    nav: { section: 'play', label: 'Spielpartner-Suche', href: '/admin/partner-finder' },
+    // Admin-Link heisst bewusst „Übersicht": die Admin-Seite zeigt nur
+    // Vereinskennzahlen. Die persönliche Suche gehört zur Mitglieder-Sicht
+    // (/partner-finder) — saubere Rollentrennung, keine Vermischung.
+    nav: { section: 'play', label: 'Spielpartner-Übersicht', href: '/admin/partner-finder' },
     order: 12,
   },
   // ── Optional (toggleable) ───────────────────────────────────────────────

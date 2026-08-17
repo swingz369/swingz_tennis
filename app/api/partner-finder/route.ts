@@ -1,7 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, forbiddenResponse } from '@/lib/api-auth';
+import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:partner-finder');
@@ -59,9 +60,18 @@ export function availabilitySlots(availability: WeeklyAvailability | null): stri
  */
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
-    const hasRole = await verifyRole(auth, 'member');
-    if (!hasRole) {
-      return forbiddenResponse('Anmeldung erforderlich');
+    // Persönliche Suche nur für echte Vereinsmitglieder — member, trainer ODER
+    // admin (ein Admin ist selbst Mitglied seines Vereins, eine Zeile pro
+    // (user, club), und darf als Spieler suchen). Plattform-Staff (owner /
+    // superadmin) ohne eigene Mitgliedschaft bekommt hier keine persönlichen
+    // Matches: sie verwalten, sie suchen nicht.
+    const isPlayer = (auth.memberships ?? []).some(
+      (m) =>
+        m.club_id === auth.clubId &&
+        (m.role === 'member' || m.role === 'trainer' || m.role === 'admin')
+    );
+    if (!isPlayer) {
+      return forbiddenResponse('Persönliche Spielpartnersuche nur für Vereinsmitglieder');
     }
 
     if (!auth.clubId) {
@@ -111,15 +121,28 @@ export async function GET(request: NextRequest) {
           .filter((s): s is string => s !== null && s !== undefined)
       );
 
-      // ── 4. Find candidates: active club members (excluding self) ──
+      // ── 4. Find candidates: active club players (excluding self) ──
       // Kein `users!inner(...)`-Embed: user_club_memberships.user_id hat keinen FK
       // auf users.id (nur deactivated_by), PostgREST würde den Embed sonst über
       // deactivated_by auflösen und aktive Mitglieder (deactivated_by = NULL) rausfiltern.
-      const { data: membershipRows } = (await supabase
+      // Kandidaten sind Spieler (member/trainer/admin): ein Admin ist selbst
+      // Mitglied seines Vereins (eine Zeile pro (user, club)) und darf als
+      // Spieler suchen — also taucht er auch als Treffer auf. Deckungsgleich
+      // mit der isPlayer-Prüfung oben und der Admin-Statistik.
+      //
+      // Service-Client statt user-scoped supabase: die RLS-Policy auf
+      // user_club_memberships gibt einem Mitglied/Trainer nur die EIGENE Zeile
+      // frei — ein Client-Query lieferte nach `.neq` eine leere Kandidatenliste
+      // und damit `matches: []` für die Hauptzielgruppe. Gleiche Falle und
+      // gleiche Lösung wie in /api/members/directory: Service-Client + explizite
+      // Autorisierung (isPlayer oben) + nur `user_id` ausliefern.
+      const serviceSupabase = createServiceClient();
+      const { data: membershipRows } = (await serviceSupabase
         .from('user_club_memberships')
         .select('user_id')
         .eq('club_id', clubId)
         .eq('is_active', true)
+        .in('role', ['member', 'trainer', 'admin'])
         .neq('user_id', userId)) as { data: { user_id: string }[] | null };
 
       if (!membershipRows || membershipRows.length === 0) {
@@ -175,7 +198,14 @@ export async function GET(request: NextRequest) {
       // können — das häufigste Scheitern einer Verabredung und genau das, was die
       // Modulbeschreibung zusagt. Quelle ist dieselbe Angabe wie in der
       // Saisonplanung (user_training_preferences.weekly_availability).
-      const { data: availabilityRows } = (await supabase
+      //
+      // Auch hier Service-Client: RLS gibt einem Mitglied nur die EIGENE
+      // Preference-Zeile frei („Users can view own preferences"), fremde Zeiten
+      // wären für Mitglieder/Trainer unsichtbar und die Dimension tot. Die
+      // Autorisierung läuft über isPlayer oben; ausgeliefert wird nur
+      // weekly_availability (Vereins-Scheduling-Daten, vergleichbar mit den
+      // clubweit sichtbaren Buchungen).
+      const { data: availabilityRows } = (await serviceSupabase
         .from('user_training_preferences')
         .select('user_id, weekly_availability')
         .eq('club_id', clubId)

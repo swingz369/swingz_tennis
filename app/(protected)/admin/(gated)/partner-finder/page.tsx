@@ -1,19 +1,19 @@
 'use client';
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
-import { PartnerFinderPanel } from '@/components/partner-finder-panel';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page-header';
 import { AnimatedCounter, ScrollReveal } from '@/components/animations';
-import { Shuffle, Users, Target, BarChart3, RefreshCw, Activity } from 'lucide-react';
+import { TennisBallEmptyState } from '@/components/ui/empty-state';
+import { Shuffle, Users, Target, BarChart3, RefreshCw, ArrowUpRight } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 
-interface MatchStats {
-  totalMatches: number;
-  avgScore: number;
+interface PartnerFinderStats {
   totalMembers: number;
-  myLevel: string;
+  activeSearchers: number;
   levelDistribution: Record<string, number>;
 }
 
@@ -23,6 +23,7 @@ const levelLabels: Record<string, string> = {
   intermediate: 'Mittelstufe',
   advanced: 'Fortgeschritten',
   tournament: 'Turnierniveau',
+  unbekannt: 'Keine Angabe',
 };
 
 const levelColors: Record<string, string> = {
@@ -31,48 +32,29 @@ const levelColors: Record<string, string> = {
   intermediate: 'from-warning-500 to-brand-accent-600',
   advanced: 'from-brand-accent-500 to-error-600',
   tournament: 'from-info-500 to-info-600',
+  unbekannt: 'from-gray-400 to-gray-500',
 };
 
-export default function PartnerFinderPage() {
-  const [stats, setStats] = useState<MatchStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(true);
+/**
+ * Verwaltungssicht der Spielpartner-Suche. Bewusst nur Vereinskennzahlen —
+ * die persönliche Suche (eigenes Level, Matches, Herausfordern) gehört zur
+ * Mitglieder-Oberfläche (/partner-finder) und ist hier nicht eingebettet.
+ */
+export default function PartnerFinderOverviewPage() {
+  const router = useRouter();
+  const [stats, setStats] = useState<PartnerFinderStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const fetchStats = useCallback(async () => {
-    setStatsLoading(true);
+    setLoading(true);
     try {
-      const res = await apiFetch('/api/partner-finder');
+      const res = await apiFetch('/api/admin/partner-finder/stats');
       if (!res.ok) return;
-      const data = await res.json();
-
-      // Compute level distribution from matches
-      const levelDist: Record<string, number> = {};
-      for (const m of data.matches ?? []) {
-        const lvl = m.playingLevel || 'beginner';
-        levelDist[lvl] = (levelDist[lvl] || 0) + 1;
-      }
-
-      const matches = data.matches ?? [];
-      const avgScore =
-        matches.length > 0
-          ? Math.round(
-              matches.reduce(
-                (sum: number, m: { compatibilityScore: number }) => sum + m.compatibilityScore,
-                0
-              ) / matches.length
-            )
-          : 0;
-
-      setStats({
-        totalMatches: matches.length,
-        avgScore,
-        totalMembers: data.totalMembers ?? 0,
-        myLevel: data.myLevel ?? 'beginner',
-        levelDistribution: levelDist,
-      });
+      setStats(await res.json());
     } catch {
       /* non-critical */
     } finally {
-      setStatsLoading(false);
+      setLoading(false);
     }
   }, []);
 
@@ -80,159 +62,156 @@ export default function PartnerFinderPage() {
     fetchStats();
   }, [fetchStats]);
 
+  const levelEntries = Object.entries(stats?.levelDistribution ?? {}).sort(([, a], [, b]) => b - a);
+
+  const isEmpty = stats !== null && stats.totalMembers === 0;
+
   return (
-    <div className="space-y-6">
-      {/* ── Hero Header ── */}
-      <ScrollReveal>
-        <div className="relative overflow-hidden rounded-xl bg-info-600 p-6 md:p-8 text-white">
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
-          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-info-400/10 blur-3xl" />
-          <div className="relative">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-white/70 mb-1">Spielbetrieb</p>
-                <h1 className="text-2xl font-bold tracking-tight">Spielpartner-Suche</h1>
-                <p className="text-white/70 mt-2">
-                  Übersicht über Spielpartner-Matching und Niveau-Verteilung
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                {stats && (
-                  <Badge className="bg-white/15 backdrop-blur-sm border-white/20 text-white gap-1.5 px-3 py-1.5">
-                    <Shuffle className="h-3.5 w-3.5" />
-                    Algorithmus-basiert
-                  </Badge>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={fetchStats}
-                  disabled={statsLoading}
-                  className="text-white hover:bg-white/10"
-                >
-                  <RefreshCw className={`h-4 w-4 ${statsLoading ? 'animate-spin' : ''}`} />
-                </Button>
-              </div>
+    <div className="relative">
+      {/* Subtile Marken-Textur — Ambient-Licht + Noise, bewusst kein Banner. */}
+      <div
+        className="pointer-events-none absolute inset-x-0 -top-8 h-72 overflow-hidden"
+        aria-hidden="true"
+      >
+        <div className="absolute -top-24 left-1/4 h-64 w-64 rounded-full bg-brand-light/10 blur-3xl" />
+        <div className="absolute -top-16 right-1/4 h-52 w-52 rounded-full bg-brand-accent/10 blur-3xl" />
+        <div className="absolute inset-0 noise opacity-[0.03]" />
+      </div>
+
+      <div className="relative z-10 space-y-6">
+        {/* Standard-Header wie auf den übrigen Admin-Seiten — kein Hero-Banner. */}
+        <PageHeader
+          title="Spielpartner-Übersicht"
+          description="Vereinsweite Kennzahlen und Niveau-Verteilung der Spielpartner-Suche"
+          actions={[
+            {
+              label: 'Aktualisieren',
+              icon: RefreshCw,
+              variant: 'outline',
+              onClick: fetchStats,
+              disabled: loading,
+            },
+          ]}
+        />
+
+        {isEmpty ? (
+          <TennisBallEmptyState
+            title="Noch keine Spielpartner"
+            description="Sobald Mitglieder ihre Spielstärke und Verfügbarkeit hinterlegen, erscheinen hier die Kennzahlen der Spielpartner-Suche."
+            action={{ label: 'Mitglieder verwalten', onClick: () => router.push('/admin/members') }}
+          />
+        ) : (
+          <>
+            {/* ── KPI Cards ── */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+              <ScrollReveal delay={0}>
+                <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground">
+                          Spielende Mitglieder
+                        </p>
+                        <p className="text-3xl font-bold text-foreground dark:text-white">
+                          <AnimatedCounter value={stats?.totalMembers ?? 0} />
+                        </p>
+                        <p className="text-xs text-muted-foreground">Mitglieder & Trainer</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-info-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                        <Users className="h-5 w-5" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </ScrollReveal>
+
+              <ScrollReveal delay={80}>
+                <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground">Aktive Suchende</p>
+                        <p className="text-3xl font-bold text-foreground dark:text-white">
+                          <AnimatedCounter value={stats?.activeSearchers ?? 0} />
+                        </p>
+                        <p className="text-xs text-muted-foreground">haben Zeiten hinterlegt</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-success-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                        <Target className="h-5 w-5" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </ScrollReveal>
+
+              <ScrollReveal delay={160}>
+                <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10 col-span-2 lg:col-span-1">
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground">Niveaustufen</p>
+                        <p className="text-3xl font-bold text-foreground dark:text-white">
+                          <AnimatedCounter value={levelEntries.length} />
+                        </p>
+                        <p className="text-xs text-muted-foreground">im Verein vertreten</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-info-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                        <Shuffle className="h-5 w-5" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </ScrollReveal>
             </div>
-          </div>
-        </div>
-      </ScrollReveal>
 
-      {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <ScrollReveal delay={0}>
-          <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Matches gefunden</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={stats?.totalMatches ?? 0} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">potenzielle Partner</p>
-                </div>
-                <div className="p-3 rounded-xl bg-info-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <Shuffle className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
+            {/* ── Level Distribution ── */}
+            {stats && levelEntries.length > 0 && (
+              <ScrollReveal delay={240}>
+                <Card className="border border-border dark:border-white/10">
+                  <CardContent className="p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                      <h3 className="text-sm font-semibold">Niveau-Verteilung</h3>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {levelEntries.map(([level, count]) => (
+                        <div
+                          key={level}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50"
+                        >
+                          <div
+                            className={`h-3 w-3 rounded-full bg-gradient-to-br ${levelColors[level] ?? 'from-gray-400 to-gray-500'}`}
+                          />
+                          <span className="text-sm font-medium">{levelLabels[level] ?? level}</span>
+                          <span className="text-sm text-muted-foreground">({count})</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </ScrollReveal>
+            )}
+          </>
+        )}
 
-        <ScrollReveal delay={80}>
-          <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Ø Kompatibilität</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={stats?.avgScore ?? 0} suffix="%" />
-                  </p>
-                  <p className="text-xs text-muted-foreground">Durchschnitts-Score</p>
-                </div>
-                <div className="p-3 rounded-xl bg-success-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <Target className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
-
-        <ScrollReveal delay={160}>
-          <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Mitglieder analysiert</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={stats?.totalMembers ?? 0} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">aktive Mitglieder</p>
-                </div>
-                <div className="p-3 rounded-xl bg-info-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <Users className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
-
-        <ScrollReveal delay={240}>
-          <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Dein Level</p>
-                  <p className="text-xl font-bold text-foreground dark:text-white mt-1">
-                    {levelLabels[stats?.myLevel ?? 'beginner'] ?? 'Unbekannt'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">aktuelle Einstufung</p>
-                </div>
-                <div
-                  className={`p-3 rounded-xl bg-gradient-to-br ${levelColors[stats?.myLevel ?? 'beginner'] ?? 'from-gray-500 to-gray-600'} text-white shadow-lg transition-all duration-300 group-hover:scale-110`}
-                >
-                  <Activity className="h-5 w-5" />
-                </div>
-              </div>
+        {/* ── Hinweis auf die persönliche (Mitglieder-)Suche ── */}
+        <ScrollReveal delay={320}>
+          <Card className="border border-dashed border-border dark:border-white/10">
+            <CardContent className="p-4 flex items-center justify-between gap-3">
+              <p className="text-sm text-muted-foreground">
+                Deine persönliche Spielpartnersuche (eigenes Level, Matches, Herausfordern) findest
+                du auf der Mitglieder-Oberfläche.
+              </p>
+              <Button variant="outline" size="sm" asChild className="shrink-0 gap-1.5">
+                <Link href="/partner-finder">
+                  Zur Suche
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </ScrollReveal>
       </div>
-
-      {/* ── Level Distribution ── */}
-      {stats && Object.keys(stats.levelDistribution).length > 0 && (
-        <ScrollReveal delay={300}>
-          <Card className="border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                <h3 className="text-sm font-semibold">Niveau-Verteilung der Matches</h3>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {Object.entries(stats.levelDistribution)
-                  .sort(([, a], [, b]) => b - a)
-                  .map(([level, count]) => (
-                    <div
-                      key={level}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50"
-                    >
-                      <div
-                        className={`h-3 w-3 rounded-full bg-gradient-to-br ${levelColors[level] ?? 'from-gray-400 to-gray-500'}`}
-                      />
-                      <span className="text-sm font-medium">{levelLabels[level] ?? level}</span>
-                      <span className="text-sm text-muted-foreground">({count})</span>
-                    </div>
-                  ))}
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
-      )}
-
-      {/* ── Spielpartner-Panel ── */}
-      <ScrollReveal delay={400}>
-        <PartnerFinderPanel showAdminBadge />
-      </ScrollReveal>
     </div>
   );
 }

@@ -514,6 +514,64 @@ async function wipeLane(lane: Lane) {
     }
   }
 
+  // Tabellen, die `users` referenzieren, aber ohne club_id leben (z. B.
+  // audit_logs.actor_id mit club_id=NULL, decision_votes.voter_id,
+  // family_accounts.user_id). Die club_id-Schleife oben erwischt sie nicht —
+  // ohne diesen Pass scheitert `delete from users` am FK.
+  // Attributions-FKs („wer hat's getan") werden nur genullt statt gelöscht —
+  // sonst löscht man bei clubs.deleted_by den fremden Verein mit.
+  const ATTRIBUTION_COLUMNS = new Set([
+    'actor_id',
+    'author_id',
+    'approved_by',
+    'created_by',
+    'deactivated_by',
+    'deleted_by',
+    'dispute_resolved_by',
+    'moderated_by',
+    'organizer_id',
+    'recorded_by',
+    'resolved_by',
+    'reviewed_by',
+    'substitute_trainer_id',
+    'updated_by',
+  ]);
+  const userFks = await sql<{ table_name: string; column_name: string }[]>`
+    select tc.table_name, kcu.column_name
+    from information_schema.table_constraints tc
+    join information_schema.key_column_usage kcu
+      on kcu.constraint_name = tc.constraint_name
+     and kcu.constraint_schema = tc.constraint_schema
+    join information_schema.constraint_column_usage ccu
+      on ccu.constraint_name = tc.constraint_name
+     and ccu.constraint_schema = tc.constraint_schema
+    where tc.constraint_type = 'FOREIGN KEY'
+      and tc.table_schema = 'public'
+      and ccu.table_name = 'users'`;
+  for (const { table_name, column_name } of userFks) {
+    const laneUsers = `(select id from users where email like $1)`;
+    if (ATTRIBUTION_COLUMNS.has(column_name)) {
+      try {
+        await sql.unsafe(
+          `update public."${table_name}" set "${column_name}" = null where "${column_name}" in ${laneUsers}`,
+          [emailPattern]
+        );
+      } catch {
+        // NOT NULL-Attribution (z. B. board_decisions.created_by): die Zeile
+        // gehört ohnehin dem Verein — löschen statt nullen.
+        await sql.unsafe(
+          `delete from public."${table_name}" where "${column_name}" in ${laneUsers}`,
+          [emailPattern]
+        );
+      }
+    } else {
+      await sql.unsafe(
+        `delete from public."${table_name}" where "${column_name}" in ${laneUsers}`,
+        [emailPattern]
+      );
+    }
+  }
+
   await sql`delete from trainers where email like ${emailPattern}`;
   await sql`delete from users where email like ${emailPattern}`;
   if (ids.length) await sql`delete from clubs where id = any(${ids})`;

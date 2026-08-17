@@ -147,7 +147,7 @@ JSON Web Token. Wird für ICS-Calendar-Subscription-URLs signiert (nicht für Au
 
 ### KI-Matchmaking (veraltet)
 
-Veralteter Name der **Spielpartner-Suche**. Kein KI-/LLM-Modul: das Matching ist deterministisches Scoring (Niveau, Gruppen, gemeinsame Sessions, wöchentliche Verfügbarkeit). API: `GET /api/partner-finder`. UI: `/partner-finder` (Admin: `/admin/partner-finder`). Feature-Flag `partner_finder`. Siehe `user/admin.md`.
+Veralteter Name der **Spielpartner-Suche**. Kein KI-/LLM-Modul: das Matching ist deterministisches Scoring (Niveau, Gruppen, gemeinsame Sessions, wöchentliche Verfügbarkeit). API: `GET /api/partner-finder` (nur für echte Vereinsmitglieder `member`/`trainer`/`admin` — ein Admin ist selbst Mitglied seines Vereins). UI: `/partner-finder` (persönliche Suche); Admin: `/admin/partner-finder` (nur Übersicht/Kennzahlen). Feature-Flag `partner_finder`. Siehe `user/admin.md`.
 
 ## L
 

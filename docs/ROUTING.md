@@ -157,7 +157,7 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 ```
 /admin/courts                    ← Platz-Kalender
 /admin/courts/manage             ← Plätze verwalten
-/admin/partner-finder            ← Spielpartner-Suche
+/admin/partner-finder            ← Spielpartner-Übersicht (Verwaltungssicht, nur Kennzahlen)
 /admin/season-plan               ← Saison-Stundenplan
 ```
 

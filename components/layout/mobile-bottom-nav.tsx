@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { isActivePath } from '@/lib/navigation-utils';
 import { useUserRole } from '@/hooks/use-user-role';
+import { useRoleMode, type RoleModeInitial } from '@/hooks/use-role-mode';
 import { Home, Menu } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { mobileNavItems } from '@/lib/navigation';
@@ -13,24 +14,39 @@ interface MobileBottomNavProps {
   roles?: string[];
   onMenuClick?: () => void;
   className?: string;
+  /** Oberflächen-Modus (Verwalten/Spielen) aus ROLE_MODE_COOKIE — SSR-sicher vom Server. */
+  initialRoleMode?: RoleModeInitial;
 }
 
-export function MobileBottomNav({ roles, onMenuClick, className }: MobileBottomNavProps) {
+export function MobileBottomNav({
+  roles,
+  onMenuClick,
+  className,
+  initialRoleMode,
+}: MobileBottomNavProps) {
   const pathname = usePathname();
 
   // Centralised role detection via hook
   const { isOwner, isSuperAdmin, isAdmin, isTrainer } = useUserRole(roles);
 
+  // Doppelrolle: im Spieler-Modus zeigt die Bottom-Nav die Mitglieder-/Trainer-
+  // Ziele statt der Admin-Ziele — deckungsgleich mit der Sidebar.
+  const { isMemberMode } = useRoleMode(roles, initialRoleMode);
+
   // Einträge zentral in lib/navigation.ts — höchste Rolle gewinnt (TSOW tab bar)
-  const role = isOwner
-    ? ('owner' as const)
-    : isSuperAdmin
-      ? ('superadmin' as const)
-      : isAdmin
-        ? ('admin' as const)
-        : isTrainer
-          ? ('trainer' as const)
-          : ('member' as const);
+  const role = isMemberMode
+    ? isTrainer
+      ? ('trainer' as const)
+      : ('member' as const)
+    : isOwner
+      ? ('owner' as const)
+      : isSuperAdmin
+        ? ('superadmin' as const)
+        : isAdmin
+          ? ('admin' as const)
+          : isTrainer
+            ? ('trainer' as const)
+            : ('member' as const);
   const navItems = mobileNavItems(role);
 
   return (

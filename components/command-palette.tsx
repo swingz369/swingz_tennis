@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/command';
 import { useTheme } from 'next-themes';
 import { useUserRole } from '@/hooks/use-user-role';
+import { useRoleMode, type RoleModeInitial } from '@/hooks/use-role-mode';
 import { useClubFeatures } from '@/hooks/use-club-features';
 import { apiFetch } from '@/lib/api-fetch';
 import { useCommandPalette } from '@/components/command-palette-context';
@@ -43,9 +44,16 @@ interface CommandPaletteProps {
   roles?: string[];
   selectedClubId?: string | null;
   clubs?: { id: string }[];
+  /** Oberflächen-Modus (Verwalten/Spielen) aus ROLE_MODE_COOKIE — SSR-sicher vom Server. */
+  initialRoleMode?: RoleModeInitial;
 }
 
-export function CommandPalette({ roles, selectedClubId, clubs }: CommandPaletteProps = {}) {
+export function CommandPalette({
+  roles,
+  selectedClubId,
+  clubs,
+  initialRoleMode,
+}: CommandPaletteProps = {}) {
   const { open, setOpen } = useCommandPalette();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -53,6 +61,9 @@ export function CommandPalette({ roles, selectedClubId, clubs }: CommandPaletteP
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const { isAdmin, isSuperAdmin, isTrainer } = useUserRole(roles);
+  // Doppelrolle: im Spieler-Modus zeigt die Palette die Mitglieder-Navigation
+  // statt der Admin-Navigation — deckungsgleich mit Sidebar und Bottom-Nav.
+  const { isMemberMode } = useRoleMode(roles, initialRoleMode);
   const activeClubId = selectedClubId ?? clubs?.[0]?.id;
   const { features } = useClubFeatures(activeClubId);
   const hiddenSections = new Set(
@@ -123,7 +134,9 @@ export function CommandPalette({ roles, selectedClubId, clubs }: CommandPaletteP
     roles?: string[];
   }> = paletteNavItems(hiddenSections, includeMemberOnly).map((item) => ({
     label: item.name,
-    href: item.href,
+    // Im Spieler-Modus muss „Dashboard" direkt zur Mitglieder-Startseite —
+    // /dashboard würde serverseitig wieder zur höchsten Rolle (Admin) springen.
+    href: item.href === '/dashboard' && isMemberMode ? '/member' : item.href,
     icon: item.icon ?? Search,
     ...(item.href === '/dashboard' ? { shortcut: `${modKey}+D` } : {}),
     ...(item.href === '/bookings' ? { shortcut: `${modKey}+B` } : {}),
@@ -188,12 +201,15 @@ export function CommandPalette({ roles, selectedClubId, clubs }: CommandPaletteP
     );
   });
 
-  const filteredAdminNav = isAdmin || isSuperAdmin ? adminNavItems : [];
+  const filteredAdminNav = !isMemberMode && (isAdmin || isSuperAdmin) ? adminNavItems : [];
 
   const filteredQuickActions = quickActions.filter((action) => {
     if (!action.roles) return true;
-    return action.roles.some(
-      (r) => (r === 'admin' && isAdmin) || (r === 'superadmin' && isSuperAdmin)
+    // Admin-Schnellaktionen nur im Verwalten-Modus — im Spieler-Modus wären
+    // „Mitglied einladen"/„Rechnung erstellen" die falsche Oberfläche.
+    return (
+      !isMemberMode &&
+      action.roles.some((r) => (r === 'admin' && isAdmin) || (r === 'superadmin' && isSuperAdmin))
     );
   });
 
@@ -265,24 +281,26 @@ export function CommandPalette({ roles, selectedClubId, clubs }: CommandPaletteP
             {/* Mitglied/Trainer-Navigation. Admins & Superadmins sehen unten
                 ihre Admin-Gruppe statt dieser Liste — deckungsgleich mit der
                 rollenabhängigen Sidebar, die auch nur eine Navigation zeigt. */}
-            {!isAdmin && !isSuperAdmin && filteredNavItems.length > 0 && (
-              <CommandGroup heading="Navigation">
-                {filteredNavItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <CommandItem
-                      key={item.href}
-                      onSelect={() => navigate(item.href)}
-                      className="cursor-pointer"
-                    >
-                      <Icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                      {item.label}
-                      {item.shortcut && <CommandShortcut>{item.shortcut}</CommandShortcut>}
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            )}
+            {(!isAdmin && !isSuperAdmin) || isMemberMode
+              ? filteredNavItems.length > 0 && (
+                  <CommandGroup heading="Navigation">
+                    {filteredNavItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <CommandItem
+                          key={item.href}
+                          onSelect={() => navigate(item.href)}
+                          className="cursor-pointer"
+                        >
+                          <Icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                          {item.label}
+                          {item.shortcut && <CommandShortcut>{item.shortcut}</CommandShortcut>}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                )
+              : null}
 
             {filteredAdminNav.length > 0 && (
               <CommandGroup heading="Admin">

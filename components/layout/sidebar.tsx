@@ -6,11 +6,13 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { isExactActive } from '@/lib/navigation-utils';
 import { useUserRole } from '@/hooks/use-user-role';
+import { useRoleMode, type RoleModeInitial } from '@/hooks/use-role-mode';
 import { useClubFeatures } from '@/hooks/use-club-features';
 import { useOwnerClubContext } from '@/hooks/use-owner-club-context';
 
 import { AdminSection } from './admin-section';
 import { FamilySwitcher } from './family-switcher';
+import { RoleSwitcher } from './role-switcher';
 import { useFamilyAccounts } from '@/hooks/use-family-accounts';
 import { Home, X, CheckCircle, Building2, ChevronDown, UserPlus } from 'lucide-react';
 import {
@@ -73,6 +75,7 @@ export function Sidebar({
   selectedClubId,
   clubs,
   onInvite,
+  initialRoleMode,
 }: {
   roles?: string[];
   open?: boolean;
@@ -80,6 +83,8 @@ export function Sidebar({
   selectedClubId?: string | null;
   clubs?: Club[];
   onInvite?: () => void;
+  /** Oberflächen-Modus (Verwalten/Spielen) aus ROLE_MODE_COOKIE — SSR-sicher vom Server. */
+  initialRoleMode?: RoleModeInitial;
 }) {
   const pathname = usePathname();
   const sidebarRef = useRef<HTMLElement>(null);
@@ -143,7 +148,16 @@ export function Sidebar({
 
   // Centralised role detection via hook
   const { currentRole, isOwner, isSuperAdmin, isAdmin, isTrainer } = useUserRole(roles);
-  const colors = roleColors[currentRole];
+
+  // Doppelrolle (Verwalten + Spielen): Oberflächen-Modus. Reines UI-Präferenz-
+  // Flag, keine Sicherheitsgrenze — autorisiert wird weiterhin über die echten
+  // Memberships. `canSwitch` = admin/superadmin/owner UND member/trainer.
+  const { canSwitch, isMemberMode, switchToMember, switchToAdmin } = useRoleMode(
+    roles,
+    initialRoleMode
+  );
+
+  const colors = roleColors[isMemberMode ? 'member' : currentRole];
 
   // Rollen-Unterzeile — stand früher im Header unter dem Vereinsnamen und ist
   // mit dem Marken-Cluster dorthin gewandert, wo der Vereinsname jetzt steht.
@@ -282,17 +296,19 @@ export function Sidebar({
 
   // Steht unter dem Logo. Für den Owner im Vereinskontext wäre
   // "Plattform-Konsole" irreführend — er sieht dann die Vereinsverwaltung.
-  const roleLabel = actsAsClubAdmin
-    ? 'Vereinsverwaltung (als Owner)'
-    : isOwner
-      ? 'Plattform-Konsole'
-      : isSuperAdmin
-        ? 'Tennisschule-Verwaltung'
-        : isAdmin
-          ? 'Vereinsverwaltung'
-          : isTrainer
-            ? 'Mein Training'
-            : 'Mein Verein';
+  const roleLabel = isMemberMode
+    ? 'Mitglied'
+    : actsAsClubAdmin
+      ? 'Vereinsverwaltung (als Owner)'
+      : isOwner
+        ? 'Plattform-Konsole'
+        : isSuperAdmin
+          ? 'Tennisschule-Verwaltung'
+          : isAdmin
+            ? 'Vereinsverwaltung'
+            : isTrainer
+              ? 'Mein Training'
+              : 'Mein Verein';
 
   // Feature flags — hide sidebar sections for disabled modules
   const activeClubId = selectedClubId ?? clubs?.[0]?.id;
@@ -355,7 +371,9 @@ export function Sidebar({
   const includeMemberOnly = !isTrainer || (roles?.includes('member') ?? false);
 
   const roleSections: SectionDef[] = (() => {
-    if (isAdmin || actsAsClubAdmin) {
+    // Im Spieler-Modus (Doppelrolle) gewinnt die Mitglieder-/Trainer-Sicht —
+    // die Admin-Sektionen werden übersprungen, sonst bliebe die Vermischung.
+    if (!isMemberMode && (isAdmin || actsAsClubAdmin)) {
       const sections = adminSidebarSections(hiddenSections, isSuperAdmin).map((section) => ({
         label: section.label,
         icon: section.icon,
@@ -385,7 +403,7 @@ export function Sidebar({
       return sections;
     }
 
-    if (isOwner) {
+    if (!isMemberMode && isOwner) {
       // Owner: Konsistente Section-Darstellung wie Admin/Superadmin — die
       // Section-Labels ("Plattform-Konsole", "Monetarisierung") sind die
       // semantische Gruppierung und bleiben sichtbar (Audit-Log direkt
@@ -397,7 +415,7 @@ export function Sidebar({
       }));
     }
 
-    if (isSuperAdmin) {
+    if (!isMemberMode && isSuperAdmin) {
       return superadminSidebarSections().map((s) => ({
         label: s.label,
         icon: s.icon,
@@ -435,17 +453,19 @@ export function Sidebar({
     return memberSections.map((s) => ({ label: s.label, icon: s.icon, subItems: s.items }));
   })();
 
-  const dashboardHref = actsAsClubAdmin
-    ? '/admin' // Owner im Vereinskontext: „Dashboard" meint das des Vereins
-    : isOwner
-      ? '/owner'
-      : isSuperAdmin
-        ? '/superadmin'
-        : isAdmin
-          ? '/admin'
-          : isTrainer
-            ? '/trainer'
-            : '/member';
+  const dashboardHref = isMemberMode
+    ? '/member' // Spieler-Modus: „Dashboard" meint das der Mitglieder
+    : actsAsClubAdmin
+      ? '/admin' // Owner im Vereinskontext: „Dashboard" meint das des Vereins
+      : isOwner
+        ? '/owner'
+        : isSuperAdmin
+          ? '/superadmin'
+          : isAdmin
+            ? '/admin'
+            : isTrainer
+              ? '/trainer'
+              : '/member';
 
   // ────────────────────────────────────────────────────────────────────
   // Render
@@ -509,6 +529,15 @@ export function Sidebar({
             switchToChild={family.switchToChild}
             switchToOwnAccount={family.switchToOwnAccount}
             colors={colors}
+          />
+        )}
+
+        {/* Rollen-Switcher — für Menschen mit Doppelrolle (Verwalten + Spielen) */}
+        {canSwitch && (
+          <RoleSwitcher
+            isMemberMode={isMemberMode}
+            switchToMember={switchToMember}
+            switchToAdmin={switchToAdmin}
           />
         )}
 

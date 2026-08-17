@@ -77,7 +77,7 @@ const ADMIN_ROUTES: RouteTest[] = [
   { path: '/admin/tournaments', expectedContent: /turnier|tournament/i },
   { path: '/admin/tournaments/new', expectedContent: /turnier|tournament|erstellen/i },
   { path: '/admin/onboarding', expectedContent: /Schritt|Verein|onboarding/i },
-  { path: '/admin/partner-finder', expectedContent: /matching|ki|matchmaking/i },
+  { path: '/admin/partner-finder', expectedContent: /spielpartner|niveau|mitglied/i },
   { path: '/admin/audit-logs', expectedContent: /audit|protokoll|log/i },
   { path: '/admin/documents', expectedContent: /dokument/i },
   { path: '/admin/email-campaigns', expectedContent: /e-mail|kampagne|newsletter/i },

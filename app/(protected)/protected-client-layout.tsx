@@ -14,6 +14,7 @@ const Sidebar = dynamic(() => import('@/components/layout/sidebar').then((m) => 
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { SkipToContent } from '@/lib/accessibility';
 import { CommandPalette } from '@/components/command-palette';
+import type { RoleModeInitial } from '@/hooks/use-role-mode';
 import { SearchDialog } from '@/components/search-dialog';
 import { CommandPaletteProvider } from '@/components/command-palette-context';
 import { PageTransition } from '@/components/animations';
@@ -39,6 +40,8 @@ interface ProtectedClientLayoutProps {
   user: AppUser;
   /** Resolved server-side in app/(protected)/layout.tsx — drives logo + favicon. */
   branding?: ClubBranding;
+  /** Oberflächen-Modus (Verwalten/Spielen) aus ROLE_MODE_COOKIE — SSR-sicher vom Server. */
+  initialRoleMode?: RoleModeInitial;
 }
 
 function SignOutLink() {
@@ -68,7 +71,12 @@ function SignOutLink() {
  *   Mobil          → Bottom-Tab-Bar, Sidebar als Overlay über den Menü-Knopf
  * Die Sektionen pro Rolle kommen aus `lib/navigation.ts`.
  */
-export function ProtectedClientLayout({ children, user, branding }: ProtectedClientLayoutProps) {
+export function ProtectedClientLayout({
+  children,
+  user,
+  branding,
+  initialRoleMode,
+}: ProtectedClientLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
 
@@ -114,6 +122,7 @@ export function ProtectedClientLayout({ children, user, branding }: ProtectedCli
             clubs={user.clubs ?? (user.club ? [user.club] : [])}
             open={sidebarOpen}
             onClose={() => setSidebarOpen(false)}
+            initialRoleMode={initialRoleMode}
           />
           {sidebarOpen && (
             <div
@@ -164,11 +173,13 @@ export function ProtectedClientLayout({ children, user, branding }: ProtectedCli
             roles={user.roles ?? []}
             onMenuClick={() => setSidebarOpen((prev) => !prev)}
             className="md:hidden"
+            initialRoleMode={initialRoleMode}
           />
           <CommandPalette
             roles={user.roles ?? []}
             selectedClubId={user.selectedClubId ?? null}
             clubs={user.clubs ?? (user.club ? [user.club] : [])}
+            initialRoleMode={initialRoleMode}
           />
           <SearchDialog />
         </div>

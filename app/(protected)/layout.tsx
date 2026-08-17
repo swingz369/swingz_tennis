@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { ProtectedClientLayout } from './protected-client-layout';
 import { ProtectedRoute } from '@/components/layout/protected-route';
 import { requireAuth } from '@/lib/auth';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+import { ADMIN_CLUB_COOKIE, ROLE_MODE_COOKIE } from '@/lib/cookies';
 import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
 import { createServiceClient } from '@/lib/supabase/service';
 import { DEFAULT_BRANDING, brandingToCSSVars, type ClubBranding } from '@/lib/branding';
@@ -58,6 +58,13 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   //     return null (no ADMIN_CLUB_COOKIE owner UI to populate).
   const cookieStore = await cookies();
   const cookieValue = cookieStore.get(ADMIN_CLUB_COOKIE)?.value ?? null;
+
+  // Oberflächen-Modus („Verwalten" ↔ „Spielen") für Doppelrollen. Der Wert
+  // kommt als Prop in die Client-Layouts, damit SSR und Hydration deckungsgleich
+  // sind (kein localStorage-Read im Client-Initializer) und die serverseitigen
+  // Guards (member/layout.tsx) denselben Modus sehen wie die Sidebar.
+  const roleModeCookie = cookieStore.get(ROLE_MODE_COOKIE)?.value;
+  const initialRoleMode = roleModeCookie === 'member' ? ('member' as const) : ('admin' as const);
 
   let selectedClubId: string | null = null;
   if (isSuperAdmin) {
@@ -161,7 +168,11 @@ export default async function ProtectedLayout({ children }: { children: React.Re
       {/* Per-club color theming — SSR'd so it's present on first paint, no flash */}
       <style dangerouslySetInnerHTML={{ __html: `:root{${brandCssVars}}` }} />
       <ProtectedRoute>
-        <ProtectedClientLayout user={userData} branding={branding}>
+        <ProtectedClientLayout
+          user={userData}
+          branding={branding}
+          initialRoleMode={initialRoleMode}
+        >
           {children}
         </ProtectedClientLayout>
       </ProtectedRoute>
