@@ -35,16 +35,17 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ memb
     const since = new Date();
     since.setDate(since.getDate() - LOOKBACK_DAYS);
 
-    // Use the auth supabase client (RLS active)
-    const supabase = auth.supabase as ReturnType<typeof createServiceClient>;
+    // User-scoped Client (RLS aktiv). bookings hat kein `created_at` —
+    // der Buchungszeitpunkt ist `booked_at`.
+    const supabase = auth.supabase;
 
-    const { data: noShows, error } = await (supabase as any)
+    const { data: noShows, error } = await supabase
       .from('bookings')
       .select('id, session_start_time, booked_at, cancellation_reason')
       .eq('member_id', memberId)
       .eq('club_id', clubId)
       .eq('status', 'no_show')
-      .gte('created_at', since.toISOString())
+      .gte('booked_at', since.toISOString())
       .order('session_start_time', { ascending: false });
 
     if (error) {
@@ -84,7 +85,7 @@ export async function POST(
     since.setDate(since.getDate() - LOOKBACK_DAYS);
 
     // Mitglied auflösen für sprechende Benachrichtigung
-    const { data: memberUser } = await (service as any)
+    const { data: memberUser } = await service
       .from('users')
       .select('full_name, email')
       .eq('id', memberId)
@@ -94,7 +95,7 @@ export async function POST(
       memberUser?.full_name || memberUser?.email || `Mitglied ${memberId.slice(0, 8)}`;
 
     // Trainer des Vereins ermitteln (alle Trainer des Clubs)
-    const { data: trainerRows, error: trainerErr } = await (service as any)
+    const { data: trainerRows, error: trainerErr } = await service
       .from('trainer_club')
       .select('trainer_id, trainers(user_id, name)')
       .eq('club_id', clubId);
@@ -107,13 +108,22 @@ export async function POST(
       return internalErrorResponse();
     }
 
+    // Benachrichtigungen sammeln und in EINEM Insert schreiben statt pro Trainer (N+1)
+    const notificationRows: Array<{
+      user_id: string;
+      club_id: string;
+      type: string;
+      title: string;
+      message: string;
+      read: boolean;
+    }> = [];
     const notifiedTrainers: string[] = [];
 
     for (const row of trainerRows ?? []) {
       const trainer = Array.isArray(row.trainers) ? row.trainers[0] : row.trainers;
       if (!trainer?.user_id) continue;
 
-      const { error: notifErr } = await (service as any).from('notifications').insert({
+      notificationRows.push({
         user_id: trainer.user_id,
         club_id: clubId,
         type: 'absence_alert',
@@ -121,14 +131,17 @@ export async function POST(
         message: `${memberLabel} war mehrfach unentschuldigt abwesend. Bitte Kontakt aufnehmen.`,
         read: false,
       });
+      notifiedTrainers.push(trainer.name ?? trainer.user_id);
+    }
 
+    if (notificationRows.length > 0) {
+      const { error: notifErr } = await service.from('notifications').insert(notificationRows);
       if (notifErr) {
         log.error(
           'Benachrichtigung konnte nicht erstellt werden',
           notifErr instanceof Error ? notifErr : undefined
         );
-      } else {
-        notifiedTrainers.push(trainer.name ?? trainer.user_id);
+        return internalErrorResponse();
       }
     }
 

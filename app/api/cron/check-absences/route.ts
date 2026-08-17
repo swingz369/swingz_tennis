@@ -39,12 +39,13 @@ export async function GET(req: NextRequest) {
   cooldownSince.setDate(cooldownSince.getDate() - COOLDOWN_DAYS);
 
   try {
-    // 1. Alle no_show-Bookings der letzten 60 Tage laden
-    const { data: noShowRows, error: noShowErr } = await (service as any)
+    // 1. Alle no_show-Bookings der letzten 60 Tage laden.
+    //    Die Tabelle hat kein `created_at` — der Buchungszeitpunkt ist `booked_at`.
+    const { data: noShowRows, error: noShowErr } = await service
       .from('bookings')
       .select('member_id, club_id, id')
       .eq('status', 'no_show')
-      .gte('created_at', lookbackSince.toISOString());
+      .gte('booked_at', lookbackSince.toISOString());
 
     if (noShowErr) {
       log.error(
@@ -78,7 +79,7 @@ export async function GET(req: NextRequest) {
 
     // 4. Bereits benachrichtigte (member_id, club_id)-Paare der letzten 30 Tage ausschließen
     // memberId wird in action_url gespeichert für zuverlässige Deduplizierung
-    const { data: recentNotifsFull } = await (service as any)
+    const { data: recentNotifsFull } = await service
       .from('notifications')
       .select('action_url, club_id')
       .eq('type', 'absence_alert')
@@ -93,48 +94,74 @@ export async function GET(req: NextRequest) {
 
     const toProcess = candidates.filter((c) => !alreadyNotified.has(`${c.memberId}::${c.clubId}`));
 
-    let totalNotified = 0;
+    // 5. Mitglieder + Trainer je in EINEM Query auflösen statt 2 + N im Loop (N+1).
+    const memberIds = [...new Set(toProcess.map((c) => c.memberId))];
+    const clubIds = [...new Set(toProcess.map((c) => c.clubId))];
 
-    for (const { memberId, clubId, count } of toProcess) {
-      // Mitglied auflösen
-      const { data: memberUser } = await (service as any)
+    const memberMap = new Map<string, { full_name: string | null; email: string | null }>();
+    if (memberIds.length > 0) {
+      const { data: memberRows } = await service
         .from('users')
-        .select('full_name, email')
-        .eq('id', memberId)
-        .single();
+        .select('id, full_name, email')
+        .in('id', memberIds);
+      for (const u of memberRows ?? []) memberMap.set(u.id, u);
+    }
 
-      const memberLabel =
-        memberUser?.full_name || memberUser?.email || `Mitglied ${memberId.slice(0, 8)}`;
-
-      // Trainer des Clubs ermitteln
-      const { data: trainerRows } = await (service as any)
+    // trainer_club → Trainer je Club, mit user_id aus dem trainers-Embed.
+    const trainerByClub = new Map<string, Array<{ user_id: string; name: string | null }>>();
+    if (clubIds.length > 0) {
+      const { data: trainerRows } = await service
         .from('trainer_club')
-        .select('trainer_id, trainers(user_id, name)')
-        .eq('club_id', clubId);
-
+        .select('club_id, trainer_id, trainers(user_id, name)')
+        .in('club_id', clubIds);
       for (const row of trainerRows ?? []) {
         const trainer = Array.isArray(row.trainers) ? row.trainers[0] : row.trainers;
         if (!trainer?.user_id) continue;
+        const list = trainerByClub.get(row.club_id) ?? [];
+        list.push({ user_id: trainer.user_id, name: trainer.name ?? null });
+        trainerByClub.set(row.club_id, list);
+      }
+    }
 
-        const { error: notifErr } = await (service as any).from('notifications').insert({
+    // 6. Benachrichtigungen sammeln und in EINEM Batch-Insert schreiben.
+    const notificationRows: Array<{
+      user_id: string;
+      club_id: string;
+      type: string;
+      title: string;
+      message: string;
+      read: boolean;
+      action_url: string;
+    }> = [];
+    for (const { memberId, clubId, count } of toProcess) {
+      const memberUser = memberMap.get(memberId);
+      const memberLabel =
+        memberUser?.full_name || memberUser?.email || `Mitglied ${memberId.slice(0, 8)}`;
+
+      for (const trainer of trainerByClub.get(clubId) ?? []) {
+        notificationRows.push({
           user_id: trainer.user_id,
           club_id: clubId,
           type: 'absence_alert',
           title: 'Häufige Fehlzeiten',
           message: `${memberLabel} war ${count}x unentschuldigt abwesend (letzte ${LOOKBACK_DAYS} Tage). Bitte Kontakt aufnehmen.`,
           read: false,
-          // Speichert memberId für Deduplizierungs-Check
+          // Für den Deduplizierungs-Check (siehe Schritt 4)
           action_url: memberId,
         });
+      }
+    }
 
-        if (notifErr) {
-          log.error(
-            'Benachrichtigung konnte nicht gespeichert werden',
-            notifErr instanceof Error ? notifErr : undefined
-          );
-        } else {
-          totalNotified++;
-        }
+    let totalNotified = 0;
+    if (notificationRows.length > 0) {
+      const { error: notifErr } = await service.from('notifications').insert(notificationRows);
+      if (notifErr) {
+        log.error(
+          'Benachrichtigungen konnten nicht gespeichert werden',
+          notifErr instanceof Error ? notifErr : undefined
+        );
+      } else {
+        totalNotified = notificationRows.length;
       }
     }
 
