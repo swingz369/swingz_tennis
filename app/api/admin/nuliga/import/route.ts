@@ -46,48 +46,43 @@ export async function POST(req: NextRequest) {
       if (standingsFile) {
         const csv = await readFilePart(standingsFile);
         const rows = parseStandingsCsv(csv);
-        for (const row of rows) {
-          const { error } = await sb.from('teams').upsert(
-            {
-              league_id: leagueId,
-              club_id: auth.clubId!,
-              name: row.name,
-              position: row.rank,
-              matches_played: row.matchesPlayed,
-              matches_won: row.wins,
-              matches_drawn: row.draws,
-              matches_lost: row.losses,
-              points: row.points,
-            },
-            { onConflict: 'league_id,name' }
-          );
-          if (error)
-            throw new Error(`Tabellen-Import fehlgeschlagen (${row.name}): ${error.message}`);
-          standingsImported++;
-        }
+        // EIN Upsert für alle Zeilen statt N Einzel-Queries (idempotent über
+        // den natürlichen Schlüssel league_id + name).
+        const { error } = await sb.from('teams').upsert(
+          rows.map((row) => ({
+            league_id: leagueId,
+            club_id: auth.clubId!,
+            name: row.name,
+            position: row.rank,
+            matches_played: row.matchesPlayed,
+            matches_won: row.wins,
+            matches_drawn: row.draws,
+            matches_lost: row.losses,
+            points: row.points,
+          })),
+          { onConflict: 'league_id,name' }
+        );
+        if (error) throw new Error(`Tabellen-Import fehlgeschlagen: ${error.message}`);
+        standingsImported = rows.length;
       }
 
       if (matchesFile) {
         const csv = await readFilePart(matchesFile);
         const rows = parseMatchesCsv(csv, teamName);
-        for (const row of rows) {
-          const { error } = await sb.from('match_days').upsert(
-            {
-              league_id: leagueId,
-              matchday_number: row.matchdayNumber,
-              opponent: row.opponent,
-              scheduled_date: row.scheduledDate?.toISOString() ?? null,
-              is_home: row.isHome,
-              status: 'scheduled',
-            },
-            { onConflict: 'league_id,matchday_number' }
-          );
-          if (error)
-            throw new Error(
-              `Spielplan-Import fehlgeschlagen (Spieltag ${row.matchdayNumber}): ${error.message}`
-            );
-          matchesImported++;
-        }
+        // EIN Upsert für alle Zeilen statt N Einzel-Queries.
+        const { error } = await sb.from('match_days').upsert(
+          rows.map((row) => ({
+            league_id: leagueId,
+            matchday_number: row.matchdayNumber,
+            opponent: row.opponent,
+            scheduled_date: row.scheduledDate?.toISOString() ?? null,
+            is_home: row.isHome,
+            status: 'scheduled',
+          })),
+          { onConflict: 'league_id,matchday_number' }
+        );
+        if (error) throw new Error(`Spielplan-Import fehlgeschlagen: ${error.message}`);
+        matchesImported = rows.length;
       }
 
       void (async () => {
