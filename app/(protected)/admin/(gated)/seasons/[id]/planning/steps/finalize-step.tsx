@@ -186,8 +186,8 @@ export function FinalizeStep() {
             </div>
             <h2 className="text-xl font-bold text-success-800">Planung erfolgreich bestätigt!</h2>
             <p className="text-sm text-success-700 mt-2 max-w-md mx-auto">
-              Trainingsgruppen und Sessions wurden erstellt und in die Profile der Trainer und
-              Mitglieder übertragen. Alle Beteiligten werden automatisch benachrichtigt.
+              Trainingsgruppen und Trainingseinheiten wurden erstellt und in die Profile der Trainer
+              und Mitglieder übertragen. Alle Beteiligten werden automatisch benachrichtigt.
             </p>
           </CardContent>
         </Card>
@@ -208,7 +208,7 @@ export function FinalizeStep() {
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-success-500" />
-                <p className="text-sm text-muted-foreground">Sessions</p>
+                <p className="text-sm text-muted-foreground">Einheiten</p>
               </div>
               <p className="text-2xl font-bold mt-1">{state.publishedSessionIds.length}</p>
             </CardContent>

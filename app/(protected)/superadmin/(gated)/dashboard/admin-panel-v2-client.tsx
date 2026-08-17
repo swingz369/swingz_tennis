@@ -244,7 +244,7 @@ export function AdminPanelV2Client({
           </TabsTrigger>
           <TabsTrigger value="sessions" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            <span className="hidden sm:inline">Sessions</span>
+            <span className="hidden sm:inline">Einheiten</span>
           </TabsTrigger>
         </TabsList>
 
@@ -328,7 +328,7 @@ export function AdminPanelV2Client({
               <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
               <h3 className="text-lg font-semibold text-foreground mb-2">Wähle einen Verein aus</h3>
               <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
-                Um Training-Sessions zu verwalten, wähle zuerst einen Verein aus der Übersicht aus.
+                Um Trainingseinheiten zu verwalten, wähle zuerst einen Verein aus der Übersicht aus.
                 Du wirst dann in die Admin-Ansicht des Vereins weitergeleitet.
               </p>
               <Link

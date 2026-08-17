@@ -171,7 +171,7 @@ export function PartnerFinderPanel({ showAdminBadge }: PartnerFinderPanelProps =
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
           <RefreshCw className="h-8 w-8 animate-spin mb-3 text-info-400" />
           <p className="text-sm font-medium">Suche nach passenden Partnern...</p>
-          <p className="text-xs">Analysiere Level, Gruppen und gemeinsame Sessions</p>
+          <p className="text-xs">Analysiere Level, Gruppen und gemeinsame Einheiten</p>
         </div>
       )}
 
@@ -316,7 +316,7 @@ export function PartnerFinderPanel({ showAdminBadge }: PartnerFinderPanelProps =
                             className="text-2xs px-1.5 py-0 bg-info-50 text-info-700 border-info-200"
                           >
                             <Calendar className="h-2.5 w-2.5 mr-1" />
-                            {match.commonSessions} Sessions
+                            {match.commonSessions} Einheiten
                           </Badge>
                         )}
                         {match.levelDiff === 0 && (
@@ -357,7 +357,7 @@ export function PartnerFinderPanel({ showAdminBadge }: PartnerFinderPanelProps =
                               <p className="text-lg font-semibold text-foreground tabular-nums">
                                 {match.commonSessions}
                               </p>
-                              <p className="text-2xs text-muted-foreground">Sessions</p>
+                              <p className="text-2xs text-muted-foreground">Einheiten</p>
                             </div>
                             <div className="p-2 bg-muted rounded-xl text-center">
                               <p className="text-lg font-semibold text-foreground tabular-nums">

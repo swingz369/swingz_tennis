@@ -228,7 +228,7 @@ function BookingsContent() {
   if (sessionsError) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-error-600">Fehler beim Laden der Sessions</div>
+        <div className="text-center py-12 text-error-600">Fehler beim Laden der Einheiten</div>
       </div>
     );
   }
@@ -256,7 +256,7 @@ function BookingsContent() {
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Sessions</p>
+                  <p className="text-sm font-medium text-muted-foreground">Einheiten</p>
                   <p className="text-3xl font-bold text-foreground dark:text-white">
                     <AnimatedCounter value={totalSessions} />
                   </p>
