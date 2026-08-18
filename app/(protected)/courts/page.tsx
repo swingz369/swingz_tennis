@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function CourtsRedirect() {
-  redirect('/bookings?tab=courts');
+  redirect('/scheduler');
 }

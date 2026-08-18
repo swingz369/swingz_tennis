@@ -166,7 +166,7 @@ export function memberSidebarSections(hidden: Hidden, includeMemberOnly: boolean
       label: 'Spielen',
       icon: Trophy,
       items: [
-        { name: 'Platz buchen', href: '/bookings' },
+        { name: 'Platzkalender', href: '/scheduler' },
         { name: 'Offene Spiele', href: '/matches' },
         // Nur ein Eintrag zur Spielpartner-Suche: der zweite stand ungegated davor und
         // hebelte damit das `partner_finder`-Flag aus.
@@ -190,11 +190,11 @@ export function memberSidebarSections(hidden: Hidden, includeMemberOnly: boolean
       label: 'Training',
       icon: GraduationCap,
       items: [
-        // Der eigene Trainingsplan war bisher nur über Cmd+K erreichbar —
-        // und ist die einzige Oberfläche, auf der man sich von einer Einheit
-        // abmelden kann. Steht deshalb vor dem allgemeinen Platzkalender.
-        { name: 'Mein Trainingsplan', href: '/training-schedule' },
-        { name: 'Platzkalender', href: '/scheduler' },
+        // Der eigene Trainingsplan ist die einzige Oberfläche, auf der man
+        // sich von einer Einheit abmelden kann. Seit der Zusammenlegung
+        // (PRODUKTIONSREIFE.md 4.1) liegt er im Tab „Mein Trainingsplan" von
+        // /bookings; der gemeinsame Platzkalender steht unter „Spielen".
+        { name: 'Mein Trainingsplan', href: '/bookings' },
         // Zeigt die eigene Anwesenheit des Mitglieds. War von keiner
         // Mitglieder-Oberfläche aus erreichbar — nur das Trainer-Dashboard
         // verlinkte sie, wo sie systematisch leer blieb.
@@ -361,7 +361,7 @@ export function mobileNavItems(
     case 'trainer':
       return [
         { name: 'Übersicht', href: '/trainer', icon: Home },
-        { name: 'Kalender', href: '/scheduler', icon: Calendar },
+        { name: 'Platzkalender', href: '/scheduler', icon: Calendar },
         { name: 'Verfügbarkeit', href: '/trainer/availability', icon: Clock },
         { name: 'Stunden', href: '/trainer/hours-logs', icon: ClipboardList },
         { name: 'Honorar', href: '/trainer/billing', icon: CreditCard },
@@ -369,8 +369,8 @@ export function mobileNavItems(
     default:
       return [
         { name: 'Start', href: '/member', icon: Home },
-        { name: 'Training', href: '/training-schedule', icon: ClipboardCheck },
-        { name: 'Buchen', href: '/bookings', icon: ClipboardList },
+        { name: 'Mein Trainingsplan', href: '/bookings', icon: ClipboardCheck },
+        { name: 'Platzkalender', href: '/scheduler', icon: ClipboardList },
         { name: 'Rechnungen', href: '/billing', icon: CreditCard },
       ];
   }

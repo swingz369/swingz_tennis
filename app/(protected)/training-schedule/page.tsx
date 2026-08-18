@@ -1,22 +1,8 @@
-import { MyBookings } from '@/components/bookings/my-bookings';
-import MyGroups from '@/components/bookings/my-groups';
+import { redirect } from 'next/navigation';
 
-// Eigener Trainingsplan des Mitglieds — bis hierher leitete die Seite auf den
-// Platzkalender um, sodass die Abmeldung von einer Trainingseinheit über keine
-// Mitglieder-Oberfläche erreichbar war.
-export default function MemberTrainingSchedulePage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight font-display text-foreground dark:text-white">
-          Mein Trainingsplan
-        </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Deine kommenden Trainingseinheiten und Platzbuchungen — hier kannst du dich auch abmelden.
-        </p>
-      </div>
-      <MyGroups />
-      <MyBookings />
-    </div>
-  );
+// Zusammengelegt (PRODUKTIONSREIFE.md 4.1): Gruppen und eigene Buchungen
+// stehen jetzt zusammen im Tab „Mein Trainingsplan" von /bookings. Zwei Seiten
+// mit denselben zwei Komponenten waren fuer ein Mitglied nicht unterscheidbar.
+export default function TrainingSchedulePage() {
+  redirect('/bookings?tab=my');
 }

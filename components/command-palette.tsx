@@ -158,7 +158,7 @@ export function CommandPalette({
     icon: React.ElementType;
     roles?: string[];
   }> = [
-    { label: 'Neue Buchung', href: '/bookings', icon: Calendar },
+    { label: 'Neue Buchung', href: '/scheduler', icon: Calendar },
     {
       label: 'Nachricht senden',
       href: '/messages',

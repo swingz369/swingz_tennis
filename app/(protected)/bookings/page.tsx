@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { useState, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   format,
   eachDayOfInterval,
@@ -33,7 +33,6 @@ import {
   Download,
   MessageSquare,
   Calendar as CalendarIcon,
-  MapPin,
   CalendarCheck,
   CheckCircle2,
   Timer,
@@ -54,7 +53,7 @@ import SessionWaitlistButton from '@/components/session-waitlist-button';
 import { MyBookings } from '@/components/bookings/my-bookings';
 import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 import { Card, CardContent } from '@/components/ui/card';
-import UnifiedCourtCalendar from '@/components/unified-court-calendar';
+import MyGroups from '@/components/bookings/my-groups';
 
 export default function BookingsPage() {
   return (
@@ -65,8 +64,9 @@ export default function BookingsPage() {
 }
 
 function BookingsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const initialTab = searchParams?.get('tab') || 'courts';
+  const initialTab = searchParams?.get('tab') || 'my';
 
   const [activeTab, setActiveTab] = useState(initialTab);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -84,13 +84,19 @@ function BookingsContent() {
     sessionTitle: '',
   });
 
-  // Update tab when URL param changes
+  // Der Platz-Kalender lebt seit der Zusammenlegung unter /scheduler
+  // (PRODUKTIONSREIFE.md 4.1). Alte ?tab=courts-Links leiten dorthin um,
+  // statt still auf einem anderen Tab zu landen.
   useEffect(() => {
     const tab = searchParams?.get('tab');
-    if (tab && (tab === 'bookings' || tab === 'courts' || tab === 'my')) {
+    if (tab === 'courts') {
+      router.replace('/scheduler');
+      return;
+    }
+    if (tab === 'bookings' || tab === 'my') {
       setActiveTab(tab);
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   const { data: clubData, error: clubError } = useUserClub();
   const { data: memberData } = useUserMember();
@@ -244,9 +250,9 @@ function BookingsContent() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Kalender & Reservierungen"
-        description="Platzverfügbarkeit, Training und Buchungen verwalten"
-        actions={[{ label: 'Neue Platzbuchung', href: '/dashboard/bookings/new' }]}
+        title="Mein Training"
+        description="Deine Gruppen, Trainingseinheiten und Platzbuchungen"
+        actions={[{ label: 'Neue Platzbuchung', href: '/scheduler' }]}
       />
 
       {/* ── Stat Cards ── */}
@@ -331,18 +337,14 @@ function BookingsContent() {
       {/* ── Tabs ── */}
       <ScrollReveal delay={300}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-xl grid-cols-3">
-            <TabsTrigger value="courts" className="flex items-center gap-2 min-w-0">
-              <MapPin className="h-4 w-4 shrink-0" />
-              <span className="truncate">Platz-Kalender</span>
+          <TabsList className="grid w-full max-w-xl grid-cols-2">
+            <TabsTrigger value="my" className="flex items-center gap-2 min-w-0">
+              <CalendarCheck className="h-4 w-4 shrink-0" />
+              <span className="truncate">Mein Trainingsplan</span>
             </TabsTrigger>
             <TabsTrigger value="bookings" className="flex items-center gap-2 min-w-0">
               <CalendarIcon className="h-4 w-4 shrink-0" />
               <span className="truncate">Trainerstunden</span>
-            </TabsTrigger>
-            <TabsTrigger value="my" className="flex items-center gap-2 min-w-0">
-              <CalendarCheck className="h-4 w-4 shrink-0" />
-              <span className="truncate">Meine Buchungen</span>
             </TabsTrigger>
           </TabsList>
 
@@ -556,12 +558,8 @@ function BookingsContent() {
             </div>
           </TabsContent>
 
-          {/* Courts Tab */}
-          <TabsContent value="courts" className="mt-6">
-            <UnifiedCourtCalendar />
-          </TabsContent>
-
-          <TabsContent value="my" className="mt-6">
+          <TabsContent value="my" className="mt-6 space-y-6">
+            <MyGroups />
             <MyBookings />
           </TabsContent>
         </Tabs>

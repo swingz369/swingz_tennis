@@ -220,7 +220,7 @@ export default async function MemberPage() {
             label: 'Training',
             value: upcomingTrainingCount ?? 0,
             sub: 'kommende Sessions',
-            href: '/training-schedule',
+            href: '/bookings',
           },
         ]}
       />
@@ -229,8 +229,8 @@ export default async function MemberPage() {
       <QuickActions
         label="Schnellzugriff"
         actions={[
-          { label: 'Buchen', href: '/bookings', icon: Calendar },
-          { label: 'Training', href: '/training-schedule', icon: BookOpen },
+          { label: 'Buchen', href: '/scheduler', icon: Calendar },
+          { label: 'Training', href: '/bookings', icon: BookOpen },
           {
             label: 'Trainer',
             href: '/member/trainer-booking',
