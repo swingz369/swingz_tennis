@@ -12,6 +12,10 @@ import type { ScheduleSlot } from '@/lib/season-planning/types';
 let seasonId: string | null = null;
 
 beforeAll(async () => {
+  // Ohne DATABASE_URL gibt es gar keine DB (so laeuft CI) — dann nicht erst
+  // fragen. seasonId bleibt null, und die Tests unten ueberspringen sich selbst,
+  // genau wie bei einer leeren Sandbox-Saison.
+  if (!process.env.DATABASE_URL) return;
   const [row] = await db
     .select({ id: seasons.id })
     .from(seasons)

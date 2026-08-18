@@ -27,7 +27,15 @@ export function hasIntegrationEnv(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
   if (!url || !key) return false;
-  return !isProductionSupabase(url);
+  if (isProductionSupabase(url)) return false;
+  // In CI gibt es keine Datenbank. Die Platzhalterwerte in
+  // .github/workflows/ci.yml sind nur da, damit Module wie `lib/billing-engine.ts`
+  // beim Import nicht abbrechen — sie zeigen auf nichts. Ohne diesen Riegel
+  // hielte der Guard sie fuer eine brauchbare Instanz und liesse die DB-Tests
+  // dagegen anlaufen. `RUN_DB_INTEGRATION=true` setzt man, wenn in CI wirklich
+  // eine Supabase-Instanz bereitsteht.
+  if (process.env.CI === 'true' && process.env.RUN_DB_INTEGRATION !== 'true') return false;
+  return true;
 }
 
 /**

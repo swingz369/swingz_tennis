@@ -29,6 +29,20 @@ jobs:
     timeout-minutes: 15
     env:
       NEXT_TELEMETRY_DISABLED: '1'
+      # Platzhalter, keine Zugangsdaten. src/__tests__/setup.ts laedt lokal
+      # .env.local; in CI gibt es die nicht, und Module wie lib/billing-engine.ts
+      # bauen beim Import einen Supabase-Service-Client, der ohne diese Variablen
+      # sofort wirft — die Testdatei bricht dann schon vor dem ersten Test ab.
+      # Die Werte zeigen bewusst ins Leere: die Unit-Tests mocken den Client, und
+      # hasIntegrationEnv() haelt die echten DB-Tests ueber CI=true zurueck
+      # (src/__tests__/helpers/integration.ts).
+      NEXT_PUBLIC_SUPABASE_URL: 'http://localhost:54321'
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'ci-platzhalter-anon-key'
+      SUPABASE_SERVICE_ROLE_KEY: 'ci-platzhalter-service-role-key'
+      # DATABASE_URL wird hier bewusst NICHT gesetzt. Ein Platzhalter auf
+      # localhost sieht fuer die DB-Tests wie eine echte lokale Instanz aus
+      # (cross-tenant-isolation.test.ts prueft genau darauf) und laesst sie
+      # gegen ins Leere laufen. Fehlt die Variable, ueberspringen sie sich.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
