@@ -4,8 +4,9 @@ import { FileText, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { apiFetch } from '@/lib/api-fetch';
+import { fetchJson } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
+import { ListState } from '@/components/ui/list-state';
 
 type Doc = {
   id: string;
@@ -19,11 +20,13 @@ type Doc = {
 export default function MemberDocumentsPage() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
+  // Ein 403 darf nicht als "keine Dokumente" durchgehen (PRODUKTIONSREIFE.md 4.5).
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    apiFetch('/api/admin/documents')
-      .then((r) => r.json())
+    fetchJson<{ documents?: Doc[] }>('/api/admin/documents')
       .then((d) => setDocs(d.documents ?? []))
+      .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
@@ -41,12 +44,14 @@ export default function MemberDocumentsPage() {
           <CardTitle className="text-sm font-semibold">Alle Dokumente</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Lade...</p>
-          ) : docs.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              Keine Dokumente vorhanden.
-            </p>
+          {loading || error || docs.length === 0 ? (
+            <ListState
+              loading={loading}
+              error={error}
+              empty={docs.length === 0}
+              emptyTitle="Keine Dokumente vorhanden"
+              emptyHint="Dein Verein hat hier noch nichts hinterlegt. Frag den Vorstand, wenn du ein Dokument erwartest."
+            />
           ) : (
             <div className="divide-y divide-border">
               {docs.map((doc) => (

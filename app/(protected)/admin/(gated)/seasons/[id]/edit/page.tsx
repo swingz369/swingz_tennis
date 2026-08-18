@@ -178,7 +178,7 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
       <form onSubmit={handleSubmit}>
         <Card>
           <CardHeader>
-            <CardTitle>Saison Details</CardTitle>
+            <CardTitle>Saison-Details</CardTitle>
             <CardDescription>Grundlegende Informationen zur Saison</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

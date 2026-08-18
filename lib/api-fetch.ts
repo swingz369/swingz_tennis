@@ -37,3 +37,28 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
     headers,
   });
 }
+
+/**
+ * Wie `apiFetch`, wirft aber bei einer Fehlerantwort statt sie als Daten
+ * zurückzugeben.
+ *
+ * Grund (PRODUKTIONSREIFE.md 4.5): `apiFetch(...).then(r => r.json())` liefert
+ * bei 403 oder 500 ein `{ error: … }`, und `d.items ?? []` macht daraus eine
+ * leere Liste. Der Nutzer sieht dann „keine Einträge" — eine Aussage über
+ * seinen Verein, die gar nicht geprüft wurde. Ein Fehler, der wie ein
+ * Ergebnis aussieht, ist schlimmer als ein Fehler.
+ */
+export async function fetchJson<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const res = await apiFetch(url, options);
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: unknown };
+    const message =
+      typeof body.error === 'string'
+        ? body.error
+        : typeof (body.error as { message?: string })?.message === 'string'
+          ? (body.error as { message: string }).message
+          : `Anfrage fehlgeschlagen (${res.status})`;
+    throw new Error(message);
+  }
+  return (await res.json()) as T;
+}

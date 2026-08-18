@@ -240,7 +240,7 @@ export function FeedbackModerationPanel({ clubId: _clubId }: FeedbackModerationP
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search feedback comments..."
+                placeholder="Kommentare durchsuchen …"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -253,10 +253,10 @@ export function FeedbackModerationPanel({ clubId: _clubId }: FeedbackModerationP
                 onValueChange={(v) => setFilterVisible(v as typeof filterVisible)}
               >
                 <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="All Status" />
+                  <SelectValue placeholder="Alle Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="all">Alle Status</SelectItem>
                   <SelectItem value="visible">Visible Only</SelectItem>
                   <SelectItem value="hidden">Hidden Only</SelectItem>
                 </SelectContent>

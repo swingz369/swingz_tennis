@@ -16,8 +16,9 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { apiFetch } from '@/lib/api-fetch';
+import { apiFetch, fetchJson } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
+import { ListState } from '@/components/ui/list-state';
 
 type Meeting = {
   id: string;
@@ -30,14 +31,18 @@ type Meeting = {
 
 export function MeetingsClient() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [loading, setLoading] = useState(true);
+  // Ein 403 darf nicht als "keine Versammlungen" durchgehen (PRODUKTIONSREIFE.md 4.5).
+  const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ title: '', meeting_date: '', location: '', description: '' });
 
   useEffect(() => {
-    apiFetch('/api/admin/meetings')
-      .then((r) => r.json())
-      .then((d) => setMeetings(d.meetings ?? []));
+    fetchJson<{ meetings?: Meeting[] }>('/api/admin/meetings')
+      .then((d) => setMeetings(d.meetings ?? []))
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
   const save = async () => {
@@ -87,10 +92,16 @@ export function MeetingsClient() {
       />
 
       <div className="grid gap-3">
-        {meetings.length === 0 && (
+        {(loading || error || meetings.length === 0) && (
           <Card>
-            <CardContent className="p-8 text-center text-sm text-muted-foreground">
-              Noch keine Versammlungen geplant.
+            <CardContent className="p-2">
+              <ListState
+                loading={loading}
+                error={error}
+                empty={meetings.length === 0}
+                emptyTitle="Noch keine Versammlungen geplant"
+                emptyHint="Mitgliederversammlungen und Vorstandssitzungen legst du oben rechts an."
+              />
             </CardContent>
           </Card>
         )}

@@ -80,7 +80,7 @@ export default function ClubsAdminPage() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>Wird geladen …</div>;
 
   return (
     <div className="space-y-6">

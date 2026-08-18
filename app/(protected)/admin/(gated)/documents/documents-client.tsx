@@ -15,7 +15,8 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { apiFetch } from '@/lib/api-fetch';
+import { apiFetch, fetchJson } from '@/lib/api-fetch';
+import { ListState } from '@/components/ui/list-state';
 
 const CATEGORIES = ['satzung', 'protokoll', 'beschluss', 'lizenz', 'vertrag', 'sonstige'];
 
@@ -32,15 +33,20 @@ type Doc = {
 export function DocumentsClient() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
+  // Ein 403 darf nicht als "keine Dokumente" durchgehen (PRODUKTIONSREIFE.md 4.5).
+  const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [name, setName] = useState('');
   const [category, setCategory] = useState('sonstige');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = () =>
-    apiFetch('/api/admin/documents')
-      .then((r) => r.json())
-      .then((d) => setDocs(d.documents ?? []))
+    fetchJson<{ documents?: Doc[] }>('/api/admin/documents')
+      .then((d) => {
+        setDocs(d.documents ?? []);
+        setError(null);
+      })
+      .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   useEffect(() => {
     load();
@@ -145,12 +151,14 @@ export function DocumentsClient() {
           <CardTitle className="text-sm font-semibold">Alle Dokumente ({docs.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Lade...</p>
-          ) : docs.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              Noch keine Dokumente hochgeladen.
-            </p>
+          {loading || error || docs.length === 0 ? (
+            <ListState
+              loading={loading}
+              error={error}
+              empty={docs.length === 0}
+              emptyTitle="Noch keine Dokumente hochgeladen"
+              emptyHint="Satzung, Beitragsordnung, Platzordnung — alles was Mitglieder nachlesen sollen, kommt hier hoch."
+            />
           ) : (
             <div className="divide-y divide-border">
               {docs.map((doc) => (

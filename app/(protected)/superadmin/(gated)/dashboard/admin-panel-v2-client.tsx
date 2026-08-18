@@ -240,7 +240,7 @@ export function AdminPanelV2Client({
           </TabsTrigger>
           <TabsTrigger value="members" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Members</span>
+            <span className="hidden sm:inline">Mitglieder</span>
           </TabsTrigger>
           <TabsTrigger value="sessions" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />

@@ -244,7 +244,7 @@ export function PerfHistoryClient() {
                 <th className="py-2 pr-3 font-medium">Zeitpunkt</th>
                 <th className="py-2 pr-3 font-medium">Label</th>
                 <th className="py-2 pr-3 font-medium">Quelle</th>
-                <th className="py-2 pr-3 font-medium text-right">Members</th>
+                <th className="py-2 pr-3 font-medium text-right">Mitglieder</th>
                 <th className="py-2 pr-3 font-medium text-right">mean (ms)</th>
                 <th className="py-2 pr-3 font-medium text-right">min</th>
                 <th className="py-2 pr-3 font-medium text-right">max</th>

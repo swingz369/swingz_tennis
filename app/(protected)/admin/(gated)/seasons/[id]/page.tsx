@@ -899,7 +899,7 @@ function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: s
           <Card>
             <CardHeader>
               <CardTitle>Trainingsplan</CardTitle>
-              <CardDescription>Geplante Training-Sessions für diese Season</CardDescription>
+              <CardDescription>Geplante Trainingseinheiten für diese Saison</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <Button onClick={() => router.push('/scheduler')}>

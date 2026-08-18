@@ -131,7 +131,7 @@ export default function PreferenceFormPage({ params }: PreferenceFormPageProps) 
         </Button>
         <PageHeader
           title="Verfügbarkeit angeben"
-          description="Geben Sie Ihre wöchentliche Verfügbarkeit für diese Season an"
+          description="Geben Sie Ihre wöchentliche Verfügbarkeit für diese Saison an"
         />
       </div>
 

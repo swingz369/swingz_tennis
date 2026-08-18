@@ -23,7 +23,8 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { apiFetch } from '@/lib/api-fetch';
+import { apiFetch, fetchJson } from '@/lib/api-fetch';
+import { ListState } from '@/components/ui/list-state';
 
 type Item = {
   id: string;
@@ -44,6 +45,9 @@ const statusColor: Record<string, string> = {
 
 export function MaintenanceTab() {
   const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+  // Ein 403 darf nicht als "keine Wartung" durchgehen (PRODUKTIONSREIFE.md 4.5).
+  const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -55,9 +59,10 @@ export function MaintenanceTab() {
   });
 
   useEffect(() => {
-    apiFetch('/api/admin/maintenance')
-      .then((r) => r.json())
-      .then((d) => setItems(d.items ?? []));
+    fetchJson<{ items?: Item[] }>('/api/admin/maintenance')
+      .then((d) => setItems(d.items ?? []))
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
   const save = async () => {
@@ -115,10 +120,16 @@ export function MaintenanceTab() {
       </div>
 
       <div className="grid gap-3">
-        {items.length === 0 && (
+        {(loading || error || items.length === 0) && (
           <Card>
-            <CardContent className="p-8 text-center text-sm text-muted-foreground">
-              Keine Wartungseinträge vorhanden.
+            <CardContent className="p-2">
+              <ListState
+                loading={loading}
+                error={error}
+                empty={items.length === 0}
+                emptyTitle="Keine Wartungseinträge vorhanden"
+                emptyHint="Platzpflege, Netzwechsel, Winterdienst — hier eintragen, damit die Plätze in der Zeit nicht buchbar sind."
+              />
             </CardContent>
           </Card>
         )}
