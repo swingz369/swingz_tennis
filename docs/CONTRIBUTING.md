@@ -346,6 +346,30 @@ Root cause: nothing **prevented** an AI-session from setting `git config
 user.email` to a placeholder value. Root fix is procedural: enforce the
 correct identity at the commit boundary + maintain a fallback mapping.
 
+### Warum die kanonische E-Mail am 18.08.2026 gewechselt ist
+
+Rule 9 entstand aus einem Vercel-Fehler ueber eine **ungueltige** Adresse
+(`ci-validate@swingz.local`, "Ensure your git email matches your GitHub account").
+Am 18.08.2026 trat ein **anderer** Vercel-Fehler auf:
+
+> "The deployment was blocked because the commit author did not have contributing
+> access to the project on Vercel. The Hobby Plan does not support collaboration
+> for private repositories."
+
+Das ist kein Formatproblem, sondern eine Zuordnung: Vercel erkennt den Commit-Autor
+als jemand anderen als den Kontoinhaber, und der Hobby-Plan laesst bei privaten
+Repos keine weiteren Mitglieder zu. Das Vercel-Konto laeuft auf
+`mike.swinger@gmx.de`; die kanonische Adresse stand auf `bartmz@gmx.de`. Folge:
+jeder Git-Deploy seit dem 16.08.2026 auf `BLOCKED`, live ging nur, was per
+`vercel --prod` von Hand deployt wurde (Beleg: docs/PRODUKTIONSREIFE.md).
+
+Die kanonische Adresse ist deshalb `mike.swinger@gmx.de`. Der Anzeigename bleibt
+`Bart Mz` — Vercel prueft die Adresse, nicht den Namen.
+
+**Voraussetzung, die ausserhalb dieses Repos liegt:** `mike.swinger@gmx.de` muss
+im GitHub-Konto `swingz369` als verifizierte Adresse hinterlegt sein. Sonst
+ersetzt der erste Vercel-Fehler den zweiten.
+
 ### Canonical maintainer-identity (single source-of-truth)
 
 The maintainer's expected name + email live in **`scripts/_maintainer_identity.sh`**
@@ -375,9 +399,9 @@ If the canonical identity ever changes, follow this protocol:
 
 | Layer                         | What                                          | Where                                 | Purpose                                                                                                            |
 | ----------------------------- | --------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| 1. Persistent local identity  | `git config user.email "bartmz@gmx.de"`       | repo-local (run once after clone)     | All future commits from this machine use the right email                                                           |
+| 1. Persistent local identity  | `git config user.email "mike.swinger@gmx.de"` | repo-local (run once after clone)     | All future commits from this machine use the right email                                                           |
 | 2. Husky pre-commit guard     | Step 0 of `.husky/pre-commit`                 | this repo, runs at every commit       | Rejects commits with wrong/missing email BEFORE they enter history                                                 |
-| 3. `.mailmap` display-mapping | root-level, versioned                         | Git's built-in display-only mechanism | Older wrong-identity commits still display as `Bart Mz <bartmz@gmx.de>` in `git log` / GitHub UI                   |
+| 3. `.mailmap` display-mapping | root-level, versioned                         | Git's built-in display-only mechanism | Older wrong-identity commits still display as `Bart Mz <mike.swinger@gmx.de>` in `git log` / GitHub UI             |
 | 4. One-shot recovery script   | `scripts/_rewrite_sprint45_authors.py --full` | idempotent helper used once           | If wrong-identity commits ever slip through again, atomic 12-commit rewrite + force-push with backup-tag preserved |
 
 ### What you must do if you're a new contributor / AI-session
