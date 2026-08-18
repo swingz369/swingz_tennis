@@ -464,6 +464,50 @@ zahlenden Kunden noch juristisch gegengelesen werden.
 gegen die Datenbank geprüft stimmen sie nicht mehr. Beide sind jetzt durch Tests abgesichert,
 damit das so bleibt.
 
+### Korrektur zu Phase 0: die Ursache war eine andere
+
+Der Merge nach `main` ist am 18.08.2026 erfolgt (Fast-Forward, 99 Commits, `7cc25c0c`).
+**Produktion wurde dadurch trotzdem nicht aktuell.** Der Grund:
+
+> Vercel baut aus Git gar nichts. Der Deploy für `main` steht auf `BLOCKED`, ebenso jeder
+> Branch-Deploy seit dem 16.08.2026. Vercels `errorLink` verweist auf
+> _troubleshoot-project-collaboration#team-configuration_; das Projekt meldet zusätzlich
+> `"live": false`.
+
+Der Git-Autor ist `bartmz@gmx.de` / GitHub `swingz369`, das Vercel-Konto lautet
+`bartmz-3856` / `mike.swinger@gmx.de`. Der letzte erfolgreiche Produktions-Deploy
+(16.08.2026) kam **nicht aus Git**, sondern aus einem direkten CLI-Deploy.
+
+**Damit war der „wichtigste Befund" dieses Dokuments nur das Symptom.** Die 50 Commits vor
+`main` waren die Folge, nicht die Ursache — auch ein früherer Merge wäre nie live gegangen.
+Wer den Auslieferungsweg freimachen will, muss zuerst die Verknüpfung zwischen GitHub-Konto
+und Vercel-Team reparieren; alles andere behandelt eine Wirkung.
+
+Nachprüfbar über die Vercel-API: `list_deployments` zeigt für jeden Git-Deploy
+`"state": "BLOCKED"`, für die CLI-Deploys `"state": "READY"`.
+
+### Migrationen sind in Produktion angewendet (18.08.2026)
+
+`MIGRATE_ENV=prod npx tsx scripts/migrate.ts up` — drei Dateien
+(`waitlist_position_shift`, `member_number`, `subscription_paywall`), Trockenlauf vorher
+sauber. Verifiziert: 166 Mitgliedschaften, alle mit Mitgliedsnummer, keine Doppelvergabe.
+
+### Vor dem Deploy zu klären: Bestandskonten
+
+In Produktion stehen **alle 195 Nutzer auf `subscription_tier = 'free'`** — niemand hatte je
+einen bezahlten Tarif, weil der CHECK-Constraint keinen zuliess (s. o.). Sobald die
+Bezahlschranke live geht, sperrt sie damit 8 Konten aus (6 Admins, 4 Superadmins,
+überlappend). Alles Testzugänge, kein zahlender Kunde; der Owner behält Zugriff.
+
+Entweder man setzt diese Konten vorher auf einen bezahlten Tarif, oder man nimmt die Sperre
+bewusst in Kauf.
+
+### Nebenbefund: Testrückstände in Produktion
+
+Produktion enthält 26 Vereine, davon **19 Rückstände aus Testläufen** (`RLS Test Club`,
+`Billing Test Club <timestamp>`) — genau das Muster, das `AGENTS.md` § Testdaten beschreibt
+und das lokal am 13.08.2026 bereinigt wurde. In Produktion steht es noch.
+
 ### Offen geblieben — und warum
 
 | ID       | Warum nicht erledigt                                                                                   |
