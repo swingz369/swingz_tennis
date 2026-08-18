@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 import { BillingEngine } from '@/lib/billing-engine';
 import type { CreateInvoice, CreateSepaMandate } from '@/lib/types/billing';
-import { hasIntegrationEnv } from '../helpers/integration';
+import { deleteTestClub, hasIntegrationEnv } from '../helpers/integration';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -93,7 +93,7 @@ describeIntegration('Payment Flow Integration Tests', () => {
       await supabase.from('invoices').delete().eq('club_id', testClubId);
       await supabase.from('sepa_mandates').delete().eq('club_id', testClubId);
       await supabase.from('user_club_memberships').delete().eq('club_id', testClubId);
-      await supabase.from('clubs').delete().eq('id', testClubId);
+      await deleteTestClub(supabase, testClubId);
     }
 
     if (testMemberId) {

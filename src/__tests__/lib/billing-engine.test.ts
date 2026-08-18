@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 import { BillingEngine } from '@/lib/billing-engine';
 import type { CreateInvoice } from '@/lib/types/billing';
-import { hasIntegrationEnv } from '../helpers/integration';
+import { deleteTestClub, hasIntegrationEnv } from '../helpers/integration';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -51,6 +51,11 @@ describeIntegration('BillingEngine (Integration Tests - Requires Database)', () 
     if (club && !clubError) {
       testClubId = (club as { id: string }).id;
     }
+  });
+
+  afterAll(async () => {
+    await deleteTestClub(supabase, testClubId);
+    if (TEST_MEMBER) await supabase.from('users').delete().eq('id', TEST_MEMBER);
   });
 
   /** Helper to create a test invoice with member_id=null (avoids FK to auth.users) */

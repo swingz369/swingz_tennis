@@ -10,7 +10,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
-import { hasIntegrationEnv } from '../helpers/integration';
+import { deleteTestClub, hasIntegrationEnv } from '../helpers/integration';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -72,7 +72,8 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
 
   afterAll(async () => {
     // Cleanup
-    await serviceRoleClient.from('clubs').delete().eq('id', testClubId);
+    await serviceRoleClient.from('trainers').delete().eq('id', testTrainerId);
+    await deleteTestClub(serviceRoleClient, testClubId);
   });
 
   describe('Helper Functions', () => {

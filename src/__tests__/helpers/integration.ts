@@ -29,3 +29,30 @@ export function hasIntegrationEnv(): boolean {
   if (!url || !key) return false;
   return !isProductionSupabase(url);
 }
+
+/**
+ * Löscht einen Testverein vollständig. Zwei Fallstricke, die dazu geführt haben,
+ * dass bis 18.08.2026 59 Leichen ("RLS Test Club" × 20 usw.) in der lokalen DB
+ * lagen, obwohl zwei der drei Tests ein Cleanup hatten:
+ *
+ *  1. `audit_logs`, `hours_logs` und `bookings` haben KEIN `ON DELETE CASCADE`
+ *     auf `clubs` — sie müssen von Hand weg.
+ *  2. Die Trigger `audit_{invoices,payments,sepa_mandates}` schreiben WÄHREND
+ *     des Cascade-Deletes neue `audit_logs`-Zeilen. Deshalb erst die
+ *     auditierten Tabellen leeren, dann `audit_logs`, dann den Verein.
+ *
+ * Fehler werden geworfen, nicht geschluckt — das Supabase-SDK meldet sie nur im
+ * Rückgabewert, und genau dieses stille Scheitern war die Ursache.
+ */
+export async function deleteTestClub(supabase: any, clubId: string | undefined): Promise<void> {
+  if (!clubId) return;
+  // Auditierte Tabellen zuerst — ihre Trigger feuern hier, nicht später.
+  for (const table of ['invoices', 'sepa_mandates']) {
+    await supabase.from(table).delete().eq('club_id', clubId);
+  }
+  for (const table of ['audit_logs', 'hours_logs', 'bookings']) {
+    await supabase.from(table).delete().eq('club_id', clubId);
+  }
+  const { error } = await supabase.from('clubs').delete().eq('id', clubId);
+  if (error) throw new Error(`Testverein ${clubId} nicht gelöscht: ${error.message}`);
+}
