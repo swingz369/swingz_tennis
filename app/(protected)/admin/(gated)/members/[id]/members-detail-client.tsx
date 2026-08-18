@@ -1,5 +1,6 @@
 'use client';
 import { extractErrorMessage } from '@/lib/typed-helpers';
+import { formatMemberNumber } from '@/lib/format';
 
 import { useState, useEffect, useCallback } from 'react';
 import { CenteredModal } from '@/components/ui/centered-modal';
@@ -490,6 +491,9 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                 </h2>
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground truncate">
                   {member.email}
+                </p>
+                <p className="text-xs text-muted-foreground font-mono tabular-nums">
+                  Mitgliedsnummer {formatMemberNumber(member.member_number)}
                 </p>
               </div>
             </div>

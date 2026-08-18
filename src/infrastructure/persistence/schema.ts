@@ -36,6 +36,8 @@ export const clubs = pgTable(
     timezone: varchar('timezone', { length: 50 }).default('Europe/Berlin'),
     default_session_duration_minutes: integer('default_session_duration_minutes').default(60),
     max_members: integer('max_members').notNull().default(500),
+    // Nächste freie Mitgliedsnummer dieses Vereins — nur vom Trigger geschrieben.
+    next_member_number: integer('next_member_number').notNull().default(1),
     opening_hours: jsonb('opening_hours')
       .$type<{
         monday: { open: string; close: string };
@@ -401,6 +403,10 @@ export const userClubMemberships = pgTable(
     deactivated_at: timestamp('deactivated_at'),
     deactivated_by: uuid('deactivated_by'),
     include_in_planning: boolean('include_in_planning').notNull().default(true),
+    // Vereinsweite Mitgliedsnummer. Vergibt der DB-Trigger `assign_member_number()`
+    // beim INSERT (supabase/migrations/20260818120000_member_number.sql) — nie aus
+    // der Anwendung setzen, sonst reißt die Lücke im Zähler auf.
+    member_number: integer('member_number'),
     // A2 — Funktionale Vereinsämter (Host-Flag-System, komplement\u00e4r zur Rolle).
     // Keys + Typen definiert in `lib/auth-common.ts` (`OfficeRole` / `OfficeFlagMap`).
     // Bestehende Migration `20260625_office_flags.sql` hat die JSONB-Spalte bereits angelegt.

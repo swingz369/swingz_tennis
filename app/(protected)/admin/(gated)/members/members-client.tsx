@@ -1,5 +1,6 @@
 'use client';
 import { extractErrorMessage } from '@/lib/typed-helpers';
+import { formatMemberNumber } from '@/lib/format';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -37,6 +38,7 @@ import type { Member } from './member.types';
 import type { PaginationMeta } from '@/lib/pagination';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import { apiFetch } from '@/lib/api-fetch';
+import { createLogger } from '@/lib/logger';
 import { PageHeader } from '@/components/ui/page-header';
 import { NoMembersBrandedEmptyState, NoSearchResultsEmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -53,6 +55,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+
+const log = createLogger('members-client');
 
 interface MembersClientProps {
   initialMembers: Member[];
@@ -102,7 +106,16 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
       .then((res) => res.json())
       .then((data) => setApprovalCount(data?.count ?? 0))
       .catch((err) => {
-        console.error('Anzahl offener Beitrittsanfragen konnte nicht geladen werden', err);
+        // Der Abbruch beim Unmount ist der Normalfall, kein Fehler: React
+        // führt die Cleanup-Funktion bei jedem Verlassen der Seite (und im
+        // Strict Mode direkt nach dem ersten Lauf) aus. Das landete bisher als
+        // `AbortError` in der Konsole und im Dev-Overlay — gemeldet wurde ein
+        // Fehler, passiert ist nichts.
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        log.error(
+          'Anzahl offener Beitrittsanfragen konnte nicht geladen werden',
+          err instanceof Error ? err : undefined
+        );
       });
     return () => controller.abort();
   }, []);
@@ -350,7 +363,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Suche nach Name oder E-Mail..."
+                placeholder="Suche nach Name, E-Mail oder Nr...."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -457,6 +470,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                     >
                       Planung
                     </TableHead>
+                    <TableHead className="hidden sm:table-cell">Nr.</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>E-Mail</TableHead>
                     <TableHead className="hidden lg:table-cell">Telefon</TableHead>
@@ -468,7 +482,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                 <TableBody>
                   {filteredMembers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8}>
+                      <TableCell colSpan={9}>
                         {hasActiveFilters ? (
                           <NoSearchResultsEmptyState searchTerm={searchQuery || undefined} />
                         ) : (
@@ -508,6 +522,9 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                           ) : (
                             <span className="text-xs text-muted-foreground/50">—</span>
                           )}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell font-mono text-xs text-muted-foreground tabular-nums">
+                          {formatMemberNumber(member.member_number)}
                         </TableCell>
                         <TableCell className="whitespace-nowrap">
                           <span className="font-medium text-foreground dark:text-white">

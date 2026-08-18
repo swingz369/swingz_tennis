@@ -179,6 +179,12 @@ export function formatNumber(value: number | null | undefined): string {
   return NUMBER_FORMATTER.format(value);
 }
 
+/** Vereinsweite Mitgliedsnummer, vierstellig aufgefüllt (42 → "0042"). */
+export function formatMemberNumber(value: number | null | undefined): string {
+  if (value == null) return '—';
+  return String(value).padStart(4, '0');
+}
+
 /** Format a relative time string (e.g., "vor 5 Min.", "vor 2 Std.") */
 export function formatRelativeTime(iso: string | Date | null | undefined): string {
   if (!iso) return '—';

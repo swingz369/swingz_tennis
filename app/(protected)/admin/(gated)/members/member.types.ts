@@ -9,6 +9,8 @@ export interface Member {
   honorary_since?: string | null;
   include_in_planning: boolean;
   joined_at: string;
+  /** Vereinsweite Mitgliedsnummer; null nur bei Altbestand vor der Migration. */
+  member_number?: number | null;
   // Expanded fields
   phone?: string | null;
   address?: string | null;

@@ -31,7 +31,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
   // Fetch membership data (include_in_planning not in generated types, use cast)
   const { data: memberData } = await (supabase.from('user_club_memberships') as any)
     .select(
-      'id, user_id, role, joined_at, is_active, is_honorary, honorary_since, include_in_planning'
+      'id, user_id, role, joined_at, is_active, is_honorary, honorary_since, include_in_planning, member_number'
     )
     .eq('id', id)
     .single();
@@ -74,6 +74,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     honorary_since: memberData.honorary_since ?? null,
     include_in_planning: memberData.include_in_planning ?? true,
     joined_at: memberData.joined_at,
+    member_number: memberData.member_number ?? null,
     phone: userData?.phone || null,
     address: userData?.address || null,
     city: userData?.city || null,

@@ -21,7 +21,7 @@ export default async function MembersPage({
   const excludedRoles = isSuperadmin ? ['trainer'] : ['trainer', 'superadmin'];
   let query = (supabase.from('user_club_memberships') as any)
     .select(
-      'id, user_id, role, is_active, is_honorary, honorary_since, joined_at, include_in_planning'
+      'id, user_id, role, is_active, is_honorary, honorary_since, joined_at, include_in_planning, member_number'
     )
     .eq('club_id', clubId)
     .not('role', 'in', `(${excludedRoles.join(',')})`);
@@ -33,7 +33,13 @@ export default async function MembersPage({
     .not('role', 'in', `(${excludedRoles.join(',')})`);
 
   // Apply same search filter to both data + count queries
-  if (search) {
+  if (search && /^\d+$/.test(search.trim())) {
+    // Reine Ziffern = Mitgliedsnummer. Führende Nullen sind Anzeigeformat
+    // (formatMemberNumber), gespeichert ist die blanke Zahl — "0042" muss finden.
+    const memberNumber = Number(search.trim());
+    query = query.eq('member_number', memberNumber);
+    countQuery = countQuery.eq('member_number', memberNumber);
+  } else if (search) {
     const { data: matchingUsers } = await supabase
       .from('users')
       .select('id')
@@ -123,6 +129,7 @@ export default async function MembersPage({
       honorary_since: m.honorary_since ?? null,
       include_in_planning: m.include_in_planning ?? true,
       joined_at: m.joined_at,
+      member_number: m.member_number ?? null,
     };
   });
 
