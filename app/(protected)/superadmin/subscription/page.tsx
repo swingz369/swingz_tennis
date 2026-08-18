@@ -5,7 +5,7 @@ import { PLANS, recommendSchoolPlan, SCHOOL_THRESHOLD, type PlanKey } from '@/li
 import {
   PlanCards,
   SubscriptionToasts,
-} from '@/app/(protected)/admin/(gated)/subscription/subscribe-button';
+} from '@/app/(protected)/admin/subscription/subscribe-button';
 import { Building2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 

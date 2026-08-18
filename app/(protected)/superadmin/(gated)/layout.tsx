@@ -1,7 +1,10 @@
 import { redirect } from 'next/navigation';
 import { requireAuth } from '@/lib/auth';
-import { isSubscriptionPastDue } from '@/lib/subscription-gate';
-import { SubscriptionDunningBlock } from '@/components/billing/subscription-dunning-block';
+import { getSubscriptionState } from '@/lib/subscription-gate';
+import {
+  SubscriptionDunningBlock,
+  SubscriptionRequiredBlock,
+} from '@/components/billing/subscription-dunning-block';
 
 /**
  * Superadmin "gated" route group — everything except /superadmin/onboarding.
@@ -26,8 +29,16 @@ export default async function SuperadminGatedLayout({ children }: { children: Re
   // Previously only the admin layout had this check — the school_s/school_l
   // plans (79/99 €) are billed to the superadmin's own account, so this
   // layout needs the identical gate (see lib/subscription-gate.ts).
-  if (await isSubscriptionPastDue(supabase, user.id)) {
+  const subscription = await getSubscriptionState(supabase, user.id);
+  if (subscription === 'past_due') {
     return <SubscriptionDunningBlock />;
+  }
+
+  // Pflicht-Abo, identisch zum Admin-Layout (PRODUKTIONSREIFE.md 3.1).
+  // Der Superadmin hat das Onboarding an dieser Stelle bereits hinter sich —
+  // der Redirect oben stellt das sicher.
+  if (subscription === 'none') {
+    return <SubscriptionRequiredBlock href="/superadmin/subscription" />;
   }
 
   return <>{children}</>;

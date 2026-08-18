@@ -22,6 +22,7 @@ import {
   Edit,
   Award,
   Trash2,
+  Download,
   Loader2,
   CheckCircle,
   XCircle,
@@ -795,8 +796,43 @@ export default function MemberProfile() {
         )}
       </div>
 
+      {/* ── Deine Daten ──────────────────────────────────────────────────── */}
+      <DataExportSection />
+
       {/* ── Gefahrenzone ─────────────────────────────────────────────────── */}
       <DeleteAccountSection />
+    </div>
+  );
+}
+
+/**
+ * Selbstauskunft nach Art. 15 DSGVO. Bewusst ein normaler Link statt eines
+ * fetch-Downloads: die Route authentifiziert über das Session-Cookie, also
+ * reicht die Navigation — und der Browser übernimmt das Speichern.
+ */
+function DataExportSection() {
+  return (
+    <div className="mt-8">
+      <div className="border rounded-xl overflow-hidden">
+        <div className="px-5 py-4 bg-muted/40 border-b">
+          <h3 className="text-sm font-semibold">Deine Daten</h3>
+        </div>
+        <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium">Datenauskunft herunterladen</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Du erhältst alle personenbezogenen Daten, die dein Verein zu dir gespeichert hat, als
+              JSON-Datei (Auskunft nach Art. 15 DSGVO).
+            </p>
+          </div>
+          <Button asChild variant="outline" size="sm" className="shrink-0 gap-2">
+            <a href="/api/user/export" download>
+              <Download className="h-4 w-4" />
+              Auskunft herunterladen
+            </a>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

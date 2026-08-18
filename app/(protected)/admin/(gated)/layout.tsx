@@ -4,8 +4,11 @@ import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
 import { getHighestRole } from '@/lib/auth-common';
-import { isSubscriptionPastDue } from '@/lib/subscription-gate';
-import { SubscriptionDunningBlock } from '@/components/billing/subscription-dunning-block';
+import { getSubscriptionState } from '@/lib/subscription-gate';
+import {
+  SubscriptionDunningBlock,
+  SubscriptionRequiredBlock,
+} from '@/components/billing/subscription-dunning-block';
 
 /**
  * Admin "gated" route group — everything except /admin/onboarding.
@@ -41,7 +44,8 @@ export default async function AdminGatedLayout({ children }: { children: React.R
   // Dunning: block access once the SaaS subscription is past_due/unpaid.
   // Rendered inline (not a redirect) so the customer can always reach the
   // billing portal even though the target route itself is also gated.
-  if (await isSubscriptionPastDue(supabase, user.id)) {
+  const subscription = await getSubscriptionState(supabase, user.id);
+  if (subscription === 'past_due') {
     return <SubscriptionDunningBlock />;
   }
 
@@ -57,6 +61,20 @@ export default async function AdminGatedLayout({ children }: { children: React.R
     if (clubData && !clubData.setup_completed_at) {
       redirect('/admin/onboarding');
     }
+  }
+
+  // Pflicht-Abo: kein Freemium, keine Testphase (PRODUKTIONSREIFE.md 3.1).
+  // Steht bewusst NACH der Onboarding-Weiche — ein Neukunde soll den Wizard
+  // durchlaufen und dabei sehen, was er kauft; erst danach steht die Kasse.
+  // Plattform-Personal (owner/superadmin) zahlt hier nichts: der Superadmin
+  // hat sein eigenes Abo im Superadmin-Bereich.
+  //
+  // ponytail: Sperre auf Seitenebene, nicht in der API. Ein Admin, der die
+  // Routen direkt anspricht, kommt weiterhin durch. Wenn das relevant wird,
+  // gehört die Prüfung zusätzlich in lib/api-auth.ts — dann aber mit einer
+  // Ausnahmeliste für die Onboarding-Routen, sonst kommt niemand zum Checkout.
+  if (!isPlatformStaff && subscription === 'none') {
+    return <SubscriptionRequiredBlock />;
   }
 
   return <>{children}</>;

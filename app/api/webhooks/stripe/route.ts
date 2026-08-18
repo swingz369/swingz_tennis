@@ -518,7 +518,7 @@ async function handleSaasSubscription(
     return;
   }
 
-  await supabase
+  const { error } = await supabase
     .from('users')
     .update({
       subscription_tier: tier,
@@ -527,6 +527,18 @@ async function handleSaasSubscription(
       stripe_subscription_id: subscriptionId,
     })
     .eq('id', userId);
+
+  // Der Kunde hat bezahlt. Schlägt das Update fehl, bleibt er trotzdem auf
+  // 'free' und kommt nicht in seinen Verein — das darf nicht still passieren.
+  // Genau so lief es bis zum 18.08.2026: der CHECK-Constraint kannte die
+  // Plan-Keys nicht, und niemand hat den Fehler gelesen.
+  if (error) {
+    log.error(
+      'SaaS subscription: Aktivierung konnte nicht gespeichert werden',
+      new Error(error.message)
+    );
+    throw new Error(`Abo-Aktivierung fehlgeschlagen: ${error.message}`);
+  }
 
   log.info('SaaS subscription activated', { userId, tier });
 }
@@ -546,10 +558,21 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
   };
   if (tier) update.subscription_tier = tier;
 
-  await supabase
+  const { error } = await supabase
     .from('users')
     .update(update as never)
     .eq('stripe_customer_id', customerId);
+
+  // Siehe handleCheckoutCompleted: ein verschluckter Fehler bedeutet, dass der
+  // Abo-Status in SwingZ und der bei Stripe auseinanderlaufen.
+  if (error) {
+    log.error(
+      'SaaS subscription: Update konnte nicht gespeichert werden',
+      new Error(error.message)
+    );
+    throw new Error(`Abo-Update fehlgeschlagen: ${error.message}`);
+  }
+
   log.info('SaaS subscription updated', { customerId, tier, status: sub.status });
 }
 
