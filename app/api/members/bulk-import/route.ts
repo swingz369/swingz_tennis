@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
           result.failed++;
           result.errors.push({
             record,
-            error: createError?.message || 'User-Erstellung fehlgeschlagen',
+            error: 'Benutzer konnte nicht angelegt werden',
           });
         } else {
           createdUserByEmail.set(record.email, userId);

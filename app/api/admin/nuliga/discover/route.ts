@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
       if (saveError || !saved) {
         log.error('Vereinsseite konnte nicht gespeichert werden', {
           clubId,
-          error: saveError?.message ?? 'keine Zeile aktualisiert (RLS?)',
+          error: 'Ergebnis konnte nicht gespeichert werden',
         });
         return NextResponse.json(
           {

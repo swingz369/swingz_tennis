@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
           log.error('[Invite] Error:', link.error ?? inviteError);
           return NextResponse.json(
             {
-              error: `Einladung fehlgeschlagen: ${link.error?.message ?? inviteError?.message ?? 'unbekannter Fehler'}`,
+              error: 'Einladung fehlgeschlagen',
             },
             { status: 502 }
           );

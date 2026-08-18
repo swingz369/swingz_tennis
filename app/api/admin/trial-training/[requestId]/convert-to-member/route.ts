@@ -102,7 +102,7 @@ export async function POST(
         );
         return NextResponse.json(
           {
-            error: `Benutzer konnte nicht angelegt werden: ${createError?.message ?? 'Unbekannter Fehler'}`,
+            error: 'Benutzer konnte nicht angelegt werden',
           },
           { status: 500 }
         );

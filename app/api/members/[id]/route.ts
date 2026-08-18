@@ -159,10 +159,7 @@ export async function PATCH(
           );
           if (authEmailError) {
             log.error('Failed to update auth email:', authEmailError);
-            return NextResponse.json(
-              { error: authEmailError.message || 'E-Mail-Änderung fehlgeschlagen' },
-              { status: 409 }
-            );
+            return NextResponse.json({ error: 'E-Mail-Änderung fehlgeschlagen' }, { status: 409 });
           }
         }
 

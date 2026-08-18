@@ -143,10 +143,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
       if (emailError) {
         log.error('[SendInvoiceEmail] Resend error:', emailError);
-        return NextResponse.json(
-          { error: `E-Mail-Versand fehlgeschlagen: ${emailError.message}` },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: 'E-Mail-Versand fehlgeschlagen' }, { status: 500 });
       }
 
       // Update invoice status to 'sent'

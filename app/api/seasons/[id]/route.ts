@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
+import { internalErrorResponse, safeErrorMessage } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
@@ -204,13 +204,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         return NextResponse.json({ season: updated });
       } catch (error) {
         log.error(`PATCH /api/seasons/[id] error:`, error);
+        // Bis 18.08.2026 stand hier error.message bzw. JSON.stringify(error) —
+        // bei einem DB-Fehler also das komplette Statement im Browser.
         return NextResponse.json(
-          {
-            error:
-              error instanceof Error
-                ? error.message
-                : (JSON.stringify(error) ?? 'Failed to update season'),
-          },
+          { error: safeErrorMessage(error, 'Saison konnte nicht gespeichert werden.') },
           { status: 500 }
         );
       }

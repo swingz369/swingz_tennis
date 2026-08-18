@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:training-groups');
 
 async function findOrCreateSchedule(
   supabase: any,
@@ -14,7 +17,7 @@ async function findOrCreateSchedule(
     start_date: string;
     end_date: string;
   }
-): Promise<{ scheduleId: string; error: Error | null }> {
+): Promise<{ scheduleId: string; failure: Error | null }> {
   const { data: existing } = await supabase
     .from('schedules')
     .select('id')
@@ -22,7 +25,7 @@ async function findOrCreateSchedule(
     .eq('season_type', season.season_type)
     .eq('season_year', season.year)
     .limit(1);
-  if (existing?.[0]?.id) return { scheduleId: existing[0].id, error: null };
+  if (existing?.[0]?.id) return { scheduleId: existing[0].id, failure: null };
   const { data: created, error: createErr } = await supabase
     .from('schedules')
     .insert({
@@ -35,9 +38,8 @@ async function findOrCreateSchedule(
     })
     .select('id')
     .single();
-  if (createErr)
-    return { scheduleId: '', error: new Error(`Failed to create schedule: ${createErr.message}`) };
-  return { scheduleId: created.id, error: null };
+  if (createErr) return { scheduleId: '', failure: new Error(createErr.message) };
+  return { scheduleId: created.id, failure: null };
 }
 
 export async function GET(request: NextRequest) {
@@ -77,8 +79,13 @@ export async function POST(request: NextRequest) {
     if (season.club_id !== auth.clubId)
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
-    const { scheduleId, error: scheduleErr } = await findOrCreateSchedule(auth.supabase, season);
-    if (scheduleErr) return internalErrorResponse();
+    const { scheduleId, failure: scheduleErr } = await findOrCreateSchedule(auth.supabase, season);
+    if (scheduleErr) {
+      // Der Originalfehler ging bisher ersatzlos verloren — internalErrorResponse()
+      // sagt dem Nutzer zu Recht nichts, dem Log aber auch nicht.
+      log.error('Trainingsplan konnte nicht angelegt werden', scheduleErr);
+      return internalErrorResponse();
+    }
 
     const { data, error } = await (auth.supabase.from('training_groups') as any)
       .insert({

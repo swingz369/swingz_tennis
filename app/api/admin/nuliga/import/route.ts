@@ -104,12 +104,10 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({ standingsImported, matchesImported });
     } catch (err) {
-      const msg =
-        err instanceof NuligaCsvParseError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : 'Import fehlgeschlagen';
+      // Nur der CSV-Parsefehler ist fuer den Nutzer formuliert und sagt ihm,
+      // was an seiner Datei nicht stimmt. Alles andere (DB, Netz) wuerde
+      // interne Details durchreichen.
+      const msg = err instanceof NuligaCsvParseError ? err.message : 'Import fehlgeschlagen';
       log.error('nuliga csv import error', err instanceof Error ? err : undefined);
       return NextResponse.json({ error: msg }, { status: 400 });
     }

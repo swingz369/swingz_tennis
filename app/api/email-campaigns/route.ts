@@ -95,10 +95,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (campaignError || !campaign) {
-      return NextResponse.json(
-        { error: campaignError?.message || 'Kampagne konnte nicht erstellt werden' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Kampagne konnte nicht erstellt werden' }, { status: 500 });
     }
 
     // Create individual email queue entries up front, so a crashed send
@@ -120,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     if (queueError || !queueRows) {
       return NextResponse.json(
-        { error: queueError?.message || 'Warteschlange konnte nicht angelegt werden' },
+        { error: 'Warteschlange konnte nicht angelegt werden' },
         { status: 500 }
       );
     }

@@ -129,10 +129,7 @@ export async function POST(request: NextRequest) {
         });
 
       if (uploadError) {
-        return NextResponse.json(
-          { error: `Upload fehlgeschlagen: ${uploadError.message}` },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: 'Upload fehlgeschlagen' }, { status: 500 });
       }
 
       // Get public URL

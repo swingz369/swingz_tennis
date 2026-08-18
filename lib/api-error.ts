@@ -89,3 +89,21 @@ export function errorResponse(
 export function internalErrorResponse(message = 'Interner Serverfehler'): NextResponse {
   return errorResponse('INTERNAL', message);
 }
+
+/**
+ * Macht aus einem beliebigen Fehler eine Meldung, die dem Nutzer gezeigt
+ * werden darf.
+ *
+ * Grund: Fehler aus Postgres, PostgREST und Drizzle tragen das komplette
+ * Statement samt Tabellen- und Spaltennamen in `.message`. Ein 500er hat
+ * davon einmal den ganzen Bauplan an den Browser geliefert — für den Nutzer
+ * wertlos, für einen Angreifer eine Landkarte.
+ *
+ * Durchgelassen wird nur, was die Anwendung selbst formuliert hat
+ * (`ApiException`). Alles andere bekommt den Ersatztext; das Original gehört
+ * ins Server-Log, nicht in die Antwort.
+ */
+export function safeErrorMessage(err: unknown, fallback = 'Interner Serverfehler'): string {
+  if (err instanceof ApiException) return err.message;
+  return fallback;
+}

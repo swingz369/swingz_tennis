@@ -93,7 +93,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           err instanceof Error ? err : { message: msg, stack }
         );
         return NextResponse.json(
-          { error: `Database error loading groups: ${msg}` },
+          { error: 'Gruppen konnten nicht geladen werden.' },
           { status: 500 }
         );
       }
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           err instanceof Error ? err : { message: msg, stack }
         );
         return NextResponse.json(
-          { error: `Database error loading courts: ${msg}` },
+          { error: 'Plätze konnten nicht geladen werden.' },
           { status: 500 }
         );
       }
@@ -147,7 +147,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           err instanceof Error ? err : { message: msg, stack }
         );
         return NextResponse.json(
-          { error: `Database error loading plan entries: ${msg}` },
+          { error: 'Planeinträge konnten nicht geladen werden.' },
           { status: 500 }
         );
       }
