@@ -1,6 +1,6 @@
 # Weg zur Produktionsreife
 
-> Zuletzt verifiziert: 18. August 2026 (Umsetzungsstand am Ende des Tages nachgetragen)
+> Zuletzt verifiziert: 18. August 2026 (Anhang D: offene Punkte für die nächste Sitzung)
 >
 > Lebendes Dokument. **Der Plan** — was in welcher Reihenfolge passieren muss, damit SwingZ ein
 > Produkt ist, das ein Verein kauft, benutzt und behält.
@@ -421,6 +421,7 @@ Was an diesem Tag erledigt wurde, und was dabei über den Plan hinaus gefunden w
 | --- | ------------------------------------------------------------------------------------------------------- |
 | 0.1 | Arbeitsverzeichnis entflochten: Mitgliedsnummer, Plan-Dokument und Design-Vereinfachung in drei Commits |
 | 0.5 | Auslieferungsregel in `AGENTS.md` § Auslieferung festgehalten                                           |
+| 1.1 | E-Mail-Versand laeuft: `swingz.cloud` bei Resend verifiziert, echte Mail zugestellt (`EMAIL_SETUP.md`)  |
 | 1.2 | Rohe DB-Fehler aus allen Antworten entfernt, `safeErrorMessage()`, Wächter-Test                         |
 | 1.3 | Migrations-Tracking geprüft: Baseline ist eingetragen, keine Differenz                                  |
 | 1.4 | Geprüft: nur `ops_heartbeats` hat RLS ohne Policy — bewusst, in `DATABASE.md` belegt                    |
@@ -513,12 +514,83 @@ und das lokal am 13.08.2026 bereinigt wurde. In Produktion steht es noch.
 | ID       | Warum nicht erledigt                                                                                   |
 | -------- | ------------------------------------------------------------------------------------------------------ |
 | 0.2–0.4  | Merge nach `main` und Deploy-Verifikation sind deine Entscheidung, nicht meine                         |
-| 1.1      | **E-Mail-Versand** — braucht einen echten Versand an eine echte Adresse und Zugang zu Resend           |
 | 2.4, 5.5 | VPS-Arbeit (App-Rolle ohne BYPASSRLS, TLS erzwingen) — braucht SSH-Zugriff                             |
 | 3.2, 3.3 | Onboarding-Probelauf — braucht einen Menschen ohne Vorwissen, das ist der ganze Sinn                   |
-| 3.4      | Vollständiger Rechnungslauf — hängt an 1.1                                                             |
+| 3.4      | Vollständiger Rechnungslauf — Blocker 1.1 ist weg, Lauf selbst steht aus                               |
 | 4.3      | Handy-Durchlauf mit Zeitmessung — braucht ein echtes Handy                                             |
 | 4.4, 4.5 | Nur die vier eindeutigen Listen umgestellt; ein vollständiger Durchgang durch alle Ansichten steht aus |
 | 5.2      | Sentry in Produktion prüfen — geht erst nach dem Deploy                                                |
 | 5.4      | Rücksicherung proben — braucht VPS und eine leere Datenbank                                            |
 | 6.1–6.6  | Phase 6 nicht angefangen                                                                               |
+
+---
+
+## Anhang D — Was als Nächstes (Stand 18.08.2026, 22:15)
+
+Diese Liste ist der Einstiegspunkt für die nächste Sitzung. Sortiert danach, **woran** ein Punkt
+hängt — nicht nach Phase. Ein Punkt, der auf Zugang wartet, ist kein Punkt, den man „gleich noch
+schnell" macht.
+
+### Blockiert alles: die Auslieferung (0.2–0.4)
+
+Vercel baut aus Git nichts. Jeder Git-Deploy steht auf `BLOCKED`, der letzte erfolgreiche
+Produktions-Deploy kam aus einem CLI-Aufruf. Ursache ist die Verknüpfung zwischen GitHub-Konto
+(`swingz369`) und Vercel-Team (`bartmz-3856`, `mike.swinger@gmx.de`) — Commit `5f4de662` hat
+davon nur die Commit-Adresse gerade gezogen, nicht die Team-Zuordnung.
+
+Nachweis, dass es behoben ist: ein Push auf `main` erzeugt einen Deploy mit `"state": "READY"`.
+
+Solange das offen ist, ist 0.4 unbelegt: `/api/health` in Produktion antwortet zwar `ok`, aber
+alle sechs Cron-Heartbeats stehen auf `unbekannt` (nur `vps-backup` meldet sich, 20 h alt). Ob
+`monitor.yml` wirklich anschlägt, ist damit nicht gezeigt — dazu gehört der provozierte Fehlalarm.
+
+### Braucht einen Menschen, nicht einen Agenten
+
+| ID       | Was                                                                                     |
+| -------- | --------------------------------------------------------------------------------------- |
+| 3.2, 3.3 | Onboarding am Stück durchspielen — von jemandem ohne Vorwissen — und Top-5 daraus fixen |
+| 3.4      | Vollständiger Rechnungslauf. Blocker 1.1 (E-Mail) ist weg, der Lauf selbst steht aus    |
+| 4.3      | Handy-Durchlauf pro Rolle, mit Stoppuhr                                                 |
+
+### Braucht SSH auf den VPS
+
+| ID       | Was                                                            |
+| -------- | -------------------------------------------------------------- |
+| 2.4, 5.5 | App-Rolle ohne `BYPASSRLS`, TLS für den DB-Transport erzwingen |
+| 5.4      | Rücksicherung einmal wirklich einspielen, nicht nur sichern    |
+
+### Geht erst nach einem echten Deploy
+
+| ID  | Was                                               |
+| --- | ------------------------------------------------- |
+| 5.2 | Prüfen, dass Sentry in Produktion Fehler empfängt |
+
+### Halbfertig
+
+| ID       | Was                                                                                      |
+| -------- | ---------------------------------------------------------------------------------------- |
+| 4.4, 4.5 | Nur die vier eindeutigen Listen umgestellt. Ein Durchgang durch alle Ansichten steht aus |
+
+### Phase 6 — nicht angefangen
+
+6.1 Integrationstests in CI · 6.2 E2E-Kernweg in CI · 6.3 Coverage-Schwelle ·
+6.4 toter Code (knip) · 6.5 `docs:check`/`docs:autogen` im Pre-Commit · 6.6 Schema-Drift-Wächter
+
+### Vor dem Deploy zu entscheiden
+
+- **Bestandskonten:** alle 195 Produktions-Nutzer stehen auf `subscription_tier = 'free'`. Die
+  Bezahlschranke sperrt damit 8 Konten aus (6 Admins, 4 Superadmins, überlappend) — alles
+  Testzugänge. Entweder vorher hochsetzen oder die Sperre bewusst in Kauf nehmen.
+- **Testrückstände:** 19 der 26 Produktions-Vereine sind Rückstände aus Testläufen.
+
+### Zusätzlich aus dem unabhängigen Audit vom 18.08.2026
+
+`ARCHIV/2026-08-18-produktionsreife-audit.md` hat 13 Befunde am Code selbst geprüft, die in
+diesem Plan **nicht** vorkommen. Die drei P0 daraus gehören vor den ersten zahlenden Kunden:
+
+1. SECURITY-DEFINER-RPCs sind an `anon`/`authenticated` vergeben — RLS-Bypass.
+2. Zwei der sechs Vercel-Crons laufen faktisch nicht (deckt sich mit den `unbekannt`-Heartbeats).
+3. Es gibt keine Staging-/Preview-Umgebung — jede Änderung wird in Produktion zum ersten Mal echt.
+
+P1/P2 (Stripe-Idempotenz, €15-Fallback beim Buchungspreis, In-Memory-Rate-Limit, unverschlüsselte
+Secret-Backups im Repo-Root, …) stehen dort mit Begründung und Fundstelle.
