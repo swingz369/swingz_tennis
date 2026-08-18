@@ -18,6 +18,7 @@ SwingZ ist eine Management-Lösung für Tennisvereine: Mitglieder, Buchungen, Tr
 | [`ENVIRONMENTS.md`](ENVIRONMENTS.md)                       | Umgebungen & Datenbanken: lokal vs. Produktion, Env-Dateien, Migrations-/Deploy-Weg, Backups   |
 | [`SERVICES.md`](SERVICES.md)                               | Alle Adressen und Dienste (lokal, Produktion, Drittanbieter) und wo die Zugangsdaten liegen    |
 | [`OPEN_ITEMS.md`](OPEN_ITEMS.md)                           | **Konsolidierte offene Punkte & nächste Schritte** (P0–P3 + Roadmap) — hier zuerst lesen       |
+| [`PRODUKTIONSREIFE.md`](PRODUKTIONSREIFE.md)               | **Der Plan**: Phasen, Reihenfolge, Gates und Abnahmekriterien bis zur Verkaufsreife            |
 | [`HANDBOOK.md`](HANDBOOK.md)                               | Nutzerhandbuch                                                                                 |
 | [`handbook/`](handbook/)                                   | Ausführliches Dev-/User-Handbuch, inkl. auto-generierter Kapitel (siehe unten)                 |
 | [`DESIGN.md`](DESIGN.md)                                   | Design-Konzept (Design-System, Component-Architektur, A11y-Audit)                              |
