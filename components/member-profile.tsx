@@ -32,6 +32,7 @@ import { AvatarUpload } from '@/components/ui/avatar-upload';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { toast } from 'sonner';
 import { useUserMember } from '@/hooks/use-user-data';
+import { formatMemberNumber } from '@/lib/format';
 import { apiFetch } from '@/lib/api-fetch';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { createClient } from '@/lib/supabase/client';
@@ -294,6 +295,17 @@ export default function MemberProfile() {
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground truncate">
                   {formData.email}
                 </p>
+                {/* Die Mitgliedsnummer ist die Nummer, die auf jeder Rechnung
+                    und in jeder Rückfrage beim Verein steht — sie gehört
+                    dorthin, wo das Mitglied sie nachschlagen kann. */}
+                {memberData?.memberNumber != null && (
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Mitgliedsnummer{' '}
+                    <span className="font-mono font-medium text-foreground">
+                      {formatMemberNumber(memberData.memberNumber)}
+                    </span>
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap">

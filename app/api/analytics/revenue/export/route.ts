@@ -7,6 +7,7 @@ import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories
 import { DrizzleScheduleRepository } from '@/infrastructure/persistence/repositories/schedule.repository';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { toCsv, csvHeaders } from '@/lib/csv';
 
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -21,11 +22,17 @@ export async function GET(_request: NextRequest) {
     }
 
     const { searchParams } = new URL(_request.url);
-    const clubId = searchParams.get('clubId');
     const format = searchParams.get('format') || 'csv';
 
+    // Wie bei den anderen Exporten: aktiver Verein als Normalfall
+    // (PRODUKTIONSREIFE.md 3.5).
+    const requested = searchParams.get('clubId');
+    const clubId = requested ?? auth.clubId;
     if (!clubId) {
-      return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
+      return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
+    }
+    if (requested && requested !== auth.clubId && !(await verifyRole(auth, 'superadmin'))) {
+      return forbiddenResponse('Kein Zugriff auf diesen Verein');
     }
 
     try {
@@ -40,12 +47,7 @@ export async function GET(_request: NextRequest) {
       }
 
       const csv = convertRevenueToCSV(revenue);
-      return new NextResponse(csv, {
-        headers: {
-          'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="revenue-${clubId}.csv"`,
-        },
-      });
+      return new NextResponse(csv, { headers: csvHeaders(`umsaetze-${clubId}`) });
     } catch (_error) {
       return internalErrorResponse();
     }
@@ -57,31 +59,22 @@ function convertRevenueToCSV(data: {
   payments: Array<Record<string, unknown>>;
   monthlyBreakdown: Array<Record<string, unknown>>;
 }): string {
-  const paymentHeaders = ['ID', 'Mitglied', 'Betrag (EUR)', 'Datum', 'Uhrzeit', 'Zahlungsmethode'];
-  const paymentRows = [paymentHeaders.join(',')];
-
-  for (const payment of data.payments) {
-    const values = [
-      payment.id,
-      payment.memberName,
-      payment.amount,
-      payment.date,
-      payment.time,
-      payment.method,
-    ]
-      .map((v) => `"${v}"`)
-      .join(',');
-    paymentRows.push(values);
-  }
-
-  paymentRows.push('');
-  const monthlyHeaders = ['Monat', 'Umsatz (EUR)'];
-  paymentRows.push(monthlyHeaders.join(','));
-  for (const month of data.monthlyBreakdown) {
-    paymentRows.push(`"${month.month}","${month.revenue}"`);
-  }
-
-  return paymentRows.join('\n');
+  // Zwei Tabellen in einer Datei, durch eine Leerzeile getrennt — Zahlungen
+  // im Detail, darunter die Monatssummen.
+  const zahlungen = toCsv(data.payments, [
+    ['id', 'ID'],
+    ['memberName', 'Mitglied'],
+    ['amount', 'Betrag (EUR)'],
+    ['date', 'Datum'],
+    ['time', 'Uhrzeit'],
+    ['method', 'Zahlungsmethode'],
+  ]);
+  const monate = toCsv(data.monthlyBreakdown, [
+    ['month', 'Monat'],
+    ['revenue', 'Umsatz (EUR)'],
+  ]);
+  // Das BOM der zweiten Tabelle muss weg — es gehoert nur an den Dateianfang.
+  return `${zahlungen}\r\n\r\n${monate.replace(/^\uFEFF/, '')}`;
 }
 
 function generatePDFExport(

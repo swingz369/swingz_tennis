@@ -828,6 +828,7 @@ export type Database = {
           logo_url: string | null;
           max_members: number;
           name: string;
+          next_member_number: number;
           nuliga_club_url: string | null;
           opening_hours: Json;
           phone: string | null;
@@ -872,6 +873,7 @@ export type Database = {
           logo_url?: string | null;
           max_members?: number;
           name: string;
+          next_member_number?: number;
           nuliga_club_url?: string | null;
           opening_hours: Json;
           phone?: string | null;
@@ -916,6 +918,7 @@ export type Database = {
           logo_url?: string | null;
           max_members?: number;
           name?: string;
+          next_member_number?: number;
           nuliga_club_url?: string | null;
           opening_hours?: Json;
           phone?: string | null;
@@ -6913,6 +6916,7 @@ export type Database = {
           is_honorary: boolean;
           joined_at: string;
           last_reactivation_sent_at: string | null;
+          member_number: number | null;
           office_flags: Json;
           reactivation_count: number;
           role: string;
@@ -6933,6 +6937,7 @@ export type Database = {
           is_honorary?: boolean;
           joined_at?: string;
           last_reactivation_sent_at?: string | null;
+          member_number?: number | null;
           office_flags?: Json;
           reactivation_count?: number;
           role?: string;
@@ -6953,6 +6958,7 @@ export type Database = {
           is_honorary?: boolean;
           joined_at?: string;
           last_reactivation_sent_at?: string | null;
+          member_number?: number | null;
           office_flags?: Json;
           reactivation_count?: number;
           role?: string;

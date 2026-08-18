@@ -7,6 +7,7 @@ import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories
 import { DrizzleScheduleRepository } from '@/infrastructure/persistence/repositories/schedule.repository';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { toCsv, csvHeaders } from '@/lib/csv';
 
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -20,11 +21,15 @@ export async function GET(_request: NextRequest) {
       return rateLimitError;
     }
 
-    const { searchParams } = new URL(_request.url);
-    const clubId = searchParams.get('clubId');
-
+    // Wie beim Mitglieder-Export: der aktive Verein ist der Normalfall,
+    // clubId bleibt fuer den Superadmin (PRODUKTIONSREIFE.md 3.5).
+    const requested = new URL(_request.url).searchParams.get('clubId');
+    const clubId = requested ?? auth.clubId;
     if (!clubId) {
-      return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
+      return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
+    }
+    if (requested && requested !== auth.clubId && !(await verifyRole(auth, 'superadmin'))) {
+      return forbiddenResponse('Kein Zugriff auf diesen Verein');
     }
 
     try {
@@ -34,37 +39,10 @@ export async function GET(_request: NextRequest) {
       const useCase = getClubBookingsUseCase(bookingRepository, clubRepository, scheduleRepository);
       const bookings = await useCase.execute(clubId);
 
-      const csv = convertToCSV(bookings);
-      return new NextResponse(csv, {
-        headers: {
-          'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="bookings-${clubId}.csv"`,
-        },
-      });
+      const csv = toCsv(bookings as unknown as Record<string, unknown>[]);
+      return new NextResponse(csv, { headers: csvHeaders(`buchungen-${clubId}`) });
     } catch (_error) {
       return internalErrorResponse();
     }
   });
-}
-
-function convertToCSV(data: object[]): string {
-  if (data.length === 0) return '';
-
-  const headers = Object.keys(data[0]);
-  const csvRows: string[] = [];
-  csvRows.push(headers.join(','));
-
-  for (const row of data) {
-    const values = headers.map((header) => {
-      const value = (row as Record<string, unknown>)[header];
-      const formatted =
-        value instanceof Date
-          ? value.toISOString().split('T')[0]
-          : String(value ?? '').replace(/"/g, '""');
-      return `"${formatted}"`;
-    });
-    csvRows.push(values.join(','));
-  }
-
-  return csvRows.join('\n');
 }

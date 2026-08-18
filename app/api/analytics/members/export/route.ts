@@ -1,37 +1,73 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { getClubMembersUseCase } from '@/application/members/get-club-members.use-case';
-import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories/club.repository';
-import { DrizzleMemberRepository } from '@/infrastructure/persistence/repositories/member.repository';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { logPiiRead } from '@/lib/db/audit-logger';
+import { createServiceClient } from '@/lib/supabase/service';
+import { toCsv, csvHeaders } from '@/lib/csv';
+import { formatMemberNumber } from '@/lib/format';
+import { createLogger } from '@/lib/logger';
 
-export async function GET(_request: NextRequest) {
-  return withApiAuth(_request, async (auth) => {
+const log = createLogger('api:analytics:members:export');
+
+/**
+ * Mitgliederliste als CSV — der Ausstiegsweg aus SwingZ
+ * (PRODUKTIONSREIFE.md 3.5 und 4.7).
+ *
+ * Liest die Mitgliedschaften direkt statt über den Domain-Use-Case: der
+ * Export braucht die Mitgliedsnummer, und die haengt an der Mitgliedschaft
+ * (`user_club_memberships.member_number`), nicht an der Person. Ein Export
+ * ist eine Auswertung, kein Vorgang der Domaene.
+ */
+export async function GET(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
       return forbiddenResponse('Zugriff nur für Admins');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }
 
-    const { searchParams } = new URL(_request.url);
-    const clubId = searchParams.get('clubId');
-
+    // Der aktive Verein aus dem Auth-Kontext ist der Normalfall; der
+    // clubId-Parameter bleibt für den Superadmin, der einen bestimmten Verein
+    // exportiert. Vorher war der Parameter Pflicht — und die einzige Stelle,
+    // die den Export verlinkt (components/reports-dashboard.tsx), gab ihn
+    // nicht mit. Der Download lieferte damit immer 400.
+    const requested = new URL(request.url).searchParams.get('clubId');
+    const clubId = requested ?? auth.clubId;
     if (!clubId) {
-      return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
+      return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
+    }
+    if (requested && requested !== auth.clubId && !(await verifyRole(auth, 'superadmin'))) {
+      return forbiddenResponse('Kein Zugriff auf diesen Verein');
     }
 
     try {
-      const memberRepository = new DrizzleMemberRepository();
-      const clubRepository = new DrizzleClubRepository();
-      const useCase = getClubMembersUseCase(memberRepository, clubRepository);
-      const members = await useCase.execute(clubId);
+      const sb = createServiceClient();
+      const { data, error } = await sb
+        .from('user_club_memberships')
+        .select('member_number, role, is_active, joined_at, users(full_name, email, phone)')
+        .eq('club_id', clubId)
+        .order('member_number', { ascending: true });
+
+      if (error) {
+        log.error('Mitglieder-Export nicht lesbar', new Error(error.message));
+        return internalErrorResponse('Mitgliederliste konnte nicht gelesen werden');
+      }
+
+      const rows = (data ?? []).map((m: Record<string, any>) => ({
+        nr: formatMemberNumber(m.member_number),
+        name: m.users?.full_name ?? '',
+        email: m.users?.email ?? '',
+        telefon: m.users?.phone ?? '',
+        rolle: m.role ?? '',
+        beitritt: m.joined_at ? String(m.joined_at).slice(0, 10) : '',
+        status: m.is_active ? 'aktiv' : 'inaktiv',
+      }));
 
       // Ein Export trägt die Mitgliederdaten aus dem System heraus — das ist
       // der Vorgang, den ein Protokoll festhalten muss (anders als das bloße
@@ -40,42 +76,25 @@ export async function GET(_request: NextRequest) {
         auth.user.id,
         'member',
         `export:${clubId}`,
-        _request,
-        { format: 'csv', count: members.length },
+        request,
+        { format: 'csv', count: rows.length },
         clubId
       );
 
-      const csv = convertToCSV(members);
-      return new NextResponse(csv, {
-        headers: {
-          'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="members-${clubId}.csv"`,
-        },
-      });
-    } catch (_error) {
+      const csv = toCsv(rows, [
+        ['nr', 'Mitgliedsnummer'],
+        ['name', 'Name'],
+        ['email', 'E-Mail'],
+        ['telefon', 'Telefon'],
+        ['rolle', 'Rolle'],
+        ['beitritt', 'Beitritt'],
+        ['status', 'Status'],
+      ]);
+
+      return new NextResponse(csv, { headers: csvHeaders(`mitglieder-${clubId}`) });
+    } catch (err) {
+      log.error('Mitglieder-Export fehlgeschlagen', err instanceof Error ? err : undefined);
       return internalErrorResponse();
     }
   });
-}
-
-function convertToCSV(data: object[]): string {
-  if (data.length === 0) return '';
-
-  const headers = Object.keys(data[0]);
-  const csvRows = [];
-  csvRows.push(headers.join(','));
-
-  for (const row of data) {
-    const values = headers.map((header) => {
-      const value = (row as Record<string, unknown>)[header];
-      const formatted =
-        value instanceof Date
-          ? value.toISOString().split('T')[0]
-          : String(value ?? '').replace(/"/g, '""');
-      return `"${formatted}"`;
-    });
-    csvRows.push(values.join(','));
-  }
-
-  return csvRows.join('\n');
 }

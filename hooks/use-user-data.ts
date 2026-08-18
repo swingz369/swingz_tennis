@@ -36,6 +36,8 @@ export interface UserMemberData {
   emergencyPhone?: string;
   dateOfBirth?: string;
   dtbId?: string;
+  /** Vereinsweit fortlaufende Mitgliedsnummer der aktiven Mitgliedschaft. */
+  memberNumber?: number | null;
   memberType?: 'member' | 'trial' | 'inactive';
   membershipStatus?: 'active' | 'inactive' | 'suspended' | 'terminated';
   membershipStart?: string;

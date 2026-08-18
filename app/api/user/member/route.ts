@@ -34,14 +34,22 @@ export async function GET(_req: NextRequest) {
     // sich aus der Fee-Configuration des Mitglieds (amount × billing_unit_count),
     // nicht mehr aus dem früheren globalen Vereins-Stundenpreis.
     let trainingFeePerSession = 0;
+    // Die Mitgliedsnummer haengt an der Mitgliedschaft, nicht an der Person —
+    // ein Mitglied in zwei Vereinen hat zwei (siehe PRODUKTIONSREIFE.md
+    // Anhang A). Deshalb kommt sie aus derselben Abfrage wie der Beitrag.
+    let memberNumber: number | null = null;
     if (auth.clubId) {
       const { data: membership } = await auth.supabase
         .from('user_club_memberships')
-        .select('fee_configuration_id, fee_configurations(amount, billing_unit_count)')
+        .select(
+          'member_number, fee_configuration_id, fee_configurations(amount, billing_unit_count)'
+        )
         .eq('user_id', auth.user.id)
         .eq('club_id', auth.clubId)
         .eq('is_active', true)
         .maybeSingle();
+      memberNumber =
+        (membership as { member_number?: number | null } | null)?.member_number ?? null;
       const feeConfig = membership?.fee_configurations;
       const amount = Number(feeConfig?.amount ?? 0);
       const units = Number(feeConfig?.billing_unit_count ?? 1);
@@ -62,6 +70,7 @@ export async function GET(_req: NextRequest) {
       emergencyPhone: userProfile?.emergency_phone || '',
       dateOfBirth: userProfile?.date_of_birth || '',
       dtbId: userProfile?.dtb_id || '',
+      memberNumber,
       trainingFeePerSession,
     });
   });
