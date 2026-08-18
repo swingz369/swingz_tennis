@@ -540,6 +540,25 @@ davon nur die Commit-Adresse gerade gezogen, nicht die Team-Zuordnung.
 
 Nachweis, dass es behoben ist: ein Push auf `main` erzeugt einen Deploy mit `"state": "READY"`.
 
+**Nachgemessen am 18.08.2026, 22:20.** Der Push von `299ca3dc` erzeugte zwei Minuten später
+`dpl_8uy5nj7hP8HCEmvhW6eRXDLNr22T` — wieder `BLOCKED`. Die geänderte Commit-Adresse hat nichts
+bewirkt: der vorherige blockierte Deploy lief unter `githubCommitAuthorLogin: swingz369`, dieser
+unter `tsowapp`, beide blockiert. Vercels Begründung ist in beiden Fällen dieselbe:
+
+> The deployment was blocked because the commit author did not have contributing access to the
+> project on Vercel. The Hobby Plan does not support collaboration for private repositories.
+
+Es ist also keine Frage der richtigen E-Mail, sondern des Plans: das Repo ist privat, das
+Vercel-Konto ist Hobby, und Vercel behandelt jeden Commit-Autor, der nicht der verknüpfte
+Kontoinhaber ist, als Mitarbeiter. Drei Wege, mehr gibt es nicht:
+
+1. **Vercel Pro** (~20 $/Monat). Löst es direkt und ist für ein Produkt, das Geld einnimmt, ohnehin
+   die ehrliche Antwort — Hobby erlaubt keine kommerzielle Nutzung.
+2. **Repo öffentlich machen.** Dann greift die Einschränkung nicht. Für dieses Repo keine Option.
+3. **Git-Deploys aufgeben** und aus GitHub Actions per `vercel --prod` mit Token deployen. Genau
+   das passiert heute schon von Hand — die beiden `READY`-Deploys sind CLI-Läufe. Kostet nichts,
+   verliert aber Preview-Deploys pro Branch.
+
 Solange das offen ist, ist 0.4 unbelegt: `/api/health` in Produktion antwortet zwar `ok`, aber
 alle sechs Cron-Heartbeats stehen auf `unbekannt` (nur `vps-backup` meldet sich, 20 h alt). Ob
 `monitor.yml` wirklich anschlägt, ist damit nicht gezeigt — dazu gehört der provozierte Fehlalarm.
