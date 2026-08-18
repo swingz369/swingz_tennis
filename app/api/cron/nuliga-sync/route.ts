@@ -6,6 +6,7 @@ import { createLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { isValidNuligaUrl } from '@/lib/services/nuliga-scraper';
 import { syncLeagueFromNuliga } from '@/lib/services/nuliga-sync';
+import { recordHeartbeat } from '@/lib/ops-heartbeat';
 
 const log = createLogger('cron:nuliga-sync');
 
@@ -158,6 +159,8 @@ export async function GET(request: NextRequest) {
 
     Sentry.captureCheckIn({ checkInId, monitorSlug: 'nuliga-sync', status: 'ok' });
 
+    // Lebenszeichen fuer /api/health (PRODUKTIONSREIFE.md 5.3)
+    await recordHeartbeat('cron-nuliga-sync');
     return NextResponse.json({
       success: true,
       total: leagues.length,

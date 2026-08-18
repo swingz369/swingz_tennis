@@ -18,6 +18,7 @@ import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import { recordHeartbeat } from '@/lib/ops-heartbeat';
 
 const log = createLogger('cron:prune-audit-logs');
 
@@ -34,6 +35,8 @@ export async function GET(req: NextRequest) {
 
     const result = Array.isArray(data) ? data[0] : data;
     log.info('Audit-Logs bereinigt', result ?? {});
+    // Lebenszeichen fuer /api/health (PRODUKTIONSREIFE.md 5.3)
+    await recordHeartbeat('cron-prune-audit-logs');
     return NextResponse.json({ success: true, ...(result ?? {}) });
   } catch (err) {
     log.error('Bereinigung fehlgeschlagen', err instanceof Error ? err : undefined);

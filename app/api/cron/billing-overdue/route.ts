@@ -5,6 +5,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { dunningService } from '@/lib/billing/dunning.service';
 import { createLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
+import { recordHeartbeat } from '@/lib/ops-heartbeat';
 
 const log = createLogger('cron:billing-overdue');
 
@@ -57,6 +58,8 @@ export async function GET(request: NextRequest) {
     // Sentry cron monitoring: mark as OK
     Sentry.captureCheckIn({ checkInId, monitorSlug: 'billing-overdue', status: 'ok' });
 
+    // Lebenszeichen fuer /api/health (PRODUKTIONSREIFE.md 5.3)
+    await recordHeartbeat('cron-billing-overdue');
     return NextResponse.json({
       success: true,
       overdueMarked: updated?.length ?? 0,

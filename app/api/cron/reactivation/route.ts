@@ -19,6 +19,7 @@ import * as Sentry from '@sentry/nextjs';
 import { ReactivationService } from '@/lib/services/reactivation.service';
 import { createLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
+import { recordHeartbeat } from '@/lib/ops-heartbeat';
 
 const log = createLogger('cron:reactivation');
 
@@ -54,6 +55,8 @@ export async function GET(request: NextRequest) {
 
     Sentry.captureCheckIn({ checkInId, monitorSlug: 'reactivation', status: 'ok' });
 
+    // Lebenszeichen fuer /api/health (PRODUKTIONSREIFE.md 5.3)
+    await recordHeartbeat('cron-reactivation');
     return NextResponse.json({
       success: true,
       ...result,

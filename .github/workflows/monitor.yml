@@ -2,11 +2,11 @@
 # .github/workflows/monitor.yml
 # ═══════════════════════════════════════════════════════════════════════════════
 #
-# Erreichbarkeit + Totmannschalter fürs Backup, ohne zusätzlichen Anbieter.
+# Erreichbarkeit + Totmannschalter für alle geplanten Jobs, ohne zusätzlichen Anbieter.
 #
 # Bisher erfuhr man einen Ausfall dadurch, dass jemand anruft, und ein
-# stillstehendes Backup gar nicht. Der Lauf prüft alle 30 Minuten die App, die
-# Datenbank-Schicht und das Alter des letzten Backups; schlägt er fehl,
+# stillstehender Cron-Job gar nicht — er erzeugt einfach nichts. Der Lauf prüft
+# alle 30 Minuten die App, die Datenbank-Schicht und das Alter jedes Jobs; schlägt er fehl,
 # verschickt GitHub eine Mail an den Repository-Besitzer.
 #
 # ACHTUNG: `schedule` läuft ausschliesslich auf dem Standard-Branch. Dieser
@@ -29,7 +29,7 @@ concurrency:
 
 jobs:
   erreichbarkeit:
-    name: App, Datenbank & Backup-Alter
+    name: App, Datenbank & Job-Alter
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -48,11 +48,15 @@ jobs:
             echo "::error::Datenbank-Prüfung meldet Fehler"
             exit 1
           }
-          echo "$body" | jq -e '.checks.backup == "ok"' > /dev/null || {
-            age=$(echo "$body" | jq -r '.backupAgeHours')
-            echo "::error::Backup überfällig oder unbekannt (Alter: ${age}h) — siehe docs/RUNBOOK-BACKUP-ROLLBACK.md § 3"
+          # Überfällige Jobs: /api/health listet sie unter `ueberfaellig`
+          # (PRODUKTIONSREIFE.md 5.3). `unbekannt` ist kein Alarm — so sieht
+          # ein Job vor seinem ersten Lauf aus.
+          stale=$(echo "$body" | jq -r '.ueberfaellig // [] | join(", ")')
+          if [ -n "$stale" ]; then
+            echo "::error::Geplante Jobs überfällig: ${stale} — siehe docs/SERVICES.md und docs/RUNBOOK-BACKUP-ROLLBACK.md § 3"
+            echo "$body" | jq '.jobs'
             exit 1
-          }
+          fi
 
       - name: Supabase-Gateway auf dem VPS
         # Eigener Schritt, weil ein Ausfall hier eine andere Ursache hat als ein

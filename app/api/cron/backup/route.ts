@@ -4,6 +4,7 @@ import { internalErrorResponse } from '@/lib/api-error';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
+import { recordHeartbeat } from '@/lib/ops-heartbeat';
 
 const log = createLogger('cron:backup');
 
@@ -236,6 +237,8 @@ export async function GET(request: NextRequest) {
       size: `${(metadata.fileSizeBytes / 1024).toFixed(1)} KB`,
     });
 
+    // Lebenszeichen fuer /api/health (PRODUKTIONSREIFE.md 5.3)
+    await recordHeartbeat('cron-backup');
     return NextResponse.json({
       success: true,
       metadata,

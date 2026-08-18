@@ -16,6 +16,7 @@ import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { pushNotificationService } from '@/lib/push-notification.service';
 import { sendRemindersSchema } from '@/application/validation/schemas/reminders.schema';
 import { createLogger } from '@/lib/logger';
+import { recordHeartbeat } from '@/lib/ops-heartbeat';
 
 const log = createLogger('api:reminders:booking-tomorrow');
 
@@ -139,6 +140,10 @@ export async function POST(_request: NextRequest) {
           });
       }
 
+      // Lebenszeichen fuer /api/health (PRODUKTIONSREIFE.md 5.3). Ein
+      // Trockenlauf zaehlt nicht — sonst sieht die Ueberwachung einen Job als
+      // gelaufen, der nichts verschickt hat.
+      if (!input.dryRun) await recordHeartbeat('cron-booking-reminders');
       return NextResponse.json({
         success: true,
         dryRun: input.dryRun,
