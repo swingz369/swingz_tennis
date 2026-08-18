@@ -382,3 +382,70 @@ weder Tabelle noch Spalten noch gleichnamige Policies existierten.
 ## Prozess-Regel für künftige Migrationen
 
 Siehe `AGENTS.md` → Abschnitt "Migrationen" für die verbindliche Regel (Live-Zustand vor Schreiben prüfen, exakte Policy-Namen aus `pg_policies` übernehmen statt aus alten Migrationsdateien zu raten, diese Datei bei jeder Policy-relevanten Änderung aktualisieren).
+
+---
+
+## Tabellen mit RLS ohne Policy (Stand 18.08.2026, geprüft)
+
+Abfrage gegen die lokale DB nach der Baseline:
+
+```sql
+select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity
+  and not exists (select 1 from pg_policies p
+                  where p.tablename = c.relname and p.schemaname = 'public');
+```
+
+Ergebnis: **genau eine Tabelle** — `ops_heartbeats`. Das ist Absicht und in der
+Migration `20260816200000_ops_heartbeats.sql` begründet: geschrieben wird sie
+vom Server (Superuser) und vom Service-Client, gelesen von `/api/health`.
+Beide umgehen RLS ohnehin; für jede andere Rolle bleibt die Tabelle leer, und
+genau das ist hier die gewünschte Antwort.
+
+`season_planning_configs` und `season_statistics`, die in älteren Audits als
+policylos geführt wurden, haben seit dem 15.08.2026 Policies (siehe Abschnitt
+oben). Der Befund in `PRODUKTIONSREIFE.md` 1.4 war damit bereits erledigt.
+
+## Vereinstrennung — nachgewiesen statt behauptet (Stand 18.08.2026)
+
+`src/__tests__/integration/cross-tenant-isolation.test.ts` prüft mit zwei
+Vereinen und drei Nutzern, was `rls-policies.test.ts` nicht prüfen konnte:
+jener Test arbeitet ausschließlich mit dem Service-Client, und der umgeht RLS.
+
+Belegt sind damit:
+
+| Frage                                                          | Ergebnis |
+| -------------------------------------------------------------- | -------- |
+| Sieht ein Superadmin von Verein A die `billing_periods` von B? | nein     |
+| Sieht ein Mitglied von A Nutzer aus Verein B?                  | nein     |
+| Sieht ein Mitglied von A Nutzer aus dem eigenen Verein?        | ja       |
+
+Der Test setzt `request.jwt.claims` und die Rolle `authenticated` direkt —
+also genau so, wie PostgREST es für einen angemeldeten Nutzer tut — und rollt
+alles am Ende zurück.
+
+## Löschkonzept: Aufbewahrungsfristen je Datenart (Stand 18.08.2026)
+
+Die Löschung selbst ist verdrahtet (`DELETE /api/user/delete`: anonymisiert
+statt hart zu löschen, damit die Buchführung intakt bleibt). Was fehlte, war
+das Dokument, das sagt, _wie lange_ was aufbewahrt wird — die erste Frage in
+jedem Datenschutz-Audit.
+
+| Datenart                                    | Frist                                                     | Grundlage                           | Mechanismus                                              |
+| ------------------------------------------- | --------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------- |
+| Stammdaten (`users`)                        | bis Löschantrag                                           | Art. 17 DSGVO                       | `/api/user/delete` — Anonymisierung, Auth-Konto entfernt |
+| Mitgliedschaften (`user_club_memberships`)  | bis Löschantrag                                           | Vertragserfüllung                   | dito, `is_active = false`                                |
+| Rechnungen, Zahlungen, Mahnungen            | **10 Jahre**                                              | § 147 AO, § 257 HGB (GoBD)          | bleiben erhalten, Personenbezug wird pseudonymisiert     |
+| SEPA-Mandate (`sepa_mandates`)              | 14 Monate nach letzter Abbuchung, dann Kontodaten löschen | SEPA-Rulebook                       | `/api/user/delete` überschreibt IBAN sofort bei Löschung |
+| Buchungen (`bookings`)                      | 3 Jahre                                                   | Verjährung § 195 BGB                | noch manuell                                             |
+| Trainerstunden, Anwesenheiten               | 10 Jahre                                                  | Abrechnungsgrundlage, § 147 AO      | bleiben erhalten                                         |
+| Audit-Protokoll (`audit_logs`)              | 1 Jahr                                                    | Nachweispflicht Art. 5 Abs. 2 DSGVO | Cron `/api/cron/prune-audit-logs`, wöchentlich           |
+| Benachrichtigungen, Nachrichten             | 2 Jahre                                                   | kein gesetzlicher Zwang             | noch manuell                                             |
+| Trainer-Notizen über Mitglieder             | bis Löschantrag                                           | berechtigtes Interesse              | `/api/user/delete` löscht sie hart                       |
+| Probetrainings-Anfragen (`trial_trainings`) | 6 Monate ohne Abschluss                                   | Zweckbindung                        | noch manuell                                             |
+| Serverprotokolle (Vercel, Sentry)           | 30 bzw. 90 Tage                                           | Vorgabe des Anbieters               | automatisch beim Anbieter                                |
+
+Die mit „noch manuell" markierten Fristen haben keinen automatischen Job. Das
+ist bewusst so festgehalten und nicht überspielt: eine Frist, die nirgends
+läuft, ist eine Absichtserklärung. Der nächste Schritt wäre, sie an
+`/api/cron/prune-audit-logs` anzuhängen.

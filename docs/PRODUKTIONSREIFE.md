@@ -1,6 +1,6 @@
 # Weg zur Produktionsreife
 
-> Zuletzt verifiziert: 18. August 2026
+> Zuletzt verifiziert: 18. August 2026 (Umsetzungsstand am Ende des Tages nachgetragen)
 >
 > Lebendes Dokument. **Der Plan** — was in welcher Reihenfolge passieren muss, damit SwingZ ein
 > Produkt ist, das ein Verein kauft, benutzt und behält.
@@ -349,18 +349,23 @@ Damit nicht jemand später denkt, es sei vergessen worden:
 
 ---
 
-## 7. Offene Entscheidungen — die brauche ich von dir
+## 7. Entscheidungen — getroffen am 18.08.2026
 
-Diese vier kann ich nicht aus dem Code beantworten, und sie ändern den Plan:
+Die vier offenen Punkte sind entschieden. Sie stehen hier als Begründung; verbindlich
+nachgeführt sind sie in `BUSINESS_RULES.md`.
 
-1. **Preis-Enforcement (3.1):** Hartes Gate ohne Abo, oder eine Testphase mit Ablaufdatum?
-   Testphase ist verkaufsfreundlicher und deutlich mehr Arbeit.
-2. **`users` cross-tenant (2.3):** Sollen Mitglieder Nutzer anderer Vereine sehen können?
-   Für den Partner-Finder über Vereinsgrenzen wäre es nötig; sonst zu.
-3. **Platzbelegung (4.1):** Welche der sieben Oberflächen ist die richtige? Ich habe eine
-   Empfehlung (`UnifiedCourtCalendar` unter `/scheduler`), aber das ist eine Produktentscheidung.
-4. **VPS (2.4/5.5):** Bleibt die selbstgehostete Supabase, oder wird auf Supabase Cloud
-   umgezogen? Das entscheidet, ob TLS und RLS-Rolle eine Woche Arbeit sind oder ein Häkchen.
+1. **Preis-Enforcement (3.1): hartes Gate, keine Testphase.** Wer nicht zahlen _muss_,
+   zahlt nicht. Umgesetzt — siehe `BUSINESS_RULES.md` § 6.
+2. **`users` cross-tenant (2.3): zu.** Mitglieder sehen keine Nutzer anderer Vereine. Eine
+   vereinsübergreifende Spielpartner-Suche ist damit bewusst ausgeschlossen. Der Code war
+   bereits so; jetzt ist es dokumentiert und durch einen Test belegt.
+3. **Platzbelegung (4.1): eine Seite pro Frage.** `/scheduler` mit `UnifiedCourtCalendar`
+   für „wer ist wann auf dem Platz", `/bookings` für „was habe ich". Abweichung von der
+   ursprünglichen Empfehlung: der persönliche Teil bleibt auf `/bookings`, weil fünf alte
+   Pfade bereits dorthin zeigen.
+4. **VPS (2.4/5.5): bleibt vorerst.** Umzug zu einem Anbieter später. Damit bleiben eigene
+   App-Rolle ohne BYPASSRLS und TLS-Erzwingung echte Arbeit und keine Häkchen — sie stehen
+   weiter in Phase 5.
 
 ---
 
@@ -403,3 +408,73 @@ Alles unter ✅ ist am 18.08.2026 so gemessen worden:
 | Keine DSGVO-Auskunftsroute     | `ls app/api/user/` → club, delete, me, member, notifications, roles      |
 | Sentry in `devDependencies`    | `package.json`; Verdrahtung in `next.config.js`, `lib/logger.ts`         |
 | 6 Cron-Jobs, 1 Heartbeat       | `vercel.json`; `app/api/health/route.ts` prüft nur `vps-backup`          |
+
+---
+
+## Anhang C — Umsetzungsstand 18.08.2026 (abends)
+
+Was an diesem Tag erledigt wurde, und was dabei über den Plan hinaus gefunden wurde.
+
+### Erledigt
+
+| ID  | Was                                                                                                     |
+| --- | ------------------------------------------------------------------------------------------------------- |
+| 0.1 | Arbeitsverzeichnis entflochten: Mitgliedsnummer, Plan-Dokument und Design-Vereinfachung in drei Commits |
+| 0.5 | Auslieferungsregel in `AGENTS.md` § Auslieferung festgehalten                                           |
+| 1.2 | Rohe DB-Fehler aus allen Antworten entfernt, `safeErrorMessage()`, Wächter-Test                         |
+| 1.3 | Migrations-Tracking geprüft: Baseline ist eingetragen, keine Differenz                                  |
+| 1.4 | Geprüft: nur `ops_heartbeats` hat RLS ohne Policy — bewusst, in `DATABASE.md` belegt                    |
+| 2.1 | `GET /api/user/export` (Art. 15 DSGVO) plus Klickweg im Profil                                          |
+| 2.2 | Geprüft und per Test belegt: Abrechnungstabellen sind pro Verein getrennt                               |
+| 2.3 | Entschieden, dokumentiert, per Test belegt                                                              |
+| 2.5 | Rechtstexte gegen `SERVICES.md` abgeglichen — drei Fehler korrigiert (s. u.)                            |
+| 2.6 | Löschkonzept mit Fristen je Datenart in `DATABASE.md`                                                   |
+| 3.1 | Pflicht-Abo statt Freemium; dabei den Grund gefunden, warum es nie funktionieren konnte (s. u.)         |
+| 3.5 | CSV-Exporte öffnen sich in deutschem Excel; kaputter Export-Link repariert                              |
+| 4.1 | Platzbelegung: zwei Seiten statt sieben, alte Pfade leiten um                                           |
+| 4.2 | E-Mail-Kanal aus der Oberfläche erreichbar gemacht (war von nirgendwo verlinkt)                         |
+| 4.5 | `fetchJson()` + `<ListState>`; vier Fail-open-Listen umgestellt                                         |
+| 4.6 | Denglisch aus den sichtbaren Texten                                                                     |
+| 4.7 | Mitgliedsnummer im eigenen Profil und im CSV-Export                                                     |
+| 5.1 | `@sentry/nextjs` nach `dependencies`                                                                    |
+| 5.3 | Totmannschalter für alle sechs Cron-Jobs, `monitor.yml` schlägt darauf an                               |
+| 5.6 | Support-Kanal und Reaktionszeit in `HANDBOOK.md`                                                        |
+
+### Über den Plan hinaus gefunden
+
+**Eine bezahlte Subscription konnte gar nicht gespeichert werden.** Der CHECK-Constraint
+`users_subscription_tier_check` kannte nur `free|pro|enterprise`, der Stripe-Webhook schreibt
+aber die Plan-Keys aus `lib/plans.ts`. Jedes UPDATE nach einem erfolgreichen Checkout schlug
+fehl — und weil der Webhook den Fehler nicht las, lautlos. Ein Kunde konnte bezahlen und blieb
+auf `free`. Gegen die lokale DB belegt, Constraint erweitert, beide Webhook-Handler prüfen
+jetzt ihren Fehler. Ohne diesen Fund hätte das Pflicht-Abo aus 3.1 niemanden je durchgelassen.
+
+**`/admin/email-campaigns` war aus der Oberfläche nicht erreichbar.** Nur die Umleitung von
+`/newsletters` zeigte darauf, und die verlinkte niemand.
+
+**Der Mitglieder-CSV-Export lieferte immer 400.** Er verlangte `clubId` als Pflichtparameter;
+die einzige Stelle, die ihn verlinkt, gab ihn nicht mit.
+
+**Die Datenschutzerklärung nannte den falschen Auftragsverarbeiter.** Dort stand „Supabase
+Inc. (Hosting in der EU)"; die Datenbank läuft selbstbetrieben auf dem manitu-VPS in
+Deutschland. Sentry und Upstash fehlten ganz. Beides korrigiert — sollte vor dem ersten
+zahlenden Kunden noch juristisch gegengelesen werden.
+
+**Zwei Befunde des Plans waren bereits erledigt.** 1.4 und 2.2 stammten aus älteren Audits;
+gegen die Datenbank geprüft stimmen sie nicht mehr. Beide sind jetzt durch Tests abgesichert,
+damit das so bleibt.
+
+### Offen geblieben — und warum
+
+| ID       | Warum nicht erledigt                                                                                   |
+| -------- | ------------------------------------------------------------------------------------------------------ |
+| 0.2–0.4  | Merge nach `main` und Deploy-Verifikation sind deine Entscheidung, nicht meine                         |
+| 1.1      | **E-Mail-Versand** — braucht einen echten Versand an eine echte Adresse und Zugang zu Resend           |
+| 2.4, 5.5 | VPS-Arbeit (App-Rolle ohne BYPASSRLS, TLS erzwingen) — braucht SSH-Zugriff                             |
+| 3.2, 3.3 | Onboarding-Probelauf — braucht einen Menschen ohne Vorwissen, das ist der ganze Sinn                   |
+| 3.4      | Vollständiger Rechnungslauf — hängt an 1.1                                                             |
+| 4.3      | Handy-Durchlauf mit Zeitmessung — braucht ein echtes Handy                                             |
+| 4.4, 4.5 | Nur die vier eindeutigen Listen umgestellt; ein vollständiger Durchgang durch alle Ansichten steht aus |
+| 5.2      | Sentry in Produktion prüfen — geht erst nach dem Deploy                                                |
+| 5.4      | Rücksicherung proben — braucht VPS und eine leere Datenbank                                            |
+| 6.1–6.6  | Phase 6 nicht angefangen                                                                               |

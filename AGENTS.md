@@ -125,6 +125,35 @@ npm run seed:reset    # komplett platt + alles neu (löscht auch die Nutzer-Lane
 
 `docs/TEST-CREDENTIALS.md` schreibt das Seed-Skript bei jedem Vollauf neu und ist per `.gitignore` ausgeschlossen (Klartext-Passwörter). Es ist damit ein generiertes Artefakt im Sinne der Regel oben — nicht von Hand editieren, nicht als lebendes Dokument pflegen. Wer Accounts wissen will, liest die Datei oder führt `npm run seed` aus.
 
+## Auslieferung
+
+Grund für diese Regel: Am 18.08.2026 lag der Arbeitsstand 50 Commits und 69
+geänderte Dateien vor `main`. Vercel deployt aus `main` — es lief in Produktion
+also nichts davon, darunter ein Sicherheitsfix und der Überwachungs-Workflow.
+`schedule` in GitHub Actions läuft ausschliesslich auf dem Standard-Branch;
+solange `monitor.yml` nicht auf `main` lag, fand **gar keine Überwachung
+statt**. Wochenlange Arbeit war unsichtbar, und niemand hätte einen Ausfall
+bemerkt.
+
+### 1. Kein Arbeitsstand älter als eine Woche ausserhalb von `main`
+
+Kleine Branches, häufig mergen. Ein Branch, der zwei Themen mischt, ist zwei
+Branches — das Entflechten im Nachhinein kostet mehr als das Trennen vorher.
+
+### 2. Ein Branch, ein Vorhaben
+
+Der Branchname sagt, worum es geht. Landen unterwegs andere Änderungen im
+Arbeitsverzeichnis, kommen sie in eigene Commits mit eigener Begründung, nicht
+in einen Klumpen.
+
+### 3. Nach dem Merge wird geprüft, nicht gehofft
+
+Ein Merge ist kein Deploy und ein Deploy ist kein Beleg. Nach dem Merge:
+Health-Endpunkt in Produktion abrufen und einmal nachsehen, ob der
+Monitor-Workflow tatsächlich gelaufen ist.
+
+---
+
 ## Konflikte
 
 Widerspricht dieses Dokument `CLAUDE.md` (oder einer äquivalenten Config-Datei eines anderen Tools) in einer nicht-Doku-Frage, gilt `CLAUDE.md`. In Doku-Governance-Fragen gilt dieses Dokument.

@@ -104,6 +104,31 @@ Details: [`dev/feature-flags.md`](./handbook/dev/feature-flags.md). Master-Regis
 - [`dev/testing-strategy.md`](./handbook/dev/testing-strategy.md) — Vitest + Playwright + E2E
 - [`dev/background-jobs.md`](./handbook/dev/background-jobs.md) — Jobs-Runner, Cron, Race-Conditions
 
+### Support — ein Kanal, eine zugesagte Zeit
+
+| Anliegen                 | Adresse                    | Zusage                              |
+| ------------------------ | -------------------------- | ----------------------------------- |
+| Alles Fachliche          | `support@swingz.cloud`     | Antwort binnen 24 h an Werktagen    |
+| Fehlermeldungen          | `bugs@swingz.cloud`        | wie oben                            |
+| Datenschutz (Art. 15/17) | `datenschutz@swingz.cloud` | gesetzlich 1 Monat, Ziel 5 Werktage |
+
+`support@swingz.cloud` ist der Kanal, auf den `/support` und `/contact`
+zeigen — die 24-Stunden-Zusage steht dort wörtlich auf der Seite und ist
+damit gegenüber dem Kunden verbindlich. Wer sie ändert, ändert beides.
+
+Auskunft und Löschung müssen nicht über den Support laufen: das Mitglied löst
+beides selbst im Profil aus (`/api/user/export`, `/api/user/delete`).
+
+### Überwachung
+
+`.github/workflows/monitor.yml` prüft alle 30 Minuten `/api/health` und den
+Supabase-Zugang auf dem VPS und schickt bei Fehlschlag eine Mail an den
+Repository-Besitzer. Geprüft werden Erreichbarkeit, die Datenbankschicht und
+das Alter jedes geplanten Jobs (Liste in `lib/ops-heartbeat.ts`).
+
+⚠️ `schedule` in GitHub Actions läuft **nur auf dem Standard-Branch**. Solange
+der Workflow nicht auf `main` liegt, findet keine Überwachung statt.
+
 ---
 
 ## 🧰 Glossar

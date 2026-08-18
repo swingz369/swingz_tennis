@@ -206,8 +206,16 @@ export default function AVVPage() {
               </thead>
               <tbody>
                 <tr>
-                  <td>Supabase</td>
-                  <td>Datenbank, Authentifizierung, Datei-Storage</td>
+                  <td>manitu GmbH</td>
+                  <td>
+                    Serverhosting für Datenbank, Authentifizierung und Datei-Storage
+                    (selbstbetriebene Supabase-Instanz)
+                  </td>
+                  <td>Deutschland (St. Wendel); kein Drittlandtransfer</td>
+                </tr>
+                <tr>
+                  <td>Upstash</td>
+                  <td>Zwischenspeicher für die Begrenzung der Zugriffsrate (IP-Adressen)</td>
                   <td>EU-Region; ggf. Drittlandtransfer über SCC abgesichert</td>
                 </tr>
                 <tr>

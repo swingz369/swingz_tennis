@@ -163,11 +163,21 @@ export default function DatenschutzPage() {
             </p>
             <ul>
               <li>
-                <strong>Supabase Inc.</strong> — Datenbank- und Authentifizierungs-Infrastruktur
-                (Hosting in der EU)
+                <strong>manitu GmbH</strong> (St. Wendel, Deutschland) — Serverhosting der Datenbank
+                und der Authentifizierung. Die eingesetzte Supabase-Software wird von uns selbst auf
+                diesem Server betrieben; die Daten verlassen Deutschland dabei nicht.
               </li>
               <li>
                 <strong>Vercel Inc.</strong> — Hosting der Anwendung
+              </li>
+              <li>
+                <strong>Functional Software, Inc. (Sentry)</strong> — Fehlerüberwachung der
+                Anwendung. Übermittelt werden technische Fehlerdaten; personenbezogene Daten nur,
+                soweit sie Teil einer Fehlermeldung sind.
+              </li>
+              <li>
+                <strong>Upstash, Inc.</strong> — Zwischenspeicher für die Begrenzung der
+                Zugriffsrate (speichert kurzzeitig IP-Adressen zur Abwehr von Missbrauch)
               </li>
               <li>
                 <strong>Stripe Payments Europe, Ltd.</strong> — Zahlungsabwicklung

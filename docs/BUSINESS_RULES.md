@@ -102,10 +102,70 @@ Passwörter: siehe `TEST-CREDENTIALS.md` (nicht in Git einchecken).
 
 ## 6. Billing & Stripe
 
-- Zwei Preispläne: **Starter** (€29/Monat) und **Professional** (€79/Monat).
+### Pflicht-Abo — kein Freemium, keine Testphase
+
+**Der Vereinsbereich ist kostenpflichtig ab dem ersten Tag.** Es gibt bewusst
+keine Probephase: wer nicht zahlen _muss_, zahlt nicht — das ist keine
+Feature-Frage, sondern das Geschäftsmodell. Entscheidung vom 18.08.2026.
+
+Konkret (siehe `lib/subscription-gate.ts`):
+
+| Zustand    | Bedeutung                             | Was der Kunde sieht               |
+| ---------- | ------------------------------------- | --------------------------------- |
+| `ok`       | bezahltes, laufendes Abo              | den Vereinsbereich                |
+| `past_due` | Abbuchung gescheitert                 | Sperre mit Link ins Stripe-Portal |
+| `none`     | kein Abo (`subscription_tier='free'`) | Sperre mit Tarifauswahl           |
+
+Die Sperre greift **nach** der Onboarding-Weiche: ein Neukunde durchläuft
+erst den Einrichtungs-Wizard und sieht, was er kauft; danach steht die Kasse.
+`/admin/subscription` und `/superadmin/subscription` liegen deshalb ausserhalb
+der `(gated)`-Gruppe — sonst führte die Sperre auf eine gesperrte Seite.
+
+Nicht betroffen: Mitglieder und Trainer (die zahlen nichts) sowie
+Plattform-Personal (`owner`).
+
+### Preispläne
+
+Vier Pläne, Quelle ist `lib/plans.ts`:
+
+| Key        | Name           | Preis/Monat | Für                |
+| ---------- | -------------- | ----------- | ------------------ |
+| `solo_s`   | Starter        | 29 €        | bis 200 Mitglieder |
+| `solo_l`   | Professional   | 49 €        | ab 201 Mitglieder  |
+| `school_s` | Tennisschule S | 79 €        | bis 5 Vereine      |
+| `school_l` | Tennisschule L | 99 €        | mehr als 5 Vereine |
+
+Solo-Pläne rechnet der Admin ab, Schul-Pläne der Superadmin. Ein Verein, der
+zu einer Tennisschule gehört, sieht deshalb keinen eigenen Abo-Eintrag.
+
+### Sonstiges
+
 - Stripe-Checkout wird client-seitig über `@/lib/stripe/client.ts` initiiert (gibt `null` zurück wenn nicht konfiguriert).
 - Webhook-Verarbeitung über `@/lib/stripe/stripe-client.ts` (wirft Fehler wenn nicht konfiguriert — bewusst streng).
 - SEPA-Lastschrift: PAIN.008-XML-Export unter `/admin/billing/sepa`.
+- Die Webhook-Handler prüfen ihre Datenbank-Updates auf Fehler und werfen bei
+  einem Fehlschlag, damit Stripe erneut zustellt. Grund: bis 18.08.2026 kannte
+  der CHECK-Constraint auf `users.subscription_tier` die Plan-Keys nicht, jedes
+  Update nach einem Checkout schlug fehl — und lautlos, weil niemand den Fehler
+  las. Ein Kunde konnte bezahlen und blieb auf `free`.
+
+---
+
+## 6a. Sichtbarkeit über Vereinsgrenzen
+
+**Mitglieder sehen ausschliesslich Nutzer aus ihren eigenen Vereinen.**
+Entscheidung vom 18.08.2026. Damit ist eine vereinsübergreifende
+Spielpartner-Suche bewusst ausgeschlossen — der Partner-Finder arbeitet
+innerhalb eines Vereins.
+
+Durchgesetzt wird das von der RLS-Policy `Members can view club members` auf
+`public.users` über die Funktion `shares_active_club_with()`. Ebenso getrennt
+sind die Abrechnungstabellen: ein Superadmin mit drei Vereinen sieht die
+Zahlen jedes Vereins nur einzeln.
+
+Nachgewiesen (nicht behauptet) durch
+`src/__tests__/integration/cross-tenant-isolation.test.ts`; Details in
+`docs/DATABASE.md`.
 
 ---
 
