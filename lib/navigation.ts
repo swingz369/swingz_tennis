@@ -126,7 +126,17 @@ export function adminSidebarSections(hidden: Hidden, belongsToTennisschule = fal
       label: 'Verein',
       icon: Landmark,
       items: [
+        // Zwei Kanaele, benannt nach dem Kanal (PRODUKTIONSREIFE.md 4.2):
+        // /messages ist die Nachricht in der App — an eine Person oder an
+        // alle. /admin/email-campaigns ist der Weg ins Postfach. Wer die
+        // Namen nach dem Zweck benennt ("Newsletter", "Rundschreiben"), zwingt
+        // den Vorstand zu raten, welcher der richtige ist.
+        //
+        // /admin/email-campaigns war bis zum 18.08.2026 aus der Oberflaeche
+        // gar nicht erreichbar — nur die Umleitung von /newsletters zeigte
+        // darauf, und die verlinkte niemand.
         { name: 'Nachrichten', href: '/messages' },
+        { name: 'E-Mail an Mitglieder', href: '/admin/email-campaigns' },
         { name: 'Vereinseinstellungen', href: '/admin/settings' },
         { name: 'Auswertungen', href: '/admin/analytics' },
         { name: 'Dokumente', href: '/admin/documents' },
