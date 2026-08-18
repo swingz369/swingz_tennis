@@ -52,10 +52,12 @@ function Cell({ item }: { item: KpiBandItem }) {
           </span>
         )}
       </dd>
+      {/* Ohne `font-mono`: der Zusatz ist ein Satz („nichts offen"), keine
+          Zahlenkolonne. In Konsolenschrift gesetzt sah das ganze Band nach
+          Log-Ausgabe aus — die Zahl darüber richtet sich über `tabular-nums`
+          aus, dafür braucht es keine zweite Schrift. */}
       {item.sub && (
-        <p className={cn('mt-2 font-mono text-xs font-semibold', toneClass[item.tone ?? 'flat'])}>
-          {item.sub}
-        </p>
+        <p className={cn('mt-2 text-xs font-medium', toneClass[item.tone ?? 'flat'])}>{item.sub}</p>
       )}
     </>
   );

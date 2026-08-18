@@ -115,7 +115,7 @@ export function SeasonProgressCard({ season }: { season: SeasonProgress }) {
         className="pointer-events-none absolute -bottom-16 -right-12 h-44 w-44 rounded-full border-2 border-white/10"
       />
 
-      <p className="relative font-mono text-2xs font-semibold uppercase tracking-[0.13em] text-brand-accent">
+      <p className="relative tabular-nums text-2xs font-semibold uppercase tracking-[0.13em] text-brand-accent">
         {season.name}
       </p>
       <h3 className="relative mt-2 text-lg font-semibold tracking-[-0.025em]">{copy.title}</h3>
@@ -141,7 +141,7 @@ export function SeasonProgressCard({ season }: { season: SeasonProgress }) {
               style={{ width: `${pct}%` }}
             />
           </div>
-          <p className="relative mt-2 font-mono text-[11px] text-white/60">
+          <p className="relative mt-2 tabular-nums text-[11px] text-white/60">
             {pct} %{deadline && ` · ${deadline}`}
           </p>
         </>
@@ -164,7 +164,7 @@ export function SeasonProgressCard({ season }: { season: SeasonProgress }) {
               style={{ width: `${weeks.pct}%` }}
             />
           </div>
-          <p className="relative mt-2 font-mono text-[11px] text-white/60">
+          <p className="relative mt-2 tabular-nums text-[11px] text-white/60">
             {weeks.pct} % · {weeks.label}
           </p>
         </>

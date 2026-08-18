@@ -150,8 +150,11 @@ export function StatCard({
         // `h-full`: Karten mit Sparkline oder zweiter Zeile sind höher als die
         // übrigen. Ohne das blieben die kürzeren oben kleben statt die Zeilenhöhe
         // mitzugehen — die KPI-Reihe wirkte dadurch ausgefranst.
-        'h-full bg-card dark:bg-card border border-border dark:border-white/10 rounded-xl shadow-sm cursor-pointer group transition-colors',
-        colors.border,
+        'h-full bg-card dark:bg-card border border-border dark:border-white/10 rounded-xl group transition-colors',
+        // `cursor-pointer` nur, wenn die Karte auch wirklich irgendwohin führt —
+        // vorher zeigte jede Kennzahl eine Hand, auch die ohne Ziel.
+        href && 'cursor-pointer',
+        href && colors.border,
         // Hervorgehobene Karte trägt die Aktionsfarbe, nicht den Signal-Ocker:
         // eine ockerne Oberkante neben einem grünen Kennzahlenband las sich wie
         // eine Warnung, gemeint war „das hier zuerst".
@@ -164,13 +167,19 @@ export function StatCard({
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
+            <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground">
               {label}
             </p>
             <div className="flex items-baseline gap-2 mt-1.5">
+              {/* Zahl in der Textschrift, nicht in Mono: Mono war hier kein
+                  Argument für Lesbarkeit (`tabular-nums` leistet die Ausrichtung
+                  bereits), sondern nur ein Stilmittel — und eine Konsolenschrift
+                  auf einem Vereins-Dashboard sagt „Entwicklerwerkzeug".
+                  Grösser und mit enger Laufweite, damit die Zahl das ist, was
+                  man zuerst sieht — sie ist der Grund für die Karte. */}
               <p
                 className={cn(
-                  'text-2xl font-bold font-mono text-foreground dark:text-white tabular-nums',
+                  'text-[32px] font-semibold leading-none tracking-[-0.04em] text-foreground dark:text-white tabular-nums',
                   valueClassName
                 )}
               >
@@ -201,15 +210,10 @@ export function StatCard({
               <Sparkline points={trend} className={cn('mt-2', colors.text)} />
             )}
           </div>
-          <div
-            className={cn(
-              'flex h-10 w-10 items-center justify-center rounded-xl shrink-0',
-              colors.bg,
-              iconClassName
-            )}
-          >
-            <Icon className={cn('h-5 w-5', colors.text)} />
-          </div>
+          {/* Icon ohne getönte Kachel und ohne Signalfarbe: es benennt die
+              Kennzahl, es meldet nichts. Farbe bleibt der Sparkline und dem
+              Badge vorbehalten — also dem, was tatsächlich einen Zustand hat. */}
+          <Icon className={cn('h-4 w-4 shrink-0 text-muted-foreground/70', iconClassName)} />
         </div>
       </div>
     </div>

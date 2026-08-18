@@ -203,10 +203,6 @@ export const shadows = {
   },
 };
 
-export const gradients = {
-  // Nur `hero` wird noch verdrahtet (tailwind.config.ts → bg-gradient-hero).
-  // Die übrigen Verläufe (primary/accent/mesh/aurora/glass/text …) waren
-  // Reste der alten blauen Marke (hsl 206) und wurden am 16.08.2026 entfernt —
-  // sie standen in keiner Utility mehr und widersprachen der Grün/Gold-Palette.
-  hero: 'linear-gradient(160deg, hsl(206 100% 18%) 0%, hsl(206 100% 31%) 40%, hsl(204 85% 45%) 100%)',
-};
+// `gradients` entfiel am 18.08.2026: der einzige verbliebene Verlauf (`hero`)
+// führte noch die alte blaue Marke (hsl 206) und stand in keiner Utility mehr.
+// Die Auth-Seiten bringen ihre Verläufe direkt in globals.css mit.

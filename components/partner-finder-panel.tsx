@@ -278,9 +278,7 @@ export function PartnerFinderPanel({ showAdminBadge }: PartnerFinderPanelProps =
                           >
                             {match.compatibilityScore}
                           </span>
-                          <span className="text-3xs text-muted-foreground uppercase tracking-wider">
-                            Score
-                          </span>
+                          <span className="text-3xs text-muted-foreground">Score</span>
                         </div>
                       </div>
 

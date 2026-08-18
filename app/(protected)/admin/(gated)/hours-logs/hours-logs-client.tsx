@@ -361,25 +361,25 @@ export default function HoursLogsClient() {
               <table className="w-full">
                 <thead className="bg-muted dark:bg-muted">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground">
                       Trainer
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground">
                       Datum
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground">
                       Zeit
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-foreground dark:text-foreground">
                       Stunden
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider hidden md:table-cell">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground hidden md:table-cell">
                       Notizen
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-foreground dark:text-foreground">
                       Aktionen
                     </th>
                   </tr>

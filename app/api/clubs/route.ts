@@ -5,10 +5,13 @@ import { createClient } from '@/infrastructure/external/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { buildPaginationMeta } from '@/lib/pagination';
+import { ALL_LIMIT, buildPaginationMeta } from '@/lib/pagination';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:clubs');
+
+/** Seitengrösse, wenn der Aufrufer keine nennt. */
+const DEFAULT_CLUB_LIMIT = 25;
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -24,14 +27,21 @@ export async function GET(req: NextRequest) {
       // Use Supabase directly instead of repository to avoid domain layer issues
       const supabase = await createClient();
 
-      // Pagination params
+      // Pagination, Suche und Filter — alles serverseitig, damit die Zählung
+      // in der Oberfläche stimmt. Vorher filterte die Vereinsübersicht die
+      // 20 gelieferten Zeilen im Browser weiter und nannte das Ergebnis
+      // „alle Vereine".
       const url = new URL(req.url);
       const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1);
-      const limit = Math.min(
-        100,
-        Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10) || 20)
-      );
+      const limitRaw = url.searchParams.get('limit') || '';
+      const limit =
+        limitRaw === 'all'
+          ? ALL_LIMIT
+          : Math.min(ALL_LIMIT, Math.max(1, parseInt(limitRaw, 10) || DEFAULT_CLUB_LIMIT));
       const offset = (page - 1) * limit;
+      const search = (url.searchParams.get('search') || '').trim();
+      const status = url.searchParams.get('status') || 'all';
+      const sort = url.searchParams.get('sort') === 'name' ? 'name' : 'created_at';
 
       // CRITICAL: Scope clubs based on user role
       // - Owner: sees ALL clubs
@@ -43,9 +53,22 @@ export async function GET(req: NextRequest) {
       let clubsQuery = supabase
         .from('clubs')
         .select('id, name, status, max_members, created_at')
-        .order('created_at', { ascending: false });
+        .order(sort, { ascending: sort === 'name' });
 
       let countQuery = supabase.from('clubs').select('id', { count: 'exact', head: true });
+
+      if (search) {
+        // `%` und `_` sind in ILIKE Platzhalter — ohne Maskierung würde die
+        // Suche nach „TC_Rot" auch „TCxRot" finden.
+        const pattern = `%${search.replace(/[%_]/g, (c) => `\\${c}`)}%`;
+        clubsQuery = clubsQuery.ilike('name', pattern);
+        countQuery = countQuery.ilike('name', pattern);
+      }
+
+      if (status !== 'all') {
+        clubsQuery = clubsQuery.eq('status', status);
+        countQuery = countQuery.eq('status', status);
+      }
 
       if (!isOwner) {
         // Filter to clubs where user has membership (covers superadmin's
@@ -102,6 +125,7 @@ export async function GET(req: NextRequest) {
           status: c.status || 'active',
           memberCount: memberCounts[c.id] || 0,
           maxMembers: c.max_members || 100,
+          createdAt: c.created_at,
         })),
         pagination,
       });

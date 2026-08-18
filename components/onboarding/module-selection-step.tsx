@@ -212,7 +212,7 @@ export function ModuleSelectionStep({
                     und wurde in der schmalen Kachel sonst abgeschnitten. */}
                 <h3 className="font-semibold text-foreground break-words">{feature.label}</h3>
                 {isCore && (
-                  <span className="inline-flex items-center gap-1 text-2xs font-medium uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                  <span className="inline-flex items-center gap-1 text-2xs font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded">
                     <Lock className="h-2.5 w-2.5" />
                     Pflicht
                   </span>
@@ -256,17 +256,13 @@ export function ModuleSelectionStep({
 
       {/* Core features */}
       <div>
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Grundfunktionen
-        </h3>
+        <h3 className="text-sm font-semibold text-muted-foreground mb-3">Grundfunktionen</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{coreFeatures.map(renderCard)}</div>
       </div>
 
       {/* Optional features */}
       <div>
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Optionale Module
-        </h3>
+        <h3 className="text-sm font-semibold text-muted-foreground mb-3">Optionale Module</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {optionalFeatures.map(renderCard)}
         </div>

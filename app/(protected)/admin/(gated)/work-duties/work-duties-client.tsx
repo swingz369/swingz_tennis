@@ -571,7 +571,7 @@ export default function WorkDutiesClient({
                       {/* Assigned Members */}
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          <h4 className="text-xs font-semibold text-muted-foreground">
                             Zugewiesene Mitglieder
                           </h4>
                           {duty.status !== 'completed' && duty.status !== 'cancelled' && (
@@ -887,9 +887,7 @@ export default function WorkDutiesClient({
 
             {/* Template fields */}
             <div className="space-y-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block">
-                Vorlage
-              </span>
+              <span className="text-xs font-semibold text-muted-foreground block">Vorlage</span>
               <div>
                 <label htmlFor="bulk-title" className="text-xs font-medium">
                   Titel *
@@ -993,7 +991,7 @@ export default function WorkDutiesClient({
 
             {/* Date range */}
             <div className="space-y-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block">
+              <span className="text-xs font-semibold text-muted-foreground block">
                 Zeitraum & Wiederholung
               </span>
               <div className="grid grid-cols-2 gap-3">

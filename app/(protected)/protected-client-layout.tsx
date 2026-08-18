@@ -137,18 +137,25 @@ export function ProtectedClientLayout({
             />
           )}
           <div className="flex min-w-0 flex-1 flex-col">
-            {/* Über dem Header: solange ein Owner einen fremden Verein
-                verwaltet, muss das ständig sichtbar sein — nicht in der
-                Navigation versteckt. */}
-            <OwnerClubBanner
-              roles={user.roles ?? []}
-              clubName={
-                (user.clubs ?? []).find((c) => c.id === user.selectedClubId)?.name ??
-                user.club?.name ??
-                null
-              }
-            />
-            <Header user={user} onMenuClick={() => setSidebarOpen((prev) => !prev)} />
+            {/* Banner und Header hängen gemeinsam am oberen Rand.
+                Vorher trug jeder für sich `sticky top-0 z-50`: zwei Elemente,
+                die an dieselbe Kante wollen, stapeln nicht — das später im DOM
+                stehende (der Header) legt sich beim Scrollen über das frühere.
+                Der Owner-Banner verschwand dadurch hinter dem Header, obwohl
+                er technisch „klebte". Ein gemeinsamer Sticky-Block hält beide
+                sichtbar, ohne dass irgendwo eine Bannerhöhe als Offset
+                hartkodiert werden muss (er bricht auf Mobile um). */}
+            <div className="sticky top-0 z-50">
+              <OwnerClubBanner
+                roles={user.roles ?? []}
+                clubName={
+                  (user.clubs ?? []).find((c) => c.id === user.selectedClubId)?.name ??
+                  user.club?.name ??
+                  null
+                }
+              />
+              <Header user={user} onMenuClick={() => setSidebarOpen((prev) => !prev)} />
+            </div>
             <main
               id="main-content"
               className="flex-1 bg-background p-4 md:p-6 lg:p-8 pb-20 md:pb-6"

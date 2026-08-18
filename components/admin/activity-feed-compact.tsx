@@ -104,7 +104,7 @@ export function ActivityFeedCompact({
               </div>
               <time
                 dateTime={item.startISO}
-                className="shrink-0 text-xs font-mono tabular-nums text-muted-foreground whitespace-nowrap"
+                className="shrink-0 text-xs tabular-nums text-muted-foreground whitespace-nowrap"
               >
                 {formatRelativeTime(item.startISO)}
               </time>

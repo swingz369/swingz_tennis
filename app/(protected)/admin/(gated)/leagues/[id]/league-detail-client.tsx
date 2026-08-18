@@ -761,7 +761,7 @@ export default function LeagueDetailClient({
                 value={leagueForm.nuliga_url}
                 onChange={(e) => setLeagueForm({ ...leagueForm, nuliga_url: e.target.value })}
                 placeholder="https://htv.liga.nu/cgi-bin/WebObjects/..."
-                className="mt-1 font-mono text-xs"
+                className="mt-1 tabular-nums text-xs"
               />
             </div>
             <div>
@@ -1046,9 +1046,7 @@ export default function LeagueDetailClient({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="text-center min-w-[3rem]">
-                          <div className="text-2xs text-muted-foreground uppercase tracking-wider">
-                            Spieltag
-                          </div>
+                          <div className="text-2xs text-muted-foreground">Spieltag</div>
                           <div className="text-xl font-bold text-primary">{md.matchday_number}</div>
                         </div>
                         <div>
@@ -1270,7 +1268,7 @@ export default function LeagueDetailClient({
                     value={nuligaUrl}
                     onChange={(e) => setNuligaUrl(e.target.value)}
                     placeholder="https://htv.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/groupPage?championship=...&group=..."
-                    className="mt-1 font-mono text-xs"
+                    className="mt-1 tabular-nums text-xs"
                   />
                   <p className="text-2xs text-muted-foreground mt-1">
                     URL muss von *.liga.nu stammen (z.B. htv.liga.nu, btv.liga.nu)
@@ -1452,7 +1450,7 @@ export default function LeagueDetailClient({
                     onChange={(e) => setImportCsv(e.target.value)}
                     placeholder="Spieltag;Datum;Gegner;Heim/Auswärts;...&#10;1;15.03.2026;TC Musterstadt;Heim;..."
                     rows={5}
-                    className="w-full mt-1 p-2 rounded border bg-background text-sm font-mono resize-none"
+                    className="w-full mt-1 p-2 rounded border bg-background text-sm tabular-nums resize-none"
                   />
                 </div>
                 <div className="flex gap-2 justify-end">
@@ -1596,7 +1594,7 @@ export default function LeagueDetailClient({
                   value={rosterUrl}
                   onChange={(e) => setRosterUrl(e.target.value)}
                   placeholder="https://htv.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/teamPortrait?teamtable=..."
-                  className="font-mono text-xs"
+                  className="tabular-nums text-xs"
                 />
                 <Button size="sm" onClick={handleRosterSync} disabled={rosterSyncing}>
                   {rosterSyncing ? 'Lade…' : 'Abrufen'}
@@ -1621,7 +1619,7 @@ export default function LeagueDetailClient({
                 <Card key={p.id}>
                   <CardContent className="p-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-mono tabular-nums text-muted-foreground w-6">
+                      <span className="text-sm tabular-nums text-muted-foreground w-6">
                         {p.position_number ?? '–'}
                       </span>
                       <span className="text-sm font-medium">{p.name}</span>
@@ -1694,7 +1692,7 @@ export default function LeagueDetailClient({
                     .sort((a, b) => (a.position ?? 999) - (b.position ?? 999))
                     .map((team, idx) => (
                       <TableRow key={team.id}>
-                        <TableCell className="font-mono text-muted-foreground">
+                        <TableCell className="tabular-nums text-muted-foreground">
                           {team.position ?? idx + 1}
                         </TableCell>
                         <TableCell className="font-medium">{team.name}</TableCell>

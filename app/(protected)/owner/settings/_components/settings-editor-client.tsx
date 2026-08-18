@@ -151,9 +151,7 @@ export function SettingsEditorClient({ settings }: { settings: EditableSetting[]
           <div className="space-y-6">
             {Object.entries(grouped).map(([category, items]) => (
               <div key={category}>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                  {category}
-                </p>
+                <p className="text-xs font-semibold text-muted-foreground mb-2">{category}</p>
                 <div className="space-y-2">
                   {items.map((s) => {
                     const isEditing = editingKey === s.key;

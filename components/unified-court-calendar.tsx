@@ -242,11 +242,7 @@ function DraggableSessionCard({
             : 'bg-info-50 text-info-800 hover:shadow-md border-l-[3px] border-info-500 cursor-grab active:cursor-grabbing'
       }`}
     >
-      {isCancelled && (
-        <div className="text-3xs font-semibold text-error-600 uppercase tracking-wide mb-0.5">
-          Abgesagt
-        </div>
-      )}
+      {isCancelled && <div className="text-3xs font-semibold text-error-600 mb-0.5">Abgesagt</div>}
       <div className="flex items-center gap-1.5">
         <GripVertical className="h-3 w-3 text-info-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
         <span className="font-bold truncate text-2xs">{session.trainerName || 'Trainer'}</span>
@@ -390,9 +386,7 @@ function PositionedSessionBlock({
       }}
     >
       {isCancelledSession && (
-        <div className="text-3xs font-semibold text-error-600 uppercase tracking-wide mb-0.5">
-          Abgesagt
-        </div>
+        <div className="text-3xs font-semibold text-error-600 mb-0.5">Abgesagt</div>
       )}
       <div className="flex items-start justify-between gap-1">
         <div className="flex items-center gap-1.5 min-w-0">
@@ -1448,9 +1442,7 @@ export default function UnifiedCourtCalendar({
                     : 'bg-muted/50 text-muted-foreground hover:bg-muted'
               }`}
             >
-              <span className="text-2xs uppercase tracking-wide opacity-80">
-                {format(day, 'EEE', { locale: de })}
-              </span>
+              <span className="text-2xs opacity-80">{format(day, 'EEE', { locale: de })}</span>
               <span className="text-base font-bold mt-0.5 tabular-nums">{format(day, 'd')}</span>
             </button>
           );

@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { ArrowUpRight } from 'lucide-react';
 import { IconBox, type IconBoxVariant } from '@/components/ui/icon-box';
 import type { LucideIcon } from 'lucide-react';
 
@@ -31,33 +30,31 @@ export function QuickActions({
   if (mode === 'detailed') {
     return (
       <div className={className}>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
-          {label}
-        </p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <h2 className="text-sm font-semibold text-foreground mb-3">{label}</h2>
+        {/* Ein zusammenhängendes Raster statt einzeln schwebender Kacheln: eine
+            Umrandung aussen, Haarlinien innen. Das ist dieselbe Idee wie beim
+            KPI-Band — die Gruppe ist ein Objekt, nicht n Objekte. */}
+        {/* Haarlinien als `ring` je Zelle, nicht als Rand oder als Lücke über
+            einem gefärbten Grund: Ringe liegen ausserhalb der Box und
+            überlappen sich mit denen der Nachbarzelle zu einer einzigen Linie,
+            und der äussere Ring wird vom `overflow-hidden` des Rahmens
+            weggeschnitten. Das bleibt beim Umbruch von 4 auf 2 Spalten richtig
+            — und eine unbesetzte Zelle bleibt leer, statt (wie bei der
+            gefärbten Lücke) als grauer Block stehenzubleiben. */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 rounded-xl border border-border dark:border-white/10 overflow-hidden">
           {actions.map((action) => (
-            <Link key={action.href + action.label} href={action.href}>
-              <div className="border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group rounded-xl h-full">
-                <div className="p-5 flex flex-col gap-3 h-full">
-                  <IconBox
-                    icon={action.icon}
-                    variant={action.variant ?? 'light'}
-                    className="group-hover:scale-105 transition-transform"
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-foreground dark:text-white">
-                      {action.label}
-                    </p>
-                    {action.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{action.description}</p>
-                    )}
-                  </div>
-                  <div className="mt-auto flex items-center gap-1">
-                    <span className="text-xs font-medium text-brand-light">Öffnen</span>
-                    <ArrowUpRight className="h-3 w-3 text-brand-light" />
-                  </div>
-                </div>
-              </div>
+            <Link
+              key={action.href + action.label}
+              href={action.href}
+              className="flex flex-col gap-1 bg-card p-4 ring-1 ring-border dark:ring-white/10 transition-colors hover:bg-muted/60"
+            >
+              <IconBox icon={action.icon} size="sm" variant={action.variant ?? 'light'} />
+              <p className="mt-1 text-sm font-semibold text-foreground dark:text-white">
+                {action.label}
+              </p>
+              {action.description && (
+                <p className="text-xs text-muted-foreground">{action.description}</p>
+              )}
             </Link>
           ))}
         </div>
@@ -68,23 +65,16 @@ export function QuickActions({
   // Compact mode — icon grid for member/trainer
   return (
     <div className={className}>
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
-        {label}
-      </p>
-      <div className="grid grid-cols-3 gap-2.5">
+      <h2 className="text-sm font-semibold text-foreground mb-3">{label}</h2>
+      <div className="grid grid-cols-3 sm:grid-cols-4 rounded-xl border border-border dark:border-white/10 overflow-hidden">
         {actions.map((action) => (
           <Link
             key={action.href + action.label}
             href={action.href}
-            className="flex flex-col items-center gap-2 p-3.5 rounded-xl border border-border dark:border-white/10 shadow-sm hover:border-brand-light/30 hover:shadow-md transition-all active:scale-95 group"
+            className="flex flex-col items-center gap-2 bg-card px-2 py-4 ring-1 ring-border dark:ring-white/10 transition-colors hover:bg-muted/60 active:bg-muted"
           >
-            <IconBox
-              icon={action.icon}
-              size="md"
-              variant={action.variant ?? 'light'}
-              className="group-hover:scale-110 transition-transform duration-300"
-            />
-            <span className="text-2xs font-semibold text-center leading-tight text-muted-foreground group-hover:text-foreground transition-colors">
+            <IconBox icon={action.icon} size="md" variant={action.variant ?? 'light'} />
+            <span className="text-xs font-medium text-center leading-tight text-foreground">
               {action.label}
             </span>
           </Link>

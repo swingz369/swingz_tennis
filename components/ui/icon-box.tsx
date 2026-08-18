@@ -42,41 +42,55 @@ export interface IconBoxProps {
   iconClassName?: string;
 }
 
+// Der Container hat keine eigene Grösse mehr — er umschliesst das Icon.
+// Vorher spannte er eine getönte Kachel auf (h-10 w-10 um ein 20-px-Icon);
+// ohne Fläche wäre eine feste Kachelgrösse nur noch ein Loch im Layout.
 const sizeClasses: Record<IconBoxSize, { container: string; icon: string }> = {
-  xs: {
-    container: 'h-7 w-7 rounded-xl',
-    icon: 'h-3.5 w-3.5',
-  },
-  sm: {
-    container: 'h-8 w-8 rounded-xl',
-    icon: 'h-4 w-4',
-  },
-  md: {
-    container: 'h-10 w-10 rounded-xl',
-    icon: 'h-5 w-5',
-  },
-  lg: {
-    container: 'h-14 w-14 rounded-xl',
-    icon: 'h-7 w-7',
-  },
+  xs: { container: '', icon: 'h-3.5 w-3.5' },
+  sm: { container: '', icon: 'h-4 w-4' },
+  md: { container: '', icon: 'h-5 w-5' },
+  lg: { container: '', icon: 'h-6 w-6' },
 };
 
+/**
+ * ── Farbdisziplin (18.08.2026) ──
+ *
+ * Vorher trug jede Variante eine eigene getönte Kachel: `Buchen` blau,
+ * `Trainer` türkis, `Rechnungen` violett, `Turniere` bernstein — zwölf
+ * Pastellflächen nebeneinander, deren Farbe nichts bedeutete. Genau das ist
+ * das Muster, an dem man generierte Oberflächen erkennt: Farbe als Dekoration
+ * statt als Aussage.
+ *
+ * Jetzt gilt: **Farbe nur, wo sie etwas sagt.** Die dekorativen Varianten
+ * (blue/purple/teal/indigo/light/gray) laufen alle auf denselben ruhigen Ton
+ * zusammen, die semantischen (green/amber/red/rose/orange) behalten ihre
+ * Signalfarbe. Die Kachel selbst ist weg — ein Icon braucht keinen eigenen
+ * Hintergrund, um als Icon gelesen zu werden; es steht jetzt direkt neben
+ * seinem Text wie in jeder handgebauten Oberfläche.
+ *
+ * Die Varianten-Namen bleiben (28 Aufrufstellen), damit das eine Datei-Änderung
+ * bleibt statt einer Migration.
+ */
+const NEUTRAL = 'text-muted-foreground';
+
 const variantClasses: Record<IconBoxVariant, string> = {
-  primary: 'bg-brand-primary/10 text-brand-primary dark:text-brand-light',
-  light: 'bg-brand-light/10 text-brand-light',
-  blue: 'bg-info-50 dark:bg-info-900/30 text-info-600 dark:text-info-400',
-  green: 'bg-success-50 dark:bg-success-900/20 text-success-600 dark:text-success-400',
-  amber: 'bg-warning-50 dark:bg-warning-900/20 text-warning-600 dark:text-warning-400',
-  purple: 'bg-info-50 dark:bg-info-900/30 text-info-600 dark:text-info-400',
-  red: 'bg-error-50 dark:bg-error-900/20 text-error-500 dark:text-error-400',
-  orange:
-    'bg-brand-accent-50 dark:bg-brand-accent-900/20 text-brand-accent-600 dark:text-brand-accent-400',
-  teal: 'bg-info-50 dark:bg-info-900/20 text-info-600 dark:text-info-400',
-  rose: 'bg-error-50 dark:bg-error-900/20 text-error-600 dark:text-error-400',
-  indigo: 'bg-info-50 dark:bg-info-900/20 text-info-600 dark:text-info-400',
-  gray: 'bg-muted dark:bg-card/5 text-muted-foreground/50 dark:text-muted-foreground',
-  'gradient-primary': 'bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg',
-  'gradient-accent': 'bg-gradient-accent text-white shadow-lg',
+  primary: 'text-primary',
+  light: NEUTRAL,
+  blue: NEUTRAL,
+  purple: NEUTRAL,
+  teal: NEUTRAL,
+  indigo: NEUTRAL,
+  gray: NEUTRAL,
+  green: 'text-success-600',
+  amber: 'text-warning-600',
+  red: 'text-error-600',
+  rose: 'text-error-600',
+  orange: 'text-brand-accent-2',
+  // Die beiden Verlaufs-Varianten waren die einzigen gefüllten Flächen. Gefüllt
+  // bleiben sie — aber einfarbig: ein Farbverlauf auf 24 px Kantenlänge ist
+  // nichts als Rauschen.
+  'gradient-primary': 'bg-primary text-primary-foreground rounded-md p-2',
+  'gradient-accent': 'bg-primary text-primary-foreground rounded-md p-2',
 };
 
 export function IconBox({

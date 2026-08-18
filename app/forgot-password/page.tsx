@@ -48,9 +48,6 @@ export default function ForgotPasswordPage() {
       <div className="hidden lg:flex lg:flex-1 relative">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-auth-hero" />
-          <div className="absolute inset-0 noise opacity-[0.015]" />
-          <div className="absolute top-20 left-20 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
-          <div className="absolute bottom-20 right-20 w-56 h-56 bg-brand-accent/8 rounded-full blur-3xl animate-aurora [animation-delay:5s]" />
         </div>
 
         <div className="relative z-10 flex flex-col justify-center p-16 text-white">
@@ -65,10 +62,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <h1 className="text-4xl font-extrabold leading-tight max-w-md">
-            Kein Problem.{' '}
-            <span className="text-gradient-primary bg-clip-text text-transparent">
-              Wir helfen dir.
-            </span>
+            Kein Problem. <span className="text-brand-light">Wir helfen dir.</span>
           </h1>
 
           <p className="mt-6 text-white/55 text-lg max-w-md leading-relaxed">

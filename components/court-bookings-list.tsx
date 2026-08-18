@@ -409,36 +409,36 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
             <thead>
               <tr className="bg-muted/50 border-b border-border">
                 <th
-                  className="text-left p-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
+                  className="text-left p-3 font-semibold text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
                   onClick={() => toggleSort('session_start_time')}
                 >
                   Datum / Zeit <SortIcon field="session_start_time" sortField={sortField} />
                 </th>
                 <th
-                  className="text-left p-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
+                  className="text-left p-3 font-semibold text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
                   onClick={() => toggleSort('member_name')}
                 >
                   Mitglied <SortIcon field="member_name" sortField={sortField} />
                 </th>
                 <th
-                  className="text-left p-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
+                  className="text-left p-3 font-semibold text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
                   onClick={() => toggleSort('court_name')}
                 >
                   Platz <SortIcon field="court_name" sortField={sortField} />
                 </th>
-                <th className="text-left p-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                <th className="text-left p-3 font-semibold text-xs text-muted-foreground whitespace-nowrap">
                   Herkunft
                 </th>
-                <th className="text-left p-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                <th className="text-left p-3 font-semibold text-xs text-muted-foreground whitespace-nowrap">
                   Typ
                 </th>
                 <th
-                  className="text-left p-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
+                  className="text-left p-3 font-semibold text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
                   onClick={() => toggleSort('status')}
                 >
                   Status <SortIcon field="status" sortField={sortField} />
                 </th>
-                <th className="text-right p-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                <th className="text-right p-3 font-semibold text-xs text-muted-foreground whitespace-nowrap">
                   Details
                 </th>
               </tr>

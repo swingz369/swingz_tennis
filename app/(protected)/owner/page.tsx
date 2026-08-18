@@ -9,18 +9,31 @@ import {
   Plus,
   Inbox,
   AlertTriangle,
-  ScrollText,
   CircleSlash,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import { KpiBand } from '@/components/ui/kpi-band';
 import { PageHeader } from '@/components/ui/page-header';
 import { monthlyRecurringRevenue } from '@/lib/billing-plans';
 import { auditActionLabel, auditSubject } from '@/lib/audit-labels';
 
 export const dynamic = 'force-dynamic';
+
+// Zeilenmasse der Dashboard-Tabellen — identisch zum Admin-Dashboard, damit
+// beide Ebenen gleich dicht wirken. Die geteilten Table-Bausteine bringen
+// `p-4`/`h-10` mit; das ist für eine Übersichtskarte zu luftig.
+const HEAD_CELL = 'h-auto px-5 pb-2.5 pt-0 text-2xs uppercase tracking-[0.09em]';
+const BODY_CELL = 'px-5 py-2.5';
 
 /**
  * /owner — Plattform-Konsole.
@@ -208,59 +221,84 @@ export default async function OwnerPage() {
         </div>
       )}
 
-      {/* Alle Vereine */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center justify-between">
-            Vereine
-            <div className="flex items-center gap-2">
-              <Link href="/owner/clubs?new=1">
-                <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
-                  <Plus className="h-3 w-3" /> Verein anlegen
-                </Button>
-              </Link>
-              <Link
-                href="/owner/clubs"
-                className="text-xs text-info-600 hover:underline font-normal flex items-center gap-1"
-              >
-                Alle <ChevronRight className="h-3 w-3" />
-              </Link>
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="divide-y divide-border dark:divide-white/5">
-            {allClubs.slice(0, 10).map((club: any) => (
-              <div key={club.id} className="flex items-center justify-between gap-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{club.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {(membersByClub.get(club.id) ?? 0).toLocaleString('de-DE')} Mitglieder
-                    {!adminsByClub.get(club.id) && ' · kein Admin'}
-                    {!club.setup_completed_at && ' · Einrichtung offen'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {club.status === 'inactive' && (
-                    <Badge variant="secondary" className="text-xs">
-                      Inaktiv
-                    </Badge>
-                  )}
-                  <Link
-                    href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
-                    className="text-xs text-info-600 hover:text-info-800 dark:text-info-400 hover:underline whitespace-nowrap"
-                  >
-                    Als Admin →
-                  </Link>
-                </div>
-              </div>
-            ))}
-            {allClubs.length === 0 && (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                Noch keine Vereine angelegt.
-              </p>
-            )}
+      {/* ── Vereine ──
+          Als Tabelle in einer Karte, nicht als freie Liste. Der Zwischenschritt
+          ohne Rahmen (18.08.2026, vormittags) war ein Rückschritt: auf 1600 px
+          Inhaltsbreite standen Name links und Kennzahlen rechts so weit
+          auseinander, dass die Zeile nicht mehr als eine Einheit zu lesen war.
+          Was fehlte, war nicht der Rahmen, sondern die Spalte — jetzt beides,
+          gleiche Bauweise wie „Letzte Buchungen" im Admin-Dashboard. */}
+      <Card className="p-0">
+        <CardHeader className="flex-row items-start justify-between space-y-0 px-5 pb-3 pt-5">
+          <div>
+            <CardTitle className="text-sm font-semibold">Vereine</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {allClubs.length === 1 ? '1 Verein' : `${allClubs.length} Vereine`}
+              {allClubs.length > 10 && ' · die 10 neuesten'}
+            </p>
           </div>
+          <div className="flex shrink-0 items-center gap-3">
+            <Link
+              href="/owner/clubs?new=1"
+              className="flex items-center gap-1 text-[12.5px] font-medium text-primary hover:underline"
+            >
+              <Plus className="h-3 w-3" /> Verein anlegen
+            </Link>
+            <Link
+              href="/owner/clubs"
+              className="text-[12.5px] font-medium text-muted-foreground hover:text-foreground"
+            >
+              Alle →
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent className="px-0 pb-0">
+          {allClubs.length === 0 ? (
+            <p className="px-5 pb-5 text-sm text-muted-foreground">Noch keine Vereine angelegt.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className={HEAD_CELL}>Verein</TableHead>
+                  {/* Feste Breiten für die schmalen Spalten — sonst verteilt der
+                      Browser die Kartenbreite gleichmässig und zwischen Namen
+                      und Zahl klafft eine Handbreit Nichts. */}
+                  <TableHead className={cn(HEAD_CELL, 'w-[14%] text-right')}>Mitglieder</TableHead>
+                  <TableHead className={cn(HEAD_CELL, 'w-[22%]')}>Status</TableHead>
+                  <TableHead className={cn(HEAD_CELL, 'w-[12%] text-right')}>Aktion</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {allClubs.slice(0, 10).map((club: any) => (
+                  <TableRow key={club.id}>
+                    <TableCell className={cn(BODY_CELL, 'font-medium')}>{club.name}</TableCell>
+                    <TableCell className={cn(BODY_CELL, 'text-right tabular-nums')}>
+                      {(membersByClub.get(club.id) ?? 0).toLocaleString('de-DE')}
+                    </TableCell>
+                    <TableCell className={cn(BODY_CELL, 'text-muted-foreground')}>
+                      {club.status === 'inactive' ? (
+                        <Badge variant="secondary">Inaktiv</Badge>
+                      ) : !adminsByClub.get(club.id) ? (
+                        <span className="text-warning-700 dark:text-warning-300">kein Admin</span>
+                      ) : !club.setup_completed_at ? (
+                        'Einrichtung offen'
+                      ) : (
+                        'Aktiv'
+                      )}
+                    </TableCell>
+                    <TableCell className={cn(BODY_CELL, 'text-right')}>
+                      <Link
+                        href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
+                        className="whitespace-nowrap text-[12.5px] font-medium text-primary hover:underline"
+                      >
+                        Als Admin →
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -268,58 +306,66 @@ export default async function OwnerPage() {
           Der Owner ist die einzige Rolle mit Sicht über alle Vereine; ohne
           diesen Auszug müsste er das Audit-Log aktiv aufsuchen, um zu sehen,
           dass überhaupt etwas passiert ist. */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center justify-between">
-            Letzte Aktivität
-            <Link
-              href="/owner/audit"
-              className="text-xs text-info-600 hover:underline font-normal flex items-center gap-1"
-            >
-              Audit-Log <ChevronRight className="h-3 w-3" />
-            </Link>
-          </CardTitle>
+      <Card className="p-0">
+        <CardHeader className="flex-row items-start justify-between space-y-0 px-5 pb-3 pt-5">
+          <CardTitle className="text-sm font-semibold">Letzte Aktivität</CardTitle>
+          <Link
+            href="/owner/audit"
+            className="shrink-0 text-[12.5px] font-medium text-primary hover:underline"
+          >
+            Audit-Log →
+          </Link>
         </CardHeader>
-        <CardContent>
-          <div className="divide-y divide-border dark:divide-white/5">
-            {((recentAudit ?? []) as any[]).map((entry) => (
-              <div key={entry.id} className="flex items-center gap-3 py-2.5">
-                <ScrollText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                {/* Nur „Geändert" sieht für jeden Vorgang gleich aus — erst mit
-                    dem betroffenen Objekt wird die Zeile lesbar. */}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm">
+        <CardContent className="px-0 pb-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {/* Zeitstempel links als eigene Spalte — ein Protokoll liest man
+                    der Zeit nach. Das Schriftrollen-Symbol an jeder Zeile ist
+                    weg: es stand an allen Einträgen gleich und unterschied
+                    damit nichts. */}
+                <TableHead className={cn(HEAD_CELL, 'w-[14%]')}>Zeit</TableHead>
+                <TableHead className={HEAD_CELL}>Vorgang</TableHead>
+                <TableHead className={cn(HEAD_CELL, 'w-[20%] text-right')}>Ausgelöst von</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {((recentAudit ?? []) as any[]).map((entry) => (
+                <TableRow key={entry.id}>
+                  <TableCell className={cn(BODY_CELL, 'text-muted-foreground tabular-nums')}>
+                    {new Date(entry.created_at).toLocaleString('de-DE', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </TableCell>
+                  {/* Nur „Geändert" sieht für jeden Vorgang gleich aus — erst mit
+                      dem betroffenen Objekt wird die Zeile lesbar. */}
+                  <TableCell className={BODY_CELL}>
                     {auditActionLabel(entry.action)}{' '}
                     <span className="text-muted-foreground">{auditSubject(entry)}</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground">
+                  </TableCell>
+                  <TableCell className={cn(BODY_CELL, 'text-right text-muted-foreground')}>
                     {entry.actor?.full_name ?? entry.actor?.email ?? 'System'}
-                  </p>
-                </div>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {new Date(entry.created_at).toLocaleString('de-DE', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-              </div>
-            ))}
-            {((recentAudit ?? []) as any[]).length === 0 && (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                Noch keine Ereignisse aufgezeichnet.
-              </p>
-            )}
-          </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {((recentAudit ?? []) as any[]).length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} className={cn(BODY_CELL, 'text-muted-foreground')}>
+                    Noch keine Ereignisse aufgezeichnet.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
       {/* Schnellaktionen */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-          Schnellaktionen
-        </p>
+        <p className="text-xs font-semibold text-muted-foreground mb-3">Schnellaktionen</p>
         <div className="grid grid-cols-2 gap-3">
           {[
             // „Alle Vereine" stand hier doppelt (Karte oben verlinkt bereits
@@ -332,11 +378,9 @@ export default async function OwnerPage() {
             <Link
               key={action.label}
               href={action.href}
-              className="flex items-center gap-3 p-3 rounded-xl border border-border dark:border-white/10 hover:border-info-400/50 hover:shadow-sm transition-all bg-background dark:bg-card/5"
+              className="flex items-center gap-3 p-3 rounded-xl border border-border dark:border-white/10 hover:bg-muted/60 transition-colors bg-card"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-info-50 dark:bg-info-900/20 shrink-0">
-                <action.icon className="h-4 w-4 text-info-600 dark:text-info-400" />
-              </div>
+              <action.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="text-sm font-medium">{action.label}</span>
             </Link>
           ))}

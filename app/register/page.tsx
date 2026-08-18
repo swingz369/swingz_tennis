@@ -43,7 +43,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-40 glass">
+      <header className="sticky top-0 z-40 border-b border-border bg-background">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <nav className="flex h-16 items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">

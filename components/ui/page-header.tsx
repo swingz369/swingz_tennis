@@ -30,11 +30,22 @@ export function PageHeader({ title, description, actions, children, className }:
     <div className={cn('space-y-3', className)}>
       {/* Title row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        {/* ── Typografische Hierarchie (18.08.2026) ──
+            Vorher lag zwischen Seitentitel (text-2xl/24 px) und Fliesstext
+            (text-sm/14 px) nicht genug Abstand, um beim Überfliegen als Ebene
+            zu wirken — auf jedem Screen war alles ähnlich laut. Der Titel geht
+            jetzt auf 30 px mit enger Laufweite (die Display-Schrift verträgt
+            das und wirkt erst dadurch gesetzt statt fett), die Beschreibung
+            wird etwas grösser, aber ruhig. */}
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold font-display text-foreground dark:text-white tracking-tight">
+          <h1 className="font-display text-[28px] sm:text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground dark:text-white">
             {title}
           </h1>
-          {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
+          {description && (
+            <p className="text-[15px] leading-snug text-muted-foreground mt-1.5 max-w-[60ch]">
+              {description}
+            </p>
+          )}
         </div>
 
         {/* Actions */}

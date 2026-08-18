@@ -16,6 +16,7 @@ import { redirect } from 'next/navigation';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { getHighestRole, type UserRole } from '@/lib/auth-common';
 import { requireAuth } from '@/lib/auth';
+import { createServiceClient } from '@/lib/supabase/service';
 import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
 
 export interface AdminContext {
@@ -112,7 +113,24 @@ export async function requireAdminClub(): Promise<AdminContext> {
   }
 
   return {
-    supabase,
+    // ── Owner liest mit dem Service-Client (18.08.2026) ──
+    //
+    // Der Owner hat per Definition **keine** Mitgliedschaft in einem Verein
+    // (siehe CLAUDE.md, „Owner-Besonderheiten"). Jede RLS-Policy, die über
+    // `user_club_memberships` scopt, liefert ihm deshalb null Zeilen — und
+    // zwar ohne Fehler. Sichtbar wurde das im Admin-Dashboard: der Owner sah
+    // über den Club-Switcher zwar die Buchungszeilen (die Tabelle hat eine
+    // eigene Policy), aber jede eingebettete Beziehung kam leer zurück —
+    // „Unbekannt" statt Mitgliedsname, „—" statt Platzname.
+    //
+    // Die Rollenprüfung ist oben bereits passiert; wer hier ankommt, ist
+    // Owner und darf laut Rollenmodell ohnehin alles sehen. Der Service-Client
+    // ist derselbe Weg, den die Owner-Seiten (`/owner/*`) schon gehen.
+    //
+    // Bewusst nur für `owner`: der Superadmin hat echte Mitgliedschaftszeilen
+    // je Verein, seine RLS greift korrekt und muss auch greifen — er darf
+    // eben *nicht* jeden Verein sehen.
+    supabase: isOwner ? (createServiceClient() as unknown as AdminContext['supabase']) : supabase,
     user,
     clubId: helperClubId,
     isSuperadmin,

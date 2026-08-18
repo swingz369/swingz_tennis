@@ -293,9 +293,7 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
         {/* Tastenkürzel — früher hinter einem schwebenden Button unten rechts, der auf
             jeder Seite im Weg lag. Hier sucht man ohnehin nach dem schnellen Weg. */}
         <div className="rounded-xl border border-border bg-muted/30 p-4">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-            Tastenkürzel
-          </p>
+          <p className="text-xs font-semibold text-muted-foreground mb-3">Tastenkürzel</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {KEYBOARD_SHORTCUTS.map((s) => (
               <div key={s.keys} className="flex items-center justify-between gap-3 text-sm">
@@ -305,7 +303,7 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
                     <Badge
                       key={k}
                       variant="outline"
-                      className="min-w-[32px] justify-center font-mono text-xs"
+                      className="min-w-[32px] justify-center tabular-nums text-xs"
                     >
                       {k}
                     </Badge>

@@ -255,7 +255,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
           ) : (
             grouped.map((group) => (
               <div key={group.label} className="py-1">
-                <p className="px-3 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="px-3 pb-1 text-[11px] font-medium text-muted-foreground">
                   {group.label}
                 </p>
                 {group.items.map((result) => {

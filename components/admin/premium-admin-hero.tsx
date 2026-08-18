@@ -72,12 +72,12 @@ export function PremiumAdminHero({
       {/* Date + Role pill — Datum in Mono, damit es als Datenzeile liest und
           nicht als zweite Überschrift mit der Begrüßung konkurriert. */}
       <div className="flex items-center gap-2 mb-2">
-        <p className="font-mono text-[11px] font-medium uppercase tracking-[0.13em] text-muted-foreground">
+        <p className="tabular-nums text-[11px] font-medium uppercase tracking-[0.13em] text-muted-foreground">
           {todayLabel}
         </p>
         <span
           className={cn(
-            'text-2xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
+            'text-2xs font-semibold px-2 py-0.5 rounded-full',
             isPlatformStaff
               ? 'bg-info-50 text-info-700 dark:bg-info-900/20 dark:text-info-300'
               : 'bg-brand-light/10 text-brand-light dark:bg-brand-light/20 dark:text-success-300'

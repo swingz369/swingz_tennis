@@ -419,7 +419,7 @@ export default function LeaguesClient() {
                       value={clubUrl}
                       onChange={(e) => setClubUrl(e.target.value)}
                       placeholder="https://xyz.liga.nu/…/clubTeams?club=12345"
-                      className="font-mono text-xs"
+                      className="tabular-nums text-xs"
                     />
                     <Button
                       size="sm"
@@ -681,7 +681,7 @@ export default function LeaguesClient() {
                 value={newLeague.nuliga_url}
                 onChange={(e) => setNewLeague({ ...newLeague, nuliga_url: e.target.value })}
                 placeholder="https://xyz.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/teamPortrait?...&team=..."
-                className="mt-1 font-mono text-xs"
+                className="mt-1 tabular-nums text-xs"
               />
               <p className="text-2xs text-muted-foreground mt-1">
                 Am besten die <strong>Mannschaftsseite</strong> („Mannschaftsportrait") eintragen —

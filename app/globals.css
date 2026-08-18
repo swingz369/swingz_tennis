@@ -164,9 +164,9 @@
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  --noise-opacity: 0.03;
-  --glass-blur: 24px;
-  --glass-blur-heavy: 40px;
+  /* --noise-opacity / --glass-blur / --glass-blur-heavy entfielen am
+     18.08.2026 zusammen mit .noise, .glass und .glass-strong — die drei
+     Variablen hatten danach keinen Leser mehr. */
   --transition-fast: 150ms;
   --transition-base: 250ms;
   --transition-slow: 400ms;
@@ -435,59 +435,6 @@ body {
       linear-gradient(180deg, hsl(var(--brand-secondary)) 0%, hsl(206 50% 12%) 100%);
   }
 
-  /* ── Text Gradients ── */
-  .text-gradient-primary {
-    background: linear-gradient(
-      135deg,
-      hsl(var(--brand-primary)) 0%,
-      hsl(var(--brand-primary-light)) 100%
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .text-gradient-accent {
-    background: linear-gradient(135deg, hsl(var(--brand-accent)) 0%, hsl(77 71% 62%) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .text-gradient-warm {
-    background: linear-gradient(
-      135deg,
-      hsl(var(--brand-accent)) 0%,
-      hsl(var(--brand-primary-light)) 100%
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* ── Glass Morphism (multi-tier) ── */
-  .glass {
-    background: hsl(var(--surface) / 0.8);
-    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-    border: 1px solid hsl(var(--border-subtle) / 0.5);
-  }
-  .glass-strong {
-    background: hsl(var(--surface) / 0.9);
-    backdrop-filter: blur(var(--glass-blur-heavy)) saturate(200%);
-    -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(200%);
-    border: 1px solid hsl(var(--border-subtle) / 0.6);
-    box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.08);
-  }
-
-  /* ── Noise texture ── */
-  .noise::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    opacity: var(--noise-opacity);
-    pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-
   /* ── Entry Animations ── */
   .animate-in {
     animation: fade-in-up 0.6s var(--ease-out-expo) forwards;
@@ -520,57 +467,6 @@ body {
   .reveal.visible {
     opacity: 1;
     transform: translateY(0);
-  }
-
-  /* ── Hover Effects ── */
-  .hover-lift {
-    transition:
-      transform var(--transition-base) var(--ease-smooth),
-      box-shadow var(--transition-base) var(--ease-smooth);
-  }
-  .hover-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.12);
-  }
-  .hover-glow {
-    transition: box-shadow var(--transition-base) var(--ease-smooth);
-  }
-  .hover-glow:hover {
-    box-shadow: 0 0 40px -8px hsl(var(--brand-primary) / 0.25);
-  }
-  .tap-scale {
-    transition: transform var(--transition-fast) var(--ease-smooth);
-  }
-  .tap-scale:active {
-    transform: scale(0.97);
-  }
-
-  /* ── Gradient Border ── */
-  .gradient-border {
-    position: relative;
-    background: hsl(var(--surface));
-    border-radius: 1rem;
-  }
-  .gradient-border::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    padding: 1px;
-    border-radius: inherit;
-    background: linear-gradient(
-      135deg,
-      hsl(var(--brand-primary) / 0.5) 0%,
-      hsl(var(--brand-accent) / 0.3) 100%
-    );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
   }
 
   /* ── Skeleton Loading ── */
@@ -609,32 +505,6 @@ body {
   }
   50% {
     transform: translateY(-12px) rotate(2deg);
-  }
-}
-
-@keyframes float-slow {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-@keyframes pulse-glow {
-  0%,
-  100% {
-    box-shadow:
-      0 0 30px rgba(27, 67, 50, 0.25),
-      0 0 60px rgba(27, 67, 50, 0.15);
-    opacity: 1;
-  }
-  50% {
-    box-shadow:
-      0 0 50px rgba(27, 67, 50, 0.4),
-      0 0 100px rgba(27, 67, 50, 0.2);
-    opacity: 0.9;
   }
 }
 
@@ -678,28 +548,6 @@ body {
   }
 }
 
-@keyframes slide-in-right {
-  0% {
-    opacity: 0;
-    transform: translateX(24px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slide-in-left {
-  0% {
-    opacity: 0;
-    transform: translateX(-24px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
 @keyframes page-enter {
   0% {
     opacity: 0;
@@ -722,45 +570,19 @@ body {
   }
 }
 
-@keyframes gradient-shift {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
 /* ── ANIMATION CLASSES ── */
 
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
-.animate-float-slow {
-  animation: float-slow 8s ease-in-out infinite;
-}
-.animate-pulse-glow {
-  animation: pulse-glow 3s ease-in-out infinite;
-}
 .animate-shimmer {
   animation: shimmer 2.5s linear infinite;
-}
-.animate-gradient {
-  animation: gradient-shift 8s ease infinite;
-  background-size: 200% 200%;
 }
 .animate-fade-in {
   animation: fade-in 0.5s var(--ease-out-expo) forwards;
 }
 .animate-scale-in {
   animation: scale-in 0.4s var(--ease-bounce) forwards;
-}
-.animate-slide-in-right {
-  animation: slide-in-right 0.5s var(--ease-out-expo) forwards;
-}
-.animate-slide-in-left {
-  animation: slide-in-left 0.5s var(--ease-out-expo) forwards;
 }
 
 /* ── Page Transition ── */

@@ -68,11 +68,8 @@ const shadows = [
   { name: 'Soft Shadow', class: 'shadow-soft' },
   { name: 'Medium Shadow', class: 'shadow-medium' },
   { name: 'Strong Shadow', class: 'shadow-strong' },
-  { name: 'Glass Shadow', class: 'shadow-glass' },
-  { name: 'Elegant Shadow', class: 'shadow-elegant' },
   { name: 'Premium Shadow', class: 'shadow-premium' },
   { name: 'Glow Primary', class: 'shadow-glow-primary-sm' },
-  { name: 'Glow Accent', class: 'shadow-glow-accent-sm' },
 ];
 
 const radii = [
@@ -89,16 +86,10 @@ const radii = [
 
 const animations = [
   { name: 'Float', class: 'animate-float' },
-  { name: 'Float Slow', class: 'animate-float-slow' },
-  { name: 'Pulse Glow', class: 'animate-pulse-glow' },
   { name: 'Shimmer', class: 'animate-shimmer' },
   { name: 'Fade In', class: 'animate-fade-in' },
   { name: 'Scale In', class: 'animate-scale-in' },
-  { name: 'Slide In Right', class: 'animate-slide-in-right' },
-  { name: 'Slide In Left', class: 'animate-slide-in-left' },
   { name: 'Slide Down', class: 'animate-slide-down' },
-  { name: 'Aurora', class: 'animate-aurora' },
-  { name: 'Gradient Shift', class: 'animate-gradient' },
 ];
 
 const badgeVariants = [
@@ -149,12 +140,6 @@ const iconBoxSizes = ['xs', 'sm', 'md', 'lg'] as const;
 const iconBoxIcons = [Star, Heart, Shield, Zap, Brain, Trophy, Calendar, Sparkles];
 
 const spacingScale = [0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24];
-
-const hoverEffects = [
-  { name: 'Hover Lift', class: 'hover-lift' },
-  { name: 'Hover Glow', class: 'hover-glow' },
-  { name: 'Tap Scale', class: 'tap-scale' },
-];
 
 // ── Components ──
 
@@ -220,7 +205,6 @@ export default function DesignPreviewPage() {
     { id: 'colors', label: 'Farben' },
     { id: 'typography', label: 'Typografie' },
     { id: 'shadows', label: 'Schatten' },
-    { id: 'glass', label: 'Glass' },
     { id: 'radius', label: 'Radius' },
     { id: 'animations', label: 'Animationen' },
     { id: 'spacing', label: 'Abstände' },
@@ -249,7 +233,7 @@ export default function DesignPreviewPage() {
           <h1 className="text-hero-md sm:text-hero-lg font-bold font-display text-white tracking-tight mb-4">
             Design Token
             <br />
-            <span className="text-gradient-accent">Preview</span>
+            <span className="text-brand-light">Preview</span>
           </h1>
           <p className="text-lg text-white/60 max-w-2xl mx-auto">
             Vollständige Übersicht aller Design-Tokens, Komponenten-States und UI-Patterns des
@@ -348,26 +332,19 @@ export default function DesignPreviewPage() {
                 Text & Background Utilities
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {(
-                  [
-                    'text-brand-primary',
-                    'text-brand-light',
-                    'text-brand-accent',
-                    'text-gradient-primary',
-                    'text-gradient-accent',
-                    'text-gradient-warm',
-                  ] as const
-                ).map((cls) => (
-                  <div
-                    key={cls}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-muted dark:bg-card/[0.03]"
-                  >
-                    <span className={cn('text-sm font-semibold', cls)}>SwingZ</span>
-                    <span className="text-2xs font-mono text-muted-foreground dark:text-muted-foreground">
-                      {cls}
-                    </span>
-                  </div>
-                ))}
+                {(['text-brand-primary', 'text-brand-light', 'text-brand-accent'] as const).map(
+                  (cls) => (
+                    <div
+                      key={cls}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-muted dark:bg-card/[0.03]"
+                    >
+                      <span className={cn('text-sm font-semibold', cls)}>SwingZ</span>
+                      <span className="text-2xs font-mono text-muted-foreground dark:text-muted-foreground">
+                        {cls}
+                      </span>
+                    </div>
+                  )
+                )}
               </div>
             </div>
           </Section>
@@ -468,57 +445,6 @@ export default function DesignPreviewPage() {
                   </div>
                 ))}
               </div>
-            </div>
-          </Section>
-        )}
-
-        {/* ── GLASS ── */}
-        {activeTab === 'glass' && (
-          <Section
-            title="Glass Morphism"
-            description="Zwei Varianten: .glass (leicht) und .glass-strong (verstärkt). Beide passen sich via CSS-Variablen an Light/Dark-Mode an."
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {' '}
-              <div className="relative overflow-hidden rounded-xl h-48 bg-gradient-to-br from-brand-primary to-success-900">
-                <div className="absolute inset-0 bg-grid opacity-[0.08]" />
-                <div className="absolute inset-4 glass rounded-xl flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-sm font-semibold text-foreground dark:text-white">.glass</p>
-                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
-                      background: surface / 0.8
-                      <br />
-                      backdrop-filter: blur(24px)
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="relative overflow-hidden rounded-xl h-48 bg-gradient-to-br from-brand-accent/80 to-brand-primary/80">
-                <div className="absolute inset-0 bg-grid opacity-[0.08]" />
-                <div className="absolute inset-4 glass-strong rounded-xl flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-sm font-semibold text-foreground dark:text-white">
-                      .glass-strong
-                    </p>
-                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
-                      background: surface / 0.9
-                      <br />
-                      backdrop-filter: blur(40px)
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 p-6 glass rounded-xl">
-              <p className="text-sm text-muted-foreground dark:text-foreground">
-                Glass-Varianten werden in Sidebar, Bottom-Nav, Modals und Cards eingesetzt. Durch
-                die{' '}
-                <code className="text-xs bg-brand-light/10 px-1.5 py-0.5 rounded text-brand-light">
-                  backdrop-filter
-                </code>{' '}
-                entsteht ein moderner, tiefenwirkender UI-Look.
-              </p>
             </div>
           </Section>
         )}
@@ -651,7 +577,7 @@ export default function DesignPreviewPage() {
               ))}
             </div>
 
-            <div className="mt-8 p-6 glass rounded-xl">
+            <div className="mt-8 rounded-xl border border-border bg-card p-6">
               <h3 className="text-sm font-semibold text-foreground dark:text-foreground mb-2">
                 Spacing in der Praxis
               </h3>
@@ -782,28 +708,6 @@ export default function DesignPreviewPage() {
             description="Hover-, Focus-, Active- und Glow-Effekte für Buttons, Cards und Navigationselemente."
           >
             <div className="space-y-8">
-              {/* Hover Effects */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground dark:text-foreground">
-                  Hover Effects
-                </h3>
-                <div className="flex flex-wrap gap-4">
-                  {hoverEffects.map((h) => (
-                    <div
-                      key={h.name}
-                      className={cn(
-                        'px-6 py-4 rounded-xl bg-background dark:bg-surface-dark border border-border/40 dark:border-white/[0.06] cursor-pointer transition-all duration-200',
-                        h.class
-                      )}
-                    >
-                      <span className="text-sm font-medium text-foreground dark:text-foreground">
-                        {h.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               {/* Button States */}
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-foreground dark:text-foreground">
@@ -844,18 +748,6 @@ export default function DesignPreviewPage() {
                       </button>
                     </div>
                   ))}
-                </div>
-              </div>
-
-              {/* Gradient Buttons */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground dark:text-foreground">
-                  Gradient Border
-                </h3>
-                <div className="gradient-border p-6 max-w-md">
-                  <p className="text-sm text-muted-foreground dark:text-foreground">
-                    Cards mit gradient-border erhalten einen sanften Farbverlauf-Rahmen.
-                  </p>
                 </div>
               </div>
             </div>

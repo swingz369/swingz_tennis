@@ -73,9 +73,7 @@ export function WeekDaysHeaderRow({ weekDays }: { weekDays: Date[] }) {
   return (
     <div className="grid grid-cols-[180px_repeat(7,1fr)] bg-muted/50">
       <div className="p-3 flex items-center justify-center border-b border-r border-border/40">
-        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Platz
-        </span>
+        <span className="text-xs font-bold text-muted-foreground">Platz</span>
       </div>
       {weekDays.map((day) => {
         const today = isToday(day);
@@ -87,9 +85,7 @@ export function WeekDaysHeaderRow({ weekDays }: { weekDays: Date[] }) {
             }`}
           >
             <div
-              className={`text-xs font-bold uppercase tracking-wide ${
-                today ? 'text-primary' : 'text-muted-foreground'
-              }`}
+              className={`text-xs font-bold ${today ? 'text-primary' : 'text-muted-foreground'}`}
             >
               {format(day, 'EEE', { locale: de })}
             </div>

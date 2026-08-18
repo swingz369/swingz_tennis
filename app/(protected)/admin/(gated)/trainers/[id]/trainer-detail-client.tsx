@@ -987,7 +987,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                     <p className="text-muted-foreground dark:text-muted-foreground text-sm mb-1">
                       Branchenerfahrung
                     </p>
-                    <div className="text-3xl font-bold font-mono text-foreground dark:text-white tabular-nums">
+                    <div className="text-3xl font-bold tabular-nums text-foreground dark:text-white tabular-nums">
                       {trainer.experience.years} <span className="text-xl">Jahre</span>
                     </div>
                   </CardContent>
@@ -997,7 +997,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                     <p className="text-muted-foreground dark:text-muted-foreground text-sm mb-1">
                       Vorherige Vereine
                     </p>
-                    <div className="text-3xl font-bold font-mono text-foreground dark:text-white tabular-nums">
+                    <div className="text-3xl font-bold tabular-nums text-foreground dark:text-white tabular-nums">
                       {trainer.experience.previousClubs.length}
                     </div>
                   </CardContent>

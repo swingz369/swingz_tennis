@@ -465,7 +465,7 @@ export default function AdminShopPage() {
             <CardContent className="p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
+                  <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground">
                     {kpi.label}
                   </p>
                   <p className="text-2xl font-bold text-primary mt-1.5 tabular-nums">

@@ -90,7 +90,7 @@ export default function LandingPage() {
       </a>
 
       {/* ═══════════ SITE NAV ═══════════ */}
-      <header className="sticky top-0 z-40 glass">
+      <header className="sticky top-0 z-40 border-b border-border bg-background">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <nav className="flex h-16 items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
@@ -142,14 +142,6 @@ export default function LandingPage() {
         aria-labelledby="hero-heading"
         className="relative overflow-hidden bg-login-hero text-white"
       >
-        {/* Aurora blobs — gleiche Deko wie /login */}
-        <div className="absolute inset-0 opacity-25 overflow-hidden" aria-hidden="true">
-          <div className="absolute top-20 left-10 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
-          <div className="absolute top-40 right-20 w-64 h-64 bg-brand-accent/8 rounded-full blur-3xl animate-aurora [animation-delay:5s]" />
-          <div className="absolute bottom-20 left-1/3 w-56 h-56 bg-brand-secondary/10 rounded-full blur-3xl animate-aurora [animation-delay:10s]" />
-        </div>
-        <div className="absolute inset-0 noise opacity-[0.04]" aria-hidden="true" />
-
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 pt-20 sm:pt-28 lg:pt-32 pb-20 sm:pb-28">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm text-white/80 mb-8 animate-in">
@@ -163,7 +155,7 @@ export default function LandingPage() {
             className="font-display text-4xl sm:text-hero-md lg:text-hero-lg font-extrabold tracking-tight max-w-4xl animate-in animate-in-delay-1"
           >
             Dein Tennisclub.
-            <span className="block text-gradient-accent">Intelligent verwaltet.</span>
+            <span className="block text-brand-light">Intelligent verwaltet.</span>
           </h1>
 
           {/* Sub */}
@@ -265,7 +257,6 @@ export default function LandingPage() {
       <SectionReveal as="section" aria-labelledby="cta-heading" className="pb-20 sm:pb-28">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="relative overflow-hidden rounded-xl bg-gradient-primary text-white px-6 py-16 sm:px-16 sm:py-20 text-center shadow-strong">
-            <div className="absolute inset-0 noise opacity-[0.04]" aria-hidden="true" />
             <div className="relative">
               <h2
                 id="cta-heading"

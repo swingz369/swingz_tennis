@@ -170,7 +170,7 @@ export function AdminSection({
           // Mono und ohne Sperrung — die Kennzahl soll sich von der gesperrten
           // Versalschrift der Beschriftung absetzen und beim Wechsel der Zahl
           // nicht die Breite springen lassen.
-          <span className="shrink-0 rounded bg-muted px-1.5 font-mono text-2xs font-semibold tracking-normal text-foreground/70 tabular-nums">
+          <span className="shrink-0 rounded bg-muted px-1.5 tabular-nums text-2xs font-semibold tracking-normal text-foreground/70 tabular-nums">
             {badge}
           </span>
         )}

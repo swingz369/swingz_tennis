@@ -26,19 +26,23 @@ describe('StatCard Component', () => {
     expect(svg).toBeInTheDocument();
   });
 
-  it('should apply custom iconClassName', () => {
+  // Die drei folgenden Tests hingen an der alten Optik: getönte Icon-Kachel
+  // (`.h-10.w-10`), Zahl in `.text-2xl.font-bold`, Karte mit `.shadow-sm`.
+  // Seit dem Design-Durchgang vom 18.08.2026 hat die Karte keinen Schatten und
+  // das Icon keine Kachel mehr. Geprüft wird jetzt, dass die Klassen dort
+  // ankommen, wo die Komponente sie hinreicht — nicht, wie sie aussehen.
+  it('should apply custom iconClassName to the icon', () => {
     const { container } = render(
-      <StatCard icon={Users} value={8} label="Test" iconClassName="bg-info-100" />
+      <StatCard icon={Users} value={8} label="Test" iconClassName="text-info-600" />
     );
-    const iconContainer = container.querySelector('.h-10.w-10');
-    expect(iconContainer).toHaveClass('bg-info-100');
+    expect(container.querySelector('svg')).toHaveClass('text-info-600');
   });
 
-  it('should apply custom valueClassName to value and icon', () => {
+  it('should apply custom valueClassName to value', () => {
     const { container } = render(
       <StatCard icon={Users} value={99} label="Test" valueClassName="text-success-600" />
     );
-    const valueElement = container.querySelector('.text-2xl.font-bold');
+    const valueElement = container.querySelector('.tabular-nums');
     expect(valueElement).toHaveClass('text-success-600');
   });
 
@@ -46,14 +50,7 @@ describe('StatCard Component', () => {
     const { container } = render(
       <StatCard icon={Users} value={3} label="Test" className="custom-class" />
     );
-    const card = container.querySelector('.shadow-sm');
-    expect(card).toHaveClass('custom-class');
-  });
-
-  it('should render with default blue icon background', () => {
-    const { container } = render(<StatCard icon={Users} value={7} label="Test" />);
-    const iconContainer = container.querySelector('.h-10.w-10');
-    expect(iconContainer).toHaveClass('bg-info-50');
+    expect(container.querySelector('.custom-class')).toBeInTheDocument();
   });
 
   it('should handle zero value', () => {
@@ -76,7 +73,7 @@ describe('StatCard Component', () => {
     expect(screen.getByText('B')).toBeInTheDocument();
     expect(screen.getByText('C')).toBeInTheDocument();
 
-    const cards = container.querySelectorAll('.shadow-sm');
+    const cards = container.querySelectorAll('.rounded-xl');
     expect(cards).toHaveLength(3);
   });
 });

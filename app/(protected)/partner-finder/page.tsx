@@ -33,9 +33,7 @@ export default async function PartnerFinderPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
-          Algorithmus-basiert
-        </p>
+        <p className="text-xs font-medium text-muted-foreground mb-1">Algorithmus-basiert</p>
         <PageHeader
           title="Spielpartner-Suche"
           description="Finde Trainingspartner mit passendem Level und gemeinsamen Interessen"

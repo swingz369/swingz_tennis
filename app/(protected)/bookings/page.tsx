@@ -252,7 +252,7 @@ function BookingsContent() {
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <ScrollReveal delay={0}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+          <Card variant="interactive" className="group cursor-pointer">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
@@ -271,7 +271,7 @@ function BookingsContent() {
         </ScrollReveal>
 
         <ScrollReveal delay={80}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+          <Card variant="interactive" className="group cursor-pointer">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
@@ -290,7 +290,7 @@ function BookingsContent() {
         </ScrollReveal>
 
         <ScrollReveal delay={160}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+          <Card variant="interactive" className="group cursor-pointer">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
@@ -309,7 +309,7 @@ function BookingsContent() {
         </ScrollReveal>
 
         <ScrollReveal delay={240}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+          <Card variant="interactive" className="group cursor-pointer">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div className="space-y-2">

@@ -22,33 +22,42 @@ function nodeHasVisibleText(node: React.ReactNode): boolean {
   return false;
 }
 
+// ── Knöpfe (18.08.2026) ──
+// Vorher: jeder Knopf mit Schatten, der Akzent-Knopf mit Farbverlauf und
+// `shadow-lg → shadow-xl` beim Hover, `duration-300` auf allem. Ein Knopf ist
+// eine Fläche mit Text, keine schwebende Kachel — Schatten hat er nur, wenn er
+// über etwas liegt (Dialog, Sheet), und das regelt der Container.
+// `outline` trug `border-2`: eine 2-px-Kontur neben einer 1-px-Karte ist die
+// dickste Linie der Oberfläche und zieht Aufmerksamkeit auf die zweitwichtigste
+// Aktion.
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-xl font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-xl font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
   {
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow-sm hover:brightness-110 focus-visible:ring-primary/50',
+          'bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary/50',
         primary:
-          'bg-primary text-primary-foreground shadow-sm hover:brightness-110 focus-visible:ring-primary/50',
+          'bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary/50',
         secondary:
-          'bg-brand-secondary text-white shadow-md hover:bg-brand-secondary/90 hover:shadow-lg focus-visible:ring-brand-secondary/50',
+          'bg-brand-secondary text-white hover:bg-brand-secondary/90 focus-visible:ring-brand-secondary/50',
         outline:
-          'border-2 border-border dark:border-white/20 bg-transparent text-foreground dark:text-white hover:border-brand-light hover:text-brand-light hover:bg-brand-light/5 focus-visible:ring-brand-light/50',
+          'border border-input bg-transparent text-foreground dark:text-white hover:bg-muted focus-visible:ring-ring',
         ghost:
           'text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/10 hover:text-foreground dark:hover:text-white focus-visible:ring-ring',
-        destructive:
-          'bg-error-600 text-white shadow-md hover:bg-error-700 hover:shadow-lg focus-visible:ring-error-500',
+        destructive: 'bg-error-600 text-white hover:bg-error-700 focus-visible:ring-error-500',
         accent:
-          'bg-gradient-accent text-white shadow-lg hover:shadow-xl focus-visible:ring-brand-accent/50',
-        link: 'text-brand-light underline-offset-4 hover:underline',
+          'bg-brand-accent-2 text-white hover:bg-brand-accent-2/90 focus-visible:ring-brand-accent-2/50',
+        link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
         sm: 'h-9 px-4 text-sm gap-1.5',
         md: 'h-11 px-5 text-base gap-2',
         lg: 'h-12 px-6 text-lg gap-2.5',
         xl: 'h-14 px-8 text-xl gap-3',
-        default: 'h-10 px-4 py-2',
+        // `gap-2` fehlte als einziger Grösse: Knöpfe mit Icon (die meisten
+        // Kopfzeilen-Aktionen) klebten Symbol und Text aneinander.
+        default: 'h-10 px-4 py-2 text-sm gap-2',
         icon: 'h-10 w-10 p-0',
       },
       fullWidth: {

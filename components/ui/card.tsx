@@ -2,15 +2,28 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
-const cardVariants = cva('rounded-xl bg-card dark:bg-card transition-all duration-500 ease-out', {
+/**
+ * ── Karten stehen still (18.08.2026) ──
+ *
+ * Vorher hob sich **jede** Karte beim Überfahren um 4 px an und warf einen
+ * xl-Schatten — auch die, die man gar nicht anklicken kann. Eine Fläche, die
+ * auf Mauskontakt reagiert, verspricht eine Aktion; hielt sie nicht, wirkte
+ * die Seite unruhig und beliebig. Dazu `duration-500`: eine halbe Sekunde für
+ * einen Hover ist doppelt so lang wie die Wahrnehmungsschwelle.
+ *
+ * Jetzt: Karten sind ruhige Flächen mit Haarlinie, ohne Schatten, ohne
+ * Bewegung. Wer eine anklickbare Karte baut, nimmt `variant="interactive"` —
+ * dann und nur dann gibt es eine Reaktion, und die ist eine Randfärbung,
+ * kein Sprung.
+ */
+const cardVariants = cva('rounded-xl bg-card dark:bg-card', {
   variants: {
     variant: {
-      default:
-        'border border-border dark:border-white/10 shadow-sm hover:shadow-xl hover:-translate-y-1',
-      elevated:
-        'border border-border dark:border-white/10 shadow-lg hover:shadow-2xl hover:-translate-y-2',
-      bordered:
-        'border-2 border-border dark:border-white/20 hover:border-brand-light/50 hover:shadow-xl',
+      default: 'border border-border dark:border-white/10',
+      interactive:
+        'border border-border dark:border-white/10 transition-colors duration-150 hover:border-foreground/25 dark:hover:border-white/25',
+      elevated: 'border border-border dark:border-white/10 shadow-md',
+      bordered: 'border border-border dark:border-white/20',
       flat: 'bg-muted dark:bg-card/5 border border-border dark:border-white/10',
     },
     padding: {

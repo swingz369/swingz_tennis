@@ -116,9 +116,7 @@ export default function ReportsDashboard() {
 
       {/* Export Actions */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-          Exporte
-        </p>
+        <p className="text-xs font-semibold text-muted-foreground mb-3">Exporte</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: 'Mitglieder CSV', href: '/api/analytics/members/export', icon: Users },

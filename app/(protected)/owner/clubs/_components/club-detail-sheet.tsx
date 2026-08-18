@@ -271,9 +271,7 @@ export function ClubDetailSheet({
           <div className="mt-6 space-y-6">
             {/* ── Read-Only-Snapshot ────────────────────────────────── */}
             <section className="space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Snapshot (read-only)
-              </h3>
+              <h3 className="text-xs font-semibold text-muted-foreground">Snapshot (read-only)</h3>
               <Card>
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-start gap-3">
@@ -360,9 +358,7 @@ export function ClubDetailSheet({
 
             {/* ── Edit-Form ─────────────────────────────────────────── */}
             <section className="space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Vereinsdaten
-              </h3>
+              <h3 className="text-xs font-semibold text-muted-foreground">Vereinsdaten</h3>
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="cd-name">Vereinsname</Label>

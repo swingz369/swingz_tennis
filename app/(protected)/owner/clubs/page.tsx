@@ -1,13 +1,28 @@
 'use client';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { Building2, Plus, UserPlus, ExternalLink, Search, Pencil, Trash2 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Plus, UserPlus, ExternalLink, Search, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { PaginationNav } from '@/components/ui/pagination-nav';
 import {
   Dialog,
   DialogContent,
@@ -19,9 +34,14 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { showInviteResult } from '@/lib/invite-feedback';
 import { apiFetch } from '@/lib/api-fetch';
+import { formatDate } from '@/lib/format';
+import { createLogger } from '@/lib/logger';
+import type { PaginationMeta } from '@/lib/pagination';
 import { PageHeader } from '@/components/ui/page-header';
 import { ClubDetailSheet } from './_components/club-detail-sheet';
 import { recommendSoloPlan, PLAN_LABELS } from '@/lib/plans';
+
+const log = createLogger('owner-clubs');
 
 interface Club {
   id: string;
@@ -29,12 +49,30 @@ interface Club {
   status: string;
   memberCount: number;
   maxMembers: number;
+  createdAt?: string | null;
 }
+
+const STATUS_LABELS: Record<string, string> = {
+  active: 'Aktiv',
+  pending: 'Wartet auf Freigabe',
+  deleted: 'Gelöscht',
+};
 
 export default function OwnerClubsPage() {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+
+  // ── Tabellensteuerung ──
+  // Suche, Statusfilter, Sortierung und Seitengrösse laufen alle über die API
+  // (siehe app/api/clubs/route.ts). Vorher holte die Seite die ersten 20
+  // Vereine und filterte die im Browser: ab Verein 21 fehlten Einträge, ohne
+  // dass die Oberfläche das irgendwo gesagt hätte.
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sort, setSort] = useState<'created_at' | 'name'>('created_at');
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
 
   const [newClubOpen, setNewClubOpen] = useState(false);
   const [newClub, setNewClub] = useState({ name: '', city: '' });
@@ -55,15 +93,30 @@ export default function OwnerClubsPage() {
   const [deleting, setDeleting] = useState(false);
   const [restoring, setRestoring] = useState<string | null>(null);
 
-  const refreshClubs = useCallback(async () => {
-    try {
-      const r = await apiFetch('/api/clubs');
-      const d = await r.json();
-      setClubs(d.clubs ?? []);
-    } catch {
-      toast.error('Vereine konnten nicht neu geladen werden');
-    }
-  }, []);
+  const query = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+    sort,
+    ...(search.trim() ? { search: search.trim() } : {}),
+    ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
+  }).toString();
+
+  const refreshClubs = useCallback(
+    async (signal?: AbortSignal) => {
+      try {
+        const r = await apiFetch(`/api/clubs?${query}`, signal ? { signal } : undefined);
+        const d = await r.json();
+        setClubs(d.clubs ?? []);
+        setMeta(d.pagination ?? null);
+      } catch (err) {
+        // Abbruch beim Tippen (neue Suche löst die alte ab) ist kein Fehler.
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        log.error('Vereine konnten nicht geladen werden', err instanceof Error ? err : undefined);
+        toast.error('Vereine konnten nicht geladen werden');
+      }
+    },
+    [query]
+  );
 
   const handleActivateClub = async (clubId: string) => {
     setActivating(clubId);
@@ -125,15 +178,26 @@ export default function OwnerClubsPage() {
     if (new URLSearchParams(window.location.search).has('new')) setNewClubOpen(true);
   }, []);
 
+  // Ein Effekt für Laden, Suchen, Filtern, Blättern — `query` fasst alle
+  // Stellschrauben zusammen. Die Suche wird entprellt, damit nicht jeder
+  // Tastendruck eine Abfrage auslöst.
+  const isFirstLoad = useRef(true);
   useEffect(() => {
-    apiFetch('/api/clubs')
-      .then((r) => r.json())
-      .then((d) => setClubs(d.clubs ?? []))
-      .catch(() => toast.error('Vereine konnten nicht geladen werden'))
-      .finally(() => setLoading(false));
-  }, []);
+    const controller = new AbortController();
+    const delay = isFirstLoad.current ? 0 : 250;
+    isFirstLoad.current = false;
+    const t = setTimeout(() => {
+      refreshClubs(controller.signal).finally(() => setLoading(false));
+    }, delay);
+    return () => {
+      clearTimeout(t);
+      controller.abort();
+    };
+  }, [refreshClubs]);
 
-  const filtered = clubs.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
+  // Suche/Filter/Seitengrösse ändern die Treffermenge — auf Seite 7 einer
+  // dreiseitigen Liste stünde sonst nichts.
+  const resetToFirstPage = () => setPage(1);
 
   const handleCreateClub = async () => {
     if (!newClub.name.trim()) return;
@@ -189,115 +253,188 @@ export default function OwnerClubsPage() {
         actions={[{ label: 'Verein anlegen', icon: Plus, onClick: () => setNewClubOpen(true) }]}
       />
 
-      <div className="relative">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Verein suchen..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      {/* Steuerleiste: Suche, Statusfilter, Sortierung */}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Verein suchen..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              resetToFirstPage();
+            }}
+            className="pl-9"
+            aria-label="Vereine durchsuchen"
+          />
+        </div>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => {
+            setStatusFilter(v);
+            resetToFirstPage();
+          }}
+        >
+          <SelectTrigger className="w-full sm:w-[200px]" aria-label="Nach Status filtern">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Status</SelectItem>
+            <SelectItem value="active">Aktiv</SelectItem>
+            <SelectItem value="pending">Wartet auf Freigabe</SelectItem>
+            <SelectItem value="deleted">Gelöscht</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select
+          value={sort}
+          onValueChange={(v) => {
+            setSort(v as 'created_at' | 'name');
+            resetToFirstPage();
+          }}
+        >
+          <SelectTrigger className="w-full sm:w-[180px]" aria-label="Sortierung">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="created_at">Neueste zuerst</SelectItem>
+            <SelectItem value="name">Name A–Z</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Lade Vereine...</p>
-      ) : (
-        <div className="grid gap-3">
-          {filtered.map((club) => (
-            <Card key={club.id} className="border shadow-sm">
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-50 dark:bg-info-900/20 shrink-0">
-                  <Building2 className="h-5 w-5 text-info-600 dark:text-info-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{club.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {club.memberCount} Mitglieder · kein Limit — Tarif:{' '}
-                    {PLAN_LABELS[recommendSoloPlan(club.memberCount)]}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {club.status === 'deleted' ? (
-                    <>
-                      <Badge variant="secondary">Gelöscht</Badge>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1 text-xs h-7"
-                        disabled={restoring === club.id}
-                        onClick={() => handleRestoreClub(club.id)}
-                      >
-                        {restoring === club.id ? '...' : 'Wiederherstellen'}
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      {club.status === 'pending' && (
-                        <Button
-                          size="sm"
-                          variant="default"
-                          className="gap-1 text-xs h-7 bg-warning-500 hover:bg-warning-600"
-                          disabled={activating === club.id}
-                          onClick={() => handleActivateClub(club.id)}
-                        >
-                          {activating === club.id ? '...' : 'Freigeben'}
-                        </Button>
+      <div className="rounded-xl border border-border dark:border-white/10 overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Verein</TableHead>
+                <TableHead className="text-right">Mitglieder</TableHead>
+                <TableHead className="hidden lg:table-cell">Tarif</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="hidden md:table-cell">Angelegt</TableHead>
+                <TableHead className="text-right">Aktionen</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
+                    Lade Vereine…
+                  </TableCell>
+                </TableRow>
+              ) : clubs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
+                    {search || statusFilter !== 'all'
+                      ? 'Kein Verein passt zu Suche und Filter.'
+                      : 'Noch kein Verein angelegt.'}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                clubs.map((club) => (
+                  <TableRow key={club.id}>
+                    <TableCell className="font-medium">{club.name}</TableCell>
+                    <TableCell className="text-right tabular-nums">{club.memberCount}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-muted-foreground">
+                      {PLAN_LABELS[recommendSoloPlan(club.memberCount)]}
+                    </TableCell>
+                    <TableCell>
+                      {club.status === 'active' ? (
+                        <span className="text-sm text-muted-foreground">Aktiv</span>
+                      ) : (
+                        <Badge variant={club.status === 'pending' ? 'warning' : 'secondary'}>
+                          {STATUS_LABELS[club.status] ?? club.status}
+                        </Badge>
                       )}
-                      {club.status !== 'active' && club.status !== 'pending' && (
-                        <Badge variant="secondary">{club.status}</Badge>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1 text-xs h-7"
-                        onClick={() => {
-                          setInviteClubId(club.id);
-                          setInviteClubName(club.name);
-                          setInviteOpen(true);
-                        }}
-                      >
-                        <UserPlus className="h-3 w-3" /> Admin einladen
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="default"
-                        className="gap-1 text-xs h-7"
-                        onClick={() => setEditingClubId(club.id)}
-                      >
-                        <Pencil className="h-3 w-3" /> Bearbeiten
-                      </Button>
-                      <Link
-                        href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
-                        className="inline-flex items-center gap-1 text-xs text-info-600 dark:text-info-400 hover:underline"
-                      >
-                        <ExternalLink className="h-3 w-3" /> Als Admin
-                      </Link>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1 text-xs h-7 text-error-600 hover:text-error-700 hover:bg-error-50 dark:text-error-400 dark:hover:bg-error-900/20"
-                        onClick={() => {
-                          setDeleteClubId(club.id);
-                          setDeleteClubName(club.name);
-                          setDeleteConfirmText('');
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3" /> Löschen
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {filtered.length === 0 && (
-            <Card>
-              <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                Keine Vereine gefunden.
-              </CardContent>
-            </Card>
-          )}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-muted-foreground tabular-nums">
+                      {club.createdAt ? formatDate(club.createdAt) : '—'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        {club.status === 'deleted' ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            disabled={restoring === club.id}
+                            onClick={() => handleRestoreClub(club.id)}
+                          >
+                            {restoring === club.id ? '…' : 'Wiederherstellen'}
+                          </Button>
+                        ) : (
+                          <>
+                            {club.status === 'pending' && (
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs"
+                                disabled={activating === club.id}
+                                onClick={() => handleActivateClub(club.id)}
+                              >
+                                {activating === club.id ? '…' : 'Freigeben'}
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 gap-1 text-xs"
+                              onClick={() => {
+                                setInviteClubId(club.id);
+                                setInviteClubName(club.name);
+                                setInviteOpen(true);
+                              }}
+                            >
+                              <UserPlus className="h-3 w-3" /> Admin
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 gap-1 text-xs"
+                              onClick={() => setEditingClubId(club.id)}
+                            >
+                              <Pencil className="h-3 w-3" /> Bearbeiten
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" asChild>
+                              <Link href={`/api/admin/switch-club-redirect?clubId=${club.id}`}>
+                                <ExternalLink className="h-3 w-3" /> Als Admin
+                              </Link>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-error-600 hover:bg-error-50 hover:text-error-700 dark:text-error-400 dark:hover:bg-error-900/20"
+                              aria-label={`${club.name} löschen`}
+                              onClick={() => {
+                                setDeleteClubId(club.id);
+                                setDeleteClubName(club.name);
+                                setDeleteConfirmText('');
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
+      </div>
+
+      {meta && (
+        <PaginationNav
+          meta={meta}
+          onPageChange={setPage}
+          pageSizeOptions={[10, 25, 50, 'all']}
+          currentLimit={limit}
+          onPageSizeChange={(size) => {
+            setLimit(size);
+            resetToFirstPage();
+          }}
+        />
       )}
 
       {/* Detail-Drawer (Phase 2) */}

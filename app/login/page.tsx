@@ -57,13 +57,6 @@ export default function LoginPage() {
       <div className="hidden lg:flex lg:flex-1 relative">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-login-hero" />
-          {/* Aurora blobs */}
-          <div className="absolute inset-0 opacity-25 overflow-hidden">
-            <div className="absolute top-20 left-10 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
-            <div className="absolute top-40 right-20 w-64 h-64 bg-brand-accent/8 rounded-full blur-3xl animate-aurora [animation-delay:5s]" />
-            <div className="absolute bottom-20 left-1/3 w-56 h-56 bg-brand-secondary/10 rounded-full blur-3xl animate-aurora [animation-delay:10s]" />
-          </div>
-          <div className="absolute inset-0 noise opacity-[0.04]" />
           <svg
             className="absolute inset-0 w-full h-full opacity-[0.025]"
             xmlns="http://www.w3.org/2000/svg"
@@ -94,10 +87,7 @@ export default function LoginPage() {
             </Link>
 
             <h1 className="text-4xl font-extrabold leading-tight max-w-md">
-              Die Zukunft des{' '}
-              <span className="text-gradient-accent bg-clip-text text-transparent">
-                Tennisclub-Managements
-              </span>
+              Die Zukunft des <span className="text-brand-light">Tennisclub-Managements</span>
             </h1>
 
             <p className="mt-6 text-white/55 text-lg max-w-md leading-relaxed">

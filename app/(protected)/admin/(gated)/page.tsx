@@ -647,7 +647,7 @@ export default async function AdminPage() {
       <IconBox icon={action.icon} size="xs" className="shrink-0" />
       <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{action.label}</span>
       {action.badge && (
-        <span className="shrink-0 rounded px-1.5 font-mono text-2xs font-semibold text-destructive">
+        <span className="shrink-0 rounded px-1.5 tabular-nums text-2xs font-semibold text-destructive">
           {action.badge}
         </span>
       )}
@@ -893,7 +893,7 @@ export default async function AdminPage() {
                           </TableCell>
                           <TableCell className={cn(BODY_CELL, 'whitespace-nowrap text-xs')}>
                             <span className="block font-medium text-foreground">{b.courtName}</span>
-                            <span className="block font-mono text-muted-foreground">
+                            <span className="block tabular-nums text-muted-foreground">
                               {b.dateTime}
                             </span>
                           </TableCell>

@@ -11,22 +11,31 @@ import {
   Calendar,
   Users,
   Clock,
-  TrendingUp,
-  ChevronRight,
-  CheckCircle,
   ClipboardCheck,
   BarChart3,
   Bell,
   CreditCard,
-  Timer,
   Target,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { cn } from '@/lib/utils';
+import { KpiBand } from '@/components/ui/kpi-band';
 import { QuickActions } from '@/components/ui/quick-actions';
-import { IconBox } from '@/components/ui/icon-box';
 import { TrainerRsvpList } from '@/components/trainer-rsvp-list';
-import { AnimatedCounter, ScrollReveal } from '@/components/animations';
+import { ScrollReveal } from '@/components/animations';
 import { Button } from '@/components/ui/button';
+
+// Zeilenmasse wie im Admin-, Owner- und Superadmin-Dashboard.
+const HEAD_CELL = 'h-auto px-5 pb-2.5 pt-0 text-2xs uppercase tracking-[0.09em]';
+const BODY_CELL = 'px-5 py-2.5';
 
 export interface TrainerSession {
   id: string;
@@ -94,202 +103,115 @@ export default function TrainerDashboardClient({
 
   return (
     <div className="space-y-6">
-      {/* ── Page Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* ── Kopf ──
+          Vorher stand hier eine dreizeilige Anrede („Trainer-Bereich" /
+          „Willkommen zurück" / „Deine Übersicht über Sessions, Anwesenheit und
+          mehr") plus rechts eine Pille mit derselben Zahl, die zwei Zeilen
+          tiefer noch einmal als Kachel kam. Jetzt: wer, und was heute ansteht. */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
-            Trainer-Bereich
-          </p>
-          <h1 className="text-2xl font-bold font-display text-foreground dark:text-white tracking-tight">
-            Willkommen zurück
+          <h1 className="font-display text-[28px] sm:text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground dark:text-white">
+            {trainerName ? `Hallo, ${trainerName.split(' ')[0]}` : 'Trainer-Übersicht'}
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Deine Übersicht über Sessions, Anwesenheit und mehr
+          <p className="mt-1.5 text-[15px] text-muted-foreground">
+            {todaySessions.length > 0
+              ? `${todaySessions.length} ${todaySessions.length === 1 ? 'Einheit' : 'Einheiten'} heute`
+              : stats.upcomingSessions > 0
+                ? `Heute nichts — ${stats.upcomingSessions} kommende ${stats.upcomingSessions === 1 ? 'Einheit' : 'Einheiten'}`
+                : 'Keine Einheiten geplant'}
           </p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <Button asChild variant="outline">
-            <Link href="/scheduler">Alle Einheiten</Link>
-          </Button>
-          <div className="hidden sm:flex items-center gap-2 rounded-xl border border-border dark:border-white/10 px-4 py-2.5">
-            <Clock className="h-4 w-4 text-brand-light" />
-            <span className="text-sm font-medium text-foreground dark:text-white">
-              {todaySessions.length > 0 ? (
-                <>{todaySessions.length} Sessions heute</>
-              ) : (
-                <>
-                  <AnimatedCounter value={stats.upcomingSessions} /> kommende
-                </>
-              )}
-            </span>
+        <Button asChild variant="outline">
+          <Link href="/scheduler">Alle Einheiten</Link>
+        </Button>
+      </div>
+
+      {/* Kennzahlen als Band statt als vier gerahmte Kacheln — gleiche
+          Begründung wie in components/ui/kpi-band.tsx. */}
+      <KpiBand
+        items={[
+          { label: 'Diese Woche', value: stats.thisWeekSessions, sub: 'Einheiten geplant' },
+          { label: 'Kommende', value: stats.upcomingSessions, sub: 'anstehend' },
+          {
+            label: 'Anwesenheit',
+            value: `${stats.attendanceRate}`,
+            suffix: '%',
+            sub: 'Quote',
+            tone: stats.attendanceRate >= 80 ? 'up' : 'flat',
+          },
+          { label: 'Gesamt', value: stats.totalSessions, sub: 'alle Zeiten' },
+        ]}
+      />
+
+      {/* ── Kommende Einheiten ──
+          Tabelle in einer Karte, Datum und Uhrzeit als eigene Spalten: so
+          stehen die Termine auf einer gemeinsamen Kante und lassen sich
+          vergleichen. Die Symbol-Kachel je Zeile ist weg — sie war an jeder
+          Zeile dieselbe und unterschied damit nichts. */}
+      <Card className="p-0">
+        <CardHeader className="flex-row items-start justify-between space-y-0 px-5 pb-3 pt-5">
+          <div>
+            <CardTitle className="text-sm font-semibold">Kommende Einheiten</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {sessions.length === 1 ? '1 Einheit' : `${sessions.length} Einheiten`}
+              {sessions.length > 5 && ' · die nächsten 5'}
+            </p>
           </div>
-        </div>
-      </div>
-
-      {/* ── Stat Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <ScrollReveal delay={0}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Gesamt Sessions</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={stats.totalSessions} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">alle Zeiten</p>
-                </div>
-                <IconBox
-                  icon={Calendar}
-                  size="md"
-                  variant="blue"
-                  className="transition-transform duration-300 group-hover:scale-110"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
-
-        <ScrollReveal delay={80}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Kommende</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={stats.upcomingSessions} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">anstehende Einheiten</p>
-                </div>
-                <IconBox
-                  icon={TrendingUp}
-                  size="md"
-                  variant="primary"
-                  className="transition-transform duration-300 group-hover:scale-110"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
-
-        <ScrollReveal delay={160}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Diese Woche</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={stats.thisWeekSessions} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">Einheiten geplant</p>
-                </div>
-                <IconBox
-                  icon={Timer}
-                  size="md"
-                  variant="purple"
-                  className="transition-transform duration-300 group-hover:scale-110"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
-
-        <ScrollReveal delay={240}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Anwesenheit</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={stats.attendanceRate} suffix="%" />
-                  </p>
-                  <p className="text-xs text-muted-foreground">Quote</p>
-                </div>
-                <IconBox
-                  icon={CheckCircle}
-                  size="md"
-                  variant="green"
-                  className="transition-transform duration-300 group-hover:scale-110"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
-      </div>
-
-      {/* ── Upcoming sessions ── */}
-      <ScrollReveal delay={300}>
-        <Card className="p-0 border border-border dark:border-white/10 overflow-hidden">
-          <CardHeader className="px-5 pt-5 pb-3 border-b border-border dark:border-white/10">
-            <CardTitle className="text-sm font-semibold flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-xl bg-brand-light/10 text-brand-light">
-                  <Calendar className="h-4 w-4" />
-                </div>
-                <span>Kommende Einheiten</span>
-              </div>
-              <Link
-                href="/scheduler"
-                className="text-xs text-brand-light hover:underline font-normal flex items-center gap-1 group"
-              >
-                Alle anzeigen
-                <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-5 pb-5">
-            {sessions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="h-14 w-14 rounded-xl bg-muted flex items-center justify-center mb-3">
-                  <Calendar className="h-7 w-7 text-muted-foreground/50" />
-                </div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Keine bevorstehenden Sessions
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Sobald dir Einheiten zugewiesen werden, erscheinen sie hier
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border dark:divide-white/5">
+          <Link
+            href="/scheduler"
+            className="shrink-0 text-[12.5px] font-medium text-primary hover:underline"
+          >
+            Alle anzeigen →
+          </Link>
+        </CardHeader>
+        <CardContent className="px-0 pb-0">
+          {sessions.length === 0 ? (
+            <p className="px-5 pb-5 text-sm text-muted-foreground">
+              Keine bevorstehenden Einheiten. Sobald dir welche zugewiesen werden, stehen sie hier.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className={cn(HEAD_CELL, 'w-[22%]')}>Datum</TableHead>
+                  <TableHead className={cn(HEAD_CELL, 'w-[18%]')}>Zeit</TableHead>
+                  <TableHead className={HEAD_CELL}>Gruppe / Platz</TableHead>
+                  <TableHead className={cn(HEAD_CELL, 'w-[14%] text-right')}>Aktion</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {sessions.slice(0, 5).map((session) => (
-                  <div
-                    key={session.id}
-                    className="flex items-center gap-3 py-3.5 hover:bg-muted/50 transition-colors rounded-xl -mx-2 px-2 group/item"
-                  >
-                    <div className="h-10 w-10 rounded-xl bg-brand-light/10 text-brand-light flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
-                      <Calendar className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground dark:text-white truncate">
-                        {session.groupName || session.courtName || 'Training'}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatDate(session.startTime)} · {formatTime(session.startTime)}–
-                        {formatTime(session.endTime)}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-xl bg-brand-light/10 hover:bg-brand-light/20 transition-all text-brand-light text-xs font-medium"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedSessionId(session.id);
-                        document
-                          .getElementById('session-teilnehmer')
-                          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }}
-                    >
-                      <ClipboardCheck className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Anwesenheit</span>
-                    </button>
-                  </div>
+                  <TableRow key={session.id}>
+                    <TableCell className={cn(BODY_CELL, 'text-muted-foreground tabular-nums')}>
+                      {formatDate(session.startTime)}
+                    </TableCell>
+                    <TableCell className={cn(BODY_CELL, 'font-medium tabular-nums')}>
+                      {formatTime(session.startTime)}–{formatTime(session.endTime)}
+                    </TableCell>
+                    <TableCell className={BODY_CELL}>
+                      {session.groupName || session.courtName || 'Training'}
+                    </TableCell>
+                    <TableCell className={cn(BODY_CELL, 'text-right')}>
+                      <button
+                        type="button"
+                        className="text-[12.5px] font-medium text-primary hover:underline"
+                        onClick={() => {
+                          setSelectedSessionId(session.id);
+                          document
+                            .getElementById('session-teilnehmer')
+                            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}
+                      >
+                        Anwesenheit
+                      </button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </ScrollReveal>
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       {/* ── Session RSVPs & Check-in ── */}
       <ScrollReveal delay={350}>
@@ -309,7 +231,7 @@ export default function TrainerDashboardClient({
         <QuickActions
           label="Schnellzugriff"
           actions={[
-            { label: 'Platzkalender', href: '/scheduler', icon: Calendar, variant: 'light' },
+            { label: 'Platzkalender', href: '/scheduler', icon: Calendar },
             // „Anwesenheit" → /attendance-history entfernt: derselbe Fehlgriff,
             // den der Kommentar oben für den Session-Knopf beschreibt. Die Seite
             // zeigt die Anwesenheit eines MITGLIEDS und lieferte dem Trainer
@@ -319,21 +241,18 @@ export default function TrainerDashboardClient({
               label: 'Abwesenheiten',
               href: '/trainer/absences',
               icon: ClipboardCheck,
-              variant: 'blue',
             },
             {
               label: 'Verfügbarkeit',
               href: '/trainer/availability',
               icon: Clock,
-              variant: 'purple',
             },
             {
               label: 'Meine Planungswünsche',
               href: '/trainer/planning-preferences',
               icon: Target,
-              variant: 'indigo',
             },
-            { label: 'Profil', href: '/trainer/profile', icon: Users, variant: 'green' },
+            { label: 'Profil', href: '/trainer/profile', icon: Users },
             // Hieß „Abrechnung" und zeigte auf /billing — das sind die eigenen
             // Mitgliedsrechnungen, nicht das Trainerhonorar. Die Stundennachweise
             // sind die Grundlage der Honorarabrechnung; eine Trainer-Ansicht der
@@ -342,17 +261,15 @@ export default function TrainerDashboardClient({
               label: 'Meine Stunden',
               href: '/trainer/hours-logs',
               icon: BarChart3,
-              variant: 'amber',
             },
             {
               label: 'Meine Abrechnung',
               href: '/trainer/billing',
               icon: CreditCard,
-              variant: 'green',
             },
             // Zeigte auf /notifications — das sind die Benachrichtigungs-
             // Einstellungen, nicht die Nachrichten.
-            { label: 'Nachrichten', href: '/messages', icon: Bell, variant: 'blue' },
+            { label: 'Nachrichten', href: '/messages', icon: Bell },
           ]}
         />
       </ScrollReveal>

@@ -59,7 +59,7 @@ export function AuditStatStrip() {
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground leading-relaxed">{card.body}</p>
-              <p className="mt-2 text-xs font-mono text-info-600/70 dark:text-info-400/70">—</p>
+              <p className="mt-2 text-xs tabular-nums text-info-600/70 dark:text-info-400/70">—</p>
             </CardContent>
             {/* dezenter Bau-Licht-Vermerk */}
             <div
@@ -75,7 +75,7 @@ export function AuditStatStrip() {
       {/* Tipps-Karte */}
       <Card className="border-info-200/60 dark:border-info-700/40 bg-info-50/40 dark:bg-info-900/10">
         <CardContent className="py-4 px-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-info-700 dark:text-info-300 mb-1.5">
+          <p className="text-xs font-semibold text-info-700 dark:text-info-300 mb-1.5">
             Schnellstart
           </p>
           <ul className="space-y-1 text-sm text-foreground dark:text-info-100">

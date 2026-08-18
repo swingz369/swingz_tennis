@@ -70,6 +70,7 @@ function makeChain(opts: {
   chain.select = vi.fn(() => chain);
   chain.eq = vi.fn(() => chain);
   chain.in = vi.fn(() => chain);
+  chain.ilike = vi.fn(() => chain);
   chain.order = vi.fn(() => chain);
   chain.range = vi.fn(() => ({ data, error }));
   // Thenable — used when chain is passed to Promise.all without calling range()
@@ -137,6 +138,7 @@ describe('GET /api/clubs', () => {
       status: 'active',
       memberCount: 2,
       maxMembers: 100,
+      createdAt: '2026-01-01',
     });
     expect(body.clubs[1]).toEqual({
       id: 'c2',
@@ -144,6 +146,7 @@ describe('GET /api/clubs', () => {
       status: 'active',
       memberCount: 1,
       maxMembers: 200,
+      createdAt: '2026-01-02',
     });
 
     // Pagination metadata
@@ -156,7 +159,9 @@ describe('GET /api/clubs', () => {
     expect(body.pagination.hasPrev).toBe(false);
   });
 
-  it('uses default page=1 and limit=20 when no params provided', async () => {
+  // Seitengrösse 25 seit 18.08.2026 (vorher 20): identisch zum Default in
+  // lib/pagination.ts, damit Vereinsliste und übrige Tabellen gleich blättern.
+  it('uses default page=1 and limit=25 when no params provided', async () => {
     const clubsChain = makeChain({ data: [], count: 0 });
     mockSupabase.from.mockImplementation((table: string) => {
       if (table === 'clubs') return clubsChain;
@@ -169,9 +174,9 @@ describe('GET /api/clubs', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.pagination.page).toBe(1);
-    expect(body.pagination.limit).toBe(20);
-    // Default offset=0, limit=20 → range(0, 19)
-    expect(clubsChain.range).toHaveBeenCalledWith(0, 19);
+    expect(body.pagination.limit).toBe(25);
+    // Default offset=0, limit=25 → range(0, 24)
+    expect(clubsChain.range).toHaveBeenCalledWith(0, 24);
   });
 
   it('calculates correct offset for page 3 with limit 10', async () => {
@@ -195,7 +200,10 @@ describe('GET /api/clubs', () => {
     expect(clubsChain.range).toHaveBeenCalledWith(20, 29);
   });
 
-  it('clamps limit to max 100 and min 1', async () => {
+  // Die Obergrenze liegt seit 18.08.2026 bei ALL_LIMIT statt bei 100: die
+  // Vereinsübersicht bietet „Alle" als Seitengrösse an, und mit einer Kappung
+  // bei 100 hätte diese Option stillschweigend gelogen.
+  it('clamps limit to ALL_LIMIT and min 1', async () => {
     const clubsChain500 = makeChain({ data: [], count: 0 });
     mockSupabase.from.mockImplementation((table: string) => {
       if (table === 'clubs') return clubsChain500;
@@ -207,9 +215,8 @@ describe('GET /api/clubs', () => {
 
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.pagination.limit).toBe(100);
-    // range(0, 99)
-    expect(clubsChain500.range).toHaveBeenCalledWith(0, 99);
+    expect(body.pagination.limit).toBe(500);
+    expect(clubsChain500.range).toHaveBeenCalledWith(0, 499);
   });
 
   it('treats limit=0 as default (JavaScript falsy → || fallback)', async () => {
@@ -223,8 +230,44 @@ describe('GET /api/clubs', () => {
 
     expect(res.status).toBe(200);
     const body = await res.json();
-    // parseInt('0') is falsy → || 20 kicks in → limit=20
-    expect(body.pagination.limit).toBe(20);
+    // parseInt('0') is falsy → || DEFAULT_CLUB_LIMIT kicks in → limit=25
+    expect(body.pagination.limit).toBe(25);
+  });
+
+  // ── Suche und Statusfilter (18.08.2026) ─────────────────
+
+  it('passes an escaped ILIKE pattern for `search` to data and count query', async () => {
+    const clubsChain = makeChain({ data: [], count: 0 });
+    const countChain = makeChain({ count: 0, countOnly: true });
+    let call = 0;
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'clubs') return call++ === 0 ? clubsChain : countChain;
+      return makeChain({});
+    });
+
+    // `%` im Suchbegriff ist in ILIKE ein Platzhalter — ohne Maskierung fände
+    // die Suche nach „TC%Rot" auch alles dazwischen.
+    const req = new NextRequest('http://localhost/api/clubs?search=TC%25Rot');
+    await GET(req);
+
+    expect(clubsChain.ilike).toHaveBeenCalledWith('name', '%TC\\%Rot%');
+    expect(countChain.ilike).toHaveBeenCalledWith('name', '%TC\\%Rot%');
+  });
+
+  it('filters by status when given, and not when status=all', async () => {
+    const withStatus = makeChain({ data: [], count: 0 });
+    mockSupabase.from.mockImplementation((table: string) =>
+      table === 'clubs' ? withStatus : makeChain({})
+    );
+    await GET(new NextRequest('http://localhost/api/clubs?status=pending'));
+    expect(withStatus.eq).toHaveBeenCalledWith('status', 'pending');
+
+    const allStatus = makeChain({ data: [], count: 0 });
+    mockSupabase.from.mockImplementation((table: string) =>
+      table === 'clubs' ? allStatus : makeChain({})
+    );
+    await GET(new NextRequest('http://localhost/api/clubs?status=all'));
+    expect(allStatus.eq).not.toHaveBeenCalledWith('status', expect.anything());
   });
 
   // ── Role-based filtering ────────────────────────────────

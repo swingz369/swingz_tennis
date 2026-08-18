@@ -75,7 +75,6 @@ export default function PartnerFinderOverviewPage() {
       >
         <div className="absolute -top-24 left-1/4 h-64 w-64 rounded-full bg-brand-light/10 blur-3xl" />
         <div className="absolute -top-16 right-1/4 h-52 w-52 rounded-full bg-brand-accent/10 blur-3xl" />
-        <div className="absolute inset-0 noise opacity-[0.03]" />
       </div>
 
       <div className="relative z-10 space-y-6">
@@ -105,7 +104,7 @@ export default function PartnerFinderOverviewPage() {
             {/* ── KPI Cards ── */}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
               <ScrollReveal delay={0}>
-                <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
+                <Card variant="interactive" className="group">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between">
                       <div className="space-y-2">
@@ -126,7 +125,7 @@ export default function PartnerFinderOverviewPage() {
               </ScrollReveal>
 
               <ScrollReveal delay={80}>
-                <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
+                <Card variant="interactive" className="group">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between">
                       <div className="space-y-2">
@@ -145,7 +144,7 @@ export default function PartnerFinderOverviewPage() {
               </ScrollReveal>
 
               <ScrollReveal delay={160}>
-                <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10 col-span-2 lg:col-span-1">
+                <Card variant="interactive" className="group col-span-2 lg:col-span-1">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between">
                       <div className="space-y-2">

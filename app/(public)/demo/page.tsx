@@ -50,7 +50,7 @@ export default function DemoPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* ═══════════ NAV ═══════════ */}
-      <header className="sticky top-0 z-40 glass">
+      <header className="sticky top-0 z-40 border-b border-border bg-background">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <nav className="flex h-16 items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
@@ -181,7 +181,6 @@ export default function DemoPage() {
         {/* ═══════════ CTA ═══════════ */}
         <section className="pt-6">
           <div className="relative overflow-hidden rounded-xl bg-gradient-primary text-white px-6 py-12 sm:px-16 sm:py-16 text-center shadow-strong">
-            <div className="absolute inset-0 noise opacity-[0.04]" aria-hidden="true" />
             <div className="relative">
               <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
                 Bereit für euren eigenen Verein?

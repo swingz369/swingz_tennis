@@ -147,11 +147,6 @@ export default function ResetPasswordPage() {
       <header className="relative overflow-hidden bg-brand-secondary">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-auth-hero" />
-          <div className="absolute inset-0 opacity-25 overflow-hidden">
-            <div className="absolute -top-10 left-10 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
-            <div className="absolute -bottom-16 right-20 w-56 h-56 bg-brand-accent/8 rounded-full blur-3xl animate-aurora [animation-delay:5s]" />
-          </div>
-          <div className="absolute inset-0 noise opacity-[0.04]" />
         </div>
         <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
           <nav className="flex h-20 items-center justify-between">

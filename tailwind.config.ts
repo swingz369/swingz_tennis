@@ -1,5 +1,5 @@
 import type { Config } from 'tailwindcss';
-import { colors, typography, shadows, gradients, radius } from './styles/theme';
+import { colors, typography, shadows, radius } from './styles/theme';
 import tailwindAnimate from 'tailwindcss-animate';
 
 const config: Config = {
@@ -14,7 +14,9 @@ const config: Config = {
   // in lib/billing/datev-mapper.ts), aber keine sind — sonst generiert
   // Tailwind daraus ungültiges CSS und der Build bricht.
   blocklist: ['[-:T.Z]'],
-  safelist: ['bg-gradient-hero', 'bg-gradient-primary', 'bg-gradient-accent', 'animate-shimmer'],
+  // `bg-gradient-hero` und `bg-gradient-accent` fielen am 18.08.2026 weg —
+  // beide Verläufe hatten keine Verwendung mehr (siehe globals.css).
+  safelist: ['bg-gradient-primary', 'animate-shimmer'],
   theme: {
     extend: {
       colors: {
@@ -138,25 +140,31 @@ const config: Config = {
         ...radius,
       },
       boxShadow: {
+        // ── Schattenskala neu definiert (18.08.2026) ──
+        // Tailwind-Default ist neutralgrau und für einen weissen Grund gebaut.
+        // Auf dem warmen Clay-Grund liest sich das als grauer Schmutzrand, und
+        // weil `shadow-sm` in 163 Dateien steht, war das der Grundton der ganzen
+        // App: jede Fläche schwebt ein bisschen, keine steht.
+        // Die Skala hier ist warm getönt (hue 40, die Grundfarbe) und deutlich
+        // flacher — `sm` ist praktisch nur noch eine Kontaktkante. Wer wirklich
+        // Höhe braucht, nimmt `md`/`lg`; `xl`/`2xl` bleiben Overlays vorbehalten.
+        sm: '0 1px 1px hsl(40 20% 8% / 0.04)',
+        DEFAULT: '0 1px 2px hsl(40 20% 8% / 0.05), 0 1px 1px hsl(40 20% 8% / 0.03)',
+        md: '0 2px 4px -1px hsl(40 20% 8% / 0.06), 0 1px 2px hsl(40 20% 8% / 0.04)',
+        lg: '0 6px 12px -4px hsl(40 20% 8% / 0.08), 0 2px 4px -2px hsl(40 20% 8% / 0.05)',
+        xl: '0 12px 24px -8px hsl(40 20% 8% / 0.10), 0 4px 8px -4px hsl(40 20% 8% / 0.06)',
+        '2xl': '0 24px 48px -16px hsl(40 20% 8% / 0.14)',
         soft: shadows.md,
         medium: shadows.lg,
         strong: shadows.xl,
         'glow-primary-sm': shadows.glow.primary,
         'glow-primary': shadows.glow.primaryStrong,
-        'glow-accent-sm': shadows.glow.accent,
-        'glow-accent': shadows.glow.accentStrong,
-        glass: '0 0 0 1px rgba(255,255,255,0.1), 0 8px 24px rgba(0,0,0,0.1)',
-        elegant:
-          '0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06), 0 1px 0 rgba(0,0,0,0.02)',
         premium:
           '0 24px 64px -16px rgba(0,0,0,0.15), 0 8px 32px -8px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.1) inset',
       },
       backgroundImage: {
         'gradient-primary':
           'linear-gradient(135deg, hsl(var(--brand-primary)) 0%, hsl(var(--brand-primary-light)) 100%)',
-        'gradient-accent':
-          'linear-gradient(135deg, hsl(var(--brand-accent)) 0%, hsl(77 71% 62%) 100%)',
-        'gradient-hero': gradients.hero,
       },
       transitionDuration: {
         '400': '400ms',
@@ -169,11 +177,6 @@ const config: Config = {
       keyframes: {
         // Keyframes are defined as Single Source of Truth in app/globals.css.
         // Only aurora + slide-down remain here (they have no globals.css equivalent).
-        aurora: {
-          '0%, 100%': { transform: 'translateY(0) rotate(0deg) scale(1)', opacity: '0.6' },
-          '33%': { transform: 'translateY(-30px) rotate(5deg) scale(1.1)', opacity: '0.8' },
-          '66%': { transform: 'translateY(20px) rotate(-3deg) scale(0.95)', opacity: '0.5' },
-        },
         'slide-down': {
           '0%': { opacity: '0', transform: 'translateY(-4px) scaleY(0.98)', maxHeight: '0' },
           '100%': { opacity: '1', transform: 'translateY(0) scaleY(1)', maxHeight: '500px' },
@@ -183,16 +186,10 @@ const config: Config = {
         // Keyframe bodies are in app/globals.css (Single Source of Truth).
         // Only aurora + slide-down keyframes remain in this file.
         float: 'float 6s ease-in-out infinite',
-        'float-slow': 'float-slow 8s ease-in-out infinite',
-        'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
         shimmer: 'shimmer 2.5s linear infinite',
         'fade-in-up': 'fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'fade-in': 'fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'scale-in': 'scale-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-        'slide-in-right': 'slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-        'slide-in-left': 'slide-in-left 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-        aurora: 'aurora 15s ease-in-out infinite',
-        'gradient-shift': 'gradient-shift 8s ease infinite',
         'slide-down': 'slide-down 0.25s ease-out forwards',
       },
     },

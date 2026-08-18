@@ -96,14 +96,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             `,
           }}
         />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://api.fontshare.com" />
-        <link rel="preconnect" href="https://cdn.fontshare.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://api.fontshare.com/v2/css?f[]=clash-display@1&f[]=pally@1,400,500,600,700,400i,500i,700i&display=swap"
-        />
+        {/* Bis 18.08.2026 hingen hier vier Preconnects und ein render-blockierendes
+            Stylesheet von Fontshare für „Clash Display" und „Pally". Beide
+            Schriften waren in keiner einzigen Regel referenziert (`font-display`
+            löst laut styles/theme.ts auf DM Sans auf) — jede Seite lud also zwei
+            Schriftfamilien, die nie ein Zeichen gesetzt haben. Google-Preconnects
+            ebenfalls raus: JetBrains Mono kommt über next/font und wird beim Build
+            selbst gehostet, DM Sans liegt in app/fonts/.
+            Die App führt bewusst **eine** Schrift. Hierarchie entsteht über Grösse,
+            Gewicht und Laufweite — nicht über eine zweite Familie. */}
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
         )}

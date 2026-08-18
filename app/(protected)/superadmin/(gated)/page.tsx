@@ -1,19 +1,26 @@
 import { requireAuth } from '@/lib/auth';
 import Link from 'next/link';
-import {
-  Building2,
-  GraduationCap,
-  Activity,
-  ChevronRight,
-  Shield,
-  TrendingUp,
-  Settings,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Building2, Activity, Shield, TrendingUp, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import { PageHeader } from '@/components/ui/page-header';
+import { KpiBand } from '@/components/ui/kpi-band';
+import { QuickActions } from '@/components/ui/quick-actions';
 
 export const dynamic = 'force-dynamic';
+
+// Zeilenmasse wie im Admin- und Owner-Dashboard.
+const HEAD_CELL = 'h-auto px-5 pb-2.5 pt-0 text-2xs uppercase tracking-[0.09em]';
+const BODY_CELL = 'px-5 py-2.5';
 
 export default async function SuperadminPage() {
   const { supabase, user } = await requireAuth();
@@ -102,119 +109,107 @@ export default async function SuperadminPage() {
         </Badge>
       </div>
 
-      {/* Platform KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
+      {/* Kennzahlen als Band — dasselbe Muster wie Owner-, Admin- und
+          Trainer-Dashboard. Vorher: drei Karten in einem Vierer-Raster (die
+          vierte Spalte blieb leer), jede mit getönter Symbolkachel in einer
+          eigenen Farbe, die nichts bedeutete. */}
+      <KpiBand
+        items={[
           {
-            label: 'Vereine (Gruppe)',
+            label: 'Vereine',
             value: clubCount,
-            icon: Building2,
-            color: 'text-info-600',
-            bg: 'bg-info-50 dark:bg-info-900/20',
+            sub: 'in deiner Gruppe',
+            href: '/superadmin/clubs',
           },
+          { label: 'Mitgliedschaften', value: activeMembers ?? 0, sub: 'aktiv' },
+          { label: 'Trainer', value: totalTrainers ?? 0, sub: 'aktiv' },
           {
-            label: 'Aktive Mitgliedschaften',
-            value: activeMembers ?? 0,
-            icon: Activity,
-            color: 'text-success-600',
-            bg: 'bg-success-50 dark:bg-success-900/20',
+            label: 'Ø Mitglieder',
+            value: clubCount > 0 ? Math.round((activeMembers ?? 0) / clubCount) : 0,
+            sub: 'je Verein',
           },
-          {
-            label: 'Aktive Trainer',
-            value: totalTrainers ?? 0,
-            icon: GraduationCap,
-            color: 'text-warning-600',
-            bg: 'bg-warning-50 dark:bg-warning-900/20',
-          },
-        ].map((stat) => (
-          <Card key={stat.label} className="border-0 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value.toLocaleString('de-DE')}</p>
-                </div>
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+        ]}
+      />
 
-      {/* All clubs — click to manage */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center justify-between">
-            Alle Vereine
-            <Link
-              href="/superadmin/clubs"
-              className="text-xs text-info-600 hover:underline font-normal flex items-center gap-1"
-            >
-              Verwalten <ChevronRight className="h-3 w-3" />
-            </Link>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="divide-y divide-border dark:divide-white/10">
-            {clubsWithStats.map((club: any) => (
-              <div key={club.id} className="flex items-center gap-4 py-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-info-50 dark:bg-info-900/20 shrink-0">
-                  <Building2 className="h-4 w-4 text-info-600 dark:text-info-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{club.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {club.members} Mitglieder · {club.trainers} Trainer
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {club.status === 'inactive' && (
-                    <Badge variant="secondary" className="text-xs">
-                      Inaktiv
-                    </Badge>
-                  )}
-                  {/* "Als Admin verwalten" → setzt Cookie + weiter zu /admin */}
-                  <Link
-                    href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
-                    className="text-xs text-info-600 hover:text-info-800 dark:text-info-400 hover:underline whitespace-nowrap"
-                  >
-                    Als Admin →
-                  </Link>
-                </div>
-              </div>
-            ))}
+      {/* Vereine als Tabelle in einer Karte — gleiche Bauweise wie im Owner-
+          und Admin-Dashboard. Freie Zeilen ohne Spalten liefen auf breiten
+          Schirmen zu weit auseinander, um noch als Zeile gelesen zu werden. */}
+      <Card className="p-0">
+        <CardHeader className="flex-row items-start justify-between space-y-0 px-5 pb-3 pt-5">
+          <div>
+            <CardTitle className="text-sm font-semibold">Alle Vereine</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {clubsWithStats.length === 1 ? '1 Verein' : `${clubsWithStats.length} Vereine`}
+            </p>
           </div>
+          <Link
+            href="/superadmin/clubs"
+            className="shrink-0 text-[12.5px] font-medium text-primary hover:underline"
+          >
+            Verwalten →
+          </Link>
+        </CardHeader>
+        <CardContent className="px-0 pb-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className={HEAD_CELL}>Verein</TableHead>
+                <TableHead className={cn(HEAD_CELL, 'w-[14%] text-right')}>Mitglieder</TableHead>
+                <TableHead className={cn(HEAD_CELL, 'w-[12%] text-right')}>Trainer</TableHead>
+                <TableHead className={cn(HEAD_CELL, 'w-[14%]')}>Status</TableHead>
+                <TableHead className={cn(HEAD_CELL, 'w-[12%] text-right')}>Aktion</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {clubsWithStats.map((club: any) => (
+                <TableRow key={club.id}>
+                  <TableCell className={cn(BODY_CELL, 'font-medium')}>{club.name}</TableCell>
+                  <TableCell className={cn(BODY_CELL, 'text-right tabular-nums')}>
+                    {club.members}
+                  </TableCell>
+                  <TableCell className={cn(BODY_CELL, 'text-right tabular-nums')}>
+                    {club.trainers}
+                  </TableCell>
+                  <TableCell className={cn(BODY_CELL, 'text-muted-foreground')}>
+                    {club.status === 'inactive' ? (
+                      <Badge variant="secondary">Inaktiv</Badge>
+                    ) : (
+                      'Aktiv'
+                    )}
+                  </TableCell>
+                  <TableCell className={cn(BODY_CELL, 'text-right')}>
+                    {/* "Als Admin verwalten" → setzt Cookie + weiter zu /admin */}
+                    <Link
+                      href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
+                      className="whitespace-nowrap text-[12.5px] font-medium text-primary hover:underline"
+                    >
+                      Als Admin →
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {clubsWithStats.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className={cn(BODY_CELL, 'text-muted-foreground')}>
+                    Noch kein Verein in deiner Gruppe.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* Superadmin Quick Actions */}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-          Plattform-Verwaltung
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: 'Vereine verwalten', href: '/superadmin/clubs', icon: Building2 },
-            { label: 'Vereinsübersicht', href: '/superadmin/tenants', icon: TrendingUp },
-            { label: 'Analytics', href: '/admin/analytics', icon: Activity },
-            { label: 'Einstellungen', href: '/admin/settings', icon: Settings },
-          ].map((action) => (
-            <Link
-              key={action.href}
-              href={action.href}
-              className="flex items-center gap-3 p-3 rounded-xl border border-border dark:border-white/10 hover:border-info-400/50 hover:shadow-sm transition-all bg-background dark:bg-card/5"
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-info-50 dark:bg-info-900/20 shrink-0">
-                <action.icon className="h-4 w-4 text-info-600 dark:text-info-400" />
-              </div>
-              <span className="text-sm font-medium">{action.label}</span>
-              <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
-            </Link>
-          ))}
-        </div>
-      </div>
+      <QuickActions
+        label="Plattform-Verwaltung"
+        mode="detailed"
+        actions={[
+          { label: 'Vereine verwalten', href: '/superadmin/clubs', icon: Building2 },
+          { label: 'Vereinsübersicht', href: '/superadmin/tenants', icon: TrendingUp },
+          { label: 'Analytics', href: '/admin/analytics', icon: Activity },
+          { label: 'Einstellungen', href: '/admin/settings', icon: Settings },
+        ]}
+      />
     </div>
   );
 }

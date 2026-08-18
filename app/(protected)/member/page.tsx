@@ -5,22 +5,24 @@ import {
   Calendar,
   BookOpen,
   CreditCard,
-  MapPin,
   Trophy,
-  ChevronRight,
-  Clock,
   ArrowRight,
-  Zap,
   GraduationCap,
-  Sparkles,
   ClipboardCheck,
   HardHat,
   MessageSquare,
   Users,
 } from 'lucide-react';
-import { IconBox } from '@/components/ui/icon-box';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import { KpiBand } from '@/components/ui/kpi-band';
 import { QuickActions } from '@/components/ui/quick-actions';
 import { MyTeamsCard } from '@/components/league/my-teams-card';
@@ -28,6 +30,10 @@ import { TennisBallEmptyState } from '@/components/ui/empty-state';
 import { OUTSTANDING_INVOICE_STATUSES } from '@/lib/billing/invoice-visibility';
 
 export const dynamic = 'force-dynamic';
+
+// Zeilenmasse wie in den übrigen Dashboards.
+const HEAD_CELL = 'h-auto px-5 pb-2.5 pt-0 text-2xs uppercase tracking-[0.09em]';
+const BODY_CELL = 'px-5 py-2.5';
 
 export default async function MemberPage() {
   const { supabase, user } = await requireAuth();
@@ -182,10 +188,10 @@ export default async function MemberPage() {
       {/* Ohne Avatar-Initiale: das Nutzerbild steht bereits im Header rechts.
           Ohne Hero-Pills: dieselben Ziele stehen direkt darunter als Kacheln. */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight font-display text-foreground dark:text-white">
-          Hallo, {firstName}!
+        <h1 className="font-display text-[28px] sm:text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground dark:text-white">
+          Hallo, {firstName}
         </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <p className="text-[15px] text-muted-foreground mt-1.5">
           {club?.name ?? 'Mein Verein'} · Mitglied
         </p>
       </div>
@@ -223,13 +229,12 @@ export default async function MemberPage() {
       <QuickActions
         label="Schnellzugriff"
         actions={[
-          { label: 'Buchen', href: '/bookings', icon: Calendar, variant: 'light' },
-          { label: 'Training', href: '/training-schedule', icon: BookOpen, variant: 'blue' },
+          { label: 'Buchen', href: '/bookings', icon: Calendar },
+          { label: 'Training', href: '/training-schedule', icon: BookOpen },
           {
             label: 'Trainer',
             href: '/member/trainer-booking',
             icon: GraduationCap,
-            variant: 'teal',
           },
           ...(features.tournaments === true
             ? [
@@ -237,7 +242,6 @@ export default async function MemberPage() {
                   label: 'Turniere',
                   href: '/member/tournaments',
                   icon: Trophy,
-                  variant: 'amber' as const,
                 },
               ]
             : []),
@@ -247,18 +251,16 @@ export default async function MemberPage() {
                   label: 'Mannschaften',
                   href: '/member/leagues',
                   icon: Trophy,
-                  variant: 'green' as const,
                 },
               ]
             : []),
-          { label: 'Rechnungen', href: '/billing', icon: CreditCard, variant: 'purple' },
+          { label: 'Rechnungen', href: '/billing', icon: CreditCard },
           ...(features.family_accounts === true
             ? [
                 {
                   label: 'Familienkonto',
                   href: '/member/family',
                   icon: Users,
-                  variant: 'teal' as const,
                 },
               ]
             : []),
@@ -266,12 +268,11 @@ export default async function MemberPage() {
           // was hier fehlt, ist für sie faktisch nicht erreichbar. Nachrichten
           // hingen vorher nur an den entfernten Hero-Pills, die eigene
           // Anwesenheit war überhaupt nirgends verlinkt.
-          { label: 'Nachrichten', href: '/messages', icon: MessageSquare, variant: 'blue' },
+          { label: 'Nachrichten', href: '/messages', icon: MessageSquare },
           {
             label: 'Anwesenheit',
             href: '/attendance-history',
             icon: ClipboardCheck,
-            variant: 'teal',
           },
           ...(features.work_duty === true
             ? [
@@ -279,7 +280,6 @@ export default async function MemberPage() {
                   label: 'Dienste',
                   href: '/member/work-duties',
                   icon: HardHat,
-                  variant: 'amber' as const,
                 },
               ]
             : []),
@@ -287,7 +287,6 @@ export default async function MemberPage() {
             label: 'Präferenzen',
             href: '/member/preferences',
             icon: ClipboardCheck,
-            variant: 'green',
           },
         ]}
       />
@@ -295,143 +294,116 @@ export default async function MemberPage() {
       {/* ── Meine Mannschaften (nur für Spieler in einer Meldeliste) ── */}
       <MyTeamsCard />
 
-      {/* ── Next Session (Hero Card) ── */}
+      {/* ── Nächster Termin ──
+          Der eine Punkt, wegen dem ein Mitglied diese Seite überhaupt öffnet.
+          Vorher war er eine Karte wie jede andere: gleicher Rahmen, gleiche
+          Schriftgrösse, dazu eine Eyebrow-Zeile mit Blitz-Symbol und eine
+          „HEUTE"-Pille — vier Elemente, die um dieselbe Aufmerksamkeit rangen.
+          Jetzt trägt die Uhrzeit die Information, alles andere ordnet sich
+          unter. Der Tag steht als Wort daneben, nicht als Signalpille. */}
       {nextSession ? (
-        <Link href="/bookings">
-          <Card className="border border-border dark:border-white/10 cursor-pointer hover:border-brand-light/40 hover:shadow-sm transition-all duration-300 group">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2.5">
-                  <IconBox icon={Zap} size="sm" variant="light" />
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Nächste Session
+        <Link href="/bookings" className="group block">
+          <Card variant="interactive" padding="none">
+            <div className="flex items-stretch">
+              <div className="w-1 shrink-0 rounded-l-xl bg-primary" aria-hidden="true" />
+              <div className="flex flex-1 items-center justify-between gap-4 p-5">
+                <div className="min-w-0">
+                  <p className="text-sm text-muted-foreground">
+                    {isToday(nextSession.timeslot_start)
+                      ? 'Heute'
+                      : formatDate(nextSession.timeslot_start)}
                   </p>
-                </div>
-                {isToday(nextSession.timeslot_start) && (
-                  <span className="text-2xs font-bold bg-brand-light/10 text-brand-light px-3 py-1 rounded-full">
-                    HEUTE
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-lg font-bold text-foreground dark:text-white">
+                  <p className="mt-1 text-[26px] font-semibold leading-none tracking-[-0.03em] text-foreground dark:text-white tabular-nums">
+                    {formatTime(nextSession.timeslot_start)}
+                    <span className="text-muted-foreground">
+                      –{formatTime(nextSession.timeslot_end)}
+                    </span>
+                  </p>
+                  <p className="mt-2 truncate text-sm text-muted-foreground">
                     {nextCourt?.name ?? 'Training'}
                   </p>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    {formatDate(nextSession.timeslot_start)} ·{' '}
-                    {formatTime(nextSession.timeslot_start)}–{formatTime(nextSession.timeslot_end)}
-                  </p>
                 </div>
-                <ArrowRight className="h-5 w-5 text-muted-foreground/40 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
               </div>
-            </CardContent>
+            </div>
           </Card>
         </Link>
       ) : (
-        <Card className="border border-border dark:border-white/10">
-          <CardContent className="p-5">
-            <div className="flex items-start gap-4">
-              <IconBox icon={Sparkles} size="lg" variant="light" />
-              <div>
-                <p className="font-semibold text-foreground">Bereit für dein erstes Training?</p>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  Buche jetzt deine erste Session und starte durch.
-                </p>
-                <Link
-                  href="/bookings"
-                  className="inline-flex items-center gap-1.5 mt-2 text-sm font-semibold text-brand-light hover:underline"
-                >
-                  Jetzt buchen <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              </div>
-            </div>
-          </CardContent>
+        <Card padding="none">
+          <div className="p-5">
+            <p className="font-semibold text-foreground">Noch kein Termin gebucht</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Freie Plätze und Trainingszeiten stehen in der Platzbuchung.
+            </p>
+            <Link
+              href="/bookings"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+            >
+              Zur Platzbuchung <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </Card>
       )}
 
-      {/* ── Next Bookings ── */}
+      {/* ── Kommende Termine ──
+          Bis 18.08.2026 standen hier zwei Karten: „Nächste Buchungen" und
+          „Trainingseinheiten". Die zweite war eine Teilmenge der ersten —
+          `nextSessions` entsteht aus genau denselben `upcomingBookings` —, also
+          dieselben Termine ein zweites Mal, nur ohne den ersten. Eine Liste.
+
+          Auch weg: das „Bestätigt"-Badge an jeder Zeile. Die Abfrage filtert auf
+          `status = 'confirmed'`; ein Merkmal, das ausnahmslos alle Zeilen tragen,
+          unterscheidet nichts und ist damit reine Fläche.
+
+          Und keine Kartenhülle mehr um die Liste: eine Überschrift und
+          Trennlinien reichen. Vier gerahmte Blöcke untereinander waren der
+          Hauptgrund, warum die Seite wie ein Baukasten aussah. */}
       {(upcomingBookings ?? []).length > 0 && (
-        <Card className="border border-border dark:border-white/10 p-0">
-          <CardHeader className="px-5 pt-5 pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center justify-between">
-              Nächste Buchungen
-              <Link
-                href="/bookings"
-                className="text-xs text-brand-light hover:underline font-normal flex items-center gap-1"
-              >
-                Alle <ChevronRight className="h-3 w-3" />
-              </Link>
-            </CardTitle>
+        <Card className="p-0">
+          <CardHeader className="flex-row items-start justify-between space-y-0 px-5 pb-3 pt-5">
+            <CardTitle className="text-sm font-semibold">Kommende Termine</CardTitle>
+            <Link
+              href="/bookings"
+              className="shrink-0 text-[12.5px] font-medium text-primary hover:underline"
+            >
+              Alle →
+            </Link>
           </CardHeader>
-          <CardContent className="px-5 pb-5">
-            <div className="divide-y divide-border dark:divide-white/5">
-              {upcomingBookings!.map((b: any) => {
-                const court = Array.isArray(b.sessions?.courts)
-                  ? b.sessions.courts[0]
-                  : b.sessions?.courts;
-                return (
-                  <div
-                    key={b.id}
-                    className="flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-xl transition-colors"
-                  >
-                    <IconBox icon={MapPin} size="sm" variant="green" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate text-foreground">
-                        {court?.name ?? 'Platz'}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatDate(b.session_start_time)} · {formatTime(b.session_start_time)}
-                      </p>
-                    </div>
-                    <Badge className="text-2xs bg-success-50 text-success-700 border-success-200 font-medium">
-                      Bestätigt
-                    </Badge>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── Next Training Sessions ── */}
-      {nextSessions.length > 1 && (
-        <Card className="border border-border dark:border-white/10 p-0">
-          <CardHeader className="px-5 pt-5 pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center justify-between">
-              Trainingseinheiten
-              <Link
-                href="/bookings"
-                className="text-xs text-brand-light hover:underline font-normal flex items-center gap-1"
-              >
-                Alle <ChevronRight className="h-3 w-3" />
-              </Link>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-5 pb-5">
-            <div className="divide-y divide-border dark:divide-white/5">
-              {nextSessions.slice(1, 4).map((s: any) => {
-                const court = Array.isArray(s.courts) ? s.courts[0] : s.courts;
-                return (
-                  <div
-                    key={s.id}
-                    className="flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-xl transition-colors"
-                  >
-                    <IconBox icon={Clock} size="sm" variant="light" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate text-foreground">
-                        {court?.name ?? 'Training'}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatDate(s.timeslot_start)} · {formatTime(s.timeslot_start)}–
-                        {formatTime(s.timeslot_end)}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          <CardContent className="px-0 pb-0">
+            {/* Datum und Uhrzeit als eigene Spalten: dadurch stehen die Termine
+                untereinander auf einer Kante und lassen sich vergleichen,
+                statt jeweils hinter einem Symbol neu anzusetzen. */}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className={cn(HEAD_CELL, 'w-[30%]')}>Datum</TableHead>
+                  <TableHead className={cn(HEAD_CELL, 'w-[16%]')}>Zeit</TableHead>
+                  <TableHead className={HEAD_CELL}>Platz</TableHead>
+                  <TableHead className={cn(HEAD_CELL, 'w-[16%] text-right')}>Art</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {upcomingBookings!.map((b: any) => {
+                  const court = Array.isArray(b.sessions?.courts)
+                    ? b.sessions.courts[0]
+                    : b.sessions?.courts;
+                  return (
+                    <TableRow key={b.id}>
+                      <TableCell className={cn(BODY_CELL, 'text-muted-foreground tabular-nums')}>
+                        {formatDate(b.session_start_time)}
+                      </TableCell>
+                      <TableCell className={cn(BODY_CELL, 'font-medium tabular-nums')}>
+                        {formatTime(b.session_start_time)}
+                      </TableCell>
+                      <TableCell className={BODY_CELL}>{court?.name ?? 'Platz'}</TableCell>
+                      <TableCell className={cn(BODY_CELL, 'text-right text-muted-foreground')}>
+                        {b.sessions ? 'Training' : 'Platzbuchung'}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       )}
