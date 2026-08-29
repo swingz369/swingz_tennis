@@ -42,7 +42,6 @@ const PERSONAL_DATA: ReadonlyArray<{ table: string; columns: string[]; label: st
   { table: 'trainer_profiles', columns: ['trainer_id'], label: 'Trainerprofil' },
   { table: 'trainer_member_notes', columns: ['member_id'], label: 'Notizen über Sie' },
   { table: 'trainer_feedback', columns: ['member_id', 'trainer_id'], label: 'Feedback' },
-  { table: 'training_group_memberships', columns: ['member_id'], label: 'Gruppenzugehörigkeit' },
   { table: 'season_waitlists', columns: ['member_id'], label: 'Wartelisten (Saison)' },
   { table: 'waitlist_entries', columns: ['user_id'], label: 'Wartelisten (Kurse)' },
   { table: 'work_duty_assignments', columns: ['member_id'], label: 'Arbeitsdienste' },

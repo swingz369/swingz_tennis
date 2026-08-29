@@ -185,28 +185,6 @@ export const schedules = pgTable(
   })
 );
 
-export const trainingGroups = pgTable(
-  'training_groups',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    club_id: uuid('club_id')
-      .notNull()
-      .references(() => clubs.id, { onDelete: 'cascade' }),
-    schedule_id: uuid('schedule_id')
-      .notNull()
-      .references(() => schedules.id, { onDelete: 'cascade' }),
-    name: varchar('name', { length: 100 }).notNull(),
-    level: varchar('level', { length: 20 }).notNull().default('intermediate'),
-    age_group: varchar('age_group', { length: 20 }).notNull().default('senior'),
-    is_active: boolean('is_active').notNull().default(true),
-  },
-  (table) => ({
-    club_idx: index('training_groups_club_idx').on(table.club_id),
-    schedule_idx: index('training_groups_schedule_idx').on(table.schedule_id),
-    club_active_idx: index('training_groups_club_active_idx').on(table.club_id, table.is_active),
-  })
-);
-
 export const groups = pgTable(
   'groups',
   {
@@ -517,17 +495,6 @@ export const invoiceItems = pgTable(
   })
 );
 
-export const trainingGroupsRelations = relations(trainingGroups, ({ one }) => ({
-  club: one(clubs, {
-    fields: [trainingGroups.club_id],
-    references: [clubs.id],
-  }),
-  schedule: one(schedules, {
-    fields: [trainingGroups.schedule_id],
-    references: [schedules.id],
-  }),
-}));
-
 export const courtsRelations = relations(courts, ({ one }) => ({
   club: one(clubs, {
     fields: [courts.club_id],
@@ -783,10 +750,10 @@ export const seasonPlanEntries = pgTable(
       .notNull()
       .references(() => trainers.id, { onDelete: 'restrict' }),
     court_id: uuid('court_id').references(() => courts.id, { onDelete: 'set null' }),
-    // FK points to the modern seasonal `groups` table (member_ids JSONB, created by
-    // SeasonClusteringEngine). NOT the legacy `training_groups` table (`schedule_id`
-    // NOT NULL, designed for fixed schedules — incompatible with clustering-driven groups).
-    // See supabase/migrations/20260630_recorrect_season_plan_entries_group_fk.sql
+    // FK zeigt auf die saisonale `groups`-Tabelle (member_ids JSONB, von der
+    // SeasonClusteringEngine erzeugt). Die frühere zweite Tabelle
+    // `training_groups` ist mit 20260828_drop_training_groups.sql entfallen.
+    // Siehe supabase/migrations/20260630_recorrect_season_plan_entries_group_fk.sql
     // for the matching DB-level FK correction (drizzle/0010 had pointed to the wrong table).
     group_id: uuid('group_id').references(() => groups.id, { onDelete: 'cascade' }),
 
@@ -2921,18 +2888,6 @@ export const trainerRatingSummary = pgTable('trainer_rating_summary', {
   avg_punctuality: integer('avg_punctuality'),
   avg_motivation: integer('avg_motivation'),
   last_updated: text('last_updated'),
-});
-
-export const trainingGroupMemberships = pgTable('training_group_memberships', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  training_group_id: uuid('training_group_id').notNull(),
-  member_id: uuid('member_id').notNull(),
-  club_id: uuid('club_id').notNull(),
-  joined_at: text('joined_at').notNull(),
-  left_at: text('left_at'),
-  left_reason: text('left_reason'),
-  created_by: text('created_by'),
-  created_at: timestamp('created_at').notNull().defaultNow(),
 });
 
 // ==============================================================================

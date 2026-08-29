@@ -78,7 +78,6 @@ const BACKUP_TABLES = [
   'trainer_club',
   'courts',
   'schedules',
-  'training_groups',
   'groups',
   'pricing_rules',
   'sessions',

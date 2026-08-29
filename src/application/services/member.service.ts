@@ -118,7 +118,7 @@ export class MemberService {
       membershipStatus: membershipStatus as Member['membershipStatus'],
       membershipStart: (m.joined_at as string) || undefined,
       membershipEnd: (m.deactivated_at as string) || undefined,
-      trainingGroup: undefined, // stored in training_group_memberships, fetched separately
+      trainingGroup: undefined, // steht in groups.member_ids, wird separat geholt
       // jsonb-Spalte, die auch als JSON-String zurückkommen kann — ein Cast
       // hätte daraus einen String gemacht, dessen `?.name` still `undefined` ist.
       emergencyContact: emergencyContact
@@ -373,31 +373,27 @@ export class MemberService {
   }
 
   /**
-   * Get members by training group — joins training_group_memberships
+   * Mitglieder einer Trainingsgruppe.
    *
-   * Resolves the human-readable group name (e.g. "Anfänger") to a group ID
-   * via the training_groups table, then fetches member IDs from
-   * training_group_memberships, and finally returns full Member entities.
+   * Löst den Gruppennamen (z. B. „Jugend Anfänger") über `groups` auf und
+   * liest die Mitglieder aus deren `member_ids`. Die frühere Fassung ging über
+   * `training_groups` + `training_group_memberships` — ein zweites, nie
+   * befülltes Gruppen-System, das mit der Migration
+   * `20260828_drop_training_groups.sql` entfernt wurde. `season_plan_entries`
+   * zeigt per FK ohnehin auf `groups`; das hier ist jetzt dieselbe Quelle.
    */
   static async getMembersByTrainingGroup(trainingGroup: string): Promise<Member[]> {
-    // Resolve training group name → ID
     const { data: groupData } = await db
-      .from('training_groups')
-      .select('id, name')
+      .from('groups')
+      .select('id, name, member_ids')
       .eq('name', trainingGroup)
-      .single();
+      .maybeSingle();
 
     if (!groupData) return [];
 
-    const groupId = groupData.id as string;
     const groupName = (groupData.name as string) || trainingGroup;
 
-    const { data: membershipRecords } = await db
-      .from('training_group_memberships')
-      .select('member_id')
-      .eq('training_group_id', groupId);
-
-    const userIds = [...new Set((membershipRecords || []).map((r) => r.member_id as string))];
+    const userIds = [...new Set((groupData.member_ids as string[] | null) ?? [])];
     if (userIds.length === 0) return [];
 
     // Fetch user_club_memberships for these users
@@ -482,7 +478,7 @@ export class MemberService {
       }
       if (input.membershipStart !== undefined) membershipUpdate.joined_at = input.membershipStart;
       if (input.membershipEnd !== undefined) membershipUpdate.deactivated_at = input.membershipEnd;
-      // Note: trainingGroup is stored in training_group_memberships, not here
+      // Note: die Gruppenzugehörigkeit steht in groups.member_ids, nicht hier
 
       await db
         .from('user_club_memberships')
@@ -566,6 +562,14 @@ export class MemberService {
       else active++;
     }
 
+    // Gruppenverteilung aus `groups.member_ids` — die Spalte ist die Quelle
+    // der Zugehörigkeit, seit `training_group_memberships` entfallen ist.
+    const { data: groupRows } = await db.from('groups').select('name, member_ids');
+    const byTrainingGroup: Record<string, number> = {};
+    for (const g of groupRows ?? []) {
+      byTrainingGroup[g.name as string] = ((g.member_ids as string[] | null) ?? []).length;
+    }
+
     return {
       total,
       active,
@@ -574,10 +578,11 @@ export class MemberService {
       terminated,
       byType: {
         member: active + suspended,
-        trial: 0, // trial tracking requires training_group_memberships
+        // Probemitglieder stehen in `trial_trainings`, nicht in den Mitgliedschaften.
+        trial: 0,
         inactive,
       },
-      byTrainingGroup: {}, // requires training_group_memberships join
+      byTrainingGroup,
     };
   }
 

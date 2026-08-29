@@ -1,6 +1,6 @@
 import { eq, gte, lte, sql, and, inArray } from 'drizzle-orm';
 import { db } from '../db';
-import { schedules, sessions, trainingGroups } from '../schema';
+import { schedules, sessions } from '../schema';
 import { Schedule } from '@/domain/entities/schedule';
 import type { SessionId } from '@/domain/value-objects';
 import { ScheduleId, ClubId, ScheduleWeek, TrainerId } from '@/domain/value-objects';
@@ -66,7 +66,6 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
 
   async delete(id: ScheduleId): Promise<void> {
     await db.delete(sessions).where(eq(sessions.schedule_id, id.getValue()));
-    await db.delete(trainingGroups).where(eq(trainingGroups.schedule_id, id.getValue()));
     await db.delete(schedules).where(eq(schedules.id, id.getValue()));
   }
 
