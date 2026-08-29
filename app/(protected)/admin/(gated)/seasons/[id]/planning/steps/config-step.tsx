@@ -202,11 +202,11 @@ function CopyGroupsPanel({ seasonId, clubId }: { seasonId: string; clubId: strin
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(extractErrorMessage(data) ?? 'Fehler beim Kopieren der Gruppen');
+        toast.error(extractErrorMessage(data) ?? 'Fehler beim Übernehmen des Stundenplans');
         return;
       }
       toast.success(
-        `${data.copiedGroups} Gruppe${data.copiedGroups !== 1 ? 'n' : ''} mit ${data.copiedMembers} Mitglied${data.copiedMembers !== 1 ? 'ern' : ''} übernommen.`
+        `${data.copiedEntries} Stundenplan-Eintr${data.copiedEntries !== 1 ? 'äge' : 'ag'} aus ${data.copiedGroups} Gruppe${data.copiedGroups !== 1 ? 'n' : ''} übernommen.`
       );
       setSourceSeasonId('');
     } catch {
@@ -221,11 +221,11 @@ function CopyGroupsPanel({ seasonId, clubId }: { seasonId: string; clubId: strin
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <Copy className="h-4 w-4 text-primary" />
-          Gruppen aus vorheriger Saison übernehmen
+          Stundenplan aus vorheriger Saison übernehmen
         </CardTitle>
         <CardDescription>
-          Kopiert Trainingsgruppen inklusive Mitgliederzuordnungen aus einer abgeschlossenen Saison
-          in diese Saison — ohne Neu-Clustering.
+          Übernimmt die Belegung einer abgeschlossenen Saison — wer unterrichtet wann, wo, mit
+          welcher Gruppe — als Entwurf in diese Saison. Ohne Neu-Clustering.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -238,8 +238,8 @@ function CopyGroupsPanel({ seasonId, clubId }: { seasonId: string; clubId: strin
         ) : (
           <>
             <div className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800 dark:border-warning-800 dark:bg-warning-900 dark:text-warning-200">
-              Bestehende Gruppen in dieser Saison werden <strong>nicht gelöscht</strong> — die
-              kopierten Gruppen kommen zusätzlich hinzu.
+              Nur in eine Saison ohne eigenen Stundenplan. Hat diese Saison schon Einträge, wird
+              nichts übernommen — erst leeren, dann kopieren.
             </div>
             <div className="flex items-end gap-3">
               <div className="flex-1">

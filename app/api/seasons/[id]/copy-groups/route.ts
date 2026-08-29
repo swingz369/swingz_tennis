@@ -8,7 +8,17 @@ const log = createLogger('api:seasons:copy-groups');
 
 // POST /api/seasons/[id]/copy-groups
 // Body: { sourceSeasonId: string }
-// Kopiert alle training_groups (+ member_ids) der Quell-Saison in die Ziel-Saison.
+//
+// Übernimmt den Stundenplan einer früheren Saison: jeder `season_plan_entry`
+// der Quell-Saison wird als Entwurf in die Ziel-Saison kopiert.
+//
+// Die Route hiess einmal „Gruppen kopieren" und las aus `training_groups` —
+// einer zweiten, nie befüllten Tabelle, weshalb sie ausnahmslos mit 404
+// antwortete (siehe docs/ARCHIV/2026-08-28-grundfunktionen-harmonisierung.md,
+// F-6). Gruppen selbst sind club-weit (`groups`, ohne `season_id`); sie zu
+// kopieren wäre ein No-op, die Ziel-Saison sieht sie ohnehin alle. Was der
+// Admin an dieser Stelle übernehmen will, ist die Belegung: wer unterrichtet
+// wann, wo, mit welcher Gruppe.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) {
@@ -64,115 +74,73 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return forbiddenResponse('Quell- und Ziel-Saison müssen zum gleichen Verein gehören');
     }
 
-    // Gruppen der Quell-Saison laden
-    // training_groups sind über schedule_id mit der Saison verknüpft.
-    // Zuerst schedules der Quell-Saison finden.
-    const { data: sourceSchedules, error: schedulesErr } = await supabase
-      .from('schedules')
-      .select('id')
-      .eq('club_id', sourceSeason.club_id)
-      // Saison-Typ-Matching über season_year und season_type nicht direkt verfügbar —
-      // wir holen Gruppen direkt über club_id der Quellsaison aus training_groups,
-      // gefiltert nach den schedule_ids der Quellsaison
-      .gte('season_start_date', '2000-01-01'); // Alle Schedules — wird unten gefiltert
+    // Stundenplan-Einträge der Quell-Saison laden
+    // Feldliste als eine Zeichenkette: setzt man sie aus Teilen zusammen, kann
+    // der Supabase-Typgenerator die Spalten nicht mehr auflösen.
+    const { data: sourceEntries, error: entriesErr } = await supabase
+      .from('season_plan_entries')
+      .select(
+        'trainer_id, court_id, group_id, day_of_week, day_of_week_2, start_time, end_time, duration_minutes, entry_type, max_participants, expected_participants, sessions_per_week, starts_from_week, ends_at_week, notes'
+      )
+      .eq('season_id', sourceSeasonId);
 
-    // Einfacherer Ansatz: Gruppen direkt per club_id laden, die zur Quell-Saison gehören.
-    // training_groups.schedule_id zeigt auf schedules, die wiederum club_id haben.
-    // Wir laden Gruppen, deren schedule_id zu einem der Quell-Saison-Schedules gehört.
-    const { data: sourceSchedulesForSeason, error: ssErr } = await supabase
-      .from('schedules')
-      .select('id')
-      .eq('club_id', sourceSeason.club_id);
-
-    void sourceSchedules;
-    void schedulesErr;
-
-    if (ssErr) {
-      log.error('Fehler beim Laden der Schedules', ssErr);
+    if (entriesErr) {
+      log.error('Fehler beim Laden der Quell-Einträge', entriesErr);
       return NextResponse.json({ error: 'Fehler beim Laden der Quell-Saison' }, { status: 500 });
     }
 
-    const scheduleIds = (sourceSchedulesForSeason ?? []).map((s) => s.id);
-
-    // Gruppen der Quell-Saison (über einen der Schedules verknüpft)
-    let sourceGroups: Array<{
-      id: string;
-      name: string;
-      level: string;
-      age_group: string;
-      club_id: string;
-      schedule_id: string;
-    }> = [];
-
-    if (scheduleIds.length > 0) {
-      const { data: groups, error: groupsErr } = await supabase
-        .from('training_groups')
-        .select('id, name, level, age_group, club_id, schedule_id')
-        .eq('club_id', sourceSeason.club_id)
-        .in('schedule_id', scheduleIds);
-
-      if (groupsErr) {
-        log.error('Fehler beim Laden der Quell-Gruppen', groupsErr);
-        return NextResponse.json({ error: 'Fehler beim Laden der Gruppen' }, { status: 500 });
-      }
-      sourceGroups = (groups ?? []) as typeof sourceGroups;
-    }
-
-    if (sourceGroups.length === 0) {
+    if (!sourceEntries?.length) {
       return NextResponse.json(
-        { error: 'Keine Gruppen in der Quell-Saison gefunden' },
+        { error: 'Die Quell-Saison hat noch keine Stundenplan-Einträge' },
         { status: 404 }
       );
     }
 
-    // Schedule der Ziel-Saison laden oder den ersten verfügbaren nehmen
-    const { data: targetSchedules } = await supabase
-      .from('schedules')
-      .select('id')
-      .eq('club_id', targetSeason.club_id)
-      .limit(1);
+    // Nicht zweimal übernehmen: hat die Ziel-Saison schon einen Plan, würde ein
+    // zweiter Klick ihn verdoppeln statt ihn zu ersetzen.
+    const { count: existing } = await supabase
+      .from('season_plan_entries')
+      .select('id', { count: 'exact', head: true })
+      .eq('season_id', targetSeasonId);
 
-    const targetScheduleId = targetSchedules?.[0]?.id;
-    if (!targetScheduleId) {
+    if (existing && existing > 0) {
       return NextResponse.json(
         {
-          error: 'Die Ziel-Saison hat noch keinen Schedule. Bitte zuerst einen Schedule erstellen.',
+          error:
+            'Die Ziel-Saison hat bereits Stundenplan-Einträge. Bitte zuerst leeren, dann übernehmen.',
         },
-        { status: 422 }
+        { status: 409 }
       );
     }
 
-    // Neue Gruppen erstellen
-    const newGroups = sourceGroups.map((g) => ({
-      club_id: targetSeason.club_id,
-      schedule_id: targetScheduleId,
-      name: g.name,
-      level: g.level,
-      age_group: g.age_group,
-      is_active: true,
-    }));
-
     const { data: inserted, error: insertErr } = await supabase
-      .from('training_groups')
-      .insert(newGroups)
+      .from('season_plan_entries')
+      .insert(
+        sourceEntries.map((e) => ({
+          ...e,
+          season_id: targetSeasonId,
+          club_id: targetSeason.club_id,
+          // Übernommen heisst Entwurf: der Admin sieht den Plan, bevor er ihn
+          // veröffentlicht — nichts wird still aktiv.
+          status: 'planned',
+          planning_source: 'copied',
+        }))
+      )
       .select('id');
 
     if (insertErr) {
-      log.error('Fehler beim Kopieren der Gruppen', insertErr);
-      return NextResponse.json({ error: 'Fehler beim Kopieren der Gruppen' }, { status: 500 });
+      log.error('Fehler beim Kopieren der Stundenplan-Einträge', insertErr);
+      return NextResponse.json(
+        { error: 'Fehler beim Übernehmen des Stundenplans' },
+        { status: 500 }
+      );
     }
 
-    const copiedGroups = inserted?.length ?? 0;
-    // Mitglieder liegen in training_group_memberships und werden hier nicht kopiert.
-    const copiedMembers = 0;
+    const copiedEntries = inserted?.length ?? 0;
+    const copiedGroups = new Set(sourceEntries.map((e) => e.group_id).filter(Boolean)).size;
 
-    log.info('Gruppen kopiert', {
-      sourceSeasonId,
-      targetSeasonId,
-      copiedGroups,
-      copiedMembers,
-    });
+    log.info('Stundenplan übernommen', { sourceSeasonId, targetSeasonId, copiedEntries });
 
-    return NextResponse.json({ copiedGroups, copiedMembers });
+    return NextResponse.json({ copiedEntries, copiedGroups });
   });
 }
