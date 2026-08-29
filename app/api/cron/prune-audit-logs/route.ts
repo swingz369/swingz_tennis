@@ -11,7 +11,7 @@
  * Fristen: Lese-Protokolle 90 Tage, Sicherheitsprotokolle 12 Monate,
  * Finanzvorgänge unbegrenzt (§ 147 AO).
  *
- * Auth: Header x-cron-secret muss mit CRON_SECRET übereinstimmen.
+ * Auth: Header `Authorization: Bearer <CRON_SECRET>` (Vercel-Cron-Konvention).
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
@@ -19,13 +19,18 @@ import { internalErrorResponse } from '@/lib/api-error';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 import { recordHeartbeat } from '@/lib/ops-heartbeat';
+import { env } from '@/lib/env';
 
 const log = createLogger('cron:prune-audit-logs');
 
 export async function GET(req: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret || req.headers.get('x-cron-secret') !== cronSecret) {
-    log.error('Cron-Aufruf mit ungültigem Secret abgewiesen', undefined);
+  const cronSecret = env.CRON_SECRET;
+  if (!cronSecret) {
+    log.error('CRON_SECRET not configured — rejecting request');
+    return NextResponse.json({ error: 'Dienst fehlkonfiguriert' }, { status: 500 });
+  }
+  if (req.headers.get('authorization') !== `Bearer ${cronSecret}`) {
+    log.error('Cron-Aufruf mit ungültigem Secret abgewiesen');
     return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   }
 

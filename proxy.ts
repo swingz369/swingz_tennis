@@ -122,6 +122,21 @@ const PUBLIC_ROUTES = [
   '/sw.js', // Service Worker
 ];
 
+// API-Routen, die sich selbst authentifizieren (CRON_SECRET bzw. HMAC-Signatur
+// im eigenen Handler) und deshalb OHNE Supabase-Session durch die Middleware
+// müssen. Die Middleware kennt weder CRON_SECRET noch die Stripe-Signatur.
+//   /api/webhooks                   → Stripe, prüft HMAC-Signatur selbst
+//   /api/cron                       → Vercel-Crons, prüfen CRON_SECRET selbst
+//   /api/reminders/booking-tomorrow → Cron prüft CRON_SECRET (GET); der
+//                                      Admin-Trigger (POST) authentifiziert
+//                                      sich weiterhin per withApiAuth
+// CSRF (Schritt 5) und globales Rate-Limit bleiben davon unberührt.
+const SELF_AUTHENTICATED_API_ROUTES = [
+  '/api/webhooks',
+  '/api/cron',
+  '/api/reminders/booking-tomorrow',
+];
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const requestHeaders = new Headers(request.headers);
@@ -207,17 +222,29 @@ export async function proxy(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid or missing CSRF token' }, { status: 403 });
   }
 
-  // 6. Nicht eingeloggt → Login (Pages) bzw. 401 JSON (API)
+  // 6. Nicht eingeloggt → Login (Pages) bzw. 401 JSON (API).
   //    API-Routen dürfen NIE einen Redirect erhalten: fetch() folgt dem Redirect
   //    automatisch zur Login-Seite (HTML statt JSON), was der Client als Session-
   //    Abbruch/"Ausgeloggt" wahrnimmt, obwohl es nur ein abgelaufenes CSRF/Auth-Token war.
+  //
+  //    Selbst-authentifizierte API-Routen (Webhooks/Crons) werden hier
+  //    durchgelassen — sie prüfen ihr Secret bzw. ihre Signatur im eigenen
+  //    Handler. Ohne diese Ausnahme wären Vercel-Cron-Aufrufe (kein
+  //    Supabase-Cookie) und der Stripe-Webhook hier bereits mit 401 beantwortet
+  //    worden, bevor ihre Route den CRON_SECRET-/HMAC-Check ausführen konnte.
   if (error || !user) {
-    if (pathname.startsWith('/api/')) {
+    const isSelfAuthenticated = SELF_AUTHENTICATED_API_ROUTES.some(
+      (route) => pathname === route || pathname.startsWith(route + '/')
+    );
+    if (pathname.startsWith('/api/') && !isSelfAuthenticated) {
       return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
     }
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirectTo', pathname);
-    return NextResponse.redirect(loginUrl);
+    if (!pathname.startsWith('/api/')) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirectTo', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    // API + selbst-authentifiziert → durchlassen zum Handler.
   }
 
   // 7. Eingeloggt auf /login → Dashboard

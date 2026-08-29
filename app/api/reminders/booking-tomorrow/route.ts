@@ -17,8 +17,11 @@ import { pushNotificationService } from '@/lib/push-notification.service';
 import { sendRemindersSchema } from '@/application/validation/schemas/reminders.schema';
 import { createLogger } from '@/lib/logger';
 import { recordHeartbeat } from '@/lib/ops-heartbeat';
+import { env } from '@/lib/env';
 
 const log = createLogger('api:reminders:booking-tomorrow');
+
+export const dynamic = 'force-dynamic';
 
 class TempSessionRepository implements ISessionRepository {
   async findSessionsForDateRange(startDate: Date, endDate: Date): Promise<Session[]> {
@@ -91,6 +94,96 @@ class TempMemberRepository implements IMemberRepository {
   }
 }
 
+/**
+ * Gemeinsame Ausführung für Cron (GET) und manuellen Admin-Trigger (POST):
+ * baut den ReminderService, verschickt die Erinnerungen für morgen, feuert
+ * Push-Benachrichtigungen ab und schreibt das Lebenszeichen.
+ *
+ * dryRun=true verschickt nichts und schreibt kein Heartbeat — ein Trockenlauf
+ * zählt nicht als gelaufener Job (Kommentar unten).
+ */
+async function runReminders(dryRun: boolean) {
+  const reminderService = new ReminderService(
+    new EmailService(),
+    new AuditServiceImpl(),
+    new TempSessionRepository(),
+    new TempBookingRepository(),
+    new TempMemberRepository()
+  );
+
+  const results = await reminderService.sendTomorrowReminders({ dryRun });
+
+  const sentCount = results.filter((r) => r.status === 'sent').length;
+  const failedCount = results.filter((r) => r.status === 'failed').length;
+
+  // Fire-and-forget: send push notifications for each successful reminder
+  const sentResults = results.filter((r) => r.status === 'sent');
+  for (const r of sentResults) {
+    const time = new Date(r.sessionStart).toLocaleTimeString('de-DE', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const court = r.courtName || 'Platz';
+    pushNotificationService
+      .sendToUser(r.memberId, {
+        title: 'Training morgen',
+        body: `${time} Uhr — ${court}${r.trainerName ? ` mit ${r.trainerName}` : ''}`,
+        url: '/bookings',
+        tag: `reminder-${r.sessionId}`,
+      })
+      .catch(() => {
+        /* non-blocking */
+      });
+  }
+
+  // Lebenszeichen fuer /api/health (PRODUKTIONSREIFE.md 5.3). Ein
+  // Trockenlauf zaehlt nicht — sonst sieht die Ueberwachung einen Job als
+  // gelaufen, der nichts verschickt hat.
+  if (!dryRun) await recordHeartbeat('cron-booking-reminders');
+
+  return {
+    total: results.length,
+    sent: sentCount,
+    failed: failedCount,
+    results: results.slice(0, 50),
+  };
+}
+
+/**
+ * GET /api/reminders/booking-tomorrow
+ *
+ * Vercel-Cron-Einstieg (vercel.json: `0 18 * * *`). Vercel ruft Cron-Jobs
+ * per GET mit `Authorization: Bearer <CRON_SECRET>` auf — deshalb GET und
+ * CRON_SECRET-Auth statt Admin-Session. Der manuelle Admin-Trigger bleibt
+ * POST (mit dryRun) darunter.
+ */
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  const cronSecret = env.CRON_SECRET;
+  if (!cronSecret) {
+    log.error('CRON_SECRET not configured — rejecting request');
+    return NextResponse.json({ error: 'Dienst fehlkonfiguriert' }, { status: 500 });
+  }
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
+  }
+
+  try {
+    const { total, sent, failed, results } = await runReminders(false);
+    return NextResponse.json({
+      success: true,
+      dryRun: false,
+      total,
+      sent,
+      failed,
+      results,
+    });
+  } catch (error) {
+    log.error('Error sending reminders (cron):', error);
+    return internalErrorResponse();
+  }
+}
+
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
@@ -107,50 +200,15 @@ export async function POST(_request: NextRequest) {
       const body = await _request.json();
       const input = sendRemindersSchema.parse(body);
 
-      const reminderService = new ReminderService(
-        new EmailService(),
-        new AuditServiceImpl(),
-        new TempSessionRepository(),
-        new TempBookingRepository(),
-        new TempMemberRepository()
-      );
+      const { total, sent, failed, results } = await runReminders(input.dryRun);
 
-      const results = await reminderService.sendTomorrowReminders(input);
-
-      const sentCount = results.filter((r) => r.status === 'sent').length;
-      const failedCount = results.filter((r) => r.status === 'failed').length;
-
-      // Fire-and-forget: send push notifications for each successful reminder
-      const sentResults = results.filter((r) => r.status === 'sent');
-      for (const r of sentResults) {
-        const time = new Date(r.sessionStart).toLocaleTimeString('de-DE', {
-          hour: '2-digit',
-          minute: '2-digit',
-        });
-        const court = r.courtName || 'Platz';
-        pushNotificationService
-          .sendToUser(r.memberId, {
-            title: 'Training morgen',
-            body: `${time} Uhr — ${court}${r.trainerName ? ` mit ${r.trainerName}` : ''}`,
-            url: '/bookings',
-            tag: `reminder-${r.sessionId}`,
-          })
-          .catch(() => {
-            /* non-blocking */
-          });
-      }
-
-      // Lebenszeichen fuer /api/health (PRODUKTIONSREIFE.md 5.3). Ein
-      // Trockenlauf zaehlt nicht — sonst sieht die Ueberwachung einen Job als
-      // gelaufen, der nichts verschickt hat.
-      if (!input.dryRun) await recordHeartbeat('cron-booking-reminders');
       return NextResponse.json({
         success: true,
         dryRun: input.dryRun,
-        total: results.length,
-        sent: sentCount,
-        failed: failedCount,
-        results: results.slice(0, 50),
+        total,
+        sent,
+        failed,
+        results,
       });
     } catch (error) {
       log.error('Error sending reminders:', error);
