@@ -105,11 +105,18 @@ export async function POST(request: NextRequest) {
               { status: 500 }
             );
           }
-          await stripe.subscriptions.update(existingSubscriptionId, {
-            items: [{ id: currentItem.id, price: priceId }],
-            proration_behavior: 'create_prorations',
-            metadata: { adminUserId: user.id, plan, interval, saasSubscription: 'true' },
-          });
+          await stripe.subscriptions.update(
+            existingSubscriptionId,
+            {
+              items: [{ id: currentItem.id, price: priceId }],
+              proration_behavior: 'create_prorations',
+              metadata: { adminUserId: user.id, plan, interval, saasSubscription: 'true' },
+            },
+            {
+              // Retries des Plan-Wechsels belasten nicht doppelt.
+              idempotencyKey: `subscribe-switch-${existingSubscriptionId}-${priceId}`,
+            }
+          );
           log.info('Stripe subscription plan switched in place', {
             plan,
             interval,
@@ -135,7 +142,10 @@ export async function POST(request: NextRequest) {
           ? { ...baseSessionParams, customer: customerId }
           : { ...baseSessionParams, customer_email: profile?.email ?? user.email ?? undefined };
 
-        const session = await stripe.checkout.sessions.create(sessionParams);
+        const session = await stripe.checkout.sessions.create(sessionParams, {
+          // Wiederholte Klicks erzeugen keine doppelten Checkout-Sessions.
+          idempotencyKey: `subscribe-${user.id}-${plan}-${interval}`,
+        });
         log.info('Stripe subscription session created', { plan, interval, sessionId: session.id });
         return NextResponse.json({ url: session.url });
       } catch (err) {

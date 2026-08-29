@@ -12,8 +12,11 @@ import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { getStripe } from '@/lib/stripe/client';
 import { createLogger } from '@/lib/logger';
 import { appBaseUrl } from '@/lib/app-url';
+import { DrizzlePricingRuleRepository } from '@/infrastructure/persistence/repositories/pricing-rule.repository';
+import { ClubId, CourtId } from '@/domain/value-objects';
 
 const log = createLogger('api:stripe:checkout');
+const pricingRepo = new DrizzlePricingRuleRepository();
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -29,7 +32,7 @@ export async function POST(_request: NextRequest) {
 
     try {
       const body = await _request.json();
-      const { type, bookingId, sessionId, clubId, amount, description } = body;
+      const { type, bookingId, sessionId, clubId, description } = body;
 
       if (!type || !clubId) {
         return NextResponse.json({ error: 'type und clubId sind erforderlich' }, { status: 400 });
@@ -42,8 +45,11 @@ export async function POST(_request: NextRequest) {
         );
       }
 
-      // Resolve amount and court name from DB when type = 'booking'
-      let resolvedAmount: number = amount; // in cents
+      // Der Preis wird serverseitig ermittelt — niemals aus dem Client-Body.
+      // Basis ist der Stundenpreis des Platztyps (0 = kostenlos), darüber werden
+      // aktive pricing_rules angewendet (z. B. Winter-Zuschlag). Ein stiller
+      // €15-Default existiert nicht mehr.
+      let resolvedAmount = 0; // in cents
       let courtName = 'Platz';
 
       if (type === 'booking' && bookingId) {
@@ -57,6 +63,7 @@ export async function POST(_request: NextRequest) {
             id,
             club_id,
             member_id,
+            court_id,
             session_id,
             payment_status,
             sessions(
@@ -92,23 +99,56 @@ export async function POST(_request: NextRequest) {
           courtName = sessionData.courts.name;
         }
 
-        // Get pricing from booking_rules or use default (€15 = 1500 cents)
-        if (!resolvedAmount) {
-          await supabase
-            .from('booking_rules')
-            .select('require_payment')
-            .eq('club_id', clubId)
-            .eq('applies_to_role', 'member')
-            .maybeSingle();
-
-          // Default price: 15 EUR = 1500 cents
-          resolvedAmount = 1500;
+        // Preis ermitteln: Basis = Stundenpreis des Platztyps, darüber pricing_rules.
+        if (!sessionData?.timeslot_start || !sessionData?.timeslot_end) {
+          return NextResponse.json(
+            { error: 'Buchungszeitraum fehlt — Preis kann nicht ermittelt werden' },
+            { status: 400 }
+          );
         }
+
+        const sessionStart = new Date(sessionData.timeslot_start);
+        const sessionEnd = new Date(sessionData.timeslot_end);
+        const bookingHours = (sessionEnd.getTime() - sessionStart.getTime()) / 3_600_000;
+
+        let basePricePerHour = 0;
+        if (booking.court_id) {
+          const { data: court } = await supabase
+            .from('courts')
+            .select('court_type_id')
+            .eq('id', booking.court_id)
+            .maybeSingle();
+          if (court?.court_type_id) {
+            const { data: courtType } = await supabase
+              .from('court_types')
+              .select('hourly_rate')
+              .eq('id', court.court_type_id)
+              .maybeSingle();
+            basePricePerHour = Number(courtType?.hourly_rate ?? 0);
+          }
+        }
+
+        const pricing = await pricingRepo.calculatePrice(ClubId.fromString(booking.club_id), {
+          courtId: booking.court_id ? CourtId.fromString(booking.court_id) : undefined,
+          startTime: sessionStart,
+          dayOfWeek: sessionStart.getDay(),
+          bookingHours,
+          basePricePerHour,
+        });
+
+        const effectivePricePerHour = pricing.pricePerHour * pricing.multiplier;
+        resolvedAmount = Math.round(effectivePricePerHour * bookingHours * 100);
       }
 
-      // Use a safe default if still not resolved
+      // Ohne fälligen Betrag gibt es nichts zu belasten — keinen Default erfinden.
       if (!resolvedAmount || resolvedAmount <= 0) {
-        resolvedAmount = 1500; // 15 EUR default
+        return NextResponse.json(
+          {
+            error:
+              'Kein fälliger Betrag — die Buchung ist kostenlos oder der Preis konnte nicht ermittelt werden.',
+          },
+          { status: 400 }
+        );
       }
 
       // Build base URL
@@ -134,30 +174,36 @@ export async function POST(_request: NextRequest) {
       // --- Create real Stripe Checkout Session ---
       const lineItemName = description || `Platzbuchung - ${courtName}`;
 
-      const session = await stripe.checkout.sessions.create({
-        mode: 'payment',
-        line_items: [
-          {
-            price_data: {
-              currency: 'eur',
-              unit_amount: resolvedAmount,
-              product_data: {
-                name: lineItemName,
+      const session = await stripe.checkout.sessions.create(
+        {
+          mode: 'payment',
+          line_items: [
+            {
+              price_data: {
+                currency: 'eur',
+                unit_amount: resolvedAmount,
+                product_data: {
+                  name: lineItemName,
+                },
               },
+              quantity: 1,
             },
-            quantity: 1,
+          ],
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          customer_email: auth.user.email || undefined,
+          metadata: {
+            bookingId: bookingId || '',
+            sessionId: sessionId || '',
+            userId: auth.user.id,
+            clubId,
           },
-        ],
-        success_url: successUrl,
-        cancel_url: cancelUrl,
-        customer_email: auth.user.email || undefined,
-        metadata: {
-          bookingId: bookingId || '',
-          sessionId: sessionId || '',
-          userId: auth.user.id,
-          clubId,
         },
-      });
+        {
+          // Wiederholte Klicks erzeugen keine doppelten Checkout-Sessions.
+          idempotencyKey: `booking-checkout-${bookingId}`,
+        }
+      );
 
       return NextResponse.json({ url: session.url, sessionId: session.id });
     } catch (error) {
