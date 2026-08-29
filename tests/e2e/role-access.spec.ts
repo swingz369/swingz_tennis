@@ -41,10 +41,13 @@ test.describe('Superadmin', () => {
     await expect(sidebar.getByText('Vereinsübersicht')).toBeVisible();
     await expect(sidebar.getByText('Admins verwalten')).toBeVisible();
 
-    // Club-scoped Admin-Sektionen dürfen nicht auftauchen
+    // Club-scoped Admin-Sektionen dürfen nicht auftauchen. Über Sub-Items
+    // geprüft (nicht über den Sektions-Button), weil `/Verein/i` auch den
+    // legitimen Superadmin-Club-Switcher ("Verein Claude Sandbox Alpha") und
+    // "Meine Vereine einklappen" matcht.
     await expect(sidebar.getByText('Alle Mitglieder')).not.toBeVisible();
-    await expect(sidebar.getByRole('button', { name: /Spielbetrieb/i })).not.toBeVisible();
-    await expect(sidebar.getByRole('button', { name: /Verein/i })).not.toBeVisible();
+    await expect(sidebar.getByText('Saisonplanung')).not.toBeVisible();
+    await expect(sidebar.getByText('Vereinseinstellungen')).not.toBeVisible();
   });
 
   test('Verwaltung-Sektion zeigt Statistiken + Einstellungen', async ({ page }) => {
@@ -108,12 +111,12 @@ test.describe('Trainer', () => {
     );
   });
 
-  test('sieht Bottom-Nav-Items (keine Sidebar)', async ({ page }) => {
+  test('sieht Trainer-Sidebar-Sektionen (Desktop)', async ({ page }) => {
     await page.goto('/trainer', { waitUntil: 'networkidle' });
-    const bottomNav = page.locator('nav[aria-label="Navigation"]');
-    await expect(bottomNav).toBeVisible({ timeout: 10000 });
-    for (const item of ['Übersicht', 'Einheiten', 'Verfügbarkeit', 'Saisonplanung']) {
-      await expect(bottomNav.getByRole('link', { name: new RegExp(item, 'i') })).toBeVisible();
+    const sidebar = page.locator(SIDEBAR);
+    await expect(sidebar).toBeVisible({ timeout: 10000 });
+    for (const section of ['Mein Training', 'Meine Leistung', 'Spielen', 'Mein Verein']) {
+      await expect(sidebar.getByRole('button', { name: new RegExp(section, 'i') })).toBeVisible();
     }
   });
 
@@ -135,12 +138,12 @@ test.describe('Member', () => {
     await loginAsRoleAware(page, process.env.TEST_MEMBER_EMAIL!, process.env.TEST_MEMBER_PASSWORD!);
   });
 
-  test('sieht Bottom-Nav-Items (keine Sidebar)', async ({ page }) => {
+  test('sieht Mitglieder-Sidebar-Sektionen (Desktop)', async ({ page }) => {
     await page.goto('/member', { waitUntil: 'networkidle' });
-    const bottomNav = page.locator('nav[aria-label="Navigation"]');
-    await expect(bottomNav).toBeVisible({ timeout: 10000 });
-    for (const item of ['Home', 'Stundenplan', 'Buchen', 'Rechnungen']) {
-      await expect(bottomNav.getByRole('link', { name: new RegExp(item, 'i') })).toBeVisible();
+    const sidebar = page.locator(SIDEBAR);
+    await expect(sidebar).toBeVisible({ timeout: 10000 });
+    for (const section of ['Spielen', 'Training', 'Mein Verein']) {
+      await expect(sidebar.getByRole('button', { name: new RegExp(section, 'i') })).toBeVisible();
     }
   });
 

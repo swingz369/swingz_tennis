@@ -23,10 +23,12 @@ const MEMBER_ROUTES: RouteTest[] = [
   { path: '/bookings', expectedContent: /buchung|platz/i },
   { path: '/bookings-unified', expectedContent: /buchung|platz/i },
   { path: '/my-bookings', expectedContent: /buchung|meine/i },
-  { path: '/scheduler', expectedContent: /stundenplan|scheduler/i },
+  // Die Seite heisst in der Navigation „Platzkalender" und rendert den
+  // UnifiedCourtCalendar — „Stundenplan" stand hier noch aus der Zeit davor.
+  { path: '/scheduler', expectedContent: /platzkalender|kalender/i },
   { path: '/courts', expectedContent: /platz|court/i },
   { path: '/courts/daily', expectedContent: /platz|täglich/i },
-  // /training-schedule redirected auf /scheduler — Nav zeigt "Stundenplan", nicht "training"
+  // /training-schedule redirected auf /scheduler — Nav zeigt "Platzkalender", nicht "training"
   { path: '/training-schedule', expectedContent: /stundenplan|platz/i },
   { path: '/member', expectedContent: /mitglied|member/i },
   { path: '/member/preferences', expectedContent: /präferenz|einstellung|verfügbar/i },
@@ -117,7 +119,9 @@ const OWNER_ROUTES: RouteTest[] = [
   { path: '/owner/access', expectedContent: /zugriff|access|berechtigung/i },
   { path: '/owner/admins', expectedContent: /admin/i },
   { path: '/owner/audit', expectedContent: /audit|protokoll/i },
-  { path: '/owner/billing', expectedContent: /rechnung|billing/i },
+  // Die Seite heisst „Umsatz & Abos" — sie zeigt den Abo-Status aller Vereine,
+  // keine Rechnungen. „billing" stand hier nur wegen des Routennamens.
+  { path: '/owner/billing', expectedContent: /umsatz|abo/i },
   { path: '/owner/clubs', expectedContent: /verein|club/i },
   { path: '/owner/settings', expectedContent: /einstellung/i },
   { path: '/owner/superadmins', expectedContent: /superadmin/i },
@@ -196,7 +200,11 @@ test.describe('Member Pages', () => {
   test('member CANNOT access admin routes', async ({ page }) => {
     for (const restricted of RESTRICTED_ROUTES.member) {
       await page.goto(restricted, { waitUntil: 'domcontentloaded' });
-      await page.waitForURL((url) => !url.pathname.startsWith(restricted), { timeout: 15000 });
+      // 45s statt 15s: die Zielroute der Umleitung wird im Dev-Server beim
+      // ersten Treffer kalt kompiliert. Mit 15s meldete der Test eine
+      // Rollen-Lücke, wo nur der Compiler langsam war — die Umleitung selbst
+      // ist da (role-access.spec.ts prüft sie mit warmen Routen).
+      await page.waitForURL((url) => !url.pathname.startsWith(restricted), { timeout: 45000 });
       expect(page.url()).not.toContain(restricted);
     }
   });
@@ -214,7 +222,11 @@ test.describe('Admin Pages', () => {
   test('admin CANNOT access superadmin routes', async ({ page }) => {
     for (const restricted of RESTRICTED_ROUTES.admin) {
       await page.goto(restricted, { waitUntil: 'domcontentloaded' });
-      await page.waitForURL((url) => !url.pathname.startsWith(restricted), { timeout: 15000 });
+      // 45s statt 15s: die Zielroute der Umleitung wird im Dev-Server beim
+      // ersten Treffer kalt kompiliert. Mit 15s meldete der Test eine
+      // Rollen-Lücke, wo nur der Compiler langsam war — die Umleitung selbst
+      // ist da (role-access.spec.ts prüft sie mit warmen Routen).
+      await page.waitForURL((url) => !url.pathname.startsWith(restricted), { timeout: 45000 });
       expect(page.url()).not.toContain(restricted);
     }
   });
@@ -236,7 +248,11 @@ test.describe('Trainer Pages', () => {
   test('trainer CANNOT access admin or superadmin routes', async ({ page }) => {
     for (const restricted of RESTRICTED_ROUTES.trainer) {
       await page.goto(restricted, { waitUntil: 'domcontentloaded' });
-      await page.waitForURL((url) => !url.pathname.startsWith(restricted), { timeout: 15000 });
+      // 45s statt 15s: die Zielroute der Umleitung wird im Dev-Server beim
+      // ersten Treffer kalt kompiliert. Mit 15s meldete der Test eine
+      // Rollen-Lücke, wo nur der Compiler langsam war — die Umleitung selbst
+      // ist da (role-access.spec.ts prüft sie mit warmen Routen).
+      await page.waitForURL((url) => !url.pathname.startsWith(restricted), { timeout: 45000 });
       expect(page.url()).not.toContain(restricted);
     }
   });
@@ -258,7 +274,11 @@ test.describe('Superadmin Pages', () => {
   test('superadmin CANNOT access owner routes', async ({ page }) => {
     for (const restricted of RESTRICTED_ROUTES.superadmin) {
       await page.goto(restricted, { waitUntil: 'domcontentloaded' });
-      await page.waitForURL((url) => !url.pathname.startsWith(restricted), { timeout: 15000 });
+      // 45s statt 15s: die Zielroute der Umleitung wird im Dev-Server beim
+      // ersten Treffer kalt kompiliert. Mit 15s meldete der Test eine
+      // Rollen-Lücke, wo nur der Compiler langsam war — die Umleitung selbst
+      // ist da (role-access.spec.ts prüft sie mit warmen Routen).
+      await page.waitForURL((url) => !url.pathname.startsWith(restricted), { timeout: 45000 });
       expect(page.url()).not.toContain(restricted);
     }
   });
