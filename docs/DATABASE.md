@@ -1,6 +1,28 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 16. August 2026 (Migrations-Tracking ersetzt, Owner-UPDATE-Policy auf `clubs`, Audit-Trigger auf den Finanztabellen; Live-Prüfung per postgres-js auf `supabase.swingz.cloud:6543`)
+> Zuletzt verifiziert: 28. August 2026 (`training_groups` entfernt; davor 16. August 2026: Migrations-Tracking ersetzt, Owner-UPDATE-Policy auf `clubs`, Audit-Trigger auf den Finanztabellen; Live-Prüfung per postgres-js auf `supabase.swingz.cloud:6543`)
+
+## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
+
+Die Datenbank führte zwei Gruppen-Tabellen nebeneinander:
+
+- `groups` — club-weit, Mitglieder in `member_ids` (JSONB), von der
+  `SeasonClusteringEngine` erzeugt. **Ziel des FK** von
+  `season_plan_entries.group_id`.
+- `training_groups` (+ `training_group_memberships`) — an `schedules` gehängt,
+  `schedule_id NOT NULL`, für feste Stundenpläne gedacht.
+
+`training_groups` war in **allen sieben** Vereinen leer und hatte keinen
+Aufrufer in der Oberfläche, brachte aber zwei API-Routen dazu, gegen die
+falsche Tabelle zu joinen (`plan-entries` lieferte zu jedem Eintrag
+`group_name: null`) und liess `/api/seasons/[id]/copy-groups` ausnahmslos mit
+404 antworten.
+
+`20260828_drop_training_groups.sql` entfernt beide Tabellen. **Einzige Quelle
+für Gruppenzugehörigkeit ist seitdem `groups.member_ids`.** Wer eine Migration
+schreibt, die Gruppen betrifft, prüft diese Spalte — nicht eine
+Zwischentabelle. Befund und Nachweis:
+`docs/ARCHIV/2026-08-28-grundfunktionen-harmonisierung.md` (F-3, F-4, F-6).
 
 ## Baseline-Konsolidierung (Stand 16.08.2026)
 

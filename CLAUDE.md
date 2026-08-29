@@ -3,7 +3,7 @@
 @AGENTS.md
 
 > Automatisch bei jedem Session-Start geladen. Nur Dinge die NICHT aus dem Code offensichtlich sind.
-> Zuletzt verifiziert: 21. Juni 2026 (5-Rollen-Hierarchie: owner > superadmin > admin > trainer > member)
+> Zuletzt verifiziert: 28. August 2026 (Rollen-Hierarchie und Tarife gegen Code geprüft)
 > Doku-Governance-Regeln (welche Datei wohin, wann updaten statt neu anlegen): siehe `AGENTS.md`.
 
 ---
@@ -154,7 +154,11 @@ In `notifications`-Tabelle via Service-Client einfügen.
 - Checkout (Client, graceful — gibt `null` wenn nicht konfiguriert): `@/lib/stripe/client.ts`
 - Webhooks (Server, wirft Fehler wenn nicht konfiguriert): `@/lib/stripe/stripe-client.ts`
 - **Niemals** `stripe`-Package direkt importieren — immer diese Wrapper nutzen
-- Pricing: Starter €29/Monat, Professional €79/Monat
+- Tarife (`lib/plans.ts`, einzige Quelle): Starter €29, Professional €49,
+  Tennisschule S €79, Tennisschule L €99 — je Monat. Tarif-Keys in der DB:
+  `solo_s`, `solo_l`, `school_s`, `school_l` (`users.subscription_tier`).
+- **Pflicht-Abo:** ohne `subscription_status` in `active`/`trialing` zeigt
+  jede Seite unter `app/(protected)/admin/(gated)/` nur die Bezahlschranke.
 
 ### E-Mail (Resend SMTP)
 
@@ -246,8 +250,17 @@ Testvereine gehören genau einer **Lane** — dem Eigentümer der Daten:
 | TC Neuland e.V.      | `user`  | **Komplett leer** — Erstlogin/Onboarding von Hand     |
 | Claude Sandbox Alpha | `agent` | Arbeitsverein der KI, bestückt                        |
 | Claude Sandbox Beta  | `agent` | Leer — Onboarding-/CSV-Import-Tests der KI            |
+| Claude Sandbox Gamma | `agent` | 500 Mitglieder, 20 Trainer, 12 Plätze — Lasttest      |
 
-Owner bleibt `admin@swingz.com` (echter Zugang, vom Seed nie angefasst).
+Owner bleibt `admin@swingz.com` (echter Zugang, vom Seed nie angefasst). Für
+Tests gibt es zusätzlich `owner@claude.test` in der Agent-Lane — gleiche Rolle,
+Seed-Passwort, wird bei jedem `seed:agent` neu angelegt. Darauf zeigen die
+`TEST_OWNER_*`-Variablen.
+
+Eingerichtete Testvereine bekommen im Seed ein laufendes Abo (Admin `solo_s`,
+Superadmin `school_s`) — ohne das zeigt der gesamte Admin-Bereich nur die
+Bezahlschranke. Die leeren Vereine (TC Neuland, Claude Sandbox Beta) bleiben
+bewusst ohne: das ist der Erstlogin-Weg über den Onboarding-Wizard.
 
 Alle Zugangsdaten: **`docs/TEST-CREDENTIALS.md`** — wird vom Seed generiert, nicht in Git
 (Klartext-Passwörter). Die `TEST_*`-Variablen in `.env.local` zeigen bewusst auf die
