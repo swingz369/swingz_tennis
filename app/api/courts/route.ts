@@ -7,8 +7,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, forbiddenResponse, verifyClubAccess } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:courts');
@@ -24,13 +25,27 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     // auth.clubId was resolved by withApiAuth → resolveActiveClub, honoring
     // ADMIN_CLUB_COOKIE for superadmin (club-exists) and members/admins (membership).
-    // Query ?clubId= still wins for explicit overrides.
+    // Query ?clubId= still wins for explicit overrides — aber nur nach
+    // expliziter Vereins-Prüfung (siehe unten).
     const clubId = url.searchParams.get('clubId') ?? auth.clubId;
     if (!clubId) {
       return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
     }
 
-    const { data: courts, error } = await auth.supabase
+    // Der ?clubId=-Parameter wurde vorher ungeprüft übernommen und darauf
+    // vertraut, dass RLS die fremden Zeilen wegfiltert. Mit Service-Client
+    // (unten) wäre das ein Datenleck — die Prüfung gehört hierher.
+    if (!verifyClubAccess(auth, clubId)) {
+      return forbiddenResponse('Kein Zugriff auf diesen Verein');
+    }
+
+    // RLS auf `courts` scopt über user_club_memberships (get_user_club_ids).
+    // Bei Policy-Drift im Live-Schema liefert das für Admins eine leere Liste
+    // ohne Fehler. Der Service-Client umgeht das; die Autorisierung ist oben
+    // explizit passiert und der Query bleibt strikt auf `club_id` gescopt.
+    const supabase = createServiceClient();
+
+    const { data: courts, error } = await supabase
       .from('courts')
       .select(
         'id, club_id, court_type_id, name, number, surface, has_indoor, has_lighting, is_active, usable_for_training, created_at'

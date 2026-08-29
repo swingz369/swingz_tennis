@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/auth';
 import { requireAdminClub } from '@/lib/admin-context';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { PageHeader } from '@/components/ui/page-header';
 import { createLogger } from '@/lib/logger';
 import { PlacesHubTabs } from './places-hub-tabs';
@@ -11,7 +11,10 @@ const log = createLogger('admin:courts:page');
 export default async function AdminCourtsPage() {
   await requireAuth();
   const { clubId } = await requireAdminClub();
-  const supabase = await createClient();
+  // requireAdminClub() hat Rolle + Vereinskontext bereits verifiziert. Der
+  // Service-Client liest hier, damit RLS-Drift auf `courts`/`court_types`
+  // (Scope über user_club_memberships) keine leere Platzliste erzeugt.
+  const supabase = createServiceClient();
 
   const [
     { data: courts, error: courtsErr },

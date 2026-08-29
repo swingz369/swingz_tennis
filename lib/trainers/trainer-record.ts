@@ -22,8 +22,8 @@
  * `trainers.id` (Legacy-Zeilen, bei denen beides gleich ist) → nichts.
  */
 import { db } from '@/src/infrastructure/persistence/db';
-import { trainers } from '@/src/infrastructure/persistence/schema';
-import { eq, inArray, or } from 'drizzle-orm';
+import { trainers, userClubMemberships } from '@/src/infrastructure/persistence/schema';
+import { and, eq, inArray, or } from 'drizzle-orm';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('trainer-record');
@@ -46,6 +46,39 @@ export async function resolveTrainerRecordId(userId: string): Promise<string | n
   if (byUserId) return byUserId.id;
 
   return rows[0].id;
+}
+
+/**
+ * Liefert die club_id, in der ein Trainer (trainers.id oder users.id) als
+ * Trainer aktiv ist — oder null. Wird gebraucht, wo ein Mitglied über den
+ * Service-Client fremde Trainer-Slots liest/bucht und die Vereinsgrenze
+ * explizit geprüft werden muss, weil RLS diese Zeilen für Mitglieder nicht
+ * freigibt.
+ */
+export async function resolveTrainerClubId(trainerId: string): Promise<string | null> {
+  const rows = await db
+    .select({ id: trainers.id, userId: trainers.user_id })
+    .from(trainers)
+    .where(or(eq(trainers.id, trainerId), eq(trainers.user_id, trainerId)));
+
+  if (rows.length === 0) return null;
+
+  const row = rows.find((r) => r.userId) ?? rows[0];
+  const userId = row.userId ?? row.id;
+
+  const membership = await db
+    .select({ clubId: userClubMemberships.club_id })
+    .from(userClubMemberships)
+    .where(
+      and(
+        eq(userClubMemberships.user_id, userId),
+        eq(userClubMemberships.role, 'trainer'),
+        eq(userClubMemberships.is_active, true)
+      )
+    )
+    .limit(1);
+
+  return membership[0]?.clubId ?? null;
 }
 
 /**

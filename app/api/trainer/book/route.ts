@@ -5,6 +5,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createServiceClient } from '@/lib/supabase/service';
+import { resolveTrainerClubId } from '@/lib/trainers/trainer-record';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:trainer:book');
@@ -14,7 +16,7 @@ export async function POST(request: NextRequest) {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
-    const { supabase, user } = auth;
+    const { user } = auth;
 
     const body = await request.json().catch(() => null);
     if (!body) return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
@@ -26,6 +28,23 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Mitglieder dürfen fremde Trainer-Slots per RLS weder lesen noch buchen
+    // (nur der Trainer selbst oder ein Superadmin). Der Service-Client umgeht
+    // das — die Vereinsgrenze wird deshalb hier explizit geprüft.
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
+    }
+
+    const trainerClubId = await resolveTrainerClubId(trainerId);
+    if (!trainerClubId || trainerClubId !== auth.clubId) {
+      return NextResponse.json(
+        { error: 'Dieser Trainer gehört nicht zu deinem Verein' },
+        { status: 403 }
+      );
+    }
+
+    const supabase = createServiceClient();
 
     // Find the available slot
     const { data: slot } = await supabase
@@ -56,14 +75,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Buchung fehlgeschlagen' }, { status: 500 });
     }
 
-    // Also create a bookings record for the member
-    const { data: club } = await supabase
-      .from('user_club_memberships')
-      .select('club_id')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .maybeSingle();
-
     // Create booking entry in bookings table (best-effort)
     // We reuse the existing bookings table with a note referencing trainer slot
     const bookingStart = `${date.split('T')[0]}T${startTime}:00`;
@@ -75,7 +86,7 @@ export async function POST(request: NextRequest) {
         status: 'confirmed',
         session_start_time: bookingStart,
         notes: `Trainer-Einzelstunde (slot_id: ${slot.id})`,
-        club_id: club?.club_id ?? null,
+        club_id: auth.clubId,
       } as any)
       .select('id')
       .maybeSingle();

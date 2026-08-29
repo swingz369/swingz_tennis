@@ -5,18 +5,30 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
-import { resolveTrainerRecordId } from '@/lib/trainers/trainer-record';
+import { resolveTrainerRecordId, resolveTrainerClubId } from '@/lib/trainers/trainer-record';
 
 const log = createLogger('api:trainer:availability');
 
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
-    const { supabase } = auth;
     const sp = request.nextUrl.searchParams;
     const trainerId = sp.get('trainerId');
     const from = sp.get('from');
     const to = sp.get('to');
+
+    // RLS lässt Mitglieder fremde Trainer-Slots nicht lesen (nur der Trainer
+    // selbst oder ein Superadmin des Vereins). Der Service-Client umgeht das —
+    // die Vereinsgrenze wird hier explizit geprüft statt auf RLS zu vertrauen.
+    const supabase = createServiceClient();
+
+    if (trainerId && auth.clubId) {
+      const trainerClubId = await resolveTrainerClubId(trainerId);
+      if (!trainerClubId || trainerClubId !== auth.clubId) {
+        return NextResponse.json({ slots: [], maxHoursPerWeek: null });
+      }
+    }
 
     let query = supabase
       .from('trainer_availabilities')
@@ -34,12 +46,12 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await query;
     if (error) {
-      // RLS blocks non-trainer/non-superadmin users — return empty instead of 500
-      log.warn('trainer availability GET (likely RLS):', error.message);
+      log.error('trainer availability GET error:', error.message);
       return NextResponse.json({ slots: [], maxHoursPerWeek: null });
     }
 
-    // Eine Auflösung für alle Pfade — siehe lib/trainers/trainer-record.ts.
+    // maxHoursPerWeek bezieht sich auf den Aufrufer (ein Trainer sieht sein
+    // eigenes Limit). Für Mitglieder irrelevant — bleibt dort null.
     const recordId = await resolveTrainerRecordId(auth.user.id);
     const { data: trainerRecord } = recordId
       ? await supabase
