@@ -41,6 +41,8 @@ const SEED_PASSWORD = process.env.SEED_PASSWORD ?? 'SwingZ-Test-2026!';
 
 /** Der einzige echte Zugang — wird nie gelöscht. */
 const OWNER_EMAIL = 'admin@swingz.com';
+/** Owner-Testzugang der Agent-Lane — siehe Kommentar bei der Anlage weiter unten. */
+const AGENT_OWNER_EMAIL = 'owner@claude.test';
 
 /**
  * Tabellen, die ein Reset nie anfassen darf: globale Referenzdaten — und
@@ -220,6 +222,29 @@ const CLUBS: ClubSpec[] = [
     finance: false,
     extraFeatures: [],
   },
+  {
+    key: 'claude-gamma',
+    name: 'Claude Sandbox Gamma',
+    city: 'Grossstadt',
+    bundesland: 'Nordrhein-Westfalen',
+    domain: 'gamma.claude.test',
+    lane: 'agent',
+    purpose:
+      'Lasttest-Verein: 500 Mitglieder, 20 Trainer, 12 Plätze. Prüft, ob Saisonplanung, ' +
+      'Listen und Auswertungen in realistischer Vereinsgrösse noch tragen.',
+    adminLocal: 'admin',
+    courts: 12,
+    trainers: 20,
+    members: 500,
+    memberLogins: 3,
+    // Bewusst VOR der Planung: so lässt sich der Auto-Planer mit 400 Präferenz-
+    // Sätzen selbst auslösen und messen. Ein fertig geplanter Verein würde
+    // genau den Schritt überspringen, um den es hier geht.
+    season: 'collecting_preferences',
+    preferences: true,
+    finance: true,
+    extraFeatures: ['trial_training', 'partner_finder'],
+  },
 ];
 
 /**
@@ -236,7 +261,7 @@ const SUPERADMINS = [
   {
     email: 'superadmin@claude.test',
     name: 'Claude Superadmin',
-    clubs: ['claude-alpha', 'claude-beta'],
+    clubs: ['claude-alpha', 'claude-beta', 'claude-gamma'],
     lane: 'agent' as Lane,
   },
 ];
@@ -574,6 +599,11 @@ async function wipeLane(lane: Lane) {
 
   await sql`delete from trainers where email like ${emailPattern}`;
   await sql`delete from users where email like ${emailPattern}`;
+  // Zuletzt nochmal das Protokoll: `audit_finance_change` ist ein AFTER-DELETE-
+  // Trigger auf invoices/payments und schreibt beim Aufräumen neue audit_logs-
+  // Zeilen — die Schleife oben hat sie da schon gelöscht, und `delete from clubs`
+  // scheitert dann am FK.
+  if (ids.length) await sql`delete from audit_logs where club_id = any(${ids})`;
   if (ids.length) await sql`delete from clubs where id = any(${ids})`;
 
   const { data } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
@@ -627,6 +657,16 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
     const name = `Admin ${spec.name}`;
     const uid = await createLogin(email, name);
     await addMembership(uid, clubId, 'admin');
+    // Pflicht-Abo (app/(protected)/admin/(gated)/layout.tsx): ohne laufendes
+    // Abo zeigt JEDE Admin-Seite nur die Bezahlschranke. Ein eingerichteter
+    // Testverein wäre damit ab dem ersten Klick unbenutzbar. Die noch leeren
+    // Vereine (Neuland, Beta) bleiben bewusst ohne — das ist der echte
+    // Erstlogin-Weg: erst Onboarding-Wizard, dann Kasse.
+    if (spec.members > 0) {
+      await sql`update users set subscription_tier = 'solo_s',
+                                 subscription_status = 'active'
+                where id = ${uid}`;
+    }
     accounts.push({ role: 'admin', email, name });
     log(`  Admin: ${email}`);
   } else {
@@ -647,7 +687,11 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
         name: `Platz ${i}`,
         number: i,
         surface: i <= spec.courts - 1 ? 'clay' : 'hard',
-        has_indoor: i > spec.courts - 2,
+        // Etwa ein Drittel Halle, mindestens zwei. Vorher waren es fix zwei —
+        // bei 12 Plätzen und Wintersaison plante der Clusterer dadurch auf
+        // zwei Plätzen für 500 Mitglieder und meldete 183 mal „kein Zeitslot".
+        // Ein Verein dieser Grösse hat eine Halle, keine zwei Felder.
+        has_indoor: i > spec.courts - Math.max(2, Math.round(spec.courts / 3)),
         has_lighting: i % 2 === 0,
         usable_for_training: true,
       })} returning id`;
@@ -685,7 +729,7 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
         email,
         name: p.name,
         user_id: uid,
-        specialties: JSON.stringify([LEVELS[i % LEVELS.length], AGE_GROUPS[i % AGE_GROUPS.length]]),
+        specialties: sql.json([LEVELS[i % LEVELS.length], AGE_GROUPS[i % AGE_GROUPS.length]]),
         max_hours_per_week: 20 + (i % 3) * 5,
         is_active: true,
       })} returning id`;
@@ -701,12 +745,12 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
       phone: `+49 170 ${1000000 + i}`,
       date_of_birth: birthDate('adult', i + 5),
       bio: `Lizenzierte:r Tennistrainer:in mit Schwerpunkt ${LEVELS[i % LEVELS.length]}.`,
-      qualifications: JSON.stringify(['DTB C-Lizenz', ...(i % 2 ? ['DTB B-Lizenz'] : [])]),
-      specializations: JSON.stringify([AGE_GROUPS[i % AGE_GROUPS.length]]),
+      qualifications: sql.json(['DTB C-Lizenz', ...(i % 2 ? ['DTB B-Lizenz'] : [])]),
+      specializations: sql.json([AGE_GROUPS[i % AGE_GROUPS.length]]),
       hourly_rate: 35 + (i % 4) * 5,
       contracted_hourly_rate: 30 + (i % 4) * 5,
       status: 'active',
-      availability: JSON.stringify({
+      availability: sql.json({
         monday: true,
         tuesday: true,
         wednesday: true,
@@ -726,7 +770,7 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
         start_time: '14:00',
         end_time: '21:00',
         status: 'available',
-        recurring_pattern: JSON.stringify({ type: 'weekly', interval: 1 }),
+        recurring_pattern: sql.json({ type: 'weekly', interval: 1 }),
       })}`;
     }
     accounts.push({ role: 'trainer', email, name: p.name });
@@ -787,14 +831,14 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
   // ── Gruppen ─────────────────────────────────────────────────────────
   const groupIds: string[] = [];
   if (spec.members >= 8) {
-    const combos: { level: string; ageGroup: string }[] = [
-      { level: 'beginner', ageGroup: 'youth' },
-      { level: 'intermediate', ageGroup: 'youth' },
-      { level: 'beginner', ageGroup: 'adult' },
-      { level: 'intermediate', ageGroup: 'adult' },
-      { level: 'advanced', ageGroup: 'adult' },
-      { level: 'intermediate', ageGroup: 'senior' },
-    ];
+    // Kombinationen aus dem tatsächlichen Mitgliederbestand ableiten statt aus
+    // einer festen Liste. Die feste Liste kannte sechs Paare und liess damit
+    // jede andere Kombination (Leistung/Jugend, Anfänger/Senioren, Elite/*)
+    // ohne Gruppe — im 500er-Verein hingen so 193 Mitglieder in gar keiner.
+    const combos = [...new Set(memberMeta.map((m) => `${m.level}|${m.ageGroup}`))].map((k) => {
+      const [level, ageGroup] = k.split('|') as [string, string];
+      return { level, ageGroup };
+    });
     const labelAge: Record<string, string> = {
       youth: 'Jugend',
       adult: 'Erwachsene',
@@ -807,23 +851,35 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
       professional: 'Elite',
     };
     for (const c of combos) {
-      const mem = memberMeta
+      const matching = memberMeta
         .filter((m) => m.level === c.level && m.ageGroup === c.ageGroup)
-        .slice(0, 8)
         .map((m) => m.id);
-      if (mem.length < 2) continue;
-      const [g] = await sql<{ id: string }[]>`
-        insert into groups ${sql({
-          club_id: clubId,
-          name: `${labelAge[c.ageGroup]} ${labelLvl[c.level]}`,
-          level: c.level,
-          age_group: c.ageGroup,
-          max_members: c.ageGroup === 'youth' ? 6 : 10,
-          max_size: c.ageGroup === 'youth' ? 6 : 10,
-          member_ids: JSON.stringify(mem),
-          is_active: true,
-        })} returning id`;
-      groupIds.push(g.id);
+      if (matching.length < 2) continue;
+
+      // In Gruppen der zulässigen Grösse aufteilen statt die ersten acht zu
+      // nehmen. Bei 60 Mitgliedern fällt der Unterschied kaum auf, bei 500
+      // schon: sonst hingen 90 % der Mitglieder in gar keiner Gruppe und jede
+      // Auswertung über Gruppenauslastung wäre Unsinn.
+      const cap = c.ageGroup === 'youth' ? 6 : 10;
+      const chunks: string[][] = [];
+      for (let i = 0; i < matching.length; i += cap) chunks.push(matching.slice(i, i + cap));
+
+      for (const [n, mem] of chunks.entries()) {
+        if (mem.length < 2) continue;
+        const base = `${labelAge[c.ageGroup]} ${labelLvl[c.level]}`;
+        const [g] = await sql<{ id: string }[]>`
+          insert into groups ${sql({
+            club_id: clubId,
+            name: chunks.length > 1 ? `${base} ${n + 1}` : base,
+            level: c.level,
+            age_group: c.ageGroup,
+            max_members: cap,
+            max_size: cap,
+            member_ids: sql.json(mem),
+            is_active: true,
+          })} returning id`;
+        groupIds.push(g.id);
+      }
     }
     log(`  ${groupIds.length} Trainingsgruppen`);
   }
@@ -937,13 +993,14 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
 
         const entries = await sql<
           {
+            id: string;
             trainer_id: string;
             court_id: string;
             group_id: string;
             day_of_week: number;
             start_time: string;
           }[]
-        >`select trainer_id, court_id, group_id, day_of_week, start_time
+        >`select id, trainer_id, court_id, group_id, day_of_week, start_time
             from season_plan_entries where season_id = ${season.id}`;
 
         const sessionIds: { id: string; courtId: string; startsAt: Date }[] = [];
@@ -960,7 +1017,8 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
                 schedule_id: schedule.id,
                 trainer_id: e.trainer_id,
                 court_id: e.court_id,
-                group_ids: JSON.stringify([e.group_id]),
+                group_ids: sql.json([e.group_id]),
+                plan_entry_id: e.id,
                 week_number: weekOffset + 2,
                 timeslot_start: start.toISOString(),
                 timeslot_end: end.toISOString(),
@@ -1001,7 +1059,7 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
     // ── Präferenzen ───────────────────────────────────────────────────
     if (spec.preferences) {
       let pn = 0;
-      for (const m of memberMeta.slice(0, Math.ceil(memberMeta.length * 0.7))) {
+      for (const m of memberMeta.slice(0, Math.ceil(memberMeta.length * 0.8))) {
         const avail = weeklyAvailability(pn);
         // Wunschpartner: ein anderes Mitglied derselben Gruppe.
         const partner = memberMeta.find((x) => x.id !== m.id && x.level === m.level);
@@ -1013,8 +1071,8 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
           preferred_level: m.level,
           preferred_age_group: m.ageGroup,
           self_assessed_level: m.level,
-          weekly_availability: JSON.stringify(avail),
-          wish_partner_ids: JSON.stringify(partner && pn % 3 === 0 ? [partner.id] : []),
+          weekly_availability: sql.json(avail),
+          wish_partner_ids: sql.json(partner && pn % 3 === 0 ? [partner.id] : []),
           max_sessions_per_week: 1 + (pn % 2),
           priority: 5,
           is_submitted: true,
@@ -1026,8 +1084,8 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
           club_id: clubId,
           preferred_level: m.level,
           preferred_age_group: m.ageGroup,
-          weekly_availability: JSON.stringify(avail),
-          preferred_court_ids: JSON.stringify(courtIds.slice(0, 2)),
+          weekly_availability: sql.json(avail),
+          preferred_court_ids: sql.json(courtIds.slice(0, 2)),
           max_sessions_per_week: 1 + (pn % 2),
         })}`;
         pn++;
@@ -1043,8 +1101,8 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
           user_id: tr.user_id,
           club_id: clubId,
           user_role: 'trainer',
-          weekly_availability: JSON.stringify(weeklyAvailability(i, true)),
-          can_teach_groups: JSON.stringify(groupIds.slice(0, 3)),
+          weekly_availability: sql.json(weeklyAvailability(i, true)),
+          can_teach_groups: sql.json(groupIds.slice(0, 3)),
           max_sessions_per_week: 12,
           priority: 5,
           is_submitted: true,
@@ -1053,6 +1111,77 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
       }
       log(`  ${pn} Mitglieder- + ${trainerIds.length} Trainer-Präferenzen`);
     }
+  }
+
+  // ── Finanzen ──────────────────────────────────────────────────────────
+  // Ohne Rechnungen und Trainerstunden ist das Kernmodul „Finanzen" in jeder
+  // Rolle leer und damit nicht prüfbar — Admin sieht keine Rechnung, Mitglied
+  // keine eigene, Trainer keine Stunden. Bewusst wenige Datensätze, aber in
+  // allen Zuständen, die die Oberfläche unterscheidet.
+  if (spec.finance && memberIds.length) {
+    const feeId = feeIds['Erwachsene'];
+    const stati = ['paid', 'sent', 'overdue', 'draft'] as const;
+    let invoiceCount = 0;
+    for (const [i, memberId] of memberIds.slice(0, 8).entries()) {
+      const status = stati[i % stati.length]!;
+      const due = new Date();
+      due.setDate(due.getDate() + (status === 'overdue' ? -21 : 21));
+      const net = 240;
+      const tax = 0;
+      const [inv] = await sql<{ id: string }[]>`
+        insert into invoices ${sql({
+          club_id: clubId,
+          member_id: memberId,
+          invoice_number: `${new Date().getFullYear()}-${String(i + 1).padStart(4, '0')}`,
+          invoice_type: 'membership',
+          subtotal: net,
+          amount: net + tax,
+          tax_amount: tax,
+          paid_amount: status === 'paid' ? net : 0,
+          status,
+          currency: 'EUR',
+          due_date: due.toISOString().slice(0, 10),
+          ...(status === 'paid' ? { paid_at: new Date().toISOString() } : {}),
+          ...(status === 'draft' ? {} : { sent_at: new Date().toISOString() }),
+        })} returning id`;
+      await sql`insert into invoice_items ${sql({
+        invoice_id: inv.id,
+        description: 'Mitgliedsbeitrag Erwachsene (Jahr)',
+        item_type: 'membership',
+        quantity: 1,
+        unit_price: net,
+        tax_rate: 0,
+        ...(feeId ? { reference_id: feeId, reference_type: 'fee_configuration' } : {}),
+      })}`;
+      invoiceCount++;
+    }
+
+    // Trainerstunden: je Trainer eine genehmigte und eine offene — die offene
+    // ist der Testfall für den Genehmigungs-Workflow des Admins.
+    let hoursCount = 0;
+    for (const trainerId of trainerIds) {
+      const [t] = await sql<{ name: string }[]>`
+        select name from trainers where id = ${trainerId}`;
+      if (!t) continue;
+      for (const [k, status] of (['approved', 'pending'] as const).entries()) {
+        const d = new Date();
+        d.setDate(d.getDate() - (k + 1) * 3);
+        await sql`insert into hours_logs ${sql({
+          trainer_id: trainerId,
+          trainer_name: t.name,
+          club_id: clubId,
+          date: d.toISOString().slice(0, 10),
+          start_time: '17:00',
+          end_time: '18:30',
+          duration: 90,
+          type: 'training',
+          status,
+          ...(status === 'approved' ? { approved_at: new Date().toISOString() } : {}),
+        })}`;
+        hoursCount++;
+      }
+    }
+    log(`  ${invoiceCount} Rechnungen, ${hoursCount} Trainerstunden`);
   }
 
   return { clubId, accounts };
@@ -1332,7 +1461,25 @@ async function main() {
     // Suite auf: sie klickte in einer Sidebar, die auf dem Wizard lag).
     // Der Wizard-Testfall des Menschen ist TC Neuland, nicht dieser Account.
     await sql`update users set superadmin_setup_completed_at = now() where id = ${uid}`;
+    // Gleiche Begründung wie beim Admin: ohne laufendes Abo steht hinter jeder
+    // Superadmin-Seite nur die Bezahlschranke. `school_s` ist der Tarif für
+    // eine Tennisschule bis fünf Vereine (lib/plans.ts).
+    await sql`update users set subscription_tier = 'school_s',
+                               subscription_status = 'active'
+              where id = ${uid}`;
     log(`\n👔 Superadmin ${sa.email} → ${sa.clubs.join(', ')}`);
+  }
+
+  // Owner der Agent-Lane. Der echte Plattform-Owner (admin@swingz.com) gehört
+  // dem Menschen, sein Passwort steht nirgends im Repo — die Owner-Rolle war
+  // damit in den E2E-Tests gar nicht prüfbar (Login 401). Dieser Account hier
+  // ist der Testzugang dafür: gleiche Rolle, gleiches Seed-Passwort, und beim
+  // nächsten `seed:agent` wieder weg.
+  if (lanes.includes('agent')) {
+    const uid = await createLogin(AGENT_OWNER_EMAIL, 'Claude Owner');
+    // Owner hat keine club_id — nur die Rolle. Siehe CLAUDE.md § Rollen.
+    await addMembership(uid, null, 'owner');
+    log(`\n🛠️  Owner ${AGENT_OWNER_EMAIL} (Agent-Lane, ohne Verein)`);
   }
 
   // Die E2E-Tests hängen an einer UUID, die sich bei jedem Reset ändert.
