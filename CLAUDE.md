@@ -159,6 +159,10 @@ In `notifications`-Tabelle via Service-Client einfügen.
   `solo_s`, `solo_l`, `school_s`, `school_l` (`users.subscription_tier`).
 - **Pflicht-Abo:** ohne `subscription_status` in `active`/`trialing` zeigt
   jede Seite unter `app/(protected)/admin/(gated)/` nur die Bezahlschranke.
+- ⚠️ **Bis zum Launch abgeschaltet:** `SUBSCRIPTION_ENFORCEMENT=off` (lokal und
+  in Produktion) lässt jeden Verein alles nutzen. Nur exakt `off` schaltet ab —
+  Variable entfernen stellt die Schranke wieder scharf. Zurückdrehen vor dem
+  Launch: `docs/OPEN_ITEMS.md` § Vor dem Launch.
 
 ### E-Mail (Resend SMTP)
 

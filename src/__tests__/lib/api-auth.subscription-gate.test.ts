@@ -9,7 +9,7 @@
  * withAuth()/requireAuth() run end to end; only isSubscriptionPastDue()'s
  * underlying `users` row is swapped per test via `mock.subscriptionStatus`.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 
 const mock = vi.hoisted(() => ({
@@ -59,6 +59,18 @@ vi.mock('@/lib/auth/resolve-active-club', () => ({
 }));
 
 import { withAuth } from '@/lib/api-auth';
+
+// Bis zum Launch steht SUBSCRIPTION_ENFORCEMENT=off in .env.local. Diese Suite
+// prüft die Schranke selbst und stellt sie deshalb ausdrücklich scharf — die
+// Abschaltung hat ihren eigenen Testfall in subscription-gate.test.ts.
+const enforcementVorher = process.env.SUBSCRIPTION_ENFORCEMENT;
+beforeEach(() => {
+  delete process.env.SUBSCRIPTION_ENFORCEMENT;
+});
+afterEach(() => {
+  if (enforcementVorher === undefined) delete process.env.SUBSCRIPTION_ENFORCEMENT;
+  else process.env.SUBSCRIPTION_ENFORCEMENT = enforcementVorher;
+});
 
 function makeRequest(method: string) {
   return new NextRequest('http://localhost/api/test', { method });

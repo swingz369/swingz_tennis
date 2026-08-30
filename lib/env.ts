@@ -42,6 +42,18 @@ export const env = createEnv({
     RESEND_API_KEY: z.string().min(1),
     EMAIL_FROM: z.string().optional(),
     CRON_SECRET: z.string().min(1),
+    /**
+     * Bezahlschranke abschalten — NUR bis zum offiziellen Launch.
+     *
+     * `off` lässt jeden Verein alles nutzen, ohne Abo. Alles andere (auch
+     * nicht gesetzt) heisst: Schranke ist scharf. Die Richtung ist Absicht —
+     * wer die Variable beim Launch vergisst, bekommt die Schranke zurück,
+     * nicht still verschenkte Umsätze.
+     *
+     * Wiedereinschalten: Variable entfernen (lokal und bei Vercel).
+     * Siehe docs/OPEN_ITEMS.md § Vor dem Launch.
+     */
+    SUBSCRIPTION_ENFORCEMENT: z.enum(['on', 'off']).optional(),
   },
   client: {
     NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
@@ -78,6 +90,7 @@ export const env = createEnv({
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
     CRON_SECRET: process.env.CRON_SECRET,
+    SUBSCRIPTION_ENFORCEMENT: process.env.SUBSCRIPTION_ENFORCEMENT,
     // Client
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,

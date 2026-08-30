@@ -5,6 +5,7 @@ import {
   SubscriptionDunningBlock,
   SubscriptionRequiredBlock,
 } from '@/components/billing/subscription-dunning-block';
+import { SubscriptionDisabledBanner } from '@/components/billing/subscription-disabled-banner';
 
 /**
  * Superadmin "gated" route group — everything except /superadmin/onboarding.
@@ -41,5 +42,10 @@ export default async function SuperadminGatedLayout({ children }: { children: Re
     return <SubscriptionRequiredBlock href="/superadmin/subscription" />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <SubscriptionDisabledBanner />
+      {children}
+    </>
+  );
 }

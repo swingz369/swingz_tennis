@@ -1,4 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('subscription-gate');
 
 /**
  * Zustand des SwingZ-Abos eines Admins/Superadmins.
@@ -20,10 +23,45 @@ const LIVE_STATUSES = new Set(['active', 'trialing']);
 /** Status, in denen der Kunde eingreifen muss, bevor es weitergeht. */
 const DUNNING_STATUSES = new Set(['past_due', 'unpaid']);
 
+/**
+ * Ist die Bezahlschranke scharf?
+ *
+ * Bis zum offiziellen Launch steht `SUBSCRIPTION_ENFORCEMENT=off`: die
+ * Testvereine sollen alles können, ohne dass jemand echtes Geld bewegt.
+ * Solange das gesetzt ist, gibt `getSubscriptionState` für jeden `ok` zurück
+ * — Vereinsbereich offen, kein Mahnfall, keine API-Sperre.
+ *
+ * Die Vorgabe ist bewusst „scharf": nur der ausdrückliche Wert `off` schaltet
+ * ab. Wer die Variable beim Launch vergisst zu entfernen, bekommt die
+ * Schranke zurück statt still verschenkter Umsätze.
+ *
+ * Wiedereinschalten: Variable in `.env.local` und bei Vercel entfernen.
+ * Der offene Punkt steht in docs/OPEN_ITEMS.md § Vor dem Launch.
+ */
+export function isSubscriptionEnforced(): boolean {
+  return process.env.SUBSCRIPTION_ENFORCEMENT !== 'off';
+}
+
+// Einmal je Prozess warnen — nicht bei jedem Seitenaufruf, sonst geht der
+// Hinweis im Rauschen unter und ist am Ende genau deshalb unsichtbar.
+let abschaltungGemeldet = false;
+
 export async function getSubscriptionState(
   supabase: SupabaseClient,
   userId: string
 ): Promise<SubscriptionState> {
+  if (!isSubscriptionEnforced()) {
+    if (!abschaltungGemeldet) {
+      abschaltungGemeldet = true;
+      log.warn(
+        'SUBSCRIPTION_ENFORCEMENT=off — Bezahlschranke ist ABGESCHALTET, jeder ' +
+          'Verein darf alles. Vor dem Launch entfernen (docs/OPEN_ITEMS.md ' +
+          '§ Vor dem Launch).'
+      );
+    }
+    return 'ok';
+  }
+
   const { data } = await supabase
     .from('users')
     .select('subscription_tier, subscription_status')

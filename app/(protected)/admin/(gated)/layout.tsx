@@ -9,6 +9,7 @@ import {
   SubscriptionDunningBlock,
   SubscriptionRequiredBlock,
 } from '@/components/billing/subscription-dunning-block';
+import { SubscriptionDisabledBanner } from '@/components/billing/subscription-disabled-banner';
 
 /**
  * Admin "gated" route group — everything except /admin/onboarding.
@@ -77,5 +78,10 @@ export default async function AdminGatedLayout({ children }: { children: React.R
     return <SubscriptionRequiredBlock />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <SubscriptionDisabledBanner />
+      {children}
+    </>
+  );
 }

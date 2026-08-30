@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 15. August 2026
+> Zuletzt verifiziert: 30. August 2026 (Bezahlschranke bis zum Launch abgeschaltet — siehe unten)
 >
 > Lebendes Dokument. Bündelt **alle dokumentierten, aber noch nicht umgesetzten** Altlasten und
 > ToDos. Wer einen Punkt umsetzt, streicht ihn hier; wer einen neuen offenen Punkt findet, trägt
@@ -17,6 +17,48 @@
 Quellen: die vier Archiv-Snapshots vom 13.08.2026 (`docs/ARCHIV/2026-08-13-*`),
 `docs/DATABASE.md`, `docs/EMAIL_SETUP.md` sowie das **eingefrorene** Ticket-System
 `docs/tickets/` (Stand Juni 2026, wird nicht mehr gepflegt — siehe Banner dort).
+
+---
+
+## Vor dem Launch — zwingend zurückdrehen
+
+### Bezahlschranke ist abgeschaltet
+
+`SUBSCRIPTION_ENFORCEMENT=off` ist gesetzt (lokal und in Vercel Production).
+Solange das gilt, gibt `getSubscriptionState()` für **jeden** Nutzer `ok` zurück:
+jeder Verein hat vollen Zugriff ohne Abo, der Mahnfall greift nicht, und die
+API-Sperre in `lib/api-auth.ts` läuft leer.
+
+**Warum:** Die Testvereine sollen bis zum offiziellen Launch benutzbar sein,
+ohne dass für sie echtes Geld bewegt wird. Ohne die Abschaltung zeigt jede
+Seite unter `app/(protected)/admin/(gated)/` nur die Bezahlschranke — der
+gesamte Vereinsbereich wäre unbenutzbar.
+
+**Zurückdrehen — zwei Schritte, sonst nichts:**
+
+```bash
+# 1. lokal
+sed -i '/^SUBSCRIPTION_ENFORCEMENT=/d' .env.local
+
+# 2. Produktion
+vercel env rm SUBSCRIPTION_ENFORCEMENT production
+vercel --prod            # Git-Deploy ist auf dem Hobby-Plan BLOCKED
+```
+
+Danach prüfen: ein Konto ohne Abo (`users.subscription_tier = 'free'`) muss auf
+`/admin/members` die Bezahlschranke sehen.
+
+**Warum das nicht vergessen werden kann:**
+
+| Sicherung                | Wirkung                                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Vorgabe ist **scharf**   | Nur exakt `off` schaltet ab. Variable weg = Schranke da. Vergessen führt nicht zu verschenktem Umsatz.     |
+| Warnung im Log           | `[subscription-gate] SUBSCRIPTION_ENFORCEMENT=off …`, einmal je Prozess                                    |
+| Leiste in der Oberfläche | `SubscriptionDisabledBanner` steht auf **jeder** Admin- und Superadmin-Seite, solange der Schalter aus ist |
+| Test                     | `subscription-gate.test.ts` prüft, dass die Vorgabe scharf ist und kein anderer Wert abschaltet            |
+
+Code: `lib/subscription-gate.ts` (`isSubscriptionEnforced`), `lib/env.ts`,
+`components/billing/subscription-disabled-banner.tsx`.
 
 ---
 
