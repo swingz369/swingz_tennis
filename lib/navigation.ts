@@ -284,8 +284,11 @@ export function superadminSidebarSections(): NavSection[] {
         // /superadmin/tenants (KPI-Übersicht) war nur über die Mobile-Nav
         // erreichbar, /superadmin/clubs (anlegen/bearbeiten) nur über die
         // Sidebar. Beide Seiten existieren — jetzt beide verlinkt.
-        { name: 'Vereinsübersicht', href: '/superadmin/tenants' },
-        { name: 'Vereine verwalten', href: '/superadmin/clubs' },
+        // Zwei verschiedene Dinge, die vorher beide nach „Liste von Vereinen"
+        // klangen: /tenants ist der Wechsler („Verein auswählen, um dessen
+        // Administration zu öffnen"), /clubs das Anlegen und Bearbeiten.
+        { name: 'Verein öffnen', href: '/superadmin/tenants' },
+        { name: 'Vereine anlegen & bearbeiten', href: '/superadmin/clubs' },
         { name: 'Admins verwalten', href: '/superadmin/admins' },
       ],
     },
@@ -319,11 +322,13 @@ export function ownerSidebarSections(): NavSection[] {
       ],
     },
     {
-      label: 'Monetarisierung',
+      // Systemweite Konfiguration lag vorher unter „Monetarisierung" — dort
+      // sucht sie niemand. Die Sektion trägt jetzt beides, was den Betrieb
+      // der Plattform selbst betrifft.
+      label: 'Plattform-Betrieb',
       icon: Settings,
       items: [
         { name: 'Umsatz & Abos', href: '/owner/billing' },
-        // Coming-Soon: Systemweite Konfiguration. Seite fehlt aktuell noch.
         { name: 'System-Einstellungen', href: '/owner/settings' },
       ],
     },

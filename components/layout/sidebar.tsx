@@ -365,6 +365,33 @@ export function Sidebar({
     };
   }
 
+  /**
+   * Entfernt Links, deren Ziel weiter oben schon vorkommt.
+   *
+   * Rollen mit zwei Nav-Bäumen — heute nur der Trainer, der seine eigene und
+   * die Mitglieder-Navigation bekommt — hatten dieselbe Seite doppelt in der
+   * Sidebar. Der erste Treffer gewinnt, weil die rollenspezifische Sektion
+   * vorne steht: dort sucht ein Trainer den Platzkalender, nicht unter
+   * „Spielen". Sektionen, die dadurch leer werden, fallen weg.
+   *
+   * Das ist bewusst eine Regel und kein Einzelfall-Filter: wer dem
+   * Mitglieder-Baum morgen einen Link hinzufügt, den der Trainer schon hat,
+   * bekommt keine zweite Dublette.
+   */
+  function dedupeByHref(sections: SectionDef[]): SectionDef[] {
+    const gesehen = new Set<string>();
+    return sections
+      .map((s) => ({
+        ...s,
+        subItems: s.subItems.filter((i) => {
+          if (gesehen.has(i.href)) return false;
+          gesehen.add(i.href);
+          return true;
+        }),
+      }))
+      .filter((s) => s.subItems.length > 0);
+  }
+
   // Sektionen kommen aus lib/navigation.ts (gemeinsame Quelle mit Mobile-Nav
   // und Command-Palette) und werden hier nur dekoriert: Approval-Badge,
   // Einladen-Aktion, Trainer-Zusammenführung.
@@ -426,27 +453,32 @@ export function Sidebar({
     const memberSections = memberSidebarSections(hiddenSections, includeMemberOnly);
 
     if (isTrainer) {
-      // Trainer: eigene Sektionen („Mein Training", „Meine Leistung") +
-      // „Spielen"/„Mein Verein" des Mitglieds. Die Mitglieder-Trainingssektion
-      // wird eingeschmolzen (Spieler-Präferenzen an die erste Trainer-Sektion);
-      // „Trainerstunde buchen" entfällt für Trainer.
-      const trainerSections = trainerSidebarSections();
-      return [
-        ...trainerSections.map((s, i) => ({
-          label: s.label,
-          icon: s.icon,
-          subItems:
-            i === 0 && includeMemberOnly
-              ? [
-                  ...s.items,
-                  { name: 'Trainingspräferenzen (Spieler)', href: '/member/preferences' },
-                ]
-              : s.items,
-        })),
-        ...memberSections
-          .filter((s) => s.label !== 'Training')
-          .map((s) => ({ label: s.label, icon: s.icon, subItems: s.items })),
-      ];
+      // Trainer sehen zwei Nav-Bäume: ihren eigenen („Mein Training", „Meine
+      // Leistung") und den des Mitglieds. Beide wurden vorher blind
+      // aneinandergehängt — dabei stand `/scheduler` zweimal da, beide Male als
+      // „Platzkalender". `dedupeByHref` unten fängt diese ganze Klasse ab, nicht
+      // nur den einen Fall.
+      //
+      // Die Mitglieder-Sektion „Training" wurde vorher komplett verworfen. Damit
+      // verlor ein Trainer, der im Verein auch selbst spielt, seinen eigenen
+      // Trainingsplan und seine Anwesenheit — beides gibt es sonst nirgends.
+      // Weg muss nur „Trainerstunde buchen": ein Trainer bucht keine
+      // Trainerstunde bei sich selbst.
+      const trainerSections = trainerSidebarSections().map((s) => ({
+        label: s.label,
+        icon: s.icon,
+        subItems: s.items,
+      }));
+
+      const spielerSections = memberSections.map((s) => ({
+        // „Mein Training" (unterrichten) und „Training" (selbst spielen) nebeneinander
+        // wäre nicht zu unterscheiden.
+        label: s.label === 'Training' ? 'Training (als Spieler)' : s.label,
+        icon: s.icon,
+        subItems: s.items.filter((i) => i.href !== '/member/trainer-booking'),
+      }));
+
+      return dedupeByHref([...trainerSections, ...spielerSections]);
     }
 
     // Mitglied — gruppierte Sektionen statt flacher Liste
