@@ -311,63 +311,114 @@ Menschen gewünschte Vorgabe.
 
 ## 7. Lasttest: 500 Mitglieder (Claude Sandbox Gamma)
 
-Neuer Verein in der Agent-Lane, um zu sehen, ob die Saisonplanung in
-realistischer Vereinsgrösse trägt.
+Neuer Verein in der Agent-Lane, um zu sehen, ob Betrieb **und** Saisonplanung in
+realistischer Vereinsgrösse tragen. Admin: `admin@gamma.claude.test`.
 
-|             |                                                                                                    |
-| ----------- | -------------------------------------------------------------------------------------------------- |
-| Mitglieder  | 500 (3 mit Login)                                                                                  |
-| Trainer     | 20 (alle mit Login + Verfügbarkeit)                                                                |
-| Plätze      | 12, davon 4 Halle                                                                                  |
-| Gruppen     | 65                                                                                                 |
-| Präferenzen | 400 Mitglieder (80 %), 20 Trainer (100 %)                                                          |
-| Saison      | `collecting_preferences` — bewusst **vor** der Planung, damit der Auto-Planer selbst auslösbar ist |
+|                |                                                    |
+| -------------- | -------------------------------------------------- |
+| Mitglieder     | 500 (3 mit Login)                                  |
+| Trainer        | 20 (alle mit Login + Verfügbarkeit)                |
+| Plätze         | 12, davon 4 Halle                                  |
+| Gruppen        | 65                                                 |
+| Saison         | `published` — laufender Betrieb                    |
+| Stundenplan    | 65 Einträge                                        |
+| Sessions       | 195 (drei Wochen: Vor-, laufende, Folgewoche)      |
+| Buchungen      | 497                                                |
+| Anwesenheiten  | 497 (Vorwoche, mit Widerspruchs- und Offen-Fällen) |
+| Rechnungen     | 300, in allen vier Zuständen                       |
+| Trainerstunden | 40 (je Trainer eine genehmigte, eine offene)       |
+| Präferenzen    | 400 Mitglieder (80 %), 20 Trainer (100 %)          |
 
-### Ergebnis
+> **Erster Anlauf war zu eng gedacht.** Die Saison stand zunächst auf
+> `collecting_preferences`, damit sich der Auto-Planer selbst auslösen lässt.
+> Damit hatte der Verein aber 0 Stundenplan-Einträge, 0 Sessions, 0 Buchungen —
+> also genau **keinen Betrieb** zum Testen. Jetzt `published`: die Präferenzen
+> bleiben erhalten, der Planer lässt sich weiterhin darauf ansetzen (unten
+> belegt), nur läuft daneben etwas.
 
-| Messung                                       | Wert                                                         |
-| --------------------------------------------- | ------------------------------------------------------------ |
-| Präferenz-Übersicht (`preferences-summary`)   | HTTP 200, **2,6 s**                                          |
-| Clustering-Lauf (`planning/cluster`, dry run) | HTTP 200, **1,9 s** Antwortzeit, davon **173 ms** Rechenzeit |
-| Iterationen                                   | 45                                                           |
-| Zugeordnet                                    | **419 von 500**                                              |
-| Auf Warteliste                                | 205                                                          |
-| Niveau-Verletzungen                           | 0                                                            |
-| Trainer-Überlast-Warnungen                    | 0                                                            |
+### Ergebnis — Saisonplanung
 
-Admin-Seiten in diesem Verein, jeweils zweiter Aufruf (ohne Kaltkompilierung),
+| Messung                                  | Wert                                                          |
+| ---------------------------------------- | ------------------------------------------------------------- |
+| Clustering (`planning/cluster`, dry run) | HTTP 200, **2,3 s** Antwort, davon **217 ms** Rechenzeit      |
+| Gruppen gebildet                         | 45                                                            |
+| Zugeordnet                               | 404 von 500                                                   |
+| Niveau-Verletzungen / Trainer-Überlast   | 0 / 0                                                         |
+| `plan-entries` (65 Einträge)             | HTTP 200, 4,0 s — **0 ohne Gruppenname** (der F-3-Fix greift) |
+| `plan-grid`                              | HTTP 200, 1,9 s                                               |
+| `preferences-summary`                    | HTTP 200, 2,1 s                                               |
+| `calendar`                               | HTTP 200, 1,9 s                                               |
+
+Der Clusterer läuft also auch auf einer **laufenden** Saison — der Admin kann
+neu planen, ohne die Saison vorher zurückzusetzen.
+
+### Ergebnis — Betrieb
+
+Admin-Seiten, jeweils zweiter Aufruf (ohne Kaltkompilierung), Inhalt geprüft,
 keine JS-Exception:
 
-| Seite                         | Ladezeit |
-| ----------------------------- | -------- |
-| `/admin/members` (500 Zeilen) | 1,58 s   |
-| `/admin/analytics`            | 1,58 s   |
-| `/admin/seasons`              | 1,33 s   |
-| `/admin/trainers`             | 1,01 s   |
-| `/admin/courts`               | 0,90 s   |
-| `/admin/billing`              | 0,81 s   |
-| `/scheduler`                  | 0,56 s   |
+| Seite                                  | Ladezeit |
+| -------------------------------------- | -------- |
+| `/admin`                               | 2,59 s   |
+| `/admin/members` (500 Zeilen)          | 1,35 s   |
+| `/admin/trainers`                      | 1,46 s   |
+| `/admin/hours-logs`                    | 1,45 s   |
+| `/admin/seasons`                       | 1,55 s   |
+| `/admin/courts`                        | 1,08 s   |
+| `/admin/billing` (300 Rechnungen)      | 1,33 s   |
+| `/admin/analytics`                     | 1,56 s   |
+| `/scheduler` (12 Plätze, Wochengitter) | 3,31 s   |
 
-**Befund:** die Planung trägt. 173 ms Rechenzeit für 500 Mitglieder ist keine
+**Befund: es trägt.** 217 ms Rechenzeit für 500 Mitglieder ist keine
 Grössenordnung, in der etwas kippt, und keine Seite bricht ein.
 
 ### Was der Lasttest zusätzlich aufdeckte
 
-Der erste Lauf ordnete nur **275 von 500** zu. Der Clusterer nannte den Grund
-selbst — auf Deutsch, im Klartext:
+Vier Fehler, die in einem 60er-Verein nicht auffallen können:
+
+**1. Nur 2 Hallenplätze, unabhängig von der Vereinsgrösse.** Der erste
+Clustering-Lauf ordnete nur 275 von 500 zu. Der Grund stand im Klartext in der
+Antwort:
 
 > „Keine freie Kapazität — **2 nutzbare Plätze (Wintersaison: nur Hallenplätze)**
 > und 20 Trainer sind ausgelastet"
 
-Der Seed vergab **fix zwei** Hallenplätze, unabhängig von der Vereinsgrösse
-(`has_indoor: i > spec.courts - 2`). Ein Verein mit 500 Mitgliedern plante die
-Wintersaison damit auf zwei Feldern. Jetzt ist etwa ein Drittel der Plätze
-Halle, mindestens zwei → **275 → 419** zugeordnet.
+`has_indoor: i > spec.courts - 2` vergab fix zwei Hallenplätze. Ein Verein mit
+500 Mitgliedern plante die Wintersaison damit auf zwei Feldern. Jetzt etwa ein
+Drittel Halle, mindestens zwei → **275 → 419** zugeordnet.
 
-Die verbleibenden 114 sind **kein Fehler**: 4 Hallenplätze × Zeitraster ist
+Die verbleibenden rund 100 sind **kein Fehler**: 4 Hallenplätze × Zeitraster ist
 eine echte Kapazitätsgrenze, und die Engine benennt sie nachvollziehbar
 (Trainerauslastung lag bei 18,75 % — der Engpass ist der Platz, nicht das
 Personal). Genau das soll ein Verein an dieser Stelle erfahren.
+
+**2. Doppelbelegung im Stundenplan.** Platz (`n % courts`), Tag (`n % 5`) und
+Stunde (`n % 3`) liefen unabhängig voneinander. Bei 12 Plätzen kollidierten
+Eintrag _n_ und _n+60_ auf demselben Platz zur selben Zeit — bei 65 Gruppen also
+mehrfach. Slot-Vergabe jetzt kollisionsfrei (Platz × Tag × 4 Zeitfenster);
+gegengeprüft: **0 Tripel doppelt** über alle Vereine.
+
+**3. Jede Session hatte genau einen Bucher — und zwar den falschen.** Die
+Buchungen liefen `memberIds[i % memberIds.length]`, quer durch die
+Mitgliederliste gewürfelt. Die Platzbelegung zeigte dadurch überall „1 von 10",
+und wer eine Gruppe öffnete, fand darin ein Mitglied, das gar nicht dazugehört.
+Jetzt bucht, wer in der Gruppe ist.
+
+**4. Keine einzige Anwesenheit, in keinem Verein.** `attendance_records` und
+`session_rsvps` waren leer — die Anwesenheitshistorie stand überall auf null und
+der Bestätigungs-Workflow (Trainer hakt ab, Mitglied bestätigt oder
+widerspricht) liess sich nirgends auslösen. Jetzt eine Session je Gruppe in der
+Vorwoche, mit einer Verteilung statt „alle da" (jeder fünfte entschuldigt, jeder
+siebte zu spät) und jeder dritten Gruppe offen beim Mitglied.
+
+Und **5.**, kein Lasttest-Fund, aber im selben Zug: 8 Rechnungen je Verein waren
+bei 500 Mitgliedern keine testbare Buchhaltung — Summen, Mahnlauf und
+Offene-Posten-Liste sehen bei acht Zeilen überall gleich aus. Jetzt rund 60 %
+der Mitglieder, gedeckelt bei 300.
+
+Alle fünf wirken auch auf die kleineren Vereine: TC Rheinland hat jetzt 10
+Stundenplan-Einträge, 30 Sessions, 58 Buchungen, 58 Anwesenheiten und 36
+Rechnungen (vorher 5 / 15 / 5 / 0 / 8).
 
 ---
 

@@ -9,28 +9,29 @@ SwingZ ist eine Management-Lösung für Tennisvereine: Mitglieder, Buchungen, Tr
 
 ## Doku-Index
 
-| Dokument                                                   | Inhalt                                                                                         |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| [`AGENTS.md`](../AGENTS.md)                                | Regeln für KI-Agenten in diesem Repo (auch Doku-Governance)                                    |
-| [`CLAUDE.md`](../CLAUDE.md)                                | Architektur, Rollen, Konventionen, DO-NOT-Liste — Pflichtlektüre vor Code-Änderungen           |
-| [`BUSINESS_RULES.md`](BUSINESS_RULES.md)                   | Verbindliche Produkt- und Rollenregeln                                                         |
-| [`DATABASE.md`](DATABASE.md)                               | DB-/RLS-Ist-Zustand, Migrations-Realität, bekannte Altlasten                                   |
-| [`ENVIRONMENTS.md`](ENVIRONMENTS.md)                       | Umgebungen & Datenbanken: lokal vs. Produktion, Env-Dateien, Migrations-/Deploy-Weg, Backups   |
-| [`SERVICES.md`](SERVICES.md)                               | Alle Adressen und Dienste (lokal, Produktion, Drittanbieter) und wo die Zugangsdaten liegen    |
-| [`OPEN_ITEMS.md`](OPEN_ITEMS.md)                           | **Konsolidierte offene Punkte & nächste Schritte** (P0–P3 + Roadmap) — hier zuerst lesen       |
-| [`PRODUKTIONSREIFE.md`](PRODUKTIONSREIFE.md)               | **Der Plan**: Phasen, Reihenfolge, Gates und Abnahmekriterien bis zur Verkaufsreife            |
-| [`HANDBOOK.md`](HANDBOOK.md)                               | Nutzerhandbuch                                                                                 |
-| [`handbook/`](handbook/)                                   | Ausführliches Dev-/User-Handbuch, inkl. auto-generierter Kapitel (siehe unten)                 |
-| [`DESIGN.md`](DESIGN.md)                                   | Design-Konzept (Design-System, Component-Architektur, A11y-Audit)                              |
-| [`ROUTING.md`](ROUTING.md)                                 | Route-Groups, Layout-Hierarchie, alle Seiten                                                   |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md)                       | Workflow für Beiträge                                                                          |
-| [`STRIPE_SETUP.md`](STRIPE_SETUP.md)                       | Stripe-Konfiguration                                                                           |
-| [`EMAIL_SETUP.md`](EMAIL_SETUP.md)                         | Resend-Konfiguration, Absenderdomain, Versandwege — **derzeit blockiert**                      |
-| [`RUNBOOK-BACKUP-ROLLBACK.md`](RUNBOOK-BACKUP-ROLLBACK.md) | Backup & Rollback                                                                              |
-| `TEST-CREDENTIALS.md`                                      | Testvereine, Lanes & Zugangsdaten — **generiert** von `scripts/seed-testdata.ts`, nicht in Git |
-| [`decisions/`](decisions/)                                 | Architektur-Entscheidungen (ADRs) — einmal gemergt unveränderlich                              |
-| [`ARCHIV/`](ARCHIV/)                                       | Abgeschlossene Audits/Analysen/Snapshots — historisch, nicht mehr aktuell                      |
-| [`tickets/`](tickets/)                                     | Ticket-System — **eingefroren (Stand Juni 2026)**, siehe `OPEN_ITEMS.md`                       |
+| Dokument                                                       | Inhalt                                                                                                                    |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| [`AGENTS.md`](../AGENTS.md)                                    | Regeln für KI-Agenten in diesem Repo (auch Doku-Governance)                                                               |
+| [`CLAUDE.md`](../CLAUDE.md)                                    | Architektur, Rollen, Konventionen, DO-NOT-Liste — Pflichtlektüre vor Code-Änderungen                                      |
+| [`BUSINESS_RULES.md`](BUSINESS_RULES.md)                       | Verbindliche Produkt- und Rollenregeln                                                                                    |
+| [`DATABASE.md`](DATABASE.md)                                   | DB-/RLS-Ist-Zustand, Migrations-Realität, bekannte Altlasten                                                              |
+| [`ENVIRONMENTS.md`](ENVIRONMENTS.md)                           | Umgebungen & Datenbanken: lokal vs. Produktion, Env-Dateien, Migrations-/Deploy-Weg, Backups                              |
+| [`SERVICES.md`](SERVICES.md)                                   | Alle Adressen und Dienste (lokal, Produktion, Drittanbieter) und wo die Zugangsdaten liegen                               |
+| [`OPEN_ITEMS.md`](OPEN_ITEMS.md)                               | **Konsolidierte offene Punkte & nächste Schritte** (P0–P3 + Roadmap) — hier zuerst lesen                                  |
+| [`PRODUKTIONSREIFE.md`](PRODUKTIONSREIFE.md)                   | **Der Plan**: Phasen, Reihenfolge, Gates und Abnahmekriterien bis zur Verkaufsreife                                       |
+| [`HANDBOOK.md`](HANDBOOK.md)                                   | Nutzerhandbuch                                                                                                            |
+| [`handbook/`](handbook/)                                       | Ausführliches Dev-/User-Handbuch, inkl. auto-generierter Kapitel (siehe unten)                                            |
+| [`DESIGN.md`](DESIGN.md)                                       | Design-Konzept (Design-System, Component-Architektur, A11y-Audit)                                                         |
+| [`ROUTING.md`](ROUTING.md)                                     | Route-Groups, Layout-Hierarchie, alle Seiten                                                                              |
+| [`SAISONPLANUNG-ALGORITHMUS.md`](SAISONPLANUNG-ALGORITHMUS.md) | Wie der Clustering-Algorithmus plant: Ablauf, Trainingsfenster, Medenspiel-Sperren, Kapazitätsrechnung, Optimierungspfade |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md)                           | Workflow für Beiträge                                                                                                     |
+| [`STRIPE_SETUP.md`](STRIPE_SETUP.md)                           | Stripe-Konfiguration                                                                                                      |
+| [`EMAIL_SETUP.md`](EMAIL_SETUP.md)                             | Resend-Konfiguration, Absenderdomain, Versandwege — **derzeit blockiert**                                                 |
+| [`RUNBOOK-BACKUP-ROLLBACK.md`](RUNBOOK-BACKUP-ROLLBACK.md)     | Backup & Rollback                                                                                                         |
+| `TEST-CREDENTIALS.md`                                          | Testvereine, Lanes & Zugangsdaten — **generiert** von `scripts/seed-testdata.ts`, nicht in Git                            |
+| [`decisions/`](decisions/)                                     | Architektur-Entscheidungen (ADRs) — einmal gemergt unveränderlich                                                         |
+| [`ARCHIV/`](ARCHIV/)                                           | Abgeschlossene Audits/Analysen/Snapshots — historisch, nicht mehr aktuell                                                 |
+| [`tickets/`](tickets/)                                         | Ticket-System — **eingefroren (Stand Juni 2026)**, siehe `OPEN_ITEMS.md`                                                  |
 
 Aktuellster Archiv-Snapshot: [`ARCHIV/2026-08-18-produktionsreife-audit.md`](ARCHIV/2026-08-18-produktionsreife-audit.md) — unabhängiges Produktionsreife-Audit am Code geprüft (13 Befunde: SECURITY-DEFINER-RPCs an `anon`, zwei tote Crons, keine Staging-Umgebung, fehlende Stripe-Idempotenz). Offene Punkte gebündelt in [`PRODUKTIONSREIFE.md`](PRODUKTIONSREIFE.md) Anhang D.
 
