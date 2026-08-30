@@ -38,7 +38,7 @@ test.describe('Superadmin', () => {
     if ((await meineVereine.getAttribute('aria-expanded')) !== 'true') {
       await meineVereine.click();
     }
-    await expect(sidebar.getByText('Vereinsübersicht')).toBeVisible();
+    await expect(sidebar.getByText('Verein öffnen')).toBeVisible();
     await expect(sidebar.getByText('Admins verwalten')).toBeVisible();
 
     // Club-scoped Admin-Sektionen dürfen nicht auftauchen. Über Sub-Items
@@ -115,7 +115,18 @@ test.describe('Trainer', () => {
     await page.goto('/trainer', { waitUntil: 'networkidle' });
     const sidebar = page.locator(SIDEBAR);
     await expect(sidebar).toBeVisible({ timeout: 10000 });
-    for (const section of ['Mein Training', 'Meine Leistung', 'Spielen', 'Mein Verein']) {
+    // „Training (als Spieler)" kam dazu: die Mitglieder-Trainingssektion wurde
+    // vorher komplett verworfen, damit fehlten einem Trainer, der selbst
+    // spielt, sein Trainingsplan und seine Anwesenheit.
+    // Klammern escapen — `new RegExp('Training (als Spieler)')` liest sie sonst
+    // als Gruppe und sucht nach „Training als Spieler" ohne Klammern.
+    for (const section of [
+      'Mein Training',
+      'Meine Leistung',
+      'Spielen',
+      'Training \\(als Spieler\\)',
+      'Mein Verein',
+    ]) {
       await expect(sidebar.getByRole('button', { name: new RegExp(section, 'i') })).toBeVisible();
     }
   });

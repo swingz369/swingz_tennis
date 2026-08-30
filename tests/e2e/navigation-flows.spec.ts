@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { loginAsRoleAware } from '../helpers/auth';
 
 /**
@@ -13,6 +13,20 @@ import { loginAsRoleAware } from '../helpers/auth';
  */
 
 const SIDEBAR = 'aside[aria-label="Seitennavigation"]';
+
+/**
+ * Cookie-Hinweis vorab bestätigen.
+ *
+ * Im Mobile-Viewport liegt das Banner unten — genau über der Bottom-Nav. Der
+ * Link darunter ist im DOM und trägt das richtige `aria-label`, wird aber nie
+ * klickbar; Playwright wartet dann bis zum Timeout auf „visible, enabled and
+ * stable". Der Fehler sieht wie ein Navigationsfehler aus und ist keiner.
+ */
+async function ohneCookieBanner(page: Page) {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('swingz-cookie-consent', 'declined');
+  });
+}
 
 test.describe('Dashboard Navigation Flows', () => {
   test.beforeEach(async ({ page }) => {
@@ -91,22 +105,26 @@ test.describe('Member Navigation Flows', () => {
     expect(page.url()).toContain('/member');
   });
 
-  test('Member: Bottom-Nav → Buchen', async ({ page }) => {
+  test('Member: Bottom-Nav → Mein Trainingsplan', async ({ page }) => {
     // Bottom-Nav ist md:hidden — nur im Mobile-Viewport sichtbar
     await page.setViewportSize({ width: 390, height: 844 });
+    await ohneCookieBanner(page);
     await page.goto('/member', { waitUntil: 'domcontentloaded' });
     const bottomNav = page.locator('nav[aria-label="Navigation"]');
     await expect(bottomNav).toBeVisible({ timeout: 10000 });
-    await bottomNav.getByRole('link', { name: /Buchen/i }).click();
+    // War /Buchen/i — dieses Label gibt es in mobileNavItems nicht.
+    await bottomNav.getByRole('link', { name: /Mein Trainingsplan/i }).click();
     await expect(page).toHaveURL(/\/bookings/, { timeout: 10000 });
   });
 
-  test('Member: Bottom-Nav → Stundenplan', async ({ page }) => {
+  test('Member: Bottom-Nav → Platzkalender', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
+    await ohneCookieBanner(page);
     await page.goto('/member', { waitUntil: 'domcontentloaded' });
     const bottomNav = page.locator('nav[aria-label="Navigation"]');
     await expect(bottomNav).toBeVisible({ timeout: 10000 });
-    await bottomNav.getByRole('link', { name: /Stundenplan/i }).click();
+    // War /Stundenplan/i — die Seite heisst seit dem Umbau „Platzkalender".
+    await bottomNav.getByRole('link', { name: /Platzkalender/i }).click();
     await expect(page).toHaveURL(/\/scheduler/, { timeout: 10000 });
   });
 });
@@ -120,7 +138,7 @@ test.describe('Superadmin Navigation', () => {
     );
   });
 
-  test('Superadmin: Sidebar → Vereinsübersicht → Clubs', async ({ page }) => {
+  test('Superadmin: Sidebar → Vereine anlegen & bearbeiten', async ({ page }) => {
     await page.goto('/superadmin', { waitUntil: 'networkidle' });
     const sidebar = page.locator(SIDEBAR);
     await expect(sidebar).toBeVisible({ timeout: 10000 });
@@ -129,7 +147,10 @@ test.describe('Superadmin Navigation', () => {
     if ((await meineVereine.getAttribute('aria-expanded')) !== 'true') {
       await meineVereine.click();
     }
-    await sidebar.getByText('Vereinsübersicht').click();
+    // Klickte vorher „Vereinsübersicht" und erwartete /superadmin/clubs — dieser
+    // Eintrag zeigte aber auf /superadmin/tenants (den Vereins-Wechsler). Die
+    // Labels sagen jetzt, was die Seiten tun.
+    await sidebar.getByText('Vereine anlegen & bearbeiten').click();
     await expect(page).toHaveURL(/\/superadmin\/clubs/, { timeout: 10000 });
   });
 });

@@ -17,7 +17,9 @@ test.describe('Sidebar Component - Role-based Navigation', () => {
 
   test('superadmin role shows platform-wide navigation', async () => {
     expect(navCode).toContain('superadminSidebarSections');
-    expect(navCode).toContain('Vereinsübersicht');
+    // Umbenannt: „Vereinsübersicht" und „Vereine verwalten" klangen beide nach
+    // einer Liste. /tenants ist der Wechsler, /clubs das Anlegen.
+    expect(navCode).toContain('Verein öffnen');
     expect(navCode).toContain('Admins verwalten');
     expect(navCode).toContain('/superadmin/tenants');
     expect(navCode).toContain('/superadmin/clubs');
@@ -49,7 +51,10 @@ test.describe('Sidebar Component - Role-based Navigation', () => {
 
   test('member role shows basic navigation', async () => {
     expect(navCode).toContain('memberSidebarSections');
-    expect(navCode).toContain('Platz buchen');
+    // War 'Platz buchen' — dieses Label gibt es in lib/navigation.ts nicht und
+    // gab es auch vorher nicht. Der Test lief still ins Leere; die Seite hinter
+    // /bookings heisst „Mein Trainingsplan".
+    expect(navCode).toContain('Mein Trainingsplan');
     expect(navCode).toContain('/bookings');
     // Sektions-Labels
     expect(navCode).toContain("'Spielen'");
