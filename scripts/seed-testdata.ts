@@ -237,10 +237,11 @@ const CLUBS: ClubSpec[] = [
     trainers: 20,
     members: 500,
     memberLogins: 3,
-    // Bewusst VOR der Planung: so lässt sich der Auto-Planer mit 400 Präferenz-
-    // Sätzen selbst auslösen und messen. Ein fertig geplanter Verein würde
-    // genau den Schritt überspringen, um den es hier geht.
-    season: 'collecting_preferences',
+    // Laufende Saison mit vollem Betrieb: Stundenplan, Sessions, Buchungen,
+    // Anwesenheiten. Die 400 Mitglieder-Präferenzen bleiben erhalten, der
+    // Auto-Planer lässt sich also weiterhin darauf ansetzen — nur eben in
+    // einem Verein, in dem gleichzeitig etwas läuft.
+    season: 'published',
     preferences: true,
     finance: true,
     extraFeatures: ['trial_training', 'partner_finder'],
@@ -443,6 +444,52 @@ async function addMembership(userId: string, clubId: string | null, role: string
     is_active: true,
     ...extra,
   })}`;
+}
+
+// ── Trainingsrahmen ───────────────────────────────────────────────────────
+
+/**
+ * Wann in einem Tennisverein Training stattfindet — und wie viel davon in eine
+ * Woche passt.
+ *
+ * Vereinstraining liegt nachmittags und abends: vorher sind Kinder in der
+ * Schule und Erwachsene bei der Arbeit. Das Fenster ist Mo–Fr 14:00–21:30,
+ * die Einheit dauert 90 Minuten. Daraus folgt alles Weitere:
+ *
+ *   5 Einheiten/Tag × 5 Tage      = 25 Platz-Slots je Platz und Woche
+ *   davon Training                = 65 % — der Rest gehört dem freien Spiel,
+ *                                   Medenspielen und der Platzpflege. Ein
+ *                                   Verein, der jede Stunde Primetime
+ *                                   verplant, hat für seine Mitglieder keinen
+ *                                   Platz mehr.
+ *   je Trainer                    = 8 Einheiten/Woche (~12 h Court-Zeit)
+ *
+ * Die Woche ist damit doppelt begrenzt: durch die Plätze UND durch die
+ * Trainer. Was ein Verein wirklich anbieten kann, ist das Minimum aus beidem.
+ *
+ * Im Winter zählen nur Hallenplätze — das ist der Engpass, an dem in echten
+ * Vereinen die Warteliste entsteht.
+ *
+ * | Plätze | Training/Wo | Trainer nötig | Mitglieder (Ø 6/Gruppe) |
+ * | ------ | ----------- | ------------- | ----------------------- |
+ * |      2 |          32 |             4 |                    ~190 |
+ * |      3 |          48 |             6 |                    ~290 |
+ * |      5 |          81 |            11 |                    ~490 |
+ * |      8 |         130 |            17 |                    ~780 |
+ * |     12 |         195 |            25 |                   ~1170 |
+ */
+const TRAININGSTAGE = 5; // Mo–Fr
+/** 14:00–21:30 in 90-Minuten-Schritten. Als Dezimalstunde. */
+const SLOT_ZEITEN = [14, 15.5, 17, 18.5, 20];
+/** Anteil der Primetime, der ins Training geht. Rest: freies Spiel, Medenspiele. */
+const TRAININGSANTEIL = 0.65;
+/** Einheiten, die ein Trainer in der Woche gibt (~12 h Court-Zeit). */
+const EINHEITEN_JE_TRAINER = 8;
+
+function wochenKapazitaet(plaetze: number, trainer: number) {
+  const platzSlots = Math.floor(plaetze * SLOT_ZEITEN.length * TRAININGSTAGE * TRAININGSANTEIL);
+  const trainerSlots = trainer * EINHEITEN_JE_TRAINER;
+  return { platzSlots, trainerSlots, nutzbar: Math.min(platzSlots, trainerSlots) };
 }
 
 // ── Wipe ──────────────────────────────────────────────────────────────────
@@ -767,8 +814,10 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
       await sql`insert into trainer_availabilities ${sql({
         trainer_id: t.id,
         date: date.toISOString(),
+        // Deckt das Trainingsfenster (SLOT_ZEITEN) vollständig ab: die letzte
+        // Einheit beginnt 20:00 und endet 21:30. Mit 21:00 fiel sie raus.
         start_time: '14:00',
-        end_time: '21:00',
+        end_time: '21:30',
         status: 'available',
         recurring_pattern: sql.json({ type: 'weekly', interval: 1 }),
       })}`;
@@ -829,7 +878,7 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
   }
 
   // ── Gruppen ─────────────────────────────────────────────────────────
-  const groupIds: string[] = [];
+  const groupIds: { id: string; ageGroup: string }[] = [];
   if (spec.members >= 8) {
     // Kombinationen aus dem tatsächlichen Mitgliederbestand ableiten statt aus
     // einer festen Liste. Die feste Liste kannte sechs Paare und liess damit
@@ -878,7 +927,7 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
             member_ids: sql.json(mem),
             is_active: true,
           })} returning id`;
-        groupIds.push(g.id);
+        groupIds.push({ id: g.id, ageGroup: c.ageGroup });
       }
     }
     log(`  ${groupIds.length} Trainingsgruppen`);
@@ -940,21 +989,76 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
       trainerIds.length &&
       groupIds.length
     ) {
+      // Was in eine Woche passt, ergibt sich aus Plätzen und Trainern — nicht
+      // daraus, wie viele Gruppen jemand angelegt hat. Mehr Gruppen als
+      // Einheiten heisst in einem echten Verein: Warteliste.
+      const kap = wochenKapazitaet(courtIds.length, trainerIds.length);
+      const geplant = groupIds.slice(0, kap.nutzbar);
+      const wartet = groupIds.length - geplant.length;
+
+      // Freie Termine als Liste (Tag × Uhrzeit × Platz), dann Gruppen darauf
+      // verteilen. Zwei Gründe für diese Reihenfolge:
+      //
+      // 1. Kein Tripel kommt doppelt vor. Vorher liefen Platz (n % courts),
+      //    Tag (n % 5) und Stunde (n % 3) unabhängig voneinander — bei 12
+      //    Plätzen kollidierten Eintrag n und n+60 auf demselben Platz zur
+      //    selben Zeit. In einem Verein mit wenigen Gruppen fällt das nie auf.
+      // 2. Der Abend füllt sich. Wird zuerst der Platz durchgezählt, landen
+      //    bei 65 Gruppen auf 12 Plätzen alle Einheiten in den ersten zwei
+      //    Zeitfenstern — ein Verein, in dem ab 17 Uhr nichts mehr passiert.
+      //    Zuerst die Uhrzeit, dann der Tag, dann der Platz.
+      type Termin = { day: number; slot: number; courtId: string };
+      const termine: Termin[] = [];
+      // Erst jede Tag/Zeit-Kombination einmal auf Platz 1, dann dieselbe Runde
+      // auf Platz 2, und so weiter. Damit verteilt sich das Training über die
+      // ganze Woche und den ganzen Abend, bevor ein zweiter Platz dazukommt.
+      //
+      // Die naheliegende Reihenfolge (erst alle Plätze einer Uhrzeit) belegt
+      // stattdessen montags um 14 Uhr zwölf Plätze gleichzeitig und lässt
+      // Donnerstag und Freitag leer — bei 65 Gruppen auf 12 Plätzen genau das
+      // beobachtete Ergebnis. Kein Verein plant so.
+      for (const courtId of courtIds) {
+        for (let day = 0; day < TRAININGSTAGE; day++) {
+          for (const slot of SLOT_ZEITEN) termine.push({ day, slot, courtId });
+        }
+      }
+
+      // Jugend spielt früh, Erwachsene spät — Kinder kommen aus der Schule,
+      // Berufstätige nach Feierabend. Eine 19:30-Einheit für die U10 wäre der
+      // deutlichste Weg, einen Stundenplan unglaubwürdig zu machen.
+      const frueh = (t: Termin) => t.slot < 17;
+      const jugend = geplant.filter((g) => g.ageGroup === 'youth');
+      const rest = geplant.filter((g) => g.ageGroup !== 'youth');
+      const fruehe = termine.filter(frueh);
+      const spaete = termine.filter((t) => !frueh(t));
+      const paare: { group: { id: string; ageGroup: string }; termin: Termin; idx: number }[] = [];
+      let fi = 0;
+      let si = 0;
+      for (const g of jugend) {
+        const t = fruehe[fi++] ?? spaete[si++];
+        if (t) paare.push({ group: g, termin: t, idx: paare.length });
+      }
+      for (const g of rest) {
+        const t = spaete[si++] ?? fruehe[fi++];
+        if (t) paare.push({ group: g, termin: t, idx: paare.length });
+      }
+
       let n = 0;
-      for (const groupId of groupIds) {
+      for (const { group, termin } of paare) {
         const trainerId = trainerIds[n % trainerIds.length];
-        const courtId = courtIds[n % courtIds.length];
-        const day = n % 5;
-        const hour = 16 + (n % 3);
+        const startMin = Math.round(termin.slot * 60);
+        const endMin = startMin + 90;
+        const hhmm = (m: number) =>
+          `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}:00`;
         await sql`insert into season_plan_entries ${sql({
           season_id: season.id,
           club_id: clubId,
           trainer_id: trainerId,
-          court_id: courtId,
-          group_id: groupId,
-          day_of_week: day,
-          start_time: `${String(hour).padStart(2, '0')}:00:00`,
-          end_time: `${String(hour + 1).padStart(2, '0')}:30:00`,
+          court_id: termin.courtId,
+          group_id: group.id,
+          day_of_week: termin.day,
+          start_time: hhmm(startMin),
+          end_time: hhmm(endMin),
           duration_minutes: 90,
           entry_type: 'training',
           planning_source: 'auto',
@@ -963,7 +1067,11 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
         })}`;
         n++;
       }
-      log(`  Saison "${spec.season}" mit ${n} Stundenplan-Einträgen`);
+      log(
+        `  Saison "${spec.season}" mit ${n} Stundenplan-Einträgen ` +
+          `(Rahmen: ${kap.platzSlots} Platz-, ${kap.trainerSlots} Trainer-Einheiten/Woche` +
+          `${wartet ? `, ${wartet} Gruppen auf Warteliste` : ''})`
+      );
 
       // ── Sessions + Buchungen ────────────────────────────────────────
       // Eine veröffentlichte Saison hatte bisher Plan-Einträge, aber keine
@@ -1003,7 +1111,13 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
         >`select id, trainer_id, court_id, group_id, day_of_week, start_time
             from season_plan_entries where season_id = ${season.id}`;
 
-        const sessionIds: { id: string; courtId: string; startsAt: Date }[] = [];
+        const sessionIds: {
+          id: string;
+          courtId: string;
+          startsAt: Date;
+          groupId: string;
+          trainerId: string;
+        }[] = [];
         for (let weekOffset = -1; weekOffset <= 1; weekOffset++) {
           for (const e of entries) {
             const start = new Date(monday);
@@ -1024,33 +1138,100 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
                 timeslot_end: end.toISOString(),
                 max_participants: 10,
               })} returning id`;
-            sessionIds.push({ id: s.id, courtId: e.court_id, startsAt: start });
+            sessionIds.push({
+              id: s.id,
+              courtId: e.court_id,
+              startsAt: start,
+              groupId: e.group_id,
+              trainerId: e.trainer_id,
+            });
           }
         }
 
-        // Buchungen nur auf die laufende Woche — die Vorwoche als „gebucht"
-        // zu zeigen wäre irreführend, die liegt in der Vergangenheit.
-        let bookingCount = 0;
+        // Wer in der Gruppe ist, bucht auch deren Termin — eine Buchung je
+        // Gruppenmitglied statt einer je Session. Vorher hatte jede Session
+        // genau einen Bucher, quer durch die Mitgliederliste gewuerfelt: die
+        // Platzbelegung zeigte dadurch ueberall „1 von 10", und wer die Gruppe
+        // oeffnete, fand darin ein Mitglied, das gar nicht dazugehoert.
+        const groupMembers = new Map<string, string[]>();
+        for (const g of await sql<{ id: string; member_ids: string[] }[]>`
+          select id, member_ids from groups where club_id = ${clubId}`) {
+          groupMembers.set(g.id, (g.member_ids as string[]) ?? []);
+        }
+
         const thisWeek = sessionIds.filter((s) => {
           const diff = (s.startsAt.getTime() - monday.getTime()) / 86_400_000;
           return diff >= 0 && diff < 7;
         });
-        for (const [i, s] of thisWeek.entries()) {
-          if (!memberIds.length) break;
-          await sql`insert into bookings ${sql({
-            club_id: clubId,
-            member_id: memberIds[i % memberIds.length],
-            schedule_id: schedule.id,
-            session_id: s.id,
-            court_id: s.courtId,
-            status: 'confirmed',
-            session_start_time: s.startsAt.toISOString(),
-            booked_at: new Date(s.startsAt.getTime() - 3 * 86_400_000).toISOString(),
-          })}`;
-          bookingCount++;
+        const lastWeek = sessionIds.filter((s) => s.startsAt.getTime() < monday.getTime());
+
+        let bookingCount = 0;
+        for (const s of thisWeek) {
+          const mem = groupMembers.get(s.groupId) ?? [];
+          for (const memberId of mem) {
+            await sql`insert into bookings ${sql({
+              club_id: clubId,
+              member_id: memberId,
+              schedule_id: schedule.id,
+              session_id: s.id,
+              court_id: s.courtId,
+              status: 'confirmed',
+              session_start_time: s.startsAt.toISOString(),
+              booked_at: new Date(s.startsAt.getTime() - 3 * 86_400_000).toISOString(),
+            })}`;
+            bookingCount++;
+          }
         }
 
-        log(`  ${sessionIds.length} Sessions (3 Wochen), ${bookingCount} Buchungen`);
+        // Anwesenheiten fuer die Vorwoche. Ohne sie steht die Anwesenheits-
+        // historie in jedem Verein leer und der Bestaetigungs-Workflow
+        // (Trainer haekelt ab, Mitglied bestaetigt oder widerspricht) laesst
+        // sich nirgends ausloesen. Eine Session je Gruppe reicht dafuer.
+        const trainerNames = new Map<string, string>();
+        for (const t of await sql<{ id: string; name: string }[]>`
+          select id, name from trainers where id = any(${trainerIds})`) {
+          trainerNames.set(t.id, t.name);
+        }
+        const memberNames = new Map<string, string>();
+        for (const u of await sql<{ id: string; full_name: string }[]>`
+          select id, full_name from users where id = any(${memberIds})`) {
+          memberNames.set(u.id, u.full_name);
+        }
+
+        let attendanceCount = 0;
+        const seenGroups = new Set<string>();
+        for (const s of lastWeek) {
+          if (seenGroups.has(s.groupId)) continue;
+          seenGroups.add(s.groupId);
+          const mem = groupMembers.get(s.groupId) ?? [];
+          for (const [k, memberId] of mem.entries()) {
+            // Eine echte Verteilung statt „alle da": jeder fuenfte fehlt
+            // entschuldigt, jeder siebte kommt zu spaet. Sonst sieht jede
+            // Quote nach 100 Prozent aus und die Filter sind untestbar.
+            const status = k % 5 === 4 ? 'excused' : k % 7 === 6 ? 'late' : 'present';
+            await sql`insert into attendance_records ${sql({
+              session_id: s.id,
+              trainer_id: s.trainerId,
+              trainer_name: trainerNames.get(s.trainerId) ?? 'Trainer',
+              participant_id: memberId,
+              participant_name: memberNames.get(memberId) ?? 'Mitglied',
+              date: s.startsAt.toISOString().slice(0, 10),
+              status,
+              trainer_confirmed: true,
+              trainer_confirmed_at: s.startsAt.toISOString(),
+              // Jede dritte Gruppe wartet noch auf die Bestaetigung des
+              // Mitglieds — das ist der offene Fall im Workflow.
+              member_status: seenGroups.size % 3 === 0 ? 'pending' : 'confirmed',
+              duration_minutes: 90,
+            })}`;
+            attendanceCount++;
+          }
+        }
+
+        log(
+          `  ${sessionIds.length} Sessions (3 Wochen), ${bookingCount} Buchungen, ` +
+            `${attendanceCount} Anwesenheiten`
+        );
       }
     } else {
       log(`  Saison "${spec.season}" (ohne Stundenplan)`);
@@ -1102,7 +1283,7 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
           club_id: clubId,
           user_role: 'trainer',
           weekly_availability: sql.json(weeklyAvailability(i, true)),
-          can_teach_groups: sql.json(groupIds.slice(0, 3)),
+          can_teach_groups: sql.json(groupIds.slice(0, 3).map((g) => g.id)),
           max_sessions_per_week: 12,
           priority: 5,
           is_submitted: true,
@@ -1122,7 +1303,13 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
     const feeId = feeIds['Erwachsene'];
     const stati = ['paid', 'sent', 'overdue', 'draft'] as const;
     let invoiceCount = 0;
-    for (const [i, memberId] of memberIds.slice(0, 8).entries()) {
+    // Etwa 60 Prozent der Mitglieder haben eine Rechnung — feste 8 waren bei
+    // 500 Mitgliedern keine testbare Buchhaltung: Summen, Mahnlauf und
+    // Offene-Posten-Liste sehen bei acht Zeilen in jedem Verein gleich aus.
+    // Nach oben gedeckelt, damit der Seed nicht zum Lasttest der Insert-
+    // Geschwindigkeit wird.
+    const invoiceTargets = memberIds.slice(0, Math.min(300, Math.ceil(memberIds.length * 0.6)));
+    for (const [i, memberId] of invoiceTargets.entries()) {
       const status = stati[i % stati.length]!;
       const due = new Date();
       due.setDate(due.getDate() + (status === 'overdue' ? -21 : 21));
