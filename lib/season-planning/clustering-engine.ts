@@ -17,6 +17,7 @@ import {
   clubs,
   sessions,
   bookings,
+  courtClosures,
 } from '@/src/infrastructure/persistence/schema';
 import {
   seasonWaitlists,
@@ -105,6 +106,16 @@ export interface ClusteringConfig {
   // Keine DB-Spalte — abschaltbar für Benchmarks/Tests, die einen einzelnen
   // Greedy-Durchlauf messen wollen.
   multiStart: boolean; // default true
+  // ── Trainingsfenster (Vereinsrealität, siehe TRAININGSFENSTER unten) ──
+  /** Frühester Beginn für Erwachsenengruppen Mo–Fr. Default '17:00'. */
+  adultEarliestWeekday: string;
+  /** Trainingsfenster am Samstag. Default 09:00–16:00. */
+  saturdayStart: string;
+  saturdayEnd: string;
+  /** Wochentage, an denen Mannschaftstraining liegen darf (0=Mo). Default Mo–Do. */
+  teamDays: number[];
+  /** Frühester Beginn für Mannschaftstraining. Default '17:00'. */
+  teamEarliest: string;
 }
 
 /** Eine Startvariante des Greedy-Laufs (siehe `multiStart`). */
@@ -148,7 +159,48 @@ const DEFAULT_CONFIG: ClusteringConfig = {
   minTrainingWeeks: 12,
   includeSunday: false,
   multiStart: true,
+  adultEarliestWeekday: '17:00',
+  saturdayStart: '09:00',
+  saturdayEnd: '16:00',
+  teamDays: [0, 1, 2, 3],
+  teamEarliest: '17:00',
 };
+
+// ============================================
+// TRAININGSFENSTER (Vereinsrealität)
+// ============================================
+//
+// Wann in einem Tennisverein tatsächlich trainiert wird. Die Slot-Liste unten
+// (`buildStandardTimeSlots`) reicht von 08:00 bis 21:00 — das ist die Öffnungs-
+// zeit der Anlage, nicht die Trainingszeit. Ohne die folgenden Grenzen plant
+// der Algorithmus eine Erwachsenengruppe auf Dienstag 08:00 und eine
+// Mannschaft auf Samstagabend. Beides gibt es in keinem Verein.
+//
+// Erhoben an vier Vereinen und den Verbandsregeln (Stand 30.08.2026):
+//
+//   TC Rödertal        Mannschaft Mo 17–20 · Damen Di 18–20 · Erwachsene
+//                      Mi 17–20 · Kinder Sa 10–11 · Erwachsene Sa 11–12
+//   TC Berlin Mitte    Kinder Mo/Do 14–18, Fr 14–19 · Jugend-Mannschaft
+//                      Di 15–17 · Anlage Mo–Fr bis 22, Sa/So nur bis 20 Uhr
+//   TSV Gaimersheim    Erwachsene Mo/Fr 18–19, Di 17–18 · Kinder Sa 09–13
+//   Taunus Tennis      After-Work Do 19:30 / 20:30
+//   TVN / Bezirk 5     Medenspiele Fr abends, Sa und So · Mannschaftstraining
+//                      werktags, Schwerpunkt Di/Mi/Do ab 18 Uhr
+//
+// Daraus die drei Regeln, die `findBestTimeSlot` als harte Bedingung prüft:
+//
+//   1. Mo–Fr vormittags kein Training. Kinder sind in der Schule (ab 14:00,
+//      war schon geregelt), Erwachsene bei der Arbeit (ab `adultEarliest-
+//      Weekday`). Vereine mit einer Vormittagsgruppe — meist Ü50 — setzen den
+//      Wert herunter; deshalb konfigurierbar statt fest verdrahtet.
+//   2. Samstag ist kein Abendtag. Vormittags Kinder, mittags Erwachsene,
+//      danach gehört der Platz dem Punktspielbetrieb.
+//   3. Mannschaftstraining meidet den Medenspiel-Korridor: nur Mo–Do, ab
+//      17:00. Freitagabend, Samstag und Sonntag wird gespielt, nicht
+//      trainiert.
+//
+// Die Verfügbarkeit der einzelnen Mitglieder gilt zusätzlich — diese Fenster
+// schneiden nur weg, was der Verein ohnehin nicht anbietet.
 
 // ============================================
 // TIME SLOTS (standard training times)
@@ -307,6 +359,12 @@ export class SeasonClusteringEngine {
   /** Wintersaison plant nur auf Hallenplätzen — für die Begründung unten wichtig. */
   private _istWinter = false;
   private _cachedGroups: GroupInfo[] | null = null;
+  /**
+   * Platz × Wochentag-Kombinationen, die über die Saison so oft gesperrt sind,
+   * dass dort kein wöchentliches Training liegen kann. Schlüssel:
+   * `${courtId}|${dayOfWeek}`. Siehe `loadBlockedCourtDays`.
+   */
+  private _blockedCourtDays: Set<string> | null = null;
   private _cachedSlotFailureRates: Record<string, number> | null = null;
   private _cachedHistoricGroups: Map<
     string,
@@ -369,6 +427,8 @@ export class SeasonClusteringEngine {
     const members = await this.loadMembers();
     const trainers = await this.loadTrainers();
     const courts = await this.loadCourts();
+    // Vor dem ersten Slot laden: die Platzwahl greift synchron darauf zu.
+    await this.loadBlockedCourtDays();
     const groups = await this.loadGroups();
     const slotFailureRates = await this.loadSlotFailureRates();
     const historicGroups = await this.loadHistoricGroups();
@@ -640,6 +700,14 @@ export class SeasonClusteringEngine {
         // zurückzufallen.
         includeSunday: this.config.includeSunday,
         multiStart: this.config.multiStart,
+        // Trainingsfenster: ebenfalls keine DB-Spalte. Ein Verein mit
+        // Vormittagsgruppe setzt sie über den Konstruktor; sonst greifen die
+        // Defaults aus TRAININGSFENSTER.
+        adultEarliestWeekday: this.config.adultEarliestWeekday,
+        saturdayStart: this.config.saturdayStart,
+        saturdayEnd: this.config.saturdayEnd,
+        teamDays: this.config.teamDays,
+        teamEarliest: this.config.teamEarliest,
       };
     }
   }
@@ -1047,6 +1115,83 @@ export class SeasonClusteringEngine {
     const platzWort = plaetze === 1 ? '1 nutzbarer Platz' : `${plaetze} nutzbare Plätze`;
     const winter = this._istWinter ? ' (Wintersaison: nur Hallenplätze)' : '';
     return `Keine freie Kapazität — ${platzWort}${winter} und ${trainer} Trainer sind ausgelastet`;
+  }
+
+  /**
+   * Platz × Wochentag-Kombinationen, an denen über die Saison so oft gesperrt
+   * ist, dass ein wöchentliches Training dort nicht stattfinden kann.
+   *
+   * Der Saisonplan ist ein Wochenraster (Wochentag + Uhrzeit), `court_closures`
+   * dagegen ein Datumsbereich. Beides trifft sich nur über die Häufigkeit: eine
+   * Sperre an einem einzelnen Samstag ist kein Grund, den Samstag dauerhaft
+   * freizuhalten — acht gesperrte Samstage von zehn schon.
+   *
+   * Der Hauptfall dafür sind **Medenspiele**: ein Heimspieltag sperrt über
+   * `court_closures.match_day_id` die Plätze von 09:00 bis 20:00
+   * (`app/api/leagues/[id]/matchdays/[matchdayId]/courts/route.ts`). Sommer- wie
+   * Winterrunde wird Freitagabend, Samstag und Sonntag gespielt — genau dort,
+   * wo ein Planer ohne dieses Wissen bereitwillig Training hinlegt.
+   *
+   * Schwelle: mehr als die Hälfte der Vorkommen dieses Wochentags in der Saison.
+   */
+  private async loadBlockedCourtDays(): Promise<Set<string>> {
+    if (this._blockedCourtDays) return this._blockedCourtDays;
+
+    const blocked = new Set<string>();
+    const [season] = await db
+      .select({ start_date: seasons.start_date, end_date: seasons.end_date })
+      .from(seasons)
+      .where(eq(seasons.id, this.seasonId));
+    if (!season) {
+      this._blockedCourtDays = blocked;
+      return blocked;
+    }
+
+    const von = new Date(season.start_date);
+    const bis = new Date(season.end_date);
+
+    const closures = await db
+      .select({
+        court_id: courtClosures.court_id,
+        start_date: courtClosures.start_date,
+        end_date: courtClosures.end_date,
+      })
+      .from(courtClosures)
+      .where(and(eq(courtClosures.club_id, this.clubId), eq(courtClosures.is_active, true)));
+
+    // Wie oft kommt jeder Wochentag in der Saison vor? Nenner der Schwelle.
+    const wochentagVorkommen = new Array(7).fill(0);
+    for (const d = new Date(von); d <= bis; d.setDate(d.getDate() + 1)) {
+      wochentagVorkommen[(d.getDay() + 6) % 7]++; // 0 = Montag
+    }
+
+    // Gesperrte Tage je Platz und Wochentag zählen.
+    const gesperrt = new Map<string, number>();
+    for (const c of closures) {
+      if (!c.court_id) continue;
+      const cVon = new Date(c.start_date);
+      const cBis = c.end_date ? new Date(c.end_date) : cVon;
+      const von2 = cVon > von ? cVon : von;
+      const bis2 = cBis < bis ? cBis : bis;
+      for (const d = new Date(von2); d <= bis2; d.setDate(d.getDate() + 1)) {
+        const key = `${c.court_id}|${(d.getDay() + 6) % 7}`;
+        gesperrt.set(key, (gesperrt.get(key) ?? 0) + 1);
+      }
+    }
+
+    for (const [key, anzahl] of gesperrt) {
+      const tag = Number(key.split('|')[1]);
+      if (anzahl > wochentagVorkommen[tag] / 2) blocked.add(key);
+    }
+
+    if (blocked.size) {
+      log.info('Plätze wegen dauerhafter Sperren aus der Planung genommen', {
+        seasonId: this.seasonId,
+        kombinationen: blocked.size,
+      });
+    }
+    this._blockedCourtDays = blocked;
+    return blocked;
   }
 
   private async loadCourts(): Promise<CourtInfo[]> {
@@ -2043,7 +2188,8 @@ export class SeasonClusteringEngine {
         courtTimeSlotUsage,
         slotFailureRates,
         assignments,
-        groupTimeSlots
+        groupTimeSlots,
+        isTeamGroup
       );
 
       if (!bestSlot) {
@@ -2270,7 +2416,9 @@ export class SeasonClusteringEngine {
     courtTimeSlotUsage: Map<string, Set<string>>,
     slotFailureRates: Record<string, number>,
     existingAssignments: GroupAssignment[],
-    timeSlots: Array<{ start: string; end: string }>
+    timeSlots: Array<{ start: string; end: string }>,
+    /** Mannschaftsgruppe — gilt der Medenspiel-Korridor (siehe TRAININGSFENSTER). */
+    isTeamGroup = false
   ):
     | (TimeSlotInfo & {
         trainerId: string;
@@ -2310,6 +2458,30 @@ export class SeasonClusteringEngine {
         // HARD CONSTRAINT: Kinder/Jugendliche sind Mo-Fr in der Schule → frühestens 14:00
         // Samstag: keine Einschränkung (kein Schultag)
         if (groupHasMinors && dayOfWeek < 5 && timeSlot.start < '14:00') continue;
+
+        // HARD CONSTRAINT: Erwachsene arbeiten Mo–Fr vormittags. Ohne diese
+        // Grenze verplant der Algorithmus sie auf 08:00 — die Slot-Liste
+        // beginnt dort, weil das die Öffnungszeit der Anlage ist, nicht die
+        // Trainingszeit. Siehe TRAININGSFENSTER, Regel 1.
+        if (!groupHasMinors && dayOfWeek < 5 && timeSlot.start < this.config.adultEarliestWeekday)
+          continue;
+
+        // HARD CONSTRAINT: Samstag ist Vormittags- und Mittagsbetrieb, danach
+        // Punktspiele. Siehe TRAININGSFENSTER, Regel 2.
+        if (
+          dayOfWeek === 5 &&
+          (timeSlot.start < this.config.saturdayStart || timeSlot.end > this.config.saturdayEnd)
+        )
+          continue;
+
+        // HARD CONSTRAINT: Mannschaftstraining meidet den Medenspiel-Korridor
+        // (Fr abends, Sa, So) und liegt werktags am Abend. Siehe
+        // TRAININGSFENSTER, Regel 3.
+        if (
+          isTeamGroup &&
+          (!this.config.teamDays.includes(dayOfWeek) || timeSlot.start < this.config.teamEarliest)
+        )
+          continue;
         // HARD CONSTRAINT: und am Abend eine Obergrenze — die gab es bisher nicht.
         // Solange nur Mitglieder mit Präferenzen geplant wurden, fiel das nicht
         // auf; sobald alle vorgesehenen Mitglieder eingeplant werden, weicht der
@@ -2404,6 +2576,10 @@ export class SeasonClusteringEngine {
         let bestCourtScore = -Infinity;
 
         for (const court of courts) {
+          // HARD CONSTRAINT: Platz ist an diesem Wochentag über die Saison
+          // hinweg gesperrt — der Regelfall sind Medenspiel-Heimspieltage
+          // (Fr abends, Sa, So). Siehe loadBlockedCourtDays.
+          if (this._blockedCourtDays?.has(`${court.id}|${dayOfWeek}`)) continue;
           const usage = courtTimeSlotUsage.get(court.id) || new Set();
           if (usage.has(courtKey)) continue;
           // Check existing assignments for this court
