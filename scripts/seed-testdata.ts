@@ -644,6 +644,37 @@ async function wipeLane(lane: Lane) {
     }
   }
 
+  // Dasselbe Spiel für `trainers`: `sessions` hängt am Trainer, hat aber keine
+  // club_id — die Schleife oben erwischt die Zeilen also nicht und
+  // `delete from trainers` scheitert am FK. Trat erst gegen eine gewachsene DB
+  // auf, weil lokal nach jedem Reset keine verwaisten Sessions übrig sind.
+  const trainerFks = await sql<{ table_name: string; column_name: string }[]>`
+    select tc.table_name, kcu.column_name
+    from information_schema.table_constraints tc
+    join information_schema.key_column_usage kcu
+      on kcu.constraint_name = tc.constraint_name
+     and kcu.constraint_schema = tc.constraint_schema
+    join information_schema.constraint_column_usage ccu
+      on ccu.constraint_name = tc.constraint_name
+     and ccu.constraint_schema = tc.constraint_schema
+    where tc.constraint_type = 'FOREIGN KEY'
+      and tc.table_schema = 'public'
+      and ccu.table_name = 'trainers'`;
+  for (const { table_name, column_name } of trainerFks) {
+    const laneTrainers = `(select id from trainers where email like $1)`;
+    if (ATTRIBUTION_COLUMNS.has(column_name)) {
+      await sql.unsafe(
+        `update public."${table_name}" set "${column_name}" = null where "${column_name}" in ${laneTrainers}`,
+        [emailPattern]
+      );
+    } else {
+      await sql.unsafe(
+        `delete from public."${table_name}" where "${column_name}" in ${laneTrainers}`,
+        [emailPattern]
+      );
+    }
+  }
+
   await sql`delete from trainers where email like ${emailPattern}`;
   await sql`delete from users where email like ${emailPattern}`;
   // Zuletzt nochmal das Protokoll: `audit_finance_change` ist ein AFTER-DELETE-
