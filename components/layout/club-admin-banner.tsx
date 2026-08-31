@@ -1,9 +1,10 @@
 'use client';
 
 /**
- * components/layout/owner-club-banner.tsx
+ * components/layout/club-admin-banner.tsx
  *
- * Hinweisleiste, solange ein Owner einen fremden Verein als Admin verwaltet.
+ * Hinweisleiste, solange ein Owner oder Superadmin einen Verein als Admin
+ * verwaltet.
  *
  * Zwei Aufgaben in einem Element, bewusst über dem gesamten Inhalt und nicht in
  * der Navigation versteckt: Sie beantwortet ständig sichtbar die Frage „in
@@ -16,19 +17,28 @@
 import Link from 'next/link';
 import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { useUserRole } from '@/hooks/use-user-role';
-import { useOwnerClubContext } from '@/hooks/use-owner-club-context';
+import { useClubAdminContext } from '@/hooks/use-club-admin-context';
 
-export function OwnerClubBanner({
+export function ClubAdminBanner({
   roles,
   clubName,
 }: {
   roles?: string[];
   clubName?: string | null;
 }) {
-  const { isOwner } = useUserRole(roles);
-  const inClubContext = useOwnerClubContext(isOwner);
+  const { isOwner, isSuperAdmin } = useUserRole(roles);
+  const inClubContext = useClubAdminContext(isOwner || isSuperAdmin);
 
   if (!inClubContext) return null;
+
+  // Der Superadmin verwaltet seine eigenen Vereine — für ihn ist das kein
+  // „fremder" Verein, wohl aber ein anderer Kontext als die Tennisschule.
+  const backHref = isOwner ? '/owner' : '/superadmin';
+  const backLabel = isOwner ? 'Zurück zur Owner-Konsole' : 'Zurück zur Tennisschule';
+  const titel = isOwner
+    ? `Fremder Verein${clubName ? `: ${clubName}` : ''}`
+    : (clubName ?? 'Verein');
+  const rolle = isOwner ? 'Owner' : 'Superadmin';
 
   return (
     // Die Warn-Skala endet bei 900. `warning-950` (vorher hier für Text und
@@ -52,18 +62,16 @@ export function OwnerClubBanner({
             aria-hidden="true"
           />
           <span className="text-sm leading-tight">
-            <strong className="block font-semibold">
-              Fremder Verein{clubName ? `: ${clubName}` : ''}
-            </strong>
+            <strong className="block font-semibold">{titel}</strong>
             <span className="text-warning-800 dark:text-warning-200/90">
-              Du bist als <strong>Owner</strong> in der Vereinsverwaltung unterwegs. Änderungen
+              Du bist als <strong>{rolle}</strong> in der Vereinsverwaltung unterwegs. Änderungen
               wirken sich direkt auf diesen Verein aus.
             </span>
           </span>
         </span>
 
         <Link
-          href="/owner"
+          href={backHref}
           // Dark: bewusst die statischen Stufen 400/500 — die Enden der
           // Statusskala sind seit 16.08.2026 themefähig (bg-*-300 wird im
           // Dark Mode dunkel, text-*-900 hell), was diesen gefüllten Button
@@ -71,7 +79,7 @@ export function OwnerClubBanner({
           className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-warning-800 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-warning-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warning-600 dark:bg-warning-400 dark:text-gray-900 dark:hover:bg-warning-500"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Zurück zur Owner-Konsole
+          {backLabel}
         </Link>
       </div>
     </div>

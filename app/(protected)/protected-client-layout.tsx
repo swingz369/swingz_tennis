@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Header } from '@/components/layout/header';
-import { OwnerClubBanner } from '@/components/layout/owner-club-banner';
+import { ClubAdminBanner } from '@/components/layout/club-admin-banner';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const Sidebar = dynamic(() => import('@/components/layout/sidebar').then((m) => m.Sidebar), {
@@ -141,12 +141,12 @@ export function ProtectedClientLayout({
                 Vorher trug jeder für sich `sticky top-0 z-50`: zwei Elemente,
                 die an dieselbe Kante wollen, stapeln nicht — das später im DOM
                 stehende (der Header) legt sich beim Scrollen über das frühere.
-                Der Owner-Banner verschwand dadurch hinter dem Header, obwohl
+                Der Kontext-Banner verschwand dadurch hinter dem Header, obwohl
                 er technisch „klebte". Ein gemeinsamer Sticky-Block hält beide
                 sichtbar, ohne dass irgendwo eine Bannerhöhe als Offset
                 hartkodiert werden muss (er bricht auf Mobile um). */}
             <div className="sticky top-0 z-50">
-              <OwnerClubBanner
+              <ClubAdminBanner
                 roles={user.roles ?? []}
                 clubName={
                   (user.clubs ?? []).find((c) => c.id === user.selectedClubId)?.name ??

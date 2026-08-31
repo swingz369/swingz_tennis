@@ -8,7 +8,7 @@ import { isExactActive } from '@/lib/navigation-utils';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useRoleMode, type RoleModeInitial } from '@/hooks/use-role-mode';
 import { useClubFeatures } from '@/hooks/use-club-features';
-import { useOwnerClubContext } from '@/hooks/use-owner-club-context';
+import { useClubAdminContext } from '@/hooks/use-club-admin-context';
 
 import { AdminSection } from './admin-section';
 import { FamilySwitcher } from './family-switcher';
@@ -287,19 +287,20 @@ export function Sidebar({
   // double-fetch on mount; the merged dependency is intentional.
 
   /**
-   * Owner, der über „Als Admin" in einen Verein gewechselt ist — er bekommt die
-   * Admin-Navigation, sonst stünde er im Verein ohne Navigation da. Den Hinweis
-   * darauf und den Rückweg liefert die Leiste über dem Inhalt
-   * (components/layout/owner-club-banner), die denselben Hook nutzt.
+   * Owner oder Superadmin, der in einen Verein gewechselt ist — er bekommt die
+   * Admin-Navigation, sonst bliebe die Plattform-Navigation stehen und der
+   * Verein wäre nur über die Adresszeile bedienbar. Den Hinweis darauf und den
+   * Rückweg liefert die Leiste über dem Inhalt
+   * (components/layout/club-admin-banner), die denselben Hook nutzt.
    */
-  const actsAsClubAdmin = useOwnerClubContext(isOwner);
+  const actsAsClubAdmin = useClubAdminContext(isOwner || isSuperAdmin);
 
   // Steht unter dem Logo. Für den Owner im Vereinskontext wäre
   // "Plattform-Konsole" irreführend — er sieht dann die Vereinsverwaltung.
   const roleLabel = isMemberMode
     ? 'Mitglied'
     : actsAsClubAdmin
-      ? 'Vereinsverwaltung (als Owner)'
+      ? `Vereinsverwaltung (als ${isOwner ? 'Owner' : 'Superadmin'})`
       : isOwner
         ? 'Plattform-Konsole'
         : isSuperAdmin

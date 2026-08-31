@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,7 @@ export default function ClubsAdminPage() {
   const [newClub, setNewClub] = useState({ name: '', maxMembers: 500 });
   const [error, setError] = useState<string | null>(null);
 
-  const fetchClubs = async () => {
+  const fetchClubs = useCallback(async () => {
     try {
       const res = await apiFetch('/api/clubs');
       if (!res.ok) {
@@ -37,7 +37,13 @@ export default function ClubsAdminPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Ohne diesen Effekt wurde `fetchClubs` nirgends aufgerufen: die Seite blieb
+  // dauerhaft auf „Wird geladen …" stehen und zeigte nie einen Verein.
+  useEffect(() => {
+    fetchClubs();
+  }, [fetchClubs]);
 
   const [seedingDemo, setSeedingDemo] = useState(false);
 

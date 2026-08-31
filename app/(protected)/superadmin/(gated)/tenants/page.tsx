@@ -17,7 +17,7 @@ interface ClubStats {
   name: string;
   member_count: number;
   trainer_count: number;
-  active_sessions: number;
+  court_count: number;
   max_members: number;
   revenue: number;
   status: string;
@@ -36,9 +36,9 @@ export default function SuperadminTenantsPage() {
         .select(
           `
           id, name, status, max_members,
-          club_memberships(count),
-          trainers(count),
-          sessions(count)
+          user_club_memberships(count),
+          trainer_club(count),
+          courts(count)
         `
         )
         .eq('status', 'active')
@@ -53,9 +53,9 @@ export default function SuperadminTenantsPage() {
       const clubsWithStats = data.map((club: any) => ({
         id: club.id,
         name: club.name,
-        member_count: club.club_memberships?.[0]?.count || 0,
-        trainer_count: club.trainers?.[0]?.count || 0,
-        active_sessions: club.sessions?.[0]?.count || 0,
+        member_count: club.user_club_memberships?.[0]?.count || 0,
+        trainer_count: club.trainer_club?.[0]?.count || 0,
+        court_count: club.courts?.[0]?.count || 0,
         max_members: club.max_members,
         status: club.status,
         revenue: 0,
@@ -162,9 +162,9 @@ export default function SuperadminTenantsPage() {
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-2 text-muted-foreground dark:text-foreground">
                       <div className="h-4 w-4 rounded-full bg-info-500"></div>
-                      Sessions
+                      Plätze
                     </span>
-                    <span className="font-bold text-lg">{club.active_sessions}</span>
+                    <span className="font-bold text-lg">{club.court_count}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-2 text-muted-foreground dark:text-foreground">
