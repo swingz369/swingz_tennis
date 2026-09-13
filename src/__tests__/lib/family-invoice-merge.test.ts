@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { mergeFamilyMemberPreviews, type FamilyMember } from '@/lib/billing/family-invoice-merge';
-import type { MemberBillingPreview } from '@/lib/billing/season-billing.service';
+import type { MemberBillingPreview } from '@/lib/types/billing.types';
 
 function preview(
   overrides: Partial<MemberBillingPreview> & { memberId: string; memberName: string }

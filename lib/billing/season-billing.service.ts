@@ -35,6 +35,7 @@
 
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import type { MemberBillingPreview } from '@/lib/types/billing.types';
 import { mergeFamilyMemberPreviews, type FamilyMember } from './family-invoice-merge';
 
 const log = createLogger('billing:season');
@@ -67,29 +68,6 @@ export interface GroupBillingLine {
   participantCount: number;
   totalTrainerCost: number;
   costPerParticipant: number;
-}
-
-export interface MemberBillingPreview {
-  memberId: string;
-  memberName: string;
-  groupName: string;
-  /** Namen aller in dieser (Sammel-)Rechnung enthaltenen Familienmitglieder. */
-  collectiveMembers?: string[];
-  trainingCost: number;
-  membershipFee: number;
-  additionalFees: number;
-  subtotalAmount: number;
-  taxAmount: number;
-  totalAmount: number;
-  lineItems: Array<{
-    description: string;
-    quantity: number;
-    unitPrice: number;
-    taxRate: number;
-    totalPrice: number;
-    taxPrice: number;
-    itemType: string;
-  }>;
 }
 
 export interface SeasonBillingPreview {

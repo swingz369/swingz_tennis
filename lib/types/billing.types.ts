@@ -107,3 +107,30 @@ export interface GroupChangeCreditResult {
   net_delta: number;
   new_balance: number;
 }
+
+// Hierher verschoben aus lib/billing/season-billing.service.ts (13.09.2026): der Typ wurde
+// zusätzlich von lib/billing/family-invoice-merge.ts importiert, was einen zirkulären Import
+// zwischen den beiden Dateien erzeugte (dependency-cruiser no-circular). Eine gemeinsam
+// genutzte Typdefinition gehört in die Typquelle, nicht in eine der beiden Implementierungen.
+export interface MemberBillingPreview {
+  memberId: string;
+  memberName: string;
+  groupName: string;
+  /** Namen aller in dieser (Sammel-)Rechnung enthaltenen Familienmitglieder. */
+  collectiveMembers?: string[];
+  trainingCost: number;
+  membershipFee: number;
+  additionalFees: number;
+  subtotalAmount: number;
+  taxAmount: number;
+  totalAmount: number;
+  lineItems: Array<{
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    taxRate: number;
+    totalPrice: number;
+    taxPrice: number;
+    itemType: string;
+  }>;
+}

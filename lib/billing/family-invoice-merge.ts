@@ -21,7 +21,7 @@
  */
 
 import { isMinor } from '@/lib/family/family-auth';
-import type { MemberBillingPreview } from './season-billing.service';
+import type { MemberBillingPreview } from '@/lib/types/billing.types';
 
 export interface FamilyMember {
   memberId: string;
