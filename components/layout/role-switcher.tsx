@@ -56,7 +56,7 @@ export function RoleSwitcher({ isMemberMode, switchToMember, switchToAdmin }: Ro
             className={cn(
               'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
               !isMemberMode
-                ? 'bg-brand-light/10 text-brand-light dark:text-success-300 font-medium'
+                ? 'bg-brand-primary/10 text-brand-primary dark:text-brand-primary-light font-medium'
                 : 'text-muted-foreground hover:bg-muted'
             )}
           >
@@ -77,7 +77,7 @@ export function RoleSwitcher({ isMemberMode, switchToMember, switchToAdmin }: Ro
             className={cn(
               'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
               isMemberMode
-                ? 'bg-info-50 dark:bg-info-900/20 text-info-700 dark:text-info-300 font-medium'
+                ? 'bg-brand-accent-2/10 dark:bg-brand-accent-2/20 text-brand-accent-2 font-medium'
                 : 'text-muted-foreground hover:bg-muted'
             )}
           >

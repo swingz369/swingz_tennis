@@ -32,9 +32,9 @@ interface Club {
   name: string;
 }
 
-// Phase 3: Owner (Violett) und Superadmin (Lila) jetzt optisch unterschiedlich.
-// Vorher waren beide „info-50/700“ → in der Sidebar nicht unterscheidbar, wenn
-// der User beide Rollen-Memberships parallel hat (selten aber möglich).
+// Gemeinsames Oberflächen-Design mit zurückhaltenden Rollenakzenten.
+// Die Rollen unterscheiden sich nur über einen kleinen Farbton; Layout,
+// Kontrast, Abstände und Interaktionsmuster bleiben identisch.
 const roleColors = {
   owner: {
     bg: 'bg-info-50 dark:bg-info-900/20',
@@ -43,28 +43,28 @@ const roleColors = {
     ring: 'ring-info-300/50',
   },
   superadmin: {
-    bg: 'bg-info-50 dark:bg-info-900/20',
-    text: 'text-info-700 dark:text-info-300',
-    light: 'info',
-    ring: 'ring-info-300/50',
+    bg: 'bg-brand-accent-2/10 dark:bg-brand-accent-2/20',
+    text: 'text-brand-accent-2 dark:text-brand-accent-2',
+    light: 'brand-accent-2',
+    ring: 'ring-brand-accent-2/40',
   },
   admin: {
-    bg: 'bg-brand-light/10 dark:bg-brand-light/15',
-    text: 'text-brand-light dark:text-success-300',
-    light: 'brand-light',
-    ring: 'ring-brand-light/30',
+    bg: 'bg-brand-primary/10 dark:bg-brand-primary/20',
+    text: 'text-brand-primary dark:text-brand-primary-light',
+    light: 'brand-primary',
+    ring: 'ring-brand-primary/30',
   },
   trainer: {
     bg: 'bg-success-50 dark:bg-success-900/20',
     text: 'text-success-600 dark:text-success-300',
-    light: 'emerald',
+    light: 'success',
     ring: 'ring-success-300/40',
   },
   member: {
-    bg: 'bg-brand-light/10 dark:bg-brand-light/15',
-    text: 'text-brand-light dark:text-success-300',
-    light: 'brand-light',
-    ring: 'ring-brand-light/30',
+    bg: 'bg-brand-primary/10 dark:bg-brand-primary/20',
+    text: 'text-brand-primary dark:text-brand-primary-light',
+    light: 'brand-primary',
+    ring: 'ring-brand-primary/30',
   },
 };
 

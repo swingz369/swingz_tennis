@@ -48,27 +48,27 @@ export interface AdminSectionProps {
   badge?: string | null;
 }
 
-// Pre-defined colour themes (mirrors roleColors in sidebar)
+// Gemeinsame Section-Farben: ein ruhiger Grundton, kleine Akzente pro Rolle.
 export const adminSectionColors: Record<string, AdminSectionColors> = {
   superadmin: {
-    gradient: 'from-info-500 to-info-700',
-    bg: 'bg-info-50 dark:bg-info-900/20',
-    text: 'text-info-700 dark:text-info-300',
-    light: 'purple',
-    ring: 'ring-info-300/40',
+    gradient: 'from-brand-accent-2 to-brand-accent-2',
+    bg: 'bg-brand-accent-2/10 dark:bg-brand-accent-2/20',
+    text: 'text-brand-accent-2 dark:text-brand-accent-2',
+    light: 'brand-accent-2',
+    ring: 'ring-brand-accent-2/40',
   },
   admin: {
-    gradient: 'from-brand-light to-primary',
-    bg: 'bg-brand-light/10 dark:bg-brand-light/15',
-    text: 'text-brand-light dark:text-success-300',
-    light: 'brand-light',
-    ring: 'ring-brand-light/30',
+    gradient: 'from-brand-primary to-brand-primary-light',
+    bg: 'bg-brand-primary/10 dark:bg-brand-primary/20',
+    text: 'text-brand-primary dark:text-brand-primary-light',
+    light: 'brand-primary',
+    ring: 'ring-brand-primary/30',
   },
   trainer: {
     gradient: 'from-success-500 to-success-700',
     bg: 'bg-success-50 dark:bg-success-900/20',
     text: 'text-success-600 dark:text-success-300',
-    light: 'emerald',
+    light: 'success',
     ring: 'ring-success-300/40',
   },
   neutral: {
