@@ -1,6 +1,6 @@
 # Runbook: Backup & Rollback
 
-> Zuletzt verifiziert: 16.08.2026 (Abschnitt 3 korrigiert — self-hosted hat kein PITR)
+> Zuletzt verifiziert: 04.09.2026 (Abschnitt 3: Backup-Pfad auf Dev-Maschine korrigiert)
 
 > Ausgeführt/verifiziert am 2. Juli 2026. Beantwortet den Audit-Fund "Keine
 > Rollback-/Backup-Dokumentation" aus `docs/MARKET_READINESS_AUDIT-2026-07-02.md`.
@@ -77,21 +77,28 @@ desselben VPS. Für einen echten Restore ist die Kette hier maßgeblich:
 
 **Kette (existiert, am 16.08.2026 geprüft):**
 
-| Stufe                       | Was                                                                                                                                                  | Wo                                             |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| VPS, täglich 03:00          | `/home/deploy/swingz-supabase/backup-db.sh` (crontab `deploy`): `pg_dump -Fc` der DB `postgres`, gzip, mit `age` verschlüsselt, 14 Tage Aufbewahrung | `/home/deploy/backups/swingz_<ts>.dump.gz.age` |
-| Dev-Maschine, täglich 08:00 | systemd-User-Timer `swingz-backup-sync.timer` → `rsync` vom VPS, ohne Löschen (behält also länger als 14 Tage)                                       | `~/swingz-backups/`, Protokoll `sync.log`      |
-| Schlüssel                   | age-Identity — **ohne diese Datei ist kein Backup lesbar**                                                                                           | `~/.age/swingz-backup-key.txt`                 |
+| Stufe                       | Was                                                                                                                                                  | Wo                                                                   |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| VPS, täglich 03:00          | `/home/deploy/swingz-supabase/backup-db.sh` (crontab `deploy`): `pg_dump -Fc` der DB `postgres`, gzip, mit `age` verschlüsselt, 14 Tage Aufbewahrung | `/home/deploy/backups/swingz_<ts>.dump.gz.age`                       |
+| Dev-Maschine, täglich 08:00 | systemd-User-Timer `swingz-backup-sync.timer` → `rsync` vom VPS, ohne Löschen (behält also länger als 14 Tage)                                       | `~/Projektentwicklung/Backups/swingz-backups/`, Protokoll `sync.log` |
+| Schlüssel                   | age-Identity — **ohne diese Datei ist kein Backup lesbar**                                                                                           | `~/.age/swingz-backup-key.txt`                                       |
 
 Fehlerzeilen `Network is unreachable` in `sync.log` sind normal: der Timer feuert
 auch, wenn die Dev-Maschine aus oder offline ist. Kritisch wird es erst, wenn
-**gar kein** neuer Lauf mehr durchgeht — die neueste Datei in `~/swingz-backups/`
-ist der Ist-Stand, nicht das Protokoll.
+**gar kein** neuer Lauf mehr durchgeht — die neueste Datei in
+`~/Projektentwicklung/Backups/swingz-backups/` ist der Ist-Stand, nicht das
+Protokoll.
+
+> Verschoben am 04.09.2026 von `~/swingz-backups/` nach
+> `~/Projektentwicklung/Backups/swingz-backups/` im Zuge der Projekt-Reorganisation
+> (`~/Projektentwicklung/Projekte/`). Der systemd-Service
+> (`~/.config/systemd/user/swingz-backup-sync.service`) wurde entsprechend
+> angepasst.
 
 ### Restore (am 16.08.2026 einmal komplett durchgespielt)
 
 ```bash
-NEU=$(ls -t ~/swingz-backups/swingz_*.age | head -1)
+NEU=$(ls -t ~/Projektentwicklung/Backups/swingz-backups/swingz_*.age | head -1)
 age -d -i ~/.age/swingz-backup-key.txt -o /tmp/rt.dump.gz "$NEU" && gunzip /tmp/rt.dump.gz
 
 # Zielbank im lokalen Stack anlegen

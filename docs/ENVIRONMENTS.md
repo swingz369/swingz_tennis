@@ -1,6 +1,6 @@
 # Umgebungen & Datenbanken
 
-> Zuletzt verifiziert: 16. August 2026
+> Zuletzt verifiziert: 4. September 2026 (Backup-Pfad auf Dev-Maschine korrigiert)
 > Warum es genau so aufgeteilt ist (und nicht mit Staging von Anfang an): [`decisions/adr-003-datenbank-umgebungen.md`](decisions/adr-003-datenbank-umgebungen.md)
 
 Dieses Dokument beschreibt, welche Datenbank wofür da ist, wer darauf schreiben darf und wie eine Änderung von der Entwicklung nach Produktion kommt. Es ist ein **lebendes Dokument** — wer die Aufteilung ändert, ändert diese Datei mit.
@@ -141,7 +141,7 @@ Das tägliche App-Backup (`/api/cron/backup`) exportiert Tabelleninhalte als JSO
 
 Ein self-hosted Supabase hat außerdem **kein Point-in-Time-Recovery** — die Dashboard-Funktion aus der Supabase-Cloud existiert hier nicht.
 
-Das eigentliche Backup ist ein verschlüsselter `pg_dump` auf dem VPS (täglich 03:00, 14 Tage) plus ein systemd-Timer auf der Dev-Maschine, der ihn täglich nach `~/swingz-backups/` zieht. Beides läuft bereits. Kette, Schlüsseldatei, Restore-Kommandos und die Versions-Stolperfalle beim `pg_restore`: [`RUNBOOK-BACKUP-ROLLBACK.md` § 3](RUNBOOK-BACKUP-ROLLBACK.md).
+Das eigentliche Backup ist ein verschlüsselter `pg_dump` auf dem VPS (täglich 03:00, 14 Tage) plus ein systemd-Timer auf der Dev-Maschine, der ihn täglich nach `~/Projektentwicklung/Backups/swingz-backups/` zieht. Beides läuft bereits. Kette, Schlüsseldatei, Restore-Kommandos und die Versions-Stolperfalle beim `pg_restore`: [`RUNBOOK-BACKUP-ROLLBACK.md` § 3](RUNBOOK-BACKUP-ROLLBACK.md).
 
 **Ein Backup, das nie zurückgespielt wurde, ist kein Backup.** Einmal im Quartal einen Dump in den lokalen Stack einspielen (Kommandos im Runbook) — das prüft die Kette und liefert nebenbei realitätsnahe Entwicklungsdaten. Zuletzt durchgespielt: 16.08.2026, erfolgreich.
 
