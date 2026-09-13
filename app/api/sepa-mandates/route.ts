@@ -1,28 +1,32 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { SEPAMandateService } from '@/src/application/services/sepa-mandate.service';
+import {
+  errorResponse,
+  internalErrorResponse,
+  ApiException,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { SepaMandateService } from '@/application/services/sepa-mandate.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
-import type { ZodError } from 'zod';
 import { createLogger } from '@/lib/logger';
+import { CreateSEPAMandateSchema } from '@/lib/validation-schemas';
 
 const log = createLogger('api:sepa-mandates');
 
-import {
-  CreateSEPAMandateSchema,
-  validateRequestBody,
-  formatValidationErrors,
-} from '@/lib/validation-schemas';
+const createMandateSchema = CreateSEPAMandateSchema.extend({
+  memberId: CreateSEPAMandateSchema.shape.memberId.optional(),
+});
 
 export async function POST(request: NextRequest) {
   return withCSRFProtection(request, async () => {
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STRICT);
     if (rateLimitError) return rateLimitError;
 
-    return withApiAuth(request, async (auth) => {
-      try {
+    return withApiAuth(
+      request,
+      async (auth, body) => {
         // Admin can create mandates for any member; members can only sign their own
         const isAdmin = await verifyRole(auth, 'admin');
         const isMember = await verifyRole(auth, 'member');
@@ -30,75 +34,58 @@ export async function POST(request: NextRequest) {
           return forbiddenResponse('Keine Berechtigung zum Anlegen von SEPA-Mandaten');
         }
 
-        const body = await request.json();
-
-        // Members can only create mandates for themselves
         if (!isAdmin && body.memberId && body.memberId !== auth.user.id) {
           return forbiddenResponse('Mitglieder können nur Mandate für sich selbst anlegen');
         }
-        if (!isAdmin) {
-          body.memberId = auth.user.id;
+        const memberId = isAdmin && body.memberId ? body.memberId : auth.user.id;
+
+        try {
+          const { memberId: _memberId, ...mandateData } = body;
+          const mandate = await new SepaMandateService(auth).createMandate(memberId, mandateData);
+          return NextResponse.json({ success: true, mandate });
+        } catch (error) {
+          if (error instanceof ApiException) {
+            return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+          }
+          log.error('SEPA mandate creation error:', error);
+          return internalErrorResponse();
         }
-
-        // Validate request body with Zod
-        const validation = validateRequestBody(CreateSEPAMandateSchema, body);
-        if (!validation.success) {
-          const errors = (validation as { success: false; errors: ZodError }).errors;
-          return NextResponse.json(
-            {
-              error: 'Validierung fehlgeschlagen',
-              details: formatValidationErrors(errors),
-            },
-            { status: 400 }
-          );
-        }
-
-        // Create mandate
-        const mandate = await SEPAMandateService.createMandate(
-          validation.data.memberId,
-          validation.data
-        );
-
-        return NextResponse.json({ success: true, mandate });
-      } catch (error) {
-        log.error('SEPA mandate creation error:', error);
-        return internalErrorResponse();
-      }
-    });
+      },
+      { body: createMandateSchema }
+    );
   });
 }
 
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
-    try {
-      const { searchParams } = new URL(request.url);
-      const memberId = searchParams.get('memberId');
-      const mandateId = searchParams.get('mandateId');
-      const active = searchParams.get('active');
+    const { searchParams } = new URL(request.url);
+    const memberId = searchParams.get('memberId');
+    const mandateId = searchParams.get('mandateId');
+    const active = searchParams.get('active');
 
-      // Trainer and above may look up any member's mandates. A member may read
-      // exactly one thing: their own active mandate — the counterpart to POST,
-      // which already lets them sign it. Without this, /profile → Zahlungen
-      // answered 403 for every member.
-      const isPrivileged = await verifyRole(auth, 'trainer');
-      const readsOwnActiveMandate =
-        active === 'true' && !mandateId && (!memberId || memberId === auth.user.id);
-      if (!isPrivileged && !readsOwnActiveMandate) {
-        return forbiddenResponse('Keine Berechtigung zum Anzeigen von SEPA-Mandaten');
-      }
+    // Trainer und höher dürfen Mandate beliebiger Mitglieder nachschlagen. Ein
+    // Mitglied darf genau eine Sache lesen: sein eigenes aktives Mandat — das
+    // Gegenstück zu POST, das es bereits unterschreiben lässt. RLS erzwingt
+    // die eigentliche Grenze (sepa_mandates_member_view_own / _admin_manage);
+    // dieser Check ist die Vorabsperre auf App-Ebene.
+    const isPrivileged = await verifyRole(auth, 'trainer');
+    const readsOwnActiveMandate =
+      active === 'true' && !mandateId && (!memberId || memberId === auth.user.id);
+    if (!isPrivileged && !readsOwnActiveMandate) {
+      return forbiddenResponse('Keine Berechtigung zum Anzeigen von SEPA-Mandaten');
+    }
+
+    try {
+      const service = new SepaMandateService(auth);
 
       if (mandateId) {
-        const mandate = await SEPAMandateService.getMandateById(mandateId);
-        if (!mandate) {
-          return NextResponse.json({ error: 'Mandat nicht gefunden' }, { status: 404 });
-        }
+        const mandate = await service.getMandateById(mandateId);
         return NextResponse.json({ mandate });
       }
 
-      // Support ?active=true — returns active mandate for the given member or the authenticated user
       if (active === 'true') {
         const targetMemberId = memberId || auth.user.id;
-        const activeMandate = await SEPAMandateService.getActiveMandateForMember(targetMemberId);
+        const activeMandate = await service.getActiveMandateForMember(targetMemberId);
         if (!activeMandate) {
           return NextResponse.json({ mandate: null, active: false });
         }
@@ -106,12 +93,15 @@ export async function GET(request: NextRequest) {
       }
 
       if (memberId) {
-        const mandates = await SEPAMandateService.getAllMandatesForMember(memberId);
+        const mandates = await service.getAllMandatesForMember(memberId);
         return NextResponse.json({ mandates });
       }
 
       return NextResponse.json({ error: 'Member-ID oder Mandat-ID erforderlich' }, { status: 400 });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('SEPA mandate fetch error:', error);
       return internalErrorResponse();
     }

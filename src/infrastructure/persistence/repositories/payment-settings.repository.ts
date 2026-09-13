@@ -1,215 +1,131 @@
-import { eq, and, desc, sql } from 'drizzle-orm';
-import { db } from '../db';
-import { paymentSettings } from '../schema';
-import type { IPaymentSettingsRepository } from '@/domain/repositories/payment-settings-repository.interface';
-import type {
-  PaymentSettings,
-  CreatePaymentSettingsInput,
-  UpdatePaymentSettingsInput,
-} from '@/domain/entities/payment-settings.entity';
-import { parsePostgresError } from '@/lib/errors/database-errors';
-
 /**
- * Drizzle ORM implementation of the Payment Settings Repository
- * Manages payment gateway configurations with multi-tenant isolation
+ * Dritte migrierte Domäne für Option B (ADR-005). Ein Repository, kein
+ * Adapter, keine Interfaces — Muster in docs/ARCHIV/2026-09-13-architektur-
+ * analyse-datenzugriff.md § 6. RLS-Policy: supabase/migrations/
+ * 20260913150000_payment_settings_rls.sql (`payment_settings_admin_manage`).
  */
-export class DrizzlePaymentSettingsRepository implements IPaymentSettingsRepository {
-  async create(input: CreatePaymentSettingsInput, clubId: string): Promise<PaymentSettings> {
-    const now = new Date();
+import 'server-only';
+import type { AuthContext } from '@/lib/api-auth';
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/supabase';
+import { createLogger } from '@/lib/logger';
 
-    try {
-      // Check if this is the first payment setting for the club
-      const existing = await this.findAll(clubId);
-      const isFirst = existing.length === 0;
+const log = createLogger('infrastructure:payment-settings.repository');
 
-      const result = await db
-        .insert(paymentSettings)
-        .values({
-          club_id: clubId,
-          gateway: input.gateway,
-          gateway_name: input.gatewayName,
-          is_active: true,
-          is_default: isFirst, // First one becomes default
-          config: input.config,
-          supported_currencies: input.supportedCurrencies,
-          supported_methods: input.supportedMethods,
-          min_amount: input.minAmount?.toString() ?? null,
-          max_amount: input.maxAmount?.toString() ?? null,
-          fees: input.fees ?? {},
-          created_at: now,
-          updated_at: now,
-        })
-        .returning();
+export type PaymentSettings = Tables<'payment_settings'>;
 
-      return this.mapToDomain(result[0]);
-    } catch (error) {
-      throw parsePostgresError(error);
-    }
+function assertNoError(error: { message: string } | null, action: string): void {
+  if (error) {
+    log.error(action, new Error(error.message));
+    throw new Error(action);
+  }
+}
+
+export class PaymentSettingsRepository {
+  constructor(private readonly db: AuthContext['supabase']) {}
+
+  async create(input: TablesInsert<'payment_settings'>): Promise<PaymentSettings> {
+    const { data, error } = await this.db.from('payment_settings').insert(input).select().single();
+    assertNoError(error, 'Anlegen der Zahlungseinstellungen fehlgeschlagen');
+    return data!;
   }
 
   async findById(id: string, clubId: string): Promise<PaymentSettings | null> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('payment_settings')
       .select()
-      .from(paymentSettings)
-      .where(and(eq(paymentSettings.id, id), eq(paymentSettings.club_id, clubId)))
-      .limit(1);
-
-    if (result.length === 0) return null;
-    return this.mapToDomain(result[0]);
+      .eq('id', id)
+      .eq('club_id', clubId)
+      .maybeSingle();
+    assertNoError(error, 'Lesen der Zahlungseinstellungen fehlgeschlagen');
+    return data;
   }
 
   async findAll(clubId: string): Promise<PaymentSettings[]> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('payment_settings')
       .select()
-      .from(paymentSettings)
-      .where(eq(paymentSettings.club_id, clubId))
-      .orderBy(desc(paymentSettings.is_default), desc(paymentSettings.created_at));
-
-    return result.map((row) => this.mapToDomain(row));
+      .eq('club_id', clubId)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: false });
+    assertNoError(error, 'Lesen der Zahlungseinstellungen fehlgeschlagen');
+    return data ?? [];
   }
 
   async findActive(clubId: string): Promise<PaymentSettings[]> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('payment_settings')
       .select()
-      .from(paymentSettings)
-      .where(and(eq(paymentSettings.club_id, clubId), eq(paymentSettings.is_active, true)))
-      .orderBy(desc(paymentSettings.is_default), desc(paymentSettings.created_at));
-
-    return result.map((row) => this.mapToDomain(row));
+      .eq('club_id', clubId)
+      .eq('is_active', true)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: false });
+    assertNoError(error, 'Lesen der aktiven Zahlungseinstellungen fehlgeschlagen');
+    return data ?? [];
   }
 
   async findDefault(clubId: string): Promise<PaymentSettings | null> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('payment_settings')
       .select()
-      .from(paymentSettings)
-      .where(and(eq(paymentSettings.club_id, clubId), eq(paymentSettings.is_default, true)))
-      .limit(1);
-
-    if (result.length === 0) return null;
-    return this.mapToDomain(result[0]);
+      .eq('club_id', clubId)
+      .eq('is_default', true)
+      .maybeSingle();
+    assertNoError(error, 'Lesen der Standard-Zahlungseinstellungen fehlgeschlagen');
+    return data;
   }
 
   async findByGateway(
     gateway: PaymentSettings['gateway'],
     clubId: string
   ): Promise<PaymentSettings[]> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('payment_settings')
       .select()
-      .from(paymentSettings)
-      .where(and(eq(paymentSettings.gateway, gateway), eq(paymentSettings.club_id, clubId)))
-      .orderBy(desc(paymentSettings.is_default), desc(paymentSettings.created_at));
-
-    return result.map((row) => this.mapToDomain(row));
+      .eq('gateway', gateway)
+      .eq('club_id', clubId)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: false });
+    assertNoError(error, 'Lesen der Zahlungseinstellungen fehlgeschlagen');
+    return data ?? [];
   }
 
   async update(
     id: string,
-    input: UpdatePaymentSettingsInput,
+    input: TablesUpdate<'payment_settings'>,
     clubId: string
   ): Promise<PaymentSettings | null> {
-    const now = new Date();
-
-    try {
-      const updateData: Partial<typeof paymentSettings.$inferInsert> = {
-        updated_at: now,
-      };
-
-      if (input.gatewayName !== undefined) updateData.gateway_name = input.gatewayName;
-      if (input.isActive !== undefined) updateData.is_active = input.isActive;
-      if (input.isDefault !== undefined) updateData.is_default = input.isDefault;
-      if (input.config !== undefined) updateData.config = input.config;
-      if (input.supportedCurrencies !== undefined)
-        updateData.supported_currencies = input.supportedCurrencies;
-      if (input.supportedMethods !== undefined)
-        updateData.supported_methods = input.supportedMethods;
-      if (input.minAmount !== undefined)
-        updateData.min_amount = input.minAmount?.toString() ?? null;
-      if (input.maxAmount !== undefined)
-        updateData.max_amount = input.maxAmount?.toString() ?? null;
-      if (input.fees !== undefined) updateData.fees = input.fees;
-
-      const result = await db
-        .update(paymentSettings)
-        .set(updateData)
-        .where(and(eq(paymentSettings.id, id), eq(paymentSettings.club_id, clubId)))
-        .returning();
-
-      if (result.length === 0) return null;
-      return this.mapToDomain(result[0]);
-    } catch (error) {
-      throw parsePostgresError(error);
-    }
+    const { data, error } = await this.db
+      .from('payment_settings')
+      .update(input)
+      .eq('id', id)
+      .eq('club_id', clubId)
+      .select()
+      .maybeSingle();
+    assertNoError(error, 'Aktualisieren der Zahlungseinstellungen fehlgeschlagen');
+    return data;
   }
 
+  /** Setzt `id` als Standard. Der Trigger aus der Baseline-Migration hebt den bisherigen Standard auf. */
   async setAsDefault(id: string, clubId: string): Promise<PaymentSettings | null> {
-    try {
-      // The trigger in the migration will handle unsetting other defaults
-      const result = await db
-        .update(paymentSettings)
-        .set({
-          is_default: true,
-          updated_at: new Date(),
-        })
-        .where(and(eq(paymentSettings.id, id), eq(paymentSettings.club_id, clubId)))
-        .returning();
-
-      if (result.length === 0) return null;
-      return this.mapToDomain(result[0]);
-    } catch (error) {
-      throw parsePostgresError(error);
-    }
+    const { data, error } = await this.db
+      .from('payment_settings')
+      .update({ is_default: true })
+      .eq('id', id)
+      .eq('club_id', clubId)
+      .select()
+      .maybeSingle();
+    assertNoError(error, 'Setzen der Standard-Zahlungseinstellungen fehlgeschlagen');
+    return data;
   }
 
   async delete(id: string, clubId: string): Promise<boolean> {
-    const result = await db
-      .delete(paymentSettings)
-      .where(and(eq(paymentSettings.id, id), eq(paymentSettings.club_id, clubId)))
-      .returning();
-
-    return result.length > 0;
-  }
-
-  async calculateFee(paymentSettingsId: string, amount: number): Promise<number> {
-    // Use the PostgreSQL helper function
-    const result = await db.execute<{ calculate_payment_fee: string }>(sql`
-      SELECT calculate_payment_fee(
-        ${paymentSettingsId}::uuid,
-        ${amount}::numeric
-      ) as calculate_payment_fee
-    `);
-
-    if (!result || result.length === 0) {
-      return 0;
-    }
-
-    return parseFloat(result[0].calculate_payment_fee);
-  }
-
-  /**
-   * Map database row to domain entity
-   */
-  private mapToDomain(row: typeof paymentSettings.$inferSelect): PaymentSettings {
-    return {
-      id: row.id,
-      gateway: row.gateway as 'stripe' | 'paypal' | 'sepa' | 'cash' | 'other',
-      gatewayName: row.gateway_name,
-      isActive: row.is_active,
-      isDefault: row.is_default,
-      config: row.config as {
-        apiKey?: string;
-        publicKey?: string;
-        secretKey?: string;
-        merchantId?: string;
-        webhookUrl?: string;
-        [key: string]: any;
-      },
-      supportedCurrencies: row.supported_currencies,
-      supportedMethods: row.supported_methods,
-      minAmount: row.min_amount ? parseFloat(row.min_amount) : undefined,
-      maxAmount: row.max_amount ? parseFloat(row.max_amount) : undefined,
-      fees: row.fees as { fixed?: number; percentage?: number } | undefined,
-      createdAt: row.created_at.toISOString(),
-      updatedAt: row.updated_at.toISOString(),
-    };
+    const { data, error } = await this.db
+      .from('payment_settings')
+      .delete()
+      .eq('id', id)
+      .eq('club_id', clubId)
+      .select('id');
+    assertNoError(error, 'Löschen der Zahlungseinstellungen fehlgeschlagen');
+    return (data ?? []).length > 0;
   }
 }

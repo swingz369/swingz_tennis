@@ -36,11 +36,14 @@ const SERVICES_DIR = path.join(ROOT, 'src/application/services');
 // Nicht ausklammern, sondern beim nächsten Anfassen dieser Domäne (Phase 3
 // der Architektur-Analyse) beheben: Default entfernen, jede Aufrufstelle
 // zwingt der Compiler dann, clubId aus `auth.clubId` durchzureichen.
+//
+// payment-settings-service.adapter.ts: behoben und gelöscht (13.09.2026,
+// ADR-005-Migration auf PaymentSettingsService + PaymentSettingsRepository,
+// clubId kommt jetzt zwingend aus `auth.clubId` in der Route).
 const KNOWN_VIOLATIONS = new Set(
   [
     'absence-service.adapter.ts',
     'fee-configuration-service.adapter.ts',
-    'payment-settings-service.adapter.ts',
     'trial-training-service.adapter.ts',
   ].map((f) => path.join(SERVICES_DIR, f))
 );

@@ -1,197 +1,94 @@
-import { eq, and, desc } from 'drizzle-orm';
-import { db } from '../db';
-import { sepaMandates } from '../schema';
-import type {
-  SEPAMandate,
-  CreateSEPAMandateInput,
-  UpdateSEPAMandateInput,
-  ISEPAMandateRepository,
-} from '../../../domain/repositories/sepa-mandate-repository.interface';
-
+/**
+ * Zweite migrierte Domäne für Option B (ADR-005), nach Stundensätzen. Ein
+ * Repository, kein Adapter, keine Interfaces — Muster in docs/ARCHIV/
+ * 2026-09-13-architektur-analyse-datenzugriff.md § 6.
+ */
+import 'server-only';
+import type { AuthContext } from '@/lib/api-auth';
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/supabase';
 import { createLogger } from '@/lib/logger';
 
-const log = createLogger('infrastructure:persistence:repositories:sepa-mandate.reposit');
+const log = createLogger('infrastructure:sepa-mandate.repository');
 
-export class SEPAMandateRepository implements ISEPAMandateRepository {
-  async create(input: CreateSEPAMandateInput): Promise<SEPAMandate> {
-    try {
-      const now = new Date();
-      const [mandate] = await db
-        .insert(sepaMandates)
-        .values({
-          clubId: input.clubId,
-          memberId: input.memberId,
-          accountHolder: input.accountHolder,
-          iban: input.iban.replace(/\s/g, '').toUpperCase(),
-          bic: input.bic.replace(/\s/g, '').toUpperCase(),
-          bankName: input.bankName,
-          address: {
-            street: input.street,
-            houseNumber: input.houseNumber,
-            postalCode: input.postalCode,
-            city: input.city,
-          },
-          mandateReference: input.mandateReference || `M-${Date.now()}`,
-          creditorId: 'DE98ZZZ00000000000',
-          signatureDate: input.signatureDate,
-          isActive: true,
-          createdAt: now.toISOString(),
-        })
-        .returning();
+export type SepaMandate = Tables<'sepa_mandates'>;
 
-      if (!mandate) throw new Error('Failed to create SEPA mandate');
-      return this.mapToEntity(mandate);
-    } catch (error) {
-      log.error('Error creating SEPA mandate:', error);
-      throw new Error(
-        `Failed to create mandate: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-    }
+function assertNoError(error: { message: string } | null, action: string): void {
+  if (error) {
+    log.error(action, new Error(error.message));
+    throw new Error(action);
+  }
+}
+
+export class SepaMandateRepository {
+  constructor(private readonly db: AuthContext['supabase']) {}
+
+  async create(input: TablesInsert<'sepa_mandates'>): Promise<SepaMandate> {
+    const { data, error } = await this.db
+      .from('sepa_mandates')
+      .insert({
+        ...input,
+        iban: input.iban.replace(/\s/g, '').toUpperCase(),
+        bic: input.bic.replace(/\s/g, '').toUpperCase(),
+      })
+      .select()
+      .single();
+    assertNoError(error, 'Anlegen des SEPA-Mandats fehlgeschlagen');
+    return data!;
   }
 
-  async findById(id: string): Promise<SEPAMandate | null> {
-    try {
-      const [mandate] = await db
-        .select()
-        .from(sepaMandates)
-        .where(eq(sepaMandates.id, id))
-        .limit(1);
-      return mandate ? this.mapToEntity(mandate) : null;
-    } catch (error) {
-      log.error('Error finding SEPA mandate:', error);
-      throw new Error(
-        `Failed to find mandate: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-    }
+  async findById(id: string): Promise<SepaMandate | null> {
+    const { data, error } = await this.db.from('sepa_mandates').select().eq('id', id).maybeSingle();
+    assertNoError(error, 'Lesen des SEPA-Mandats fehlgeschlagen');
+    return data;
   }
 
-  async findActiveMandateByMemberId(memberId: string): Promise<SEPAMandate | null> {
-    try {
-      const [mandate] = await db
-        .select()
-        .from(sepaMandates)
-        .where(and(eq(sepaMandates.memberId, memberId), eq(sepaMandates.isActive, true)))
-        .limit(1);
-      return mandate ? this.mapToEntity(mandate) : null;
-    } catch (error) {
-      log.error('Error finding active mandate:', error);
-      throw new Error(
-        `Failed to find active mandate: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-    }
+  /** Ein Mandat gilt clubübergreifend für das Mitglied (club_id ist optional, s. Schema). */
+  async findActiveByMemberId(memberId: string): Promise<SepaMandate | null> {
+    const { data, error } = await this.db
+      .from('sepa_mandates')
+      .select()
+      .eq('member_id', memberId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    assertNoError(error, 'Lesen des aktiven SEPA-Mandats fehlgeschlagen');
+    return data;
   }
 
-  async findByMemberId(memberId: string): Promise<SEPAMandate[]> {
-    try {
-      const mandates = await db
-        .select()
-        .from(sepaMandates)
-        .where(eq(sepaMandates.memberId, memberId))
-        .orderBy(desc(sepaMandates.createdAt));
-      return mandates.map((m) => this.mapToEntity(m));
-    } catch (error) {
-      log.error('Error finding mandates by member:', error);
-      throw new Error(
-        `Failed to find mandates: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-    }
+  async findByMemberId(memberId: string): Promise<SepaMandate[]> {
+    const { data, error } = await this.db
+      .from('sepa_mandates')
+      .select()
+      .eq('member_id', memberId)
+      .order('created_at', { ascending: false });
+    assertNoError(error, 'Lesen der SEPA-Mandate fehlgeschlagen');
+    return data ?? [];
   }
 
-  async findByClubId(clubId: string): Promise<SEPAMandate[]> {
-    try {
-      const mandates = await db
-        .select()
-        .from(sepaMandates)
-        .where(eq(sepaMandates.clubId, clubId))
-        .orderBy(desc(sepaMandates.createdAt));
-      return mandates.map((m) => this.mapToEntity(m));
-    } catch (error) {
-      log.error('Error finding mandates by club:', error);
-      throw new Error(
-        `Failed to find mandates: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-    }
+  async update(id: string, input: TablesUpdate<'sepa_mandates'>): Promise<SepaMandate | null> {
+    const cleaned: TablesUpdate<'sepa_mandates'> = { ...input };
+    if (cleaned.iban) cleaned.iban = cleaned.iban.replace(/\s/g, '').toUpperCase();
+    if (cleaned.bic) cleaned.bic = cleaned.bic.replace(/\s/g, '').toUpperCase();
+
+    const { data, error } = await this.db
+      .from('sepa_mandates')
+      .update(cleaned)
+      .eq('id', id)
+      .select()
+      .maybeSingle();
+    assertNoError(error, 'Aktualisieren des SEPA-Mandats fehlgeschlagen');
+    return data;
   }
 
-  async update(id: string, input: UpdateSEPAMandateInput): Promise<SEPAMandate | null> {
-    try {
-      const updateData: Partial<typeof sepaMandates.$inferInsert> = {};
-      if (input.accountHolder !== undefined) updateData.accountHolder = input.accountHolder;
-      if (input.iban !== undefined) updateData.iban = input.iban.replace(/\s/g, '').toUpperCase();
-      if (input.bic !== undefined) updateData.bic = input.bic.replace(/\s/g, '').toUpperCase();
-      if (input.bankName !== undefined) updateData.bankName = input.bankName;
-
-      // Handle address updates
-      const existing = await this.findById(id);
-      if (!existing) return null;
-
-      if (input.street || input.houseNumber || input.postalCode || input.city) {
-        updateData.address = {
-          street: input.street ?? existing.address.street,
-          houseNumber: input.houseNumber ?? existing.address.houseNumber,
-          postalCode: input.postalCode ?? existing.address.postalCode,
-          city: input.city ?? existing.address.city,
-        };
-      }
-
-      const [updated] = await db
-        .update(sepaMandates)
-        .set(updateData)
-        .where(eq(sepaMandates.id, id))
-        .returning();
-
-      return updated ? this.mapToEntity(updated) : null;
-    } catch (error) {
-      log.error('Error updating SEPA mandate:', error);
-      throw new Error(
-        `Failed to update mandate: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-    }
-  }
-
-  async revoke(id: string, reason: string): Promise<SEPAMandate | null> {
-    try {
-      const [revoked] = await db
-        .update(sepaMandates)
-        .set({
-          isActive: false,
-          revokedAt: new Date().toISOString(),
-          revokeReason: reason,
-        })
-        .where(eq(sepaMandates.id, id))
-        .returning();
-
-      return revoked ? this.mapToEntity(revoked) : null;
-    } catch (error) {
-      log.error('Error revoking SEPA mandate:', error);
-      throw new Error(
-        `Failed to revoke mandate: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-    }
-  }
-
-  async hasActiveMandate(memberId: string): Promise<boolean> {
-    const mandate = await this.findActiveMandateByMemberId(memberId);
-    return mandate !== null;
-  }
-
-  private mapToEntity(row: typeof sepaMandates.$inferSelect): SEPAMandate {
-    return {
-      id: row.id,
-      clubId: row.clubId ?? undefined,
-      memberId: row.memberId,
-      accountHolder: row.accountHolder,
-      iban: row.iban,
-      bic: row.bic,
-      bankName: row.bankName,
-      address: row.address as SEPAMandate['address'],
-      mandateReference: row.mandateReference,
-      creditorId: row.creditorId,
-      signatureDate: new Date(row.signatureDate),
-      createdAt: new Date(row.createdAt),
-      isActive: row.isActive,
-      revokedAt: row.revokedAt ? new Date(row.revokedAt) : undefined,
-      revokeReason: row.revokeReason ?? undefined,
-    };
+  async revoke(id: string, reason: string): Promise<SepaMandate | null> {
+    const { data, error } = await this.db
+      .from('sepa_mandates')
+      .update({ is_active: false, revoked_at: new Date().toISOString(), revoke_reason: reason })
+      .eq('id', id)
+      .select()
+      .maybeSingle();
+    assertNoError(error, 'Widerrufen des SEPA-Mandats fehlgeschlagen');
+    return data;
   }
 }

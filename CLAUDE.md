@@ -60,10 +60,11 @@ Die Auth-Middleware liegt in **`proxy.ts`** (nicht `middleware.ts` — Next.js 1
 
 Grund: `docs/ARCHIV/2026-09-13-architektur-analyse-datenzugriff.md`. Rund die Hälfte der API
 umging RLS und verließ sich auf Anwendungscode für die Mandantentrennung — zwei echte
-Datenlecks im Juli waren die Folge. Neue und migrierte Domänen halten sich an dieses Muster,
-Referenzimplementierung ist **Stundensätze** (`app/api/hourly-rates/`,
-`src/application/services/hourly-rate.service.ts`,
-`src/infrastructure/persistence/repositories/hourly-rate.repository.ts`):
+Datenlecks im Juli waren die Folge. Neue und migrierte Domänen halten sich an dieses Muster.
+Bereits migriert: Stundensätze (`app/api/hourly-rates/`), SEPA-Mandate
+(`app/api/sepa-mandates/`), Zahlungseinstellungen (`app/api/payment-settings/`) — je ein
+Service unter `src/application/services/`, ein Repository unter
+`src/infrastructure/persistence/repositories/`:
 
 ```
 Route (Auth + Zod) → Service (Fachlogik) → Repository (einziger DB-Zugriff) → Postgres mit RLS
