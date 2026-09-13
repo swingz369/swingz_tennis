@@ -1,7 +1,22 @@
 import { gunzipSync } from 'zlib';
 import { Buffer } from 'buffer';
 import type { PerfHistoryPoint } from '@/app/api/admin/perf-history/local/route';
-import type { GithubPerfRun } from '@/app/api/admin/perf-history/github/route';
+
+// Hierher verschoben aus der Route (13.09.2026): der Typ wird hier befüllt, wurde aber aus der
+// Route importiert, die wiederum diese Datei importiert — zirkulärer Import (dependency-cruiser
+// no-circular). Die Route importiert ihn jetzt zurück von hier.
+export interface GithubPerfRun {
+  runId: string;
+  name: string;
+  branch: string;
+  headSha: string;
+  status: string;
+  conclusion: string | null;
+  createdAt: string;
+  updatedAt: string;
+  htmlUrl: string;
+  points: PerfHistoryPoint[];
+}
 
 interface FetchOptions {
   workflowFile: string;

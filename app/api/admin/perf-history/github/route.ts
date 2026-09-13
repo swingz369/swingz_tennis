@@ -1,23 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireAdminClub } from '@/lib/admin-context';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { getGithubWorkflowPerfHistory } from '@/lib/perf-history/github-source';
-import type { PerfHistoryPoint } from '../local/route';
+import { getGithubWorkflowPerfHistory, type GithubPerfRun } from '@/lib/perf-history/github-source';
 
 export const dynamic = 'force-dynamic';
-
-export interface GithubPerfRun {
-  runId: string;
-  name: string;
-  branch: string;
-  headSha: string;
-  status: string;
-  conclusion: string | null;
-  createdAt: string;
-  updatedAt: string;
-  htmlUrl: string;
-  points: PerfHistoryPoint[];
-}
 
 export interface GithubPerfPayload {
   generatedAt: string;

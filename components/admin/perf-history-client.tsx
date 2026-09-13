@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RefreshCw, Activity, ExternalLink, Database, AlertCircle } from 'lucide-react';
-import { PerfHistoryChart } from './perf-history-chart';
+import { PerfHistoryChart, type PerfPoint } from './perf-history-chart';
 import { apiFetch } from '@/lib/api-fetch';
 
 type Source = 'local' | 'github';
@@ -35,22 +35,6 @@ interface GithubPayload {
     points: PerfPoint[];
   }>;
   error?: string;
-}
-
-export interface PerfPoint {
-  source: 'local-bench' | 'local-scaling' | 'github';
-  runId: string;
-  label: string;
-  timestamp: string;
-  numMembers: number | null;
-  numTrainers: number | null;
-  numCourts: number | null;
-  meanMs: number;
-  minMs: number | null;
-  maxMs: number | null;
-  totalGroups: number | null;
-  unassignedCount: number | null;
-  wishPartnerRate: number | null;
 }
 
 const SOURCE_COLORS: Record<PerfPoint['source'], string> = {

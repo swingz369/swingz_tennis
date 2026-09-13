@@ -11,7 +11,24 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import type { PerfPoint } from './perf-history-client';
+// Hierher verschoben aus perf-history-client.tsx (13.09.2026): der Typ wurde von beiden Dateien
+// gebraucht und erzeugte einen zirkulären Import (dependency-cruiser no-circular) — der Client
+// importiert die Chart-Komponente, die Chart-Datei importierte den Typ zurück vom Client.
+export interface PerfPoint {
+  source: 'local-bench' | 'local-scaling' | 'github';
+  runId: string;
+  label: string;
+  timestamp: string;
+  numMembers: number | null;
+  numTrainers: number | null;
+  numCourts: number | null;
+  meanMs: number;
+  minMs: number | null;
+  maxMs: number | null;
+  totalGroups: number | null;
+  unassignedCount: number | null;
+  wishPartnerRate: number | null;
+}
 
 interface ChartProps {
   points: PerfPoint[];
