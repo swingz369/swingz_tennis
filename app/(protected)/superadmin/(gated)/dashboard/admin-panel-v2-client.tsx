@@ -28,8 +28,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { ClubWithStats, PlatformStats } from './page';
 import { PageHeader } from '@/components/ui/page-header';
+
+// Hierher verschoben aus page.tsx (13.09.2026): die Typen beschreiben die Props dieser
+// Komponente, wurden aber aus page.tsx importiert, die wiederum diese Datei importiert —
+// zirkulärer Import (dependency-cruiser no-circular). page.tsx importiert sie jetzt zurück.
+export interface ClubWithStats {
+  id: string;
+  name: string;
+  status: string;
+  memberCount: number;
+  trainerCount: number;
+}
+
+export interface PlatformStats {
+  totalClubs: number;
+  totalMembers: number;
+  totalTrainers: number;
+}
 
 interface AdminPanelV2ClientProps {
   clubs: ClubWithStats[];

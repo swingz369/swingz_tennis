@@ -1,21 +1,11 @@
 import { createClient } from '@/infrastructure/external/supabase/server';
-import { AdminPanelV2Client } from './admin-panel-v2-client';
+import {
+  AdminPanelV2Client,
+  type ClubWithStats,
+  type PlatformStats,
+} from './admin-panel-v2-client';
 
 export const dynamic = 'force-dynamic';
-
-export interface ClubWithStats {
-  id: string;
-  name: string;
-  status: string;
-  memberCount: number;
-  trainerCount: number;
-}
-
-export interface PlatformStats {
-  totalClubs: number;
-  totalMembers: number;
-  totalTrainers: number;
-}
 
 /**
  * Superadmin Dashboard Page — Platform-wide overview
