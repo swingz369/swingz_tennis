@@ -1,59 +1,51 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { absenceService } from '@/src/application/services/absence-service.adapter';
+import {
+  errorResponse,
+  internalErrorResponse,
+  ApiException,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { AbsenceService } from '@/application/services/absence.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
+import { CreateAbsenceSchema } from '@/lib/validation-schemas';
 
 const log = createLogger('api:absences');
 
-import {
-  CreateAbsenceSchema,
-  validateRequestBody,
-  formatValidationErrors,
-} from '@/lib/validation-schemas';
-
 export async function POST(request: NextRequest) {
-  return withApiAuth(request, async (auth) => {
-    // Only trainers and admins can create absences
-    const hasPermission = await verifyRole(auth, 'trainer');
-    if (!hasPermission) {
-      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
-    }
-
-    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
-    if (rateLimitError) {
-      return rateLimitError;
-    }
-
-    if (!auth.clubId) {
-      return NextResponse.json({ error: 'Kein Club-Kontext ausgewählt' }, { status: 400 });
-    }
-
-    try {
-      const body = await request.json();
-
-      // Validate request body with Zod
-      const validation = validateRequestBody(CreateAbsenceSchema, body);
-      if (!validation.success) {
-        return NextResponse.json(
-          {
-            error: 'Validierung fehlgeschlagen',
-            details: formatValidationErrors((validation as any).errors),
-          },
-          { status: 400 }
-        );
+  return withApiAuth(
+    request,
+    async (auth, body) => {
+      // Only trainers and admins can create absences
+      const hasPermission = await verifyRole(auth, 'trainer');
+      if (!hasPermission) {
+        return forbiddenResponse('Zugriff nur für Trainer oder Admins');
       }
 
-      const absence = await absenceService.createAbsence(validation.data as any, auth.clubId);
+      const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
+      if (rateLimitError) {
+        return rateLimitError;
+      }
 
-      return NextResponse.json({ success: true, absence });
-    } catch (error) {
-      log.error('Absence creation error:', error);
-      return internalErrorResponse();
-    }
-  });
+      if (!auth.clubId) {
+        return NextResponse.json({ error: 'Kein Club-Kontext ausgewählt' }, { status: 400 });
+      }
+
+      try {
+        const absence = await new AbsenceService(auth).createAbsence(body, auth.clubId);
+        return NextResponse.json({ success: true, absence });
+      } catch (error) {
+        if (error instanceof ApiException) {
+          return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+        }
+        log.error('Absence creation error:', error);
+        return internalErrorResponse();
+      }
+    },
+    { body: CreateAbsenceSchema }
+  );
 }
 
 export async function GET(request: NextRequest) {
@@ -82,20 +74,21 @@ export async function GET(request: NextRequest) {
       const startDate = searchParams.get('startDate');
       const endDate = searchParams.get('endDate');
       const active = searchParams.get('active');
+      const service = new AbsenceService(auth);
 
       if (active) {
         const today = new Date().toISOString().split('T')[0];
-        const absences = await absenceService.getActiveAbsencesForDate(today, clubId);
+        const absences = await service.getActiveAbsencesForDate(today, clubId);
         return NextResponse.json({ absences });
       }
 
       if (trainerId) {
-        const absences = await absenceService.getAbsencesByTrainerId(trainerId, clubId);
+        const absences = await service.getAbsencesByTrainerId(trainerId, clubId);
         return NextResponse.json({ absences });
       }
 
       if (status) {
-        const absences = await absenceService.getAbsencesByStatus(
+        const absences = await service.getAbsencesByStatus(
           status as 'pending' | 'approved' | 'rejected',
           clubId
         );
@@ -103,7 +96,7 @@ export async function GET(request: NextRequest) {
       }
 
       if (type) {
-        const absences = await absenceService.getAbsencesByType(
+        const absences = await service.getAbsencesByType(
           type as 'sick' | 'vacation' | 'personal' | 'other',
           clubId
         );
@@ -111,12 +104,12 @@ export async function GET(request: NextRequest) {
       }
 
       if (startDate && endDate) {
-        const absences = await absenceService.getAbsencesByDateRange(startDate, endDate, clubId);
+        const absences = await service.getAbsencesByDateRange(startDate, endDate, clubId);
         return NextResponse.json({ absences });
       }
 
       // Get all absences, scoped to the caller's active club
-      const absences = await absenceService.getAllAbsences(clubId);
+      const absences = await service.getAllAbsences(clubId);
       return NextResponse.json({ absences });
     } catch (error) {
       log.error('Absence fetch error:', error);

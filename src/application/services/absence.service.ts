@@ -1,291 +1,181 @@
-import type {
-  Absence,
-  CreateAbsenceInput,
-  UpdateAbsenceInput,
-  AbsenceConflict,
-} from '../../domain/entities/absence.entity';
+import type { AuthContext } from '@/lib/api-auth';
+import { ApiException } from '@/lib/api-error';
+import { getUserDb } from '@/infrastructure/db';
+import type { TablesUpdate } from '@/types/supabase';
+import {
+  AbsenceRepository,
+  type Absence,
+  type AbsenceType,
+  type AbsenceStatus,
+} from '@/infrastructure/persistence/repositories/absence.repository';
 
+export type CreateAbsenceInput = {
+  trainerId: string;
+  trainerName: string;
+  type: AbsenceType;
+  startDate: string;
+  endDate: string;
+  reason?: string;
+  notes?: string;
+};
+
+export type UpdateAbsenceInput = Partial<{
+  type: AbsenceType;
+  startDate: string;
+  endDate: string;
+  status: AbsenceStatus;
+  reason: string;
+  notes: string;
+}>;
+
+/**
+ * Sechste migrierte Domäne für ADR-005 (Trainer-Teildomäne: Abwesenheiten).
+ * Ein Service, ein Repository, kein Adapter, keine Interfaces, keine
+ * In-Memory-Stub-Implementierung.
+ */
 export class AbsenceService {
-  private static absences: Absence[] = [];
+  private readonly repo: AbsenceRepository;
 
-  /**
-   * Generate a unique ID
-   */
-  private static generateId(): string {
-    return `absence-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  constructor(auth: AuthContext) {
+    this.repo = new AbsenceRepository(getUserDb(auth));
   }
 
-  /**
-   * Validate absence input
-   */
-  static validateAbsenceInput(input: CreateAbsenceInput): { valid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    if (!input.trainerId || input.trainerId.trim().length === 0) {
-      errors.push('Trainer-ID ist erforderlich');
-    }
-
-    if (!input.trainerName || input.trainerName.trim().length < 2) {
-      errors.push('Trainer-Name muss mindestens 2 Zeichen lang sein');
-    }
-
-    if (!input.type) {
-      errors.push('Typ ist erforderlich');
-    }
-
-    if (!input.startDate || !this.isValidDate(input.startDate)) {
-      errors.push('Ungültiges Startdatum');
-    }
-
-    if (!input.endDate || !this.isValidDate(input.endDate)) {
-      errors.push('Ungültiges Enddatum');
-    }
-
-    if (input.startDate && input.endDate && new Date(input.startDate) > new Date(input.endDate)) {
-      errors.push('Startdatum muss vor Enddatum liegen');
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-    };
-  }
-
-  /**
-   * Validate date format
-   */
-  private static isValidDate(dateString: string): boolean {
-    const date = new Date(dateString);
-    return !isNaN(date.getTime());
-  }
-
-  /**
-   * Check for conflicts with scheduled sessions
-   */
-  static async checkForConflicts(
+  private async assertNoConflict(
     trainerId: string,
     startDate: string,
     endDate: string,
+    clubId: string,
     excludeId?: string
-  ): Promise<AbsenceConflict[]> {
-    const conflicts: AbsenceConflict[] = [];
-
-    // Get all absences for this trainer
-    const existingAbsences = this.absences.filter(
-      (a) => a.trainerId === trainerId && a.id !== excludeId && a.status === 'approved'
+  ): Promise<void> {
+    const conflicts = await this.repo.findConflicting(
+      trainerId,
+      startDate,
+      endDate,
+      clubId,
+      excludeId
     );
-
-    // Check for date overlaps
-    for (const existing of existingAbsences) {
-      if (this.hasDateOverlap(existing.startDate, existing.endDate, startDate, endDate)) {
-        conflicts.push({
-          id: this.generateId(),
-          trainerId,
-          trainerName: existing.trainerName,
-          absenceId: existing.id,
-          conflictType: 'availability',
-          conflictingDate: existing.startDate,
-          conflictingWith: [existing.id],
-        });
-      }
-    }
-
-    return conflicts;
-  }
-
-  /**
-   * Check for date overlap
-   */
-  private static hasDateOverlap(
-    start1: string,
-    end1: string,
-    start2: string,
-    end2: string
-  ): boolean {
-    const s1 = new Date(start1);
-    const e1 = new Date(end1);
-    const s2 = new Date(start2);
-    const e2 = new Date(end2);
-
-    return (s2 >= s1 && s2 <= e1) || (e2 >= s1 && e2 <= e1) || (s2 <= s1 && e2 >= e1);
-  }
-
-  /**
-   * Create a new absence
-   */
-  static async createAbsence(input: CreateAbsenceInput): Promise<Absence> {
-    const validation = this.validateAbsenceInput(input);
-    if (!validation.valid) {
-      throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
-    }
-
-    // Check for conflicts
-    const conflicts = await this.checkForConflicts(input.trainerId, input.startDate, input.endDate);
-
     if (conflicts.length > 0) {
-      throw new Error(`Conflicts detected: ${conflicts.map((c) => c.conflictType).join(', ')}`);
+      throw new ApiException(
+        'CONFLICT',
+        'Zeitraum überschneidet sich mit einer bereits genehmigten Abwesenheit'
+      );
     }
+  }
 
-    const now = new Date().toISOString();
-    const absence: Absence = {
-      id: this.generateId(),
-      trainerId: input.trainerId,
-      trainerName: input.trainerName,
+  async createAbsence(input: CreateAbsenceInput, clubId: string): Promise<Absence> {
+    await this.assertNoConflict(input.trainerId, input.startDate, input.endDate, clubId);
+
+    return this.repo.create({
+      club_id: clubId,
+      trainer_id: input.trainerId,
+      trainer_name: input.trainerName,
       type: input.type,
-      startDate: input.startDate,
-      endDate: input.endDate,
+      start_date: input.startDate,
+      end_date: input.endDate,
       status: 'pending',
-      reason: input.reason,
-      notes: input.notes,
-      createdAt: now,
-      updatedAt: now,
-    };
+      reason: input.reason ?? null,
+      notes: input.notes ?? null,
+    });
+  }
 
-    this.absences.push(absence);
+  async getAbsenceById(id: string, clubId: string): Promise<Absence> {
+    const absence = await this.repo.findById(id, clubId);
+    if (!absence) throw new ApiException('NOT_FOUND', 'Abwesenheit nicht gefunden');
     return absence;
   }
 
-  /**
-   * Get absence by ID
-   */
-  static async getAbsenceById(id: string): Promise<Absence | null> {
-    return this.absences.find((a) => a.id === id) || null;
+  async getAbsencesByTrainerId(trainerId: string, clubId: string): Promise<Absence[]> {
+    return this.repo.findByTrainerId(trainerId, clubId);
   }
 
-  /**
-   * Get absences by trainer ID
-   */
-  static async getAbsencesByTrainerId(trainerId: string): Promise<Absence[]> {
-    return this.absences.filter((a) => a.trainerId === trainerId);
+  async getAllAbsences(clubId: string): Promise<Absence[]> {
+    return this.repo.findAll(clubId);
   }
 
-  /**
-   * Get all absences
-   */
-  static async getAllAbsences(): Promise<Absence[]> {
-    return [...this.absences];
+  async getAbsencesByStatus(status: AbsenceStatus, clubId: string): Promise<Absence[]> {
+    return this.repo.findByStatus(status, clubId);
   }
 
-  /**
-   * Get absences by status
-   */
-  static async getAbsencesByStatus(status: Absence['status']): Promise<Absence[]> {
-    return this.absences.filter((a) => a.status === status);
+  async getAbsencesByType(type: AbsenceType, clubId: string): Promise<Absence[]> {
+    return this.repo.findByType(type, clubId);
   }
 
-  /**
-   * Get absences by type
-   */
-  static async getAbsencesByType(type: Absence['type']): Promise<Absence[]> {
-    return this.absences.filter((a) => a.type === type);
+  async getAbsencesByDateRange(
+    startDate: string,
+    endDate: string,
+    clubId: string
+  ): Promise<Absence[]> {
+    return this.repo.findByDateRange(startDate, endDate, clubId);
   }
 
-  /**
-   * Get absences by date range
-   */
-  static async getAbsencesByDateRange(startDate: string, endDate: string): Promise<Absence[]> {
-    return this.absences.filter((a) => {
-      const absenceStart = new Date(a.startDate);
-      const absenceEnd = new Date(a.endDate);
-      const rangeStart = new Date(startDate);
-      const rangeEnd = new Date(endDate);
-
-      return (
-        (absenceStart >= rangeStart && absenceStart <= rangeEnd) ||
-        (absenceEnd >= rangeStart && absenceEnd <= rangeEnd) ||
-        (absenceStart <= rangeStart && absenceEnd >= rangeEnd)
-      );
-    });
+  async getActiveAbsencesForDate(date: string, clubId: string): Promise<Absence[]> {
+    return this.repo.findActiveForDate(date, clubId);
   }
 
-  /**
-   * Update absence
-   */
-  static async updateAbsence(id: string, input: UpdateAbsenceInput): Promise<Absence | null> {
-    const index = this.absences.findIndex((a) => a.id === id);
-    if (index === -1) {
-      return null;
-    }
+  async updateAbsence(id: string, input: UpdateAbsenceInput, clubId: string): Promise<Absence> {
+    const existing = await this.repo.findById(id, clubId);
+    if (!existing) throw new ApiException('NOT_FOUND', 'Abwesenheit nicht gefunden');
 
-    const existing = this.absences[index];
-
-    // Check for conflicts if dates are changing
     if ((input.startDate || input.endDate) && input.status !== 'rejected') {
-      const newStart = input.startDate || existing.startDate;
-      const newEnd = input.endDate || existing.endDate;
-
-      const conflicts = await this.checkForConflicts(existing.trainerId, newStart, newEnd, id);
-
-      if (conflicts.length > 0) {
-        throw new Error(`Conflicts detected: ${conflicts.map((c) => c.conflictType).join(', ')}`);
-      }
+      const newStart = input.startDate ?? existing.start_date;
+      const newEnd = input.endDate ?? existing.end_date;
+      await this.assertNoConflict(existing.trainer_id, newStart, newEnd, clubId, id);
     }
 
-    const updated: Absence = {
-      ...existing,
-      ...input,
-      updatedAt: new Date().toISOString(),
+    const update: TablesUpdate<'trainer_absences'> = {
+      ...(input.type !== undefined && { type: input.type }),
+      ...(input.startDate !== undefined && { start_date: input.startDate }),
+      ...(input.endDate !== undefined && { end_date: input.endDate }),
+      ...(input.status !== undefined && { status: input.status }),
+      ...(input.reason !== undefined && { reason: input.reason }),
+      ...(input.notes !== undefined && { notes: input.notes }),
     };
 
-    this.absences[index] = updated;
+    const updated = await this.repo.update(id, update, clubId);
+    if (!updated) throw new ApiException('NOT_FOUND', 'Abwesenheit nicht gefunden');
     return updated;
   }
 
-  /**
-   * Approve absence
-   */
-  static async approveAbsence(id: string, approvedBy: string): Promise<Absence | null> {
-    const updated = await this.updateAbsence(id, {
-      status: 'approved',
-      approvedBy,
-      approvedAt: new Date().toISOString(),
-    });
+  async findSessionConflicts(
+    trainerId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<Array<{ id: string; date: string }>> {
+    return this.repo.findSessionConflicts(trainerId, startDate, endDate);
+  }
 
+  async approveAbsence(id: string, approvedBy: string, clubId: string): Promise<Absence> {
+    const updated = await this.repo.update(
+      id,
+      { status: 'approved', approved_by: approvedBy, approved_at: new Date().toISOString() },
+      clubId
+    );
+    if (!updated) throw new ApiException('NOT_FOUND', 'Abwesenheit nicht gefunden');
     return updated;
   }
 
-  /**
-   * Reject absence
-   */
-  static async rejectAbsence(id: string, approvedBy: string): Promise<Absence | null> {
-    const updated = await this.updateAbsence(id, {
-      status: 'rejected',
-      approvedBy,
-      approvedAt: new Date().toISOString(),
-    });
-
+  async rejectAbsence(
+    id: string,
+    rejectedBy: string,
+    clubId: string,
+    reason?: string
+  ): Promise<Absence> {
+    const updated = await this.repo.update(
+      id,
+      {
+        status: 'rejected',
+        approved_by: rejectedBy,
+        approved_at: new Date().toISOString(),
+        ...(reason !== undefined && { reason }),
+      },
+      clubId
+    );
+    if (!updated) throw new ApiException('NOT_FOUND', 'Abwesenheit nicht gefunden');
     return updated;
   }
 
-  /**
-   * Delete absence
-   */
-  static async deleteAbsence(id: string): Promise<boolean> {
-    const index = this.absences.findIndex((a) => a.id === id);
-    if (index === -1) {
-      return false;
-    }
-
-    this.absences.splice(index, 1);
-    return true;
-  }
-
-  /**
-   * Get active absences for a date
-   */
-  static async getActiveAbsencesForDate(date: string): Promise<Absence[]> {
-    return this.absences.filter((a) => {
-      if (a.status !== 'approved') {
-        return false;
-      }
-
-      const absenceStart = new Date(a.startDate);
-      const absenceEnd = new Date(a.endDate);
-      const targetDate = new Date(date);
-
-      return targetDate >= absenceStart && targetDate <= absenceEnd;
-    });
+  async deleteAbsence(id: string, clubId: string): Promise<void> {
+    const deleted = await this.repo.delete(id, clubId);
+    if (!deleted) throw new ApiException('NOT_FOUND', 'Abwesenheit nicht gefunden');
   }
 }
-
-// NOTE: initializeMockData() removed — API routes now use the DB-backed adapter

@@ -1,132 +1,118 @@
-import { eq, and, gte, lte, desc, ne, isNull } from 'drizzle-orm';
-import { db } from '../db';
-import { trainerAbsences, sessions } from '../schema';
-import type { IAbsenceRepository } from '@/domain/repositories/absence-repository.interface';
-import type {
-  Absence,
-  CreateAbsenceInput,
-  UpdateAbsenceInput,
-} from '@/domain/entities/absence.entity';
-import { parsePostgresError } from '@/lib/errors/database-errors';
-
 /**
- * Drizzle ORM implementation of the Absence Repository
- * Manages trainer absences with multi-tenant isolation and approval workflow
+ * Fünfte migrierte Domäne für ADR-005 (Trainer-Teildomäne: Abwesenheiten).
+ * Ein Repository, kein Adapter, keine Interfaces — Muster in docs/ARCHIV/
+ * 2026-09-13-architektur-analyse-datenzugriff.md § 6.
+ *
+ * `user_id` wird nicht gesetzt: der Trigger `set_trainer_absence_user_id`
+ * (SECURITY DEFINER) füllt ihn beim INSERT aus der Trainer-Tabelle, damit
+ * die RLS-Policy `own_absences` für den betroffenen Trainer greift,
+ * unabhängig davon, ob ein Admin die Abwesenheit angelegt hat.
  */
-export class DrizzleAbsenceRepository implements IAbsenceRepository {
-  async create(input: CreateAbsenceInput, clubId: string): Promise<Absence> {
-    const now = new Date();
+import 'server-only';
+import type { AuthContext } from '@/lib/api-auth';
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/supabase';
+import { createLogger } from '@/lib/logger';
 
-    try {
-      const result = await db
-        .insert(trainerAbsences)
-        .values({
-          trainer_id: input.trainerId,
-          club_id: clubId,
-          trainer_name: input.trainerName,
-          type: input.type,
-          start_date: new Date(input.startDate),
-          end_date: new Date(input.endDate),
-          status: 'pending',
-          reason: input.reason,
-          notes: input.notes,
-          created_at: now,
-          updated_at: now,
-        })
-        .returning();
+const log = createLogger('infrastructure:absence.repository');
 
-      return this.mapToDomain(result[0]);
-    } catch (error) {
-      throw parsePostgresError(error);
-    }
+export type Absence = Tables<'trainer_absences'>;
+export type AbsenceType = 'sick' | 'vacation' | 'personal' | 'other';
+export type AbsenceStatus = 'pending' | 'approved' | 'rejected';
+
+function assertNoError(error: { message: string } | null, action: string): void {
+  if (error) {
+    log.error(action, new Error(error.message));
+    throw new Error(action);
+  }
+}
+
+export class AbsenceRepository {
+  constructor(private readonly db: AuthContext['supabase']) {}
+
+  async create(input: TablesInsert<'trainer_absences'>): Promise<Absence> {
+    const { data, error } = await this.db.from('trainer_absences').insert(input).select().single();
+    assertNoError(error, 'Anlegen der Abwesenheit fehlgeschlagen');
+    return data!;
   }
 
   async findById(id: string, clubId: string): Promise<Absence | null> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('trainer_absences')
       .select()
-      .from(trainerAbsences)
-      .where(and(eq(trainerAbsences.id, id), eq(trainerAbsences.club_id, clubId)))
-      .limit(1);
-
-    if (result.length === 0) return null;
-    return this.mapToDomain(result[0]);
+      .eq('id', id)
+      .eq('club_id', clubId)
+      .maybeSingle();
+    assertNoError(error, 'Lesen der Abwesenheit fehlgeschlagen');
+    return data;
   }
 
   async findByTrainerId(trainerId: string, clubId: string): Promise<Absence[]> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('trainer_absences')
       .select()
-      .from(trainerAbsences)
-      .where(and(eq(trainerAbsences.trainer_id, trainerId), eq(trainerAbsences.club_id, clubId)))
-      .orderBy(desc(trainerAbsences.start_date));
-
-    return result.map((row) => this.mapToDomain(row));
+      .eq('trainer_id', trainerId)
+      .eq('club_id', clubId)
+      .order('start_date', { ascending: false });
+    assertNoError(error, 'Lesen der Abwesenheiten fehlgeschlagen');
+    return data ?? [];
   }
 
   async findAll(clubId: string): Promise<Absence[]> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('trainer_absences')
       .select()
-      .from(trainerAbsences)
-      .where(eq(trainerAbsences.club_id, clubId))
-      .orderBy(desc(trainerAbsences.start_date));
-
-    return result.map((row) => this.mapToDomain(row));
+      .eq('club_id', clubId)
+      .order('start_date', { ascending: false });
+    assertNoError(error, 'Lesen der Abwesenheiten fehlgeschlagen');
+    return data ?? [];
   }
 
-  async findByStatus(status: Absence['status'], clubId: string): Promise<Absence[]> {
-    const result = await db
+  async findByStatus(status: AbsenceStatus, clubId: string): Promise<Absence[]> {
+    const { data, error } = await this.db
+      .from('trainer_absences')
       .select()
-      .from(trainerAbsences)
-      .where(and(eq(trainerAbsences.status, status), eq(trainerAbsences.club_id, clubId)))
-      .orderBy(desc(trainerAbsences.start_date));
-
-    return result.map((row) => this.mapToDomain(row));
+      .eq('status', status)
+      .eq('club_id', clubId)
+      .order('start_date', { ascending: false });
+    assertNoError(error, 'Lesen der Abwesenheiten fehlgeschlagen');
+    return data ?? [];
   }
 
-  async findByType(type: Absence['type'], clubId: string): Promise<Absence[]> {
-    const result = await db
+  async findByType(type: AbsenceType, clubId: string): Promise<Absence[]> {
+    const { data, error } = await this.db
+      .from('trainer_absences')
       .select()
-      .from(trainerAbsences)
-      .where(and(eq(trainerAbsences.type, type), eq(trainerAbsences.club_id, clubId)))
-      .orderBy(desc(trainerAbsences.start_date));
-
-    return result.map((row) => this.mapToDomain(row));
+      .eq('type', type)
+      .eq('club_id', clubId)
+      .order('start_date', { ascending: false });
+    assertNoError(error, 'Lesen der Abwesenheiten fehlgeschlagen');
+    return data ?? [];
   }
 
+  /** Überlappung: absence_start <= range_end AND absence_end >= range_start. */
   async findByDateRange(startDate: string, endDate: string, clubId: string): Promise<Absence[]> {
-    // Find absences that overlap with the query range
-    // Overlap occurs when: (absence_start <= range_end) AND (absence_end >= range_start)
-    const result = await db
+    const { data, error } = await this.db
+      .from('trainer_absences')
       .select()
-      .from(trainerAbsences)
-      .where(
-        and(
-          eq(trainerAbsences.club_id, clubId),
-          lte(trainerAbsences.start_date, new Date(endDate)),
-          gte(trainerAbsences.end_date, new Date(startDate))
-        )
-      )
-      .orderBy(desc(trainerAbsences.start_date));
-
-    return result.map((row) => this.mapToDomain(row));
+      .eq('club_id', clubId)
+      .lte('start_date', endDate)
+      .gte('end_date', startDate)
+      .order('start_date', { ascending: false });
+    assertNoError(error, 'Lesen der Abwesenheiten fehlgeschlagen');
+    return data ?? [];
   }
 
   async findActiveForDate(date: string, clubId: string): Promise<Absence[]> {
-    const targetDate = new Date(date);
-
-    const result = await db
+    const { data, error } = await this.db
+      .from('trainer_absences')
       .select()
-      .from(trainerAbsences)
-      .where(
-        and(
-          eq(trainerAbsences.club_id, clubId),
-          eq(trainerAbsences.status, 'approved'),
-          lte(trainerAbsences.start_date, targetDate),
-          gte(trainerAbsences.end_date, targetDate)
-        )
-      )
-      .orderBy(desc(trainerAbsences.start_date));
-
-    return result.map((row) => this.mapToDomain(row));
+      .eq('club_id', clubId)
+      .eq('status', 'approved')
+      .lte('start_date', date)
+      .gte('end_date', date)
+      .order('start_date', { ascending: false });
+    assertNoError(error, 'Lesen der aktiven Abwesenheiten fehlgeschlagen');
+    return data ?? [];
   }
 
   async findConflicting(
@@ -136,29 +122,21 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
     clubId: string,
     excludeId?: string
   ): Promise<Absence[]> {
-    const conditions = [
-      eq(trainerAbsences.trainer_id, trainerId),
-      eq(trainerAbsences.club_id, clubId),
-      eq(trainerAbsences.status, 'approved'),
-      // Check for date overlap
-      lte(trainerAbsences.start_date, new Date(endDate)),
-      gte(trainerAbsences.end_date, new Date(startDate)),
-    ];
-
-    // Exclude specific absence (for updates)
-    if (excludeId) {
-      conditions.push(ne(trainerAbsences.id, excludeId));
-    }
-
-    const result = await db
+    let query = this.db
+      .from('trainer_absences')
       .select()
-      .from(trainerAbsences)
-      .where(and(...conditions))
-      .orderBy(desc(trainerAbsences.start_date));
-
-    return result.map((row) => this.mapToDomain(row));
+      .eq('trainer_id', trainerId)
+      .eq('club_id', clubId)
+      .eq('status', 'approved')
+      .lte('start_date', endDate)
+      .gte('end_date', startDate);
+    if (excludeId) query = query.neq('id', excludeId);
+    const { data, error } = await query.order('start_date', { ascending: false });
+    assertNoError(error, 'Prüfen auf überlappende Abwesenheiten fehlgeschlagen');
+    return data ?? [];
   }
 
+  /** Geplante, nicht stornierte Sessions des Trainers im Abwesenheitszeitraum. */
   async findSessionConflicts(
     trainerId: string,
     startDate: string,
@@ -167,110 +145,42 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
     const dayEnd = new Date(endDate);
     dayEnd.setHours(23, 59, 59, 999);
 
-    const result = await db
-      .select({ id: sessions.id, timeslot_start: sessions.timeslot_start })
-      .from(sessions)
-      .where(
-        and(
-          eq(sessions.trainer_id, trainerId),
-          isNull(sessions.cancelled_at),
-          gte(sessions.timeslot_start, new Date(startDate)),
-          lte(sessions.timeslot_start, dayEnd)
-        )
-      )
-      .orderBy(sessions.timeslot_start);
-
-    return result.map((row) => ({ id: row.id, date: row.timeslot_start.toISOString() }));
+    const { data, error } = await this.db
+      .from('sessions')
+      .select('id, timeslot_start')
+      .eq('trainer_id', trainerId)
+      .is('cancelled_at', null)
+      .gte('timeslot_start', new Date(startDate).toISOString())
+      .lte('timeslot_start', dayEnd.toISOString())
+      .order('timeslot_start', { ascending: true });
+    assertNoError(error, 'Prüfen auf Terminkonflikte fehlgeschlagen');
+    return (data ?? []).map((row) => ({ id: row.id, date: row.timeslot_start }));
   }
 
-  async update(id: string, input: UpdateAbsenceInput, clubId: string): Promise<Absence | null> {
-    const now = new Date();
-
-    try {
-      const updateData: Partial<typeof trainerAbsences.$inferInsert> = {
-        updated_at: now,
-      };
-
-      if (input.type !== undefined) updateData.type = input.type;
-      if (input.startDate !== undefined) updateData.start_date = new Date(input.startDate);
-      if (input.endDate !== undefined) updateData.end_date = new Date(input.endDate);
-      if (input.status !== undefined) updateData.status = input.status;
-      if (input.reason !== undefined) updateData.reason = input.reason;
-      if (input.notes !== undefined) updateData.notes = input.notes;
-      if (input.approvedBy !== undefined) updateData.approved_by = input.approvedBy;
-      if (input.approvedAt !== undefined) updateData.approved_at = new Date(input.approvedAt);
-
-      const result = await db
-        .update(trainerAbsences)
-        .set(updateData)
-        .where(and(eq(trainerAbsences.id, id), eq(trainerAbsences.club_id, clubId)))
-        .returning();
-
-      if (result.length === 0) return null;
-      return this.mapToDomain(result[0]);
-    } catch (error) {
-      throw parsePostgresError(error);
-    }
-  }
-
-  async approve(id: string, approvedBy: string, clubId: string): Promise<Absence | null> {
-    return this.update(
-      id,
-      {
-        status: 'approved',
-        approvedBy,
-        approvedAt: new Date().toISOString(),
-      },
-      clubId
-    );
-  }
-
-  async reject(id: string, approvedBy: string, clubId: string): Promise<Absence | null> {
-    return this.update(
-      id,
-      {
-        status: 'rejected',
-        approvedBy,
-        approvedAt: new Date().toISOString(),
-      },
-      clubId
-    );
+  async update(
+    id: string,
+    input: TablesUpdate<'trainer_absences'>,
+    clubId: string
+  ): Promise<Absence | null> {
+    const { data, error } = await this.db
+      .from('trainer_absences')
+      .update(input)
+      .eq('id', id)
+      .eq('club_id', clubId)
+      .select()
+      .maybeSingle();
+    assertNoError(error, 'Aktualisieren der Abwesenheit fehlgeschlagen');
+    return data;
   }
 
   async delete(id: string, clubId: string): Promise<boolean> {
-    const result = await db
-      .delete(trainerAbsences)
-      .where(and(eq(trainerAbsences.id, id), eq(trainerAbsences.club_id, clubId)))
-      .returning();
-
-    return result.length > 0;
-  }
-
-  /**
-   * Map database row to domain entity
-   */
-  private mapToDomain(row: typeof trainerAbsences.$inferSelect): Absence {
-    return {
-      id: row.id,
-      trainerId: row.trainer_id,
-      trainerName: row.trainer_name,
-      type: row.type as 'sick' | 'vacation' | 'personal' | 'other',
-      startDate: this.formatDate(row.start_date),
-      endDate: this.formatDate(row.end_date),
-      status: row.status as 'pending' | 'approved' | 'rejected',
-      reason: row.reason ?? undefined,
-      notes: row.notes ?? undefined,
-      approvedBy: row.approved_by ?? undefined,
-      approvedAt: row.approved_at?.toISOString(),
-      createdAt: row.created_at.toISOString(),
-      updatedAt: row.updated_at.toISOString(),
-    };
-  }
-
-  /**
-   * Format date to YYYY-MM-DD string
-   */
-  private formatDate(date: Date): string {
-    return date.toISOString().split('T')[0];
+    const { data, error } = await this.db
+      .from('trainer_absences')
+      .delete()
+      .eq('id', id)
+      .eq('club_id', clubId)
+      .select('id');
+    assertNoError(error, 'Löschen der Abwesenheit fehlgeschlagen');
+    return (data ?? []).length > 0;
   }
 }
