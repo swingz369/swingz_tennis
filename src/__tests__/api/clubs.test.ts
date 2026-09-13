@@ -238,7 +238,7 @@ describe('GET /api/clubs', () => {
 
   it('passes an escaped ILIKE pattern for `search` to data and count query', async () => {
     const clubsChain = makeChain({ data: [], count: 0 });
-    const countChain = makeChain({ count: 0, countOnly: true });
+    const countChain = makeChain({ count: 0 });
     let call = 0;
     mockSupabase.from.mockImplementation((table: string) => {
       if (table === 'clubs') return call++ === 0 ? clubsChain : countChain;
