@@ -1,4 +1,4 @@
-import type { MemberRepository } from '@/domain/repositories/member-repository.interface';
+import type { MemberRepository } from '@/infrastructure/persistence/repositories/member.repository';
 import type { ClubRepository } from '@/domain/repositories/club-repository.interface';
 import { ClubId } from '@/domain/value-objects';
 

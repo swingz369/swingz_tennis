@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { getClubMembersUseCase } from '@/application/members/get-club-members.use-case';
 import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories/club.repository';
-import { DrizzleMemberRepository } from '@/infrastructure/persistence/repositories/member.repository';
+import { MemberRepository } from '@/infrastructure/persistence/repositories/member.repository';
+import { getUserDb } from '@/infrastructure/db';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -29,7 +30,7 @@ export async function GET(_request: NextRequest) {
     }
 
     try {
-      const memberRepository = new DrizzleMemberRepository();
+      const memberRepository = new MemberRepository(getUserDb(auth));
       const clubRepository = new DrizzleClubRepository();
       const useCase = getClubMembersUseCase(memberRepository, clubRepository);
       const members = await useCase.execute(clubId);

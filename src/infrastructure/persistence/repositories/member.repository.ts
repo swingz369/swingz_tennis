@@ -1,107 +1,65 @@
-import { and, eq, inArray, sql } from 'drizzle-orm';
-import { db } from '../db';
-import { users, userClubMemberships } from '../schema';
-import type { Member } from '@/domain/repositories/member-repository.interface';
-import { MemberId, ClubId } from '@/domain/value-objects';
-import type { MemberRepository } from '@/domain/repositories/member-repository.interface';
+/**
+ * Mitglieder-Teildomäne "Mitgliederliste je Verein" für ADR-005 (Domäne 3,
+ * Teil 2, nach Gruppen). Ein Repository, keine Zeremonie — Muster in
+ * docs/ARCHIV/2026-09-13-architektur-analyse-datenzugriff.md § 6. RLS
+ * (memberships_select/memberships_manage_admin auf user_club_memberships,
+ * "Members can view club members" auf users) war hier bereits korrekt
+ * gescoped, keine Policy-Korrektur nötig.
+ *
+ * Nur findByClub() migriert — findById/findByEmail/save/exists/
+ * getMemberEmailAndName hatten keinen einzigen Aufrufer im Code.
+ */
+import 'server-only';
+import type { AuthContext } from '@/lib/api-auth';
+import type { ClubId } from '@/domain/value-objects';
+import { MemberId } from '@/domain/value-objects';
+import { createLogger } from '@/lib/logger';
 
-export class DrizzleMemberRepository implements MemberRepository {
-  async findById(id: MemberId): Promise<Member | null> {
-    const result = await db.select().from(users).where(eq(users.id, id.getValue())).limit(1);
-    if (result.length === 0) return null;
-    return this.mapToDomain(result[0]);
-  }
+const log = createLogger('infrastructure:member.repository');
 
-  async findByEmail(email: string): Promise<Member | null> {
-    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
-    if (result.length === 0) return null;
-    return this.mapToDomain(result[0]);
+export interface Member {
+  id: MemberId;
+  email: string;
+  name: string;
+  clubIds: ClubId[];
+  joinDate: Date;
+  isActive: boolean;
+}
+
+function assertNoError(error: { message: string } | null, action: string): void {
+  if (error) {
+    log.error(action, new Error(error.message));
+    throw new Error(action);
   }
+}
+
+export class MemberRepository {
+  constructor(private readonly db: AuthContext['supabase']) {}
 
   async findByClub(clubId: ClubId): Promise<Member[]> {
-    const memberships = await db
-      .select()
-      .from(userClubMemberships)
-      .where(
-        and(
-          eq(userClubMemberships.club_id, clubId.getValue()),
-          eq(userClubMemberships.is_active, true)
-        )
-      );
-    const userIds = memberships.map((m: typeof userClubMemberships.$inferSelect) => m.user_id);
+    const { data: memberships, error: membershipError } = await this.db
+      .from('user_club_memberships')
+      .select('user_id')
+      .eq('club_id', clubId.getValue())
+      .eq('is_active', true);
+    assertNoError(membershipError, 'Lesen der Mitgliedschaften fehlgeschlagen');
+
+    const userIds = (memberships ?? []).map((m) => m.user_id);
     if (userIds.length === 0) return [];
-    const usersData = await db.select().from(users).where(inArray(users.id, userIds));
-    return usersData.map((user: typeof users.$inferSelect) => {
-      const clubIds = memberships
-        .filter((m: typeof userClubMemberships.$inferSelect) => m.user_id === user.id)
-        .map((m: typeof userClubMemberships.$inferSelect) => m.club_id)
-        .map(ClubId.fromString);
-      return {
-        id: MemberId.fromString(user.id),
-        email: user.email,
-        name: user.full_name || '',
-        clubIds,
-        joinDate: new Date(user.created_at),
-        isActive: true,
-      };
-    });
-  }
 
-  async save(member: Member): Promise<void> {
-    const now = new Date();
-    const userData = {
-      id: member.id.getValue(),
-      email: member.email,
-      full_name: member.name,
-      updated_at: now,
-    };
+    const { data: users, error: usersError } = await this.db
+      .from('users')
+      .select('id, email, full_name, created_at')
+      .in('id', userIds);
+    assertNoError(usersError, 'Lesen der Mitglieder fehlgeschlagen');
 
-    const existing = await this.findById(member.id);
-    if (existing) {
-      await db.update(users).set(userData).where(eq(users.id, member.id.getValue()));
-    } else {
-      await db.insert(users).values(userData);
-      // Ein Statement statt einem Insert pro Club (Drizzle nimmt ein Array).
-      await db.insert(userClubMemberships).values(
-        member.clubIds.map((clubId) => ({
-          club_id: clubId.getValue(),
-          user_id: member.id.getValue(),
-          joined_at: now,
-          is_active: true,
-        }))
-      );
-    }
-  }
-
-  async exists(id: MemberId): Promise<boolean> {
-    const result = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(users)
-      .where(eq(users.id, id.getValue()));
-    return result[0]?.count > 0;
-  }
-
-  async getMemberEmailAndName(id: MemberId): Promise<{ email: string; name: string } | null> {
-    const result = await db
-      .select({ email: users.email, name: users.full_name })
-      .from(users)
-      .where(eq(users.id, id.getValue()))
-      .limit(1);
-    if (result.length === 0) return null;
-    return {
-      email: result[0].email,
-      name: result[0].name || 'Mitglied',
-    };
-  }
-
-  private mapToDomain(row: typeof users.$inferSelect): Member {
-    return {
-      id: MemberId.fromString(row.id),
-      email: row.email,
-      name: row.full_name || '',
-      clubIds: [],
-      joinDate: new Date(row.created_at),
+    return (users ?? []).map((user) => ({
+      id: MemberId.fromString(user.id),
+      email: user.email,
+      name: user.full_name ?? '',
+      clubIds: [clubId],
+      joinDate: new Date(user.created_at),
       isActive: true,
-    };
+    }));
   }
 }

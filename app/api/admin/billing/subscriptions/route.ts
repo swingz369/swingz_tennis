@@ -10,7 +10,6 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:admin:billing:subscriptions');
 
-// const memberRepo = new DrizzleMemberRepository(); // Will be used in future for advanced member queries
 const auditService = new AuditServiceImpl();
 
 // GET /api/admin/billing/subscriptions – Alle Abonnements (SuperAdmin only)
