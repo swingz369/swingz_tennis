@@ -167,6 +167,27 @@ if [ -n "$MD_CHANGES" ]; then
   fi
 fi
 
+# ═══ Schritt 4: Architektur-Regeln (nur wenn app/components/hooks/lib/src betroffen) ═
+# Purpose: docs/ARCHIV/2026-09-13-architektur-analyse-datenzugriff.md § 6 Phase 0 —
+# "Architektur-Check im Modus 'nur melden' mit Baseline der heutigen Verstöße".
+# .dependency-cruiser-known-violations.json grandfathert die 180 heutigen Verstöße
+# (direkter DB-Zugriff aus Routes, wenige Zirkularitäten); neue Verstöße brechen
+# den Commit ab, alte werden Domäne für Domäne abgebaut (Phase 3), nicht ausgeklammert.
+ARCH_CHANGES=$(echo "$STAGED_FILES" | grep -E '^(app|components|hooks|lib|src)/.*\.(ts|tsx)$' || true)
+if [ -n "$ARCH_CHANGES" ]; then
+  echo ""
+  echo "${BLUE}🏗️  Prüfe Architektur-Regeln (dependency-cruiser)...${NC}"
+  npx depcruise app components hooks lib src --config .dependency-cruiser.cjs --cache --ignore-known .dependency-cruiser-known-violations.json
+  ARCH_EXIT=$?
+  if [ $ARCH_EXIT -ne 0 ]; then
+    echo "${RED}❌ Architektur-Regel verletzt — Commit abgebrochen${NC}"
+    echo "${YELLOW}   Neuer Verstoß gegen eine Regel aus .dependency-cruiser.cjs.${NC}"
+    echo "${YELLOW}   Kein bekannter Altfall (siehe .dependency-cruiser-known-violations.json).${NC}"
+    echo "${YELLOW}   Details: npm run arch:check${NC}"
+    exit $ARCH_EXIT
+  fi
+fi
+
 echo ""
 echo "${GREEN}✅ Pre-commit Hook erfolgreich abgeschlossen${NC}"
 exit 0

@@ -66,6 +66,11 @@ Thumbs.db
 .temp
 node_modules/.cache
 
+# dependency-cruiser: Ad-hoc-Graph aus `npm run arch:graph` — die Baseline-Datei
+# .dependency-cruiser-known-violations.json bleibt dagegen versioniert (Analyse
+# docs/ARCHIV/2026-09-13-architektur-analyse-datenzugriff.md § 7).
+dependency-graph.svg
+
 # ═══ Compiler / Linter / Bundler caches ═════════════════════════════════
 # TypeScript incremental build info
 *.tsbuildinfo
