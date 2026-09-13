@@ -1,7 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
+import {
+  errorResponse,
+  internalErrorResponse,
+  ApiException,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { TrainerProfileService } from '@/application/services/trainer-profile.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -22,14 +27,12 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const trainerProfile = await trainerProfileService.getTrainerProfileById(id);
-
-      if (!trainerProfile) {
-        return NextResponse.json({ error: 'Trainer-Profil nicht gefunden' }, { status: 404 });
-      }
-
+      const trainerProfile = await new TrainerProfileService(auth).getTrainerProfileById(id);
       return NextResponse.json({ trainerProfile });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Trainer profile fetch error:', error);
       return internalErrorResponse();
     }
@@ -55,9 +58,10 @@ export async function PATCH(
 
     try {
       const { id } = await params;
+      const service = new TrainerProfileService(auth);
 
       if (!isAdmin) {
-        const profile = await trainerProfileService.getTrainerProfileById(id);
+        const profile = await service.findTrainerProfileById(id);
         if (!profile || profile.userId !== auth.user.id) {
           return forbiddenResponse('Du kannst nur dein eigenes Profil bearbeiten');
         }
@@ -133,7 +137,7 @@ export async function PATCH(
         extraHoursRate = rawExtraRate;
       }
 
-      const updated = await trainerProfileService.updateTrainerProfile(id, {
+      const updated = await service.updateTrainerProfile(id, {
         firstName,
         lastName,
         email,
@@ -154,12 +158,11 @@ export async function PATCH(
         emergencyContact,
       });
 
-      if (!updated) {
-        return NextResponse.json({ error: 'Trainer-Profil nicht gefunden' }, { status: 404 });
-      }
-
       return NextResponse.json({ success: true, trainerProfile: updated });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Trainer profile update error:', error);
       return internalErrorResponse();
     }
@@ -185,22 +188,21 @@ export async function DELETE(
 
     try {
       const { id } = await params;
+      const service = new TrainerProfileService(auth);
 
       if (!isAdmin) {
-        const profile = await trainerProfileService.getTrainerProfileById(id);
+        const profile = await service.findTrainerProfileById(id);
         if (!profile || profile.userId !== auth.user.id) {
           return forbiddenResponse('Du kannst nur dein eigenes Profil löschen');
         }
       }
 
-      const success = await trainerProfileService.deleteTrainerProfile(id);
-
-      if (!success) {
-        return NextResponse.json({ error: 'Trainer-Profil nicht gefunden' }, { status: 404 });
-      }
-
+      await service.deleteTrainerProfile(id);
       return NextResponse.json({ success: true });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Trainer profile delete error:', error);
       return internalErrorResponse();
     }

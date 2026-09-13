@@ -1,7 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
+import {
+  errorResponse,
+  internalErrorResponse,
+  ApiException,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { TrainerProfileService } from '@/application/services/trainer-profile.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -32,21 +37,17 @@ export async function POST(
         return NextResponse.json({ error: 'Verifiziert-von ist erforderlich' }, { status: 400 });
       }
 
-      const updated = await trainerProfileService.verifyQualification(
+      const updated = await new TrainerProfileService(auth).verifyQualification(
         id,
         qualificationId,
         verifiedBy
       );
 
-      if (!updated) {
-        return NextResponse.json(
-          { error: 'Trainer-Profil oder Qualifikation nicht gefunden' },
-          { status: 404 }
-        );
-      }
-
       return NextResponse.json({ success: true, trainerProfile: updated });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Qualification verification error:', error);
       return internalErrorResponse();
     }

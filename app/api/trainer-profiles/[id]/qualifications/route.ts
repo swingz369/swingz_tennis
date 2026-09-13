@@ -1,7 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
+import {
+  errorResponse,
+  internalErrorResponse,
+  ApiException,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { TrainerProfileService } from '@/application/services/trainer-profile.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -22,14 +27,12 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const profile = await trainerProfileService.getTrainerProfileById(id);
-
-      if (!profile) {
-        return NextResponse.json({ error: 'Trainer-Profil nicht gefunden' }, { status: 404 });
-      }
-
+      const profile = await new TrainerProfileService(auth).getTrainerProfileById(id);
       return NextResponse.json({ qualifications: profile.qualifications || [] });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Qualifications fetch error:', error);
       return internalErrorResponse();
     }
@@ -52,9 +55,10 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
     try {
       const { id } = await params;
+      const service = new TrainerProfileService(auth);
 
       if (!isAdmin) {
-        const profile = await trainerProfileService.getTrainerProfileById(id);
+        const profile = await service.findTrainerProfileById(id);
         if (!profile || profile.userId !== auth.user.id) {
           return forbiddenResponse(
             'Du kannst nur Qualifikationen zu deinem eigenen Profil hinzufügen'
@@ -63,14 +67,13 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       }
 
       const body = await _request.json();
-
       const { name, issuer, issuedDate, expiryDate, certificateUrl } = body;
 
       if (!name || !issuer || !issuedDate) {
         return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
       }
 
-      const updated = await trainerProfileService.addQualification(id, {
+      const updated = await service.addQualification(id, {
         name,
         issuer,
         issuedDate,
@@ -78,12 +81,11 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         certificateUrl,
       });
 
-      if (!updated) {
-        return NextResponse.json({ error: 'Trainer-Profil nicht gefunden' }, { status: 404 });
-      }
-
       return NextResponse.json({ success: true, trainerProfile: updated });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Qualification addition error:', error);
       return internalErrorResponse();
     }

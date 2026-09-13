@@ -1,7 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
+import {
+  errorResponse,
+  internalErrorResponse,
+  ApiException,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { TrainerProfileService } from '@/application/services/trainer-profile.service';
 import type { TrainerProfile } from '@/domain/entities/trainer.entity';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -43,8 +48,10 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
       }
 
+      const service = new TrainerProfileService(auth);
+
       // Check if profile already exists
-      const existing = await trainerProfileService.getTrainerProfileByUserId(userId);
+      const existing = await service.getTrainerProfileByUserId(userId);
       if (existing) {
         return NextResponse.json({ trainerProfile: existing });
       }
@@ -58,7 +65,7 @@ export async function POST(_request: NextRequest) {
 
       const nameParts = (userData?.full_name || firstName || '').split(' ');
 
-      const profile = await trainerProfileService.createTrainerProfile({
+      const profile = await service.createTrainerProfile({
         userId,
         clubId: clubId,
         firstName: nameParts[0] || firstName || '',
@@ -70,6 +77,9 @@ export async function POST(_request: NextRequest) {
 
       return NextResponse.json({ success: true, trainerProfile: profile });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Trainer profile creation error:', error);
       return internalErrorResponse();
     }
@@ -120,110 +130,15 @@ export async function GET(_request: NextRequest) {
         return NextResponse.json({ profiles: [] });
       }
 
-      // Create service client early — used for both Drizzle fallback and membership queries
+      const service = new TrainerProfileService(auth);
+
+      // 1. Query real trainer_profiles for this club (RLS-scoped via getUserDb)
+      let profiles: TrainerProfile[] = await service.getTrainerProfilesByClubId(clubId);
+
+      // 2. Check for trainers in memberships that have no profile yet. Service
+      //    client bypasses RLS — nötig, um alle Mitgliedschaften des Vereins zu
+      //    sehen, unabhängig davon, ob der Aufrufer sie selbst einsehen dürfte.
       const serviceClient = createServiceClient();
-
-      // 1. Query real trainer_profiles for this club
-      //    Try Drizzle first; fall back to Supabase service client if Drizzle fails (stale socket)
-      let profiles: TrainerProfile[];
-      try {
-        profiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
-      } catch (drizzleErr) {
-        log.warn(
-          '[trainer-profiles GET] Drizzle query failed, falling back to service client:',
-          drizzleErr instanceof Error ? drizzleErr.message : drizzleErr
-        );
-        const { data: fallbackRows, error: fallbackError } = await serviceClient
-          .from('trainer_profiles')
-          .select('*')
-          .eq('club_id', clubId)
-          .order('created_at', { ascending: false });
-        if (fallbackError) {
-          log.error(
-            '[trainer-profiles GET] Service client fallback also failed:',
-            fallbackError.message
-          );
-          profiles = [];
-        } else {
-          // ── NaN-Guard helper for Supabase PostgREST numeric coercion ───────
-          // If the service-client fallback returns malformed numeric strings
-          // (rare but observed on legacy rows: raw quotes, trailing junk),
-          // parseFloat returns NaN, which the UI then renders as "NaN/h" in
-          // the Stundensatz-Spalte. The helper collapses ANY non-finite input
-          // (NaN / Infinity / non-numeric / null / undefined) to `null` —
-          // explicit and idempotent. Mirrors parseNumericField in
-          // trainer-profile.repository.ts#mapToEntity so the Drizzle path
-          // and this PostgREST-fallback path produce the same entity shape.
-          const parseNumOrNull = (raw: unknown): number | null => {
-            if (raw == null) return null;
-            // Runtime-Type-Check statt unsafe `as number` Cast. Number.isFinite(true)
-            // ist true (coerced zu 1), und Number.isFinite({}) ist false — aber
-            // ohne expliziten Type-Check landet ein slipped boolean oder object
-            // unsauber im Number-Pfad. Mit dem expliziten Branch akzeptieren wir
-            // nur `string` + `number`, alles andere kollabiert deterministisch auf null.
-            if (typeof raw === 'string') {
-              const n = parseFloat(raw);
-              return Number.isFinite(n) ? n : null;
-            }
-            if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null;
-            return null;
-          };
-          profiles = (fallbackRows ?? []).map((row: any) => ({
-            id: row.id,
-            userId: row.user_id,
-            firstName: row.first_name,
-            lastName: row.last_name,
-            email: row.email,
-            phone: row.phone,
-            dateOfBirth: row.dateOfBirth ?? row.date_of_birth ?? '1990-01-01',
-            bio: row.bio ?? undefined,
-            profileImageUrl: row.profileImageUrl ?? row.profile_image_url ?? undefined,
-            qualifications: row.qualifications ?? [],
-            specializations: row.specializations ?? [],
-            experience: row.experience ?? { years: 0, previousClubs: [], achievements: [] },
-            status: row.status ?? 'active',
-            // Falls NaN/Infinity hier durchschlagen würden (PostgREST-malformed-number),
-            // leiten wir auch das LEGACY `hourlyRate` durch den Helper. Konsistent mit
-            // mapToEntity, das ALLE 3 Felder guarded. Das `?? undefined` am Ende erhält
-            // den domain Type `?: number` (hourlyRate ist nicht nullable im Gegensatz zu
-            // contracted/extra deren Type `?: number | null` ist).
-            hourlyRate: parseNumOrNull(row.hourlyRate ?? row.hourly_rate) ?? undefined,
-            // Sprint 4 Trainer Dual-Rate: ALSO map the two new columns in the
-            // fallback path so the admin UI doesn't silently lose the contracted
-            // rate (admin-editable) + extra-hours rate (trainer-editable) when
-            // Drizzle throws (stale-socket fallback). See migration
-            // supabase/migrations/20260610_add_trainer_dual_rate.sql and
-            // TrainerProfile.$inferSelect for the canonical column names.
-            //
-            // Mirror the Drizzle `mapToEntity` coercion pattern (see
-            // trainer-profile.repository.ts): Supabase PostgREST returns
-            // `numeric(10, 2)` columns as strings. The helper `parseNumOrNull`
-            // defined just above this `.map(...)` ALSO rejects non-finite
-            // (NaN/Infinity) inputs — closing the gap that previously rendered
-            // "NaN/h" in the UI for malformed legacy rows.
-            contractedHourlyRate: parseNumOrNull(row.contracted_hourly_rate),
-            extraHoursRate: parseNumOrNull(row.extra_hours_rate),
-            availability: row.availability ?? {
-              monday: true,
-              tuesday: true,
-              wednesday: true,
-              thursday: true,
-              friday: true,
-              saturday: false,
-              sunday: false,
-            },
-            preferredTimeSlots: row.preferredTimeSlots ?? row.preferred_time_slots ?? [],
-            languages: row.languages ?? ['Deutsch'],
-            emergencyContact: row.emergencyContact ??
-              row.emergency_contact ?? { name: '', phone: '', relationship: '' },
-            createdAt: row.created_at ?? new Date().toISOString(),
-            updatedAt: row.updated_at ?? new Date().toISOString(),
-          }));
-        }
-      }
-
-      // 2. Check for trainers in memberships that have no profile yet
-      // Service client bypasses RLS (membership queries may be restricted)
       const { data: memberships, error: membershipError } = await serviceClient
         .from('user_club_memberships')
         .select('user_id, created_at, is_active')
@@ -259,7 +174,7 @@ export async function GET(_request: NextRequest) {
             let created: TrainerProfile | null = null;
             for (let attempt = 0; attempt < 2; attempt++) {
               try {
-                created = await trainerProfileService.createTrainerProfile({
+                created = await service.createTrainerProfile({
                   userId,
                   clubId: clubId,
                   firstName: nameParts[0] || '',

@@ -1,43 +1,35 @@
 /**
  * ════════════════════════════════════════════════════════════════════════════════
  * src/__tests__/api/trainer-profiles.route.test.ts
- * (konsolidiert aus tests/unit/app/api/trainer-profiles/route.test.ts)
  * ════════════════════════════════════════════════════════════════════════════════
  *
  * UNIT-TESTS FOR: app/api/trainer-profiles/route.ts (GET-Handler)
- *                 (Sprint 4 Trainer Dual-Rate close-out)
+ *
+ * Umgebaut für ADR-005 (13.09.2026): Die Route hat keinen Drizzle-Pfad und
+ * keinen Service-Client-Fallback mehr — beides lief über die inzwischen
+ * entfernte BYPASSRLS-Drizzle-Verbindung. Es gibt nur noch EINEN Weg:
+ * getUserDb(auth) → TrainerProfileRepository → PostgREST. Die
+ * ursprünglichen zwei Testpfade ("Drizzle path" / "Service-Client-Fallback
+ * path") sind deshalb zu einem zusammengeführt; die fachlich wertvollen
+ * Assertions (Dual-Rate-Propagation, 13-Fall-NaN-Guard-Bündel,
+ * hourlyRate-undefined-vs-null-Semantik) bleiben unverändert erhalten —
+ * TrainerProfileRepository.parseNumericField ist bytegleich mit der alten
+ * Drizzle-Repository-Guard-Funktion.
  *
  * SCOPE
- *   - Dual-rate propagation through the Drizzle happy-path
- *     (trainerProfileService.getTrainerProfilesByClubId returns mock-entity)
- *   - Dual-rate propagation + 13-case NaN-Guard edge-bundle through the
- *     Service-Client-Fallback path (Drizzle throws → PostgREST fallback)
- *   - The two helpers MUST produce identical entity shape:
- *       - route.ts closure-local `parseNumOrNull` (Fallback-Path)
- *       - repository.ts `TrainerProfileRepository.parseNumericField` (Drizzle-Path)
- *     → if one diverges from the other, the public API contract breaks.
- *   - Legacy hourlyRate coercion (snake_case `hourly_rate` + camelCase
- *     `hourlyRate`, fall-back chain, `?? undefined` domain-type hygiene).
- *   - Auth + rate-limit smoke (403 + happy-path 200).
+ *   - Dual-rate propagation durch TrainerProfileRepository.mapToEntity.
+ *   - 13-Fall-NaN-Guard-Bündel auf contracted_hourly_rate.
+ *   - Legacy-hourlyRate-Coercion (`hourly_rate` snake_case Spalte).
+ *   - Auth + Rate-Limit-Smoke (403 + Happy-Path 200).
  *
  * MOCKING STRATEGY
- *   - `@/lib/logger` returns no-op loggers.
- *   - `@/lib/api-auth` exposes a programmable `withApiAuth` + `verifyRole`
- *     so the auth-layer can be configured per-test (per bail-out rule #3:
- *     `mockAuthCtx` is module-mutable, see beforeEach).
- *   - `@/lib/rate-limit` exposes a no-op gate.
- *   - `@/lib/supabase/service` exposes a chainable mock surfaced through
- *     `mockServiceClient` (table-routed to test-trainers / memberships / users).
- *   - `@/src/application/services/trainer-profile-service.adapter` exposes
- *     a programmable `getTrainerProfilesByClubId` mock driving the
- *     Drizzle-path test surface.
- *
- * NOTE — RUNTIME EXPECTATION
- *   These tests follow the repo convention (src/__tests__/lib/hardware/adapter.test.ts,
- *   src/__tests__/api/webhooks-booking-completed.route.test.ts). Run on dev-machine:
- *   `npx vitest run src/__tests__/api/trainer-profiles.route.test.ts`.
- *
- * ════════════════════════════════════════════════════════════════════════════════
+ *   - `@/lib/logger` → no-op.
+ *   - `@/lib/api-auth` → programmierbarer `withApiAuth` + `verifyRole`.
+ *   - `@/lib/rate-limit` → kein Rate-Gate.
+ *   - `@/lib/supabase/service` → chainbarer Mock für die
+ *     Mitgliedschafts-/Auto-Provisioning-Abfragen (createServiceClient).
+ *   - `auth.supabase` (dieselbe Mock-Instanz) deckt den getUserDb(auth)-Pfad
+ *     ab, über den TrainerProfileRepository tatsächlich läuft.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -50,7 +42,6 @@ const VALID_UUID_TRAINER_USER_2 = '22222222-2222-4222-8222-222222222222';
 
 // ─── Module-Mocks (hoisted via vi.mock) ───────────────────────────────────────
 
-// @/lib/logger → no-op
 vi.mock('@/lib/logger', () => ({
   createLogger: () => ({
     info: vi.fn(),
@@ -60,10 +51,6 @@ vi.mock('@/lib/logger', () => ({
   }),
 }));
 
-// ── @/lib/api-auth ───────────────────────────────────────────────────────────
-// Programmable auth-context. mockAuthCtx and mockVerifyRoleResult are module
-// mutable state; beforeEach in each describe-block re-stages them per-the-per-
-// test-cleanliness rule from the booking-completed.test.ts mirror.
 let mockAuthCtx: any;
 let mockVerifyRoleResult: boolean;
 
@@ -79,19 +66,14 @@ vi.mock('@/lib/api-auth', () => ({
     }),
 }));
 
-// @/lib/rate-limit → no rate-gate
 vi.mock('@/lib/rate-limit', () => ({
   RATE_LIMITS: { STANDARD: { max: 60, windowMs: 60000 } },
   checkRateLimitOrFail: vi.fn(async () => null),
 }));
 
-// ── @/lib/supabase/service ───────────────────────────────────────────────────
-// Chainable stateful mock. Routes by table-name. Captures `from()` calls into
-// `mockServiceClient.fromCallsTable` so test-assertions can verify call-patterns.
-// `from` is the SAME vi.fn() instance as `fromMock` (not a copy) — the route
-// under test calls `serviceClient.from(...)`, while `resetServiceClientMock`
-// below programs behavior via the `fromMock` alias; both must resolve to one
-// underlying mock or the route's calls go through unconfigured.
+// Chainable stateful mock, routed by table name. Serves BOTH createServiceClient()
+// (Mitgliedschafts-/Users-Lookups) UND auth.supabase (getUserDb-Pfad für
+// trainer_profiles) — dieselbe Instanz deckt beide Konsumenten ab.
 const mockServiceClient: {
   fromCallsTable: string[];
   fromMock: ReturnType<typeof vi.fn>;
@@ -106,31 +88,8 @@ vi.mock('@/lib/supabase/service', () => ({
   createServiceClient: () => mockServiceClient,
 }));
 
-// ── @/src/application/services/trainer-profile-service.adapter ──────────────
-// Programmable Drizzle-path entry-point mock. `getTrainerProfilesByClubId`
-// rejects to force Fallback-Path or resolves to simulate Drizzle success.
-const mockTrainerProfileService: {
-  getTrainerProfilesByClubId: ReturnType<typeof vi.fn>;
-  createTrainerProfile: ReturnType<typeof vi.fn>;
-} = {
-  getTrainerProfilesByClubId: vi.fn(),
-  createTrainerProfile: vi.fn(),
-};
-vi.mock('@/src/application/services/trainer-profile-service.adapter', () => ({
-  trainerProfileService: mockTrainerProfileService,
-}));
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Standard "admin signed in for VALID_UUID_CLUB" — the happy-path auth-context.
- * The membership list mirrors what an admin row would carry (active/admin role).
- *
- * NOTE: GET does NOT touch `auth.supabase` directly (only POST does, via
- * `auth.supabase.from('users').select(...)` for profile-create user-lookup).
- * The `supabase` field is included for shape-fidelity with the real auth
- * context but is unused by the GET-handler tests in this file.
- */
 function makeAdminAuthCtx(clubId = VALID_UUID_CLUB) {
   return {
     user: { id: 'admin-uuid', email: 'admin@test' },
@@ -146,24 +105,26 @@ function makeGetReq(opts: { queryClubId?: string } = {}): NextRequest {
 }
 
 /**
- * Build a TrainerProfile entity (Drizzle-path result) with sane defaults +
- * per-test rate overrides.
+ * Baut eine rohe `trainer_profiles`-Zeile, wie sie via PostgREST
+ * zurückkommt — snake_case Spaltennamen, `numeric`-Spalten teils als String
+ * (Treiber-Eigenheit), die TrainerProfileRepository.parseNumericField
+ * abfängt.
  */
-function buildDrizzleEntity(overrides: Record<string, unknown> = {}) {
+function buildRow(overrides: Record<string, unknown> = {}) {
   return {
     id: 'profile-aaa',
-    userId: VALID_UUID_USER,
-    firstName: 'Anna',
-    lastName: 'Müller',
+    user_id: VALID_UUID_USER,
+    first_name: 'Anna',
+    last_name: 'Müller',
     email: 'anna@test',
     phone: '000-0000000',
-    dateOfBirth: '1990-01-01',
-    bio: undefined,
-    profileImageUrl: undefined,
+    date_of_birth: '1990-01-01',
+    bio: null,
+    profile_image_url: null,
     qualifications: [],
     specializations: [],
     experience: { years: 0, previousClubs: [], achievements: [] },
-    status: 'active' as const,
+    status: 'active',
     availability: {
       monday: true,
       tuesday: true,
@@ -173,45 +134,22 @@ function buildDrizzleEntity(overrides: Record<string, unknown> = {}) {
       saturday: false,
       sunday: false,
     },
-    preferredTimeSlots: [],
+    preferred_time_slots: [],
     languages: ['Deutsch'],
-    emergencyContact: { name: '', phone: '', relationship: '' },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    hourlyRate: 50,
-    contractedHourlyRate: 45,
-    extraHoursRate: 50,
-    ...overrides,
-  };
-}
-
-/**
- * Build a Supabase PostgREST row (Fallback-Path result) with per-test rate
- * overrides. Keys here reflect `snake_case` columns as they arrive through
- * PostgREST + the camelCase `hourlyRate` legacy column aliased.
- */
-function buildFallbackRow(overrides: Record<string, unknown> = {}) {
-  return {
-    id: 'profile-aaa',
-    user_id: VALID_UUID_USER,
-    first_name: 'Anna',
-    last_name: 'Müller',
-    email: 'anna@test',
-    phone: '000-0000000',
-    dateOfBirth: '1990-01-01',
-    status: 'active',
-    hourlyRate: 50,
+    emergency_contact: { name: '', phone: '', relationship: '' },
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     hourly_rate: 50,
     contracted_hourly_rate: '45.00',
     extra_hours_rate: '50.00',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
     ...overrides,
   };
 }
 
 /**
- * Reset the service-client mock with the new per-test data. Routes by table.
+ * Programmiert den Service-Client-Mock neu. `trainerProfilesData` deckt
+ * sowohl den createServiceClient()-Konsumenten als auch auth.supabase
+ * (getUserDb-Pfad) ab, da beide dieselbe Mock-Instanz sind.
  */
 function resetServiceClientMock({
   trainerProfilesData = [],
@@ -267,26 +205,22 @@ function resetServiceClientMock({
   });
 }
 
-// Re-stage all mocks before each test (pollution-guard). Mirrors the
-// booking-completed.test.ts pattern.
 beforeEach(() => {
   mockAuthCtx = makeAdminAuthCtx();
   mockVerifyRoleResult = true;
-  mockTrainerProfileService.getTrainerProfilesByClubId.mockReset();
-  mockTrainerProfileService.createTrainerProfile.mockReset();
-  // Default: Drizzle-path returns empty array (no trainers)
-  mockTrainerProfileService.getTrainerProfilesByClubId.mockResolvedValue([]);
   resetServiceClientMock({});
 });
 
 // ════════════════════════════════════════════════════════════════════════════════
-// Drizzle-Path: dual-rate propagation
+// Dual-rate propagation
 // ════════════════════════════════════════════════════════════════════════════════
-describe('GET /api/trainer-profiles — Drizzle path: dual-rate propagation', () => {
-  it('propagates contractedHourlyRate + extraHoursRate (numeric) into the entity', async () => {
-    mockTrainerProfileService.getTrainerProfilesByClubId.mockResolvedValueOnce([
-      buildDrizzleEntity({ contractedHourlyRate: 45, extraHoursRate: 50 }),
-    ]);
+describe('GET /api/trainer-profiles — dual-rate propagation', () => {
+  it('propagates contracted_hourly_rate="45.00" + extra_hours_rate="50.00" as numbers', async () => {
+    resetServiceClientMock({
+      trainerProfilesData: [
+        buildRow({ contracted_hourly_rate: '45.00', extra_hours_rate: '50.00' }),
+      ],
+    });
     const { GET } = await import('@/app/api/trainer-profiles/route');
     const res = await GET(makeGetReq());
     expect(res.status).toBe(200);
@@ -294,102 +228,42 @@ describe('GET /api/trainer-profiles — Drizzle path: dual-rate propagation', ()
     expect(json.profiles).toHaveLength(1);
     expect(json.profiles[0].contractedHourlyRate).toBe(45);
     expect(json.profiles[0].extraHoursRate).toBe(50);
-  });
-
-  it('coerces string-style numbers from Drizzle $inferSelect (parseFloat path preserved)', async () => {
-    // Simulates a row that has `numeric` columns as strings via the driver.
-    // parseNumericField in mapToEntity should coerce '45.00' → 45 (number).
-    mockTrainerProfileService.getTrainerProfilesByClubId.mockResolvedValueOnce([
-      buildDrizzleEntity({ contractedHourlyRate: 45, extraHoursRate: 50 }),
-    ]);
-    const { GET } = await import('@/app/api/trainer-profiles/route');
-    const res = await GET(makeGetReq());
-    const json = await res.json();
-    // Strict type-check: numeric values, not strings
     expect(typeof json.profiles[0].contractedHourlyRate).toBe('number');
     expect(typeof json.profiles[0].extraHoursRate).toBe('number');
   });
 
-  it('returns null for null contractedHourlyRate (DB has null value after migration)', async () => {
-    mockTrainerProfileService.getTrainerProfilesByClubId.mockResolvedValueOnce([
-      buildDrizzleEntity({
-        contractedHourlyRate: null,
-        extraHoursRate: null,
-        hourlyRate: 50, // legacy fallback
-      }),
-    ]);
+  it('coerces legacy hourly_rate (snake_case) through parseNumericField', async () => {
+    resetServiceClientMock({
+      trainerProfilesData: [
+        buildRow({ hourly_rate: 50, contracted_hourly_rate: null, extra_hours_rate: null }),
+      ],
+    });
     const { GET } = await import('@/app/api/trainer-profiles/route');
     const res = await GET(makeGetReq());
     const json = await res.json();
+    expect(json.profiles[0].hourlyRate).toBe(50);
     expect(json.profiles[0].contractedHourlyRate).toBeNull();
     expect(json.profiles[0].extraHoursRate).toBeNull();
-    // hourlyRate fallback preserved
-    expect(json.profiles[0].hourlyRate).toBe(50);
   });
 
   it('returns undefined for null hourlyRate (Domain-Type-Hygiene: hourlyRate is not nullable)', async () => {
-    // The real repository (TrainerProfileRepository.mapToEntity) already
-    // coerces a null DB column to `undefined` via `parseNumericField(...) ??
-    // undefined` before the entity ever reaches this route — the route
-    // itself does no further transform on the Drizzle path. Simulate that
-    // already-mapped shape here (not a raw `null` column value).
-    mockTrainerProfileService.getTrainerProfilesByClubId.mockResolvedValueOnce([
-      buildDrizzleEntity({
-        hourlyRate: undefined,
-        contractedHourlyRate: 45,
-        extraHoursRate: 50,
-      }),
-    ]);
-    const { GET } = await import('@/app/api/trainer-profiles/route');
-    const res = await GET(makeGetReq());
-    const json = await res.json();
-    // Critical: hourlyRate must be UNDEFINED (not null) — domain type is `?: number`, not nullable.
-    expect(json.profiles[0].hourlyRate).toBeUndefined();
-    expect(json.profiles[0].contractedHourlyRate).toBe(45);
-  });
-});
-
-// ════════════════════════════════════════════════════════════════════════════════
-// Service-Client-Fallback-Path: dual-rate propagation + 13-case NaN-Guard bundle
-// ════════════════════════════════════════════════════════════════════════════════
-describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate propagation', () => {
-  beforeEach(() => {
-    // Force the catch-block (Fallback-Path): Drizzle throws → route falls back
-    // to Supabase service-client. This is the path that exercises the
-    // closure-local `parseNumOrNull` helper.
-    mockTrainerProfileService.getTrainerProfilesByClubId.mockRejectedValueOnce(
-      new Error('drizzle stale-socket')
-    );
-  });
-
-  // ── Happy path ────────────────────────────────────────────────────────────
-  it('propagates contracted_hourly_rate="45.00" + extra_hours_rate="50.00" as numbers', async () => {
     resetServiceClientMock({
       trainerProfilesData: [
-        buildFallbackRow({
-          contracted_hourly_rate: '45.00',
-          extra_hours_rate: '50.00',
-        }),
+        buildRow({ hourly_rate: null, contracted_hourly_rate: '45.00', extra_hours_rate: '50.00' }),
       ],
     });
     const { GET } = await import('@/app/api/trainer-profiles/route');
     const res = await GET(makeGetReq());
-    expect(res.status).toBe(200);
     const json = await res.json();
+    // Kritisch: hourlyRate muss UNDEFINED sein (nicht null) — Domain-Typ ist `?: number`, nicht nullable.
+    expect(json.profiles[0].hourlyRate).toBeUndefined();
     expect(json.profiles[0].contractedHourlyRate).toBe(45);
-    expect(json.profiles[0].extraHoursRate).toBe(50);
   });
 
-  it('coerces legacy hourly_rate (snake_case) through parseNumOrNull helper', async () => {
-    // Only hourly_rate set (legacy trainer, no dual-rate configured yet)
+  it('propagates null in ALL rate columns when DB has dual-rate pre-migration data', async () => {
     resetServiceClientMock({
       trainerProfilesData: [
-        buildFallbackRow({
-          hourlyRate: undefined,
-          hourly_rate: 50,
-          contracted_hourly_rate: null,
-          extra_hours_rate: null,
-        }),
+        buildRow({ hourly_rate: 50, contracted_hourly_rate: null, extra_hours_rate: null }),
       ],
     });
     const { GET } = await import('@/app/api/trainer-profiles/route');
@@ -400,12 +274,10 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
     expect(json.profiles[0].extraHoursRate).toBeNull();
   });
 
-  // ── NaN-Guard 13-case bundle on contracted_hourly_rate ────────────────────
-  describe('NaN-Guard 13-case edge bundle (parseNumOrNull closure-local)', () => {
+  // ── NaN-Guard 13-Fall-Bündel auf contracted_hourly_rate ────────────────────
+  describe('NaN-Guard 13-case edge bundle (TrainerProfileRepository.parseNumericField)', () => {
     it('returns null for null column value', async () => {
-      resetServiceClientMock({
-        trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: null })],
-      });
+      resetServiceClientMock({ trainerProfilesData: [buildRow({ contracted_hourly_rate: null })] });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
       const json = await res.json();
@@ -413,7 +285,7 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
     });
 
     it('returns null for undefined / missing column', async () => {
-      const row = buildFallbackRow();
+      const row = buildRow();
       delete (row as Record<string, unknown>).contracted_hourly_rate;
       resetServiceClientMock({ trainerProfilesData: [row] });
       const { GET } = await import('@/app/api/trainer-profiles/route');
@@ -424,7 +296,7 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
 
     it('returns null for "not-a-number" (parseFloat → NaN → caught by guard)', async () => {
       resetServiceClientMock({
-        trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: 'not-a-number' })],
+        trainerProfilesData: [buildRow({ contracted_hourly_rate: 'not-a-number' })],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
@@ -433,9 +305,7 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
     });
 
     it('returns null for empty string "" (parseFloat → NaN)', async () => {
-      resetServiceClientMock({
-        trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: '' })],
-      });
+      resetServiceClientMock({ trainerProfilesData: [buildRow({ contracted_hourly_rate: '' })] });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
       const json = await res.json();
@@ -444,7 +314,7 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
 
     it('returns null for whitespace-only string "   " (parseFloat → NaN)', async () => {
       resetServiceClientMock({
-        trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: '   ' })],
+        trainerProfilesData: [buildRow({ contracted_hourly_rate: '   ' })],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
@@ -454,8 +324,28 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
 
     it('returns null for Infinity literal (Number.isFinite rejects)', async () => {
       resetServiceClientMock({
+        trainerProfilesData: [buildRow({ contracted_hourly_rate: Infinity as unknown as string })],
+      });
+      const { GET } = await import('@/app/api/trainer-profiles/route');
+      const res = await GET(makeGetReq());
+      const json = await res.json();
+      expect(json.profiles[0].contractedHourlyRate).toBeNull();
+    });
+
+    it('returns null for boolean slipped true (explicit typeof branch)', async () => {
+      resetServiceClientMock({
+        trainerProfilesData: [buildRow({ contracted_hourly_rate: true as unknown as string })],
+      });
+      const { GET } = await import('@/app/api/trainer-profiles/route');
+      const res = await GET(makeGetReq());
+      const json = await res.json();
+      expect(json.profiles[0].contractedHourlyRate).toBeNull();
+    });
+
+    it('returns null for object slipped {junk}', async () => {
+      resetServiceClientMock({
         trainerProfilesData: [
-          buildFallbackRow({ contracted_hourly_rate: Infinity as unknown as string }),
+          buildRow({ contracted_hourly_rate: { junk: 'value' } as unknown as string }),
         ],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
@@ -464,41 +354,9 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
       expect(json.profiles[0].contractedHourlyRate).toBeNull();
     });
 
-    it('returns null for boolean slipped true (Round-3 fix: explicit typeof branch)', async () => {
-      // Defense-in-depth: if PostgREST ever serialized a boolean where a
-      // numeric was expected (data corruption or driver bug), the helper
-      // rejects it via the explicit typeof branch (not the unsafe `as number`
-      // cast + Number.isFinite coercion of true → 1).
+    it('returns null for array slipped []', async () => {
       resetServiceClientMock({
-        trainerProfilesData: [
-          buildFallbackRow({ contracted_hourly_rate: true as unknown as string }),
-        ],
-      });
-      const { GET } = await import('@/app/api/trainer-profiles/route');
-      const res = await GET(makeGetReq());
-      const json = await res.json();
-      expect(json.profiles[0].contractedHourlyRate).toBeNull();
-    });
-
-    it('returns null for object slipped {junk} (Round-3 fix)', async () => {
-      resetServiceClientMock({
-        trainerProfilesData: [
-          buildFallbackRow({
-            contracted_hourly_rate: { junk: 'value' } as unknown as string,
-          }),
-        ],
-      });
-      const { GET } = await import('@/app/api/trainer-profiles/route');
-      const res = await GET(makeGetReq());
-      const json = await res.json();
-      expect(json.profiles[0].contractedHourlyRate).toBeNull();
-    });
-
-    it('returns null for array slipped [] (Round-3 fix)', async () => {
-      resetServiceClientMock({
-        trainerProfilesData: [
-          buildFallbackRow({ contracted_hourly_rate: [] as unknown as string }),
-        ],
+        trainerProfilesData: [buildRow({ contracted_hourly_rate: [] as unknown as string })],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
@@ -507,13 +365,8 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
     });
 
     it('parses "45,50" german decimal comma to 45 (lenient, locked behavior)', async () => {
-      // DOCUMENT this as locked behavior — parseFloat ignores trailing chars
-      // and the comma is not a numeric separator. Real-world csv imports with
-      // german decimals will produce this; downstream consumers need to be
-      // aware. If behavior must change to locale-tolerant parsing, the helper
-      // itself must change — re-run the test.
       resetServiceClientMock({
-        trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: '45,50' })],
+        trainerProfilesData: [buildRow({ contracted_hourly_rate: '45,50' })],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
@@ -522,13 +375,8 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
     });
 
     it('parses "45.50abc" leniently to 45.5 (parseFloat reads numeric prefix)', async () => {
-      // Same lenient-storey behavior — parseFloat reads leading prefix even
-      // when trailing chars are present. `parseFloat('45.50abc')` reads the
-      // full "45.50" numeric prefix (including the decimal portion) → 45.5,
-      // not 45. Acceptable since DB columns should never surface this;
-      // defense-in-depth only.
       resetServiceClientMock({
-        trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: '45.50abc' })],
+        trainerProfilesData: [buildRow({ contracted_hourly_rate: '45.50abc' })],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
@@ -536,18 +384,10 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
       expect(json.profiles[0].contractedHourlyRate).toBe(45.5);
     });
 
-    it('preserves 0 (parseNumOrNull returns 0, not false/null/zombie)', async () => {
-      // Edge case: 0 must not be coerced to null/undefined by the nullish-
-      // coalescing chain. This test guards against future refactors that
-      // accidentally collapse falsy values.
+    it('preserves 0 (parseNumericField returns 0, not false/null/zombie)', async () => {
       resetServiceClientMock({
         trainerProfilesData: [
-          buildFallbackRow({
-            hourlyRate: undefined,
-            hourly_rate: 0,
-            contracted_hourly_rate: '0',
-            extra_hours_rate: '0',
-          }),
+          buildRow({ hourly_rate: 0, contracted_hourly_rate: '0', extra_hours_rate: '0' }),
         ],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
@@ -559,42 +399,14 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
     });
 
     it('propagates -0 in-memory helper-behavior; HTTP roundtrip collapses to +0 via JSON.stringify', async () => {
-      // DOCUMENT: parseNumOrNull('-0') internally returns -0 (negative zero is
-      // finite per Number.isFinite); HOWEVER, NextResponse.json serializes via
-      // JSON.stringify which collapses -0 → +0 per the JSON spec (only one
-      // zero representation). The HTTP test therefore asserts +0. If a future
-      // helper-side audit is desired, test parseNumOrNull in isolation (no
-      // HTTP, no serialization layer) — see lib/utils/numeric-coerce.ts once
-      // extracted.
       resetServiceClientMock({
-        trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: '-0' })],
+        trainerProfilesData: [buildRow({ contracted_hourly_rate: '-0' })],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
       const json = await res.json();
       expect(json.profiles[0].contractedHourlyRate).toBe(0);
     });
-  });
-
-  it('propagates null in ALL rate columns when DB has dual-rate pre-migration data', async () => {
-    // Pre-migration trainers: hourlyRate present, contracted+extra null. Verify
-    // the dual-rate default is null (not undefined) so the UI can render "—".
-    resetServiceClientMock({
-      trainerProfilesData: [
-        buildFallbackRow({
-          hourlyRate: 50,
-          hourly_rate: 50,
-          contracted_hourly_rate: null,
-          extra_hours_rate: null,
-        }),
-      ],
-    });
-    const { GET } = await import('@/app/api/trainer-profiles/route');
-    const res = await GET(makeGetReq());
-    const json = await res.json();
-    expect(json.profiles[0].hourlyRate).toBe(50);
-    expect(json.profiles[0].contractedHourlyRate).toBeNull();
-    expect(json.profiles[0].extraHoursRate).toBeNull();
   });
 });
 
@@ -619,27 +431,29 @@ describe('GET /api/trainer-profiles — auth + rate-limit smoke', () => {
     expect(json.profiles).toEqual([]);
   });
 
-  it('returns 200 + profiles list on Drizzle happy path with mixed rate columns', async () => {
-    mockTrainerProfileService.getTrainerProfilesByClubId.mockResolvedValueOnce([
-      buildDrizzleEntity({
-        id: 'profile-1',
-        userId: VALID_UUID_USER,
-        firstName: 'Anna',
-        lastName: 'Müller',
-        contractedHourlyRate: 45,
-        extraHoursRate: 50,
-        hourlyRate: 42,
-      }),
-      buildDrizzleEntity({
-        id: 'profile-2',
-        userId: VALID_UUID_TRAINER_USER_2,
-        firstName: 'Tom',
-        lastName: 'Schmidt',
-        contractedHourlyRate: null,
-        extraHoursRate: null,
-        hourlyRate: 60,
-      }),
-    ]);
+  it('returns 200 + profiles list with mixed rate columns', async () => {
+    resetServiceClientMock({
+      trainerProfilesData: [
+        buildRow({
+          id: 'profile-1',
+          user_id: VALID_UUID_USER,
+          first_name: 'Anna',
+          last_name: 'Müller',
+          contracted_hourly_rate: '45.00',
+          extra_hours_rate: '50.00',
+          hourly_rate: 42,
+        }),
+        buildRow({
+          id: 'profile-2',
+          user_id: VALID_UUID_TRAINER_USER_2,
+          first_name: 'Tom',
+          last_name: 'Schmidt',
+          contracted_hourly_rate: null,
+          extra_hours_rate: null,
+          hourly_rate: 60,
+        }),
+      ],
+    });
     const { GET } = await import('@/app/api/trainer-profiles/route');
     const res = await GET(makeGetReq());
     expect(res.status).toBe(200);

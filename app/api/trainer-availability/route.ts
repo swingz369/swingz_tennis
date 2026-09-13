@@ -7,7 +7,7 @@ import {
   safeErrorMessage,
 } from '@/lib/api-error';
 import { TrainerAvailabilityService } from '@/application/services/trainer-availability.service';
-import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
+import { TrainerProfileService } from '@/application/services/trainer-profile.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ availabilities: [] });
       }
 
-      const profiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
+      const profiles = await new TrainerProfileService(auth).getTrainerProfilesByClubId(clubId);
       if (profiles.length === 0) {
         return NextResponse.json({ availabilities: [] });
       }
@@ -151,7 +151,9 @@ export async function POST(request: NextRequest) {
       if (auth.role !== 'trainer') {
         const clubId = auth.clubId;
         if (clubId) {
-          const clubProfiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
+          const clubProfiles = await new TrainerProfileService(auth).getTrainerProfilesByClubId(
+            clubId
+          );
           const clubRecordIds = await resolveTrainerRecordIds(clubProfiles.map((p) => p.userId));
           const isInClub = [...clubRecordIds.values()].includes(targetRecordId);
           if (!isInClub) {
@@ -230,7 +232,9 @@ export async function DELETE(request: NextRequest) {
       if (auth.role !== 'trainer') {
         const clubId = auth.clubId;
         if (clubId) {
-          const clubProfiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
+          const clubProfiles = await new TrainerProfileService(auth).getTrainerProfilesByClubId(
+            clubId
+          );
           const clubRecordIds = await resolveTrainerRecordIds(clubProfiles.map((p) => p.userId));
           const isInClub = [...clubRecordIds.values()].includes(availability.trainer_id);
           if (!isInClub) {
