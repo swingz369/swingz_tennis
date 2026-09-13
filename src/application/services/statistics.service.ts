@@ -47,11 +47,11 @@ export class StatisticsService {
       (m) => new Date(m.createdAt) >= startDate && new Date(m.createdAt) <= endDate
     ).length;
 
-    const convertedTrials = trialTrainings.filter((t) => t.status === 'converted').length;
-
-    const totalTrials = trialTrainings.filter(
+    const trialsInPeriod = trialTrainings.filter(
       (t) => new Date(t.createdAt) >= startDate && new Date(t.createdAt) <= endDate
-    ).length;
+    );
+    const convertedTrials = trialsInPeriod.filter((t) => t.status === 'converted').length;
+    const totalTrials = trialsInPeriod.length;
 
     const conversionRate = totalTrials > 0 ? (convertedTrials / totalTrials) * 100 : 0;
 
