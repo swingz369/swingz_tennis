@@ -2,7 +2,8 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, verifyTrainerInClub, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
+import { ApiException, errorResponse, safeErrorMessage } from '@/lib/api-error';
+import { HoursLogService } from '@/application/services/hours-log.service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:hours-logs:[id]:reject');
@@ -35,21 +36,16 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         );
       }
 
-      const existing = await hoursLogService.getHoursLogById(id);
-      if (!existing) {
-        return NextResponse.json(
-          { success: false, error: 'Stundennachweis nicht gefunden' },
-          { status: 404 }
-        );
-      }
-      if (!(await verifyTrainerInClub(auth, existing.trainerId))) {
+      const service = new HoursLogService(auth);
+      const existing = await service.getHoursLogById(id);
+      if (!(await verifyTrainerInClub(auth, existing.trainer_id))) {
         return NextResponse.json(
           { success: false, error: 'Stundennachweis nicht gefunden' },
           { status: 404 }
         );
       }
 
-      const hoursLog = await hoursLogService.rejectHoursLog(id, auth.user.id, reason);
+      const hoursLog = await service.rejectHoursLog(id, auth.user.id, reason);
 
       return NextResponse.json({
         success: true,
@@ -57,6 +53,9 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         message: 'Stundennachweis abgelehnt',
       });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Reject hours log error:', error);
       return NextResponse.json(
         { success: false, error: 'Fehler bei der Ablehnung' },

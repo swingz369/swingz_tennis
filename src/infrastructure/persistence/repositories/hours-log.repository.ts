@@ -1,237 +1,128 @@
-import { eq, and, gte, lte, desc } from 'drizzle-orm';
-import { db } from '../db';
-import { hoursLogs } from '../schema';
-import type {
-  HoursLog,
-  CreateHoursLogInput,
-  UpdateHoursLogInput,
-  HoursSummary,
-  HoursLogRepository,
-} from '@/domain/repositories/hours-log-repository.interface';
-import { parsePostgresError } from '@/lib/errors/database-errors';
+/**
+ * Trainer-Teildomäne "Stundenerfassung" für ADR-005. Ein Repository, kein
+ * Adapter, keine Interfaces — Muster in docs/ARCHIV/2026-09-13-architektur-
+ * analyse-datenzugriff.md § 6. RLS-Policy-Korrektur: supabase/migrations/
+ * 20260913180000_hours_logs_admin_access.sql (admin, nicht nur superadmin).
+ */
+import 'server-only';
+import type { AuthContext } from '@/lib/api-auth';
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/supabase';
+import { createLogger } from '@/lib/logger';
 
-export class DrizzleHoursLogRepository implements HoursLogRepository {
-  async create(input: CreateHoursLogInput): Promise<HoursLog> {
-    const duration = this.calculateDuration(input.startTime, input.endTime);
-    const now = new Date();
+const log = createLogger('infrastructure:hours-log.repository');
 
-    try {
-      const result = await db
-        .insert(hoursLogs)
-        .values({
-          trainer_id: input.trainerId,
-          trainer_name: input.trainerName,
-          session_id: input.sessionId ?? null,
-          date: new Date(input.date),
-          start_time: input.startTime,
-          end_time: input.endTime,
-          duration,
-          type: input.type,
-          status: 'pending',
-          notes: input.notes,
-          created_at: now,
-          updated_at: now,
-        })
-        .returning();
+export type HoursLog = Tables<'hours_logs'>;
+export type HoursLogType = 'training' | 'preparation' | 'meeting' | 'other';
+export type HoursLogStatus = 'pending' | 'approved' | 'rejected';
 
-      return this.mapToDomain(result[0]);
-    } catch (error) {
-      throw parsePostgresError(error);
-    }
+export type HoursSummary = {
+  trainerId: string;
+  trainerName: string;
+  totalHours: number;
+  trainingHours: number;
+  preparationHours: number;
+  meetingHours: number;
+  otherHours: number;
+  pendingHours: number;
+  approvedHours: number;
+  rejectedHours: number;
+};
+
+function assertNoError(error: { message: string } | null, action: string): void {
+  if (error) {
+    log.error(action, new Error(error.message));
+    throw new Error(action);
+  }
+}
+
+function calculateDuration(startTime: string, endTime: string): number {
+  const [startHours, startMinutes] = startTime.split(':').map(Number);
+  const [endHours, endMinutes] = endTime.split(':').map(Number);
+  return endHours * 60 + endMinutes - (startHours * 60 + startMinutes);
+}
+
+export class HoursLogRepository {
+  constructor(private readonly db: AuthContext['supabase']) {}
+
+  async create(input: Omit<TablesInsert<'hours_logs'>, 'duration' | 'status'>): Promise<HoursLog> {
+    const duration = calculateDuration(input.start_time, input.end_time);
+    const { data, error } = await this.db
+      .from('hours_logs')
+      .insert({ ...input, duration, status: 'pending' })
+      .select()
+      .single();
+    assertNoError(error, 'Anlegen des Stundennachweises fehlgeschlagen');
+    return data!;
   }
 
   async findById(id: string): Promise<HoursLog | null> {
-    const result = await db.select().from(hoursLogs).where(eq(hoursLogs.id, id)).limit(1);
-
-    if (result.length === 0) return null;
-    return this.mapToDomain(result[0]);
+    const { data, error } = await this.db.from('hours_logs').select().eq('id', id).maybeSingle();
+    assertNoError(error, 'Lesen des Stundennachweises fehlgeschlagen');
+    return data;
   }
 
   async findByTrainerId(trainerId: string): Promise<HoursLog[]> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('hours_logs')
       .select()
-      .from(hoursLogs)
-      .where(eq(hoursLogs.trainer_id, trainerId))
-      .orderBy(desc(hoursLogs.date));
-
-    return result.map((row) => this.mapToDomain(row));
+      .eq('trainer_id', trainerId)
+      .order('date', { ascending: false });
+    assertNoError(error, 'Lesen der Stundennachweise fehlgeschlagen');
+    return data ?? [];
   }
 
+  /** Nur für vereinsübergreifende Aggregation (StatisticsService, systemDb). */
   async findAll(): Promise<HoursLog[]> {
-    const result = await db.select().from(hoursLogs).orderBy(desc(hoursLogs.date));
-    return result.map((row) => this.mapToDomain(row));
-  }
-
-  async findByDateRange(startDate: string, endDate: string): Promise<HoursLog[]> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('hours_logs')
       .select()
-      .from(hoursLogs)
-      .where(and(gte(hoursLogs.date, new Date(startDate)), lte(hoursLogs.date, new Date(endDate))))
-      .orderBy(desc(hoursLogs.date));
-
-    return result.map((row) => this.mapToDomain(row));
+      .order('date', { ascending: false });
+    assertNoError(error, 'Lesen der Stundennachweise fehlgeschlagen');
+    return data ?? [];
   }
 
-  async findByStatus(status: HoursLog['status']): Promise<HoursLog[]> {
-    const result = await db
-      .select()
-      .from(hoursLogs)
-      .where(eq(hoursLogs.status, status))
-      .orderBy(desc(hoursLogs.date));
-
-    return result.map((row) => this.mapToDomain(row));
-  }
-
-  async update(id: string, input: UpdateHoursLogInput): Promise<HoursLog | null> {
-    const now = new Date();
-
-    try {
-      const updateData: Partial<typeof hoursLogs.$inferInsert> = {
-        updated_at: now,
-      };
-
-      if (input.startTime !== undefined) updateData.start_time = input.startTime;
-      if (input.endTime !== undefined) updateData.end_time = input.endTime;
-      if (input.type !== undefined) updateData.type = input.type;
-      if (input.status !== undefined) updateData.status = input.status;
-      if (input.notes !== undefined) updateData.notes = input.notes;
-      if (input.approvedBy !== undefined) updateData.approved_by = input.approvedBy;
-      if (input.approvedAt !== undefined) updateData.approved_at = new Date(input.approvedAt);
-      if (input.rejectionReason !== undefined) updateData.rejection_reason = input.rejectionReason;
-
-      // Recalculate duration if times changed
-      if (input.startTime || input.endTime) {
-        const existing = await this.findById(id);
-        if (existing) {
-          const startTime = input.startTime ?? existing.startTime;
-          const endTime = input.endTime ?? existing.endTime;
-          updateData.duration = this.calculateDuration(startTime, endTime);
-        }
+  async update(id: string, input: TablesUpdate<'hours_logs'>): Promise<HoursLog | null> {
+    const update = { ...input };
+    if (update.start_time || update.end_time) {
+      const existing = await this.findById(id);
+      if (existing) {
+        const startTime = update.start_time ?? existing.start_time;
+        const endTime = update.end_time ?? existing.end_time;
+        update.duration = calculateDuration(startTime, endTime);
       }
-
-      const result = await db
-        .update(hoursLogs)
-        .set(updateData)
-        .where(eq(hoursLogs.id, id))
-        .returning();
-
-      if (result.length === 0) return null;
-      return this.mapToDomain(result[0]);
-    } catch (error) {
-      throw parsePostgresError(error);
     }
+    const { data, error } = await this.db
+      .from('hours_logs')
+      .update(update)
+      .eq('id', id)
+      .select()
+      .maybeSingle();
+    assertNoError(error, 'Aktualisieren des Stundennachweises fehlgeschlagen');
+    return data;
   }
 
-  async approve(id: string, approvedBy: string): Promise<HoursLog | null> {
-    return this.update(id, {
-      status: 'approved',
-      approvedBy,
-      approvedAt: new Date().toISOString(),
-    });
-  }
-
-  async reject(id: string, approvedBy: string, reason?: string): Promise<HoursLog | null> {
-    return this.update(id, {
-      status: 'rejected',
-      approvedBy,
-      approvedAt: new Date().toISOString(),
-      rejectionReason: reason,
-    });
-  }
-
-  async delete(id: string): Promise<void> {
-    await db.delete(hoursLogs).where(eq(hoursLogs.id, id));
+  async delete(id: string): Promise<boolean> {
+    const { data, error } = await this.db.from('hours_logs').delete().eq('id', id).select('id');
+    assertNoError(error, 'Löschen des Stundennachweises fehlgeschlagen');
+    return (data ?? []).length > 0;
   }
 
   async getSummaryForTrainer(trainerId: string): Promise<HoursSummary> {
     const logs = await this.findByTrainerId(trainerId);
-
-    const totalMinutes = logs.reduce((sum, log) => sum + log.duration, 0);
-    const trainingMinutes = logs
-      .filter((log) => log.type === 'training')
-      .reduce((sum, log) => sum + log.duration, 0);
-    const preparationMinutes = logs
-      .filter((log) => log.type === 'preparation')
-      .reduce((sum, log) => sum + log.duration, 0);
-    const meetingMinutes = logs
-      .filter((log) => log.type === 'meeting')
-      .reduce((sum, log) => sum + log.duration, 0);
-    const otherMinutes = logs
-      .filter((log) => log.type === 'other')
-      .reduce((sum, log) => sum + log.duration, 0);
-
-    const pendingMinutes = logs
-      .filter((log) => log.status === 'pending')
-      .reduce((sum, log) => sum + log.duration, 0);
-    const approvedMinutes = logs
-      .filter((log) => log.status === 'approved')
-      .reduce((sum, log) => sum + log.duration, 0);
-    const rejectedMinutes = logs
-      .filter((log) => log.status === 'rejected')
-      .reduce((sum, log) => sum + log.duration, 0);
-
-    const trainerName = logs.length > 0 ? logs[0].trainerName : 'Unknown';
+    const sum = (pred: (l: HoursLog) => boolean) =>
+      logs.filter(pred).reduce((total, l) => total + l.duration, 0);
 
     return {
       trainerId,
-      trainerName,
-      totalHours: totalMinutes / 60,
-      trainingHours: trainingMinutes / 60,
-      preparationHours: preparationMinutes / 60,
-      meetingHours: meetingMinutes / 60,
-      otherHours: otherMinutes / 60,
-      pendingHours: pendingMinutes / 60,
-      approvedHours: approvedMinutes / 60,
-      rejectedHours: rejectedMinutes / 60,
-    };
-  }
-
-  async getAllSummaries(): Promise<HoursSummary[]> {
-    // Get distinct trainer IDs
-    const result = await db
-      .select({
-        trainer_id: hoursLogs.trainer_id,
-      })
-      .from(hoursLogs)
-      .groupBy(hoursLogs.trainer_id);
-
-    const summaries: HoursSummary[] = [];
-    for (const row of result) {
-      const summary = await this.getSummaryForTrainer(row.trainer_id);
-      summaries.push(summary);
-    }
-
-    return summaries;
-  }
-
-  private calculateDuration(startTime: string, endTime: string): number {
-    const [startHours, startMinutes] = startTime.split(':').map(Number);
-    const [endHours, endMinutes] = endTime.split(':').map(Number);
-
-    const startTotalMinutes = startHours * 60 + startMinutes;
-    const endTotalMinutes = endHours * 60 + endMinutes;
-
-    return endTotalMinutes - startTotalMinutes;
-  }
-
-  private mapToDomain(row: typeof hoursLogs.$inferSelect): HoursLog {
-    return {
-      id: row.id,
-      trainerId: row.trainer_id,
-      trainerName: row.trainer_name,
-      sessionId: row.session_id ?? undefined,
-      date: row.date.toISOString().split('T')[0], // YYYY-MM-DD
-      startTime: row.start_time,
-      endTime: row.end_time,
-      duration: row.duration,
-      type: row.type as 'training' | 'preparation' | 'meeting' | 'other',
-      status: row.status as 'pending' | 'approved' | 'rejected',
-      notes: row.notes ?? undefined,
-      approvedBy: row.approved_by ?? undefined,
-      approvedAt: row.approved_at?.toISOString(),
-      rejectionReason: row.rejection_reason ?? undefined,
-      createdAt: row.created_at.toISOString(),
-      updatedAt: row.updated_at.toISOString(),
+      trainerName: logs.length > 0 ? logs[0].trainer_name : 'Unknown',
+      totalHours: sum(() => true) / 60,
+      trainingHours: sum((l) => l.type === 'training') / 60,
+      preparationHours: sum((l) => l.type === 'preparation') / 60,
+      meetingHours: sum((l) => l.type === 'meeting') / 60,
+      otherHours: sum((l) => l.type === 'other') / 60,
+      pendingHours: sum((l) => l.status === 'pending') / 60,
+      approvedHours: sum((l) => l.status === 'approved') / 60,
+      rejectedHours: sum((l) => l.status === 'rejected') / 60,
     };
   }
 }

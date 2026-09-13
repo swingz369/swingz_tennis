@@ -6,7 +6,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
+import { AttendanceRecordService } from '@/application/services/attendance-record.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       const { searchParams } = new URL(request.url);
       const memberId = searchParams.get('memberId');
       const clubId = searchParams.get('clubId');
+      const service = new AttendanceRecordService(auth);
 
       if (memberId) {
         // Members can only view their own summary; trainers/admins can view any
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
           return forbiddenResponse('Keine Berechtigung für diese Übersicht');
         }
 
-        const summary = await hoursLogService.getAttendanceHoursSummaryForMember(memberId);
+        const summary = await service.getAttendanceHoursSummaryForMember(memberId);
         if (!summary) {
           return NextResponse.json({
             summary: null,
@@ -48,12 +49,12 @@ export async function GET(request: NextRequest) {
         const isAdmin = await verifyRole(auth, 'admin');
         if (!isAdmin) return forbiddenResponse('Zugriff nur für Admins');
 
-        const summaries = await hoursLogService.getAttendanceHoursSummaryForClub(clubId);
+        const summaries = await service.getAttendanceHoursSummaryForClub(clubId);
         return NextResponse.json({ summaries });
       }
 
       // Default: return current user's summary
-      const summary = await hoursLogService.getAttendanceHoursSummaryForMember(auth.user.id);
+      const summary = await service.getAttendanceHoursSummaryForMember(auth.user.id);
       return NextResponse.json({ summary });
     } catch (error) {
       log.error('Hours summary error:', error);

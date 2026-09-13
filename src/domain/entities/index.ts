@@ -5,7 +5,6 @@ export * from './group.entity';
 export * from './pricing-rule.entity';
 export * from './billing.entity';
 export * from './fee-configuration.entity';
-export * from './hours-log.entity';
 export * from './member.entity';
 export * from './statistics.entity';
 export * from './system-settings.entity';

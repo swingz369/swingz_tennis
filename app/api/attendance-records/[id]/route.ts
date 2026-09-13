@@ -1,7 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
+import {
+  errorResponse,
+  internalErrorResponse,
+  ApiException,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { AttendanceRecordService } from '@/application/services/attendance-record.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -22,14 +27,12 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const attendanceRecord = await hoursLogService.getAttendanceRecordById(id);
-
-      if (!attendanceRecord) {
-        return NextResponse.json({ error: 'Anwesenheitseintrag nicht gefunden' }, { status: 404 });
-      }
-
+      const attendanceRecord = await new AttendanceRecordService(auth).getAttendanceRecordById(id);
       return NextResponse.json({ attendanceRecord });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Attendance record fetch error:', error);
       return internalErrorResponse();
     }
@@ -58,19 +61,18 @@ export async function PATCH(
 
       const { status, checkInTime, checkOutTime, notes } = body;
 
-      const updated = await hoursLogService.updateAttendanceRecord(id, {
+      const updated = await new AttendanceRecordService(auth).updateAttendanceRecord(id, {
         status,
         checkInTime,
         checkOutTime,
         notes,
       });
 
-      if (!updated) {
-        return NextResponse.json({ error: 'Anwesenheitseintrag nicht gefunden' }, { status: 404 });
-      }
-
       return NextResponse.json({ success: true, attendanceRecord: updated });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Attendance record update error:', error);
       return internalErrorResponse();
     }
@@ -95,14 +97,12 @@ export async function DELETE(
 
     try {
       const { id } = await params;
-      const success = await hoursLogService.deleteAttendanceRecord(id);
-
-      if (!success) {
-        return NextResponse.json({ error: 'Anwesenheitseintrag nicht gefunden' }, { status: 404 });
-      }
-
+      await new AttendanceRecordService(auth).deleteAttendanceRecord(id);
       return NextResponse.json({ success: true });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Attendance record delete error:', error);
       return internalErrorResponse();
     }

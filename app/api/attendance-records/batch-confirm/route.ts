@@ -6,7 +6,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
+import { AttendanceRecordService } from '@/application/services/attendance-record.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Maximal 100 Datensätze pro Batch' }, { status: 400 });
       }
 
-      const confirmed = await hoursLogService.batchConfirmAttendance(recordIds, auth.user.id);
+      const confirmed = await new AttendanceRecordService(auth).batchConfirmAttendance(recordIds);
       return NextResponse.json({ success: true, confirmed });
     } catch (error) {
       log.error('Batch confirm error:', error);

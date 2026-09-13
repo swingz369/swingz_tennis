@@ -8,8 +8,9 @@ import type {
 } from '../../domain/entities/statistics.entity';
 import { memberService } from './member-service.adapter';
 import { billingService } from './billing-service.adapter';
-import { hoursLogService } from './hours-log-service.adapter';
 import { trialTrainingService } from './trial-training-service.adapter';
+import { HoursLogRepository } from '@/infrastructure/persistence/repositories/hours-log.repository';
+import { systemDb } from '@/infrastructure/db';
 
 export class StatisticsService {
   async generateStatistics(
@@ -187,7 +188,10 @@ export class StatisticsService {
   }
 
   async calculateTrainerStatistics(startDate: Date, endDate: Date): Promise<TrainerStatistics> {
-    const hoursLogs = await hoursLogService.getAllHoursLogs();
+    const hoursLogRepo = new HoursLogRepository(
+      systemDb('Statistik-Aggregation über alle Vereine, kein Request-Kontext verfügbar')
+    );
+    const hoursLogs = await hoursLogRepo.findAll();
     const filteredLogs = hoursLogs.filter(
       (log) =>
         new Date(log.date) >= startDate &&
@@ -200,7 +204,7 @@ export class StatisticsService {
 
     const hoursByTrainer = filteredLogs.reduce(
       (acc, log) => {
-        acc[log.trainerId] = (acc[log.trainerId] || 0) + log.duration / 60;
+        acc[log.trainer_id] = (acc[log.trainer_id] || 0) + log.duration / 60;
         return acc;
       },
       {} as Record<string, number>
@@ -208,7 +212,7 @@ export class StatisticsService {
 
     const sessionsByTrainer = filteredLogs.reduce(
       (acc, log) => {
-        acc[log.trainerId] = (acc[log.trainerId] || 0) + 1;
+        acc[log.trainer_id] = (acc[log.trainer_id] || 0) + 1;
         return acc;
       },
       {} as Record<string, number>
@@ -216,7 +220,7 @@ export class StatisticsService {
 
     const trainerEarnings = filteredLogs.reduce(
       (acc, log) => {
-        acc[log.trainerId] = (acc[log.trainerId] || 0) + log.duration / 60;
+        acc[log.trainer_id] = (acc[log.trainer_id] || 0) + log.duration / 60;
         return acc;
       },
       {} as Record<string, number>

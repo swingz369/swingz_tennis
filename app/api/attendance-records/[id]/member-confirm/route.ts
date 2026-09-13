@@ -9,8 +9,13 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
+import {
+  errorResponse,
+  internalErrorResponse,
+  ApiException,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { AttendanceRecordService } from '@/application/services/attendance-record.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -27,6 +32,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const body = await request.json();
       const url = new URL(request.url);
       const isResolve = url.searchParams.get('resolve') === 'true';
+      const service = new AttendanceRecordService(auth);
 
       // Admin dispute resolution
       if (isResolve) {
@@ -41,14 +47,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           );
         }
 
-        const updated = await hoursLogService.resolveAttendanceDispute(
-          id,
-          auth.user.id,
-          resolution
-        );
-        if (!updated) {
-          return NextResponse.json({ error: 'Eintrag nicht gefunden' }, { status: 404 });
-        }
+        const updated = await service.resolveAttendanceDispute(id, auth.user.id, resolution);
         return NextResponse.json({ success: true, record: updated });
       }
 
@@ -68,22 +67,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         );
       }
 
-      let record;
-      if (action === 'confirm') {
-        record = await hoursLogService.memberConfirmAttendance(id, auth.user.id);
-      } else {
-        record = await hoursLogService.memberDisputeAttendance(id, auth.user.id, reason);
-      }
-
-      if (!record) {
-        return NextResponse.json(
-          { error: 'Eintrag nicht gefunden oder nicht berechtigt' },
-          { status: 404 }
-        );
-      }
+      const record =
+        action === 'confirm'
+          ? await service.memberConfirmAttendance(id, auth.user.id)
+          : await service.memberDisputeAttendance(id, auth.user.id, reason);
 
       return NextResponse.json({ success: true, record });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Member confirm error:', error);
       return internalErrorResponse();
     }

@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
+import { AttendanceRecordService } from '@/application/services/attendance-record.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -51,7 +51,7 @@ export async function POST(_request: NextRequest) {
       }
 
       // Create attendance record
-      const attendanceRecord = await hoursLogService.createAttendanceRecord({
+      const attendanceRecord = await new AttendanceRecordService(auth).createAttendanceRecord({
         sessionId,
         trainerId,
         trainerName,
@@ -103,13 +103,20 @@ export async function GET(_request: NextRequest) {
       const sessionId = searchParams.get('sessionId');
       const trainerId = searchParams.get('trainerId');
 
-      // Legacy trainer/admin per-session or per-trainer queries (Drizzle service)
-      if (sessionId) {
-        const attendanceRecords = await hoursLogService.getAttendanceRecordsBySessionId(sessionId);
-        return NextResponse.json({ attendanceRecords });
-      }
-      if (trainerId) {
-        const attendanceRecords = await hoursLogService.getAttendanceRecordsByTrainerId(trainerId);
+      // Trainer/Admin-Abfragen pro Session oder Trainer — RLS
+      // (attendance_records_select/admin_manage) scoped das Ergebnis auf das,
+      // was der Aufrufer tatsächlich sehen darf.
+      if (sessionId || trainerId) {
+        const isPrivileged = await verifyRole(auth, 'trainer');
+        if (!isPrivileged) {
+          return forbiddenResponse('Zugriff nur für Trainer oder Admins');
+        }
+        const service = new AttendanceRecordService(auth);
+        if (sessionId) {
+          const attendanceRecords = await service.getAttendanceRecordsBySessionId(sessionId);
+          return NextResponse.json({ attendanceRecords });
+        }
+        const attendanceRecords = await service.getAttendanceRecordsByTrainerId(trainerId!);
         return NextResponse.json({ attendanceRecords });
       }
 
@@ -123,8 +130,7 @@ export async function GET(_request: NextRequest) {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      const supabase = createServiceClient();
-      let query = supabase
+      let query = auth.supabase
         .from('attendance_records')
         .select(
           'id, session_id, participant_name, date, status, check_in_time, check_out_time, notes',
