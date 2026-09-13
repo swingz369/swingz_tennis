@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
+import { TrialTrainingService } from '@/application/services/trial-training.service';
+import { systemDb } from '@/infrastructure/db';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
 import { appBaseUrl } from '@/lib/app-url';
@@ -29,6 +30,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const trialTrainingService = new TrialTrainingService(
+      systemDb('öffentlicher DOI-Bestätigungslink, kein Login')
+    );
     const confirmed = await trialTrainingService.confirmMarketingConsent(token);
 
     return NextResponse.redirect(

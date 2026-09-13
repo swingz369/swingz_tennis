@@ -8,8 +8,8 @@ import type {
 } from '../../domain/entities/statistics.entity';
 import { memberService } from './member-service.adapter';
 import { billingService } from './billing-service.adapter';
-import { trialTrainingService } from './trial-training-service.adapter';
 import { HoursLogRepository } from '@/infrastructure/persistence/repositories/hours-log.repository';
+import { TrialTrainingRepository } from '@/infrastructure/persistence/repositories/trial-training.repository';
 import { systemDb } from '@/infrastructure/db';
 
 export class StatisticsService {
@@ -39,7 +39,10 @@ export class StatisticsService {
 
   async calculateMemberStatistics(startDate: Date, endDate: Date): Promise<MemberStatistics> {
     const members = await memberService.getAllMembers();
-    const trialTrainings = await trialTrainingService.getAllTrialTrainings();
+    const trialTrainingRepo = new TrialTrainingRepository(
+      systemDb('Statistik-Aggregation über alle Vereine, kein Request-Kontext verfügbar')
+    );
+    const trialTrainings = await trialTrainingRepo.findAllAcrossClubs();
 
     const activeMembers = members.filter((m) => m.membershipStatus === 'active').length;
     const inactiveMembers = members.filter((m) => m.membershipStatus === 'inactive').length;

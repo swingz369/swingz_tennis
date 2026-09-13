@@ -211,8 +211,10 @@ vi.mock('@/infrastructure/persistence/repositories/hours-log.repository', () => 
   };
 });
 
-// ── Mock trial-training adapter (now always uses Drizzle repo, no in-memory fallback) ──
-vi.mock('@/src/application/services/trial-training-service.adapter', () => {
+// ── Mock trial-training repository (ADR-005: StatisticsService liest jetzt
+//    über TrialTrainingRepository.findAllAcrossClubs() + systemDb, nicht mehr
+//    über den gelöschten Adapter) ──
+vi.mock('@/infrastructure/persistence/repositories/trial-training.repository', () => {
   const now = Date.now();
   const dp = (days: number) => new Date(now - days * 86400000).toISOString();
 
@@ -359,22 +361,8 @@ vi.mock('@/src/application/services/trial-training-service.adapter', () => {
   ];
 
   return {
-    trialTrainingService: {
-      getAllTrialTrainings: vi.fn().mockResolvedValue(trialTrainings),
-      getTrialTrainingById: vi.fn(),
-      getTrialTrainingsByStatus: vi.fn(),
-      getTrialTrainingsByParticipantEmail: vi.fn(),
-      getUpcomingTrialTrainings: vi.fn(),
-      getTrialTrainingsNeedingReminder: vi.fn(),
-      searchTrialTrainings: vi.fn(),
-      getTrialTrainingStats: vi.fn(),
-      createTrialTraining: vi.fn(),
-      updateTrialTraining: vi.fn(),
-      updateTrialTrainingStatus: vi.fn(),
-      addTrialTrainingFeedback: vi.fn(),
-      convertTrialToMember: vi.fn(),
-      deleteTrialTraining: vi.fn(),
-      validateTrialTrainingInput: vi.fn(),
+    TrialTrainingRepository: class {
+      findAllAcrossClubs = vi.fn().mockResolvedValue(trialTrainings);
     },
   };
 });

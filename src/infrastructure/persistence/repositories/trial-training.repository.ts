@@ -1,143 +1,232 @@
+/**
+ * Probetraining-Teildomäne (Dritter und letzter Teil von "Mitglieder,
+ * Probetraining, Gruppen", ADR-005 Domäne 3) — ein Repository statt
+ * Drizzle-Direktzugriff, docs/ARCHIV/2026-09-13-architektur-analyse-
+ * datenzugriff.md § 6.
+ *
+ * RLS-Fund: INSERT/UPDATE/SELECT auf trial_trainings erlaubten bisher nur
+ * is_club_admin bzw. einem Trainer mit bereits zugewiesener trainer_id —
+ * die Routes hier prüfen aber verifyRole(auth, 'trainer') für Anlegen/
+ * Bearbeiten. Migration 20260914100000 weitet die drei Policies auf
+ * is_club_admin OR is_club_trainer aus; die beiden "assigned"-Policies
+ * sind dadurch vollständig subsumiert und wurden gelöscht.
+ *
+ * Nur tatsächlich aufgerufene Methoden migriert: findByTrainer, findUpcoming,
+ * search, updateStatus, convertToMember hatten keinen Aufrufer außerhalb des
+ * jetzt gelöschten Adapters (dessen eigene Wrapper dafür ebenfalls nie von
+ * einer Route aufgerufen wurden).
+ */
+import 'server-only';
 import { randomBytes } from 'crypto';
-import { eq, and, desc, ilike, or, sql } from 'drizzle-orm';
-import { db } from '../db';
-import { trialTrainings, trainers, courts } from '../schema';
-import type { ITrialTrainingRepository } from '@/domain/repositories/trial-training-repository.interface';
+import type { AuthContext } from '@/lib/api-auth';
 import type {
   TrialTraining,
   CreateTrialTrainingInput,
   UpdateTrialTrainingInput,
   TrialTrainingStats,
 } from '@/domain/entities/trial-training.entity';
+import type { Tables, TablesInsert } from '@/types/supabase';
 import { parsePostgresError } from '@/lib/errors/database-errors';
+import { createLogger } from '@/lib/logger';
 
-/**
- * Drizzle ORM implementation of the Trial Training Repository
- * Manages trial sessions with conversion tracking
- */
-export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository {
+const log = createLogger('infrastructure:trial-training.repository');
+
+type TrialTrainingRow = Tables<'trial_trainings'>;
+
+/** Platzhalter-UUID für öffentliche Probetraining-Anfragen ohne Trainer/Platz. */
+const UNASSIGNED_ID = '00000000-0000-0000-0000-000000000000';
+
+function assertNoError(error: { message: string } | null, action: string): void {
+  if (error) {
+    log.error(action, new Error(error.message));
+    throw new Error(action);
+  }
+}
+
+function mapToDomain(row: TrialTrainingRow): TrialTraining {
+  return {
+    id: row.id,
+    participant: {
+      id: row.participant_id,
+      firstName: row.participant_first_name,
+      lastName: row.participant_last_name,
+      email: row.participant_email,
+      phone: row.participant_phone,
+      dateOfBirth: row.participant_date_of_birth,
+    },
+    scheduledDate: row.scheduled_date,
+    scheduledTime: row.scheduled_time,
+    duration: row.duration,
+    trainer: { id: row.trainer_id, name: row.trainer_name },
+    court: { id: row.court_id, name: row.court_name },
+    status: row.status as TrialTraining['status'],
+    notes: row.notes ?? undefined,
+    feedback: row.feedback_rating
+      ? {
+          rating: row.feedback_rating,
+          comments: row.feedback_comments ?? '',
+          wouldRecommend: row.feedback_would_recommend ?? false,
+        }
+      : undefined,
+    convertedToMemberId: row.converted_to_member_id ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export class TrialTrainingRepository {
+  constructor(private readonly db: AuthContext['supabase']) {}
+
   async create(input: CreateTrialTrainingInput, clubId: string): Promise<TrialTraining> {
-    const now = new Date();
+    const { data, error } = await this.db
+      .from('trial_trainings')
+      .insert({
+        club_id: clubId,
+        participant_first_name: input.participant.firstName,
+        participant_last_name: input.participant.lastName,
+        participant_email: input.participant.email,
+        participant_phone: input.participant.phone,
+        participant_date_of_birth: input.participant.dateOfBirth,
+        scheduled_date: input.scheduledDate,
+        scheduled_time: input.scheduledTime,
+        duration: input.duration,
+        trainer_id: input.trainerId,
+        trainer_name: 'Trainer',
+        court_id: input.courtId,
+        court_name: 'Court',
+        status: 'scheduled',
+        notes: input.notes,
+      })
+      .select()
+      .single();
+    if (error) throw parsePostgresError(error);
+    return mapToDomain(data);
+  }
 
-    try {
-      const result = await db
-        .insert(trialTrainings)
-        .values({
-          club_id: clubId,
-          participant_first_name: input.participant.firstName,
-          participant_last_name: input.participant.lastName,
-          participant_email: input.participant.email,
-          participant_phone: input.participant.phone,
-          participant_date_of_birth: new Date(input.participant.dateOfBirth),
-          scheduled_date: new Date(input.scheduledDate),
-          scheduled_time: input.scheduledTime,
-          duration: input.duration,
-          trainer_id: input.trainerId,
-          trainer_name: 'Trainer', // Will be fetched via relation
-          court_id: input.courtId,
-          court_name: 'Court', // Will be fetched via relation
-          status: 'scheduled',
-          notes: input.notes,
-          created_at: now,
-          updated_at: now,
-        })
-        .returning();
+  /**
+   * Öffentliche Probetraining-Anfrage (kein Login) — Platzhalter-Trainer/
+   * Platz statt echter Zuweisung, Admin/Trainer weist später zu. Kein
+   * DB-Transaktionsblock (Supabase-JS unterstützt das nicht) — die beiden
+   * Platzhalter-Upserts sind idempotent (ignoreDuplicates), eine echte
+   * Transaktion war hier nie zum Schutz einer Invariante nötig, nur zum
+   * Gruppieren dreier Statements.
+   */
+  async createRequested(input: CreateTrialTrainingInput, clubId: string): Promise<TrialTraining> {
+    const marketingConsent = input.marketingConsent ?? false;
+    const marketingConsentToken = marketingConsent ? randomBytes(32).toString('hex') : null;
 
-      return this.mapToDomain(result[0]);
-    } catch (error) {
-      throw parsePostgresError(error);
-    }
+    const { error: trainerError } = await this.db.from('trainers').upsert(
+      {
+        id: UNASSIGNED_ID,
+        email: 'unassigned@placeholder.local',
+        name: 'Noch nicht zugewiesen',
+        specialties: [],
+        max_hours_per_week: 0,
+        is_active: false,
+      } satisfies TablesInsert<'trainers'>,
+      { onConflict: 'id', ignoreDuplicates: true }
+    );
+    assertNoError(trainerError, 'Anlegen des Platzhalter-Trainers fehlgeschlagen');
+
+    const { error: courtError } = await this.db.from('courts').upsert(
+      {
+        id: UNASSIGNED_ID,
+        club_id: clubId,
+        name: 'Noch nicht zugewiesen',
+        surface: 'hard',
+        is_active: false,
+      } satisfies TablesInsert<'courts'>,
+      { onConflict: 'id', ignoreDuplicates: true }
+    );
+    assertNoError(courtError, 'Anlegen des Platzhalter-Platzes fehlgeschlagen');
+
+    const { data, error } = await this.db
+      .from('trial_trainings')
+      .insert({
+        club_id: clubId,
+        participant_first_name: input.participant.firstName,
+        participant_last_name: input.participant.lastName,
+        participant_email: input.participant.email,
+        participant_phone: input.participant.phone,
+        participant_date_of_birth: input.participant.dateOfBirth,
+        scheduled_date: input.scheduledDate,
+        scheduled_time: input.scheduledTime,
+        duration: input.duration,
+        trainer_id: UNASSIGNED_ID,
+        trainer_name: 'Noch nicht zugewiesen',
+        court_id: UNASSIGNED_ID,
+        court_name: 'Noch nicht zugewiesen',
+        status: 'requested',
+        notes: input.notes,
+        marketing_consent: marketingConsent,
+        marketing_consent_token: marketingConsentToken,
+      })
+      .select()
+      .single();
+    if (error) throw parsePostgresError(error);
+
+    // Token nur hier zurückgeben, damit der Aufrufer die DOI-Mail verschicken
+    // kann — mapToDomain liest ihn für alle anderen Aufrufer nie zurück.
+    return {
+      ...mapToDomain(data),
+      ...(marketingConsentToken ? { marketingConsentToken } : {}),
+    };
   }
 
   async findById(id: string, clubId: string): Promise<TrialTraining | null> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('trial_trainings')
       .select()
-      .from(trialTrainings)
-      .where(and(eq(trialTrainings.id, id), eq(trialTrainings.club_id, clubId)))
-      .limit(1);
-
-    if (result.length === 0) return null;
-    return this.mapToDomain(result[0]);
+      .eq('id', id)
+      .eq('club_id', clubId)
+      .maybeSingle();
+    assertNoError(error, 'Lesen des Probetrainings fehlgeschlagen');
+    return data ? mapToDomain(data) : null;
   }
 
   async findAll(clubId: string): Promise<TrialTraining[]> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('trial_trainings')
       .select()
-      .from(trialTrainings)
-      .where(eq(trialTrainings.club_id, clubId))
-      .orderBy(desc(trialTrainings.scheduled_date));
+      .eq('club_id', clubId)
+      .order('scheduled_date', { ascending: false });
+    assertNoError(error, 'Lesen der Probetrainings fehlgeschlagen');
+    return (data ?? []).map(mapToDomain);
+  }
 
-    return result.map((row) => this.mapToDomain(row));
+  /**
+   * Vereinsübergreifend, ohne club_id-Filter — nur für die Owner/Statistik-
+   * Aggregation ohne Request-Kontext (systemDb()), analog HoursLogRepository.
+   */
+  async findAllAcrossClubs(): Promise<TrialTraining[]> {
+    const { data, error } = await this.db
+      .from('trial_trainings')
+      .select()
+      .order('scheduled_date', { ascending: false });
+    assertNoError(error, 'Lesen der Probetrainings fehlgeschlagen');
+    return (data ?? []).map(mapToDomain);
   }
 
   async findByStatus(status: TrialTraining['status'], clubId: string): Promise<TrialTraining[]> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('trial_trainings')
       .select()
-      .from(trialTrainings)
-      .where(and(eq(trialTrainings.status, status), eq(trialTrainings.club_id, clubId)))
-      .orderBy(desc(trialTrainings.scheduled_date));
-
-    return result.map((row) => this.mapToDomain(row));
+      .eq('status', status)
+      .eq('club_id', clubId)
+      .order('scheduled_date', { ascending: false });
+    assertNoError(error, 'Lesen der Probetrainings fehlgeschlagen');
+    return (data ?? []).map(mapToDomain);
   }
 
   async findByParticipantEmail(email: string, clubId: string): Promise<TrialTraining[]> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('trial_trainings')
       .select()
-      .from(trialTrainings)
-      .where(
-        and(ilike(trialTrainings.participant_email, email), eq(trialTrainings.club_id, clubId))
-      )
-      .orderBy(desc(trialTrainings.scheduled_date));
-
-    return result.map((row) => this.mapToDomain(row));
-  }
-
-  async findByTrainer(trainerId: string, clubId: string): Promise<TrialTraining[]> {
-    const result = await db
-      .select()
-      .from(trialTrainings)
-      .where(and(eq(trialTrainings.trainer_id, trainerId), eq(trialTrainings.club_id, clubId)))
-      .orderBy(desc(trialTrainings.scheduled_date));
-
-    return result.map((row) => this.mapToDomain(row));
-  }
-
-  async findUpcoming(clubId: string, days: number = 7): Promise<TrialTraining[]> {
-    // Use the PostgreSQL helper function
-    const result = await db.execute<typeof trialTrainings.$inferSelect>(sql`
-      SELECT *
-      FROM get_upcoming_trial_trainings(
-        ${clubId}::uuid,
-        ${days}::integer
-      )
-    `);
-
-    if (!result || result.length === 0) {
-      return [];
-    }
-
-    return result.map((row) => this.mapToDomain(row));
-  }
-
-  async search(query: string, clubId: string): Promise<TrialTraining[]> {
-    const searchPattern = `%${query}%`;
-
-    const result = await db
-      .select()
-      .from(trialTrainings)
-      .where(
-        and(
-          eq(trialTrainings.club_id, clubId),
-          or(
-            ilike(trialTrainings.participant_first_name, searchPattern),
-            ilike(trialTrainings.participant_last_name, searchPattern),
-            ilike(trialTrainings.participant_email, searchPattern)
-          )
-        )
-      )
-      .orderBy(desc(trialTrainings.scheduled_date));
-
-    return result.map((row) => this.mapToDomain(row));
+      .ilike('participant_email', email)
+      .eq('club_id', clubId)
+      .order('scheduled_date', { ascending: false });
+    assertNoError(error, 'Lesen der Probetrainings fehlgeschlagen');
+    return (data ?? []).map(mapToDomain);
   }
 
   async findByDateRange(
@@ -145,19 +234,15 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
     startDate: string,
     endDate: string
   ): Promise<TrialTraining[]> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('trial_trainings')
       .select()
-      .from(trialTrainings)
-      .where(
-        and(
-          eq(trialTrainings.club_id, clubId),
-          sql`${trialTrainings.scheduled_date} >= ${new Date(startDate)}::date`,
-          sql`${trialTrainings.scheduled_date} <= ${new Date(endDate)}::date`
-        )
-      )
-      .orderBy(desc(trialTrainings.scheduled_date));
-
-    return result.map((row) => this.mapToDomain(row));
+      .eq('club_id', clubId)
+      .gte('scheduled_date', startDate)
+      .lte('scheduled_date', endDate)
+      .order('scheduled_date', { ascending: false });
+    assertNoError(error, 'Lesen der Probetrainings fehlgeschlagen');
+    return (data ?? []).map(mapToDomain);
   }
 
   async getStats(
@@ -165,25 +250,15 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
     startDate?: string,
     endDate?: string
   ): Promise<TrialTrainingStats> {
-    // Use the PostgreSQL helper function
-    const result = await db.execute<{
-      total: string;
-      scheduled: string;
-      completed: string;
-      cancelled: string;
-      no_show: string;
-      converted: string;
-      conversion_rate: string;
-    }>(sql`
-      SELECT *
-      FROM get_trial_training_stats(
-        ${clubId}::uuid,
-        ${startDate ? new Date(startDate) : null}::date,
-        ${endDate ? new Date(endDate) : null}::date
-      )
-    `);
+    const { data, error } = await this.db.rpc('get_trial_training_stats', {
+      p_club_id: clubId,
+      ...(startDate ? { p_start_date: startDate } : {}),
+      ...(endDate ? { p_end_date: endDate } : {}),
+    });
+    assertNoError(error, 'Lesen der Probetraining-Statistik fehlgeschlagen');
 
-    if (!result || result.length === 0) {
+    const row = data?.[0];
+    if (!row) {
       return {
         total: 0,
         scheduled: 0,
@@ -194,16 +269,14 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
         conversionRate: 0,
       };
     }
-
-    const row = result[0];
     return {
-      total: parseInt(row.total),
-      scheduled: parseInt(row.scheduled),
-      completed: parseInt(row.completed),
-      cancelled: parseInt(row.cancelled),
-      noShow: parseInt(row.no_show),
-      converted: parseInt(row.converted),
-      conversionRate: parseFloat(row.conversion_rate),
+      total: row.total,
+      scheduled: row.scheduled,
+      completed: row.completed,
+      cancelled: row.cancelled,
+      noShow: row.no_show,
+      converted: row.converted,
+      conversionRate: row.conversion_rate,
     };
   }
 
@@ -212,210 +285,59 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
     input: UpdateTrialTrainingInput,
     clubId: string
   ): Promise<TrialTraining | null> {
-    const now = new Date();
-
-    try {
-      const updateData: Partial<typeof trialTrainings.$inferInsert> = {
-        updated_at: now,
-      };
-
-      if (input.status !== undefined) updateData.status = input.status;
-      if (input.notes !== undefined) updateData.notes = input.notes;
-      if (input.trainerId !== undefined) updateData.trainer_id = input.trainerId;
-      if (input.trainerName !== undefined) updateData.trainer_name = input.trainerName;
-      if (input.courtId !== undefined) updateData.court_id = input.courtId;
-      if (input.courtName !== undefined) updateData.court_name = input.courtName;
-      if (input.feedback !== undefined) {
-        updateData.feedback_rating = input.feedback.rating;
-        updateData.feedback_comments = input.feedback.comments;
-        updateData.feedback_would_recommend = input.feedback.wouldRecommend;
-      }
-      if (input.convertedToMemberId !== undefined) {
-        updateData.converted_to_member_id = input.convertedToMemberId;
-      }
-
-      const result = await db
-        .update(trialTrainings)
-        .set(updateData)
-        .where(and(eq(trialTrainings.id, id), eq(trialTrainings.club_id, clubId)))
-        .returning();
-
-      if (result.length === 0) return null;
-      return this.mapToDomain(result[0]);
-    } catch (error) {
-      throw parsePostgresError(error);
+    const updateData: Partial<Tables<'trial_trainings'>> = {};
+    if (input.status !== undefined) updateData.status = input.status;
+    if (input.notes !== undefined) updateData.notes = input.notes;
+    if (input.trainerId !== undefined) updateData.trainer_id = input.trainerId;
+    if (input.trainerName !== undefined) updateData.trainer_name = input.trainerName;
+    if (input.courtId !== undefined) updateData.court_id = input.courtId;
+    if (input.courtName !== undefined) updateData.court_name = input.courtName;
+    if (input.feedback !== undefined) {
+      updateData.feedback_rating = input.feedback.rating;
+      updateData.feedback_comments = input.feedback.comments;
+      updateData.feedback_would_recommend = input.feedback.wouldRecommend;
     }
-  }
+    if (input.convertedToMemberId !== undefined) {
+      updateData.converted_to_member_id = input.convertedToMemberId;
+    }
 
-  async updateStatus(
-    id: string,
-    status: TrialTraining['status'],
-    clubId: string
-  ): Promise<TrialTraining | null> {
-    return this.update(id, { status }, clubId);
-  }
-
-  async convertToMember(
-    id: string,
-    memberId: string,
-    clubId: string
-  ): Promise<TrialTraining | null> {
-    return this.update(id, { status: 'converted', convertedToMemberId: memberId }, clubId);
+    const { data, error } = await this.db
+      .from('trial_trainings')
+      .update(updateData)
+      .eq('id', id)
+      .eq('club_id', clubId)
+      .select()
+      .maybeSingle();
+    if (error) throw parsePostgresError(error);
+    return data ? mapToDomain(data) : null;
   }
 
   async delete(id: string, clubId: string): Promise<boolean> {
-    const result = await db
-      .delete(trialTrainings)
-      .where(and(eq(trialTrainings.id, id), eq(trialTrainings.club_id, clubId)))
-      .returning();
-
-    return result.length > 0;
+    const { data, error } = await this.db
+      .from('trial_trainings')
+      .delete()
+      .eq('id', id)
+      .eq('club_id', clubId)
+      .select('id');
+    assertNoError(error, 'Löschen des Probetrainings fehlgeschlagen');
+    return (data ?? []).length > 0;
   }
 
+  /**
+   * Bestätigung per Token, vereinsübergreifend gesucht — der öffentliche
+   * DOI-Link trägt keinen Club-Kontext. Token ist Single-Use: wird beim
+   * Bestätigen sofort geleert, damit er nicht wiederverwendet werden kann.
+   */
   async confirmMarketingConsentByToken(token: string): Promise<boolean> {
-    try {
-      const result = await db
-        .update(trialTrainings)
-        .set({
-          marketing_consent_confirmed_at: new Date(),
-          marketing_consent_token: null, // Single-use — invalidate immediately
-        })
-        .where(eq(trialTrainings.marketing_consent_token, token))
-        .returning({ id: trialTrainings.id });
-
-      return result.length > 0;
-    } catch (error) {
-      throw parsePostgresError(error);
-    }
-  }
-
-  /** Unassigned placeholder UUID for public trial training requests */
-  private static readonly UNASSIGNED_ID = '00000000-0000-0000-0000-000000000000';
-
-  /**
-   * Create a requested trial training from public booking (non-member)
-   * Uses placeholder trainer/court so admin can assign real resources later.
-   */
-  async createRequested(input: CreateTrialTrainingInput, clubId: string): Promise<TrialTraining> {
-    const now = new Date();
-    const marketingConsent = input.marketingConsent ?? false;
-    // Only generate a DOI token when consent was actually given — no token
-    // means no confirmation link can ever be produced, i.e. no marketing mail.
-    const marketingConsentToken = marketingConsent ? randomBytes(32).toString('hex') : null;
-
-    try {
-      const result = await db.transaction(async (tx) => {
-        // Ensure placeholder trainer record exists for FK constraint
-        await tx
-          .insert(trainers)
-          .values({
-            id: DrizzleTrialTrainingRepository.UNASSIGNED_ID,
-            email: 'unassigned@placeholder.local',
-            name: 'Noch nicht zugewiesen',
-            specialties: [],
-            max_hours_per_week: 0,
-            is_active: false,
-            created_at: now,
-            updated_at: now,
-          })
-          .onConflictDoNothing();
-
-        // Ensure placeholder court record exists for FK constraint
-        await tx
-          .insert(courts)
-          .values({
-            id: DrizzleTrialTrainingRepository.UNASSIGNED_ID,
-            club_id: clubId,
-            name: 'Noch nicht zugewiesen',
-            surface: 'hard',
-            is_active: false,
-            created_at: now,
-          })
-          .onConflictDoNothing();
-
-        return tx
-          .insert(trialTrainings)
-          .values({
-            club_id: clubId,
-            participant_first_name: input.participant.firstName,
-            participant_last_name: input.participant.lastName,
-            participant_email: input.participant.email,
-            participant_phone: input.participant.phone,
-            participant_date_of_birth: new Date(input.participant.dateOfBirth),
-            scheduled_date: new Date(input.scheduledDate),
-            scheduled_time: input.scheduledTime,
-            duration: input.duration,
-            trainer_id: DrizzleTrialTrainingRepository.UNASSIGNED_ID,
-            trainer_name: 'Noch nicht zugewiesen',
-            court_id: DrizzleTrialTrainingRepository.UNASSIGNED_ID,
-            court_name: 'Noch nicht zugewiesen',
-            status: 'requested',
-            notes: input.notes,
-            marketing_consent: marketingConsent,
-            marketing_consent_token: marketingConsentToken,
-            created_at: now,
-            updated_at: now,
-          })
-          .returning();
-      });
-
-      // Include the freshly generated token so the caller can send the DOI
-      // confirmation email — mapToDomain never reads it back from the row
-      // for other call sites (kept out of the standard read path).
-      return {
-        ...this.mapToDomain(result[0]),
-        ...(marketingConsentToken ? { marketingConsentToken } : {}),
-      };
-    } catch (error) {
-      throw parsePostgresError(error);
-    }
-  }
-
-  /**
-   * Map database row to domain entity
-   */
-  private mapToDomain(row: typeof trialTrainings.$inferSelect): TrialTraining {
-    return {
-      id: row.id,
-      participant: {
-        id: row.participant_id,
-        firstName: row.participant_first_name,
-        lastName: row.participant_last_name,
-        email: row.participant_email,
-        phone: row.participant_phone,
-        dateOfBirth: this.formatDate(row.participant_date_of_birth),
-      },
-      scheduledDate: this.formatDate(row.scheduled_date),
-      scheduledTime: row.scheduled_time,
-      duration: row.duration,
-      trainer: {
-        id: row.trainer_id,
-        name: row.trainer_name,
-      },
-      court: {
-        id: row.court_id,
-        name: row.court_name,
-      },
-      status: row.status as
-        'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'converted' | 'requested',
-      notes: row.notes ?? undefined,
-      feedback: row.feedback_rating
-        ? {
-            rating: row.feedback_rating,
-            comments: row.feedback_comments ?? '',
-            wouldRecommend: row.feedback_would_recommend ?? false,
-          }
-        : undefined,
-      convertedToMemberId: row.converted_to_member_id ?? undefined,
-      createdAt: row.created_at.toISOString(),
-      updatedAt: row.updated_at.toISOString(),
-    };
-  }
-
-  /**
-   * Format date to YYYY-MM-DD string
-   */
-  private formatDate(date: Date): string {
-    return date.toISOString().split('T')[0];
+    const { data, error } = await this.db
+      .from('trial_trainings')
+      .update({
+        marketing_consent_confirmed_at: new Date().toISOString(),
+        marketing_consent_token: null,
+      })
+      .eq('marketing_consent_token', token)
+      .select('id');
+    if (error) throw parsePostgresError(error);
+    return (data ?? []).length > 0;
   }
 }

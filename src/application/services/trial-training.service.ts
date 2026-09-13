@@ -1,350 +1,356 @@
+/**
+ * Ersetzt die alte, rein In-Memory haltende TrialTrainingService-Klasse
+ * (Daten nur im Prozessspeicher, nie produktiv genutzt — "API routes now
+ * use the DB-backed adapter") und den gelöschten
+ * trial-training-service.adapter.ts in einem Zug (ADR-005 Domäne 3,
+ * Probetraining). Ein Service, ein Repository, kein Adapter.
+ *
+ * Der Konstruktor nimmt den Supabase-Client statt AuthContext entgegen,
+ * weil zwei Aufrufstellen (öffentliches Probetraining-Formular, DOI-
+ * Bestätigungslink) ohne Login laufen und daher systemDb() statt
+ * getUserDb(auth) übergeben — anders als bei den bisher migrierten
+ * Domänen gibt es hier keinen einheitlichen auth-Kontext.
+ */
+import 'server-only';
+import type { AuthContext } from '@/lib/api-auth';
+import { TrialTrainingRepository } from '@/infrastructure/persistence/repositories/trial-training.repository';
+import { EmailService } from '@/application/services/email.service';
+import { createLogger } from '@/lib/logger';
 import type {
   TrialTraining,
   CreateTrialTrainingInput,
   UpdateTrialTrainingInput,
   TrialTrainingStats,
-} from '../../domain/entities/trial-training.entity';
+} from '@/domain/entities/trial-training.entity';
+
+const log = createLogger('trial-training-service');
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidDate(dateString: string): boolean {
+  return !isNaN(new Date(dateString).getTime());
+}
+
+function isValidTime(timeString: string): boolean {
+  return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(timeString);
+}
 
 export class TrialTrainingService {
-  private static trainings: TrialTraining[] = [];
+  private readonly repo: TrialTrainingRepository;
 
-  /**
-   * Generate a unique ID for trial training
-   */
-  private static generateId(): string {
-    return `trial-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  constructor(private readonly db: AuthContext['supabase']) {
+    this.repo = new TrialTrainingRepository(db);
   }
 
-  /**
-   * Validate trial training input
-   */
-  static validateTrialTrainingInput(input: CreateTrialTrainingInput): {
+  validateTrialTrainingInput(input: CreateTrialTrainingInput): {
     valid: boolean;
     errors: string[];
   } {
     const errors: string[] = [];
-
     if (!input.participant.firstName || input.participant.firstName.trim().length < 2) {
       errors.push('Vorname muss mindestens 2 Zeichen lang sein');
     }
-
     if (!input.participant.lastName || input.participant.lastName.trim().length < 2) {
       errors.push('Nachname muss mindestens 2 Zeichen lang sein');
     }
-
-    if (!input.participant.email || !this.isValidEmail(input.participant.email)) {
+    if (!input.participant.email || !isValidEmail(input.participant.email)) {
       errors.push('Ungültige E-Mail-Adresse');
     }
-
     if (!input.participant.phone || input.participant.phone.trim().length < 5) {
       errors.push('Telefonnummer muss mindestens 5 Zeichen lang sein');
     }
-
-    if (!input.participant.dateOfBirth || !this.isValidDate(input.participant.dateOfBirth)) {
+    if (!input.participant.dateOfBirth || !isValidDate(input.participant.dateOfBirth)) {
       errors.push('Ungültiges Geburtsdatum');
     }
-
-    if (!input.scheduledDate || !this.isValidDate(input.scheduledDate)) {
+    if (!input.scheduledDate || !isValidDate(input.scheduledDate)) {
       errors.push('Ungültiges Trainingsdatum');
     }
-
-    if (!input.scheduledTime || !this.isValidTime(input.scheduledTime)) {
+    if (!input.scheduledTime || !isValidTime(input.scheduledTime)) {
       errors.push('Ungültige Trainingszeit');
     }
-
     if (!input.duration || input.duration < 30 || input.duration > 180) {
       errors.push('Dauer muss zwischen 30 und 180 Minuten liegen');
     }
-
     if (!input.trainerId || input.trainerId.trim().length === 0) {
       errors.push('Trainer-ID ist erforderlich');
     }
-
     if (!input.courtId || input.courtId.trim().length === 0) {
       errors.push('Platz-ID ist erforderlich');
     }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-    };
+    return { valid: errors.length === 0, errors };
   }
 
-  /**
-   * Validate public trial training input (relaxed — no trainer/court required)
-   */
-  static validatePublicTrialInput(input: CreateTrialTrainingInput): {
-    valid: boolean;
-    errors: string[];
-  } {
+  validatePublicTrialInput(input: CreateTrialTrainingInput): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
-
     if (!input.participant.firstName || input.participant.firstName.trim().length < 2) {
       errors.push('Vorname muss mindestens 2 Zeichen lang sein');
     }
-
     if (!input.participant.lastName || input.participant.lastName.trim().length < 2) {
       errors.push('Nachname muss mindestens 2 Zeichen lang sein');
     }
-
-    if (!input.participant.email || !this.isValidEmail(input.participant.email)) {
+    if (!input.participant.email || !isValidEmail(input.participant.email)) {
       errors.push('Ungültige E-Mail-Adresse');
     }
-
     if (!input.participant.phone || input.participant.phone.trim().length < 5) {
       errors.push('Telefonnummer muss mindestens 5 Zeichen lang sein');
     }
-
-    if (!input.participant.dateOfBirth || !this.isValidDate(input.participant.dateOfBirth)) {
+    if (!input.participant.dateOfBirth || !isValidDate(input.participant.dateOfBirth)) {
       errors.push('Ungültiges Geburtsdatum');
     }
-
-    if (!input.scheduledDate || !this.isValidDate(input.scheduledDate)) {
+    if (!input.scheduledDate || !isValidDate(input.scheduledDate)) {
       errors.push('Ungültiges Trainingsdatum');
     }
-
-    if (!input.scheduledTime || !this.isValidTime(input.scheduledTime)) {
+    if (!input.scheduledTime || !isValidTime(input.scheduledTime)) {
       errors.push('Ungültige Trainingszeit');
     }
-
     if (!input.duration || input.duration < 30 || input.duration > 180) {
       errors.push('Dauer muss zwischen 30 und 180 Minuten liegen');
     }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-    };
+    return { valid: errors.length === 0, errors };
   }
 
-  /**
-   * Validate email format
-   */
-  private static isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
-
-  /**
-   * Validate date format
-   */
-  private static isValidDate(dateString: string): boolean {
-    const date = new Date(dateString);
-    return !isNaN(date.getTime());
-  }
-
-  /**
-   * Validate time format
-   */
-  private static isValidTime(timeString: string): boolean {
-    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    return timeRegex.test(timeString);
-  }
-
-  /**
-   * Create a new trial training
-   */
-  static async createTrialTraining(input: CreateTrialTrainingInput): Promise<TrialTraining> {
+  async createTrialTraining(
+    input: CreateTrialTrainingInput,
+    clubId: string
+  ): Promise<TrialTraining> {
     const validation = this.validateTrialTrainingInput(input);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
     }
-
-    const now = new Date().toISOString();
-    const trialTraining: TrialTraining = {
-      id: this.generateId(),
-      participant: {
-        id: `participant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        ...input.participant,
-      },
-      scheduledDate: input.scheduledDate,
-      scheduledTime: input.scheduledTime,
-      duration: input.duration,
-      trainer: {
-        id: input.trainerId,
-        name: 'Trainer', // In production, fetch trainer name from database
-      },
-      court: {
-        id: input.courtId,
-        name: 'Platz', // In production, fetch court name from database
-      },
-      status: 'scheduled',
-      notes: input.notes,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    this.trainings.push(trialTraining);
-    return trialTraining;
+    return this.repo.create(input, clubId);
   }
 
-  /**
-   * Get trial training by ID
-   */
-  static async getTrialTrainingById(id: string): Promise<TrialTraining | null> {
-    return this.trainings.find((t) => t.id === id) || null;
+  async createPublicTrialTraining(
+    input: CreateTrialTrainingInput,
+    clubId: string
+  ): Promise<TrialTraining> {
+    const validation = this.validatePublicTrialInput(input);
+    if (!validation.valid) {
+      throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+    }
+    return this.repo.createRequested(input, clubId);
   }
 
-  /**
-   * Get all trial trainings
-   */
-  static async getAllTrialTrainings(): Promise<TrialTraining[]> {
-    return [...this.trainings];
+  async getTrialTrainingById(id: string, clubId: string): Promise<TrialTraining | null> {
+    return this.repo.findById(id, clubId);
   }
 
-  /**
-   * Get trial trainings by status
-   */
-  static async getTrialTrainingsByStatus(
-    status: TrialTraining['status']
+  async getAllTrialTrainings(clubId: string): Promise<TrialTraining[]> {
+    return this.repo.findAll(clubId);
+  }
+
+  async getTrialTrainingsByStatus(
+    status: TrialTraining['status'],
+    clubId: string
   ): Promise<TrialTraining[]> {
-    return this.trainings.filter((t) => t.status === status);
+    return this.repo.findByStatus(status, clubId);
   }
 
-  /**
-   * Get trial trainings by participant email
-   */
-  static async getTrialTrainingsByParticipantEmail(email: string): Promise<TrialTraining[]> {
-    return this.trainings.filter((t) => t.participant.email.toLowerCase() === email.toLowerCase());
+  async getTrialTrainingsByParticipantEmail(
+    email: string,
+    clubId: string
+  ): Promise<TrialTraining[]> {
+    return this.repo.findByParticipantEmail(email, clubId);
   }
 
-  /**
-   * Update trial training
-   */
-  static async updateTrialTraining(
+  async getTrialTrainingsByDateRange(
+    clubId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<TrialTraining[]> {
+    return this.repo.findByDateRange(clubId, startDate, endDate);
+  }
+
+  async getTrialTrainingStats(
+    clubId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<TrialTrainingStats> {
+    return this.repo.getStats(clubId, startDate, endDate);
+  }
+
+  async updateTrialTraining(
     id: string,
-    input: UpdateTrialTrainingInput
+    input: UpdateTrialTrainingInput,
+    clubId: string
   ): Promise<TrialTraining | null> {
-    const index = this.trainings.findIndex((t) => t.id === id);
-    if (index === -1) {
-      return null;
+    return this.repo.update(id, input, clubId);
+  }
+
+  async deleteTrialTraining(id: string, clubId: string): Promise<boolean> {
+    return this.repo.delete(id, clubId);
+  }
+
+  /** @returns true if a matching, unconfirmed token was found and confirmed */
+  async confirmMarketingConsent(token: string): Promise<boolean> {
+    return this.repo.confirmMarketingConsentByToken(token);
+  }
+
+  /**
+   * Benachrichtigt Admins/Superadmins des Vereins über eine neue
+   * Probetraining-Anfrage aus dem öffentlichen Formular. Läuft immer über
+   * systemDb() (Aufrufer ist die unauthentifizierte Public-Route).
+   */
+  async notifyAdminsOfNewRequest(trialTraining: TrialTraining, clubId: string): Promise<void> {
+    if (!clubId) {
+      log.info('No clubId provided, skipping admin notification');
+      return;
     }
 
-    const existing = this.trainings[index];
-    const updated: TrialTraining = {
-      ...existing,
-      ...input,
-      updatedAt: new Date().toISOString(),
-    };
+    try {
+      const { data: memberships } = await this.db
+        .from('user_club_memberships')
+        .select('user_id')
+        .eq('club_id', clubId)
+        .eq('is_active', true)
+        .in('role', ['admin', 'superadmin']);
 
-    this.trainings[index] = updated;
-    return updated;
+      const userIds = (memberships ?? []).map((m) => m.user_id);
+      if (userIds.length === 0) {
+        log.info('No admins found for club, skipping notification', { clubId });
+        return;
+      }
+
+      const { data: admins } = await this.db
+        .from('users')
+        .select('email, full_name')
+        .in('id', userIds);
+
+      if (!admins || admins.length === 0) {
+        log.info('No admins found for club, skipping notification', { clubId });
+        return;
+      }
+
+      const { data: clubRow } = await this.db
+        .from('clubs')
+        .select('name')
+        .eq('id', clubId)
+        .maybeSingle();
+      const clubName = clubRow?.name ?? 'SwingZ Tennis Club';
+
+      const baseUrl =
+        process.env.NEXT_PUBLIC_APP_URL ||
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        'https://swingz.cloud';
+      const adminDashboardUrl = `${baseUrl}/admin/trial-training`;
+
+      const participant = trialTraining.participant;
+      const participantName = `${participant.firstName} ${participant.lastName}`;
+
+      const notes = trialTraining.notes || '';
+      const experienceMatch = notes.match(/Spielstärke:\s*(.+?)(?:\s*\|\s*|$)/);
+      const experienceLevel = experienceMatch ? experienceMatch[1] : undefined;
+      const cleanNotes = notes.replace(/Spielstärke:\s*.+?(?:\s*\|\s*)?/, '').trim() || undefined;
+
+      for (const admin of admins) {
+        if (!admin.email) continue;
+
+        await EmailService.sendNewTrialRequestNotification({
+          adminEmail: admin.email,
+          adminName: admin.full_name ?? 'Admin',
+          participantName,
+          participantEmail: participant.email,
+          participantPhone: participant.phone,
+          preferredDate: trialTraining.scheduledDate,
+          preferredTime: trialTraining.scheduledTime,
+          experienceLevel,
+          notes: cleanNotes,
+          clubName,
+          adminDashboardUrl,
+        });
+      }
+
+      log.info('Admin trial request notifications sent', { clubId, adminCount: admins.length });
+    } catch (error) {
+      log.error(
+        'Failed to send trial request notification to admins',
+        error instanceof Error ? error : undefined
+      );
+    }
+  }
+
+  async notifyParticipantOfTrialTraining(
+    trialTraining: TrialTraining,
+    clubId?: string
+  ): Promise<void> {
+    const participant = trialTraining.participant;
+
+    try {
+      let clubName = 'SwingZ Tennis Club';
+      if (clubId) {
+        const { data: clubRow } = await this.db
+          .from('clubs')
+          .select('name')
+          .eq('id', clubId)
+          .maybeSingle();
+        if (clubRow?.name) clubName = clubRow.name;
+      }
+
+      const participantName = `${participant.firstName} ${participant.lastName}`;
+
+      await EmailService.sendTrialRequestConfirmation({
+        participantName,
+        participantEmail: participant.email,
+        preferredDate: trialTraining.scheduledDate,
+        preferredTime: trialTraining.scheduledTime,
+        clubName,
+      });
+
+      log.info('Participant trial request confirmation sent', { email: participant.email });
+    } catch (error) {
+      log.error(
+        'Failed to send trial request confirmation to participant',
+        error instanceof Error ? error : undefined
+      );
+    }
   }
 
   /**
-   * Update trial training status
+   * DOI-Bestätigungsmail für Marketing-Einwilligung — no-op ohne Token
+   * (kein Häkchen gesetzt, keine Mail nötig).
    */
-  static async updateTrialTrainingStatus(
-    id: string,
-    status: TrialTraining['status']
-  ): Promise<TrialTraining | null> {
-    return this.updateTrialTraining(id, { status });
-  }
-
-  /**
-   * Add feedback to trial training
-   */
-  static async addTrialTrainingFeedback(
-    id: string,
-    feedback: TrialTraining['feedback']
-  ): Promise<TrialTraining | null> {
-    return this.updateTrialTraining(id, { feedback });
-  }
-
-  /**
-   * Convert trial training to member
-   */
-  static async convertTrialToMember(id: string, memberId: string): Promise<TrialTraining | null> {
-    return this.updateTrialTraining(id, {
-      status: 'converted',
-      convertedToMemberId: memberId,
-    });
-  }
-
-  /**
-   * Delete trial training
-   */
-  static async deleteTrialTraining(id: string): Promise<boolean> {
-    const index = this.trainings.findIndex((t) => t.id === id);
-    if (index === -1) {
-      return false;
+  async sendMarketingConsentConfirmationIfNeeded(
+    trialTraining: TrialTraining,
+    clubId?: string
+  ): Promise<void> {
+    if (!trialTraining.marketingConsentToken) {
+      return;
     }
 
-    this.trainings.splice(index, 1);
-    return true;
-  }
+    const participant = trialTraining.participant;
 
-  /**
-   * Get trial training statistics
-   */
-  static async getTrialTrainingStats(): Promise<TrialTrainingStats> {
-    const total = this.trainings.length;
-    const scheduled = this.trainings.filter((t) => t.status === 'scheduled').length;
-    const completed = this.trainings.filter((t) => t.status === 'completed').length;
-    const cancelled = this.trainings.filter((t) => t.status === 'cancelled').length;
-    const noShow = this.trainings.filter((t) => t.status === 'no_show').length;
-    const converted = this.trainings.filter((t) => t.status === 'converted').length;
+    try {
+      let clubName = 'SwingZ Tennis Club';
+      if (clubId) {
+        const { data: clubRow } = await this.db
+          .from('clubs')
+          .select('name')
+          .eq('id', clubId)
+          .maybeSingle();
+        if (clubRow?.name) clubName = clubRow.name;
+      }
 
-    const conversionRate = completed > 0 ? Math.round((converted / completed) * 100) : 0;
+      const baseUrl =
+        process.env.NEXT_PUBLIC_APP_URL ||
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        'https://swingz.cloud';
+      const confirmUrl = `${baseUrl}/api/public/trial-training/confirm-marketing?token=${trialTraining.marketingConsentToken}`;
 
-    return {
-      total,
-      scheduled,
-      completed,
-      cancelled,
-      noShow,
-      converted,
-      conversionRate,
-    };
-  }
+      await EmailService.sendMarketingConsentConfirmation({
+        participantName: `${participant.firstName} ${participant.lastName}`,
+        participantEmail: participant.email,
+        clubName,
+        confirmUrl,
+      });
 
-  /**
-   * Get trial trainings scheduled in the next N days
-   */
-  static async getUpcomingTrialTrainings(days: number = 7): Promise<TrialTraining[]> {
-    const now = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + days);
-
-    return this.trainings.filter((t) => {
-      const scheduledDate = new Date(t.scheduledDate);
-      return t.status === 'scheduled' && scheduledDate >= now && scheduledDate <= futureDate;
-    });
-  }
-
-  /**
-   * Get trial trainings that need reminders (scheduled within 24 hours)
-   */
-  static async getTrialTrainingsNeedingReminder(): Promise<TrialTraining[]> {
-    const now = new Date();
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    return this.trainings.filter((t) => {
-      const scheduledDate = new Date(t.scheduledDate);
-      return t.status === 'scheduled' && scheduledDate >= now && scheduledDate <= tomorrow;
-    });
-  }
-
-  /**
-   * Search trial trainings
-   */
-  static async searchTrialTrainings(query: string): Promise<TrialTraining[]> {
-    const lowerQuery = query.toLowerCase();
-    return this.trainings.filter((t) =>
-      `${t.participant.firstName} ${t.participant.lastName} ${t.participant.email}`
-        .toLowerCase()
-        .includes(lowerQuery)
-    );
-  }
-
-  /**
-   * Reset and optionally seed the in-memory training store.
-   * Only used for testing; production code uses the DB-backed adapter.
-   */
-  static reset(data?: TrialTraining[]): void {
-    this.trainings = data ?? [];
+      log.info('Marketing consent DOI email sent', { email: participant.email });
+    } catch (error) {
+      log.error(
+        'Failed to send marketing consent DOI email',
+        error instanceof Error ? error : undefined
+      );
+    }
   }
 }
-
-// NOTE: initializeMockData() removed — API routes now use the DB-backed adapter

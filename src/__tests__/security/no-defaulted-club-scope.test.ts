@@ -42,10 +42,12 @@ const SERVICES_DIR = path.join(ROOT, 'src/application/services');
 // clubId kommt jetzt zwingend aus `auth.clubId` in der Route).
 // absence-service.adapter.ts: behoben und gelöscht (13.09.2026, ADR-005-
 // Migration auf AbsenceService + AbsenceRepository).
+// trial-training-service.adapter.ts: behoben und gelöscht (14.09.2026,
+// ADR-005-Migration auf TrialTrainingService + TrialTrainingRepository,
+// clubId kommt jetzt zwingend aus `auth.clubId` bzw. aus dem validierten
+// Zod-Body der öffentlichen Route).
 const KNOWN_VIOLATIONS = new Set(
-  ['fee-configuration-service.adapter.ts', 'trial-training-service.adapter.ts'].map((f) =>
-    path.join(SERVICES_DIR, f)
-  )
+  ['fee-configuration-service.adapter.ts'].map((f) => path.join(SERVICES_DIR, f))
 );
 
 function listServiceFiles(dir: string): string[] {

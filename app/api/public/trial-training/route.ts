@@ -2,7 +2,8 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { z } from 'zod';
-import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
+import { TrialTrainingService } from '@/application/services/trial-training.service';
+import { systemDb } from '@/infrastructure/db';
 import type { CreateTrialTrainingInput } from '@/src/domain/entities/trial-training.entity';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -19,7 +20,7 @@ const publicTrialTrainingSchema = z.object({
   preferredTime: z.string().regex(/^\d{2}:\d{2}$/, 'Ungültige Uhrzeit (HH:MM)'),
   experienceLevel: z.string().optional(),
   notes: z.string().max(2000).optional(),
-  clubId: z.string().uuid('Ungültige Club-ID').optional(),
+  clubId: z.string().uuid('Ungültige Club-ID'),
   marketingConsent: z.boolean().optional().default(false),
 });
 
@@ -83,11 +84,14 @@ export async function POST(request: NextRequest) {
       marketingConsent,
     };
 
-    const trialTraining = await trialTrainingService.createPublicTrialTraining(input, clubId || '');
+    const trialTrainingService = new TrialTrainingService(
+      systemDb('öffentliches Probetraining-Formular, kein Login')
+    );
+    const trialTraining = await trialTrainingService.createPublicTrialTraining(input, clubId);
 
     // Notify club admins — fire-and-forget (don't block the response)
     trialTrainingService
-      .notifyAdminsOfNewRequest(trialTraining, clubId || '')
+      .notifyAdminsOfNewRequest(trialTraining, clubId)
       .catch((err) =>
         log.error('Admin notification failed', err instanceof Error ? err : undefined)
       );

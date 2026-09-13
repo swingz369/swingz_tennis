@@ -1,7 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
+import { TrialTrainingService } from '@/application/services/trial-training.service';
+import { getUserDb } from '@/infrastructure/db';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { sendFollowupEmail } from '@/lib/trial-training/followup';
@@ -11,9 +12,10 @@ const log = createLogger('api:trial-training');
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
-    const hasPermission = await verifyRole(auth, 'member');
+    // Nur Trainer/Admins sehen Interessenten-PII (Name, Telefon, Geburtsdatum)
+    const hasPermission = await verifyRole(auth, 'trainer');
     if (!hasPermission) {
-      return forbiddenResponse('Anmeldung erforderlich');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
@@ -21,9 +23,15 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       return rateLimitError;
     }
 
+    const clubId = auth.clubId;
+    if (!clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
+
     try {
       const { id } = await params;
-      const trialTraining = await trialTrainingService.getTrialTrainingById(id);
+      const trialTrainingService = new TrialTrainingService(getUserDb(auth));
+      const trialTraining = await trialTrainingService.getTrialTrainingById(id, clubId);
 
       if (!trialTraining) {
         return NextResponse.json({ error: 'Probetraining nicht gefunden' }, { status: 404 });
@@ -52,6 +60,11 @@ export async function PATCH(
       return rateLimitError;
     }
 
+    const clubId = auth.clubId;
+    if (!clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
+
     try {
       const { id } = await params;
       const body = await _request.json();
@@ -67,16 +80,21 @@ export async function PATCH(
         courtName,
       } = body;
 
-      const updated = await trialTrainingService.updateTrialTraining(id, {
-        status,
-        notes,
-        feedback,
-        convertedToMemberId,
-        trainerId,
-        trainerName,
-        courtId,
-        courtName,
-      });
+      const trialTrainingService = new TrialTrainingService(getUserDb(auth));
+      const updated = await trialTrainingService.updateTrialTraining(
+        id,
+        {
+          status,
+          notes,
+          feedback,
+          convertedToMemberId,
+          trainerId,
+          trainerName,
+          courtId,
+          courtName,
+        },
+        clubId
+      );
 
       if (!updated) {
         return NextResponse.json({ error: 'Probetraining nicht gefunden' }, { status: 404 });
@@ -195,9 +213,15 @@ export async function DELETE(
       return rateLimitError;
     }
 
+    const clubId = auth.clubId;
+    if (!clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
+
     try {
       const { id } = await params;
-      const success = await trialTrainingService.deleteTrialTraining(id);
+      const trialTrainingService = new TrialTrainingService(getUserDb(auth));
+      const success = await trialTrainingService.deleteTrialTraining(id, clubId);
 
       if (!success) {
         return NextResponse.json({ error: 'Probetraining nicht gefunden' }, { status: 404 });

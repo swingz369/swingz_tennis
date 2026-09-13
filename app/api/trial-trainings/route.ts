@@ -1,7 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
+import { TrialTrainingService } from '@/application/services/trial-training.service';
+import { getUserDb } from '@/infrastructure/db';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
@@ -40,6 +41,11 @@ export async function POST(_request: NextRequest) {
       return rateLimitError;
     }
 
+    const clubId = auth.clubId;
+    if (!clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
+
     try {
       const body = await _request.json();
 
@@ -51,20 +57,24 @@ export async function POST(_request: NextRequest) {
         );
       }
 
-      const trialTraining = await trialTrainingService.createTrialTraining({
-        ...validation.data,
-        participant: {
-          ...validation.data.participant,
-          age: validation.data.participant.age ?? undefined,
-        } as {
-          firstName: string;
-          lastName: string;
-          email: string;
-          phone: string;
-          dateOfBirth: string;
-          age?: number;
-        },
-      } as CreateTrialTrainingInput);
+      const trialTrainingService = new TrialTrainingService(getUserDb(auth));
+      const trialTraining = await trialTrainingService.createTrialTraining(
+        {
+          ...validation.data,
+          participant: {
+            ...validation.data.participant,
+            age: validation.data.participant.age ?? undefined,
+          } as {
+            firstName: string;
+            lastName: string;
+            email: string;
+            phone: string;
+            dateOfBirth: string;
+            age?: number;
+          },
+        } as CreateTrialTrainingInput,
+        clubId
+      );
 
       return NextResponse.json({ success: true, trialTraining });
     } catch (error) {
@@ -76,10 +86,10 @@ export async function POST(_request: NextRequest) {
 
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
-    // Members can view trial trainings
-    const hasRole = await verifyRole(auth, 'member');
+    // Nur Trainer/Admins sehen Interessenten-PII (Name, Telefon, Geburtsdatum)
+    const hasRole = await verifyRole(auth, 'trainer');
     if (!hasRole) {
-      return forbiddenResponse('Anmeldung erforderlich');
+      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
@@ -98,6 +108,8 @@ export async function GET(_request: NextRequest) {
       if (!clubId) {
         return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
       }
+
+      const trialTrainingService = new TrialTrainingService(getUserDb(auth));
 
       if (email) {
         const trialTrainings = await trialTrainingService.getTrialTrainingsByParticipantEmail(

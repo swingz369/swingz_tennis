@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
+import { TrialTrainingService } from '@/application/services/trial-training.service';
+import { getUserDb } from '@/infrastructure/db';
 import { EmailService } from '@/src/application/services/email.service';
 import { createLogger } from '@/lib/logger';
 
@@ -21,11 +22,20 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       return rateLimitError;
     }
 
+    const clubId = auth.clubId;
+    if (!clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
+
     try {
       const { id } = await params;
       const trialTrainingId = id;
 
-      const trialTraining = await trialTrainingService.getTrialTrainingById(trialTrainingId);
+      const trialTrainingService = new TrialTrainingService(getUserDb(auth));
+      const trialTraining = await trialTrainingService.getTrialTrainingById(
+        trialTrainingId,
+        clubId
+      );
 
       if (!trialTraining) {
         return NextResponse.json({ error: 'Probetraining nicht gefunden' }, { status: 404 });
@@ -42,7 +52,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       const { data: settingRows } = await auth.supabase
         .from('system_settings')
         .select('key, value')
-        .eq('club_id', auth.clubId ?? '')
+        .eq('club_id', clubId)
         .in('key', ['club_address', 'club_phone', 'club_email', 'club_name']);
       const settings: Record<string, string> = {};
       for (const row of settingRows ?? []) {
