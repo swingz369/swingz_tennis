@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { SeasonBillingConfig } from '@/lib/billing/season-billing.service';
+import type { SeasonBillingConfig } from '@/application/services/season-billing.service';
 import type { PreferencesSummary } from '@/lib/season-planning/types';
 import { apiFetch } from '@/lib/api-fetch';
 import {

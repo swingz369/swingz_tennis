@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 28. August 2026 (`training_groups` entfernt; davor 16. August 2026: Migrations-Tracking ersetzt, Owner-UPDATE-Policy auf `clubs`, Audit-Trigger auf den Finanztabellen; Live-Prüfung per postgres-js auf `supabase.swingz.cloud:6543`)
+> Zuletzt verifiziert: 14. September 2026 (Autorisierungs-Check in `generate_season_invoices_atomic` nachgetragen); davor 28. August 2026 (`training_groups` entfernt; davor 16. August 2026: Migrations-Tracking ersetzt, Owner-UPDATE-Policy auf `clubs`, Audit-Trigger auf den Finanztabellen; Live-Prüfung per postgres-js auf `supabase.swingz.cloud:6543`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -178,6 +178,28 @@ docker exec supabase-db psql -U postgres -c "select count(*) from <table>;"
 - **superadmin**: pro verwaltetem Verein eine eigene `user_club_memberships`-Zeile mit `role='superadmin'` — genau wie ein Admin, nur mehrfach. Zwei Wege, wie diese Zeilen entstehen: (1) Owner weist über `/owner/superadmins` einen bestehenden Verein zu, (2) Superadmin legt selbst einen neuen Verein an (`POST /api/clubs`) — beide Wege erzeugen jetzt konsistent `role='superadmin'`-Zeilen (App-Fix vom 05.08.2026, vorher erzeugte Pfad 2 fälschlich `role='admin'`).
 - **Scoping-Helper** (SECURITY DEFINER SQL-Funktionen, alle bestätigt live vorhanden): `is_club_admin(club_id)`, `is_club_trainer(club_id)`, `is_club_member(club_id)` — alle drei prüfen `user_club_memberships` mit echtem `club_id`-Bezug und schließen `superadmin` in ihrer Rollen-Liste ein. `is_superadmin_of(club_id)` (neu, 05.08.2026) ist der Ersatz für den alten `is_superadmin()`-Bypass, wo keine der drei anderen Funktionen passt.
 - **`is_superadmin()`** (ohne Club-Parameter) prüft NUR "hat dieser User irgendwo eine `role='superadmin'`-Zeile" — **niemals club-scoped verwenden**. Wurde bis 05.08.2026 in ~23 Policies über 20 Tabellen unscoped eingesetzt (siehe `supabase/migrations/20260805000000_scope_superadmin_to_managed_clubs.sql` für die vollständige Historie der gefixten Policies).
+
+## SECURITY DEFINER-Funktionen ohne eigenen Autorisierungs-Check (Fund 14.09.2026)
+
+`is_club_admin`/`is_club_trainer`/`is_club_member` schützen nur, was über RLS läuft. Eine
+SECURITY DEFINER-Funktion umgeht RLS per Definition — sie muss ihre eigene Prüfung mitbringen,
+sonst ist jede an `authenticated` gegrantete SECURITY DEFINER-Funktion ein offener
+Schreib-/Lesezugriff über `POST /rest/v1/rpc/<name>`, unabhängig davon, was die aufrufende
+App-Route vorher prüft.
+
+`generate_season_invoices_atomic(p_season_id, p_club_id, p_invoices)` hatte genau diese Lücke:
+an `authenticated` gegrantet, schrieb echte Entwurfs-Rechnungen für beliebige `p_club_id`, ohne
+zu prüfen, ob der Aufrufer dort überhaupt Mitglied ist. Die drei Aufrufer im App-Code
+(`SeasonBillingService.generateInvoices`, aufgerufen aus `app/api/seasons/[id]/billing`,
+`app/api/seasons/[id]/planning/confirm`, `app/api/billing/generate-season-invoices`) prüften
+zwar korrekt vor dem RPC-Aufruf — das schützt aber nicht vor einem direkten Aufruf am App-Code
+vorbei. Migration `20260914120000_generate_season_invoices_atomic_auth_check.sql` trägt
+`IF NOT is_club_admin(p_club_id) THEN RAISE EXCEPTION ...` am Funktionsanfang nach.
+
+**Noch nicht geprüft:** ob weitere SECURITY DEFINER-Funktionen mit `authenticated`-Grant
+dieselbe Lücke haben (`next_invoice_sequence`, `generate_invoice_number`, o.ä.) — nicht Teil
+dieses Funds, sollte bei Gelegenheit systematisch durchgegangen werden (`SELECT proname, proacl
+FROM pg_proc WHERE prosecdef AND proacl::text LIKE '%authenticated%'`).
 
 ## Gelöste Altlasten (Stand 05.08.2026, zweiter Fix-Durchgang)
 

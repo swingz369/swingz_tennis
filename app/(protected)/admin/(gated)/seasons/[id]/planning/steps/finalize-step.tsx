@@ -31,7 +31,7 @@ import {
   DollarSign,
   Table2,
 } from 'lucide-react';
-import type { SeasonBillingPreview } from '@/lib/billing/season-billing.service';
+import type { SeasonBillingPreview } from '@/application/services/season-billing.service';
 import { apiFetch } from '@/lib/api-fetch';
 import { ConflictList } from '@/components/season-planning/conflict-list';
 import { DryRunPanel } from '@/components/admin/dry-run-panel';

@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth } from '@/lib/api-auth';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
-import { seasonBillingService } from '@/lib/billing/season-billing.service';
+import { SeasonBillingService } from '@/application/services/season-billing.service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:[id]:billing');
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const access = await authorizeSeasonAccess(auth, seasonId, { allowedRoles: ['admin'] });
       if (!access.ok) return access.response;
 
-      const preview = await seasonBillingService.calculatePreview(seasonId);
+      const preview = await new SeasonBillingService(auth).calculatePreview(seasonId);
       return NextResponse.json(preview);
     } catch (error) {
       log.error('GET billing preview error:', error);
@@ -46,7 +46,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       if (!access.ok) return access.response;
 
       const body = await request.json();
-      const config = await seasonBillingService.upsertConfig(seasonId, access.season.club_id, body);
+      const config = await new SeasonBillingService(auth).upsertConfig(
+        seasonId,
+        access.season.club_id,
+        body
+      );
       return NextResponse.json(config);
     } catch (error) {
       log.error('PUT billing config error:', error);
@@ -63,7 +67,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const access = await authorizeSeasonAccess(auth, seasonId, { allowedRoles: ['admin'] });
       if (!access.ok) return access.response;
 
-      const result = await seasonBillingService.generateInvoices(seasonId);
+      const result = await new SeasonBillingService(auth).generateInvoices(seasonId);
       return NextResponse.json(result);
     } catch (error) {
       log.error('POST generate invoices error:', error);

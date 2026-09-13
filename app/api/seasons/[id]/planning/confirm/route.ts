@@ -564,11 +564,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
         let invoicesCreated = 0;
         if (publishedIds.length > 0) {
           try {
-            const { seasonBillingService } = await import('@/lib/billing/season-billing.service');
+            const { SeasonBillingService } =
+              await import('@/application/services/season-billing.service');
             // Beim erneuten Veröffentlichen ändert sich die Zahl der Einheiten —
             // die noch offenen Rechnungen müssen mitziehen, sonst bleibt der
             // Betrag des ersten Publish stehen.
-            const result = await seasonBillingService.generateInvoices(seasonId, {
+            const result = await new SeasonBillingService(auth).generateInvoices(seasonId, {
               replaceDrafts: isRepublish,
             });
             invoicesCreated = result.created.length;

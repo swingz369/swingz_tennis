@@ -1,28 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { AuthContext } from '@/lib/api-auth';
+import { SeasonBillingService } from '@/application/services/season-billing.service';
 
-// ─── Mocks (must come before importing the service) ─────────────────────────
+// ─── Mocks ────────────────────────────────────────────────────────────────
 
 const mockRpc = vi.fn();
 const mockFrom = vi.fn();
 
-vi.mock('@/lib/supabase/service', () => ({
-  createServiceClient: () => ({
+const mockAuth = {
+  supabase: {
     rpc: (...args: unknown[]) => mockRpc(...args),
     from: (...args: unknown[]) => mockFrom(...args),
-  }),
-}));
-
-vi.mock('@/lib/billing-engine', () => ({
-  billingEngine: {
-    createInvoice: vi.fn(async (data: { member_id: string }) => ({
-      id: `invoice-${data.member_id}`,
-      invoice_number: `INV-FAKE-${data.member_id}`,
-    })),
   },
-}));
-
-// Now safe to import the service under test
-import { seasonBillingService } from '@/lib/billing/season-billing.service';
+  user: { id: 'admin-uid' },
+  clubId: '11111111-1111-1111-1111-111111111111',
+  role: 'admin',
+  memberships: [],
+} as unknown as AuthContext;
 
 // ─── Test data factories ─────────────────────────────────────────────────────
 
@@ -31,7 +25,6 @@ const SEASON_ID = '22222222-2222-2222-2222-222222222222';
 const M1 = 'm1-uuid-0000-0000-0000-000000000001';
 const M2 = 'm2-uuid-0000-0000-0000-000000000002';
 
-/** Standard mock data: getSeasonClubId → season row, idempotency → empty. */
 const SEASON_ROW = {
   id: SEASON_ID,
   name: 'Sommer 2026',
@@ -117,13 +110,20 @@ const MEMBERS = [
 ];
 
 /**
- * Helper: create a mock Supabase query builder that resolves to `result`.
- * Unlike the old makeChainable Proxy, this returns a proper thenable that
- * resolves to { data, error } — matching Supabase's real .from().select().eq()...single() chain.
+ * Mock Supabase query builder. Unlike a plain chainable stub, it tracks
+ * whether `.insert()` was called on it and resolves to a different result
+ * in that case — needed because `SeasonBillingRepository.createInvoice`
+ * reuses the same `.from('invoices')` table for both the idempotency
+ * SELECT and (in the legacy-loop fallback) the invoice INSERT.
  */
-function makeQueryResult(result: { data: unknown; error: unknown }) {
+function makeQueryBuilder(opts: {
+  select?: { data: unknown; error: unknown };
+  insert?: (rows: unknown) => { data: unknown; error: unknown };
+}) {
   const builder: Record<string, unknown> = {};
-  // Chainable methods — all return self
+  let didInsert = false;
+  let insertedRows: unknown = null;
+
   for (const key of [
     'select',
     'eq',
@@ -139,12 +139,59 @@ function makeQueryResult(result: { data: unknown; error: unknown }) {
   ]) {
     builder[key] = () => builder;
   }
-  // thenable — makes `await` resolve to `result`
+  builder.insert = (rows: unknown) => {
+    didInsert = true;
+    insertedRows = rows;
+    return builder;
+  };
   builder.then = (resolve: (v: unknown) => unknown) => {
-    resolve(result);
+    if (didInsert && opts.insert) {
+      resolve(opts.insert(insertedRows));
+    } else {
+      resolve(opts.select ?? { data: null, error: null });
+    }
     return builder;
   };
   return builder;
+}
+
+function mockDefaultTables() {
+  mockFrom.mockImplementation((table: string) => {
+    if (table === 'seasons') return makeQueryBuilder({ select: { data: SEASON_ROW, error: null } });
+    return makeQueryBuilder({ select: { data: [], error: null } });
+  });
+}
+
+/** Additionally wires `invoices`/`invoice_items` INSERT for the legacy loop. */
+function mockLegacyLoopTables() {
+  mockFrom.mockImplementation((table: string) => {
+    if (table === 'seasons') return makeQueryBuilder({ select: { data: SEASON_ROW, error: null } });
+    if (table === 'invoices') {
+      return makeQueryBuilder({
+        select: { data: [], error: null }, // idempotency check: none existing
+        insert: (rows) => {
+          const row = rows as { member_id: string };
+          return {
+            data: {
+              id: `legacy-inv-${row.member_id}`,
+              invoice_number: `INV-LEGACY-${row.member_id}`,
+            },
+            error: null,
+          };
+        },
+      });
+    }
+    if (table === 'invoice_items') {
+      return makeQueryBuilder({ insert: () => ({ data: null, error: null }) });
+    }
+    return makeQueryBuilder({ select: { data: [], error: null } });
+  });
+}
+
+function spyOnPreview(memberPreviews: typeof MEMBERS, overrides: Record<string, unknown> = {}) {
+  return vi
+    .spyOn(SeasonBillingService.prototype, 'calculatePreview')
+    .mockResolvedValue({ ...BASE_PREVIEW, memberPreviews, ...overrides } as never);
 }
 
 // ─── Test suite ──────────────────────────────────────────────────────────────
@@ -152,19 +199,11 @@ function makeQueryResult(result: { data: unknown; error: unknown }) {
 describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('calls the atomic RPC with the correct payload when the function is available', async () => {
-    // Mock from() to return results based on table name
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'seasons') {
-        return makeQueryResult({ data: SEASON_ROW, error: null });
-      }
-      // season_billing_configs, season_plan_entries, trainers, groups, users, invoices
-      return makeQueryResult({ data: [], error: null });
-    });
-
-    // Mock the RPC to return success
+    mockDefaultTables();
     mockRpc.mockResolvedValueOnce({
       data: {
         created: [
@@ -186,19 +225,10 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
       },
       error: null,
     });
+    spyOnPreview(MEMBERS);
 
-    // Inject the preview via reflection (mock calculatePreview)
-    const svc = seasonBillingService as unknown as {
-      calculatePreview: () => Promise<typeof BASE_PREVIEW & { memberPreviews: typeof MEMBERS }>;
-    };
-    vi.spyOn(svc, 'calculatePreview').mockResolvedValue({
-      ...BASE_PREVIEW,
-      memberPreviews: MEMBERS,
-    });
+    const result = await new SeasonBillingService(mockAuth).generateInvoices(SEASON_ID);
 
-    const result = await seasonBillingService.generateInvoices(SEASON_ID);
-
-    // RPC was called exactly once with the right name + payload
     expect(mockRpc).toHaveBeenCalledTimes(1);
     expect(mockRpc).toHaveBeenCalledWith(
       'generate_season_invoices_atomic',
@@ -215,7 +245,6 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
       })
     );
 
-    // Result shape is correct
     expect(result.created).toHaveLength(2);
     expect(result.created[0]).toEqual({
       memberId: M1,
@@ -228,90 +257,37 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
   });
 
   it('falls back to the legacy per-invoice loop when the RPC returns 42883 (function not found)', async () => {
-    const svc = seasonBillingService as unknown as {
-      calculatePreview: () => Promise<typeof BASE_PREVIEW & { memberPreviews: typeof MEMBERS }>;
-    };
-    vi.spyOn(svc, 'calculatePreview').mockResolvedValue({
-      ...BASE_PREVIEW,
-      memberPreviews: MEMBERS,
-    });
-
-    // Mock from() based on table — idempotency check returns empty
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'seasons') {
-        return makeQueryResult({ data: SEASON_ROW, error: null });
-      }
-      // invoices idempotency + any other table → empty
-      return makeQueryResult({ data: [], error: null });
-    });
-
-    // RPC returns the PostgREST "function not found" code
+    mockLegacyLoopTables();
     mockRpc.mockResolvedValueOnce({
       data: null,
       error: { code: '42883', message: 'function does not exist' },
     });
+    spyOnPreview(MEMBERS);
 
-    const { billingEngine } = await import('@/lib/billing-engine');
-    const createSpy = vi.spyOn(billingEngine, 'createInvoice');
+    const result = await new SeasonBillingService(mockAuth).generateInvoices(SEASON_ID);
 
-    const result = await seasonBillingService.generateInvoices(SEASON_ID);
-
-    // RPC was attempted
     expect(mockRpc).toHaveBeenCalledWith('generate_season_invoices_atomic', expect.anything());
-
-    // Fallback was used: billingEngine.createInvoice was called for each member
-    expect(createSpy).toHaveBeenCalledTimes(2);
-    expect(createSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ member_id: M1, type: 'season' })
-    );
-    expect(createSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ member_id: M2, type: 'season' })
-    );
-
     expect(result.created).toHaveLength(2);
+    expect(result.created.map((c) => c.memberId).sort()).toEqual([M1, M2].sort());
     expect(result.skipped).toEqual([]);
     expect(result.failed).toEqual([]);
   });
 
   it('falls back when the RPC throws an exception (network / DB error)', async () => {
-    const svc = seasonBillingService as unknown as {
-      calculatePreview: () => Promise<typeof BASE_PREVIEW & { memberPreviews: typeof MEMBERS }>;
-    };
-    vi.spyOn(svc, 'calculatePreview').mockResolvedValue({
-      ...BASE_PREVIEW,
-      memberPreviews: MEMBERS,
-    });
-
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'seasons') {
-        return makeQueryResult({ data: SEASON_ROW, error: null });
-      }
-      return makeQueryResult({ data: [], error: null });
-    });
-
-    // RPC throws (e.g. transport error)
+    mockLegacyLoopTables();
     mockRpc.mockRejectedValueOnce(new Error('connection refused'));
+    spyOnPreview(MEMBERS);
 
-    const { billingEngine } = await import('@/lib/billing-engine');
-    const createSpy = vi.spyOn(billingEngine, 'createInvoice');
+    const result = await new SeasonBillingService(mockAuth).generateInvoices(SEASON_ID);
 
-    const result = await seasonBillingService.generateInvoices(SEASON_ID);
-
-    expect(createSpy).toHaveBeenCalledTimes(2); // fallback ran
-    expect(result.created).toHaveLength(2);
+    expect(result.created).toHaveLength(2); // fallback ran
   });
 
   it('returns empty result when there are no member previews (no RPC call)', async () => {
-    const svc = seasonBillingService as unknown as {
-      calculatePreview: () => Promise<typeof BASE_PREVIEW & { memberPreviews: unknown[] }>;
-    };
-    vi.spyOn(svc, 'calculatePreview').mockResolvedValue({
-      ...BASE_PREVIEW,
-      memberPreviews: [],
-      grandTotal: 0,
-    });
+    mockDefaultTables();
+    spyOnPreview([], { grandTotal: 0 });
 
-    const result = await seasonBillingService.generateInvoices(SEASON_ID);
+    const result = await new SeasonBillingService(mockAuth).generateInvoices(SEASON_ID);
 
     expect(mockRpc).not.toHaveBeenCalled();
     expect(result.created).toEqual([]);
@@ -321,21 +297,7 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
   });
 
   it('propagates per-member failures from the RPC into the failed[] array', async () => {
-    const svc = seasonBillingService as unknown as {
-      calculatePreview: () => Promise<typeof BASE_PREVIEW & { memberPreviews: typeof MEMBERS }>;
-    };
-    vi.spyOn(svc, 'calculatePreview').mockResolvedValue({
-      ...BASE_PREVIEW,
-      memberPreviews: MEMBERS,
-    });
-
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'seasons') {
-        return makeQueryResult({ data: SEASON_ROW, error: null });
-      }
-      return makeQueryResult({ data: [], error: null });
-    });
-
+    mockDefaultTables();
     mockRpc.mockResolvedValueOnce({
       data: {
         created: [
@@ -351,8 +313,9 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
       },
       error: null,
     });
+    spyOnPreview(MEMBERS);
 
-    const result = await seasonBillingService.generateInvoices(SEASON_ID);
+    const result = await new SeasonBillingService(mockAuth).generateInvoices(SEASON_ID);
 
     expect(result.created).toHaveLength(1);
     expect(result.created[0].memberId).toBe(M1);
@@ -360,23 +323,7 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
   });
 
   it('logs rounding drift when preview grandTotal differs from sum of created totals by >= 1 ct', async () => {
-    const svc = seasonBillingService as unknown as {
-      calculatePreview: () => Promise<typeof BASE_PREVIEW & { memberPreviews: typeof MEMBERS }>;
-    };
-    vi.spyOn(svc, 'calculatePreview').mockResolvedValue({
-      ...BASE_PREVIEW,
-      grandTotal: 178.5,
-      memberPreviews: MEMBERS,
-    });
-
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'seasons') {
-        return makeQueryResult({ data: SEASON_ROW, error: null });
-      }
-      return makeQueryResult({ data: [], error: null });
-    });
-
-    // RPC returns slightly different totals (simulating a rounding edge case)
+    mockDefaultTables();
     mockRpc.mockResolvedValueOnce({
       data: {
         created: [
@@ -398,17 +345,18 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
       },
       error: null,
     });
+    spyOnPreview(MEMBERS, { grandTotal: 178.5 });
 
     // createLogger() routes through console.log under jsdom (this project's
     // global test environment) since logger.ts's isServer check is false there.
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    const result = await seasonBillingService.generateInvoices(SEASON_ID);
+    const result = await new SeasonBillingService(mockAuth).generateInvoices(SEASON_ID);
 
     expect(result.roundingDrift).toBeCloseTo(0.02, 1); // 178.5 - 178.48
     expect(logSpy).toHaveBeenCalledWith(
       '[WARN]',
-      expect.stringContaining('[SeasonBilling] Rounding drift detected'),
+      expect.stringContaining('Rounding drift detected'),
       expect.anything()
     );
   });

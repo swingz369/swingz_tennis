@@ -24,7 +24,7 @@ import {
   clubs,
 } from '@/src/infrastructure/persistence/schema';
 import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
-import { seasonBillingService } from '@/lib/billing/season-billing.service';
+import { SeasonBillingService } from '@/application/services/season-billing.service';
 import { seasonConfirmationEmailService } from '@/lib/season-planning/season-confirmation-email.service';
 import {
   isDateInHolidays,
@@ -34,7 +34,8 @@ import {
 import { normalizeRsvpStatus, type RsvpStatusKey } from '@/lib/rsvp-status';
 import { berlinWallClock } from '@/lib/berlin-time';
 import type { GroupAssignment, ConflictDetectionResult } from '@/lib/season-planning/types';
-import type { SeasonBillingPreview } from '@/lib/billing/season-billing.service';
+import type { SeasonBillingPreview } from '@/application/services/season-billing.service';
+import type { AuthContext } from '@/lib/api-auth';
 
 import { createLogger } from '@/lib/logger';
 import { loadHolidaysForState } from './holidays.server';
@@ -745,7 +746,10 @@ async function loadRsvpDistribution(seasonId: string): Promise<DryRunRsvpDistrib
  * Run a complete dry-run of the publish workflow for a given season.
  * Does NOT write anything to the database. Safe to call repeatedly.
  */
-export async function runSeasonDryRun(seasonId: string): Promise<DryRunReport | DryRunError> {
+export async function runSeasonDryRun(
+  seasonId: string,
+  auth: AuthContext
+): Promise<DryRunReport | DryRunError> {
   try {
     // 1. Load season
     const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
@@ -847,7 +851,7 @@ export async function runSeasonDryRun(seasonId: string): Promise<DryRunReport | 
     let billing: SeasonBillingPreview | null = null;
     let billingError: string | null = null;
     try {
-      billing = await seasonBillingService.calculatePreview(seasonId);
+      billing = await new SeasonBillingService(auth).calculatePreview(seasonId);
     } catch (err) {
       billingError = err instanceof Error ? err.message : 'Billing-Vorschau fehlgeschlagen';
     }

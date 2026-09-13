@@ -1,8 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
 import { createClient } from '@/lib/supabase/server';
-import type { Invoice, GenerateSeasonInvoiceParams } from '@/lib/types/billing.types';
-import { seasonBillingService } from '@/lib/billing/season-billing.service';
+import type { Invoice } from '@/lib/types/billing.types';
 
 export async function generateInvoiceNumber(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -57,71 +56,6 @@ export async function createMembershipInvoice(params: {
     .select()
     .single();
   if (error) throw new Error(error.message);
-  return data as Invoice;
-}
-
-/**
- * @deprecated Use `seasonBillingService.generateInvoices(seasonId)` instead.
- * This wrapper exists for backward compatibility with `/api/billing/generate-season-invoices`
- * which still uses installment logic on top of the new line-item-based engine.
- *
- * The new flow:
- *   1. `seasonBillingService.calculatePreview(seasonId)` — honors inaktive Wochen
- *   2. `seasonBillingService.generateInvoices(seasonId)` — line-item invoices with
- *      proper tax_amount, season_id-filtered idempotency, transaction-safe
- *   3. If installments are needed, call `createInstallments(invoiceId, count, dates)`
- *
- * Single source of truth: `lib/billing/season-billing.service.ts`
- */
-export async function createSeasonInvoice(params: GenerateSeasonInvoiceParams): Promise<Invoice> {
-  const supabase = await createClient();
-
-  // Step 1: trigger the new engine (idempotent — skips already-invoiced members)
-  const result = await seasonBillingService.generateInvoices(params.season_id);
-
-  // Step 2: locate the freshly created invoice for THIS member
-  const created = result.created.find((c) => c.memberId === params.member_id);
-  if (!created) {
-    throw new Error(
-      `No invoice created for member ${params.member_id} in season ${params.season_id} (likely already invoiced).`
-    );
-  }
-
-  // Step 3: if installments are requested, add them to the invoice
-  if (params.installment_count > 1) {
-    if (params.installment_due_dates.length !== params.installment_count) {
-      throw new Error(
-        `installment_due_dates length (${params.installment_due_dates.length}) must equal installment_count (${params.installment_count})`
-      );
-    }
-    const { data: invoice, error } = await supabase
-      .from('invoices')
-      .select('amount')
-      .eq('id', created.invoiceId)
-      .single();
-    if (error || !invoice) throw new Error(`Failed to fetch invoice: ${error?.message}`);
-    const total_amount = (invoice as { amount: number }).amount;
-    const perInstallment = total_amount / params.installment_count;
-    const installments = params.installment_due_dates.map((due_date, i) => ({
-      invoice_id: created.invoiceId,
-      installment_number: i + 1,
-      amount: perInstallment,
-      due_date,
-      status: 'pending',
-    }));
-    const { error: instError } = await (supabase as SupabaseClient<Database>)
-      .from('invoice_installments')
-      .insert(installments);
-    if (instError) throw new Error(`Failed to create installments: ${instError.message}`);
-  }
-
-  // Return the full invoice row
-  const { data, error } = await (supabase as SupabaseClient<Database>)
-    .from('invoices')
-    .select('*')
-    .eq('id', created.invoiceId)
-    .single();
-  if (error || !data) throw new Error(error?.message ?? 'Invoice not found');
   return data as Invoice;
 }
 

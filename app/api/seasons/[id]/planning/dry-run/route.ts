@@ -39,7 +39,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     }
 
     try {
-      const result = await runSeasonDryRun(seasonId);
+      const result = await runSeasonDryRun(seasonId, auth);
       if (!result.ok) {
         const status = result.code === 'season_not_found' ? 404 : 400;
         return NextResponse.json(result, { status });

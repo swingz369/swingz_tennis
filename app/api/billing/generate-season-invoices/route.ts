@@ -1,65 +1,70 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireAuth } from '@/lib/api-auth';
-import { createSeasonInvoice } from '@/lib/services/billing.service';
+import { requireAuth, verifyClubAccess } from '@/lib/api-auth';
+import { SeasonBillingService } from '@/application/services/season-billing.service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:generate-season-invoices');
 
 const Schema = z.object({
   club_id: z.string().uuid(),
   season_id: z.string().uuid(),
   installment_count: z.number().int().min(1).max(3).default(1),
   installment_due_dates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).default([]),
-  due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 export async function POST(request: NextRequest) {
   const auth = await requireAuth(request);
-  if (!auth.user) return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
-  const { supabase, user } = auth;
 
   const body = await request.json();
   const parsed = Schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { club_id, season_id, installment_count, installment_due_dates, due_date } = parsed.data;
+  const { club_id, season_id, installment_count, installment_due_dates } = parsed.data;
 
-  const { data: membership } = await supabase
-    .from('user_club_memberships')
-    .select('role')
-    .eq('user_id', user.id)
-    .eq('club_id', club_id)
-    .eq('is_active', true)
-    .maybeSingle();
-  if (!membership || !['admin', 'superadmin'].includes(membership.role))
+  if (!verifyClubAccess(auth, club_id)) {
     return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
-
-  const { data: members } = await supabase
-    .from('user_club_memberships')
-    .select('user_id, fee_configuration_id')
-    .eq('club_id', club_id)
-    .eq('is_active', true)
-    .eq('role', 'member');
-
-  let created = 0;
-  const errors: string[] = [];
-
-  for (const member of members ?? []) {
-    try {
-      await createSeasonInvoice({
-        club_id,
-        member_id: member.user_id,
-        season_id,
-        fee_configuration_id: member.fee_configuration_id ?? '',
-        installment_count,
-        installment_due_dates,
-        due_date,
-        created_by: user.id,
-      });
-      created++;
-    } catch (e) {
-      errors.push(`${member.user_id}: ${e instanceof Error ? e.message : 'Unknown error'}`);
-    }
   }
 
-  return NextResponse.json({ created, errors });
+  if (installment_count > 1 && installment_due_dates.length !== installment_count) {
+    return NextResponse.json(
+      { error: 'installment_due_dates muss installment_count Einträge haben' },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const result = await new SeasonBillingService(auth).generateInvoices(season_id);
+
+    if (installment_count > 1 && result.created.length > 0) {
+      for (const invoice of result.created) {
+        const perInstallment = invoice.totalAmount / installment_count;
+        const { error } = await auth.supabase.from('invoice_installments').insert(
+          installment_due_dates.map((due_date, i) => ({
+            invoice_id: invoice.invoiceId,
+            installment_number: i + 1,
+            amount: perInstallment,
+            due_date,
+            status: 'pending',
+          }))
+        );
+        if (error) {
+          log.error(
+            `Ratenzahlung für Rechnung ${invoice.invoiceId} konnte nicht angelegt werden`,
+            new Error(error.message)
+          );
+        }
+      }
+    }
+
+    return NextResponse.json({
+      created: result.created.length,
+      skipped: result.skipped.length,
+      errors: result.failed.map((f) => `${f.memberId}: ${f.error}`),
+    });
+  } catch (e) {
+    log.error('Saison-Abrechnung fehlgeschlagen', e instanceof Error ? e : undefined);
+    return NextResponse.json({ error: 'Saison-Abrechnung fehlgeschlagen' }, { status: 500 });
+  }
 }

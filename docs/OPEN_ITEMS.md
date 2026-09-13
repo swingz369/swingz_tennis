@@ -112,6 +112,16 @@ Service-Client erreichbar. → **Fix:** Policies definieren oder bewusst dokumen
 
 ## P1 — Wichtig
 
+- **SECURITY DEFINER-Funktionen ohne eigenen Autorisierungs-Check: systematisch prüfen.**
+  Fund bei ADR-005 Phase 3 (Abrechnungslauf, 14.09.2026): `generate_season_invoices_atomic`
+  war an `authenticated` gegrantet und umging RLS (SECURITY DEFINER) komplett, ohne selbst zu
+  prüfen, ob der Aufrufer Admin des übergebenen Clubs ist — gefixt in
+  `20260914120000_generate_season_invoices_atomic_auth_check.sql`. 51 SECURITY DEFINER-Funktionen
+  sind insgesamt an `authenticated` gegrantet; nur diese eine wurde geprüft. → **Systematisch
+  durchgehen**, v. a. schreibende (`create_invoice_with_items`, `add_balance_entry_atomic`,
+  `increment_member_balance` fallen auf den ersten Blick auf — noch nicht geprüft, ob sie
+  ungenutzt oder ebenfalls ungeschützt sind).
+  → Quelle: `docs/DATABASE.md` § SECURITY DEFINER-Funktionen ohne eigenen Autorisierungs-Check.
 - **`users` ist für jedes Mitglied vollständig lesbar (cross-tenant).** `GET /rest/v1/users`
   liefert Namen aller Nutzer aller Vereine. → **Entscheiden**, ob gewollt; die neue
   `directory`-Route gibt bewusst nur den eigenen Verein heraus.
