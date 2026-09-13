@@ -1,6 +1,11 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
+import {
+  internalErrorResponse,
+  ApiException,
+  errorResponse,
+  safeErrorMessage,
+} from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { BillingService } from '@/src/application/services/billing.service';
@@ -21,14 +26,13 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       }
 
       const { id } = await params;
-      const updated = await BillingService.markTrainerBillingAsPaid(id);
-
-      if (!updated) {
-        return NextResponse.json({ error: 'Trainer-Abrechnung nicht gefunden' }, { status: 404 });
-      }
+      const updated = await new BillingService(auth).markTrainerBillingAsPaid(id);
 
       return NextResponse.json({ success: true, trainerBilling: updated });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Trainer billing payment error:', error);
       return internalErrorResponse();
     }

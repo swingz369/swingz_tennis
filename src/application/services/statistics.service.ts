@@ -7,7 +7,7 @@ import type {
   DashboardMetric,
 } from '../../domain/entities/statistics.entity';
 import { memberService } from './member-service.adapter';
-import { billingService } from './billing-service.adapter';
+import { BillingRepository } from '@/infrastructure/persistence/repositories/billing.repository';
 import { HoursLogRepository } from '@/infrastructure/persistence/repositories/hours-log.repository';
 import { TrialTrainingRepository } from '@/infrastructure/persistence/repositories/trial-training.repository';
 import { systemDb } from '@/infrastructure/db';
@@ -92,22 +92,25 @@ export class StatisticsService {
   }
 
   async calculateRevenueStatistics(startDate: Date, endDate: Date): Promise<RevenueStatistics> {
-    const billing = await billingService.getAllTrainerBillings();
+    const billingRepo = new BillingRepository(
+      systemDb('Statistik-Aggregation über alle Vereine, kein Request-Kontext verfügbar')
+    );
+    const billing = await billingRepo.findAllTrainerBillings();
     const members = await memberService.getAllMembers();
 
     // Filter billing records created within the date range
     const filteredBilling = billing.filter(
-      (b) => new Date(b.createdAt) >= startDate && new Date(b.createdAt) <= endDate
+      (b) => new Date(b.created_at) >= startDate && new Date(b.created_at) <= endDate
     );
 
-    const totalRevenue = filteredBilling.reduce((sum, b) => sum + b.totalAmount, 0);
-    const trainingRevenue = filteredBilling.reduce((sum, b) => sum + b.totalAmount, 0); // Simplified
+    const totalRevenue = filteredBilling.reduce((sum, b) => sum + Number(b.total_amount), 0);
+    const trainingRevenue = filteredBilling.reduce((sum, b) => sum + Number(b.total_amount), 0); // Simplified
     const pendingPayments = filteredBilling
       .filter((b) => b.status === 'pending')
-      .reduce((sum, b) => sum + b.totalAmount, 0);
+      .reduce((sum, b) => sum + Number(b.total_amount), 0);
     const overduePayments = filteredBilling
       .filter((b) => b.status === 'overdue')
-      .reduce((sum, b) => sum + b.totalAmount, 0);
+      .reduce((sum, b) => sum + Number(b.total_amount), 0);
 
     const averageRevenuePerMember = members.length > 0 ? totalRevenue / members.length : 0;
 
@@ -381,15 +384,15 @@ export class StatisticsService {
   }
 
   private groupRevenueByMonth(
-    billing: Array<{ totalAmount: number; createdAt: string | Date }>
+    billing: Array<{ total_amount: number; created_at: string | Date }>
   ): Array<{ month: string; revenue: number }> {
     const monthlyRevenue = billing.reduce(
       (acc, b) => {
-        const month = new Date(b.createdAt).toLocaleString('de-DE', {
+        const month = new Date(b.created_at).toLocaleString('de-DE', {
           month: 'short',
           year: 'numeric',
         });
-        acc[month] = (acc[month] || 0) + b.totalAmount;
+        acc[month] = (acc[month] || 0) + Number(b.total_amount);
         return acc;
       },
       {} as Record<string, number>

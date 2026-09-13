@@ -20,15 +20,15 @@ import { formatCurrency, formatDate, formatNumber } from '@/lib/format';
 
 interface TrainerBilling {
   id: string;
-  trainerName: string;
-  totalHours: number;
-  hourlyRate: number;
-  totalAmount: number;
-  taxFreeAmount: number;
-  taxableAmount: number;
+  trainer_name: string;
+  total_hours: number;
+  hourly_rate: number;
+  total_amount: number;
+  tax_free_amount: number;
+  taxable_amount: number;
   status: 'pending' | 'processed' | 'paid' | 'overdue';
-  dueDate?: string;
-  paidAt?: string;
+  due_date: string | null;
+  paid_at: string | null;
 }
 
 interface TrainerRate {
@@ -154,16 +154,16 @@ export function TrainerBillingTab() {
                 <TableBody>
                   {billings.map((b) => (
                     <TableRow key={b.id}>
-                      <TableCell className="font-medium">{b.trainerName}</TableCell>
-                      <TableCell className="text-right">{formatNumber(b.totalHours)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(b.hourlyRate)}</TableCell>
+                      <TableCell className="font-medium">{b.trainer_name}</TableCell>
+                      <TableCell className="text-right">{formatNumber(b.total_hours)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(b.hourly_rate)}</TableCell>
                       <TableCell className="text-right font-medium">
-                        {formatCurrency(b.totalAmount)}
+                        {formatCurrency(b.total_amount)}
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground">
-                        {formatCurrency(b.taxFreeAmount)}
+                        {formatCurrency(b.tax_free_amount)}
                       </TableCell>
-                      <TableCell>{b.dueDate ? formatDate(b.dueDate) : '—'}</TableCell>
+                      <TableCell>{b.due_date ? formatDate(b.due_date) : '—'}</TableCell>
                       <TableCell>
                         <StatusBadge status={b.status} label={STATUS_LABELS[b.status]} size="sm" />
                       </TableCell>
@@ -198,9 +198,9 @@ export function TrainerBillingTab() {
                             )}
                           </div>
                         )}
-                        {b.status === 'paid' && b.paidAt && (
+                        {b.status === 'paid' && b.paid_at && (
                           <span className="text-sm text-muted-foreground">
-                            bezahlt am {formatDate(b.paidAt)}
+                            bezahlt am {formatDate(b.paid_at)}
                           </span>
                         )}
                       </TableCell>

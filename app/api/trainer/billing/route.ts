@@ -39,7 +39,9 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const trainerBillings = await BillingService.getTrainerBillingsByTrainerId(trainerId);
+      const trainerBillings = await new BillingService(auth).getTrainerBillingsByTrainerId(
+        trainerId
+      );
       return NextResponse.json({ trainerBillings });
     } catch (error) {
       log.error('Trainer billing fetch failed', error instanceof Error ? error : undefined);

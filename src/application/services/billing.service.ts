@@ -1,290 +1,131 @@
-import { createServiceClient } from '@/lib/supabase/service';
-import type {
-  TrainerBilling,
-  BillingLineItem,
-  CreateTrainerBillingInput,
-  UpdateTrainerBillingInput,
-  BillingSummary,
-} from '../../domain/entities/billing.entity';
+import type { AuthContext } from '@/lib/api-auth';
+import { ApiException } from '@/lib/api-error';
+import type { TablesInsert } from '@/types/supabase';
+import { getUserDb } from '@/infrastructure/db';
+import {
+  BillingRepository,
+  type TrainerBilling,
+  type BillingLineItem,
+  type BillingSummary,
+} from '@/infrastructure/persistence/repositories/billing.repository';
 
-const supabase = createServiceClient();
+export type CreateTrainerBillingInput = Omit<
+  TablesInsert<'trainer_billings'>,
+  'id' | 'status' | 'created_at' | 'updated_at'
+>;
 
-// ── row-to-domain mappers ──────────────────────────────────────────────────
-
-function rowToTrainerBilling(row: Record<string, unknown>): TrainerBilling {
-  return {
-    id: row.id as string,
-    billingPeriodId: row.billing_period_id as string,
-    trainerId: row.trainer_id as string,
-    trainerName: row.trainer_name as string,
-    totalHours: Number(row.total_hours),
-    hourlyRate: Number(row.hourly_rate),
-    totalAmount: Number(row.total_amount),
-    taxFreeAmount: Number(row.tax_free_amount ?? 0),
-    taxableAmount: Number(row.taxable_amount ?? 0),
-    status: row.status as TrainerBilling['status'],
-    invoiceId: row.invoice_id as string | undefined,
-    invoiceNumber: row.invoice_number as string | undefined,
-    dueDate: row.due_date as string | undefined,
-    paidAt: row.paid_at as string | undefined,
-    notes: row.notes as string | undefined,
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  };
-}
-
-function rowToBillingLineItem(row: Record<string, unknown>): BillingLineItem {
-  return {
-    id: row.id as string,
-    trainerBillingId: row.trainer_billing_id as string,
-    date: row.date as string,
-    description: row.description as string,
-    hours: Number(row.hours),
-    rate: Number(row.rate),
-    amount: Number(row.amount),
-    type: row.type as BillingLineItem['type'],
-    sessionId: row.session_id as string | undefined,
-  };
-}
-
-// ── service ───────────────────────────────────────────────────────────────
-
+/**
+ * Repository-Service für die Domäne "Honorarabrechnung" (ADR-005). Fachlogik
+ * (Übungsleiterpauschale) hier, Datenzugriff ausschliesslich im Repository —
+ * RLS erzwingt die Mandantentrennung, nicht dieser Service.
+ */
 export class BillingService {
-  /**
-   * Create trainer billing
-   */
-  static async createTrainerBilling(input: CreateTrainerBillingInput): Promise<TrainerBilling> {
-    const { data, error } = await supabase
-      .from('trainer_billings')
-      .insert({
-        billing_period_id: input.billingPeriodId,
-        trainer_id: input.trainerId,
-        trainer_name: input.trainerName,
-        total_hours: input.totalHours,
-        hourly_rate: input.hourlyRate,
-        total_amount: input.totalAmount,
-        tax_free_amount: input.taxFreeAmount ?? 0,
-        taxable_amount: input.taxableAmount ?? input.totalAmount,
-        status: 'pending',
-        due_date: input.dueDate ?? null,
-        notes: input.notes ?? null,
-      })
-      .select()
-      .single();
+  private readonly repo: BillingRepository;
 
-    if (error || !data) {
-      throw new Error(`Failed to create trainer billing: ${error?.message}`);
-    }
-    return rowToTrainerBilling(data as Record<string, unknown>);
+  constructor(auth: AuthContext) {
+    this.repo = new BillingRepository(getUserDb(auth));
   }
 
-  /**
-   * Get trainer billing by ID
-   */
-  static async getTrainerBillingById(id: string): Promise<TrainerBilling | null> {
-    const { data, error } = await supabase
-      .from('trainer_billings')
-      .select()
-      .eq('id', id)
-      .maybeSingle();
+  // ═══ Trainer Billings ═══
 
-    if (error) throw new Error(`Failed to get trainer billing: ${error.message}`);
-    return data ? rowToTrainerBilling(data as Record<string, unknown>) : null;
+  /**
+   * Übungsleiterpauschale (§ 3 Nr. 26 EStG): max. 3.000 € steuerfrei p.a.
+   * Berechnet den steuerfreien Anteil aus dem bereits im laufenden Jahr
+   * genutzten Freibetrag des Trainers.
+   */
+  async createTrainerBilling(input: CreateTrainerBillingInput): Promise<TrainerBilling> {
+    const ANNUAL_LIMIT = 3000;
+    const currentYear = new Date().getFullYear();
+
+    const existing = await this.repo.findTaxFreeAmountsForTrainerInYear(
+      input.trainer_id,
+      currentYear
+    );
+    const usedThisYear = existing.reduce((sum, b) => sum + b.taxFreeAmount, 0);
+    const remaining = Math.max(0, ANNUAL_LIMIT - usedThisYear);
+    const taxFreeAmount = Math.min(Number(input.total_amount), remaining);
+    const taxableAmount = Number(input.total_amount) - taxFreeAmount;
+
+    return this.repo.createTrainerBilling({
+      ...input,
+      tax_free_amount: taxFreeAmount,
+      taxable_amount: taxableAmount,
+      status: 'pending',
+    });
   }
 
-  /**
-   * Get trainer billings by billing period
-   */
-  static async getTrainerBillingsByBillingPeriod(
-    billingPeriodId: string
-  ): Promise<TrainerBilling[]> {
-    const { data, error } = await supabase
-      .from('trainer_billings')
-      .select()
-      .eq('billing_period_id', billingPeriodId);
-
-    if (error) throw new Error(`Failed to get trainer billings by period: ${error.message}`);
-    return (data ?? []).map((r) => rowToTrainerBilling(r as Record<string, unknown>));
+  async getTrainerBillingById(id: string): Promise<TrainerBilling> {
+    const billing = await this.repo.findTrainerBillingById(id);
+    if (!billing) throw new ApiException('NOT_FOUND', 'Trainer-Abrechnung nicht gefunden');
+    return billing;
   }
 
-  /**
-   * Get trainer billings by trainer ID
-   */
-  static async getTrainerBillingsByTrainerId(trainerId: string): Promise<TrainerBilling[]> {
-    const { data, error } = await supabase
-      .from('trainer_billings')
-      .select()
-      .eq('trainer_id', trainerId);
-
-    if (error) throw new Error(`Failed to get trainer billings by trainer: ${error.message}`);
-    return (data ?? []).map((r) => rowToTrainerBilling(r as Record<string, unknown>));
+  async getTrainerBillingsByBillingPeriod(billingPeriodId: string): Promise<TrainerBilling[]> {
+    return this.repo.findTrainerBillingsByBillingPeriod(billingPeriodId);
   }
 
-  /**
-   * Get all trainer billings, optionally filtered by status
-   */
-  static async getAllTrainerBillings(status?: string): Promise<TrainerBilling[]> {
-    let query = supabase.from('trainer_billings').select();
-    if (status) {
-      query = query.eq('status', status);
-    }
-    const { data, error } = await query.order('created_at', { ascending: false });
-
-    if (error) throw new Error(`Failed to get trainer billings: ${error.message}`);
-    return (data ?? []).map((r) => rowToTrainerBilling(r as Record<string, unknown>));
+  async getTrainerBillingsByTrainerId(trainerId: string): Promise<TrainerBilling[]> {
+    return this.repo.findTrainerBillingsByTrainerId(trainerId);
   }
 
-  /**
-   * Update trainer billing
-   */
-  static async updateTrainerBilling(
+  async getAllTrainerBillings(status?: string): Promise<TrainerBilling[]> {
+    return this.repo.findAllTrainerBillings(status);
+  }
+
+  async updateTrainerBilling(
     id: string,
-    input: UpdateTrainerBillingInput
-  ): Promise<TrainerBilling | null> {
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    if (input.status !== undefined) patch.status = input.status;
-    if (input.invoiceId !== undefined) patch.invoice_id = input.invoiceId;
-    if (input.invoiceNumber !== undefined) patch.invoice_number = input.invoiceNumber;
-    if (input.dueDate !== undefined) patch.due_date = input.dueDate;
-    if (input.paidAt !== undefined) patch.paid_at = input.paidAt;
-    if (input.notes !== undefined) patch.notes = input.notes;
-
-    const { data, error } = await supabase
-      .from('trainer_billings')
-      .update(patch as never)
-      .eq('id', id)
-      .select()
-      .maybeSingle();
-
-    if (error) throw new Error(`Failed to update trainer billing: ${error.message}`);
-    return data ? rowToTrainerBilling(data as Record<string, unknown>) : null;
-  }
-
-  /**
-   * Mark trainer billing as paid
-   */
-  static async markTrainerBillingAsPaid(id: string): Promise<TrainerBilling | null> {
-    return this.updateTrainerBilling(id, {
-      status: 'paid',
-      paidAt: new Date().toISOString(),
-    });
-  }
-
-  /**
-   * Mark trainer billing as overdue
-   */
-  static async markTrainerBillingAsOverdue(id: string): Promise<TrainerBilling | null> {
-    return this.updateTrainerBilling(id, {
-      status: 'overdue',
-    });
-  }
-
-  /**
-   * Create billing line item
-   */
-  static async createBillingLineItem(
-    trainerBillingId: string,
-    date: string,
-    description: string,
-    hours: number,
-    rate: number,
-    type: 'training' | 'preparation' | 'meeting' | 'other',
-    sessionId?: string
-  ): Promise<BillingLineItem> {
-    const { data, error } = await supabase
-      .from('billing_line_items')
-      .insert({
-        trainer_billing_id: trainerBillingId,
-        date,
-        description,
-        hours,
-        rate,
-        amount: hours * rate,
-        type,
-        session_id: sessionId ?? null,
-      })
-      .select()
-      .single();
-
-    if (error || !data) {
-      throw new Error(`Failed to create billing line item: ${error?.message}`);
+    input: {
+      status?: TrainerBilling['status'];
+      invoiceId?: string;
+      invoiceNumber?: string;
+      dueDate?: string;
+      paidAt?: string;
+      notes?: string;
     }
-    return rowToBillingLineItem(data as Record<string, unknown>);
+  ): Promise<TrainerBilling> {
+    const updated = await this.repo.updateTrainerBilling(id, {
+      status: input.status,
+      invoice_id: input.invoiceId,
+      invoice_number: input.invoiceNumber,
+      due_date: input.dueDate,
+      paid_at: input.paidAt,
+      notes: input.notes,
+    });
+    if (!updated) throw new ApiException('NOT_FOUND', 'Trainer-Abrechnung nicht gefunden');
+    return updated;
   }
 
-  /**
-   * Get billing line items by trainer billing ID
-   */
-  static async getBillingLineItemsByTrainerBilling(
-    trainerBillingId: string
-  ): Promise<BillingLineItem[]> {
-    const { data, error } = await supabase
-      .from('billing_line_items')
-      .select()
-      .eq('trainer_billing_id', trainerBillingId);
-
-    if (error) throw new Error(`Failed to get billing line items: ${error.message}`);
-    return (data ?? []).map((r) => rowToBillingLineItem(r as Record<string, unknown>));
+  async markTrainerBillingAsPaid(id: string): Promise<TrainerBilling> {
+    const updated = await this.repo.markTrainerBillingAsPaid(id);
+    if (!updated) throw new ApiException('NOT_FOUND', 'Trainer-Abrechnung nicht gefunden');
+    return updated;
   }
 
-  /**
-   * Get all billing line items
-   */
-  static async getAllBillingLineItems(): Promise<BillingLineItem[]> {
-    const { data, error } = await supabase.from('billing_line_items').select();
-
-    if (error) throw new Error(`Failed to get billing line items: ${error.message}`);
-    return (data ?? []).map((r) => rowToBillingLineItem(r as Record<string, unknown>));
+  async markTrainerBillingAsOverdue(id: string): Promise<TrainerBilling> {
+    const updated = await this.repo.markTrainerBillingAsOverdue(id);
+    if (!updated) throw new ApiException('NOT_FOUND', 'Trainer-Abrechnung nicht gefunden');
+    return updated;
   }
 
-  /**
-   * Calculate billing summary for a billing period
-   */
-  static async calculateBillingSummary(billingPeriodId: string): Promise<BillingSummary> {
-    const periodBillings = await this.getTrainerBillingsByBillingPeriod(billingPeriodId);
-
-    const totalTrainers = periodBillings.length;
-    const totalHours = periodBillings.reduce((sum, b) => sum + b.totalHours, 0);
-    const totalAmount = periodBillings.reduce((sum, b) => sum + b.totalAmount, 0);
-    const pendingAmount = periodBillings
-      .filter((b) => b.status === 'pending')
-      .reduce((sum, b) => sum + b.totalAmount, 0);
-    const processedAmount = periodBillings
-      .filter((b) => b.status === 'processed')
-      .reduce((sum, b) => sum + b.totalAmount, 0);
-    const paidAmount = periodBillings
-      .filter((b) => b.status === 'paid')
-      .reduce((sum, b) => sum + b.totalAmount, 0);
-    const overdueAmount = periodBillings
-      .filter((b) => b.status === 'overdue')
-      .reduce((sum, b) => sum + b.totalAmount, 0);
-
-    return {
-      billingPeriodId,
-      totalTrainers,
-      totalHours,
-      totalAmount,
-      pendingAmount,
-      processedAmount,
-      paidAmount,
-      overdueAmount,
-    };
+  async calculateBillingSummary(billingPeriodId: string): Promise<BillingSummary> {
+    return this.repo.calculateBillingSummary(billingPeriodId);
   }
 
-  /**
-   * Generate invoice number based on current DB count
-   */
-  static async generateInvoiceNumber(): Promise<string> {
-    const year = new Date().getFullYear();
-    const month = String(new Date().getMonth() + 1).padStart(2, '0');
-    const prefix = `INV-${year}${month}`;
+  async generateInvoiceNumber(): Promise<string> {
+    return this.repo.generateInvoiceNumber();
+  }
 
-    const { count } = await supabase
-      .from('trainer_billings')
-      .select('id', { count: 'exact', head: true })
-      .like('invoice_number', `${prefix}%`);
+  // ═══ Billing Line Items ═══
 
-    const next = (count ?? 0) + 1;
-    return `${prefix}-${String(next).padStart(4, '0')}`;
+  async createBillingLineItem(input: TablesInsert<'billing_line_items'>): Promise<BillingLineItem> {
+    return this.repo.createBillingLineItem(input);
+  }
+
+  async getBillingLineItemsByTrainerBilling(trainerBillingId: string): Promise<BillingLineItem[]> {
+    return this.repo.findBillingLineItemsByTrainerBilling(trainerBillingId);
+  }
+
+  async getAllBillingLineItems(): Promise<BillingLineItem[]> {
+    return this.repo.findAllBillingLineItems();
   }
 }

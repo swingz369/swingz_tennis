@@ -25,14 +25,14 @@ const ANNUAL_TAX_FREE_LIMIT = 3000;
 
 interface OwnBilling {
   id: string;
-  totalHours: number;
-  hourlyRate: number;
-  totalAmount: number;
-  taxFreeAmount: number;
-  taxableAmount: number;
+  total_hours: number;
+  hourly_rate: number;
+  total_amount: number;
+  tax_free_amount: number;
+  taxable_amount: number;
   status: 'pending' | 'processed' | 'paid' | 'overdue';
-  dueDate?: string;
-  paidAt?: string;
+  due_date: string | null;
+  paid_at: string | null;
 }
 
 const STATUS_LABELS: Record<OwnBilling['status'], string> = {
@@ -74,15 +74,15 @@ export function TrainerOwnBilling() {
 
   const currentYear = new Date().getFullYear();
   const thisYear = billings.filter((b) => {
-    const date = b.dueDate ?? b.paidAt;
+    const date = b.due_date ?? b.paid_at;
     // ponytail: ohne Datum keine Jahreszuordnung — Zeile zählt nicht mit
     return date ? new Date(date).getFullYear() === currentYear : false;
   });
-  const taxFreeUsed = thisYear.reduce((sum, b) => sum + Number(b.taxFreeAmount ?? 0), 0);
+  const taxFreeUsed = thisYear.reduce((sum, b) => sum + Number(b.tax_free_amount ?? 0), 0);
   const taxFreeLeft = Math.max(0, ANNUAL_TAX_FREE_LIMIT - taxFreeUsed);
   const openAmount = billings
     .filter((b) => b.status !== 'paid')
-    .reduce((sum, b) => sum + Number(b.totalAmount ?? 0), 0);
+    .reduce((sum, b) => sum + Number(b.total_amount ?? 0), 0);
 
   return (
     <div className="space-y-6">
@@ -150,17 +150,19 @@ export function TrainerOwnBilling() {
                     <TableBody>
                       {billings.map((b) => (
                         <TableRow key={b.id}>
-                          <TableCell className="text-right">{formatNumber(b.totalHours)}</TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency(b.hourlyRate)}
+                            {formatNumber(b.total_hours)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(b.hourly_rate)}
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            {formatCurrency(b.totalAmount)}
+                            {formatCurrency(b.total_amount)}
                           </TableCell>
                           <TableCell className="text-right text-muted-foreground">
-                            {formatCurrency(b.taxFreeAmount)}
+                            {formatCurrency(b.tax_free_amount)}
                           </TableCell>
-                          <TableCell>{b.dueDate ? formatDate(b.dueDate) : '—'}</TableCell>
+                          <TableCell>{b.due_date ? formatDate(b.due_date) : '—'}</TableCell>
                           <TableCell>
                             <StatusBadge
                               status={b.status}

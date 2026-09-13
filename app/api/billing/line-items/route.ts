@@ -10,10 +10,14 @@ const log = createLogger('api:billing:line-items');
 
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
-    // Permission check
-    const hasPermission = await verifyRole(auth, 'trainer');
+    // Wie /api/billing/trainers: ohne `trainerBillingId` liefert der Endpoint
+    // *alle* Abrechnungspositionen (Stunden, Sätze, Beschreibungen) aller
+    // Trainer — mit `verifyRole(auth, 'trainer')` konnte damit jeder Trainer
+    // die Detaildaten aller Kollegen auslesen. Admin-Werkzeug, kein Frontend
+    // ruft diesen Endpoint aktuell als Trainer auf.
+    const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     // Rate limit
@@ -25,43 +29,19 @@ export async function GET(_request: NextRequest) {
     try {
       const { searchParams } = new URL(_request.url);
       const trainerBillingId = searchParams.get('trainerBillingId');
+      const service = new BillingService(auth);
 
       if (trainerBillingId) {
         const billingLineItems =
-          await BillingService.getBillingLineItemsByTrainerBilling(trainerBillingId);
+          await service.getBillingLineItemsByTrainerBilling(trainerBillingId);
         return NextResponse.json({ billingLineItems });
       }
 
-      // Get all billing line items
-      const billingLineItems = await BillingService.getAllBillingLineItems();
+      // Get all billing line items (RLS scopt auf den eigenen Verein)
+      const billingLineItems = await service.getAllBillingLineItems();
       return NextResponse.json({ billingLineItems });
     } catch (error) {
       log.error('Billing line items fetch error:', error);
-      return internalErrorResponse();
-    }
-  });
-}
-
-export async function POST(_request: NextRequest) {
-  return withApiAuth(_request, async (auth) => {
-    // Permission check
-    const hasPermission = await verifyRole(auth, 'trainer');
-    if (!hasPermission) {
-      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
-    }
-
-    // Rate limit
-    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
-    if (rateLimitError) {
-      return rateLimitError;
-    }
-
-    try {
-      // Implement POST logic here if needed
-
-      return NextResponse.json({ success: true });
-    } catch (error) {
-      log.error('Billing line items creation error:', error);
       return internalErrorResponse();
     }
   });

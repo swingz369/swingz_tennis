@@ -2,9 +2,9 @@
  * Integration Tests — StatisticsService & Dashboard Metrics
  *
  * Verifies that the StatisticsService correctly computes statistics from
- * the in-memory mock data across MemberService, HoursLogService, and
- * TrialTrainingService. The BillingService adapter and FeatureFlags
- * are mocked to ensure in-memory data paths are used.
+ * the in-memory mock data across MemberService, HoursLogRepository,
+ * TrialTrainingRepository and BillingRepository. FeatureFlags are mocked
+ * to ensure in-memory data paths are used.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -436,115 +436,130 @@ vi.mock('@/src/application/services/member-service.adapter', () => {
   };
 });
 
-// ── Mock billing adapter (BillingService uses direct Supabase, not in-memory) ──
-//    Data inline in factory to avoid hoisting issues with vi.mock
-vi.mock('@/src/application/services/billing-service.adapter', () => {
+// ── Mock billing repository (ADR-005: StatisticsService liest jetzt über
+//    BillingRepository + systemDb, nicht mehr über den gelöschten Drizzle-
+//    Adapter). Feldnamen snake_case, wie Tables<'trainer_billings'> sie
+//    liefert. Data inline in factory to avoid hoisting issues with vi.mock
+vi.mock('@/infrastructure/persistence/repositories/billing.repository', () => {
   const billingData = [
     {
       id: 'bill-1',
-      billingPeriodId: 'period-1',
-      trainerId: 'trainer-1',
-      trainerName: 'Thomas Müller',
-      totalHours: 40,
-      hourlyRate: 45,
-      totalAmount: 1800,
+      billing_period_id: 'period-1',
+      trainer_id: 'trainer-1',
+      trainer_name: 'Thomas Müller',
+      total_hours: 40,
+      hourly_rate: 45,
+      total_amount: 1800,
+      tax_free_amount: 0,
+      taxable_amount: 1800,
       status: 'paid' as const,
-      invoiceId: 'inv-1',
-      invoiceNumber: 'INV-202601-0001',
-      dueDate: '2026-02-15',
-      paidAt: '2026-02-14',
-      createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
-      updatedAt: new Date(Date.now() - 20 * 86400000).toISOString(),
+      invoice_id: 'inv-1',
+      invoice_number: 'INV-202601-0001',
+      due_date: '2026-02-15',
+      paid_at: '2026-02-14',
+      notes: null,
+      created_at: new Date(Date.now() - 20 * 86400000).toISOString(),
+      updated_at: new Date(Date.now() - 20 * 86400000).toISOString(),
     },
     {
       id: 'bill-2',
-      billingPeriodId: 'period-1',
-      trainerId: 'trainer-2',
-      trainerName: 'Julia Weber',
-      totalHours: 35,
-      hourlyRate: 55,
-      totalAmount: 1925,
+      billing_period_id: 'period-1',
+      trainer_id: 'trainer-2',
+      trainer_name: 'Julia Weber',
+      total_hours: 35,
+      hourly_rate: 55,
+      total_amount: 1925,
+      tax_free_amount: 0,
+      taxable_amount: 1925,
       status: 'pending' as const,
-      invoiceId: 'inv-2',
-      invoiceNumber: 'INV-202601-0002',
-      dueDate: '2026-02-15',
-      createdAt: new Date(Date.now() - 18 * 86400000).toISOString(),
-      updatedAt: new Date(Date.now() - 18 * 86400000).toISOString(),
+      invoice_id: 'inv-2',
+      invoice_number: 'INV-202601-0002',
+      due_date: '2026-02-15',
+      paid_at: null,
+      notes: null,
+      created_at: new Date(Date.now() - 18 * 86400000).toISOString(),
+      updated_at: new Date(Date.now() - 18 * 86400000).toISOString(),
     },
     {
       id: 'bill-3',
-      billingPeriodId: 'period-1',
-      trainerId: 'trainer-3',
-      trainerName: 'Michael Bauer',
-      totalHours: 50,
-      hourlyRate: 70,
-      totalAmount: 3500,
+      billing_period_id: 'period-1',
+      trainer_id: 'trainer-3',
+      trainer_name: 'Michael Bauer',
+      total_hours: 50,
+      hourly_rate: 70,
+      total_amount: 3500,
+      tax_free_amount: 0,
+      taxable_amount: 3500,
       status: 'paid' as const,
-      invoiceId: 'inv-3',
-      invoiceNumber: 'INV-202601-0003',
-      dueDate: '2026-02-15',
-      paidAt: '2026-02-10',
-      createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
-      updatedAt: new Date(Date.now() - 15 * 86400000).toISOString(),
+      invoice_id: 'inv-3',
+      invoice_number: 'INV-202601-0003',
+      due_date: '2026-02-15',
+      paid_at: '2026-02-10',
+      notes: null,
+      created_at: new Date(Date.now() - 15 * 86400000).toISOString(),
+      updated_at: new Date(Date.now() - 15 * 86400000).toISOString(),
     },
     {
       id: 'bill-4',
-      billingPeriodId: 'period-1',
-      trainerId: 'trainer-4',
-      trainerName: 'Sarah Klein',
-      totalHours: 25,
-      hourlyRate: 35,
-      totalAmount: 875,
+      billing_period_id: 'period-1',
+      trainer_id: 'trainer-4',
+      trainer_name: 'Sarah Klein',
+      total_hours: 25,
+      hourly_rate: 35,
+      total_amount: 875,
+      tax_free_amount: 0,
+      taxable_amount: 875,
       status: 'overdue' as const,
-      invoiceId: 'inv-4',
-      invoiceNumber: 'INV-202601-0004',
-      dueDate: '2026-01-30',
-      createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-      updatedAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+      invoice_id: 'inv-4',
+      invoice_number: 'INV-202601-0004',
+      due_date: '2026-01-30',
+      paid_at: null,
+      notes: null,
+      created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
+      updated_at: new Date(Date.now() - 30 * 86400000).toISOString(),
     },
     {
       id: 'bill-5',
-      billingPeriodId: 'period-1',
-      trainerId: 'trainer-5',
-      trainerName: 'Ahmed Al-Rashid',
-      totalHours: 30,
-      hourlyRate: 50,
-      totalAmount: 1500,
+      billing_period_id: 'period-1',
+      trainer_id: 'trainer-5',
+      trainer_name: 'Ahmed Al-Rashid',
+      total_hours: 30,
+      hourly_rate: 50,
+      total_amount: 1500,
+      tax_free_amount: 0,
+      taxable_amount: 1500,
       status: 'processed' as const,
-      invoiceId: 'inv-5',
-      invoiceNumber: 'INV-202601-0005',
-      dueDate: '2026-02-15',
-      createdAt: new Date(Date.now() - 10 * 86400000).toISOString(),
-      updatedAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+      invoice_id: 'inv-5',
+      invoice_number: 'INV-202601-0005',
+      due_date: '2026-02-15',
+      paid_at: null,
+      notes: null,
+      created_at: new Date(Date.now() - 10 * 86400000).toISOString(),
+      updated_at: new Date(Date.now() - 10 * 86400000).toISOString(),
     },
   ];
 
   return {
-    billingService: {
-      getAllTrainerBillings: vi.fn().mockResolvedValue(billingData),
-      getAllBillingPeriods: vi.fn().mockResolvedValue([]),
-      createBillingPeriod: vi.fn(),
-      getBillingPeriodById: vi.fn(),
-      getCurrentBillingPeriod: vi.fn(),
-      closeBillingPeriod: vi.fn(),
-      createTrainerBilling: vi.fn(),
-      getTrainerBillingById: vi.fn(),
-      getTrainerBillingsByBillingPeriod: vi.fn(),
-      getTrainerBillingsByTrainerId: vi.fn(),
-      updateTrainerBilling: vi.fn(),
-      markTrainerBillingAsPaid: vi.fn(),
-      markTrainerBillingAsOverdue: vi.fn(),
-      createBillingLineItem: vi.fn(),
-      getBillingLineItemsByTrainerBilling: vi.fn(),
-      getAllBillingLineItems: vi.fn(),
-      calculateBillingSummary: vi.fn(),
-      generateInvoiceNumber: vi.fn(),
+    BillingRepository: class {
+      findAllTrainerBillings = vi.fn().mockResolvedValue(billingData);
+      findTrainerBillingById = vi.fn().mockResolvedValue(null);
+      findTrainerBillingsByBillingPeriod = vi.fn().mockResolvedValue([]);
+      findTrainerBillingsByTrainerId = vi.fn().mockResolvedValue([]);
+      createTrainerBilling = vi.fn();
+      updateTrainerBilling = vi.fn();
+      markTrainerBillingAsPaid = vi.fn();
+      markTrainerBillingAsOverdue = vi.fn();
+      findTaxFreeAmountsForTrainerInYear = vi.fn().mockResolvedValue([]);
+      generateInvoiceNumber = vi.fn();
+      calculateBillingSummary = vi.fn();
+      createBillingLineItem = vi.fn();
+      findBillingLineItemsByTrainerBilling = vi.fn().mockResolvedValue([]);
+      findAllBillingLineItems = vi.fn().mockResolvedValue([]);
     },
   };
 });
 
 import { StatisticsService } from '@/src/application/services/statistics.service';
-import { billingService } from '@/src/application/services/billing-service.adapter';
 
 // ════════════════════════════════════════════════════════════
 // TESTS
@@ -740,12 +755,6 @@ describe('StatisticsService — Integration with Mock Data', () => {
       );
 
       expect(Array.isArray(stats.revenueByMonth)).toBe(true);
-    });
-
-    it('calls billing adapter getAllTrainerBillings', async () => {
-      await statsService.calculateRevenueStatistics(new Date('2020-01-01'), new Date('2030-12-31'));
-
-      expect(billingService.getAllTrainerBillings).toHaveBeenCalled();
     });
 
     it('returns zero revenue when date range has no billing data', async () => {

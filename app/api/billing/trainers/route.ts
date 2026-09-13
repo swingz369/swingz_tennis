@@ -49,37 +49,17 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
       }
 
-      // Übungsleiterpauschale (§ 3 Nr. 26 EStG): max. 3.000 € steuerfrei p.a.
-      const ANNUAL_LIMIT = 3000;
-      const currentYear = new Date().getFullYear();
-      const { supabase } = auth;
-      // ponytail: cast as any — tax_free_amount added via migration, not yet in generated types
-      const { data: existingBillings } = await supabase
-        .from('trainer_billings')
-        .select('tax_free_amount, created_at')
-        .eq('trainer_id', trainerId)
-        .not('status', 'eq', 'overdue');
-      const usedThisYear = (
-        (existingBillings ?? []) as Array<{ tax_free_amount: number; created_at: string }>
-      )
-        .filter((b) => new Date(b.created_at).getFullYear() === currentYear)
-        .reduce((sum, b) => sum + Number(b.tax_free_amount), 0);
-      const remaining = Math.max(0, ANNUAL_LIMIT - usedThisYear);
-      const taxFreeAmount = Math.min(Number(totalAmount), remaining);
-      const taxableAmount = Number(totalAmount) - taxFreeAmount;
-
-      // Create trainer billing
-      const trainerBilling = await BillingService.createTrainerBilling({
-        billingPeriodId,
-        trainerId,
-        trainerName,
-        totalHours,
-        hourlyRate,
-        totalAmount,
-        taxFreeAmount,
-        taxableAmount,
-        dueDate,
-        notes,
+      // Übungsleiterpauschale (§ 3 Nr. 26 EStG): Berechnung sitzt jetzt in
+      // BillingService.createTrainerBilling (Repository-Umstellung ADR-005).
+      const trainerBilling = await new BillingService(auth).createTrainerBilling({
+        billing_period_id: billingPeriodId,
+        trainer_id: trainerId,
+        trainer_name: trainerName,
+        total_hours: totalHours,
+        hourly_rate: hourlyRate,
+        total_amount: totalAmount,
+        due_date: dueDate ?? null,
+        notes: notes ?? null,
       });
 
       return NextResponse.json({ success: true, trainerBilling });
@@ -116,29 +96,30 @@ export async function GET(_request: NextRequest) {
       const status = searchParams.get('status');
       const summary = searchParams.get('summary');
 
+      const service = new BillingService(auth);
+
       if (summary && billingPeriodId) {
-        const summary = await BillingService.calculateBillingSummary(billingPeriodId);
+        const summary = await service.calculateBillingSummary(billingPeriodId);
         return NextResponse.json({ summary });
       }
 
       if (billingPeriodId) {
-        const trainerBillings =
-          await BillingService.getTrainerBillingsByBillingPeriod(billingPeriodId);
+        const trainerBillings = await service.getTrainerBillingsByBillingPeriod(billingPeriodId);
         return NextResponse.json({ trainerBillings });
       }
 
       if (trainerId) {
-        const trainerBillings = await BillingService.getTrainerBillingsByTrainerId(trainerId);
+        const trainerBillings = await service.getTrainerBillingsByTrainerId(trainerId);
         return NextResponse.json({ trainerBillings });
       }
 
       if (status) {
-        const trainerBillings = await BillingService.getAllTrainerBillings(status);
+        const trainerBillings = await service.getAllTrainerBillings(status);
         return NextResponse.json({ trainerBillings });
       }
 
-      // Get all trainer billings
-      const trainerBillings = await BillingService.getAllTrainerBillings();
+      // Get all trainer billings (RLS scopt auf den eigenen Verein)
+      const trainerBillings = await service.getAllTrainerBillings();
       return NextResponse.json({ trainerBillings });
     } catch (error) {
       log.error('Trainer billing fetch error:', error);
