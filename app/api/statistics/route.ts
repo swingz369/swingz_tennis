@@ -1,13 +1,23 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { StatisticsService } from '@/src/application/services/statistics.service';
-import { withApiAuth } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:statistics');
 
 export async function GET(request: NextRequest) {
-  return withApiAuth(request, async (_auth) => {
+  return withApiAuth(request, async (auth) => {
+    // Fund bei der ADR-005-Migration (Domäne Abrechnung): dieser Endpunkt
+    // liefert plattformweite Umsatz-/Trainer-/Mitgliederzahlen ohne jeden
+    // Rollen-Check — jeder angemeldete Nutzer (auch ein einfaches Mitglied)
+    // konnte sie abrufen. Die Schwester-Routen (export, dashboard) prüfen
+    // bereits verifyRole.
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) {
+      return forbiddenResponse('Zugriff nur für Admins');
+    }
+
     try {
       const searchParams = request.nextUrl.searchParams;
       const period = (searchParams.get('period') || 'monthly') as
