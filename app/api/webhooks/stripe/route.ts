@@ -56,11 +56,12 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json({ received: true, deduplicated: true });
       }
     } catch (idempotencyError) {
-      // Graceful degradation: if stripe_events table/RPC doesn't exist yet, continue processing
-      log.warn('Idempotency check unavailable, processing anyway', {
-        error:
-          idempotencyError instanceof Error ? idempotencyError.message : String(idempotencyError),
-      });
+      // Payment events must not be processed without the atomic deduplication guard.
+      log.error(
+        'Idempotency check unavailable — webhook will be retried',
+        idempotencyError instanceof Error ? idempotencyError : undefined
+      );
+      return NextResponse.json({ error: 'Webhook vorübergehend nicht verfügbar' }, { status: 503 });
     }
 
     log.info('Received Stripe event', { type: event.type, eventId: event.id });
