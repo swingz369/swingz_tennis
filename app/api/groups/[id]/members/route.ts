@@ -1,7 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { DrizzleGroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
+import { GroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
+import { getUserDb } from '@/infrastructure/db';
 import { GroupId, MemberId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -9,8 +10,6 @@ import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:groups:[id]:members');
-
-const groupRepo = new DrizzleGroupRepository();
 
 const addMemberSchema = z.object({
   memberId: z.string().uuid(),
@@ -39,6 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         );
       }
 
+      const groupRepo = new GroupRepository(getUserDb(auth));
       await groupRepo.addMemberToGroup(
         GroupId.fromString(id),
         MemberId.fromString(validation.data.memberId)

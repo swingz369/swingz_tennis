@@ -1,7 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { DrizzleGroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
+import { GroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
+import { getUserDb } from '@/infrastructure/db';
 import { GroupId, MemberId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -9,8 +10,6 @@ import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:groups:[id]');
-
-const groupRepo = new DrizzleGroupRepository();
 
 const updateGroupSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -34,6 +33,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id } = await params;
 
     try {
+      const groupRepo = new GroupRepository(getUserDb(auth));
       const group = await groupRepo.findById(GroupId.fromString(id));
       if (!group) {
         return NextResponse.json({ error: 'Gruppe nicht gefunden' }, { status: 404 });
@@ -83,6 +83,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         );
       }
 
+      const groupRepo = new GroupRepository(getUserDb(auth));
       const group = await groupRepo.findById(GroupId.fromString(id));
       if (!group) {
         return NextResponse.json({ error: 'Gruppe nicht gefunden' }, { status: 404 });
@@ -93,13 +94,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         group.setDescription(
           validation.data.description === null ? undefined : validation.data.description
         );
-      }
-      if (validation.data.level !== undefined) {
-        // level is read-only after creation? For now we allow but typically immutable
-        // We'll keep as-is or throw error. Simpler: allow.
-      }
-      if (validation.data.ageGroup !== undefined) {
-        // same as level
       }
       if (validation.data.isActive !== undefined) {
         if (validation.data.isActive) {
@@ -145,6 +139,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const { id } = await params;
 
     try {
+      const groupRepo = new GroupRepository(getUserDb(auth));
       const group = await groupRepo.findById(GroupId.fromString(id));
       if (!group) {
         return NextResponse.json({ error: 'Gruppe nicht gefunden' }, { status: 404 });

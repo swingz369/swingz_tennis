@@ -1,7 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { DrizzleGroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
+import { GroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
+import { getUserDb } from '@/infrastructure/db';
 import { GroupEntity } from '@/domain/entities/group.entity';
 import { ClubId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
@@ -10,8 +11,6 @@ import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:groups');
-
-const groupRepo = new DrizzleGroupRepository();
 
 const createGroupSchema = z.object({
   clubId: z.string().uuid(),
@@ -43,6 +42,7 @@ export async function GET(req: NextRequest) {
     }
 
     try {
+      const groupRepo = new GroupRepository(getUserDb(auth));
       const groups = await groupRepo.findByClubId(ClubId.fromString(clubId));
       return NextResponse.json({
         groups: groups.map((g) => ({
@@ -101,6 +101,7 @@ export async function POST(req: NextRequest) {
         description === null ? undefined : description
       );
 
+      const groupRepo = new GroupRepository(getUserDb(auth));
       await groupRepo.save(group);
 
       return NextResponse.json(

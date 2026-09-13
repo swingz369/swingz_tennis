@@ -1,15 +1,14 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { DrizzleGroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
+import { GroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
+import { getUserDb } from '@/infrastructure/db';
 import { GroupId, MemberId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:groups:[id]:members:[memberId]');
-
-const groupRepo = new DrizzleGroupRepository();
 
 // DELETE /api/groups/[id]/members/[memberId] – Mitglied aus Gruppe entfernen
 export async function DELETE(
@@ -28,6 +27,7 @@ export async function DELETE(
     const { id, memberId } = await params;
 
     try {
+      const groupRepo = new GroupRepository(getUserDb(auth));
       await groupRepo.removeMemberFromGroup(GroupId.fromString(id), MemberId.fromString(memberId));
       return NextResponse.json({ success: true });
     } catch (error) {

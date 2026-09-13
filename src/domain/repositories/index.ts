@@ -4,5 +4,4 @@ export * from './booking-repository.interface';
 export * from './member-repository.interface';
 export * from './trainer-repository.interface';
 export * from './court-repository.interface';
-export * from './group-repository.interface';
 export * from './pricing-rule-repository.interface';
