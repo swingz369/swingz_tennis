@@ -1,20 +1,26 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
+import {
+  internalErrorResponse,
+  ApiException,
+  errorResponse,
+  safeErrorMessage,
+} from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { billingEngine } from '@/lib/billing-engine';
-import type { CreateInvoice } from '@/lib/types/billing';
+import { InvoiceService } from '@/application/services/invoice.service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:billing:invoices:create');
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
-    // Permission check (trainer or admin)
-    const hasPermission = await verifyRole(auth, 'trainer');
+    // Nur Admins — RLS auf `invoices` verlangt is_club_admin(club_id) für
+    // INSERT ohnehin; ein Trainer scheiterte hier bisher unbemerkt am
+    // Service-Client-Umweg, der RLS komplett umging (ADR-005-Bugklasse).
+    const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Zugriff nur für Trainer oder Admins');
+      return forbiddenResponse('Zugriff nur für Admins');
     }
 
     // Rate limit
@@ -84,11 +90,11 @@ export async function POST(_request: NextRequest) {
         );
       }
 
-      // Build invoice data
-      const createInvoiceData: CreateInvoice = {
+      const invoice = await new InvoiceService(auth).createAdhocInvoice({
         club_id: clubId,
         member_id,
         due_date,
+        notes: notes ? notes.substring(0, 1000) : undefined,
         items: validItems.map((item: any) => ({
           description: item.description.substring(0, 500),
           quantity: Math.min(Math.max(item.quantity, 1), 1000),
@@ -104,13 +110,13 @@ export async function POST(_request: NextRequest) {
             ? item.itemType
             : 'other',
         })),
-        notes: notes ? notes.substring(0, 1000) : undefined,
-      };
-
-      const invoice = await billingEngine.createInvoice(createInvoiceData);
+      });
 
       return NextResponse.json(invoice, { status: 201 });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Error creating invoice:', error);
       return internalErrorResponse();
     }

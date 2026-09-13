@@ -1,9 +1,17 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
 import { z } from 'zod';
-import { requireAuth } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import {
+  errorResponse,
+  internalErrorResponse,
+  ApiException,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { requireAuth, verifyClubAccess, verifyRole } from '@/lib/api-auth';
+import { InvoiceService } from '@/application/services/invoice.service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:invoices:id');
 
 const UpdateSchema = z.object({
   status: z.enum(['sent', 'cancelled', 'overdue', 'reminder_sent']),
@@ -12,68 +20,55 @@ const UpdateSchema = z.object({
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { supabase, user } = await requireAuth(request);
+  const auth = await requireAuth(request);
 
-  const { data, error } = await supabase
-    .from('invoices')
-    .select('*, invoice_items(*), invoice_installments(*)')
-    .eq('id', id)
-    .single();
-  if (error) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
+  try {
+    const service = new InvoiceService(auth);
+    const invoice = await service.getInvoiceById(id);
 
-  const { data: membership } = await supabase
-    .from('user_club_memberships')
-    .select('role')
-    .eq('user_id', user.id)
-    .eq('club_id', data.club_id)
-    .eq('is_active', true)
-    .maybeSingle();
-  const isMember = data.member_id === user.id;
-  if (!membership && !isMember)
-    return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
+    const isMember = invoice.member_id === auth.user.id;
+    if (!isMember && !verifyClubAccess(auth, invoice.club_id)) {
+      return errorResponse('FORBIDDEN', 'Nicht berechtigt');
+    }
 
-  return NextResponse.json({ data });
+    return NextResponse.json({ data: invoice });
+  } catch (error) {
+    if (error instanceof ApiException) {
+      return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+    }
+    log.error('Rechnung konnte nicht geladen werden', error instanceof Error ? error : undefined);
+    return internalErrorResponse();
+  }
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { supabase, user } = await requireAuth(request);
+  const auth = await requireAuth(request);
   const body = await request.json();
   const parsed = UpdateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { data: invoice, error: fetchErr } = await supabase
-    .from('invoices')
-    .select('club_id, status')
-    .eq('id', id)
-    .single();
-  if (fetchErr || !invoice) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
+  try {
+    const service = new InvoiceService(auth);
+    const invoice = await service.getInvoiceById(id);
+    if (!verifyClubAccess(auth, invoice.club_id) || !(await verifyRole(auth, 'admin'))) {
+      return errorResponse('FORBIDDEN', 'Nicht berechtigt');
+    }
 
-  const { data: membership } = await supabase
-    .from('user_club_memberships')
-    .select('role')
-    .eq('user_id', user.id)
-    .eq('club_id', invoice.club_id)
-    .eq('is_active', true)
-    .maybeSingle();
-  if (!membership || !['admin', 'superadmin'].includes(membership.role))
-    return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
-
-  const updates: Record<string, unknown> = { status: parsed.data.status };
-  if (parsed.data.status === 'sent') updates.sent_at = new Date().toISOString();
-  if (parsed.data.status === 'cancelled') {
-    updates.cancelled_at = new Date().toISOString();
-    updates.cancellation_reason = parsed.data.cancellation_reason ?? null;
+    const updated = await service.updateInvoiceStatus(id, parsed.data.status, {
+      cancellationReason: parsed.data.cancellation_reason,
+    });
+    return NextResponse.json({ data: updated });
+  } catch (error) {
+    if (error instanceof ApiException) {
+      return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+    }
+    log.error(
+      'Rechnung konnte nicht aktualisiert werden',
+      error instanceof Error ? error : undefined
+    );
+    return internalErrorResponse();
   }
-
-  const { data: updated, error: updateErr } = await supabase
-    .from('invoices')
-    .update(updates as never)
-    .eq('id', id)
-    .select()
-    .single();
-  if (updateErr) return internalErrorResponse();
-  return NextResponse.json({ data: updated });
 }
 
 export async function DELETE(
@@ -81,46 +76,22 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { supabase, user } = await requireAuth(request);
+  const auth = await requireAuth(request);
 
-  // Fetch invoice to check ownership and status
-  const { data: invoice, error: fetchErr } = await supabase
-    .from('invoices')
-    .select('club_id, status')
-    .eq('id', id)
-    .single();
-  if (fetchErr || !invoice) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
+  try {
+    const service = new InvoiceService(auth);
+    const invoice = await service.getInvoiceById(id);
+    if (!verifyClubAccess(auth, invoice.club_id) || !(await verifyRole(auth, 'admin'))) {
+      return errorResponse('FORBIDDEN', 'Nicht berechtigt');
+    }
 
-  // Only admin/superadmin can delete
-  const { data: membership } = await supabase
-    .from('user_club_memberships')
-    .select('role')
-    .eq('user_id', user.id)
-    .eq('club_id', invoice.club_id)
-    .eq('is_active', true)
-    .maybeSingle();
-  if (!membership || !['admin', 'superadmin'].includes(membership.role))
-    return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
-
-  // Prevent deleting paid invoices (safety guard)
-  if (invoice.status === 'paid') {
-    return NextResponse.json(
-      {
-        error:
-          'Bezahlte Rechnungen können nicht gelöscht werden. Bitte stornieren Sie die Rechnung stattdessen.',
-      },
-      { status: 400 }
-    );
+    await service.deleteInvoice(id);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (error instanceof ApiException) {
+      return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+    }
+    log.error('Rechnung konnte nicht gelöscht werden', error instanceof Error ? error : undefined);
+    return internalErrorResponse();
   }
-
-  // Use service client for cascade deletes (bypasses RLS delete policies)
-  const serviceSb = createServiceClient();
-  await serviceSb.from('invoice_items').delete().eq('invoice_id', id);
-  await serviceSb.from('invoice_installments').delete().eq('invoice_id', id);
-
-  // Delete the invoice itself
-  const { error: deleteErr } = await serviceSb.from('invoices').delete().eq('id', id);
-
-  if (deleteErr) return internalErrorResponse();
-  return NextResponse.json({ success: true });
 }

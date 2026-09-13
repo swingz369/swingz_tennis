@@ -1,8 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { billingEngine } from '@/lib/billing-engine';
+import { InvoiceService } from '@/application/services/invoice.service';
 import type { InvoiceStatus } from '@/lib/types/billing';
 import { createLogger } from '@/lib/logger';
 
@@ -38,16 +38,21 @@ export async function GET(_request: NextRequest) {
         );
       }
 
+      if (clubId && !verifyClubAccess(auth, clubId)) {
+        return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
+      }
+
+      const service = new InvoiceService(auth);
       let invoices;
 
       if (clubId) {
-        invoices = await billingEngine.getInvoicesByClub(clubId, {
+        invoices = await service.getInvoicesByClub(clubId, {
           status: status as InvoiceStatus,
           limit,
           offset,
         });
       } else if (memberId) {
-        invoices = await billingEngine.getInvoicesByMember(memberId, {
+        invoices = await service.getInvoicesByMember(memberId, {
           status: status as InvoiceStatus,
           limit,
           offset,

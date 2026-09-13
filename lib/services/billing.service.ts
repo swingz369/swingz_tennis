@@ -27,55 +27,6 @@ async function getClubTaxRate(
   return (data as { tax_rate?: number } | null)?.tax_rate ?? 0;
 }
 
-export async function createAdhocInvoice(params: {
-  club_id: string;
-  member_id: string;
-  due_date: string;
-  notes?: string;
-  items: Array<{ description: string; quantity: number; unit_price: number }>;
-  created_by: string;
-}): Promise<Invoice> {
-  const supabase = await createClient();
-  const invoice_number = await generateInvoiceNumber(supabase, params.club_id);
-  const taxRate = await getClubTaxRate(supabase, params.club_id);
-  const subtotal = params.items.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
-  const tax_amount = subtotal * (taxRate / 100);
-  const total_amount = subtotal + tax_amount;
-
-  const { data: invoice, error } = await (supabase as SupabaseClient<Database>)
-    .from('invoices')
-    .insert({
-      club_id: params.club_id,
-      member_id: params.member_id,
-      invoice_number,
-      invoice_type: 'adhoc',
-      due_date: params.due_date,
-      status: 'draft',
-      amount: total_amount,
-      tax_amount,
-      currency: 'EUR',
-      notes: params.notes ?? null,
-    })
-    .select()
-    .single();
-  if (error) throw new Error(`Failed to create invoice: ${error.message}`);
-
-  const lineItems = params.items.map((i) => ({
-    invoice_id: (invoice as { id: string }).id,
-    description: i.description,
-    quantity: i.quantity,
-    unit_price: i.unit_price,
-    tax_rate: taxRate,
-    item_type: 'other',
-  }));
-  const { error: itemsError } = await (supabase as SupabaseClient<Database>)
-    .from('invoice_items')
-    .insert(lineItems);
-  if (itemsError) throw new Error(`Failed to create invoice items: ${itemsError.message}`);
-
-  return invoice as Invoice;
-}
-
 export async function createMembershipInvoice(params: {
   club_id: string;
   member_id: string;
