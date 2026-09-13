@@ -1,72 +1,70 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
+import { z } from 'zod';
+import { errorResponse, internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { hourlyRateService } from '@/src/application/services/hourly-rate-service.adapter';
+import { HourlyRateService } from '@/application/services/hourly-rate.service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:hourly-rates:tiers');
 
-export async function POST(_request: NextRequest) {
-  return withApiAuth(_request, async (auth) => {
-    const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) {
-      return forbiddenResponse('Zugriff nur für Admins');
-    }
+const createTierSchema = z.object({
+  name: z.string().min(2),
+  description: z.string().optional(),
+  base_rate: z.number().nonnegative(),
+  training_types: z.array(z.string()).min(1),
+  experience_level: z.enum(['beginner', 'intermediate', 'advanced', 'professional']),
+});
 
-    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
-    if (rateLimitError) {
-      return rateLimitError;
-    }
-
-    try {
-      const body = await _request.json();
-
-      const { name, description, baseRate, trainingTypes, experienceLevel } = body;
-
-      if (!name || !baseRate || !trainingTypes || !experienceLevel) {
-        return NextResponse.json({ error: 'Pflichtfelder fehlen' }, { status: 400 });
+export async function POST(request: NextRequest) {
+  return withApiAuth(
+    request,
+    async (auth, body) => {
+      const hasPermission = await verifyRole(auth, 'admin');
+      if (!hasPermission) {
+        return forbiddenResponse('Zugriff nur für Admins');
+      }
+      if (!auth.clubId) {
+        return errorResponse('VALIDATION_ERROR', 'Kein Verein zugeordnet');
       }
 
-      const rateTier = await hourlyRateService.createHourlyRateTier({
-        name,
-        description,
-        baseRate,
-        trainingTypes,
-        experienceLevel,
-      });
+      const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STRICT);
+      if (rateLimitError) {
+        return rateLimitError;
+      }
 
-      return NextResponse.json({ success: true, rateTier });
-    } catch (error) {
-      log.error('Hourly rate tier creation error:', error);
-      return internalErrorResponse();
-    }
-  });
+      try {
+        const rateTier = await new HourlyRateService(auth).createTier(auth.clubId, body);
+        return NextResponse.json({ success: true, rateTier });
+      } catch (error) {
+        log.error('Hourly rate tier creation error:', error);
+        return internalErrorResponse();
+      }
+    },
+    { body: createTierSchema }
+  );
 }
 
-export async function GET(_request: NextRequest) {
-  return withApiAuth(_request, async (auth) => {
+export async function GET(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
       return forbiddenResponse('Zugriff nur für Admins');
     }
+    if (!auth.clubId) {
+      return errorResponse('VALIDATION_ERROR', 'Kein Verein zugeordnet');
+    }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }
 
     try {
-      const { searchParams } = new URL(_request.url);
-      const active = searchParams.get('active');
-
-      if (active) {
-        const rateTiers = await hourlyRateService.getActiveHourlyRateTiers();
-        return NextResponse.json({ rateTiers });
-      }
-
-      const rateTiers = await hourlyRateService.getAllHourlyRateTiers();
+      const { searchParams } = new URL(request.url);
+      const activeOnly = searchParams.get('active') === 'true';
+      const rateTiers = await new HourlyRateService(auth).listTiers(auth.clubId, activeOnly);
       return NextResponse.json({ rateTiers });
     } catch (error) {
       log.error('Hourly rate tier fetch error:', error);

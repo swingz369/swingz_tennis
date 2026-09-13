@@ -37,6 +37,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { User } from '@supabase/supabase-js';
+import type { z, ZodTypeAny } from 'zod';
 import type { Database } from '@/types/supabase';
 import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
 import { hasRole, getHighestRole } from '@/lib/auth-common';
@@ -292,11 +293,29 @@ export interface WithAuthOptions {
    * escape hatch.
    */
   allowWhilePastDue?: boolean;
+  /**
+   * Zod-Schema für den Request-Body (Phase 2 des Umsetzungsplans, docs/ARCHIV/
+   * 2026-09-13-architektur-analyse-datenzugriff.md § 6). Wird VOR dem Handler
+   * geparst; bei Fehlschlag antwortet withAuth direkt mit 400
+   * (VALIDATION_ERROR), der Handler läuft dann gar nicht erst an. Der
+   * Handler bekommt die geparsten, typisierten Daten als zweites Argument.
+   */
+  body?: ZodTypeAny;
 }
 
+export async function withAuth<Schema extends ZodTypeAny>(
+  request: NextRequest,
+  handler: (auth: AuthContext, body: z.infer<Schema>) => Promise<NextResponse>,
+  options: Omit<WithAuthOptions, 'body'> & { body: Schema }
+): Promise<NextResponse>;
 export async function withAuth(
   request: NextRequest,
   handler: (auth: AuthContext) => Promise<NextResponse>,
+  options?: WithAuthOptions
+): Promise<NextResponse>;
+export async function withAuth(
+  request: NextRequest,
+  handler: (auth: AuthContext, body?: unknown) => Promise<NextResponse>,
   options: WithAuthOptions = {}
 ): Promise<NextResponse> {
   try {
@@ -320,7 +339,19 @@ export async function withAuth(
       );
     }
 
-    const response = await handler(auth);
+    let parsedBody: unknown;
+    if (options.body) {
+      const raw = await request.json().catch(() => undefined);
+      const parsed = options.body.safeParse(raw);
+      if (!parsed.success) {
+        return errorResponse('VALIDATION_ERROR', 'Eingabe ungültig', {
+          details: parsed.error.flatten(),
+        });
+      }
+      parsedBody = parsed.data;
+    }
+
+    const response = await handler(auth, parsedBody);
 
     // Auto-set ADMIN_CLUB_COOKIE for admins who don't have it yet.
     // Previously only the superadmin club-switcher set this cookie,

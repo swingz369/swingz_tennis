@@ -1,186 +1,140 @@
-import type {
-  HourlyRateTier,
-  TrainerHourlyRate,
-  RateHistoryEntry,
-  CreateHourlyRateTierInput,
-  UpdateHourlyRateTierInput,
-  CreateTrainerHourlyRateInput,
-  UpdateTrainerHourlyRateInput,
-} from '../../domain/entities/hourly-rate.entity';
+import type { AuthContext } from '@/lib/api-auth';
+import { ApiException } from '@/lib/api-error';
+import type { TablesInsert, TablesUpdate } from '@/types/supabase';
+import { getUserDb } from '@/infrastructure/db';
 import {
-  HourlyRateTierRepository,
-  TrainerHourlyRateRepository,
-  RateHistoryRepository,
-} from '../../infrastructure/persistence/repositories/hourly-rate.repository';
+  HourlyRateRepository,
+  type HourlyRateTier,
+  type TrainerHourlyRate,
+  type RateHistoryEntry,
+} from '@/infrastructure/persistence/repositories/hourly-rate.repository';
+
+export type CreateTierInput = Omit<TablesInsert<'hourly_rate_tiers'>, 'club_id' | 'id'>;
+export type UpdateTierInput = Omit<TablesUpdate<'hourly_rate_tiers'>, 'club_id' | 'id'>;
+export type CreateTrainerRateInput = Omit<
+  TablesInsert<'trainer_hourly_rates'>,
+  'club_id' | 'id' | 'effective_rate'
+>;
+export type UpdateTrainerRateInput = Pick<
+  TablesUpdate<'trainer_hourly_rates'>,
+  'override_rate' | 'valid_until' | 'reason'
+>;
 
 /**
- * HourlyRateService — Drizzle-backed service.
- * All data operations go through Drizzle repositories directly.
+ * Referenz-Service für Option B (ADR-005): ein Modul pro Domäne, ein
+ * Repository, kein Adapter, keine Interfaces. Fachlogik hier (Effektivsatz,
+ * Historie), Datenzugriff ausschliesslich im Repository.
  */
 export class HourlyRateService {
-  private static tierRepo = new HourlyRateTierRepository();
-  private static trainerRateRepo = new TrainerHourlyRateRepository();
-  private static historyRepo = new RateHistoryRepository();
+  private readonly repo: HourlyRateRepository;
 
-  /**
-   * Validate hourly rate tier input
-   */
-  static validateHourlyRateTierInput(input: CreateHourlyRateTierInput): {
-    valid: boolean;
-    errors: string[];
-  } {
-    const errors: string[] = [];
-
-    if (!input.name || input.name.trim().length < 2) {
-      errors.push('Name muss mindestens 2 Zeichen lang sein');
-    }
-
-    if (!input.baseRate || input.baseRate < 0) {
-      errors.push('Basisrate muss positiv sein');
-    }
-
-    if (!input.trainingTypes || input.trainingTypes.length === 0) {
-      errors.push('Mindestens ein Trainingstyp ist erforderlich');
-    }
-
-    if (!input.experienceLevel) {
-      errors.push('Erfahrungslevel ist erforderlich');
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-    };
+  constructor(auth: AuthContext) {
+    this.repo = new HourlyRateRepository(getUserDb(auth));
   }
 
-  /**
-   * Validate trainer hourly rate input
-   */
-  static validateTrainerHourlyRateInput(input: CreateTrainerHourlyRateInput): {
-    valid: boolean;
-    errors: string[];
-  } {
-    const errors: string[] = [];
+  // ═══ Rate Tiers ═══
 
-    if (!input.trainerId || input.trainerId.trim().length === 0) {
-      errors.push('Trainer-ID ist erforderlich');
-    }
-
-    if (!input.trainerName || input.trainerName.trim().length < 2) {
-      errors.push('Trainer-Name muss mindestens 2 Zeichen lang sein');
-    }
-
-    if (!input.baseRate || input.baseRate < 0) {
-      errors.push('Basisrate muss positiv sein');
-    }
-
-    if (input.overrideRate !== undefined && input.overrideRate < 0) {
-      errors.push('Override-Rate muss positiv sein');
-    }
-
-    if (!input.validFrom || !this.isValidDate(input.validFrom)) {
-      errors.push('Gültig ab ist erforderlich');
-    }
-
-    if (input.validUntil && !this.isValidDate(input.validUntil)) {
-      errors.push('Ungültiges Gültig bis Datum');
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-    };
+  async createTier(clubId: string, input: CreateTierInput): Promise<HourlyRateTier> {
+    return this.repo.createTier({ ...input, club_id: clubId });
   }
 
-  /**
-   * Validate date format
-   */
-  private static isValidDate(dateString: string): boolean {
-    const date = new Date(dateString);
-    return !isNaN(date.getTime());
+  async getTierById(id: string): Promise<HourlyRateTier> {
+    const tier = await this.repo.findTierById(id);
+    if (!tier) throw new ApiException('NOT_FOUND', 'Tarifstufe nicht gefunden');
+    return tier;
   }
 
-  // ═══ Hourly Rate Tier Operations ═══
-
-  static async createHourlyRateTier(input: CreateHourlyRateTierInput): Promise<HourlyRateTier> {
-    const validation = this.validateHourlyRateTierInput(input);
-    if (!validation.valid) {
-      throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
-    }
-    return await this.tierRepo.create(input);
+  async listTiers(clubId: string, activeOnly = false): Promise<HourlyRateTier[]> {
+    return this.repo.findTiers(clubId, { activeOnly });
   }
 
-  static async getHourlyRateTierById(id: string): Promise<HourlyRateTier | null> {
-    return await this.tierRepo.findById(id);
+  async updateTier(id: string, input: UpdateTierInput): Promise<HourlyRateTier> {
+    const updated = await this.repo.updateTier(id, input);
+    if (!updated) throw new ApiException('NOT_FOUND', 'Tarifstufe nicht gefunden');
+    return updated;
   }
 
-  static async getAllHourlyRateTiers(): Promise<HourlyRateTier[]> {
-    return await this.tierRepo.findAll();
+  async deleteTier(id: string): Promise<void> {
+    const deleted = await this.repo.deleteTier(id);
+    if (!deleted) throw new ApiException('NOT_FOUND', 'Tarifstufe nicht gefunden');
   }
 
-  static async getActiveHourlyRateTiers(): Promise<HourlyRateTier[]> {
-    return await this.tierRepo.findActive();
-  }
+  // ═══ Trainer Rates ═══
 
-  static async updateHourlyRateTier(
-    id: string,
-    input: UpdateHourlyRateTierInput
-  ): Promise<HourlyRateTier | null> {
-    return await this.tierRepo.update(id, input);
-  }
-
-  static async deleteHourlyRateTier(id: string): Promise<boolean> {
-    return await this.tierRepo.delete(id);
-  }
-
-  // ═══ Trainer Hourly Rate Operations ═══
-
-  static async createTrainerHourlyRate(
-    input: CreateTrainerHourlyRateInput
+  async createTrainerRate(
+    clubId: string,
+    input: CreateTrainerRateInput
   ): Promise<TrainerHourlyRate> {
-    const validation = this.validateTrainerHourlyRateInput(input);
-    if (!validation.valid) {
-      throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
-    }
-    return await this.trainerRateRepo.create(input);
+    const effectiveRate = input.override_rate ?? input.base_rate;
+    return this.repo.createTrainerRate({
+      ...input,
+      club_id: clubId,
+      effective_rate: effectiveRate,
+    });
   }
 
-  static async getTrainerHourlyRateById(id: string): Promise<TrainerHourlyRate | null> {
-    return await this.trainerRateRepo.findById(id);
+  async getTrainerRateById(id: string): Promise<TrainerHourlyRate> {
+    const rate = await this.repo.findTrainerRateById(id);
+    if (!rate) throw new ApiException('NOT_FOUND', 'Trainer-Stundensatz nicht gefunden');
+    return rate;
   }
 
-  static async getTrainerHourlyRateByTrainerId(
-    trainerId: string
-  ): Promise<TrainerHourlyRate | null> {
-    return await this.trainerRateRepo.findByTrainerId(trainerId);
+  async getCurrentTrainerRate(trainerId: string): Promise<TrainerHourlyRate> {
+    const rate = await this.repo.findCurrentTrainerRate(trainerId);
+    if (!rate) throw new ApiException('NOT_FOUND', 'Kein gültiger Trainer-Stundensatz gefunden');
+    return rate;
   }
 
-  static async getAllTrainerHourlyRates(): Promise<TrainerHourlyRate[]> {
-    return await this.trainerRateRepo.findAll();
+  async listTrainerRates(clubId: string): Promise<TrainerHourlyRate[]> {
+    return this.repo.findTrainerRates(clubId);
   }
 
-  static async updateTrainerHourlyRate(
+  /** Aktualisiert einen Satz und schreibt bei tatsächlicher Änderung einen Historieneintrag. */
+  async updateTrainerRate(
     id: string,
-    input: UpdateTrainerHourlyRateInput
-  ): Promise<TrainerHourlyRate | null> {
-    return await this.trainerRateRepo.update(id, input);
+    changedBy: string,
+    input: UpdateTrainerRateInput
+  ): Promise<TrainerHourlyRate> {
+    const existing = await this.repo.findTrainerRateById(id);
+    if (!existing) throw new ApiException('NOT_FOUND', 'Trainer-Stundensatz nicht gefunden');
+
+    const newEffectiveRate = input.override_rate ?? existing.base_rate;
+
+    const updated = await this.repo.updateTrainerRate(id, {
+      override_rate: input.override_rate,
+      valid_until: input.valid_until,
+      reason: input.reason,
+      effective_rate: newEffectiveRate,
+    });
+    if (!updated) throw new ApiException('NOT_FOUND', 'Trainer-Stundensatz nicht gefunden');
+
+    if (newEffectiveRate !== existing.effective_rate) {
+      await this.repo.addHistoryEntry({
+        club_id: existing.club_id,
+        trainer_id: existing.trainer_id,
+        trainer_name: existing.trainer_name,
+        old_rate: existing.effective_rate,
+        new_rate: newEffectiveRate,
+        changed_by: changedBy,
+        reason: input.reason ?? null,
+      });
+    }
+
+    return updated;
   }
 
-  static async deleteTrainerHourlyRate(id: string): Promise<boolean> {
-    return await this.trainerRateRepo.delete(id);
+  async deleteTrainerRate(id: string): Promise<void> {
+    const deleted = await this.repo.deleteTrainerRate(id);
+    if (!deleted) throw new ApiException('NOT_FOUND', 'Trainer-Stundensatz nicht gefunden');
   }
 
-  static async calculateEffectiveRate(trainerId: string): Promise<number | null> {
-    return await this.trainerRateRepo.calculateEffectiveRate(trainerId);
+  // ═══ Rate History ═══
+
+  async getHistoryForTrainer(trainerId: string): Promise<RateHistoryEntry[]> {
+    return this.repo.findHistoryForTrainer(trainerId);
   }
 
-  // ═══ Rate History Operations ═══
-
-  static async getRateHistoryForTrainer(trainerId: string): Promise<RateHistoryEntry[]> {
-    return await this.historyRepo.findByTrainerId(trainerId);
-  }
-
-  static async getAllRateHistory(): Promise<RateHistoryEntry[]> {
-    return await this.historyRepo.findAll();
+  async getHistory(clubId: string): Promise<RateHistoryEntry[]> {
+    return this.repo.findHistory(clubId);
   }
 }

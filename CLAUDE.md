@@ -3,7 +3,8 @@
 @AGENTS.md
 
 > Automatisch bei jedem Session-Start geladen. Nur Dinge die NICHT aus dem Code offensichtlich sind.
-> Zuletzt verifiziert: 28. August 2026 (Rollen-Hierarchie und Tarife gegen Code geprüft)
+> Zuletzt verifiziert: 13. September 2026 (Rollen-Hierarchie und Tarife gegen Code geprüft;
+> Datenzugriffsmuster ADR-005 ergänzt)
 > Doku-Governance-Regeln (welche Datei wohin, wann updaten statt neu anlegen): siehe `AGENTS.md`.
 
 ---
@@ -54,6 +55,34 @@ Die Auth-Middleware liegt in **`proxy.ts`** (nicht `middleware.ts` — Next.js 1
 | Browser                          | `createClient()` aus `@/lib/supabase/client`         | Client Components                              |
 
 > ⚠️ Direkte Drizzle/postgres-js Verbindungen (Port 5432) **schlagen aus der Dev-Umgebung fehl** — Supabase sperrt Port 5432 extern. Stattdessen Supabase REST via Service-Client verwenden.
+
+### Datenzugriff in API-Routes (ADR-005)
+
+Grund: `docs/ARCHIV/2026-09-13-architektur-analyse-datenzugriff.md`. Rund die Hälfte der API
+umging RLS und verließ sich auf Anwendungscode für die Mandantentrennung — zwei echte
+Datenlecks im Juli waren die Folge. Neue und migrierte Domänen halten sich an dieses Muster,
+Referenzimplementierung ist **Stundensätze** (`app/api/hourly-rates/`,
+`src/application/services/hourly-rate.service.ts`,
+`src/infrastructure/persistence/repositories/hourly-rate.repository.ts`):
+
+```
+Route (Auth + Zod) → Service (Fachlogik) → Repository (einziger DB-Zugriff) → Postgres mit RLS
+```
+
+- Repositories bekommen ihren DB-Kontext **nur** über `@/infrastructure/db`:
+  `getUserDb(auth)` (Nutzer-Token, RLS aktiv — der Normalfall) oder `systemDb(reason)`
+  (Service-Client ohne RLS, nur für die Whitelist: Cron, Stripe-Webhook, Benachrichtigungen,
+  Owner-Funktionen — `reason` ist Pflicht und wird geloggt).
+- Kein DI-Container, kein Repository-Interface für genau eine Implementierung, kein
+  Service+Adapter-Paar. Ein Service, ein Repository pro Domäne.
+- Domänen-Typen kommen aus `Tables<'x'>`/`TablesInsert<'x'>`/`TablesUpdate<'x'>`
+  (`@/types/supabase`), keine handgeschriebenen `rowToX`-Mapper.
+- Fachliche Fehler (404, 409, …) wirft der Service als `ApiException`; die Route gibt
+  `safeErrorMessage(error)` zurück, **nie** `error.message` roh (geprüft von
+  `no-raw-db-errors.test.ts`).
+- Ältere Domänen laufen noch über Drizzle (`src/infrastructure/persistence/db.ts`, Port 6543
+  ohne TLS) oder direkten Service-Client-Zugriff in der Route — Migration Domäne für Domäne
+  (Plan: Archiv-Analyse § 6).
 
 ### UI
 

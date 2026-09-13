@@ -1,108 +1,107 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
+import { z } from 'zod';
+import {
+  errorResponse,
+  internalErrorResponse,
+  ApiException,
+  safeErrorMessage,
+} from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { hourlyRateService } from '@/src/application/services/hourly-rate-service.adapter';
+import { HourlyRateService } from '@/application/services/hourly-rate.service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:hourly-rates:tiers:[id]');
 
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  return withApiAuth(_request, async (auth) => {
+const updateTierSchema = z.object({
+  name: z.string().min(2).optional(),
+  description: z.string().optional(),
+  base_rate: z.number().nonnegative().optional(),
+  training_types: z.array(z.string()).min(1).optional(),
+  experience_level: z.enum(['beginner', 'intermediate', 'advanced', 'professional']).optional(),
+  is_active: z.boolean().optional(),
+});
+
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
       return forbiddenResponse('Zugriff nur für Admins');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }
 
     try {
       const { id } = await params;
-      const rateTier = await hourlyRateService.getHourlyRateTierById(id);
-
-      if (!rateTier) {
-        return NextResponse.json({ error: 'Stundensatz-Stufe nicht gefunden' }, { status: 404 });
-      }
-
+      const rateTier = await new HourlyRateService(auth).getTierById(id);
       return NextResponse.json({ rateTier });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Hourly rate tier fetch error:', error);
       return internalErrorResponse();
     }
   });
 }
 
-export async function PATCH(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  return withApiAuth(_request, async (auth) => {
-    const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) {
-      return forbiddenResponse('Zugriff nur für Admins');
-    }
-
-    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
-    if (rateLimitError) {
-      return rateLimitError;
-    }
-
-    try {
-      const { id } = await params;
-      const body = await _request.json();
-
-      const { name, description, baseRate, trainingTypes, experienceLevel, isActive } = body;
-
-      const updated = await hourlyRateService.updateHourlyRateTier(id, {
-        name,
-        description,
-        baseRate,
-        trainingTypes,
-        experienceLevel,
-        isActive,
-      });
-
-      if (!updated) {
-        return NextResponse.json({ error: 'Stundensatz-Stufe nicht gefunden' }, { status: 404 });
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  return withApiAuth(
+    request,
+    async (auth, body) => {
+      const hasPermission = await verifyRole(auth, 'admin');
+      if (!hasPermission) {
+        return forbiddenResponse('Zugriff nur für Admins');
       }
 
-      return NextResponse.json({ success: true, rateTier: updated });
-    } catch (error) {
-      log.error('Hourly rate tier update error:', error);
-      return internalErrorResponse();
-    }
-  });
+      const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STRICT);
+      if (rateLimitError) {
+        return rateLimitError;
+      }
+
+      try {
+        const { id } = await params;
+        const rateTier = await new HourlyRateService(auth).updateTier(id, body);
+        return NextResponse.json({ success: true, rateTier });
+      } catch (error) {
+        if (error instanceof ApiException) {
+          return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+        }
+        log.error('Hourly rate tier update error:', error);
+        return internalErrorResponse();
+      }
+    },
+    { body: updateTierSchema }
+  );
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  return withApiAuth(_request, async (auth) => {
+  return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
       return forbiddenResponse('Zugriff nur für Admins');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STRICT);
     if (rateLimitError) {
       return rateLimitError;
     }
 
     try {
       const { id } = await params;
-      const success = await hourlyRateService.deleteHourlyRateTier(id);
-
-      if (!success) {
-        return NextResponse.json({ error: 'Stundensatz-Stufe nicht gefunden' }, { status: 404 });
-      }
-
+      await new HourlyRateService(auth).deleteTier(id);
       return NextResponse.json({ success: true });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Hourly rate tier delete error:', error);
       return internalErrorResponse();
     }
