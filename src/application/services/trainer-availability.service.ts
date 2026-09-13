@@ -1,409 +1,141 @@
-import type {
-  TrainerAvailability,
-  AvailabilityConflict,
-  CreateTrainerAvailabilityInput,
-  UpdateTrainerAvailabilityInput,
-  AvailabilityQuery,
-} from '../../domain/entities/trainer-availability.entity';
+import type { AuthContext } from '@/lib/api-auth';
+import { ApiException } from '@/lib/api-error';
+import { getUserDb } from '@/infrastructure/db';
+import type { TablesUpdate } from '@/types/supabase';
+import {
+  TrainerAvailabilityRepository,
+  type TrainerAvailability,
+  type AvailabilityQuery,
+  type AvailabilityStatus,
+} from '@/infrastructure/persistence/repositories/trainer-availability.repository';
 
+export type CreateTrainerAvailabilityInput = {
+  trainerId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status?: 'available' | 'unavailable' | 'blocked';
+  notes?: string;
+  recurringPattern?: {
+    type: 'daily' | 'weekly' | 'monthly' | 'yearly';
+    interval: number;
+    endDate?: string;
+  };
+};
+
+export type UpdateTrainerAvailabilityInput = Partial<{
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: AvailabilityStatus;
+  notes: string;
+}>;
+
+export type AvailabilityConflict = {
+  trainerId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  conflictingWith: [string, string];
+};
+
+function hasTimeOverlap(a: TrainerAvailability, startTime: string, endTime: string): boolean {
+  return (
+    (startTime >= a.start_time && startTime < a.end_time) ||
+    (endTime > a.start_time && endTime <= a.end_time) ||
+    (startTime <= a.start_time && endTime >= a.end_time)
+  );
+}
+
+/**
+ * Trainer-Teildomäne "Verfügbarkeit" für ADR-005. Ein Service, ein
+ * Repository, kein Adapter, keine Interfaces, keine In-Memory-Stub-
+ * Implementierung. `recurringPattern` wird als Metadaten-Feld gespeichert,
+ * nicht in Einzeltermine expandiert — das entspricht dem bisherigen
+ * DB-Verhalten (die alte In-Memory-Expansion lief nie gegen die DB).
+ */
 export class TrainerAvailabilityService {
-  private static availabilities: TrainerAvailability[] = [];
+  private readonly repo: TrainerAvailabilityRepository;
 
-  /**
-   * Generate a unique ID
-   */
-  private static generateId(): string {
-    return `avail-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  constructor(auth: AuthContext) {
+    this.repo = new TrainerAvailabilityRepository(getUserDb(auth));
   }
 
-  /**
-   * Validate availability input
-   */
-  static validateAvailabilityInput(input: CreateTrainerAvailabilityInput): {
-    valid: boolean;
-    errors: string[];
-  } {
-    const errors: string[] = [];
-
-    if (!input.trainerId || input.trainerId.trim().length === 0) {
-      errors.push('Trainer-ID ist erforderlich');
-    }
-
-    if (!input.date || !this.isValidDate(input.date)) {
-      errors.push('Ungültiges Datum');
-    }
-
-    if (!input.startTime || !this.isValidTime(input.startTime)) {
-      errors.push('Ungültige Startzeit');
-    }
-
-    if (!input.endTime || !this.isValidTime(input.endTime)) {
-      errors.push('Ungültige Endzeit');
-    }
-
-    if (input.startTime && input.endTime && input.startTime >= input.endTime) {
-      errors.push('Startzeit muss vor Endzeit liegen');
-    }
-
-    if (input.recurringPattern && input.recurringPattern.interval < 1) {
-      errors.push('Intervall muss mindestens 1 sein');
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-    };
-  }
-
-  /**
-   * Validate date format
-   */
-  private static isValidDate(dateString: string): boolean {
-    const date = new Date(dateString);
-    return !isNaN(date.getTime());
-  }
-
-  /**
-   * Validate time format
-   */
-  private static isValidTime(timeString: string): boolean {
-    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    return timeRegex.test(timeString);
-  }
-
-  /**
-   * Check for time overlap
-   */
-  private static hasTimeOverlap(
-    existing: TrainerAvailability,
-    newStart: string,
-    newEnd: string
-  ): boolean {
-    return (
-      (newStart >= existing.startTime && newStart < existing.endTime) ||
-      (newEnd > existing.startTime && newEnd <= existing.endTime) ||
-      (newStart <= existing.startTime && newEnd >= existing.endTime)
-    );
-  }
-
-  /**
-   * Check for conflicts
-   */
-  static async checkForConflicts(
-    trainerId: string,
-    date: string,
-    startTime: string,
-    endTime: string,
-    excludeId?: string
-  ): Promise<AvailabilityConflict[]> {
-    const conflicts: AvailabilityConflict[] = [];
-
-    const existingAvailabilities = this.availabilities.filter(
-      (a) =>
-        a.trainerId === trainerId &&
-        a.date === date &&
-        a.id !== excludeId &&
-        a.status !== 'unavailable'
-    );
-
-    for (const existing of existingAvailabilities) {
-      if (this.hasTimeOverlap(existing, startTime, endTime)) {
-        conflicts.push({
-          id: this.generateId(),
-          trainerId,
-          trainerName: 'Trainer', // In production, fetch trainer name
-          date,
-          startTime,
-          endTime,
-          conflictType: existing.status === 'booked' ? 'double_booking' : 'overlap',
-          conflictingWith: [existing.id],
-        });
-      }
-    }
-
-    return conflicts;
-  }
-
-  /**
-   * Create a new trainer availability
-   */
-  static async createTrainerAvailability(
+  async createTrainerAvailability(
     input: CreateTrainerAvailabilityInput
   ): Promise<TrainerAvailability> {
-    const validation = this.validateAvailabilityInput(input);
-    if (!validation.valid) {
-      throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
-    }
-
-    // Check for conflicts
-    const conflicts = await this.checkForConflicts(
-      input.trainerId,
-      input.date,
-      input.startTime,
-      input.endTime
-    );
-
-    if (conflicts.length > 0 && input.status !== 'unavailable') {
-      throw new Error(`Conflicts detected: ${conflicts.map((c) => c.conflictType).join(', ')}`);
-    }
-
-    const now = new Date().toISOString();
-    const availability: TrainerAvailability = {
-      id: this.generateId(),
-      trainerId: input.trainerId,
+    return this.repo.create({
+      trainer_id: input.trainerId,
       date: input.date,
-      startTime: input.startTime,
-      endTime: input.endTime,
-      status: input.status || 'available',
-      notes: input.notes,
-      recurringPattern: input.recurringPattern,
-      createdAt: now,
-      updatedAt: now,
-    };
+      start_time: input.startTime,
+      end_time: input.endTime,
+      status: input.status ?? 'available',
+      notes: input.notes ?? null,
+      recurring_pattern: input.recurringPattern ?? null,
+    });
+  }
 
-    this.availabilities.push(availability);
-
-    // Create recurring instances if pattern is specified
-    if (input.recurringPattern) {
-      await this.createRecurringAvailabilities(availability);
-    }
-
+  async getTrainerAvailabilityById(id: string): Promise<TrainerAvailability> {
+    const availability = await this.repo.findById(id);
+    if (!availability) throw new ApiException('NOT_FOUND', 'Trainer-Verfügbarkeit nicht gefunden');
     return availability;
   }
 
-  /**
-   * Create recurring availabilities
-   */
-  private static async createRecurringAvailabilities(
-    baseAvailability: TrainerAvailability
-  ): Promise<void> {
-    if (!baseAvailability.recurringPattern) {
-      return;
-    }
-
-    const { type, interval, endDate } = baseAvailability.recurringPattern;
-    const currentDate = new Date(baseAvailability.date);
-    const end = endDate ? new Date(endDate) : new Date();
-    end.setFullYear(end.getFullYear() + 1); // Default to 1 year in the future
-
-    const nextDate = new Date(currentDate);
-
-    while (nextDate <= end) {
-      switch (type) {
-        case 'daily':
-          nextDate.setDate(nextDate.getDate() + interval);
-          break;
-        case 'weekly':
-          nextDate.setDate(nextDate.getDate() + 7 * interval);
-          break;
-        case 'monthly':
-          nextDate.setMonth(nextDate.getMonth() + interval);
-          break;
-        case 'yearly':
-          nextDate.setFullYear(nextDate.getFullYear() + interval);
-          break;
-      }
-
-      if (nextDate > end) {
-        break;
-      }
-
-      const newAvailability: TrainerAvailability = {
-        ...baseAvailability,
-        id: this.generateId(),
-        date: nextDate.toISOString().split('T')[0],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      this.availabilities.push(newAvailability);
-    }
+  async queryTrainerAvailabilities(query: AvailabilityQuery): Promise<TrainerAvailability[]> {
+    return this.repo.findByQuery(query);
   }
 
-  /**
-   * Get trainer availability by ID
-   */
-  static async getTrainerAvailabilityById(id: string): Promise<TrainerAvailability | null> {
-    return this.availabilities.find((a) => a.id === id) || null;
-  }
-
-  /**
-   * Get trainer availabilities by trainer ID
-   */
-  static async getTrainerAvailabilitiesByTrainerId(
-    trainerId: string
-  ): Promise<TrainerAvailability[]> {
-    return this.availabilities.filter((a) => a.trainerId === trainerId);
-  }
-
-  /**
-   * Get all trainer availabilities
-   */
-  static async getAllTrainerAvailabilities(): Promise<TrainerAvailability[]> {
-    return [...this.availabilities];
-  }
-
-  /**
-   * Query trainer availabilities
-   */
-  static async queryTrainerAvailabilities(
-    query: AvailabilityQuery
-  ): Promise<TrainerAvailability[]> {
-    let results = this.availabilities;
-
-    if (query.trainerId) {
-      results = results.filter((a) => a.trainerId === query.trainerId);
-    }
-
-    if (query.startDate) {
-      results = results.filter((a) => a.date >= query.startDate!);
-    }
-
-    if (query.endDate) {
-      results = results.filter((a) => a.date <= query.endDate!);
-    }
-
-    if (query.status) {
-      results = results.filter((a) => a.status === query.status);
-    }
-
-    return results;
-  }
-
-  /**
-   * Get available trainers for a specific date and time
-   */
-  static async getAvailableTrainers(
-    date: string,
-    startTime: string,
-    endTime: string
-  ): Promise<string[]> {
-    const availableTrainerIds = new Set<string>();
-
-    const relevantAvailabilities = this.availabilities.filter(
-      (a) =>
-        a.date === date &&
-        a.status === 'available' &&
-        a.startTime <= startTime &&
-        a.endTime >= endTime
-    );
-
-    for (const availability of relevantAvailabilities) {
-      // Check if there are any conflicts
-      const conflicts = await this.checkForConflicts(
-        availability.trainerId,
-        date,
-        startTime,
-        endTime,
-        availability.id
-      );
-
-      if (conflicts.length === 0) {
-        availableTrainerIds.add(availability.trainerId);
-      }
-    }
-
-    return Array.from(availableTrainerIds);
-  }
-
-  /**
-   * Update trainer availability
-   */
-  static async updateTrainerAvailability(
+  async updateTrainerAvailability(
     id: string,
     input: UpdateTrainerAvailabilityInput
-  ): Promise<TrainerAvailability | null> {
-    const index = this.availabilities.findIndex((a) => a.id === id);
-    if (index === -1) {
-      return null;
-    }
-
-    const existing = this.availabilities[index];
-
-    // Check for conflicts if time is changing
-    if ((input.date || input.startTime || input.endTime) && input.status !== 'unavailable') {
-      const newDate = input.date || existing.date;
-      const newStart = input.startTime || existing.startTime;
-      const newEnd = input.endTime || existing.endTime;
-
-      const conflicts = await this.checkForConflicts(
-        existing.trainerId,
-        newDate,
-        newStart,
-        newEnd,
-        id
-      );
-
-      if (conflicts.length > 0) {
-        throw new Error(`Conflicts detected: ${conflicts.map((c) => c.conflictType).join(', ')}`);
-      }
-    }
-
-    const updated: TrainerAvailability = {
-      ...existing,
-      ...input,
-      updatedAt: new Date().toISOString(),
+  ): Promise<TrainerAvailability> {
+    const update: TablesUpdate<'trainer_availabilities'> = {
+      ...(input.date !== undefined && { date: input.date }),
+      ...(input.startTime !== undefined && { start_time: input.startTime }),
+      ...(input.endTime !== undefined && { end_time: input.endTime }),
+      ...(input.status !== undefined && { status: input.status }),
+      ...(input.notes !== undefined && { notes: input.notes }),
     };
-
-    this.availabilities[index] = updated;
+    const updated = await this.repo.update(id, update);
+    if (!updated) throw new ApiException('NOT_FOUND', 'Trainer-Verfügbarkeit nicht gefunden');
     return updated;
   }
 
-  /**
-   * Delete trainer availability
-   */
-  static async deleteTrainerAvailability(id: string): Promise<boolean> {
-    const index = this.availabilities.findIndex((a) => a.id === id);
-    if (index === -1) {
-      return false;
-    }
-
-    this.availabilities.splice(index, 1);
-    return true;
+  async deleteTrainerAvailability(id: string): Promise<void> {
+    await this.repo.delete(id);
   }
 
-  /**
-   * Compute availability conflicts from a list of availabilities.
-   * Pure utility — does not use in-memory state.
-   */
-  static getAvailabilityConflicts(availabilities: TrainerAvailability[]): AvailabilityConflict[] {
-    const conflicts: AvailabilityConflict[] = [];
+  /** Findet sich überschneidende Verfügbarkeitszeiträume im Datumsbereich. */
+  async getAvailabilityConflicts(
+    startDate: string,
+    endDate: string
+  ): Promise<AvailabilityConflict[]> {
+    const availabilities = await this.repo.findByDateRange(undefined, startDate, endDate);
 
-    // Group by trainer and date
     const grouped = new Map<string, TrainerAvailability[]>();
-    for (const availability of availabilities) {
-      const key = `${availability.trainerId}-${availability.date}`;
-      if (!grouped.has(key)) {
-        grouped.set(key, []);
-      }
-      grouped.get(key)!.push(availability);
+    for (const a of availabilities) {
+      const key = `${a.trainer_id}::${a.date}`;
+      const group = grouped.get(key) ?? [];
+      group.push(a);
+      grouped.set(key, group);
     }
 
-    // Check for overlaps within each group
-    for (const [key, group] of grouped) {
-      const [trainerId, date] = key.split('-');
-
+    const conflicts: AvailabilityConflict[] = [];
+    for (const group of grouped.values()) {
       for (let i = 0; i < group.length; i++) {
         for (let j = i + 1; j < group.length; j++) {
-          const a1 = group[i];
-          const a2 = group[j];
-
-          if (TrainerAvailabilityService.hasTimeOverlap(a1, a2.startTime, a2.endTime)) {
+          if (hasTimeOverlap(group[i], group[j].start_time, group[j].end_time)) {
             conflicts.push({
-              id: `avail-conflict-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              trainerId,
-              trainerName: 'Trainer',
-              date,
-              startTime: a1.startTime,
-              endTime: a1.endTime,
-              conflictType: 'overlap',
-              conflictingWith: [a1.id, a2.id],
+              trainerId: group[i].trainer_id,
+              date: group[i].date,
+              startTime: group[i].start_time,
+              endTime: group[i].end_time,
+              conflictingWith: [group[i].id, group[j].id],
             });
           }
         }
       }
     }
-
     return conflicts;
   }
 }

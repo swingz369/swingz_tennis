@@ -1,7 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { trainerAvailabilityService } from '@/src/application/services/trainer-availability-service.adapter';
+import {
+  errorResponse,
+  internalErrorResponse,
+  ApiException,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { TrainerAvailabilityService } from '@/application/services/trainer-availability.service';
 import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -32,6 +37,7 @@ export async function GET(request: NextRequest) {
       const startDate = searchParams.get('start_date');
       const endDate = searchParams.get('end_date');
       const status = searchParams.get('status');
+      const service = new TrainerAvailabilityService(auth);
 
       // For trainer role, they can only see their own availability
       if (auth.role === 'trainer') {
@@ -42,7 +48,7 @@ export async function GET(request: NextRequest) {
         if (!ownTrainerId) {
           return NextResponse.json({ availabilities: [] });
         }
-        const availabilities = await trainerAvailabilityService.queryTrainerAvailabilities({
+        const availabilities = await service.queryTrainerAvailabilities({
           trainerId: ownTrainerId,
           ...(startDate ? { startDate } : {}),
           ...(endDate ? { endDate } : {}),
@@ -56,7 +62,7 @@ export async function GET(request: NextRequest) {
         // Die Oberfläche schickt die User-ID des Trainers; aufgelöst wird auf die
         // trainers.id, auf die der Fremdschlüssel zeigt.
         const recordId = (await resolveTrainerRecordId(trainerId)) ?? trainerId;
-        const availabilities = await trainerAvailabilityService.queryTrainerAvailabilities({
+        const availabilities = await service.queryTrainerAvailabilities({
           trainerId: recordId,
           ...(startDate ? { startDate } : {}),
           ...(endDate ? { endDate } : {}),
@@ -80,7 +86,7 @@ export async function GET(request: NextRequest) {
       const recordIds = await resolveTrainerRecordIds(profiles.map((p) => p.userId));
       const allAvailabilities = await Promise.all(
         [...recordIds.values()].map((recordId) =>
-          trainerAvailabilityService.queryTrainerAvailabilities({
+          service.queryTrainerAvailabilities({
             trainerId: recordId,
             startDate: startDate || undefined,
             endDate: endDate || undefined,
@@ -157,7 +163,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      const availability = await trainerAvailabilityService.createTrainerAvailability({
+      const availability = await new TrainerAvailabilityService(auth).createTrainerAvailability({
         trainerId: targetRecordId,
         date,
         startTime: start_time,
@@ -198,18 +204,24 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ error: 'Verfügbarkeits-ID erforderlich' }, { status: 400 });
       }
 
+      const service = new TrainerAvailabilityService(auth);
+
       // Look up the availability record
-      const availability =
-        await trainerAvailabilityService.getTrainerAvailabilityById(availabilityId);
-      if (!availability) {
-        return NextResponse.json({ error: 'Verfügbarkeit nicht gefunden' }, { status: 404 });
+      let availability;
+      try {
+        availability = await service.getTrainerAvailabilityById(availabilityId);
+      } catch (error) {
+        if (error instanceof ApiException) {
+          return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+        }
+        throw error;
       }
 
-      // Trainer: can only delete own availability. availability.trainerId ist eine
+      // Trainer: can only delete own availability. availability.trainer_id ist eine
       // trainers.id — verglichen wird deshalb mit der aufgelösten eigenen ID.
       if (auth.role === 'trainer') {
         const ownRecordId = await resolveTrainerRecordId(auth.user.id);
-        if (!ownRecordId || ownRecordId !== availability.trainerId) {
+        if (!ownRecordId || ownRecordId !== availability.trainer_id) {
           return forbiddenResponse('Du kannst nur deine eigene Verfügbarkeit löschen');
         }
       }
@@ -220,7 +232,7 @@ export async function DELETE(request: NextRequest) {
         if (clubId) {
           const clubProfiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
           const clubRecordIds = await resolveTrainerRecordIds(clubProfiles.map((p) => p.userId));
-          const isInClub = [...clubRecordIds.values()].includes(availability.trainerId);
+          const isInClub = [...clubRecordIds.values()].includes(availability.trainer_id);
           if (!isInClub) {
             return NextResponse.json(
               { error: 'Verfügbarkeit gehört nicht zu deinem Verein' },
@@ -230,7 +242,7 @@ export async function DELETE(request: NextRequest) {
         }
       }
 
-      await trainerAvailabilityService.deleteTrainerAvailability(availabilityId);
+      await service.deleteTrainerAvailability(availabilityId);
       return NextResponse.json({ success: true });
     } catch (error) {
       log.error('Trainer availability DELETE error:', error);

@@ -1,97 +1,66 @@
-import { eq, and, gte, lte, desc, sql, type SQL } from 'drizzle-orm';
-import { db } from '../db';
-import { trainerAvailabilities } from '../schema';
-import type {
-  TrainerAvailability,
-  AvailabilityConflict,
-  CreateTrainerAvailabilityInput,
-  UpdateTrainerAvailabilityInput,
-  AvailabilityQuery,
-  TrainerAvailabilityRepository,
-} from '@/domain/repositories/trainer-availability-repository.interface';
-import { parsePostgresError } from '@/lib/errors/database-errors';
+/**
+ * Trainer-Teildomäne "Verfügbarkeit" für ADR-005. Ein Repository, kein
+ * Adapter, keine Interfaces. `trainer_availabilities` hat keine `club_id`
+ * (die Verfügbarkeit gehört dem Trainer als Person, nicht einem Verein) —
+ * die RLS-Policies scopen stattdessen über die `trainer_club`-Zuordnung
+ * (supabase/migrations/20260913170000_trainer_availabilities_admin_access.sql).
+ */
+import 'server-only';
+import type { AuthContext } from '@/lib/api-auth';
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/supabase';
+import { createLogger } from '@/lib/logger';
 
-export class DrizzleTrainerAvailabilityRepository implements TrainerAvailabilityRepository {
-  async create(input: CreateTrainerAvailabilityInput): Promise<TrainerAvailability> {
-    const now = new Date();
+const log = createLogger('infrastructure:trainer-availability.repository');
 
-    try {
-      const result = await db
-        .insert(trainerAvailabilities)
-        .values({
-          trainer_id: input.trainerId,
-          date: new Date(input.date),
-          start_time: input.startTime,
-          end_time: input.endTime,
-          status: input.status ?? 'available',
-          notes: input.notes,
-          recurring_pattern: input.recurringPattern ?? null,
-          created_at: now,
-          updated_at: now,
-        })
-        .returning();
+export type TrainerAvailability = Tables<'trainer_availabilities'>;
+export type AvailabilityStatus = 'available' | 'unavailable' | 'booked' | 'blocked';
 
-      return this.mapToDomain(result[0]);
-    } catch (error) {
-      throw parsePostgresError(error);
-    }
+export type AvailabilityQuery = {
+  trainerId?: string;
+  startDate?: string;
+  endDate?: string;
+  status?: AvailabilityStatus;
+};
+
+function assertNoError(error: { message: string } | null, action: string): void {
+  if (error) {
+    log.error(action, new Error(error.message));
+    throw new Error(action);
+  }
+}
+
+export class TrainerAvailabilityRepository {
+  constructor(private readonly db: AuthContext['supabase']) {}
+
+  async create(input: TablesInsert<'trainer_availabilities'>): Promise<TrainerAvailability> {
+    const { data, error } = await this.db
+      .from('trainer_availabilities')
+      .insert(input)
+      .select()
+      .single();
+    assertNoError(error, 'Anlegen der Trainer-Verfügbarkeit fehlgeschlagen');
+    return data!;
   }
 
   async findById(id: string): Promise<TrainerAvailability | null> {
-    const result = await db
+    const { data, error } = await this.db
+      .from('trainer_availabilities')
       .select()
-      .from(trainerAvailabilities)
-      .where(eq(trainerAvailabilities.id, id))
-      .limit(1);
-
-    if (result.length === 0) return null;
-    return this.mapToDomain(result[0]);
-  }
-
-  async findByTrainerId(trainerId: string): Promise<TrainerAvailability[]> {
-    const result = await db
-      .select()
-      .from(trainerAvailabilities)
-      .where(eq(trainerAvailabilities.trainer_id, trainerId))
-      .orderBy(desc(trainerAvailabilities.date));
-
-    return result.map((row) => this.mapToDomain(row));
-  }
-
-  async findAll(): Promise<TrainerAvailability[]> {
-    const result = await db
-      .select()
-      .from(trainerAvailabilities)
-      .orderBy(desc(trainerAvailabilities.date));
-    return result.map((row) => this.mapToDomain(row));
+      .eq('id', id)
+      .maybeSingle();
+    assertNoError(error, 'Lesen der Trainer-Verfügbarkeit fehlgeschlagen');
+    return data;
   }
 
   async findByQuery(query: AvailabilityQuery): Promise<TrainerAvailability[]> {
-    const conditions: SQL[] = [];
-
-    if (query.trainerId) {
-      conditions.push(eq(trainerAvailabilities.trainer_id, query.trainerId));
-    }
-
-    if (query.startDate) {
-      conditions.push(gte(trainerAvailabilities.date, new Date(query.startDate)));
-    }
-
-    if (query.endDate) {
-      conditions.push(lte(trainerAvailabilities.date, new Date(query.endDate)));
-    }
-
-    if (query.status) {
-      conditions.push(eq(trainerAvailabilities.status, query.status));
-    }
-
-    const result = await db
-      .select()
-      .from(trainerAvailabilities)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(trainerAvailabilities.date));
-
-    return result.map((row) => this.mapToDomain(row));
+    let q = this.db.from('trainer_availabilities').select();
+    if (query.trainerId) q = q.eq('trainer_id', query.trainerId);
+    if (query.startDate) q = q.gte('date', query.startDate);
+    if (query.endDate) q = q.lte('date', query.endDate);
+    if (query.status) q = q.eq('status', query.status);
+    const { data, error } = await q.order('date', { ascending: false });
+    assertNoError(error, 'Lesen der Trainer-Verfügbarkeiten fehlgeschlagen');
+    return data ?? [];
   }
 
   async findByDateRange(
@@ -99,159 +68,33 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
     startDate: string,
     endDate: string
   ): Promise<TrainerAvailability[]> {
-    const conditions: SQL[] = [
-      gte(trainerAvailabilities.date, new Date(startDate)),
-      lte(trainerAvailabilities.date, new Date(endDate)),
-    ];
-
-    if (trainerId) {
-      conditions.push(eq(trainerAvailabilities.trainer_id, trainerId));
-    }
-
-    const result = await db
+    let q = this.db
+      .from('trainer_availabilities')
       .select()
-      .from(trainerAvailabilities)
-      .where(and(...conditions))
-      .orderBy(desc(trainerAvailabilities.date));
-
-    return result.map((row) => this.mapToDomain(row));
-  }
-
-  async findByStatus(
-    trainerId: string,
-    status: TrainerAvailability['status']
-  ): Promise<TrainerAvailability[]> {
-    const result = await db
-      .select()
-      .from(trainerAvailabilities)
-      .where(
-        and(
-          eq(trainerAvailabilities.trainer_id, trainerId),
-          eq(trainerAvailabilities.status, status)
-        )
-      )
-      .orderBy(desc(trainerAvailabilities.date));
-
-    return result.map((row) => this.mapToDomain(row));
+      .gte('date', startDate)
+      .lte('date', endDate);
+    if (trainerId) q = q.eq('trainer_id', trainerId);
+    const { data, error } = await q.order('date', { ascending: false });
+    assertNoError(error, 'Lesen der Trainer-Verfügbarkeiten fehlgeschlagen');
+    return data ?? [];
   }
 
   async update(
     id: string,
-    input: UpdateTrainerAvailabilityInput
+    input: TablesUpdate<'trainer_availabilities'>
   ): Promise<TrainerAvailability | null> {
-    const now = new Date();
-
-    try {
-      const updateData: Partial<typeof trainerAvailabilities.$inferInsert> = {
-        updated_at: now,
-      };
-
-      if (input.date !== undefined) updateData.date = new Date(input.date);
-      if (input.startTime !== undefined) updateData.start_time = input.startTime;
-      if (input.endTime !== undefined) updateData.end_time = input.endTime;
-      if (input.status !== undefined) updateData.status = input.status;
-      if (input.notes !== undefined) updateData.notes = input.notes;
-
-      const result = await db
-        .update(trainerAvailabilities)
-        .set(updateData)
-        .where(eq(trainerAvailabilities.id, id))
-        .returning();
-
-      if (result.length === 0) return null;
-      return this.mapToDomain(result[0]);
-    } catch (error) {
-      throw parsePostgresError(error);
-    }
-  }
-
-  async markAsBooked(id: string): Promise<TrainerAvailability | null> {
-    return this.update(id, { status: 'booked' });
-  }
-
-  async markAsBlocked(id: string, notes?: string): Promise<TrainerAvailability | null> {
-    return this.update(id, { status: 'blocked', notes });
+    const { data, error } = await this.db
+      .from('trainer_availabilities')
+      .update(input)
+      .eq('id', id)
+      .select()
+      .maybeSingle();
+    assertNoError(error, 'Aktualisieren der Trainer-Verfügbarkeit fehlgeschlagen');
+    return data;
   }
 
   async delete(id: string): Promise<void> {
-    await db.delete(trainerAvailabilities).where(eq(trainerAvailabilities.id, id));
-  }
-
-  async checkForConflicts(
-    trainerId: string,
-    date: string,
-    startTime: string,
-    endTime: string,
-    excludeId?: string
-  ): Promise<AvailabilityConflict[]> {
-    // Use the PostgreSQL function for overlap detection
-    const result = await db.execute<{
-      id: string;
-      start_time: string;
-      end_time: string;
-      status: string;
-    }>(sql`
-      SELECT id, start_time, end_time, status
-      FROM check_availability_overlap(
-        ${trainerId}::uuid,
-        ${new Date(date)}::timestamptz,
-        ${startTime}::varchar,
-        ${endTime}::varchar,
-        ${excludeId ?? null}::uuid
-      )
-    `);
-
-    if (!result || result.length === 0) {
-      return [];
-    }
-
-    // Map conflicts
-    return result.map((row) => ({
-      id: row.id,
-      trainerId,
-      trainerName: '', // Would need join with trainers table
-      date,
-      startTime: row.start_time,
-      endTime: row.end_time,
-      conflictType: 'overlap' as const,
-      conflictingWith: [row.id],
-    }));
-  }
-
-  async getAvailableSlots(trainerId: string, date: string): Promise<TrainerAvailability[]> {
-    const result = await db
-      .select()
-      .from(trainerAvailabilities)
-      .where(
-        and(
-          eq(trainerAvailabilities.trainer_id, trainerId),
-          eq(trainerAvailabilities.date, new Date(date)),
-          eq(trainerAvailabilities.status, 'available')
-        )
-      )
-      .orderBy(trainerAvailabilities.start_time);
-
-    return result.map((row) => this.mapToDomain(row));
-  }
-
-  private mapToDomain(row: typeof trainerAvailabilities.$inferSelect): TrainerAvailability {
-    return {
-      id: row.id,
-      trainerId: row.trainer_id,
-      date: row.date.toISOString().split('T')[0], // YYYY-MM-DD
-      startTime: row.start_time,
-      endTime: row.end_time,
-      status: row.status as 'available' | 'unavailable' | 'booked' | 'blocked',
-      notes: row.notes ?? undefined,
-      recurringPattern: row.recurring_pattern as
-        | {
-            type: 'daily' | 'weekly' | 'monthly' | 'yearly';
-            interval: number;
-            endDate?: string;
-          }
-        | undefined,
-      createdAt: row.created_at.toISOString(),
-      updatedAt: row.updated_at.toISOString(),
-    };
+    const { error } = await this.db.from('trainer_availabilities').delete().eq('id', id);
+    assertNoError(error, 'Löschen der Trainer-Verfügbarkeit fehlgeschlagen');
   }
 }

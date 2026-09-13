@@ -1,27 +1,27 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { trainerAvailabilityService } from '@/src/application/services/trainer-availability-service.adapter';
+import { TrainerAvailabilityService } from '@/application/services/trainer-availability.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:trainer-availability:conflicts');
 
-export async function GET(_request: NextRequest) {
-  return withApiAuth(_request, async (auth) => {
+export async function GET(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
       return forbiddenResponse('Zugriff nur für Admins');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }
 
     try {
-      const { searchParams } = new URL(_request.url);
+      const { searchParams } = new URL(request.url);
       const startDate = searchParams.get('startDate');
       const endDate = searchParams.get('endDate');
 
@@ -32,7 +32,7 @@ export async function GET(_request: NextRequest) {
         );
       }
 
-      const conflicts = await trainerAvailabilityService.getAvailabilityConflicts(
+      const conflicts = await new TrainerAvailabilityService(auth).getAvailabilityConflicts(
         startDate,
         endDate
       );
