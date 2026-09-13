@@ -1,0 +1,19 @@
+-- Korrektur zu 20260913150000_payment_settings_rls.sql.
+--
+-- Diese Migration ging von einer falschen Analyse aus: ein fehlerhafter
+-- `grep`-Pipe-Befund (zwei verkettete grep-Aufrufe lieferten ein
+-- unvollständiges Ergebnis) legte nahe, `payment_settings` habe trotz FORCE
+-- ROW LEVEL SECURITY überhaupt keine Policy. Tatsächlich bestehen seit der
+-- Baseline bereits vier Admin-Policies mit identischer Bedingung:
+-- "Club admins can create/delete/update/view payment settings in their
+-- clubs" (alle `is_club_admin(club_id)`). `payment_settings_admin_manage`
+-- war damit von Anfang an redundant, nie ein echter Sicherheitsgewinn.
+--
+-- Der eigentliche, echte Fehler blieb davon unberührt und ist weiterhin
+-- behoben: `payment-settings-service.adapter.ts` griff über Drizzle
+-- (BYPASSRLS-Rolle `postgres`) zu und defaultete `clubId` auf `''` —  das
+-- umging jede RLS-Policy unabhängig davon, ob eine existierte. Der Umbau auf
+-- `getUserDb(auth)` (PostgREST als `authenticated`, RLS greift immer) bleibt
+-- damit der korrekte Fix; nur die Begründung "keine Policy vorhanden" war
+-- falsch. Siehe CLAUDE.md § Datenzugriff für die korrigierte Fassung.
+DROP POLICY IF EXISTS "payment_settings_admin_manage" ON "public"."payment_settings";
