@@ -1,117 +1,42 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { requireAuth } from '@/lib/api-auth';
+import { internalErrorResponse, safeErrorMessage } from '@/lib/api-error';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
-import type { DunningRecord } from '@/lib/types/billing';
-import { createServiceClient } from '@/lib/supabase/service';
+import { getUserDb } from '@/infrastructure/db';
+import { DunningService } from '@/application/services/dunning.service';
 
 export const dynamic = 'force-dynamic';
 const log = createLogger('api:billing:dunning');
-
-interface DunningKpis {
-  totalRecords: number;
-  thisMonthCount: number;
-  totalInterest: number;
-  openRecords: number;
-  openAmount: number;
-  byLevel: { level1: number; level2: number; level3: number };
-  overdueInvoices: number;
-}
 
 /**
  * GET /api/billing/dunning?clubId=...
  *
  * Liefert Mahnläufe + Kennzahlen für die Mahnlauf-Dashboard-Komponente.
  *
- * Auth: muss aktives Mitglied des Clubs sein (jede Rolle).
+ * Auth: nur Admin/Superadmin des Vereins — RLS auf dunning_records erlaubt
+ * ohnehin nur Admins den vollen Mahnlauf-Überblick des Clubs.
  */
 export async function GET(request: NextRequest) {
-  const { supabase, user } = await requireAuth(request);
-  const { searchParams } = new URL(request.url);
-  const clubId = searchParams.get('clubId');
+  return withApiAuth(request, async (auth) => {
+    const hasRole = await verifyRole(auth, 'admin');
+    if (!hasRole) return forbiddenResponse('Zugriff nur für Admins');
 
-  if (!clubId) {
-    return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
-  }
-
-  // Membership-Check (jede Rolle darf lesen — auch Trainer/Mitglied)
-  const { data: membership } = await supabase
-    .from('user_club_memberships')
-    .select('role')
-    .eq('user_id', user.id)
-    .eq('club_id', clubId)
-    .eq('is_active', true)
-    .maybeSingle();
-
-  if (!membership) {
-    return NextResponse.json({ error: 'Kein Zugriff auf diesen Verein' }, { status: 403 });
-  }
-
-  // Service-Client für Bypass-RLS (Dashboard-Aggregation)
-  const sb = createServiceClient();
-
-  const [recordsRes, overdueRes] = await Promise.all([
-    sb
-      .from('dunning_records')
-      .select('*')
-      .eq('club_id', clubId)
-      .order('sent_at', { ascending: false })
-      .limit(100),
-    sb
-      .from('invoices')
-      .select('id', { count: 'exact', head: true })
-      .eq('club_id', clubId)
-      .eq('status', 'overdue'),
-  ]);
-
-  if (recordsRes.error) {
-    log.error('Failed to fetch dunning records', { error: recordsRes.error.message });
-    return internalErrorResponse();
-  }
-
-  const records = (recordsRes.data ?? []) as unknown as DunningRecord[];
-  const kpis: DunningKpis = computeKpis(records, overdueRes.count ?? 0);
-
-  return NextResponse.json({
-    records,
-    kpis,
-  });
-}
-
-function computeKpis(records: DunningRecord[], overdueInvoices: number): DunningKpis {
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-  let thisMonthCount = 0;
-  let totalInterest = 0;
-  let openRecords = 0;
-  let openAmount = 0;
-  let level1 = 0;
-  let level2 = 0;
-  let level3 = 0;
-
-  for (const r of records) {
-    if (r.sent_at && new Date(r.sent_at) >= monthStart) thisMonthCount += 1;
-    totalInterest += Number(r.interest_amount ?? 0);
-    const isOpen = !r.paid_at && !r.cancelled_at && (r.status ?? '') !== 'paid';
-    if (isOpen) {
-      openRecords += 1;
-      openAmount += Number(r.total_due ?? r.total_amount ?? 0);
+    const { searchParams } = new URL(request.url);
+    const clubId = searchParams.get('clubId');
+    if (!clubId) {
+      return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
     }
-    const lvl = Number(r.level ?? 0);
-    if (lvl === 1) level1 += 1;
-    else if (lvl === 2) level2 += 1;
-    else if (lvl === 3) level3 += 1;
-  }
 
-  return {
-    totalRecords: records.length,
-    thisMonthCount,
-    totalInterest,
-    openRecords,
-    openAmount,
-    byLevel: { level1, level2, level3 },
-    overdueInvoices,
-  };
+    try {
+      const service = new DunningService(getUserDb(auth));
+      const { records, kpis } = await service.getDashboardData(clubId);
+      return NextResponse.json({ records, kpis });
+    } catch (error) {
+      log.error('Mahnläufe konnten nicht geladen werden', {
+        error: safeErrorMessage(error),
+      });
+      return internalErrorResponse();
+    }
+  });
 }

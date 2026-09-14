@@ -17,15 +17,20 @@ import type { SepaDirectDebitTransaction, SepaPain008Config } from './sepa/pain0
 import { InvoiceService } from './billing/invoice.service';
 import { PaymentService } from './billing/payment.service';
 import { SepaService } from './billing/sepa.service';
-import { DunningService } from './billing/dunning.service';
 import { StatsService } from './billing/stats.service';
+import { systemDb } from '@/infrastructure/db';
+import { DunningService } from '@/application/services/dunning.service';
 
 export class BillingEngine {
   private static instance: BillingEngine;
   private invoiceService = InvoiceService.getInstance();
   private paymentService = PaymentService.getInstance();
   private sepaService = SepaService.getInstance();
-  private dunningService = DunningService.getInstance();
+  // Legacy-Fassade ohne Request-Kontext — läuft bewusst über systemDb(),
+  // wie zuvor über createServiceClient() in lib/billing/dunning.service.ts.
+  private dunningService = new DunningService(
+    systemDb('lib/billing-engine.ts Legacy-Fassade (Mahnwesen, kein User-Kontext verfügbar)')
+  );
   private statsService = StatsService.getInstance();
 
   private constructor() {}

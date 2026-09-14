@@ -11,8 +11,9 @@
  * geprüft, 14.09.2026) — kein neuer Migrationsschritt nötig, nur der
  * Datenzugriff wechselt auf `getUserDb(auth)`.
  *
- * Zahlungen, Mahnwesen, SEPA, DATEV-Export und der Abrechnungslauf
- * (season-billing.service.ts) bleiben bewusst außen vor — eigener Schnitt.
+ * Zahlungen und DATEV-Export bleiben bewusst außen vor — eigener Schnitt.
+ * (Bereits migriert: SEPA-Mandate, Abrechnungslauf — season-billing.service.ts;
+ * Mahnwesen — dunning.repository.ts/dunning.service.ts.)
  */
 import 'server-only';
 import type { AuthContext } from '@/lib/api-auth';
@@ -119,6 +120,16 @@ export class InvoiceRepository {
       .maybeSingle();
     assertNoError(error, 'Aktualisieren der Rechnung fehlgeschlagen');
     return data;
+  }
+
+  async countOverdueByClub(clubId: string): Promise<number> {
+    const { count, error } = await this.db
+      .from('invoices')
+      .select('id', { count: 'exact', head: true })
+      .eq('club_id', clubId)
+      .eq('status', 'overdue');
+    assertNoError(error, 'Zählen überfälliger Rechnungen fehlgeschlagen');
+    return count ?? 0;
   }
 
   /** Cascade: RLS erlaubt Admin/Superadmin des Clubs ALL auf allen drei Tabellen. */

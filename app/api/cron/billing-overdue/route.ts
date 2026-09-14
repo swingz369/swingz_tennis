@@ -2,7 +2,8 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
 import { createServiceClient } from '@/lib/supabase/service';
-import { dunningService } from '@/lib/billing/dunning.service';
+import { systemDb } from '@/infrastructure/db';
+import { DunningService } from '@/application/services/dunning.service';
 import { createLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { recordHeartbeat } from '@/lib/ops-heartbeat';
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
     log.info(`Marked ${updated?.length ?? 0} invoices as overdue`);
 
     // Run dunning for each affected club
+    const dunningService = new DunningService(systemDb('cron:billing-overdue'));
     const clubIds = [...new Set((updated ?? []).map((inv) => inv.club_id).filter(Boolean))];
     const dunningResults = await Promise.allSettled(
       clubIds.map((clubId) => dunningService.processAutomaticDunning(clubId))
