@@ -1,7 +1,9 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 16. September 2026 (ADR-005-Migrationsfortschritt am Code geprüft, P0/P1
-> ergänzt); davor 30. August 2026 (Bezahlschranke bis zum Launch abgeschaltet — siehe unten)
+> Zuletzt verifiziert: 17. September 2026 (Auslieferung von 33 Commits nach main, 8 Migrationen
+> auf Produktion angewendet, Deploy-Kette geprüft — drei neue Befunde unten); davor 16. September
+> 2026 (ADR-005-Migrationsfortschritt am Code geprüft); 30. August 2026 (Bezahlschranke
+> abgeschaltet — siehe unten)
 >
 > Lebendes Dokument. Bündelt **alle dokumentierten, aber noch nicht umgesetzten** Altlasten und
 > ToDos. Wer einen Punkt umsetzt, streicht ihn hier; wer einen neuen offenen Punkt findet, trägt
@@ -65,6 +67,17 @@ Code: `lib/subscription-gate.ts` (`isSubscriptionEnforced`), `lib/env.ts`,
 
 ## P0 — Blocker
 
+### GitHub Actions ist für das Repository abgeschaltet
+
+`GET /repos/swingz369/swingz_tennis/actions/permissions` liefert `{"enabled": false}`. Folge:
+**CI läuft seit dem 18.08.2026 nicht mehr** (der Push vom 17.09. mit 33 Commits hat keinen Lauf
+ausgelöst), und der `monitor`-Workflow seit dem 21.08.2026 nicht — es findet also **keine
+Überwachung statt**. Die Workflow-Dateien selbst stehen auf `active`; der Schalter sitzt eine
+Ebene höher (Settings → Actions → General). Genau der Fall, vor dem `AGENTS.md` § Auslieferung
+warnt — diesmal nicht, weil der Workflow nicht auf `main` lag, sondern weil Actions ganz aus ist.
+→ **Fix:** Actions wieder einschalten, danach prüfen, warum die letzten drei Monitor-Läufe
+(21.08.) fehlgeschlagen sind.
+
 ### E-Mail-Versand ist komplett tot
 
 `swingz.cloud` ist bei Resend nicht verifiziert. Damit geht **keine einzige** Mail raus:
@@ -121,6 +134,20 @@ Service-Client erreichbar. → **Fix:** Policies definieren oder bewusst dokumen
 
 ## P1 — Wichtig
 
+- **Drei Cron-Routen haben keinen Zeitplan.** `cron/trial-followup`, `cron/check-absences` und
+  `cron/refresh-base-rates` stehen weder in `vercel.json` (6 Einträge) noch in einem
+  GitHub-Workflow. Der Nurture-Flow des Probetrainings verschickt damit weder die Erinnerung nach
+  2 Tagen noch den letzten Anstoß nach 7 Tagen. → **Entscheiden:** einplanen oder Route löschen.
+  → Quelle: Befund 17.09.2026 beim Modul-Diagramm (`docs/diagrams/swingz-overview.html`).
+- **`cron-booking-reminders` hat nie einen Heartbeat geschrieben.** `/api/health` meldet für
+  diesen Job dauerhaft `"status": "unbekannt"`, während alle anderen Jobs Altersangaben liefern.
+  Die Route `/api/reminders/booking-tomorrow` steht in `vercel.json` (18:00). → **Prüfen**, ob der
+  Job scheitert, bevor `recordHeartbeat()` greift.
+  → Quelle: `/api/health` in Produktion, 17.09.2026.
+- **Repository umgezogen, Verweise zeigen auf den alten Namen.** `swingz369/swingz` →
+  `swingz369/swingz_tennis`. Der Push vom 17.09. lief nur über GitHubs Weiterleitung; `git remote`
+  und `docs/SERVICES.md` nennen weiter den alten Pfad. → **Fix:** `git remote set-url origin` und
+  die Zeile in `SERVICES.md`.
 - **ADR-005: Service-Schicht in 14 migrierten Routen übersprungen.** `app/api/groups/*` (4),
   `app/api/pricing-rules/*` (3), `app/api/analytics/*` (3), `bookings`, `schedule`,
   `stripe/checkout`, `clubs/[id]` importieren ein Repository direkt in der Route statt über
