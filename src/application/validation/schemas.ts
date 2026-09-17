@@ -167,30 +167,6 @@ export const createScheduleSchema = z.object({
   seasonEndDate: z.string().datetime('Invalid end date'),
 });
 
-export const optimizeScheduleSchema = z.object({
-  clubId: uuidSchema,
-  seasonType: z.enum(['spring', 'summer', 'autumn', 'winter', 'year-round']),
-  year: z.coerce.number().int().min(2020).max(2100),
-  forceRegenerate: z.boolean().optional(),
-});
-
-export const updateSessionsSchema = z.object({
-  scheduleId: uuidSchema,
-  sessions: z.array(
-    z.object({
-      id: uuidSchema.optional(),
-      trainerId: uuidSchema,
-      courtId: uuidSchema.optional().nullable(),
-      weekNumber: z.coerce.number().int().min(1).max(53),
-      timeslotStart: z.string().datetime(),
-      timeslotEnd: z.string().datetime(),
-      maxParticipants: z.coerce.number().int().min(1).max(50),
-      notes: z.string().optional().nullable(),
-      groupIds: z.array(uuidSchema).default([]),
-    })
-  ),
-});
-
 // ============================================
 // BOOKING SCHEMAS
 // ============================================

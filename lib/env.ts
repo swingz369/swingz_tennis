@@ -18,7 +18,6 @@ export const env = createEnv({
   server: {
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
     ANTHROPIC_API_KEY: z.string().optional(),
-    OPENAI_API_KEY: z.string().optional(),
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
     STRIPE_PRICE_SOLO_S: z.string().optional(),
@@ -65,7 +64,6 @@ export const env = createEnv({
     // Server
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     STRIPE_PRICE_SOLO_S: process.env.STRIPE_PRICE_SOLO_S,
