@@ -1,6 +1,7 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 30. August 2026 (Bezahlschranke bis zum Launch abgeschaltet — siehe unten)
+> Zuletzt verifiziert: 16. September 2026 (ADR-005-Migrationsfortschritt am Code geprüft, P0/P1
+> ergänzt); davor 30. August 2026 (Bezahlschranke bis zum Launch abgeschaltet — siehe unten)
 >
 > Lebendes Dokument. Bündelt **alle dokumentierten, aber noch nicht umgesetzten** Altlasten und
 > ToDos. Wer einen Punkt umsetzt, streicht ihn hier; wer einen neuen offenen Punkt findet, trägt
@@ -83,11 +84,19 @@ Fehlermeldung, kein Stack-/SQL-Trace (Regel aus `CLAUDE.md`).
 
 ### Drizzle-Service-Pfad umgeht RLS komplett
 
-`DATABASE_URL` verbindet als `postgres` (BYPASSRLS). Die ~26 API-Routes, die Drizzle statt
-Supabase-REST nutzen, schützt allein der Anwendungscode. FORCE-RLS wirkt erst, wenn die App auf
-eine Rolle ohne BYPASSRLS umgestellt wird. → **Fix:** dedizierte App-Rolle ohne BYPASSRLS + neue
-`DATABASE_URL` (Infra-Änderung, keine Migration).
+`DATABASE_URL` verbindet als `postgres` (BYPASSRLS). Die verbleibenden API-Routes, die Drizzle
+statt Supabase-REST nutzen, schützt allein der Anwendungscode. FORCE-RLS wirkt erst, wenn die
+App auf eine Rolle ohne BYPASSRLS umgestellt wird. → **Fix:** dedizierte App-Rolle ohne
+BYPASSRLS + neue `DATABASE_URL` (Infra-Änderung, keine Migration).
 → Quelle: `docs/DATABASE.md`, `docs/tickets/roadmap/TICKET-pooler-tls-und-drizzle-service-pfad.md`.
+
+**Update 16.09.2026:** ADR-005 (13.09.) hat diesen Pfad zum Zielbild gemacht (Route → Service →
+Repository → `getUserDb`/`systemDb`). Seit der Entscheidung migrierte Domänen haben den
+Drizzle-Anteil deutlich reduziert (Routen mit Drizzle-Import: 21, war ~85), den gefährlicheren
+`createServiceClient`-Bypass aber kaum (84 Routen, war ~86 — davon nur 3 über den auditierten
+`systemDb(reason)`-Wrapper). Genau dieser Pfad war laut ADR-005-Kontext Ursache der zwei echten
+Datenlecks im Juli. Voller Befund mit Zahlen und Befehlen:
+`docs/ARCHIV/2026-09-16-adr-005-migrationsfortschritt-befund.md`.
 
 ### DB-Transport unverschlüsselt
 
@@ -112,6 +121,20 @@ Service-Client erreichbar. → **Fix:** Policies definieren oder bewusst dokumen
 
 ## P1 — Wichtig
 
+- **ADR-005: Service-Schicht in 14 migrierten Routen übersprungen.** `app/api/groups/*` (4),
+  `app/api/pricing-rules/*` (3), `app/api/analytics/*` (3), `bookings`, `schedule`,
+  `stripe/checkout`, `clubs/[id]` importieren ein Repository direkt in der Route statt über
+  einen Service — RLS-Disziplin (`getUserDb`) eingehalten, aber Fachlogik landet in der Route
+  statt in `src/application/services/`, wie es ADR-005 vorschreibt. → **Fix:** pro Domäne einen
+  dünnen Service nachziehen.
+  → Quelle: `docs/ARCHIV/2026-09-16-adr-005-migrationsfortschritt-befund.md` (Befund 2).
+- **Architektur-Baseline-Datei (`dependency-cruiser`) nicht aktuell gehalten.**
+  `.dependency-cruiser-known-violations.json` ist seit dem 13.09.2026 eingefroren; `npm run
+arch:check` läuft mit `--ignore-known` dagegen und meldet "grün", obwohl der reale Verstoß-Stand
+  sich seither kaum bewegt hat (172 aktuelle Treffer vs. 174 in der Baseline trotz 8
+  Migrations-Commits). → **Fix:** `npm run arch:baseline` als festen Schritt bei jedem
+  ADR-005-Phase-3-Commit, oder CI-Gate gegen Anstieg der Verstoßzahl.
+  → Quelle: `docs/ARCHIV/2026-09-16-adr-005-migrationsfortschritt-befund.md` (Befund 1).
 - **SECURITY DEFINER-Funktionen ohne eigenen Autorisierungs-Check: systematisch prüfen.**
   Fund bei ADR-005 Phase 3 (Abrechnungslauf, 14.09.2026): `generate_season_invoices_atomic`
   war an `authenticated` gegrantet und umging RLS (SECURITY DEFINER) komplett, ohne selbst zu

@@ -21,14 +21,16 @@ Stripe-Payment-Provider (API 2026-06-24.dahlia)
 
 ## 💰 Pricing-Tiers
 
-Aktiv in `subscription_tiers` (Migration `20260724_subscription_tiers.sql`):
+Einzige Quelle: `lib/plans.ts` (Tarif-Keys in `users.subscription_tier`):
 
-| Tier             |       Preis | Beschreibung                                                       |
-| ---------------- | ----------: | ------------------------------------------------------------------ |
-| **Starter**      | €29 / Monat | 1 Verein, bis 100 Mitglieder, Kern-Module                          |
-| **Professional** | €79 / Monat | Multi-Club (Superadmin), alle Module, Smart Court-Add-On verfügbar |
+| Tier                            |       Preis | Beschreibung       |
+| ------------------------------- | ----------: | ------------------ |
+| **Starter** (`solo_s`)          | €29 / Monat | bis 200 Mitglieder |
+| **Professional** (`solo_l`)     | €49 / Monat | ab 201 Mitglieder  |
+| **Tennisschule S** (`school_s`) | €79 / Monat | bis zu 5 Vereine   |
+| **Tennisschule L** (`school_l`) | €99 / Monat | mehr als 5 Vereine |
 
-Plan-Wechsel siehe `app/api/stripe/subscribe`. ⚠️ **P0-Finding 7**: aktuell erzeugt `subscribe/route.ts:81-96` eine **neue Checkout-Session** statt vorhandene Subscription via `subscriptions.update()` zu mutieren → Doppel-Belastung möglich.
+Plan-Wechsel siehe `app/api/stripe/subscribe`. Bei bereits aktivem Abo (`status` `active`/`trialing`) wird die bestehende Subscription per `subscriptions.update()` gewechselt statt eine zweite Checkout-Session zu erzeugen (`subscribe/route.ts` § "Plan-Wechsel bei bereits aktivem Abo") — verhindert die Doppel-Belastung, die hier früher als offener Punkt stand.
 
 ## 🛒 Checkout-Flow
 
@@ -53,16 +55,21 @@ Stripe → POST /api/webhooks/stripe  (siehe unten)
 
 ### Verarbeitete Events
 
-| Event                           | Handler                  | Aktion                                                                                          |
-| ------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------- |
-| `checkout.session.completed`    | `subscription_created`   | Neue Subscription in DB, Club-Features unlocken                                                 |
-| `invoice.paid`                  | `mark_invoice_paid`      | `invoices.status = 'paid'`, `paid_at = now`, dunning-record close                               |
-| `invoice.payment_failed`        | `mark_invoice_failed`    | ⚠️ **Aktuell nicht behandelt** (P0-8) — TODO: dunning-record escalate, club-flag, member-Notify |
-| `invoice.created`               | `sync_invoice`           | Stripe-Invoice in DB spiegeln                                                                   |
-| `customer.subscription.updated` | `sync_subscription`      | Plan-Change, Quantity-Update                                                                    |
-| `customer.subscription.deleted` | `subscription_cancelled` | Club-Account deaktivieren nach Grace-Period                                                     |
-| `charge.dispute.created`        | `notify_owner`           | E-Mail an Owner bei Chargeback                                                                  |
-| `charge.refunded`               | `mark_invoice_refunded`  |                                                                                                 |
+Stand: Code-Check `app/api/webhooks/stripe/route.ts` (16.09.2026) — die Tabelle war zuvor veraltet
+(dokumentierte u. a. `invoice.payment_failed` als unbehandelt, obwohl es seit Längerem behandelt
+wird; `invoice.paid`/`invoice.created`/`charge.dispute.created` existieren dagegen nicht im Code).
+
+| Event                           | Handler                                                                                                                            | Aktion                                                                            |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `checkout.session.completed`    | `handleSaasSubscription` / `handleShopOrderPayment` / `handleInvoicePayment` / `handleBookingPayment` (je nach `session.metadata`) | SaaS-Abo anlegen, Shop-Bestellung, Rechnung oder Buchung als bezahlt markieren    |
+| `customer.subscription.updated` | `handleSubscriptionUpdated`                                                                                                        | Plan-Wechsel, Mengen-Update in der DB spiegeln                                    |
+| `customer.subscription.deleted` | `handleSubscriptionDeleted`                                                                                                        | Club-/Nutzer-Abo deaktivieren                                                     |
+| `payment_intent.succeeded`      | `handlePaymentIntentSucceeded`                                                                                                     | SEPA-Lastschrift-Zahlungen (laufen nicht über `checkout.session.completed`)       |
+| `payment_intent.payment_failed` | Inline + `handleBookingPaymentFailed`                                                                                              | Zahlung als `failed` markieren, Buchung ggf. stornieren                           |
+| `invoice.payment_failed`        | `handleSaasInvoicePaymentFailed`                                                                                                   | Benachrichtigung (In-App + E-Mail) an den Nutzer bei fehlgeschlagener Abo-Zahlung |
+| `charge.refunded`               | `handleChargeRefunded`                                                                                                             | Rückerstattung verbuchen                                                          |
+
+Jeder nicht gelistete Event-Typ landet im `default`-Zweig und wird nur geloggt (`log.info('Unhandled event type', …)`), ohne Fehler.
 
 ### Idempotenz
 

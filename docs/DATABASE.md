@@ -171,6 +171,13 @@ docker exec supabase-db psql -U postgres -c "select proname from pg_proc where p
 docker exec supabase-db psql -U postgres -c "select count(*) from <table>;"
 ```
 
+## Datenzugriffsmuster (ADR-005) — Diagramm
+
+Zielbild und Migrationsstand als interaktives Architektur-Diagramm: [`diagrams/adr-005-datenzugriff.html`](diagrams/adr-005-datenzugriff.html)
+(Route → Service → Repository → `getUserDb`/`systemDb` → Postgres mit RLS, plus der noch
+verbliebene Altdomänen-Pfad über Drizzle). Begründung der Entscheidung:
+[`decisions/adr-005-datenzugriff-supabase-repositories.md`](decisions/adr-005-datenzugriff-supabase-repositories.md).
+
 ## Rollen-/Club-Scoping-Modell (aktueller, korrekter Stand)
 
 - `user_club_memberships` ist die EINZIGE verlässliche Mitgliedschafts-Tabelle (442 Zeilen, Stand 05.08.2026). `club_members` (0 Zeilen) ist tot — nie in Policies oder App-Code referenzieren, sollte langfristig per Migration gedroppt werden (nicht in diesem Zug gemacht, um destruktive Änderungen von diesem Refactor zu trennen).
