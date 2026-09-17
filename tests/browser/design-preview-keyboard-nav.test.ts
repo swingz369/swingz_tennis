@@ -17,6 +17,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { WebTest, type WebTestContext } from '../helpers/web-test';
 import { loginAs } from '../helpers/auth';
+import { expectFooterBranding } from '../helpers/design-preview';
 
 const BASE_URL = process.env.APP_BASE_URL || 'http://localhost:3000';
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL!;
@@ -155,10 +156,7 @@ describe('Design Preview — Keyboard Tab Navigation', () => {
 
   it(
     'should render the footer with SwingZ branding',
-    async () => {
-      const text = await ctx.page.locator('footer').textContent();
-      expect(text).toContain('SwingZ Design System');
-    },
+    async () => expectFooterBranding(ctx.page),
     TEST_TIMEOUT
   );
 });
