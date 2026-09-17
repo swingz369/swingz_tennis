@@ -41,7 +41,7 @@ export function ListState({
       <div className="flex flex-col items-center gap-2 py-8 text-center">
         <AlertCircle className="h-5 w-5 text-destructive" aria-hidden />
         <p className="text-sm font-medium">Konnte nicht geladen werden</p>
-        <p className="max-w-sm text-xs text-muted-foreground">{error}</p>
+        <p className="max-w-sm text-sm text-muted-foreground">{error}</p>
       </div>
     );
   }
@@ -51,7 +51,7 @@ export function ListState({
       <div className="flex flex-col items-center gap-2 py-8 text-center">
         <Inbox className="h-5 w-5 text-muted-foreground" aria-hidden />
         <p className="text-sm font-medium">{emptyTitle}</p>
-        {emptyHint && <p className="max-w-sm text-xs text-muted-foreground">{emptyHint}</p>}
+        {emptyHint && <p className="max-w-sm text-sm text-muted-foreground">{emptyHint}</p>}
       </div>
     );
   }

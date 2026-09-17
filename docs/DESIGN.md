@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 13.08.2026 (Abschnitt 13.2/13.4 gegen `components/search-dialog.tsx` + `components/command-palette.tsx` geprüft)
+> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -90,6 +90,25 @@ Die Richtung stimmt. Die Lücke zwischen Landing Page und Admin-App ist durch di
 | Body Small    | DM Sans        | 400    | 0.875rem | Sidebar, Tabellen, Meta            |
 | Caption       | DM Sans        | 500    | 0.75rem  | Labels, Badges                     |
 | Mono          | JetBrains Mono | 400    | 0.875rem | Daten, Code                        |
+
+**Regel (Sanierungsplan Phase 3, 18.09.2026):** Diese Skala gilt für **echten Fließtext** —
+Absätze, Beschreibungen, Leerzustände, Fehlermeldungen, Formular-Hilfetexte: Dinge, die ein
+Nutzer liest statt scannt. `text-xs` ist dort **nur für Metadaten** erlaubt (Zeitstempel,
+Zähler, IDs) — nie für Erklärtext oder Hinweise, die eine Handlung begründen.
+
+UI-Chrome (Tabellenköpfe, Kartentitel, KPI-Labels, kompakte Dashboard-Kacheln) fällt **nicht**
+unter diese Regel, wenn die Dichte eine bewusste Entscheidung ist — z. B. das Admin-Dashboard
+(`app/(protected)/admin/(gated)/page.tsx`), dessen Tabellen- und Kartenmaße bewusst gegen eine
+Referenzdatei abgestimmt sind. Dort nicht mechanisch auf `text-base` anheben.
+
+Kanonische Komponenten, die die Skala bereits durchsetzen (neue Stellen sollten sie
+wiederverwenden statt eigene Größen zu erfinden):
+
+| Komponente                      | Slot                                 | Größe                                                                |
+| ------------------------------- | ------------------------------------ | -------------------------------------------------------------------- |
+| `components/ui/page-header.tsx` | `description`                        | `text-[15px]` (Fließtext-nah)                                        |
+| `components/ui/empty-state.tsx` | `description` (Größe `md`, Standard) | `text-base`                                                          |
+| `components/ui/list-state.tsx`  | Fehler-/Leer-Erklärtext              | `text-sm` (war `text-xs` — Verstoß gegen die Regel oben, korrigiert) |
 
 ### 4.3 Spacing-Raster
 
