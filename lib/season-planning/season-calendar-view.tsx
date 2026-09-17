@@ -2,14 +2,14 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Calendar, Check, Loader2, MapPin, X } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Check, Loader2, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
+import { CalendarShell } from '@/components/calendar/CalendarShell';
 import type {
   CalendarGroup,
   CalendarWeek,
@@ -193,36 +193,26 @@ export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: 
   }, [data.groups, data.stats.activeWeeksByGroup, filterActiveOnly]);
 
   return (
-    <Card>
-      <CardHeader className="space-y-3">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Saisonkalender
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Sep {data.season.start_date.slice(0, 4)} – Jul {data.season.end_date.slice(0, 4)} ·{' '}
-              {data.weeks.length} Wochen · <MapPin className="inline h-3 w-3" />{' '}
-              {data.bundeslandName}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary">{data.stats.totalWeeks} KW</Badge>
-            <Badge variant="outline" className="bg-warning-50 text-warning-900 border-warning-200">
-              {data.stats.holidayWeeks} Ferienwochen
-            </Badge>
-            <Button
-              variant={filterActiveOnly ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilterActiveOnly((v) => !v)}
-            >
-              {filterActiveOnly ? 'Alle' : 'Nur aktive Gruppen'}
-            </Button>
-          </div>
-        </div>
-
+    <CalendarShell
+      title="Saisonkalender"
+      subtitle={`Sep ${data.season.start_date.slice(0, 4)} – Jul ${data.season.end_date.slice(0, 4)} · ${data.weeks.length} Wochen · ${data.bundeslandName}`}
+      controls={
+        <>
+          <Badge variant="secondary">{data.stats.totalWeeks} KW</Badge>
+          <Badge variant="outline" className="bg-warning-50 text-warning-900 border-warning-200">
+            {data.stats.holidayWeeks} Ferienwochen
+          </Badge>
+          <Button
+            variant={filterActiveOnly ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilterActiveOnly((v) => !v)}
+          >
+            {filterActiveOnly ? 'Alle' : 'Nur aktive Gruppen'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-3">
         {/* Legend */}
         <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
           <span className="flex items-center gap-1">
@@ -236,9 +226,7 @@ export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: 
             Ferienwoche
           </span>
         </div>
-      </CardHeader>
 
-      <CardContent>
         {data.groups.length === 0 ? (
           <p className="text-sm text-muted-foreground py-8 text-center">
             Keine aktiven Gruppen für diese Saison gefunden. Lege zuerst Gruppen an oder
@@ -401,8 +389,8 @@ export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: 
           Klicke auf eine Zelle, um den Status zu wechseln. Ferienwochen sind gelb hinterlegt. Per
           Bulk-Button aktivierst/deaktivierst du alle Wochen einer Gruppe auf einmal.
         </p>
-      </CardContent>
-    </Card>
+      </div>
+    </CalendarShell>
   );
 }
 
