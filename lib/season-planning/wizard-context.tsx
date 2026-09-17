@@ -1,6 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useCallback, type ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useCallback,
+  useEffect,
+  type ReactNode,
+} from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api-fetch';
 import type {
   WizardState,
@@ -225,19 +233,51 @@ export function WizardProvider({
     createInitialState(seasonId, clubId, initialStep)
   );
 
-  const goToStep = useCallback((step: WizardStep) => {
-    dispatch({ type: 'SET_STEP', step });
-  }, []);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Browser-Zurück/Vor ändert die URL, nicht den Reducer direkt — hier zurück in
+  // den Wizard-State spiegeln, damit die Zurück-Taste einen Schritt zurückgeht
+  // statt die Seite zu verlassen.
+  useEffect(() => {
+    const stepParam = searchParams.get('step');
+    const parsed = stepParam ? parseInt(stepParam, 10) : 1;
+    const clamped = Math.min(4, Math.max(1, parsed || 1)) as WizardStep;
+    if (clamped !== state.currentStep) {
+      dispatch({ type: 'SET_STEP', step: clamped });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const pushStepToUrl = useCallback(
+    (step: WizardStep) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('step', String(step));
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
+
+  const goToStep = useCallback(
+    (step: WizardStep) => {
+      dispatch({ type: 'SET_STEP', step });
+      pushStepToUrl(step);
+    },
+    [pushStepToUrl]
+  );
 
   const nextStep = useCallback(() => {
     const next = Math.min(4, state.currentStep + 1) as WizardStep;
     dispatch({ type: 'SET_STEP', step: next });
-  }, [state.currentStep]);
+    pushStepToUrl(next);
+  }, [state.currentStep, pushStepToUrl]);
 
   const prevStep = useCallback(() => {
     const prev = Math.max(1, state.currentStep - 1) as WizardStep;
     dispatch({ type: 'SET_STEP', step: prev });
-  }, [state.currentStep]);
+    pushStepToUrl(prev);
+  }, [state.currentStep, pushStepToUrl]);
 
   const setMemberIds = useCallback((ids: string[]) => {
     dispatch({
