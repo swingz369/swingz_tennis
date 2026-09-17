@@ -109,7 +109,7 @@ function validate(value: unknown, s: Setting): string | null {
     }
     try {
       const re = new RegExp(s.validation.pattern);
-      if (!re.test(value)) return `Wert不符合 Pattern ${s.validation.pattern}`;
+      if (!re.test(value)) return `Wert entspricht nicht dem Pattern ${s.validation.pattern}`;
     } catch {
       return 'Pattern ungueltig (DB-Verantwortung)';
     }
