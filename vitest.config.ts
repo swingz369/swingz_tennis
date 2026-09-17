@@ -2,6 +2,18 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 
+// Testlauf auf Europa/Berlin festnageln. Die Kalender-Helfer in
+// `lib/court-calendar-utils.ts` rechnen bewusst in der Laufzeit-Zeitzone
+// (`setHours`), weil sie ausschliesslich in Client-Komponenten laufen — im
+// Browser eines deutschen Vereinsmitglieds ist das korrekt. Ohne diese Zeile
+// erbt der Testlauf die Zeitzone der Maschine: lokal (CEST) grün, in CI (UTC)
+// fielen 11 Tests in `court-calendar-utils.test.ts` um, weil das Fixture
+// `2026-06-08T00:00:00+02:00` unter UTC auf den 7. Juni zurückfällt.
+// Gesetzt vor dem Start der Worker, damit sie die Variable erben. Bewusst hart
+// gesetzt statt `??=`: Ein Testlauf, dessen Ergebnis von der Zeitzone der
+// Umgebung abhängt, ist genau der Fehler, den diese Zeile behebt.
+process.env.TZ = 'Europe/Berlin';
+
 export default defineConfig({
   plugins: [react({ tsDecorators: true })],
   test: {
