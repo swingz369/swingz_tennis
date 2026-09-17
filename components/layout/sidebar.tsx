@@ -463,8 +463,9 @@ export function Sidebar({
       // Die Mitglieder-Sektion „Training" wurde vorher komplett verworfen. Damit
       // verlor ein Trainer, der im Verein auch selbst spielt, seinen eigenen
       // Trainingsplan und seine Anwesenheit — beides gibt es sonst nirgends.
-      // Weg muss nur „Trainerstunde buchen": ein Trainer bucht keine
-      // Trainerstunde bei sich selbst.
+      // „Trainerstunde buchen" gibt es als eigenen Menüpunkt seit Phase 2.1.2
+      // nicht mehr (Teil der Platzkalender-Agenda-Ansicht) — kein Filter mehr
+      // nötig, ein Trainer hätte ohnehin denselben Punkt wie sein Mitgliedsbaum.
       const trainerSections = trainerSidebarSections().map((s) => ({
         label: s.label,
         icon: s.icon,
@@ -476,7 +477,7 @@ export function Sidebar({
         // wäre nicht zu unterscheiden.
         label: s.label === 'Training' ? 'Training (als Spieler)' : s.label,
         icon: s.icon,
-        subItems: s.items.filter((i) => i.href !== '/member/trainer-booking'),
+        subItems: s.items,
       }));
 
       return dedupeByHref([...trainerSections, ...spielerSections]);
