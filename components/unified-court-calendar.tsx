@@ -61,7 +61,6 @@ import CourtBookingsList from '@/components/court-bookings-list';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { CenteredModal } from '@/components/ui/centered-modal';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import {
@@ -105,6 +104,8 @@ import {
 import { apiFetch } from '@/lib/api-fetch';
 import { isDayClosed, CLOSED_DAY_ERROR } from '@/lib/booking/opening-hours';
 import { SessionCancelDialog } from '@/components/session-cancel-dialog';
+import { BlockCourtDialog } from '@/components/block-court-dialog';
+import { AdHocSessionDialog } from '@/components/ad-hoc-session-dialog';
 
 /* ─────────────────── Types ─────────────────── */
 
@@ -2588,174 +2589,49 @@ export default function UnifiedCourtCalendar({
   );
 
   /* ═══════════════════════════════════════════════════
-     RENDER: Block Dialog
+     RENDER: Block Dialog + Trainer Ad-hoc Dialog
+     (ausgelagert nach components/block-court-dialog.tsx und
+     components/ad-hoc-session-dialog.tsx — Zustand bleibt hier, weil
+     dieselben Setter auch vom Inline-Panel weiter oben befüllt werden)
      ═══════════════════════════════════════════════════ */
 
   const blockDialog = (
-    <CenteredModal open={blockDialogOpen} onClose={() => setBlockDialogOpen(false)}>
-      <div className="space-y-1.5">
-        <h2 className="text-lg font-bold flex items-center gap-2">
-          <Lock className="h-5 w-5" />
-          Platz sperren
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Sperrt den Platz {blockCourtId && courts.find((c) => c.id === blockCourtId)?.name} am{' '}
-          {format(blockDate, 'dd.MM.yyyy', { locale: de })} um {blockTimeSlot} Uhr.
-        </p>
-      </div>
-
-      <div className="space-y-4 py-2">
-        <div className="space-y-2">
-          <Label htmlFor="block-type">Sperrtyp</Label>
-          <div className="flex gap-2">
-            <Button
-              variant={blockType === 'event' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setBlockType('event')}
-              className="gap-1.5"
-            >
-              <PartyPopper className="h-4 w-4" />
-              Veranstaltung
-            </Button>
-            <Button
-              variant={blockType === 'maintenance' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setBlockType('maintenance')}
-              className="gap-1.5"
-            >
-              <Wrench className="h-4 w-4" />
-              Wartung
-            </Button>
-            <Button
-              variant={blockType === 'weather' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => {
-                setBlockType('weather');
-                if (weatherData && !blockReason) {
-                  setBlockReason(
-                    `${weatherData.description} (${Math.round(weatherData.temperature)}°C)`
-                  );
-                }
-              }}
-              className="gap-1.5"
-            >
-              <CloudRain className="h-4 w-4" />
-              Wetter
-            </Button>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="block-duration">Dauer (Stunden)</Label>
-          <div className="flex gap-2">
-            {[1, 2, 3, 4].map((h) => (
-              <Button
-                key={h}
-                variant={blockDuration === h ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setBlockDuration(h)}
-              >
-                {h}h
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="block-reason">Grund (optional)</Label>
-          <Input
-            id="block-reason"
-            placeholder={
-              blockType === 'event'
-                ? 'z.B. Firmenevent, Turnier...'
-                : blockType === 'weather'
-                  ? 'z.B. Regen, Frost, Sturm...'
-                  : 'z.B. Platzreparatur...'
-            }
-            value={blockReason}
-            onChange={(e) => setBlockReason(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="flex gap-2 pt-2">
-        <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>
-          Abbrechen
-        </Button>
-        <Button onClick={handleBlockSlot} disabled={blockLoading}>
-          {blockLoading ? 'Sperre wird gesetzt...' : 'Platz sperren'}
-        </Button>
-      </div>
-    </CenteredModal>
+    <BlockCourtDialog
+      open={blockDialogOpen}
+      onClose={() => setBlockDialogOpen(false)}
+      courtId={blockCourtId}
+      courts={courts}
+      date={blockDate}
+      timeSlot={blockTimeSlot}
+      blockType={blockType}
+      onBlockTypeChange={setBlockType}
+      weatherData={weatherData}
+      duration={blockDuration}
+      onDurationChange={setBlockDuration}
+      reason={blockReason}
+      onReasonChange={setBlockReason}
+      onSubmit={handleBlockSlot}
+      loading={blockLoading}
+    />
   );
 
-  /* ═══════════════════════════════════════════════════
-     RENDER: Trainer Ad-hoc Dialog
-     ═══════════════════════════════════════════════════ */
-
   const adHocDialog = (
-    <CenteredModal open={adHocDialogOpen} onClose={() => setAdHocDialogOpen(false)}>
-      <div className="space-y-1.5">
-        <h2 className="text-lg font-bold flex items-center gap-2">
-          <CalendarIcon className="h-5 w-5" />
-          Einheit eintragen
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Trägt eine einmalige Trainingseinheit auf{' '}
-          {adHocCourtId && courts.find((c) => c.id === adHocCourtId)?.name} am{' '}
-          {format(adHocDate, 'dd.MM.yyyy', { locale: de })} um {adHocTimeSlot} Uhr ein.
-        </p>
-      </div>
-
-      <div className="space-y-4 py-2">
-        <div className="space-y-2">
-          <Label htmlFor="adhoc-duration">Dauer (Stunden)</Label>
-          <div className="flex gap-2">
-            {[1, 2, 3, 4].map((h) => (
-              <Button
-                key={h}
-                variant={adHocDuration === h ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setAdHocDuration(h)}
-              >
-                {h}h
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="adhoc-max">Max. Teilnehmer</Label>
-          <Input
-            id="adhoc-max"
-            type="number"
-            min={1}
-            max={20}
-            value={adHocMaxParticipants}
-            onChange={(e) => setAdHocMaxParticipants(parseInt(e.target.value, 10) || 4)}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="adhoc-notes">Notiz (optional)</Label>
-          <Input
-            id="adhoc-notes"
-            placeholder="z.B. Zusatztraining Kids..."
-            value={adHocNotes}
-            onChange={(e) => setAdHocNotes(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="flex gap-2 pt-2">
-        <Button variant="outline" onClick={() => setAdHocDialogOpen(false)}>
-          Abbrechen
-        </Button>
-        <Button onClick={handleCreateAdHoc} disabled={adHocLoading}>
-          {adHocLoading ? 'Wird eingetragen...' : 'Einheit eintragen'}
-        </Button>
-      </div>
-    </CenteredModal>
+    <AdHocSessionDialog
+      open={adHocDialogOpen}
+      onClose={() => setAdHocDialogOpen(false)}
+      courtId={adHocCourtId}
+      courts={courts}
+      date={adHocDate}
+      timeSlot={adHocTimeSlot}
+      duration={adHocDuration}
+      onDurationChange={setAdHocDuration}
+      maxParticipants={adHocMaxParticipants}
+      onMaxParticipantsChange={setAdHocMaxParticipants}
+      notes={adHocNotes}
+      onNotesChange={setAdHocNotes}
+      onSubmit={handleCreateAdHoc}
+      loading={adHocLoading}
+    />
   );
 
   const sessionCancelDialogEl = cancelSessionId && (
