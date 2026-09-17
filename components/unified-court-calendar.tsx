@@ -86,6 +86,12 @@ import {
   type Session,
 } from '@/hooks/use-sessions';
 import { MonthView } from '@/components/calendar/month-view';
+import {
+  useTrainerHourSlots,
+  useBookTrainerHourSlot,
+  useWaitlistTrainerHourSlot,
+} from '@/hooks/use-trainer-hour-slots';
+import { TrainerHourSlotsSection } from '@/components/calendar/trainer-hour-slots';
 import { useSeasonPlanGrid } from '@/hooks/use-season-plan-entries';
 import { useMemberGroupIds } from '@/hooks/use-member-groups';
 import { exportSessionsToICS } from '@/lib/calendar-export';
@@ -800,6 +806,21 @@ export default function UnifiedCourtCalendar({
 
   // ── Member group filtering (role-based view) ──
   const { data: memberGroupIds = [] } = useMemberGroupIds(clubId);
+
+  // ── Trainerstunden (vierte Slot-Quelle, Phase 2.1.2) — nur für die Agenda-
+  // Ansicht des jeweils ausgewählten Tages geladen, sie sind platzunabhängig. ──
+  const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
+  const { data: trainerHourSlots = [] } = useTrainerHourSlots(
+    clubId,
+    selectedDateStr,
+    selectedDateStr
+  );
+  const trainerHourSlotsForDay = useMemo(
+    () => trainerHourSlots.filter((s) => s.date === selectedDateStr),
+    [trainerHourSlots, selectedDateStr]
+  );
+  const bookTrainerHourSlot = useBookTrainerHourSlot();
+  const waitlistTrainerHourSlot = useWaitlistTrainerHourSlot();
 
   /** Sessions visible to the current user. Admin sees all; trainer sees own sessions; member sees group sessions + own bookings. */
   const visibleSessions = useMemo(() => {
@@ -2207,6 +2228,15 @@ export default function UnifiedCourtCalendar({
         )}
 
         <CourtCalendarLegend items={getCalendarLegendItems(isAdmin)} />
+
+        <TrainerHourSlotsSection
+          slots={trainerHourSlotsForDay}
+          isMember={!isAdmin && !isTrainer}
+          onBook={(slot) => bookTrainerHourSlot.mutateAsync(slot)}
+          onWaitlist={(slot) => waitlistTrainerHourSlot.mutateAsync(slot)}
+          bookLoading={bookTrainerHourSlot.isPending}
+          waitlistLoading={waitlistTrainerHourSlot.isPending}
+        />
       </div>
     );
   }
