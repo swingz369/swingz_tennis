@@ -67,16 +67,28 @@ Code: `lib/subscription-gate.ts` (`isSubscriptionEnforced`), `lib/env.ts`,
 
 ## P0 — Blocker
 
-### GitHub Actions ist für das Repository abgeschaltet
+### ✅ Erledigt 17.09.2026 — GitHub Actions war für das Repository abgeschaltet
 
-`GET /repos/swingz369/swingz_tennis/actions/permissions` liefert `{"enabled": false}`. Folge:
-**CI läuft seit dem 18.08.2026 nicht mehr** (der Push vom 17.09. mit 33 Commits hat keinen Lauf
-ausgelöst), und der `monitor`-Workflow seit dem 21.08.2026 nicht — es findet also **keine
-Überwachung statt**. Die Workflow-Dateien selbst stehen auf `active`; der Schalter sitzt eine
-Ebene höher (Settings → Actions → General). Genau der Fall, vor dem `AGENTS.md` § Auslieferung
-warnt — diesmal nicht, weil der Workflow nicht auf `main` lag, sondern weil Actions ganz aus ist.
-→ **Fix:** Actions wieder einschalten, danach prüfen, warum die letzten drei Monitor-Läufe
-(21.08.) fehlgeschlagen sind.
+`GET /repos/swingz369/swingz_tennis/actions/permissions` lieferte `{"enabled": false}`. Folge:
+CI lief seit dem 18.08.2026 nicht mehr, der `monitor`-Workflow seit dem 21.08.2026 nicht — es
+fand also keine Überwachung statt. Auf `enabled: true, allowed_actions: all` gestellt; der erste
+CI-Lauf danach (`9283b67d`) bestätigte: Typecheck und Unit-Tests grün, nur das `audit`-Gate rot
+(siehe eigener Punkt unten — unabhängige, vorbestehende Ursache).
+→ **Noch offen:** warum die drei Monitor-Läufe vom 21.08. fehlschlugen, ist nicht untersucht —
+der Workflow selbst lief seither nicht wieder, weil er nur alle 30 Minuten per `schedule` feuert.
+
+### Dependency-Audit-Gate in CI ist rot (transitive Sicherheitslücken)
+
+Erster CI-Lauf nach dem Wiedereinschalten (17.09.2026, Commit `9283b67d`) zeigt: der Job
+„Dependency Audit (high+critical gate)“ (`.github/workflows/ci.yml`, `pnpm audit --audit-level=high`)
+schlägt fehl — 16 Funde, davon 8 hoch/2 kritisch, alle in transitiven Abhängigkeiten:
+`js-yaml` (über `eslint > @eslint/eslintrc`), `@tiptap/core` (über `@tiptap/extension-link`),
+`smol-toml` (über `knip`). Nichts davon kam mit den zeitgleich gepushten Commits — das Gate war
+vermutlich seit dem 18.08. (letzter CI-Lauf davor) so rot, nur unsichtbar, weil Actions aus war.
+→ **Fix:** je Fund die betroffene Top-Level-Abhängigkeit (`eslint`, `@tiptap/extension-link`,
+`knip`) auf eine Version mit gepatchter Transitive heben und mit `pnpm why <paket>` verifizieren,
+dass die alte Version wirklich verschwindet — nicht nur `pnpm audit` grün färben.
+→ Quelle: `gh run view 35246848376 -R swingz369/swingz_tennis --log-failed`.
 
 ### E-Mail-Versand ist komplett tot
 
@@ -144,10 +156,9 @@ Service-Client erreichbar. → **Fix:** Policies definieren oder bewusst dokumen
   Die Route `/api/reminders/booking-tomorrow` steht in `vercel.json` (18:00). → **Prüfen**, ob der
   Job scheitert, bevor `recordHeartbeat()` greift.
   → Quelle: `/api/health` in Produktion, 17.09.2026.
-- **Repository umgezogen, Verweise zeigen auf den alten Namen.** `swingz369/swingz` →
-  `swingz369/swingz_tennis`. Der Push vom 17.09. lief nur über GitHubs Weiterleitung; `git remote`
-  und `docs/SERVICES.md` nennen weiter den alten Pfad. → **Fix:** `git remote set-url origin` und
-  die Zeile in `SERVICES.md`.
+- **✅ Erledigt 17.09.2026** — Repository war umgezogen (`swingz369/swingz` →
+  `swingz369/swingz_tennis`), `git remote` und `docs/SERVICES.md` zeigten noch auf den alten
+  Namen. Beides nachgezogen.
 - **ADR-005: Service-Schicht in 14 migrierten Routen übersprungen.** `app/api/groups/*` (4),
   `app/api/pricing-rules/*` (3), `app/api/analytics/*` (3), `bookings`, `schedule`,
   `stripe/checkout`, `clubs/[id]` importieren ein Repository direkt in der Route statt über
