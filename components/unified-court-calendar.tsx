@@ -92,6 +92,8 @@ import {
   useWaitlistTrainerHourSlot,
 } from '@/hooks/use-trainer-hour-slots';
 import { TrainerHourSlotsSection } from '@/components/calendar/trainer-hour-slots';
+import type { PlanEntry } from '@/components/calendar/types';
+import { useCalendarVisibility } from '@/hooks/use-calendar-visibility';
 import { useSeasonPlanGrid } from '@/hooks/use-season-plan-entries';
 import { useMemberGroupIds } from '@/hooks/use-member-groups';
 import { exportSessionsToICS } from '@/lib/calendar-export';
@@ -144,20 +146,6 @@ interface UnifiedCourtCalendarProps {
   defaultView?: ViewMode;
   /** Override club ID (for admin pages) */
   initialClubId?: string;
-}
-
-interface PlanEntry {
-  id: string;
-  group_id: string | null;
-  group_name: string;
-  group_color: string;
-  trainer_id: string;
-  trainer_name?: string;
-  court_id: string | null;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-  [k: string]: unknown;
 }
 
 /* ─────────────────── Constants ─────────────────── */
@@ -823,36 +811,14 @@ export default function UnifiedCourtCalendar({
   const waitlistTrainerHourSlot = useWaitlistTrainerHourSlot();
 
   /** Sessions visible to the current user. Admin sees all; trainer sees own sessions; member sees group sessions + own bookings. */
-  const visibleSessions = useMemo(() => {
-    if (isAdmin) return sessions;
-    if (isTrainer && trainerRecordId)
-      return sessions.filter((s: Session) => s.trainerId === trainerRecordId);
-    if (memberGroupIds.length === 0) {
-      // No group memberships → only show own bookings + open sessions (no groupIds)
-      return sessions.filter(
-        (s: Session) => s.bookedByUser || !s.groupIds || s.groupIds.length === 0
-      );
-    }
-    const groupSet = new Set(memberGroupIds);
-    return sessions.filter((s: Session) => {
-      // Always show own bookings
-      if (s.bookedByUser) return true;
-      // Show sessions with no groups assigned (open sessions)
-      if (!s.groupIds || s.groupIds.length === 0) return true;
-      // Show sessions that overlap with the member's groups
-      return s.groupIds.some((gid: string) => groupSet.has(gid));
-    });
-  }, [sessions, isAdmin, isTrainer, trainerRecordId, memberGroupIds]);
-
-  /** Plan entries visible to the current user. Admin sees all; trainer sees their entries; member sees only their groups. */
-  const visiblePlanSlots = useMemo(() => {
-    if (isAdmin) return planSlots;
-    if (isTrainer && trainerRecordId)
-      return planSlots.filter((e: PlanEntry) => e.trainer_id === trainerRecordId);
-    if (memberGroupIds.length === 0) return []; // No groups → no plan entries visible
-    const groupSet = new Set(memberGroupIds);
-    return planSlots.filter((e: PlanEntry) => e.group_id && groupSet.has(e.group_id));
-  }, [planSlots, isAdmin, isTrainer, trainerRecordId, memberGroupIds]);
+  const { visibleSessions, visiblePlanSlots } = useCalendarVisibility({
+    sessions,
+    planSlots,
+    isAdmin,
+    isTrainer,
+    trainerRecordId,
+    memberGroupIds,
+  });
 
   // ── Court selection: derive effective court ID ──
   // If courts loaded but selected court no longer exists, fall back to card view
@@ -1327,7 +1293,12 @@ export default function UnifiedCourtCalendar({
       const exportCourts = effectiveCourtId
         ? courts.filter((c) => c.id === effectiveCourtId)
         : courts;
-      exportSessionsToICS(visibleSessions, exportCourts);
+      // Nur Sessions mit konkretem Datum exportieren — eine wiederkehrende Session
+      // ohne timeslotStart hätte parseISO(undefined) ergeben (Invalid Date im ICS).
+      const exportableSessions = visibleSessions.filter(
+        (s): s is Session & { timeslotStart: string } => !!s.timeslotStart
+      );
+      exportSessionsToICS(exportableSessions, exportCourts);
       toast.success('ICS-Export erfolgreich');
     } catch {
       toast.error('ICS-Export fehlgeschlagen');
