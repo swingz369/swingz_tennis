@@ -234,11 +234,6 @@ export default function AVVPage() {
                   <td>EU/US; SCC-abgesichert</td>
                 </tr>
                 <tr>
-                  <td>Google (Gemini API)</td>
-                  <td>KI-Saisonplanung (Trainingsplan-Optimierung)</td>
-                  <td>SCC-abgesichert; keine Übermittlung von Zahlungsdaten</td>
-                </tr>
-                <tr>
                   <td>Sentry</td>
                   <td>Fehler-Monitoring</td>
                   <td>EU-Region konfigurierbar; SCC-abgesichert</td>

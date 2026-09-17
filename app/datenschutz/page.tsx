@@ -186,11 +186,6 @@ export default function DatenschutzPage() {
                 <strong>Resend</strong> — Transaktions-E-Mail-Versand (z. B. Buchungsbestätigungen,
                 Passwort-Reset)
               </li>
-              <li>
-                <strong>Google Ireland Limited (Google Gemini)</strong> — KI-gestützte
-                Analysefunktionen; hierbei können Daten in Länder außerhalb der EU übermittelt
-                werden, abgesichert durch EU-Standardvertragsklauseln
-              </li>
             </ul>
           </Section>
 
