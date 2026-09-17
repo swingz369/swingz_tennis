@@ -145,11 +145,6 @@ const THIRD_PARTY: Section = {
       description: 'Rate-Limiting der API-Routen.',
     },
     {
-      label: 'Google AI Studio',
-      href: 'https://aistudio.google.com/apikey',
-      description: 'Gemini-Flash-Key für KI-Funktionen & Midscene-Tests.',
-    },
-    {
       label: 'manitu',
       href: 'https://mein.manitu.de',
       description: 'VPS-Anbieter (Rechnung, Reboot, Rescue).',

@@ -75,7 +75,6 @@ export interface WizardState {
     optimizationGoals: string[];
     allowOverbooking: boolean;
     preferConsistentTimeslots: boolean;
-    useAI: boolean;
     // Sonntag ist standardmäßig kein Trainingstag (Vereinsrealität, Arbeits-/
     // Ruhezeitregeln). Opt-in, Default false — siehe ClusteringConfig.includeSunday.
     includeSunday: boolean;

@@ -50,7 +50,6 @@ function createInitialState(seasonId: string, clubId: string, initialStep?: numb
       optimizationGoals: ['minimize_conflicts', 'balance_trainer_load', 'maximize_preferences'],
       allowOverbooking: false,
       preferConsistentTimeslots: true,
-      useAI: false,
       includeSunday: false,
     },
     clusteringResult: null,

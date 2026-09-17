@@ -26,7 +26,6 @@ import {
   Gauge,
   AlertTriangle,
   CheckCircle,
-  Sparkles,
   Zap,
   Baby,
   Clock,
@@ -285,14 +284,13 @@ function CopyGroupsPanel({ seasonId, clubId }: { seasonId: string; clubId: strin
  * 2. Preference Reminders: Email members/trainers without preferences
  * 3. Planning Config: Set algorithm parameters (group sizes, trainer util, etc.)
  * 4. Auto-Plan Goals: Choose optimization objectives (conflicts, load, preferences)
- * 5. AI Features: Toggle AI optimization (Gemini)
- * 6. Member Selection: Choose which members to plan for
- * 7. Trainer Availability: Review trainer load & submission status
- * 8. Billing Config: Set hourly rates, membership fees, tax rates
+ * 5. Member Selection: Choose which members to plan for
+ * 6. Trainer Availability: Review trainer load & submission status
+ * 7. Billing Config: Set hourly rates, membership fees, tax rates
  *
  * Gate to next step: readiness check must pass (isReady = true)
  */
-export function ConfigStep({ aiAvailable = true }: { aiAvailable?: boolean }) {
+export function ConfigStep() {
   const { state, dispatch } = useWizard();
   const [config, setConfig] = useState(state.planningConfig);
 
@@ -589,25 +587,6 @@ export function ConfigStep({ aiAvailable = true }: { aiAvailable?: boolean }) {
             </div>
 
             <div className="space-y-2.5 mt-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="use-ai"
-                  checked={config.useAI}
-                  onChange={(e) => handleConfigChange('useAI', e.target.checked)}
-                  className="rounded border-border"
-                />
-                <label
-                  htmlFor="use-ai"
-                  className="text-sm cursor-pointer flex items-center gap-1.5"
-                >
-                  <Sparkles className="h-3.5 w-3.5 text-warning-500" />
-                  KI-Optimierung (Gemini)
-                  {!aiAvailable && (
-                    <span className="text-xs text-warning-600 ml-1">(nicht konfiguriert)</span>
-                  )}
-                </label>
-              </div>
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"

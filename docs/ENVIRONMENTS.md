@@ -77,7 +77,7 @@ SUPABASE_SERVICE_ROLE_KEY=<aus supabase status>
 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
 ```
 
-Alle übrigen Variablen (Stripe-Testkeys, Resend, Gemini) bleiben unverändert. Testdaten:
+Alle übrigen Variablen (Stripe-Testkeys, Resend) bleiben unverändert. Testdaten:
 
 ```bash
 npm run seed:reset                # baut alle 7 Testvereine neu — jetzt lokal, gefahrlos

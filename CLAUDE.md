@@ -200,11 +200,15 @@ In `notifications`-Tabelle via Service-Client einfügen.
 - Keine `@mail.swingz.cloud`-Adressen (Subdomain nicht konfiguriert)
 - Supabase Auth-Mails: SMTP via Resend, Absender `noreply@swingz.cloud`
 
-### KI (Google Gemini Flash)
+### KI — derzeit keine im Produktivpfad
 
-- Aktiver Provider: Google Gemini Flash (`GOOGLE_GENERATIVE_AI_API_KEY`)
-- OpenAI-kompatibler Endpoint: `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
-- `ANTHROPIC_API_KEY` + `OPENAI_API_KEY` in `lib/env.ts` optional definiert aber nicht aktiv genutzt
+- **Gemini ist am 17.09.2026 entfernt worden** (Env-Variable, Owner-Status-Kachel, Wizard-Schalter
+  „KI-Optimierung", das tote Feld `useAI`). Es gab keinen Aufruf, nur die Oberfläche versprach einen.
+- Die Saisonplanung clustert **regelbasiert** (`lib/season-planning/clustering-engine.ts`,
+  Einstieg `app/api/seasons/[id]/planning/cluster/route.ts`) — kein LLM, kein Fremdaufruf.
+- Übrig ist ein unbenutzter LLM-Pfad: `src/infrastructure/ai/ai-client.ts` (OpenAI `gpt-4o-mini`,
+  `OPENAI_API_KEY`) hinter `POST /api/schedule`. Keine Oberfläche ruft die Route auf.
+- `ANTHROPIC_API_KEY` + `OPENAI_API_KEY` sind in `lib/env.ts` optional definiert.
 
 ---
 

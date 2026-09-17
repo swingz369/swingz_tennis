@@ -36,7 +36,7 @@ export interface EditableSetting {
 /**
  * SettingsEditorClient — Editierbare globale system_settings (club_id IS NULL).
  *
- * Wichtige Abgrenzung: Service-Status (Stripe/Resend/Gemini) und rein statische
+ * Wichtige Abgrenzung: Service-Status (Stripe/Resend) und rein statische
  * Werte wie Preismodell/E-Mail-Absender sind ENV-Var-getrieben und werden NICHT
  * via UI editiert. Diese Seite ist die Brücke zwischen Migration-Deploy und
  * Live-Konfiguration für die Owner-relevanten Einstellungen (z. B. decision_quorum).

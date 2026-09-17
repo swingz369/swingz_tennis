@@ -108,7 +108,6 @@ interface PlanningWizardClientProps {
   seasonYear: number;
   planningStatus: string;
   initialStep?: number;
-  aiAvailable?: boolean;
 }
 
 // ============================================
@@ -119,12 +118,10 @@ function WizardContent({
   seasonName,
   seasonType,
   seasonYear,
-  aiAvailable,
 }: {
   seasonName: string;
   seasonType: string;
   seasonYear: number;
-  aiAvailable: boolean;
 }) {
   const router = useRouter();
   const { state, nextStep, prevStep, goToStep } = useWizard();
@@ -133,7 +130,7 @@ function WizardContent({
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <ConfigStep aiAvailable={aiAvailable} />;
+        return <ConfigStep />;
       case 2:
         return <TrainerScheduleStep />;
       case 3:
@@ -141,7 +138,7 @@ function WizardContent({
       case 4:
         return <FinalizeStep />;
       default:
-        return <ConfigStep aiAvailable={aiAvailable} />;
+        return <ConfigStep />;
     }
   };
 
@@ -299,16 +296,10 @@ export function PlanningWizardClient({
   seasonType,
   seasonYear,
   initialStep,
-  aiAvailable = true,
 }: PlanningWizardClientProps) {
   return (
     <WizardProvider seasonId={seasonId} clubId={clubId} initialStep={initialStep}>
-      <WizardContent
-        seasonName={seasonName}
-        seasonType={seasonType}
-        seasonYear={seasonYear}
-        aiAvailable={aiAvailable}
-      />
+      <WizardContent seasonName={seasonName} seasonType={seasonType} seasonYear={seasonYear} />
     </WizardProvider>
   );
 }

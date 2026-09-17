@@ -71,7 +71,6 @@ export default async function OwnerSettingsPage() {
   const env = {
     stripe: !!process.env.STRIPE_SECRET_KEY,
     resend: !!process.env.RESEND_API_KEY,
-    gemini: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY,
     supabase: (clubCount ?? 0) >= 0,
   };
 
@@ -104,11 +103,6 @@ export default async function OwnerSettingsPage() {
             label="Resend (E-Mail)"
             ok={env.resend}
             detail={env.resend ? 'noreply@swingz.cloud' : 'API-Key fehlt'}
-          />
-          <StatusRow
-            label="Google Gemini (KI)"
-            ok={env.gemini}
-            detail={env.gemini ? 'Flash aktiv' : 'API-Key fehlt'}
           />
         </CardContent>
       </Card>

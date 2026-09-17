@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
-import { env } from '@/lib/env';
 import { PlanningWizardClient } from './planning-wizard-client';
 import { SeasonPlanningTabs } from '@/components/admin/season-planning-tabs';
 
@@ -74,7 +73,6 @@ export default async function PlanningWizardPage({
         seasonYear={season.year}
         planningStatus={season.planning_status}
         initialStep={initialStep}
-        aiAvailable={!!env.GOOGLE_GENERATIVE_AI_API_KEY}
       />
     </>
   );
