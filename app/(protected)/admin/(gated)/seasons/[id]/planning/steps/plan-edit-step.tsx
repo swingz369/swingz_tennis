@@ -227,6 +227,66 @@ export function PlanEditStep() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [isHydrating, setIsHydrating] = useState(!state.clusteringResult);
+  const [hydratedFromPersisted, setHydratedFromPersisted] = useState(false);
+
+  // Ein Reload verliert den Wizard-Reducer, nicht den Plan: season_plan_entries
+  // trägt jede Handkorrektur bereits (siehe PUT .../planning/plan unten). Vor der
+  // „Plan generieren"-Leerseite erst prüfen, ob schon ein gespeicherter Plan da ist.
+  useEffect(() => {
+    if (state.clusteringResult || !state.seasonId) {
+      setIsHydrating(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiFetch(`/api/seasons/${state.seasonId}/plan-grid`);
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        const rows = (data.slots ?? []) as Array<{
+          id: string;
+          group_name: string;
+          group_color: string;
+          trainer_id: string | null;
+          trainer_name: string;
+          court_id: string | null;
+          court_name: string | null;
+          day_of_week: number;
+          start_time: string;
+          end_time: string;
+          duration_min: number;
+          member_ids: string[];
+          member_names: string[];
+        }>;
+        if (rows.length === 0 || cancelled) return;
+        const slots: ScheduleSlot[] = rows.map((r) => ({
+          id: r.id,
+          groupName: r.group_name,
+          groupColor: r.group_color,
+          trainerId: r.trainer_id ?? '',
+          trainerName: r.trainer_name,
+          dayOfWeek: r.day_of_week,
+          startTime: r.start_time,
+          endTime: r.end_time,
+          durationMin: r.duration_min,
+          courtId: r.court_id,
+          courtName: r.court_name,
+          memberIds: r.member_ids,
+          memberNames: r.member_names,
+        }));
+        setPlan(slots);
+        dispatch({ type: 'SET_SCHEDULE_SLOTS', slots });
+        setHydratedFromPersisted(true);
+      } finally {
+        if (!cancelled) setIsHydrating(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.seasonId]);
 
   // Convert ClusteringResult → ScheduleSlot[] when result changes
   useEffect(() => {
@@ -374,12 +434,12 @@ export function PlanEditStep() {
   // die Oberfläche das vorher gesagt hätte. Beim ersten Lauf (noch kein Plan)
   // gibt es nichts zu verlieren, da fragt niemand.
   const handleGenerate = useCallback(() => {
-    if (state.clusteringResult) {
+    if (state.clusteringResult || plan.length > 0) {
       setConfirmRegenerate(true);
       return;
     }
     void runGenerate();
-  }, [state.clusteringResult, runGenerate]);
+  }, [state.clusteringResult, plan.length, runGenerate]);
 
   const metrics = state.clusteringResult?.metrics;
 
@@ -426,7 +486,17 @@ export function PlanEditStep() {
     return { score, totalWarnings, isExcellent };
   }, [metrics]);
 
-  if (!state.clusteringResult) {
+  if (isHydrating) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!state.clusteringResult && !hydratedFromPersisted) {
     return (
       <div className="space-y-6">
         <Card>
@@ -695,7 +765,7 @@ export function PlanEditStep() {
       />
 
       {/* Waitlist Summary */}
-      {state.clusteringResult.waitlistSummary.length > 0 && (
+      {state.clusteringResult && state.clusteringResult.waitlistSummary.length > 0 && (
         <Card className="border-info-200 bg-info-50/30">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2 text-info-700">
@@ -739,7 +809,7 @@ export function PlanEditStep() {
       )}
 
       {/* Unassigned Members */}
-      {state.clusteringResult.unassignedMembers.length > 0 && (
+      {state.clusteringResult && state.clusteringResult.unassignedMembers.length > 0 && (
         <Card className="border-error-200 bg-error-50/30">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2 text-error-700">
