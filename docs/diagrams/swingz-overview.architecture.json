@@ -1,0 +1,401 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SwingZ — Zusammenspiel der Module",
+    "output": "swingz-overview.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "git@github.com-swingz369:swingz369/swingz.git",
+      "link_mode": "local-only",
+      "revision": "f2ce12486b58994707ea6e030255674307c9ef31"
+    },
+    "views": [
+      {
+        "id": "vereinsjahr",
+        "label": "Vereinsjahr",
+        "focus": ["clubops", "members", "seasons", "play", "attendance", "finance"],
+        "note": "Der Hauptweg: Verein einrichten, Saison planen, Termine spielen, abrechnen."
+      },
+      {
+        "id": "geldfluss",
+        "label": "Geldfluss",
+        "focus": ["seasons", "attendance", "finance", "stripe"],
+        "note": "Woraus eine Rechnung entsteht und wohin die Zahlung läuft."
+      },
+      {
+        "id": "zulauf",
+        "label": "Zulauf neuer Mitglieder",
+        "focus": ["trial", "members", "seasons"],
+        "note": "Probetraining ohne Login, Nurture-Mails, Konvertierung zur Mitgliedschaft."
+      },
+      {
+        "id": "automatik",
+        "label": "Automatik & Post",
+        "focus": ["cron", "finance", "comms", "resend"],
+        "note": "Was nachts von selbst läuft und welche E-Mail daraus entsteht."
+      },
+      {
+        "id": "module",
+        "label": "Module ein und aus",
+        "focus": ["clubops", "community", "trainers"],
+        "note": "Vier Pflichtmodule, elf abschaltbare — der Schalter sitzt am Verein."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "trial",
+      "type": "backend",
+      "label": "Probetraining",
+      "sublabel": "öffentlich, ohne Login",
+      "tag": "Danke → 2 Tage → 7 Tage",
+      "pos": [280, 20],
+      "size": [170, 72],
+      "sources": [
+        {
+          "path": "lib/trial-training/followup.ts",
+          "label": "Nurture-Mails"
+        }
+      ]
+    },
+    {
+      "id": "trainers",
+      "type": "backend",
+      "label": "Trainer",
+      "sublabel": "Profile · Verfügbarkeit",
+      "tag": "Stundensatz je Trainer",
+      "pos": [560, 20],
+      "size": [170, 72],
+      "sources": [
+        {
+          "path": "src/application/services/trainer-availability.service.ts",
+          "label": "Verfügbarkeit"
+        },
+        {
+          "path": "src/application/services/hourly-rate.service.ts",
+          "label": "Stundensätze"
+        }
+      ]
+    },
+    {
+      "id": "clubops",
+      "type": "security",
+      "label": "Verein & Module",
+      "sublabel": "Onboarding · Module · Rollen",
+      "tag": "15 Module, 4 Pflicht",
+      "pos": [30, 160],
+      "size": [170, 72],
+      "sources": [
+        {
+          "path": "lib/features.ts",
+          "label": "Modul-Registry"
+        },
+        {
+          "path": "lib/navigation.ts",
+          "label": "Sidebar je Rolle"
+        }
+      ]
+    },
+    {
+      "id": "members",
+      "type": "backend",
+      "label": "Mitglieder",
+      "sublabel": "Stammdaten, Gruppen, Familien",
+      "tag": "Beitrag je Mitglied",
+      "pos": [280, 160],
+      "size": [170, 72],
+      "sources": [
+        {
+          "path": "src/application/services/member.service.ts",
+          "label": "Member-Service"
+        }
+      ]
+    },
+    {
+      "id": "seasons",
+      "type": "backend",
+      "label": "Saisonplanung",
+      "sublabel": "Clustering · Konflikte · Plan",
+      "tag": "regelbasiert, kein LLM",
+      "pos": [560, 160],
+      "size": [170, 72],
+      "sources": [
+        {
+          "path": "lib/season-planning/clustering-engine.ts",
+          "label": "Clustering"
+        },
+        {
+          "path": "app/api/seasons/[id]/planning/confirm/route.ts",
+          "label": "Freigabe"
+        }
+      ]
+    },
+    {
+      "id": "play",
+      "type": "backend",
+      "label": "Spielbetrieb",
+      "sublabel": "Termine · Plätze · Buchungen",
+      "tag": "Sperren & Preisregeln",
+      "pos": [840, 160],
+      "size": [170, 72],
+      "sources": [
+        {
+          "path": "lib/booking/safe-booking.ts",
+          "label": "Buchung mit Sperre"
+        }
+      ]
+    },
+    {
+      "id": "community",
+      "type": "backend",
+      "label": "Vereinsleben",
+      "sublabel": "Liga, Turniere, Dienste, Shop",
+      "tag": "je Verein zuschaltbar",
+      "pos": [30, 300],
+      "size": [170, 72],
+      "sources": [
+        {
+          "path": "lib/require-feature.ts",
+          "label": "Modul-Schranke"
+        }
+      ]
+    },
+    {
+      "id": "finance",
+      "type": "backend",
+      "label": "Finanzen",
+      "sublabel": "Rechnungen · SEPA · Mahnwesen",
+      "tag": "DATEV, Verzugszins",
+      "pos": [560, 300],
+      "size": [170, 72],
+      "sources": [
+        {
+          "path": "src/application/services/season-billing.service.ts",
+          "label": "Saison-Rechnungen"
+        },
+        {
+          "path": "src/application/services/dunning.service.ts",
+          "label": "Mahnstufen"
+        }
+      ]
+    },
+    {
+      "id": "attendance",
+      "type": "backend",
+      "label": "Anwesenheit",
+      "sublabel": "Check-in · Stundennachweise",
+      "tag": "Freigabe durch Verein",
+      "pos": [840, 300],
+      "size": [170, 72],
+      "sources": [
+        {
+          "path": "src/application/services/attendance-record.service.ts",
+          "label": "Anwesenheit"
+        },
+        {
+          "path": "src/application/services/hours-log.service.ts",
+          "label": "Stundennachweis"
+        }
+      ]
+    },
+    {
+      "id": "cron",
+      "type": "cloud",
+      "label": "Automatik",
+      "sublabel": "6 Vercel-Cron-Jobs",
+      "tag": "Mahnlauf, Backup, nuLiga",
+      "pos": [280, 440],
+      "size": [170, 72],
+      "sources": [
+        {
+          "path": "vercel.json",
+          "label": "Zeitplan"
+        }
+      ]
+    },
+    {
+      "id": "comms",
+      "type": "messagebus",
+      "label": "Benachrichtigungen",
+      "sublabel": "In-App · E-Mail · Push",
+      "pos": [560, 440],
+      "size": [170, 72],
+      "sources": [
+        {
+          "path": "src/infrastructure/email/email.service.ts",
+          "label": "E-Mail-Dienst"
+        }
+      ]
+    },
+    {
+      "id": "stripe",
+      "type": "external",
+      "label": "Stripe",
+      "sublabel": "Abo & Zahlungen",
+      "pos": [1050, 440],
+      "size": [170, 64]
+    },
+    {
+      "id": "resend",
+      "type": "external",
+      "label": "Resend",
+      "sublabel": "E-Mail-Zustellung",
+      "pos": [840, 440],
+      "size": [170, 64]
+    }
+  ],
+  "connections": [
+    {
+      "id": "club-to-members",
+      "from": "clubops",
+      "to": "members",
+      "label": "Verein steht",
+      "variant": "emphasis"
+    },
+    {
+      "id": "club-to-community",
+      "from": "clubops",
+      "to": "community",
+      "label": "Feature-Flags",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [115, 266]
+    },
+    {
+      "id": "trial-to-members",
+      "from": "trial",
+      "to": "members",
+      "label": "wird Mitglied",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [365, 126]
+    },
+    {
+      "id": "members-to-seasons",
+      "from": "members",
+      "to": "seasons",
+      "label": "Trainingswünsche",
+      "variant": "emphasis"
+    },
+    {
+      "id": "trainers-to-seasons",
+      "from": "trainers",
+      "to": "seasons",
+      "label": "Verfügbarkeit + Abwesenheiten",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [645, 126]
+    },
+    {
+      "id": "seasons-to-play",
+      "from": "seasons",
+      "to": "play",
+      "label": "Publish: Termine",
+      "variant": "emphasis"
+    },
+    {
+      "id": "play-to-attendance",
+      "from": "play",
+      "to": "attendance",
+      "label": "Check-in",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [925, 266]
+    },
+    {
+      "id": "seasons-to-finance",
+      "from": "seasons",
+      "to": "finance",
+      "label": "Saison-Rechnungen",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [645, 266]
+    },
+    {
+      "id": "attendance-to-finance",
+      "from": "attendance",
+      "to": "finance",
+      "label": "Stunden × Satz",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cron-to-finance",
+      "from": "cron",
+      "to": "finance",
+      "label": "02:00 Mahnlauf",
+      "fromSide": "top",
+      "toSide": "left",
+      "labelAt": [462, 336]
+    },
+    {
+      "id": "cron-to-comms",
+      "from": "cron",
+      "to": "comms",
+      "label": "Erinnerungs-Jobs"
+    },
+    {
+      "id": "finance-to-comms",
+      "from": "finance",
+      "to": "comms",
+      "label": "Rechnung + Mahnung",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [591, 406]
+    },
+    {
+      "id": "finance-to-stripe",
+      "from": "finance",
+      "to": "stripe",
+      "label": "Zahlung + Abo",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [950, 406]
+    },
+    {
+      "id": "comms-to-resend",
+      "from": "comms",
+      "to": "resend",
+      "label": "SMTP-Versand",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [786, 474]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Der Hauptweg",
+      "items": [
+        "Onboarding legt Verein, Plätze und Module an",
+        "Saisonfreigabe schreibt Termine, Buchungen, Bestätigungsmails"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Wo Geld entsteht",
+      "items": [
+        "Saison-Rechnung = Satz × Dauer × Termine ÷ Teilnehmer",
+        "Honorar aus Stundennachweisen, Einzug per SEPA oder Stripe"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Nachts von selbst",
+      "items": [
+        "02:00 Mahnlauf · 04:00 Backup · 06:00 nuLiga · 18:00 Erinnerung",
+        "Ohne Zeitplan: trial-followup, check-absences, refresh-base-rates"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Überall gültig",
+      "items": [
+        "Ein Verein ist ein Mandant: RLS auf club_id",
+        "Neue Domänen: Route → Service → Repository → RLS (ADR-005)"
+      ]
+    }
+  ]
+}

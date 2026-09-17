@@ -1,6 +1,6 @@
 # SwingZ — Master-Handbuch
 
-> Zuletzt aktualisiert: 16.08.2026 (Stand der letzten Code-Änderung an diesem Dokument)
+> Zuletzt aktualisiert: 17.09.2026 (Modul-Index gegen `lib/features.ts` verifiziert)
 
 > **Zentrale Doku für alle Rollen, alle Features, alle Schichten.** Lies hier, wenn du nicht weißt wo anfangen.
 
@@ -10,7 +10,7 @@ Willkommen im SwingZ-Handbuch. Dieses Dokument ist **single entry point** für E
 
 ## 🎾 Was ist SwingZ?
 
-SwingZ ist eine **SaaS für Tennisclub-Management** mit fünf Benutzerrollen und 13 aktivierbaren Modulen pro Verein. Stand 2026-07-01:
+SwingZ ist eine **SaaS für Tennisclub-Management** mit fünf Benutzerrollen und 15 aktivierbaren Modulen pro Verein. Stand 2026-07-01:
 
 | Kennzahl               | Wert                                                                  |
 | ---------------------- | --------------------------------------------------------------------- |
@@ -19,8 +19,8 @@ SwingZ ist eine **SaaS für Tennisclub-Management** mit fünf Benutzerrollen und
 | React-Components       | 139                                                                   |
 | DB-Migrations          | 137                                                                   |
 | SQL-Tabellen (Drizzle) | 88                                                                    |
-| Module (toggleable)    | 13 (4 core + 9 optional)                                              |
-| Externe Services       | Supabase, Stripe, Resend, Sentry, Open-Meteo, Gemini Flash, Vercel    |
+| Module (toggleable)    | 15 (4 core + 11 optional)                                             |
+| Externe Services       | Supabase, Stripe, Resend, Sentry, OpenWeatherMap, nuLiga, Vercel      |
 | Hosting                | Vercel (EU-Central)                                                   |
 | Codebase-Sprache       | TypeScript strict, Next.js 16 App Router, React 18, Server Components |
 
@@ -48,26 +48,31 @@ Das Handbuch ist nach Rollen und Themen organisiert. Wähle deinen Einstieg:
 
 ---
 
-## 🧩 Modul-Index (13 Features pro Verein)
+## 🧩 Modul-Index (15 Module pro Verein)
 
-Vereine aktivieren Module auf zwei Ebenen: beim **Onboarding-Wizard** und später in **Settings → Module**. Die JSON-`clubs.features`-Spalte speichert den Toggle-State.
+Vereine aktivieren Module auf zwei Ebenen: beim **Onboarding-Wizard** und später in **Settings → Module**. Die JSON-`clubs.features`-Spalte speichert den Toggle-State. Die Reihenfolge und die Sidebar-Platzierung unten sind die aus `lib/features.ts` (verifiziert 17.09.2026); `nav: null` heißt bewusst „kein eigener Admin-Link".
 
-| #   | Feature                     | Kategorie | Sidebar-Section     | Details                                          |
-| --- | --------------------------- | --------- | ------------------- | ------------------------------------------------ |
-| 1   | Mitgliederverwaltung        | **core**  | members             | immer an, nicht deaktivierbar                    |
-| 2   | Trainer                     | **core**  | trainers            | immer an                                         |
-| 3   | Saisonplanung               | **core**  | seasons             | inkl. KI-Clustering                              |
-| 4   | Finanzen                    | **core**  | finance             | Abrechnung, Mahnwesen (inkl. Stufen 0/1/2/3)     |
-| 5   | Shop                        | optional  | shop                | Vereinsartikel                                   |
-| 6   | Turniere                    | optional  | tournaments         | Anmeldung, Spielpläne                            |
-| 7   | Probetrainings              | optional  | trial_training      | Standard aktiv — Anmeldeformular + Nurture-Flow  |
-| 8   | Spielpartner-Suche          | optional  | partner_finder      | Spielpartner-Matching (algorithmisch)            |
-| 9   | Wetter-Integration          | optional  | weather_integration | Open-Meteo, automatische Platzsperre             |
-| 10  | Liga & Mannschaft           | optional  | league_lineup       | nuLiga-Sync                                      |
-| 11  | Arbeitsdienst               | optional  | work_duty           | Gemeinschaftsstunden                             |
-| 12  | Smart Court (Add-On €79/M.) | optional  | smart_court         | Hardware-Vendor-Integration (Nuki/Shelly/Loxone) |
+| #   | Modul                | Kategorie | Admin-Sidebar      | Details                                                              |
+| --- | -------------------- | --------- | ------------------ | -------------------------------------------------------------------- |
+| 1   | Mitgliederverwaltung | **core**  | Mitglieder         | immer an, nicht deaktivierbar                                        |
+| 2   | Trainer              | **core**  | Trainer            | Profile, Verfügbarkeiten, Stundennachweise                           |
+| 3   | Saisonplanung        | **core**  | Spielbetrieb       | regelbasiertes Clustering (kein LLM)                                 |
+| 4   | Finanzen             | **core**  | Finanzen           | Abrechnung, SEPA, Mahnwesen (Stufen 1/2/3)                           |
+| 5   | Probetrainings       | optional  | Mitglieder         | **standardmäßig an** — Anmeldeformular + Nurture-Mails               |
+| 6   | Familienkonten       | optional  | Mitglieder         | Eltern verwalten mehrere Kinderkonten                                |
+| 7   | Arbeitsdienst        | optional  | Mitglieder         | Gemeinschaftsstunden, Zuweisung und Nachverfolgung                   |
+| 8   | Liga & Mannschaft    | optional  | Spielbetrieb       | Aufstellung, Spieltage, nuLiga-Sync                                  |
+| 9   | Turniere             | optional  | kein Link (Tab)    | Tab im Veranstaltungen-Hub `/admin/events` + `/member/tournaments`   |
+| 10  | Wetter am Vereinsort | optional  | kein Link (Widget) | zeigt die Lage neben den Platzsperren — **sperrt nichts von selbst** |
+| 11  | Spielpartner-Suche   | optional  | Spielbetrieb       | Admin sieht nur Kennzahlen, die Suche liegt bei den Mitgliedern      |
+| 12  | Shop                 | optional  | Finanzen           | Vereinsartikel, Checkout über Stripe                                 |
+| 13  | Board-Beschlüsse     | optional  | kein Link          | reine Mitglieder-Funktion `/decisions`                               |
+| 14  | Gamification         | optional  | kein Link          | `/gamification`, standardmäßig aus                                   |
+| 15  | Wallet-Pässe         | optional  | kein Link          | Apple-/Google-Wallet-Mitgliedsausweis                                |
 
-Details: [`dev/feature-flags.md`](./handbook/dev/feature-flags.md). Master-Registry: [`lib/features.ts`](../lib/features.ts).
+Ein „Smart Court"-Modul gibt es nicht — weder in `lib/features.ts` noch als Route.
+
+Details: [`dev/feature-flags.md`](./handbook/dev/feature-flags.md). Master-Registry: [`lib/features.ts`](../lib/features.ts). Wie die Module zusammenspielen: [`diagrams/swingz-overview.html`](./diagrams/swingz-overview.html).
 
 ---
 

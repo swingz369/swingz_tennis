@@ -440,7 +440,7 @@ sequenceDiagram
 ### 15 · Admin erstellt Rechnung — Membership-Fee-Gate
 
 > Walkthrough: [`tutorials/admin-billing.md`](../user/tutorials/admin-billing.md)
-> **Sub-Feature-Scope (Finanzen-Modul #4 in [`docs/HANDBOOK.md`](../../HANDBOOK.md#modul-index-13-features-pro-verein)):** Dunning-Stufen 0/1/2/3 sind Teil des selben Moduls wie Rechnungs-Erstellung — Cron-getrieben, geht von §5 (Mahnwesen-Diagramm oben) aus. Für die ausführliche Stufen-Walkthrough siehe [`tutorials/admin-mahnwesen.md`](../user/tutorials/admin-mahnwesen.md).
+> **Sub-Feature-Scope (Finanzen-Modul #4 in [`docs/HANDBOOK.md`](../../HANDBOOK.md#modul-index-15-module-pro-verein)):** Dunning-Stufen 0/1/2/3 sind Teil des selben Moduls wie Rechnungs-Erstellung — Cron-getrieben, geht von §5 (Mahnwesen-Diagramm oben) aus. Für die ausführliche Stufen-Walkthrough siehe [`tutorials/admin-mahnwesen.md`](../user/tutorials/admin-mahnwesen.md).
 > Server-Page blockiert Rechnungserstellung, wenn **keine aktive `type='membership'`-Config** existiert (gelbe Warnung oben) — häufigste Fehlerquelle bei "Rechnung erstellen"-Bugs.
 
 ```mermaid
