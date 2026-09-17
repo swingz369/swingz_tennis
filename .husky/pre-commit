@@ -177,11 +177,11 @@ ARCH_CHANGES=$(echo "$STAGED_FILES" | grep -E '^(app|components|hooks|lib|src)/.
 if [ -n "$ARCH_CHANGES" ]; then
   echo ""
   echo "${BLUE}🏗️  Prüfe Architektur-Regeln (dependency-cruiser)...${NC}"
-  npx depcruise app components hooks lib src --config .dependency-cruiser.cjs --cache --ignore-known .dependency-cruiser-known-violations.json
+  npx depcruise app components hooks lib src --config .dependency-cruiser.js --cache --ignore-known .dependency-cruiser-known-violations.json
   ARCH_EXIT=$?
   if [ $ARCH_EXIT -ne 0 ]; then
     echo "${RED}❌ Architektur-Regel verletzt — Commit abgebrochen${NC}"
-    echo "${YELLOW}   Neuer Verstoß gegen eine Regel aus .dependency-cruiser.cjs.${NC}"
+    echo "${YELLOW}   Neuer Verstoß gegen eine Regel aus .dependency-cruiser.js.${NC}"
     echo "${YELLOW}   Kein bekannter Altfall (siehe .dependency-cruiser-known-violations.json).${NC}"
     echo "${YELLOW}   Details: npm run arch:check${NC}"
     exit $ARCH_EXIT
