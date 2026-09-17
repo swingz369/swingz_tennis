@@ -209,7 +209,8 @@ export function memberSidebarSections(hidden: Hidden, includeMemberOnly: boolean
         // Mitglieder-Oberfläche aus erreichbar — nur das Trainer-Dashboard
         // verlinkte sie, wo sie systematisch leer blieb.
         { name: 'Meine Anwesenheit', href: '/attendance-history' },
-        { name: 'Trainerstunde buchen', href: '/member/trainer-booking' },
+        // Trainerstunde buchen: kein eigener Menüpunkt mehr — Teil der
+        // Agenda-Ansicht von „Platzkalender" (Sanierungsplan Phase 2.1.2).
         ...(includeMemberOnly
           ? [{ name: 'Trainingspräferenzen', href: '/member/preferences' }]
           : []),

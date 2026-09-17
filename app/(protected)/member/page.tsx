@@ -7,7 +7,6 @@ import {
   CreditCard,
   Trophy,
   ArrowRight,
-  GraduationCap,
   ClipboardCheck,
   HardHat,
   MessageSquare,
@@ -231,11 +230,6 @@ export default async function MemberPage() {
         actions={[
           { label: 'Buchen', href: '/scheduler', icon: Calendar },
           { label: 'Training', href: '/bookings', icon: BookOpen },
-          {
-            label: 'Trainer',
-            href: '/member/trainer-booking',
-            icon: GraduationCap,
-          },
           ...(features.tournaments === true
             ? [
                 {
