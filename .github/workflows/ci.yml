@@ -2,8 +2,10 @@
 # .github/workflows/ci.yml
 # ═══════════════════════════════════════════════════════════════════════════════
 #
-# Gate every push/PR on typecheck + unit tests, so a red suite (or a type
-# error) can never reach main unnoticed. E2E smoke only runs when the repo
+# Gate every push/PR on typecheck + lint + unit tests, so a red suite (or a
+# type/lint error) can never reach main unnoticed — pre-commit's lint-staged
+# only covers staged files, so this is the full-repo backstop. E2E smoke only
+# runs when the repo
 # secrets needed to boot the app (Supabase) are configured — it skips
 # gracefully on forks / secret-less runs instead of failing on infra.
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -61,6 +63,9 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
 
       - name: Design-Token-Guardrail
         run: bash scripts/check-design-tokens.sh

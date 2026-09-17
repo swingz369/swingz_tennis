@@ -24,7 +24,8 @@ module.exports = {
     {
       name: 'domain-no-application',
       severity: 'error',
-      comment: 'src/domain darf nicht von src/application abhängen (Abhängigkeitsrichtung nach innen).',
+      comment:
+        'src/domain darf nicht von src/application abhängen (Abhängigkeitsrichtung nach innen).',
       from: { path: '^src/domain' },
       to: { path: '^src/application' },
     },
@@ -80,7 +81,10 @@ module.exports = {
   options: {
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.json' },
-    enhancedResolveOptions: { exportsFields: ['exports'], conditionNames: ['import', 'require', 'node', 'default'] },
+    enhancedResolveOptions: {
+      exportsFields: ['exports'],
+      conditionNames: ['import', 'require', 'node', 'default'],
+    },
     exclude: {
       path: [
         'node_modules',
