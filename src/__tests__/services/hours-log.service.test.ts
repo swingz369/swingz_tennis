@@ -2,23 +2,11 @@
  * Unit tests for HoursLogService — Trainer-Teildomäne für ADR-005.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import type { AuthContext } from '@/lib/api-auth';
+import { fakeAuth } from '../helpers/auth';
 import { ApiException } from '@/lib/api-error';
 import { HoursLogService } from '@/application/services/hours-log.service';
 import { HoursLogRepository } from '@/infrastructure/persistence/repositories/hours-log.repository';
 import type { HoursLog } from '@/infrastructure/persistence/repositories/hours-log.repository';
-
-function fakeAuth(): AuthContext {
-  return {
-    user: { id: 'user-1' } as AuthContext['user'],
-    session: null,
-    supabase: {} as AuthContext['supabase'],
-    clubId: 'club-1',
-    role: 'admin',
-    roles: ['admin'],
-    memberships: [{ club_id: 'club-1', role: 'admin' }],
-  };
-}
 
 function makeLog(overrides: Partial<HoursLog> = {}): HoursLog {
   return {

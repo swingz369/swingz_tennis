@@ -6,22 +6,10 @@
  * Repository und NOT_FOUND bei fehlenden Datensätzen.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import type { AuthContext } from '@/lib/api-auth';
+import { fakeAuth } from '../helpers/auth';
 import { PaymentSettingsService } from '@/application/services/payment-settings.service';
 import { PaymentSettingsRepository } from '@/infrastructure/persistence/repositories/payment-settings.repository';
 import type { PaymentSettings } from '@/infrastructure/persistence/repositories/payment-settings.repository';
-
-function fakeAuth(): AuthContext {
-  return {
-    user: { id: 'user-1' } as AuthContext['user'],
-    session: null,
-    supabase: {} as AuthContext['supabase'],
-    clubId: 'club-1',
-    role: 'admin',
-    roles: ['admin'],
-    memberships: [{ club_id: 'club-1', role: 'admin' }],
-  };
-}
 
 function makeSettings(overrides: Partial<PaymentSettings> = {}): PaymentSettings {
   return {

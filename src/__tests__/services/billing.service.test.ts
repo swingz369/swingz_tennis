@@ -7,25 +7,13 @@
  * Übungsleiterpauschale (§ 3 Nr. 26 EStG, max. 3.000 € steuerfrei p.a.).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { AuthContext } from '@/lib/api-auth';
+import { fakeAuth } from '../helpers/auth';
 import { ApiException } from '@/lib/api-error';
 import { BillingService } from '@/application/services/billing.service';
 import {
   BillingRepository,
   type TrainerBilling,
 } from '@/infrastructure/persistence/repositories/billing.repository';
-
-function fakeAuth(): AuthContext {
-  return {
-    user: { id: 'user-1' } as AuthContext['user'],
-    session: null,
-    supabase: {} as AuthContext['supabase'],
-    clubId: 'club-1',
-    role: 'admin',
-    roles: ['admin'],
-    memberships: [{ club_id: 'club-1', role: 'admin' }],
-  };
-}
 
 function makeTrainerBilling(overrides: Partial<TrainerBilling> = {}): TrainerBilling {
   return {

@@ -7,23 +7,11 @@
  * wäre: den Effektivsatz und wann ein Historieneintrag entsteht.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { AuthContext } from '@/lib/api-auth';
+import { fakeAuth } from '../helpers/auth';
 import { ApiException } from '@/lib/api-error';
 import { HourlyRateService } from '@/application/services/hourly-rate.service';
 import { HourlyRateRepository } from '@/infrastructure/persistence/repositories/hourly-rate.repository';
 import type { TrainerHourlyRate } from '@/infrastructure/persistence/repositories/hourly-rate.repository';
-
-function fakeAuth(): AuthContext {
-  return {
-    user: { id: 'user-1' } as AuthContext['user'],
-    session: null,
-    supabase: {} as AuthContext['supabase'],
-    clubId: 'club-1',
-    role: 'admin',
-    roles: ['admin'],
-    memberships: [{ club_id: 'club-1', role: 'admin' }],
-  };
-}
 
 function makeTrainerRate(overrides: Partial<TrainerHourlyRate> = {}): TrainerHourlyRate {
   return {

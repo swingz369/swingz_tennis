@@ -7,7 +7,7 @@
  * Eingabevalidierung beim Anlegen eines Profils.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import type { AuthContext } from '@/lib/api-auth';
+import { fakeAuth } from '../helpers/auth';
 import { ApiException } from '@/lib/api-error';
 import { TrainerProfileService } from '@/application/services/trainer-profile.service';
 import {
@@ -16,18 +16,6 @@ import {
   parseNumericField,
 } from '@/infrastructure/persistence/repositories/trainer-profile.repository';
 import type { TrainerProfile } from '@/domain/entities/trainer.entity';
-
-function fakeAuth(): AuthContext {
-  return {
-    user: { id: 'user-1' } as AuthContext['user'],
-    session: null,
-    supabase: {} as AuthContext['supabase'],
-    clubId: 'club-1',
-    role: 'admin',
-    roles: ['admin'],
-    memberships: [{ club_id: 'club-1', role: 'admin' }],
-  };
-}
 
 function makeProfile(overrides: Partial<TrainerProfile> = {}): TrainerProfile {
   return {

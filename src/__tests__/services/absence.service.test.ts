@@ -6,22 +6,10 @@
  * überlappende genehmigte Abwesenheiten.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import type { AuthContext } from '@/lib/api-auth';
+import { fakeAuth } from '../helpers/auth';
 import { AbsenceService } from '@/application/services/absence.service';
 import { AbsenceRepository } from '@/infrastructure/persistence/repositories/absence.repository';
 import type { Absence } from '@/infrastructure/persistence/repositories/absence.repository';
-
-function fakeAuth(): AuthContext {
-  return {
-    user: { id: 'user-1' } as AuthContext['user'],
-    session: null,
-    supabase: {} as AuthContext['supabase'],
-    clubId: 'club-1',
-    role: 'admin',
-    roles: ['admin'],
-    memberships: [{ club_id: 'club-1', role: 'admin' }],
-  };
-}
 
 function makeAbsence(overrides: Partial<Absence> = {}): Absence {
   return {

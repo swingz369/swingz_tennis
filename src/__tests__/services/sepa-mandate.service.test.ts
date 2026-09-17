@@ -6,23 +6,11 @@
  * Sperre gegen ein zweites aktives Mandat pro Mitglied.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { AuthContext } from '@/lib/api-auth';
+import { fakeAuth } from '../helpers/auth';
 import { ApiException } from '@/lib/api-error';
 import { SepaMandateService } from '@/application/services/sepa-mandate.service';
 import { SepaMandateRepository } from '@/infrastructure/persistence/repositories/sepa-mandate.repository';
 import type { SepaMandate } from '@/infrastructure/persistence/repositories/sepa-mandate.repository';
-
-function fakeAuth(clubId: string | null = 'club-1'): AuthContext {
-  return {
-    user: { id: 'user-1' } as AuthContext['user'],
-    session: null,
-    supabase: {} as AuthContext['supabase'],
-    clubId,
-    role: 'admin',
-    roles: ['admin'],
-    memberships: [{ club_id: clubId, role: 'admin' }],
-  };
-}
 
 function makeMandate(overrides: Partial<SepaMandate> = {}): SepaMandate {
   return {

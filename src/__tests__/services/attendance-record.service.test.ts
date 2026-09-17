@@ -9,23 +9,11 @@
  * jeweiligen Verein übergeben wurden.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import type { AuthContext } from '@/lib/api-auth';
+import { fakeAuth } from '../helpers/auth';
 import { ApiException } from '@/lib/api-error';
 import { AttendanceRecordService } from '@/application/services/attendance-record.service';
 import { AttendanceRecordRepository } from '@/infrastructure/persistence/repositories/attendance-record.repository';
 import type { AttendanceRecord } from '@/infrastructure/persistence/repositories/attendance-record.repository';
-
-function fakeAuth(): AuthContext {
-  return {
-    user: { id: 'user-1' } as AuthContext['user'],
-    session: null,
-    supabase: {} as AuthContext['supabase'],
-    clubId: 'club-1',
-    role: 'admin',
-    roles: ['admin'],
-    memberships: [{ club_id: 'club-1', role: 'admin' }],
-  };
-}
 
 function makeRecord(overrides: Partial<AttendanceRecord> = {}): AttendanceRecord {
   return {

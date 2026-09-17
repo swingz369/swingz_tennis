@@ -6,23 +6,11 @@
  * einer nie befüllten In-Memory-Implementierung existierte.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import type { AuthContext } from '@/lib/api-auth';
+import { fakeAuth } from '../helpers/auth';
 import { ApiException } from '@/lib/api-error';
 import { TrainerAvailabilityService } from '@/application/services/trainer-availability.service';
 import { TrainerAvailabilityRepository } from '@/infrastructure/persistence/repositories/trainer-availability.repository';
 import type { TrainerAvailability } from '@/infrastructure/persistence/repositories/trainer-availability.repository';
-
-function fakeAuth(): AuthContext {
-  return {
-    user: { id: 'user-1' } as AuthContext['user'],
-    session: null,
-    supabase: {} as AuthContext['supabase'],
-    clubId: 'club-1',
-    role: 'admin',
-    roles: ['admin'],
-    memberships: [{ club_id: 'club-1', role: 'admin' }],
-  };
-}
 
 function makeSlot(overrides: Partial<TrainerAvailability> = {}): TrainerAvailability {
   return {
