@@ -75,7 +75,6 @@ import {
 } from '@/components/ui/select';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
 import { useActingAsMemberId } from '@/hooks/use-effective-member';
-import { createClient } from '@/lib/supabase/client';
 import { useCourts } from '@/hooks/use-courts';
 import {
   useSessions,
@@ -767,19 +766,22 @@ export default function UnifiedCourtCalendar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rolesLoading, isAdmin, isTrainer]);
 
-  // Trainer record ID (trainers.id, not auth user ID) — used to filter own sessions
+  // Trainer record ID (trainers.id, not auth user ID) — used to filter own sessions.
+  // Über Route → resolveTrainerRecordId statt direktem Supabase-Zugriff mit
+  // E-Mail-Textvergleich (ADR-005, siehe docs/ARCHIV/2026-09-17-ux-analyse-und-
+  // sanierungsprompt.md § 2.3).
   const [trainerRecordId, setTrainerRecordId] = useState<string | null>(null);
   useEffect(() => {
     if (!isTrainer) return;
-    const sb = createClient();
-    sb.auth.getUser().then(({ data }) => {
-      if (!data.user?.email) return;
-      sb.from('trainers')
-        .select('id')
-        .ilike('email', data.user.email)
-        .maybeSingle()
-        .then(({ data: rec }) => setTrainerRecordId(rec?.id ?? null));
-    });
+    let cancelled = false;
+    apiFetch('/api/trainer/record-id')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled) setTrainerRecordId(data?.trainerId ?? null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [isTrainer]);
 
   // ── Data fetching ──
