@@ -25,6 +25,8 @@ import {
   endOfWeek,
   addWeeks,
   subWeeks,
+  addMonths,
+  subMonths,
   addDays,
   subDays,
   isSameDay,
@@ -75,14 +77,23 @@ import {
 } from '@/components/ui/select';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
 import { useActingAsMemberId } from '@/hooks/use-effective-member';
-import { createClient } from '@/lib/supabase/client';
 import { useCourts } from '@/hooks/use-courts';
 import {
   useSessions,
   useCreateBooking,
   useCancelBooking,
+  useUpdateBookingStatus,
   type Session,
 } from '@/hooks/use-sessions';
+import { MonthView } from '@/components/calendar/month-view';
+import {
+  useTrainerHourSlots,
+  useBookTrainerHourSlot,
+  useWaitlistTrainerHourSlot,
+} from '@/hooks/use-trainer-hour-slots';
+import { TrainerHourSlotsSection } from '@/components/calendar/trainer-hour-slots';
+import type { PlanEntry } from '@/components/calendar/types';
+import { useCalendarVisibility } from '@/hooks/use-calendar-visibility';
 import { useSeasonPlanGrid } from '@/hooks/use-season-plan-entries';
 import { useMemberGroupIds } from '@/hooks/use-member-groups';
 import { exportSessionsToICS } from '@/lib/calendar-export';
@@ -112,9 +123,9 @@ import { AdHocSessionDialog } from '@/components/ad-hoc-session-dialog';
 
 /* ─────────────────── Types ─────────────────── */
 
-type ViewMode = 'agenda' | 'weekly' | 'daily' | 'list';
+type ViewMode = 'agenda' | 'weekly' | 'daily' | 'list' | 'month';
 
-const VIEW_MODES: ViewMode[] = ['agenda', 'weekly', 'daily', 'list'];
+const VIEW_MODES: ViewMode[] = ['agenda', 'weekly', 'daily', 'list', 'month'];
 function isViewMode(value: string | null): value is ViewMode {
   return !!value && (VIEW_MODES as string[]).includes(value);
 }
@@ -135,20 +146,6 @@ interface UnifiedCourtCalendarProps {
   defaultView?: ViewMode;
   /** Override club ID (for admin pages) */
   initialClubId?: string;
-}
-
-interface PlanEntry {
-  id: string;
-  group_id: string | null;
-  group_name: string;
-  group_color: string;
-  trainer_id: string;
-  trainer_name?: string;
-  court_id: string | null;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-  [k: string]: unknown;
 }
 
 /* ─────────────────── Constants ─────────────────── */
@@ -767,19 +764,22 @@ export default function UnifiedCourtCalendar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rolesLoading, isAdmin, isTrainer]);
 
-  // Trainer record ID (trainers.id, not auth user ID) — used to filter own sessions
+  // Trainer record ID (trainers.id, not auth user ID) — used to filter own sessions.
+  // Über Route → resolveTrainerRecordId statt direktem Supabase-Zugriff mit
+  // E-Mail-Textvergleich (ADR-005, siehe docs/ARCHIV/2026-09-17-ux-analyse-und-
+  // sanierungsprompt.md § 2.3).
   const [trainerRecordId, setTrainerRecordId] = useState<string | null>(null);
   useEffect(() => {
     if (!isTrainer) return;
-    const sb = createClient();
-    sb.auth.getUser().then(({ data }) => {
-      if (!data.user?.email) return;
-      sb.from('trainers')
-        .select('id')
-        .ilike('email', data.user.email)
-        .maybeSingle()
-        .then(({ data: rec }) => setTrainerRecordId(rec?.id ?? null));
-    });
+    let cancelled = false;
+    apiFetch('/api/trainer/record-id')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled) setTrainerRecordId(data?.trainerId ?? null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [isTrainer]);
 
   // ── Data fetching ──
@@ -795,37 +795,30 @@ export default function UnifiedCourtCalendar({
   // ── Member group filtering (role-based view) ──
   const { data: memberGroupIds = [] } = useMemberGroupIds(clubId);
 
-  /** Sessions visible to the current user. Admin sees all; trainer sees own sessions; member sees group sessions + own bookings. */
-  const visibleSessions = useMemo(() => {
-    if (isAdmin) return sessions;
-    if (isTrainer && trainerRecordId)
-      return sessions.filter((s: Session) => s.trainerId === trainerRecordId);
-    if (memberGroupIds.length === 0) {
-      // No group memberships → only show own bookings + open sessions (no groupIds)
-      return sessions.filter(
-        (s: Session) => s.bookedByUser || !s.groupIds || s.groupIds.length === 0
-      );
-    }
-    const groupSet = new Set(memberGroupIds);
-    return sessions.filter((s: Session) => {
-      // Always show own bookings
-      if (s.bookedByUser) return true;
-      // Show sessions with no groups assigned (open sessions)
-      if (!s.groupIds || s.groupIds.length === 0) return true;
-      // Show sessions that overlap with the member's groups
-      return s.groupIds.some((gid: string) => groupSet.has(gid));
-    });
-  }, [sessions, isAdmin, isTrainer, trainerRecordId, memberGroupIds]);
+  // ── Trainerstunden (vierte Slot-Quelle, Phase 2.1.2) — nur für die Agenda-
+  // Ansicht des jeweils ausgewählten Tages geladen, sie sind platzunabhängig. ──
+  const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
+  const { data: trainerHourSlots = [] } = useTrainerHourSlots(
+    clubId,
+    selectedDateStr,
+    selectedDateStr
+  );
+  const trainerHourSlotsForDay = useMemo(
+    () => trainerHourSlots.filter((s) => s.date === selectedDateStr),
+    [trainerHourSlots, selectedDateStr]
+  );
+  const bookTrainerHourSlot = useBookTrainerHourSlot();
+  const waitlistTrainerHourSlot = useWaitlistTrainerHourSlot();
 
-  /** Plan entries visible to the current user. Admin sees all; trainer sees their entries; member sees only their groups. */
-  const visiblePlanSlots = useMemo(() => {
-    if (isAdmin) return planSlots;
-    if (isTrainer && trainerRecordId)
-      return planSlots.filter((e: PlanEntry) => e.trainer_id === trainerRecordId);
-    if (memberGroupIds.length === 0) return []; // No groups → no plan entries visible
-    const groupSet = new Set(memberGroupIds);
-    return planSlots.filter((e: PlanEntry) => e.group_id && groupSet.has(e.group_id));
-  }, [planSlots, isAdmin, isTrainer, trainerRecordId, memberGroupIds]);
+  /** Sessions visible to the current user. Admin sees all; trainer sees own sessions; member sees group sessions + own bookings. */
+  const { visibleSessions, visiblePlanSlots } = useCalendarVisibility({
+    sessions,
+    planSlots,
+    isAdmin,
+    isTrainer,
+    trainerRecordId,
+    memberGroupIds,
+  });
 
   // ── Court selection: derive effective court ID ──
   // If courts loaded but selected court no longer exists, fall back to card view
@@ -836,6 +829,27 @@ export default function UnifiedCourtCalendar({
   // ── Mutations ──
   const createBooking = useCreateBooking();
   const cancelBooking = useCancelBooking();
+  const updateBookingStatus = useUpdateBookingStatus();
+
+  // ── Monatsansicht (Phase 2.1: übernommen aus /bookings) — bucht direkt über
+  // die Session-ID statt über Platz+Zeit wie handleBookSlot. ──
+  const handleBookSession = useCallback(
+    (sessionId: string) => {
+      if (!memberId || !clubId) {
+        toast.error('Bitte einloggen um zu buchen');
+        return;
+      }
+      createBooking.mutate({ memberId, sessionId, clubId });
+    },
+    [memberId, clubId, createBooking]
+  );
+  const handleStatusChange = useCallback(
+    (bookingId: string, status: 'pending' | 'confirmed' | 'cancelled' | 'no_show') => {
+      if (!clubId) return;
+      updateBookingStatus.mutate({ bookingId, status, clubId });
+    },
+    [clubId, updateBookingStatus]
+  );
 
   // ── DnD sensors (admin only) ──
   const sensors = useSensors(
@@ -934,10 +948,12 @@ export default function UnifiedCourtCalendar({
 
   const goToPrevious = () => {
     if (viewMode === 'weekly') setCurrentWeek(subWeeks(currentWeek, 1));
+    else if (viewMode === 'month') setSelectedDate(subMonths(selectedDate, 1));
     else setSelectedDate(subDays(selectedDate, 1));
   };
   const goToNext = () => {
     if (viewMode === 'weekly') setCurrentWeek(addWeeks(currentWeek, 1));
+    else if (viewMode === 'month') setSelectedDate(addMonths(selectedDate, 1));
     else setSelectedDate(addDays(selectedDate, 1));
   };
   const goToToday = () => {
@@ -1277,7 +1293,12 @@ export default function UnifiedCourtCalendar({
       const exportCourts = effectiveCourtId
         ? courts.filter((c) => c.id === effectiveCourtId)
         : courts;
-      exportSessionsToICS(visibleSessions, exportCourts);
+      // Nur Sessions mit konkretem Datum exportieren — eine wiederkehrende Session
+      // ohne timeslotStart hätte parseISO(undefined) ergeben (Invalid Date im ICS).
+      const exportableSessions = visibleSessions.filter(
+        (s): s is Session & { timeslotStart: string } => !!s.timeslotStart
+      );
+      exportSessionsToICS(exportableSessions, exportCourts);
       toast.success('ICS-Export erfolgreich');
     } catch {
       toast.error('ICS-Export fehlgeschlagen');
@@ -1362,6 +1383,15 @@ export default function UnifiedCourtCalendar({
         <CalendarIcon className="h-4 w-4 mr-1.5" />
         Woche
       </Button>
+      <Button
+        variant={viewMode === 'month' ? 'default' : 'ghost'}
+        size="sm"
+        className="rounded-none border-r border-border"
+        onClick={() => setViewMode('month')}
+      >
+        <CalendarIcon className="h-4 w-4 mr-1.5" />
+        Monat
+      </Button>
       {(isAdmin || isTrainer) && (
         <Button
           variant={viewMode === 'daily' ? 'default' : 'ghost'}
@@ -1431,6 +1461,34 @@ export default function UnifiedCourtCalendar({
      ═══════════════════════════════════════════════════ */
   if (viewMode === 'agenda') {
     return renderAgendaView();
+  }
+
+  /* ═══════════════════════════════════════════════════
+     RENDER: Month View (Phase 2.1 — übernommen aus /bookings)
+     ═══════════════════════════════════════════════════ */
+  if (viewMode === 'month') {
+    return (
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="flex flex-wrap items-center gap-2">
+          {viewToggleEl}
+          {roleActionButtonsEl}
+        </div>
+        <MonthView
+          sessions={visibleSessions}
+          isLoading={sessionsLoading}
+          currentMonth={selectedDate}
+          onPrevMonth={goToPrevious}
+          onNextMonth={goToNext}
+          onToday={goToToday}
+          memberId={memberId}
+          clubId={clubId}
+          canManageStatus={isAdmin || isTrainer}
+          onBookSession={handleBookSession}
+          onCancelBooking={handleCancelBooking}
+          onStatusChange={handleStatusChange}
+        />
+      </div>
+    );
   }
 
   /* ═══════════════════════════════════════════════════
@@ -2141,6 +2199,15 @@ export default function UnifiedCourtCalendar({
         )}
 
         <CourtCalendarLegend items={getCalendarLegendItems(isAdmin)} />
+
+        <TrainerHourSlotsSection
+          slots={trainerHourSlotsForDay}
+          isMember={!isAdmin && !isTrainer}
+          onBook={(slot) => bookTrainerHourSlot.mutateAsync(slot)}
+          onWaitlist={(slot) => waitlistTrainerHourSlot.mutateAsync(slot)}
+          bookLoading={bookTrainerHourSlot.isPending}
+          waitlistLoading={waitlistTrainerHourSlot.isPending}
+        />
       </div>
     );
   }

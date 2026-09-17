@@ -7,7 +7,11 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
-import { resolveTrainerRecordId, resolveTrainerClubId } from '@/lib/trainers/trainer-record';
+import {
+  resolveTrainerRecordId,
+  resolveTrainerClubId,
+  resolveClubTrainerRecordIds,
+} from '@/lib/trainers/trainer-record';
 
 const log = createLogger('api:trainer:availability');
 
@@ -23,11 +27,27 @@ export async function GET(request: NextRequest) {
     // die Vereinsgrenze wird hier explizit geprüft statt auf RLS zu vertrauen.
     const supabase = createServiceClient();
 
-    if (trainerId && auth.clubId) {
-      const trainerClubId = await resolveTrainerClubId(trainerId);
-      if (!trainerClubId || trainerClubId !== auth.clubId) {
+    if (trainerId) {
+      if (auth.clubId) {
+        const trainerClubId = await resolveTrainerClubId(trainerId);
+        if (!trainerClubId || trainerClubId !== auth.clubId) {
+          return NextResponse.json({ slots: [], maxHoursPerWeek: null });
+        }
+      }
+    } else {
+      // Ohne trainerId früher ungefiltert über alle Trainer *aller* Vereine —
+      // ein Mitglied, das den Kalender ohne Trainerauswahl öffnet, hätte fremde
+      // Vereine mitgeladen. Ohne club scoping gibt es hier nichts zu lesen.
+      if (!auth.clubId) {
         return NextResponse.json({ slots: [], maxHoursPerWeek: null });
       }
+    }
+
+    const clubTrainerIds = trainerId
+      ? null
+      : await resolveClubTrainerRecordIds(auth.clubId as string);
+    if (clubTrainerIds !== null && clubTrainerIds.length === 0) {
+      return NextResponse.json({ slots: [], maxHoursPerWeek: null });
     }
 
     let query = supabase
@@ -39,6 +59,7 @@ export async function GET(request: NextRequest) {
       .in('status', ['available', 'booked']);
 
     if (trainerId) query = query.eq('trainer_id', trainerId);
+    else if (clubTrainerIds) query = query.in('trainer_id', clubTrainerIds);
     if (from) query = query.gte('date', from);
     if (to) query = query.lte('date', to);
 
