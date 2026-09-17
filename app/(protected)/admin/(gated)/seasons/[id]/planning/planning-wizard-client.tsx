@@ -142,10 +142,12 @@ function WizardContent({
     }
   };
 
+  // scheduleSlots ist auch dann gefüllt, wenn der Plan nach einem Reload aus
+  // season_plan_entries wiederhergestellt wurde statt frisch geclustert (siehe
+  // PlanEditStep) — clusteringResult allein wäre nach einem Reload immer leer.
+  const hasPlan = !!state.clusteringResult || state.scheduleSlots.length > 0;
   const canGoNext =
-    currentStep < 4 &&
-    !(currentStep === 1 && !state.isReady) &&
-    !(currentStep === 3 && !state.clusteringResult);
+    currentStep < 4 && !(currentStep === 1 && !state.isReady) && !(currentStep === 3 && !hasPlan);
   const canGoPrev = currentStep > 1;
   const isLast = currentStep === 4;
 
@@ -256,7 +258,7 @@ function WizardContent({
                 <p className="text-xs text-warning-600 mr-2">
                   Bereitschaftsprüfung nicht bestanden — Schritt 1 muss komplett sein
                 </p>
-              ) : currentStep === 3 && !state.clusteringResult ? (
+              ) : currentStep === 3 && !hasPlan ? (
                 <p className="text-xs text-warning-600 mr-2">
                   Plan muss erst generiert werden — Button in Schritt 3
                 </p>

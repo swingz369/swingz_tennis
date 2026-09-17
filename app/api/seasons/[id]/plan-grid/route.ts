@@ -9,8 +9,9 @@ import {
   trainers,
   courts,
   groups,
+  users,
 } from '@/src/infrastructure/persistence/schema';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { createLogger } from '@/lib/logger';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
 
@@ -152,26 +153,48 @@ export async function GET(request: NextRequest, context: RouteContext) {
         );
       }
 
-      const slots = entries.map((row) => ({
-        id: row.entry.id,
-        group_id: row.entry.group_id,
-        group_name: row.group_name || 'Unbekannte Gruppe',
-        group_color: row.entry.group_id ? colorMap.get(row.entry.group_id) || '#6b7280' : '#6b7280',
-        trainer_id: row.entry.trainer_id,
-        trainer_name: row.trainer_name || 'Unbekannt',
-        substitute_trainer_id: row.entry.substitute_trainer_id,
-        court_id: row.entry.court_id,
-        court_name: row.court_name || null,
-        day_of_week: row.entry.day_of_week,
-        start_time: row.entry.start_time.substring(0, 5),
-        end_time: row.entry.end_time.substring(0, 5),
-        duration_min: row.entry.duration_minutes,
-        member_ids: row.entry.expected_participants || [],
-        member_count: Array.isArray(row.entry.expected_participants)
-          ? row.entry.expected_participants.length
-          : 0,
-        status: row.entry.status,
-      }));
+      // Namen für die Mitgliederchips im wiederhergestellten Plan (Phase 1: Reload
+      // darf den Plan nicht kosten) — sonst kennt der Kalender nur IDs.
+      const allMemberIds = Array.from(
+        new Set(
+          entries.flatMap((row) =>
+            Array.isArray(row.entry.expected_participants) ? row.entry.expected_participants : []
+          )
+        )
+      );
+      const memberNameById = new Map<string, string>();
+      if (allMemberIds.length > 0) {
+        const memberRows = await db
+          .select({ id: users.id, full_name: users.full_name })
+          .from(users)
+          .where(inArray(users.id, allMemberIds));
+        memberRows.forEach((m) => memberNameById.set(m.id, m.full_name || 'Unbekannt'));
+      }
+
+      const slots = entries.map((row) => {
+        const memberIds = row.entry.expected_participants || [];
+        return {
+          id: row.entry.id,
+          group_id: row.entry.group_id,
+          group_name: row.group_name || 'Unbekannte Gruppe',
+          group_color: row.entry.group_id
+            ? colorMap.get(row.entry.group_id) || '#6b7280'
+            : '#6b7280',
+          trainer_id: row.entry.trainer_id,
+          trainer_name: row.trainer_name || 'Unbekannt',
+          substitute_trainer_id: row.entry.substitute_trainer_id,
+          court_id: row.entry.court_id,
+          court_name: row.court_name || null,
+          day_of_week: row.entry.day_of_week,
+          start_time: row.entry.start_time.substring(0, 5),
+          end_time: row.entry.end_time.substring(0, 5),
+          duration_min: row.entry.duration_minutes,
+          member_ids: memberIds,
+          member_names: memberIds.map((id) => memberNameById.get(id) || 'Unbekannt'),
+          member_count: memberIds.length,
+          status: row.entry.status,
+        };
+      });
 
       const scopedSlots =
         effectiveRole === 'trainer'

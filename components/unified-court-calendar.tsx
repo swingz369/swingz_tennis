@@ -2,6 +2,7 @@
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
 import {
   DndContext,
@@ -17,6 +18,8 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import {
   format,
+  parseISO,
+  isValid as isValidDate,
   eachDayOfInterval,
   startOfWeek,
   endOfWeek,
@@ -110,6 +113,16 @@ import { AdHocSessionDialog } from '@/components/ad-hoc-session-dialog';
 /* ─────────────────── Types ─────────────────── */
 
 type ViewMode = 'agenda' | 'weekly' | 'daily' | 'list';
+
+const VIEW_MODES: ViewMode[] = ['agenda', 'weekly', 'daily', 'list'];
+function isViewMode(value: string | null): value is ViewMode {
+  return !!value && (VIEW_MODES as string[]).includes(value);
+}
+function parseDateParam(value: string | null): Date | null {
+  if (!value) return null;
+  const parsed = parseISO(value);
+  return isValidDate(parsed) ? parsed : null;
+}
 
 interface SeasonInfo {
   id: string;
@@ -633,21 +646,55 @@ function useIsMobile(breakpoint = MOBILE_BREAKPOINT) {
 /* ─────────────────── Main Component ─────────────────── */
 
 export default function UnifiedCourtCalendar({
-  defaultView = 'agenda',
+  defaultView,
   initialClubId,
 }: UnifiedCourtCalendarProps) {
+  // ── URL-Zustand (Phase 1: eine geteilte Kalender-URL zeigt beim Empfänger
+  // dieselbe Ansicht) — die URL gewinnt immer gegenüber defaultView.
+  // Eigene Parameter-Namen (`calView` statt `view`): `places-hub-tabs.tsx`
+  // bettet den Kalender in einen Tab ein, der bereits `?view=calendar|manage`
+  // für die Tab-Auswahl benutzt — ein gemeinsamer Name würde sich überschreiben. ──
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const urlView = searchParams.get('calView');
+  const urlDate = parseDateParam(searchParams.get('calDate'));
+
   // ── State ──
-  const [viewMode, setViewMode] = useState<ViewMode>(defaultView);
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    isViewMode(urlView) ? urlView : (defaultView ?? 'agenda')
+  );
   // ── Agenda view (Tages-Buchungsflow) state ──
   const [agendaExpandedSlot, setAgendaExpandedSlot] = useState<string | null>(null);
-  const [currentWeek, setCurrentWeek] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [currentWeek, setCurrentWeek] = useState(urlDate ?? new Date());
+  const [selectedDate, setSelectedDate] = useState(urlDate ?? new Date());
   const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draggedSession, setDraggedSession] = useState<Session | null>(null);
-  const [mobileSelectedDay, setMobileSelectedDay] = useState(new Date());
-  const [selectedCourtId, setSelectedCourtId] = useState<string | null>(null);
+  const [mobileSelectedDay, setMobileSelectedDay] = useState(urlDate ?? new Date());
+  const [selectedCourtId, setSelectedCourtId] = useState<string | null>(
+    searchParams.get('calCourt')
+  );
   const isMobile = useIsMobile();
+
+  // Rollen-Vorgabe (Mitglied → agenda, Trainer/Admin → weekly) nachziehen, sobald
+  // die Rollen geladen sind — nur wenn weder die URL noch der Aufrufer
+  // (`defaultView`-Prop) schon etwas vorgegeben haben.
+  const roleViewAppliedRef = useRef(false);
+
+  // ── Kalender-Zustand zurück in die URL schreiben ──
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('calView', viewMode);
+    params.set('calDate', format(viewMode === 'weekly' ? currentWeek : selectedDate, 'yyyy-MM-dd'));
+    if (selectedCourtId) params.set('calCourt', selectedCourtId);
+    else params.delete('calCourt');
+    const next = `${pathname}?${params.toString()}`;
+    if (next !== `${pathname}?${searchParams.toString()}`) {
+      router.replace(next, { scroll: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, currentWeek, selectedDate, selectedCourtId, pathname]);
 
   // ── Block dialog state ──
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
@@ -711,6 +758,14 @@ export default function UnifiedCourtCalendar({
   const memberId = actingAsMemberId ?? memberData?.memberId ?? null;
   const isAdmin = userRoles.some((r) => r === 'admin' || r === 'superadmin');
   const isTrainer = userRoles.some((r) => r === 'trainer');
+
+  useEffect(() => {
+    if (roleViewAppliedRef.current || rolesLoading) return;
+    roleViewAppliedRef.current = true;
+    if (isViewMode(urlView) || defaultView !== undefined) return; // URL/Aufrufer gewinnt
+    if (isAdmin || isTrainer) setViewMode('weekly');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rolesLoading, isAdmin, isTrainer]);
 
   // Trainer record ID (trainers.id, not auth user ID) — used to filter own sessions
   const [trainerRecordId, setTrainerRecordId] = useState<string | null>(null);
