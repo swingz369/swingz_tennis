@@ -39,7 +39,7 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_URL: z.string().url().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
     SENTRY_AUTH_TOKEN: z.string().optional(),
-    RESEND_API_KEY: z.string().min(1),
+    RESEND_API_KEY: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
     CRON_SECRET: z.string().min(1),
     /**
