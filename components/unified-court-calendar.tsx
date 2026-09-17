@@ -25,6 +25,8 @@ import {
   endOfWeek,
   addWeeks,
   subWeeks,
+  addMonths,
+  subMonths,
   addDays,
   subDays,
   isSameDay,
@@ -80,8 +82,10 @@ import {
   useSessions,
   useCreateBooking,
   useCancelBooking,
+  useUpdateBookingStatus,
   type Session,
 } from '@/hooks/use-sessions';
+import { MonthView } from '@/components/calendar/month-view';
 import { useSeasonPlanGrid } from '@/hooks/use-season-plan-entries';
 import { useMemberGroupIds } from '@/hooks/use-member-groups';
 import { exportSessionsToICS } from '@/lib/calendar-export';
@@ -111,9 +115,9 @@ import { AdHocSessionDialog } from '@/components/ad-hoc-session-dialog';
 
 /* ─────────────────── Types ─────────────────── */
 
-type ViewMode = 'agenda' | 'weekly' | 'daily' | 'list';
+type ViewMode = 'agenda' | 'weekly' | 'daily' | 'list' | 'month';
 
-const VIEW_MODES: ViewMode[] = ['agenda', 'weekly', 'daily', 'list'];
+const VIEW_MODES: ViewMode[] = ['agenda', 'weekly', 'daily', 'list', 'month'];
 function isViewMode(value: string | null): value is ViewMode {
   return !!value && (VIEW_MODES as string[]).includes(value);
 }
@@ -838,6 +842,27 @@ export default function UnifiedCourtCalendar({
   // ── Mutations ──
   const createBooking = useCreateBooking();
   const cancelBooking = useCancelBooking();
+  const updateBookingStatus = useUpdateBookingStatus();
+
+  // ── Monatsansicht (Phase 2.1: übernommen aus /bookings) — bucht direkt über
+  // die Session-ID statt über Platz+Zeit wie handleBookSlot. ──
+  const handleBookSession = useCallback(
+    (sessionId: string) => {
+      if (!memberId || !clubId) {
+        toast.error('Bitte einloggen um zu buchen');
+        return;
+      }
+      createBooking.mutate({ memberId, sessionId, clubId });
+    },
+    [memberId, clubId, createBooking]
+  );
+  const handleStatusChange = useCallback(
+    (bookingId: string, status: 'pending' | 'confirmed' | 'cancelled' | 'no_show') => {
+      if (!clubId) return;
+      updateBookingStatus.mutate({ bookingId, status, clubId });
+    },
+    [clubId, updateBookingStatus]
+  );
 
   // ── DnD sensors (admin only) ──
   const sensors = useSensors(
@@ -936,10 +961,12 @@ export default function UnifiedCourtCalendar({
 
   const goToPrevious = () => {
     if (viewMode === 'weekly') setCurrentWeek(subWeeks(currentWeek, 1));
+    else if (viewMode === 'month') setSelectedDate(subMonths(selectedDate, 1));
     else setSelectedDate(subDays(selectedDate, 1));
   };
   const goToNext = () => {
     if (viewMode === 'weekly') setCurrentWeek(addWeeks(currentWeek, 1));
+    else if (viewMode === 'month') setSelectedDate(addMonths(selectedDate, 1));
     else setSelectedDate(addDays(selectedDate, 1));
   };
   const goToToday = () => {
@@ -1364,6 +1391,15 @@ export default function UnifiedCourtCalendar({
         <CalendarIcon className="h-4 w-4 mr-1.5" />
         Woche
       </Button>
+      <Button
+        variant={viewMode === 'month' ? 'default' : 'ghost'}
+        size="sm"
+        className="rounded-none border-r border-border"
+        onClick={() => setViewMode('month')}
+      >
+        <CalendarIcon className="h-4 w-4 mr-1.5" />
+        Monat
+      </Button>
       {(isAdmin || isTrainer) && (
         <Button
           variant={viewMode === 'daily' ? 'default' : 'ghost'}
@@ -1433,6 +1469,34 @@ export default function UnifiedCourtCalendar({
      ═══════════════════════════════════════════════════ */
   if (viewMode === 'agenda') {
     return renderAgendaView();
+  }
+
+  /* ═══════════════════════════════════════════════════
+     RENDER: Month View (Phase 2.1 — übernommen aus /bookings)
+     ═══════════════════════════════════════════════════ */
+  if (viewMode === 'month') {
+    return (
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="flex flex-wrap items-center gap-2">
+          {viewToggleEl}
+          {roleActionButtonsEl}
+        </div>
+        <MonthView
+          sessions={visibleSessions}
+          isLoading={sessionsLoading}
+          currentMonth={selectedDate}
+          onPrevMonth={goToPrevious}
+          onNextMonth={goToNext}
+          onToday={goToToday}
+          memberId={memberId}
+          clubId={clubId}
+          canManageStatus={isAdmin || isTrainer}
+          onBookSession={handleBookSession}
+          onCancelBooking={handleCancelBooking}
+          onStatusChange={handleStatusChange}
+        />
+      </div>
+    );
   }
 
   /* ═══════════════════════════════════════════════════
