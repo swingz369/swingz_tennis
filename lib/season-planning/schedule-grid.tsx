@@ -18,6 +18,7 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { DAYS, HOURS } from './schedule-constants';
 import type { ScheduleSlot } from './types';
 import { GripVertical, Users, Clock, MapPin, User, X, Pencil } from 'lucide-react';
+import { CalendarShell } from '@/components/calendar/CalendarShell';
 
 /* ─────────────────── Types ─────────────────── */
 
@@ -430,23 +431,17 @@ export default function ScheduleGrid({ plan, onSlotMove, onSlotUpdate }: Schedul
         onDragEnd={handleDragEnd}
         onDragCancel={() => setActiveSlot(null)}
       >
-        <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-          {/* Header */}
-          <div className="px-5 py-3 border-b border-border flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h2 className="font-semibold text-foreground text-sm">Wochenstundenplan</h2>
-              <span className="text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                {plan.length} Gruppen
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <GripVertical size={12} />
-              Drag & Drop zum Verschieben
-            </p>
-          </div>
-
+        <CalendarShell
+          title="Wochenstundenplan"
+          subtitle="Drag & Drop zum Verschieben"
+          controls={
+            <span className="text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+              {plan.length} Gruppen
+            </span>
+          }
+        >
           {/* Grid — Mo-Sa only — Sonntag ist kein Trainingstag (Vereinsrealität) */}
-          <div className="overflow-x-auto">
+          <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm overflow-x-auto">
             <div
               style={{
                 display: 'grid',
@@ -494,7 +489,7 @@ export default function ScheduleGrid({ plan, onSlotMove, onSlotUpdate }: Schedul
               })}
             </div>
           </div>
-        </div>
+        </CalendarShell>
 
         {/* Drag Overlay — rendered outside the grid for proper positioning */}
         <DragOverlay dropAnimation={{ duration: 200, easing: 'ease-out' }}>
