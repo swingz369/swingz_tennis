@@ -110,3 +110,26 @@ export async function resolveTrainerRecordIds(userIds: string[]): Promise<Map<st
 
   return result;
 }
+
+/**
+ * Alle `trainers.id`, die aktiv als Trainer in einem Verein sind — für Abfragen,
+ * die "alle Trainer dieses Vereins" statt eines einzelnen brauchen (z. B. der
+ * Kalender, der Trainerstunden vereinsweit anzeigt).
+ */
+export async function resolveClubTrainerRecordIds(clubId: string): Promise<string[]> {
+  const memberships = await db
+    .select({ userId: userClubMemberships.user_id })
+    .from(userClubMemberships)
+    .where(
+      and(
+        eq(userClubMemberships.club_id, clubId),
+        eq(userClubMemberships.role, 'trainer'),
+        eq(userClubMemberships.is_active, true)
+      )
+    );
+  const userIds = memberships.map((m) => m.userId);
+  if (userIds.length === 0) return [];
+
+  const ids = await resolveTrainerRecordIds(userIds);
+  return Array.from(new Set(ids.values()));
+}
