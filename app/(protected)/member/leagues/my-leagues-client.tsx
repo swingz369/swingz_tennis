@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Trophy, ExternalLink, MapPin } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Match {
   id: string;
@@ -73,11 +74,16 @@ export function MyLeaguesClient() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/member" aria-label="Zurück zum Dashboard">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/member" aria-label="Zurück zum Dashboard">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Zurück zum Dashboard</TooltipContent>
+        </Tooltip>
         <div>
           <h1 className="text-xl font-semibold">Meine Mannschaften</h1>
           <p className="text-sm text-muted-foreground">

@@ -51,6 +51,7 @@ import { PaginationNav } from '@/components/ui/pagination-nav';
 import { buildPaginationMeta, ALL_LIMIT } from '@/lib/pagination';
 
 import { createLogger } from '@/lib/logger';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const log = createLogger('trainer-profile-management');
 
@@ -550,30 +551,44 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Details"
-                          aria-label="Details"
-                          asChild
-                        >
-                          <Link href={`/admin/trainers/${trainer.id}`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title={trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
-                          aria-label={trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
-                          onClick={() => handleToggleTrainerStatus(trainer.id, trainer.status)}
-                        >
-                          {trainer.status === 'active' ? (
-                            <UserX className="h-4 w-4 text-brand-accent-600" />
-                          ) : (
-                            <UserCheck className="h-4 w-4 text-success-600" />
-                          )}
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Details"
+                              aria-label="Details"
+                              asChild
+                            >
+                              <Link href={`/admin/trainers/${trainer.id}`}>
+                                <Eye className="h-4 w-4" />
+                              </Link>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Details</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title={trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
+                              aria-label={
+                                trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'
+                              }
+                              onClick={() => handleToggleTrainerStatus(trainer.id, trainer.status)}
+                            >
+                              {trainer.status === 'active' ? (
+                                <UserX className="h-4 w-4 text-brand-accent-600" />
+                              ) : (
+                                <UserCheck className="h-4 w-4 text-success-600" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -617,16 +632,21 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
       >
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold">{selectedIds.size} Trainer deaktivieren?</h3>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setBulkConfirmOpen(false)}
-            disabled={bulkDeactivating}
-            aria-label="Schließen"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setBulkConfirmOpen(false)}
+                disabled={bulkDeactivating}
+                aria-label="Schließen"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Schließen</TooltipContent>
+          </Tooltip>
         </div>
         <p className="text-sm text-muted-foreground">
           Die ausgewählten Trainer werden auf <strong>inaktiv</strong> gesetzt. Sie können sie
@@ -682,15 +702,20 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
       <CenteredModal open={showInviteForm} onClose={() => setShowInviteForm(false)}>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold">Trainer einladen</h3>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setShowInviteForm(false)}
-            aria-label="Schließen"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setShowInviteForm(false)}
+                aria-label="Schließen"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Schließen</TooltipContent>
+          </Tooltip>
         </div>
         <p className="text-sm text-muted-foreground">
           Lade einen neuen Trainer zu deinem Verein ein

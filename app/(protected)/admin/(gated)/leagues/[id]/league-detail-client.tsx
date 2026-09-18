@@ -45,6 +45,7 @@ import { CateringTab } from '@/components/league/catering-tab';
 import { NuligaImport } from '@/components/admin/nuliga-import';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TeamMember {
   id: string;
@@ -579,11 +580,16 @@ export default function LeagueDetailClient({
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">
-          <Link href="/admin/leagues" className="mt-1">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="mt-1" asChild>
+                <Link href="/admin/leagues" aria-label="Zurück zur Ligaübersicht">
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Zurück zur Ligaübersicht</TooltipContent>
+          </Tooltip>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-primary">{league.name}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -862,24 +868,34 @@ export default function LeagueDetailClient({
                         </div>
                       </div>
                       <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            setAssigningTeamId(assigningTeamId === team.id ? null : team.id)
-                          }
-                          title="Spieler hinzufügen"
-                        >
-                          <UserPlus className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteTeam(team.id)}
-                          title="Team löschen"
-                        >
-                          <Trash2 className="h-4 w-4 text-error-400" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                setAssigningTeamId(assigningTeamId === team.id ? null : team.id)
+                              }
+                              aria-label="Spieler hinzufügen"
+                            >
+                              <UserPlus className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Spieler hinzufügen</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteTeam(team.id)}
+                              aria-label="Team löschen"
+                            >
+                              <Trash2 className="h-4 w-4 text-error-400" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Team löschen</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   </CardHeader>
@@ -1165,13 +1181,19 @@ export default function LeagueDetailClient({
                           <Edit2 className="h-3.5 w-3.5" />
                           {md.status === 'completed' ? 'Bearbeiten' : 'Ergebnis'}
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteMatchDay(md.id)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-error-400" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteMatchDay(md.id)}
+                              aria-label="Spieltag löschen"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-error-400" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Spieltag löschen</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
 
@@ -1344,9 +1366,19 @@ export default function LeagueDetailClient({
                     <History className="h-4 w-4" />
                     Sync-Historie
                   </CardTitle>
-                  <Button variant="ghost" size="icon" onClick={() => setShowSyncHistory(false)}>
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setShowSyncHistory(false)}
+                        aria-label="Schließen"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Schließen</TooltipContent>
+                  </Tooltip>
                 </div>
               </CardHeader>
               <CardContent>

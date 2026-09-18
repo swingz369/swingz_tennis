@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface WeatherData {
   temperature: number;
@@ -139,9 +140,14 @@ export default function WeatherClient() {
         </CardTitle>
         <div className="flex items-center gap-3">
           <RecommendationBadge level={weather.recommendation} />
-          <Button variant="ghost" size="icon" onClick={fetchData}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={fetchData} aria-label="Aktualisieren">
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Aktualisieren</TooltipContent>
+          </Tooltip>
         </div>
       </CardHeader>
       <CardContent>

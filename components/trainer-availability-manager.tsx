@@ -38,6 +38,7 @@ import {
   applyToAllWeeksInMonth,
 } from '@/lib/trainer-availability';
 import type { AvailabilitySlot } from '@/lib/trainer-availability';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const log = createLogger('trainer-availability-manager');
 
@@ -310,15 +311,35 @@ export default function TrainerAvailabilityManager() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-muted/30 rounded-xl p-3">
         {/* Month row */}
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={goToPreviousMonth} title="Vorheriger Monat">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={goToPreviousMonth}
+                aria-label="Vorheriger Monat"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Vorheriger Monat</TooltipContent>
+          </Tooltip>
           <span className="min-w-[140px] text-center font-semibold text-sm capitalize">
             {monthLabel}
           </span>
-          <Button variant="ghost" size="icon" onClick={goToNextMonth} title="Nächster Monat">
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={goToNextMonth}
+                aria-label="Nächster Monat"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Nächster Monat</TooltipContent>
+          </Tooltip>
         </div>
 
         {/* Week row */}
@@ -326,13 +347,33 @@ export default function TrainerAvailabilityManager() {
           <Button variant="outline" size="sm" onClick={goToCurrentWeek} disabled={isCurrentWeek}>
             Heute
           </Button>
-          <Button variant="outline" size="icon" onClick={goToPreviousWeek} title="Vorherige Woche">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goToPreviousWeek}
+                aria-label="Vorherige Woche"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Vorherige Woche</TooltipContent>
+          </Tooltip>
           <span className="min-w-[180px] text-center font-medium text-sm">{weekLabel}</span>
-          <Button variant="outline" size="icon" onClick={goToNextWeek} title="Nächste Woche">
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goToNextWeek}
+                aria-label="Nächste Woche"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Nächste Woche</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 

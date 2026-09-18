@@ -23,6 +23,7 @@ import { Bell, Calendar, Clock, Tag, Loader2, Plus, Trash2, Pin, Send } from 'lu
 import { apiFetch } from '@/lib/api-fetch';
 
 import { createLogger } from '@/lib/logger';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const log = createLogger('news-announcements');
 
@@ -374,20 +375,25 @@ export default function NewsAnnouncements({
                       </div>
                     </div>
                     {canManage && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(item.id)}
-                        disabled={deletingId === item.id}
-                        className="text-muted-foreground hover:text-error-600 shrink-0"
-                        aria-label={`Nachricht "${item.title}" löschen`}
-                      >
-                        {deletingId === item.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(item.id)}
+                            disabled={deletingId === item.id}
+                            className="text-muted-foreground hover:text-error-600 shrink-0"
+                            aria-label={`Nachricht "${item.title}" löschen`}
+                          >
+                            {deletingId === item.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{`Nachricht "${item.title}" löschen`}</TooltipContent>
+                      </Tooltip>
                     )}
                   </div>
                 </CardHeader>

@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { apiFetch, fetchJson } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
 import { ListState } from '@/components/ui/list-state';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type Meeting = {
   id: string;
@@ -137,14 +138,20 @@ export function MeetingsClient() {
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{m.description}</p>
                 )}
               </div>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-8 w-8 text-destructive shrink-0"
-                onClick={() => del(m.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-destructive shrink-0"
+                    onClick={() => del(m.id)}
+                    aria-label="Löschen"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Löschen</TooltipContent>
+              </Tooltip>
             </CardContent>
           </Card>
         ))}

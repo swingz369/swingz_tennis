@@ -38,6 +38,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiFetch } from '@/lib/api-fetch';
 import { useCourts } from '@/hooks/use-courts';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -578,14 +579,19 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                         </Badge>
                       </td>
                       <td className="p-3 text-right whitespace-nowrap">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          title="Details anzeigen"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              aria-label="Details anzeigen"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Details anzeigen</TooltipContent>
+                        </Tooltip>
                       </td>
                     </tr>
                   );
@@ -611,27 +617,39 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
               )}
             </span>
             <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-7 w-7"
-                disabled={page === 0}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    aria-label="Vorherige Seite"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Vorherige Seite</TooltipContent>
+              </Tooltip>
               <span className="text-xs px-2 tabular-nums">
                 {page + 1} / {totalPages}
               </span>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-7 w-7"
-                disabled={page >= totalPages - 1}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7"
+                    disabled={page >= totalPages - 1}
+                    onClick={() => setPage((p) => p + 1)}
+                    aria-label="Nächste Seite"
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Nächste Seite</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         )}

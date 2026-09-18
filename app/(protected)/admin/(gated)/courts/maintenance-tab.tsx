@@ -25,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { apiFetch, fetchJson } from '@/lib/api-fetch';
 import { ListState } from '@/components/ui/list-state';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type Item = {
   id: string;
@@ -167,14 +168,20 @@ export function MaintenanceTab() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7 text-destructive"
-                  onClick={() => del(item.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-destructive"
+                      onClick={() => del(item.id)}
+                      aria-label="Löschen"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Löschen</TooltipContent>
+                </Tooltip>
               </div>
             </CardContent>
           </Card>

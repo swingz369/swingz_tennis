@@ -4,6 +4,7 @@ import { extractErrorMessage } from '@/lib/typed-helpers';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -359,14 +360,20 @@ export function PreferencesTab({ userId, clubId }: Props) {
                         }}
                         className="w-[120px] h-8 text-sm"
                       />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-error-400 hover:text-error-600"
-                        onClick={() => removeSlot(key, slot.start, slot.end)}
-                      >
-                        ×
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-error-400 hover:text-error-600"
+                            onClick={() => removeSlot(key, slot.start, slot.end)}
+                            aria-label="Zeitfenster entfernen"
+                          >
+                            ×
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Zeitfenster entfernen</TooltipContent>
+                      </Tooltip>
                     </div>
                   ))}
                 {slots.length === 0 && (

@@ -3,6 +3,7 @@ import type { RenderOptions } from '@testing-library/react';
 import { render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NextIntlClientProvider } from 'next-intl';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import de from '@/i18n/dictionaries/de.json';
 
 const createTestQueryClient = () =>
@@ -31,7 +32,7 @@ const TestProviders = ({ children, queryClient, locale = 'de' }: TestProvidersPr
   return (
     <QueryClientProvider client={client}>
       <NextIntlClientProvider locale={locale} messages={messages}>
-        {children}
+        <TooltipProvider>{children}</TooltipProvider>
       </NextIntlClientProvider>
     </QueryClientProvider>
   );

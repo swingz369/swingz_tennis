@@ -24,6 +24,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface NuligaTeam {
   teamName: string;
@@ -501,17 +502,22 @@ export default function LeaguesClient() {
                     >
                       {league.status === 'active' ? 'Aktiv' : 'Abgeschlossen'}
                     </Badge>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Liga ${league.name} löschen`}
-                      onClick={(e) => {
-                        e.stopPropagation(); // Karte ist klickbar — nicht zur Detailseite springen
-                        handleDelete(league);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-error-400" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Liga ${league.name} löschen`}
+                          onClick={(e) => {
+                            e.stopPropagation(); // Karte ist klickbar — nicht zur Detailseite springen
+                            handleDelete(league);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-error-400" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{`Liga ${league.name} löschen`}</TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
               </CardHeader>

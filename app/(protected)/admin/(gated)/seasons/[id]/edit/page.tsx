@@ -21,6 +21,7 @@ import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
 import { SeasonPlanningTabs } from '@/components/admin/season-planning-tabs';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Season {
   id: string;
@@ -165,9 +166,19 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
       />
       <SeasonPlanningTabs seasonId={id} />
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.push(`/admin/seasons/${id}`)}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push(`/admin/seasons/${id}`)}
+              aria-label="Zurück zur Saison"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Zurück zur Saison</TooltipContent>
+        </Tooltip>
         <PageHeader title="Saison bearbeiten" description={<>{season.name}</>} />
       </div>
 

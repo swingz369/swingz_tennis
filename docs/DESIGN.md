@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2; §6 Phase 4.4 ergänzt: loading/error/not-found vererben im App Router, keine echte Lücke; §6 Phase 4.5 ergänzt: „Laden" ohne Auslassungspunkte vereinheitlicht)
+> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2; §6 Phase 4.4 ergänzt: loading/error/not-found vererben im App Router, keine echte Lücke; §6 Phase 4.5 ergänzt: „Laden" ohne Auslassungspunkte vereinheitlicht; §8 Icon-Button-Regel für Phase 5.1 ergänzt: aria-label + Tooltip pflicht, globale TooltipProvider, Test-Query per Rolle statt title)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -294,6 +294,18 @@ Die Design-Preview-Seite (`app/(public)/design-preview/page.tsx`) zeigt 11 Anima
 - `prefers-reduced-motion` ✅
 - ✅ Tastaturnavigation-Audit abgeschlossen (0 kritische Funde, s. Abschnitt 13)
 - ✅ ARIA-Live-Region-System — AriaLiveProvider + useAriaLive() + SonnerAriaBridge (Ticket 11 ✅)
+
+**Icon-Button-Regel (Sanierungsplan Phase 5.1, 18.09.2026):** Jeder `size="icon"`-Button
+bekommt ein `aria-label` und ist in `<Tooltip><TooltipTrigger asChild>…</TooltipTrigger>
+<TooltipContent>…</TooltipContent></Tooltip>` gewrappt — beide mit demselben Text. Die
+`TooltipProvider` sitzt einmal global in `app/providers.tsx`, einzelne Stellen brauchen keine
+eigene. `TestProviders` (`src/__tests__/test-utils.tsx`) spiegelt das, sonst wirft Radix
+außerhalb der Provider-Kette. Tests, die einen Icon-Button suchen, greifen auf
+`getByRole('button', { name: '…' })` zu — nicht auf `getByTitle`, das `title`-Attribut wurde
+zugunsten von `aria-label` entfernt (Doppel-Tooltip aus nativem `title` und Radix vermeiden).
+Ein Button mit `asChild`, der einen `Link`/`<a>` rendert, trägt sein `aria-label` auf dem
+Kind-Element (Radix `Slot` merged es auf das tatsächliche DOM-Element) — nicht zusätzlich auf
+`Button` selbst.
 
 ---
 

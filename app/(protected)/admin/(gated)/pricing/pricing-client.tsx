@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
 import { Plus, Edit, Trash2, Clock, Calendar, DollarSign, Loader2, Sun } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Types
 interface TimeRange {
@@ -529,15 +530,21 @@ export function PricingClient({ clubId }: PricingClientProps) {
               />
               <span className="text-xs text-muted-foreground">× Basispreis</span>
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-error-500"
-              onClick={() => removeTimeRange(idx)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-error-500"
+                  onClick={() => removeTimeRange(idx)}
+                  aria-label="Zeitspanne entfernen"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Zeitspanne entfernen</TooltipContent>
+            </Tooltip>
           </div>
         ))}
       </div>
@@ -712,25 +719,37 @@ export function PricingClient({ clubId }: PricingClientProps) {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => openEdit(rule)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-error-500"
-                          onClick={() => {
-                            setSelectedRule(rule);
-                            setShowDelete(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => openEdit(rule)}
+                              aria-label="Bearbeiten"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Bearbeiten</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-error-500"
+                              onClick={() => {
+                                setSelectedRule(rule);
+                                setShowDelete(true);
+                              }}
+                              aria-label="Löschen"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Löschen</TooltipContent>
+                        </Tooltip>
                       </div>
                     </TableCell>
                   </TableRow>

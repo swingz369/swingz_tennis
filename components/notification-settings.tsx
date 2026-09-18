@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 
 import { createLogger } from '@/lib/logger';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const log = createLogger('notification-settings');
 
@@ -403,25 +404,35 @@ export default function NotificationSettings() {
                     </div>
                     <div className="flex items-center gap-2">
                       {!notification.read && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleMarkAsRead(notification.id)}
-                          title="Als gelesen markieren"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleMarkAsRead(notification.id)}
+                              aria-label="Als gelesen markieren"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Als gelesen markieren</TooltipContent>
+                        </Tooltip>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleDeleteNotification(notification.id)}
-                        title="Löschen"
-                      >
-                        <XCircle className="h-4 w-4" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDeleteNotification(notification.id)}
+                            aria-label="Löschen"
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Löschen</TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                 );

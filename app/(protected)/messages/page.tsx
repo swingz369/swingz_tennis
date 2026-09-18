@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CenteredModal } from '@/components/ui/centered-modal';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Select,
   SelectContent,
@@ -572,47 +573,65 @@ function MessageList({
                 Sie liegen über der Klickfläche der Zeile (relative + z-10). */}
             <div className="relative z-10 flex items-center gap-0.5 self-center opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity">
               {folder !== 'sent' && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  title={msg.is_read ? 'Als ungelesen markieren' : 'Als gelesen markieren'}
-                  aria-label={msg.is_read ? 'Als ungelesen markieren' : 'Als gelesen markieren'}
-                  onClick={() => onToggleRead(msg)}
-                >
-                  {msg.is_read ? (
-                    <Mail className="h-3.5 w-3.5" />
-                  ) : (
-                    <MailOpen className="h-3.5 w-3.5" />
-                  )}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      aria-label={msg.is_read ? 'Als ungelesen markieren' : 'Als gelesen markieren'}
+                      onClick={() => onToggleRead(msg)}
+                    >
+                      {msg.is_read ? (
+                        <Mail className="h-3.5 w-3.5" />
+                      ) : (
+                        <MailOpen className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {msg.is_read ? 'Als ungelesen markieren' : 'Als gelesen markieren'}
+                  </TooltipContent>
+                </Tooltip>
               )}
               {folder !== 'sent' && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  title={folder === 'archive' ? 'Zurück in den Posteingang' : 'Archivieren'}
-                  aria-label={folder === 'archive' ? 'Zurück in den Posteingang' : 'Archivieren'}
-                  onClick={() => onArchive(msg, folder !== 'archive')}
-                >
-                  {folder === 'archive' ? (
-                    <ArchiveRestore className="h-3.5 w-3.5" />
-                  ) : (
-                    <Archive className="h-3.5 w-3.5" />
-                  )}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      aria-label={
+                        folder === 'archive' ? 'Zurück in den Posteingang' : 'Archivieren'
+                      }
+                      onClick={() => onArchive(msg, folder !== 'archive')}
+                    >
+                      {folder === 'archive' ? (
+                        <ArchiveRestore className="h-3.5 w-3.5" />
+                      ) : (
+                        <Archive className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {folder === 'archive' ? 'Zurück in den Posteingang' : 'Archivieren'}
+                  </TooltipContent>
+                </Tooltip>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-error-600"
-                title="Löschen"
-                aria-label="Nachricht löschen"
-                onClick={() => onDelete(msg)}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-error-600"
+                    aria-label="Nachricht löschen"
+                    onClick={() => onDelete(msg)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Löschen</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         );
@@ -644,9 +663,20 @@ function MessageDetail({
     <div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border/40 bg-muted/30">
-        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={onBack}
+              aria-label="Zurück zur Übersicht"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Zurück zur Übersicht</TooltipContent>
+        </Tooltip>
         <div className="flex-1 min-w-0">
           <h2 className="text-base font-bold text-foreground truncate">{message.subject}</h2>
           <p className="text-xs text-muted-foreground">
@@ -660,31 +690,41 @@ function MessageDetail({
             Antworten
           </Button>
           {folder !== 'sent' && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              title={folder === 'archive' ? 'Zurück in den Posteingang' : 'Archivieren'}
-              aria-label={folder === 'archive' ? 'Zurück in den Posteingang' : 'Archivieren'}
-              onClick={() => onArchive(message, folder !== 'archive')}
-            >
-              {folder === 'archive' ? (
-                <ArchiveRestore className="h-4 w-4" />
-              ) : (
-                <Archive className="h-4 w-4" />
-              )}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  aria-label={folder === 'archive' ? 'Zurück in den Posteingang' : 'Archivieren'}
+                  onClick={() => onArchive(message, folder !== 'archive')}
+                >
+                  {folder === 'archive' ? (
+                    <ArchiveRestore className="h-4 w-4" />
+                  ) : (
+                    <Archive className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {folder === 'archive' ? 'Zurück in den Posteingang' : 'Archivieren'}
+              </TooltipContent>
+            </Tooltip>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-error-600"
-            title="Löschen"
-            aria-label="Nachricht löschen"
-            onClick={() => onDelete(message)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-error-600"
+                aria-label="Nachricht löschen"
+                onClick={() => onDelete(message)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Löschen</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 

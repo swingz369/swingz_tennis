@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
 import { PageHeader } from '@/components/ui/page-header';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const log = createLogger('admin:members:family');
 
@@ -241,15 +242,20 @@ export default function AdminFamilyPage() {
                             ? 'Kind'
                             : 'Mitglied'}
                       </Badge>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-error-500"
-                        onClick={() => handleRemoveMember(group.familyGroupId, m.userId)}
-                        aria-label={`${m.fullName} aus Familie entfernen`}
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-error-500"
+                            onClick={() => handleRemoveMember(group.familyGroupId, m.userId)}
+                            aria-label={`${m.fullName} aus Familie entfernen`}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{`${m.fullName} aus Familie entfernen`}</TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                 ))}

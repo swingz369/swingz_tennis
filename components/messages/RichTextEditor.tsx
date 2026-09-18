@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface RichTextEditorProps {
   value: string;
@@ -41,18 +42,23 @@ function ToolbarButton({
   children: React.ReactNode;
 }) {
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      className={cn('h-8 w-8 shrink-0', active && 'bg-muted text-foreground')}
-      disabled={disabled}
-      onClick={onClick}
-      title={title}
-      aria-label={title}
-    >
-      {children}
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className={cn('h-8 w-8 shrink-0', active && 'bg-muted text-foreground')}
+          disabled={disabled}
+          onClick={onClick}
+          title={title}
+          aria-label={title}
+        >
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{title}</TooltipContent>
+    </Tooltip>
   );
 }
 

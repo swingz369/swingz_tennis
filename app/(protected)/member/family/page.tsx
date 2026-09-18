@@ -12,6 +12,7 @@ import { Users, Plus, Copy, RefreshCw, Loader2, ShieldCheck, LogIn } from 'lucid
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 import { useFamilyAccounts } from '@/hooks/use-family-accounts';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const FAMILY_QUERY_KEY = ['family-accounts'];
 
@@ -154,15 +155,20 @@ export default function FamilyPage() {
                     <code className="flex-1 rounded-xl border border-border bg-muted px-3 py-2 font-mono text-sm tracking-widest">
                       {family.inviteCode}
                     </code>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => copyCode(family.inviteCode!)}
-                      title="Code kopieren"
-                      aria-label="Einladungscode kopieren"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => copyCode(family.inviteCode!)}
+                          title="Code kopieren"
+                          aria-label="Einladungscode kopieren"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Einladungscode kopieren</TooltipContent>
+                    </Tooltip>
                     <Button
                       variant="outline"
                       onClick={handleRegenerate}

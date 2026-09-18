@@ -18,6 +18,7 @@ import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/ui/page-header';
 import { TennisBallEmptyState } from '@/components/ui/empty-state';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface FeeConfig {
   id: string;
@@ -374,29 +375,39 @@ export default function FeeCategoriesClient({
                         >
                           {cat.is_active ? 'Aktiv' : 'Inaktiv'}
                         </span>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={() => startEdit(cat)}
-                          aria-label={`${cat.name} bearbeiten`}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 text-error-500 hover:text-error-600 hover:bg-error-50 dark:hover:bg-error-900/20"
-                          onClick={() => handleDelete(cat.id, cat.name)}
-                          disabled={deletingId === cat.id}
-                          aria-label={`${cat.name} löschen`}
-                        >
-                          {deletingId === cat.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-3.5 w-3.5" />
-                          )}
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8"
+                              onClick={() => startEdit(cat)}
+                              aria-label={`${cat.name} bearbeiten`}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{`${cat.name} bearbeiten`}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-error-500 hover:text-error-600 hover:bg-error-50 dark:hover:bg-error-900/20"
+                              onClick={() => handleDelete(cat.id, cat.name)}
+                              disabled={deletingId === cat.id}
+                              aria-label={`${cat.name} löschen`}
+                            >
+                              {deletingId === cat.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{`${cat.name} löschen`}</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   )}

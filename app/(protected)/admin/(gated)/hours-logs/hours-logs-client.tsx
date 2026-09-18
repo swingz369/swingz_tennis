@@ -30,6 +30,7 @@ import { de } from '@/lib/locale';
 import { apiFetch } from '@/lib/api-fetch';
 
 import { createLogger } from '@/lib/logger';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const log = createLogger('admin:hours-logs:hours-logs-client');
 
@@ -420,38 +421,53 @@ export default function HoursLogsClient() {
                           <div className="flex items-center justify-end gap-1">
                             {log.status === 'pending' && (
                               <>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-success-600 hover:text-success-700 hover:bg-success-50"
-                                  title="Genehmigen"
-                                  disabled={actionLoading === log.id}
-                                  onClick={() => handleApprove(log.id)}
-                                >
-                                  <CheckCircle className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-warning-600 hover:text-warning-700 hover:bg-warning-50"
-                                  title="Ablehnen"
-                                  disabled={actionLoading === log.id}
-                                  onClick={() => setRejectId(log.id)}
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-success-600 hover:text-success-700 hover:bg-success-50"
+                                      disabled={actionLoading === log.id}
+                                      onClick={() => handleApprove(log.id)}
+                                      aria-label="Genehmigen"
+                                    >
+                                      <CheckCircle className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Genehmigen</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-warning-600 hover:text-warning-700 hover:bg-warning-50"
+                                      disabled={actionLoading === log.id}
+                                      onClick={() => setRejectId(log.id)}
+                                      aria-label="Ablehnen"
+                                    >
+                                      <XCircle className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Ablehnen</TooltipContent>
+                                </Tooltip>
                               </>
                             )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-error-400 hover:text-error-600 hover:bg-error-50"
-                              title="Löschen"
-                              disabled={actionLoading === log.id}
-                              onClick={() => setDeleteId(log.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-error-400 hover:text-error-600 hover:bg-error-50"
+                                  disabled={actionLoading === log.id}
+                                  onClick={() => setDeleteId(log.id)}
+                                  aria-label="Löschen"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Löschen</TooltipContent>
+                            </Tooltip>
                           </div>
                         </td>
                       </tr>

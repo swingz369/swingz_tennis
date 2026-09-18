@@ -10,6 +10,7 @@ import {
   CourtClosureFormDialog,
   type ClosureCourtOption,
 } from '@/components/admin/court-closure-form-dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Closure {
   id: string;
@@ -105,14 +106,19 @@ export function ClosuresManager({ courts }: { courts: ClosureCourtOption[] }) {
                     {c.end_date && ` — ${new Date(c.end_date).toLocaleDateString('de-DE')}`}
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRemove(c.id)}
-                  aria-label="Sperre aufheben"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemove(c.id)}
+                      aria-label="Sperre aufheben"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Sperre aufheben</TooltipContent>
+                </Tooltip>
               </div>
             ))}
           </div>

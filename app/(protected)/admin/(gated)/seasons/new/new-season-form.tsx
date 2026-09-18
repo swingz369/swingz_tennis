@@ -20,6 +20,7 @@ import { useUserClub } from '@/hooks/use-user-data';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function NewSeasonForm() {
   const router = useRouter();
@@ -114,9 +115,19 @@ export function NewSeasonForm() {
       />
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/admin/seasons')}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push('/admin/seasons')}
+              aria-label="Zurück zur Saisonübersicht"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Zurück zur Saisonübersicht</TooltipContent>
+        </Tooltip>
         <PageHeader title="Neue Saison erstellen" description="Lege eine neue Trainingssaison an" />
       </div>
 

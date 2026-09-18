@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { AnimatedCounter } from '@/components/animations';
 import { apiFetch } from '@/lib/api-fetch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface AtRiskMember {
   userId: string;
@@ -134,9 +135,20 @@ export function ChurnRiskPanel() {
               <p className="text-xs text-muted-foreground">Risiko-Rate</p>
             </div>
           )}
-          <Button variant="ghost" size="icon" onClick={fetchData} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={fetchData}
+                disabled={loading}
+                aria-label="Aktualisieren"
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Aktualisieren</TooltipContent>
+          </Tooltip>
         </div>
       </CardHeader>
 

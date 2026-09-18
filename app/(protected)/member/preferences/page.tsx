@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/page-header';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { apiFetch } from '@/lib/api-fetch';
 import { jsonColumn } from '@/lib/typed-helpers';
 
@@ -435,15 +436,21 @@ export default function MemberPreferencesPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 text-muted-foreground hover:text-error-500 shrink-0"
-                onClick={() => removeTimePref(idx)}
-                disabled={isSubmitted}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-error-500 shrink-0"
+                    onClick={() => removeTimePref(idx)}
+                    disabled={isSubmitted}
+                    aria-label="Wunschzeit entfernen"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Wunschzeit entfernen</TooltipContent>
+              </Tooltip>
             </div>
           ))}
 

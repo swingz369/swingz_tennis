@@ -30,6 +30,7 @@ import { ConfigStep } from './steps/config-step';
 import { TrainerScheduleStep } from './steps/trainer-schedule-step';
 import { PlanEditStep } from './steps/plan-edit-step';
 import { FinalizeStep } from './steps/finalize-step';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // ============================================
 // STEP DEFINITIONS
@@ -156,9 +157,19 @@ function WizardContent({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/admin/seasons')}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => router.push('/admin/seasons')}
+                aria-label="Zurück zur Saisonübersicht"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Zurück zur Saisonübersicht</TooltipContent>
+          </Tooltip>
           <div>
             <div className="flex items-center gap-3">
               <span className="text-2xl">{seasonType === 'summer' ? '☀️' : '❄️'}</span>

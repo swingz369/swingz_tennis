@@ -28,6 +28,7 @@ import {
 import { createLogger } from '@/lib/logger';
 import { PageHeader } from '@/components/ui/page-header';
 import { jsonColumn } from '@/lib/typed-helpers';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const log = createLogger('trainer:planning-preferences');
 
@@ -353,15 +354,21 @@ export default function TrainerPlanningPreferencesPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 text-muted-foreground hover:text-error-500 shrink-0"
-                onClick={() => removeTimePref(idx)}
-                disabled={isSubmitted}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-error-500 shrink-0"
+                    onClick={() => removeTimePref(idx)}
+                    disabled={isSubmitted}
+                    aria-label="Wunschzeit entfernen"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Wunschzeit entfernen</TooltipContent>
+              </Tooltip>
             </div>
           ))}
 

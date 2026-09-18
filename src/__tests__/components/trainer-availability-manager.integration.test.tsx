@@ -481,8 +481,8 @@ describe('TrainerAvailabilityManager (integration)', () => {
     // Mock next week fetch (also empty)
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { slots: [] }));
 
-    // Click next week button — find by title attribute
-    const nextWeekBtn = screen.getByTitle('Nächste Woche');
+    // Click next week button — find by accessible name (aria-label)
+    const nextWeekBtn = screen.getByRole('button', { name: 'Nächste Woche' });
     fireEvent.click(nextWeekBtn);
 
     // Component fetches with new week range
@@ -510,7 +510,7 @@ describe('TrainerAvailabilityManager (integration)', () => {
 
     // Step 1: Go to previous week
     mockApiFetch.mockResolvedValueOnce(mockResponse(200, { slots: [] }));
-    const prevWeekBtn = screen.getByTitle('Vorherige Woche');
+    const prevWeekBtn = screen.getByRole('button', { name: 'Vorherige Woche' });
     fireEvent.click(prevWeekBtn);
 
     await waitFor(() => {

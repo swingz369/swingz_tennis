@@ -22,6 +22,7 @@ import { NotificationBell } from '@/components/layout/notification-bell';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import { useSearchDialog } from '@/components/command-palette-context';
 import { GlobalSearch } from '@/components/layout/global-search';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface HeaderProps {
   user?: {
@@ -81,6 +82,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
     // /dashboard und von dort in den Rollenbereich — der Logout endete im
     // Nirgendwo statt auf der Loginseite. /api/auth/logout löscht zusätzlich
     // `admin_club_id` und `selected-club-id` und redirectet selbst auf /login.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- volle Navigation nötig, s. Kommentar oben
     window.location.href = '/api/auth/logout';
   };
 
@@ -150,16 +152,21 @@ export function Header({ user, onMenuClick }: HeaderProps) {
         <GlobalSearch className="ml-6 hidden sm:block w-64 lg:w-80" />
 
         <div className="flex items-center gap-0.5 shrink-0 ml-auto">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="sm:hidden h-9 w-9 text-foreground rounded-xl hover:bg-muted"
-            onClick={() => setSearchOpen(true)}
-            aria-label="Suche öffnen"
-          >
-            <Search className="h-5 w-5" aria-hidden="true" />
-            <span className="sr-only">Suche öffnen</span>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="sm:hidden h-9 w-9 text-foreground rounded-xl hover:bg-muted"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Suche öffnen"
+              >
+                <Search className="h-5 w-5" aria-hidden="true" />
+                <span className="sr-only">Suche öffnen</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Suche öffnen</TooltipContent>
+          </Tooltip>
 
           {/* Theme Toggle */}
           <ThemeToggle />
@@ -278,16 +285,21 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           </div>
 
           {/* Mobile menu toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden h-9 w-9 text-foreground dark:text-white rounded-xl hover:bg-muted dark:hover:bg-background/10"
-            onClick={onMenuClick}
-            aria-label="Menü öffnen"
-          >
-            <Menu className="h-5 w-5" aria-hidden="true" />
-            <span className="sr-only">Menü öffnen</span>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden h-9 w-9 text-foreground dark:text-white rounded-xl hover:bg-muted dark:hover:bg-background/10"
+                onClick={onMenuClick}
+                aria-label="Menü öffnen"
+              >
+                <Menu className="h-5 w-5" aria-hidden="true" />
+                <span className="sr-only">Menü öffnen</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Menü öffnen</TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </header>

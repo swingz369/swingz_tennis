@@ -29,6 +29,7 @@ import { apiFetch } from '@/lib/api-fetch';
 import { StatCard } from '@/components/ui/stat-card';
 
 import { createLogger } from '@/lib/logger';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const log = createLogger('member-billing');
 
@@ -274,15 +275,35 @@ export default function MemberBilling() {
           <Button variant="outline" size="sm" onClick={goToToday}>
             Heute
           </Button>
-          <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goToPreviousMonth}
+                aria-label="Vorheriger Monat"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Vorheriger Monat</TooltipContent>
+          </Tooltip>
           <span className="min-w-[130px] text-center font-medium text-sm">
             {format(currentMonth, 'MMMM yyyy', { locale: de })}
           </span>
-          <Button variant="outline" size="icon" onClick={goToNextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goToNextMonth}
+                aria-label="Nächster Monat"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Nächster Monat</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 

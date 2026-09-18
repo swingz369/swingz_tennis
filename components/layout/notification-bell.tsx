@@ -15,6 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useNotificationsRealtime } from '@/hooks/use-notifications-realtime';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 /**
  * Enhanced NotificationBell with dropdown panel.
@@ -165,21 +166,32 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative h-9 w-9 rounded-xl"
-          aria-label={
-            unreadCount > 0 ? `${unreadCount} ungelesene Benachrichtigungen` : 'Benachrichtigungen'
-          }
-        >
-          <Bell className="h-4 w-4" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-error-500 text-2xs font-bold text-white animate-in fade-in-0 zoom-in-95">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative h-9 w-9 rounded-xl"
+              aria-label={
+                unreadCount > 0
+                  ? `${unreadCount} ungelesene Benachrichtigungen`
+                  : 'Benachrichtigungen'
+              }
+            >
+              <Bell className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-error-500 text-2xs font-bold text-white animate-in fade-in-0 zoom-in-95">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {unreadCount > 0
+              ? `${unreadCount} ungelesene Benachrichtigungen`
+              : 'Benachrichtigungen'}
+          </TooltipContent>
+        </Tooltip>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-80">

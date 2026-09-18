@@ -55,6 +55,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const log = createLogger('members-client');
 
@@ -435,20 +436,27 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
           {/* Werkzeugleiste: Ansichtsumschalter. (CSV-Import liegt in den
               Vereinseinstellungen.) */}
           <div className="flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setViewMode(viewMode === 'table' ? 'grid' : 'table')}
-              title={viewMode === 'table' ? 'Kartenansicht' : 'Tabellenansicht'}
-              aria-label={viewMode === 'table' ? 'Kartenansicht' : 'Tabellenansicht'}
-            >
-              {viewMode === 'table' ? (
-                <LayoutGrid className="h-4 w-4" />
-              ) : (
-                <List className="h-4 w-4" />
-              )}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setViewMode(viewMode === 'table' ? 'grid' : 'table')}
+                  title={viewMode === 'table' ? 'Kartenansicht' : 'Tabellenansicht'}
+                  aria-label={viewMode === 'table' ? 'Kartenansicht' : 'Tabellenansicht'}
+                >
+                  {viewMode === 'table' ? (
+                    <LayoutGrid className="h-4 w-4" />
+                  ) : (
+                    <List className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {viewMode === 'table' ? 'Kartenansicht' : 'Tabellenansicht'}
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           {/* Members Table / Grid */}
@@ -560,30 +568,42 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-right">
                           <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Details"
-                              aria-label="Details"
-                              asChild
-                            >
-                              <Link href={`/admin/members/${member.id}`}>
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
-                              aria-label={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
-                              onClick={() => handleToggleActive(member.id, member.is_active)}
-                            >
-                              {member.is_active ? (
-                                <UserX className="h-4 w-4 text-brand-accent-600" />
-                              ) : (
-                                <UserCheck className="h-4 w-4 text-success-600" />
-                              )}
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Details"
+                                  aria-label="Details"
+                                  asChild
+                                >
+                                  <Link href={`/admin/members/${member.id}`}>
+                                    <Eye className="h-4 w-4" />
+                                  </Link>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Details</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                                  aria-label={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                                  onClick={() => handleToggleActive(member.id, member.is_active)}
+                                >
+                                  {member.is_active ? (
+                                    <UserX className="h-4 w-4 text-brand-accent-600" />
+                                  ) : (
+                                    <UserCheck className="h-4 w-4 text-success-600" />
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {member.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                              </TooltipContent>
+                            </Tooltip>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -674,32 +694,44 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                           Beigetreten: {formatDate(member.joined_at)}
                         </p>
                         <div className="flex justify-end gap-1 pt-1 border-t border-border dark:border-white/5">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            title="Details"
-                            aria-label="Details"
-                            asChild
-                          >
-                            <Link href={`/admin/members/${member.id}`}>
-                              <Eye className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            title={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
-                            aria-label={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
-                            onClick={() => handleToggleActive(member.id, member.is_active)}
-                          >
-                            {member.is_active ? (
-                              <UserX className="h-4 w-4 text-brand-accent-600" />
-                            ) : (
-                              <UserCheck className="h-4 w-4 text-success-600" />
-                            )}
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title="Details"
+                                aria-label="Details"
+                                asChild
+                              >
+                                <Link href={`/admin/members/${member.id}`}>
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Details</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                                aria-label={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                                onClick={() => handleToggleActive(member.id, member.is_active)}
+                              >
+                                {member.is_active ? (
+                                  <UserX className="h-4 w-4 text-brand-accent-600" />
+                                ) : (
+                                  <UserCheck className="h-4 w-4 text-success-600" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {member.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                       </CardContent>
                     </Card>
@@ -747,16 +779,21 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
               <h3 className="text-lg font-bold">
                 {selectedIds.size} Mitglied{selectedIds.size !== 1 ? 'er' : ''} deaktivieren?
               </h3>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setBulkConfirmOpen(false)}
-                disabled={bulkDeactivating}
-                aria-label="Schließen"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setBulkConfirmOpen(false)}
+                    disabled={bulkDeactivating}
+                    aria-label="Schließen"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Schließen</TooltipContent>
+              </Tooltip>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
               Folgende Mitglieder werden deaktiviert und verlieren den Zugang zum Vereinsportal:
@@ -818,18 +855,23 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
       >
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold">Neues Mitglied einladen</h3>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => {
-              setShowInviteDialog(false);
-              setInviteForm({ email: '', full_name: '', role: 'member' });
-            }}
-            aria-label="Schließen"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  setShowInviteDialog(false);
+                  setInviteForm({ email: '', full_name: '', role: 'member' });
+                }}
+                aria-label="Schließen"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Schließen</TooltipContent>
+          </Tooltip>
         </div>
         <form onSubmit={handleInvite} className="space-y-4 mt-4">
           <div>

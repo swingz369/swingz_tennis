@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Assignment {
   id: string;
@@ -852,14 +853,20 @@ export default function WorkDutiesClient({
                 <Repeat className="h-4 w-4 text-primary" />
                 Mehrere Dienste erstellen
               </CardTitle>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setShowBulk(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setShowBulk(false)}
+                    aria-label="Schließen"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Schließen</TooltipContent>
+              </Tooltip>
             </div>
             <p className="text-xs text-muted-foreground">
               Erstelle wiederkehrende Dienste aus einer Vorlage für einen Zeitraum.

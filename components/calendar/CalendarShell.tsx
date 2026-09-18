@@ -3,6 +3,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export interface CalendarShellNav {
   label: string;
@@ -49,25 +50,37 @@ export function CalendarShell({
                 Heute
               </Button>
               <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 rounded-xl"
-                  onClick={nav.onPrev}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-xl"
+                      onClick={nav.onPrev}
+                      aria-label="Zurück"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Zurück</TooltipContent>
+                </Tooltip>
                 <span className="min-w-[140px] text-center text-sm font-semibold text-foreground tabular-nums">
                   {nav.label}
                 </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 rounded-xl"
-                  onClick={nav.onNext}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-xl"
+                      onClick={nav.onNext}
+                      aria-label="Vor"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Vor</TooltipContent>
+                </Tooltip>
               </div>
             </>
           )}

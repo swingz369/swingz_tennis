@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { PageHeader } from '@/components/ui/page-header';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { NewSeasonForm } from './new-season-form';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,11 +30,16 @@ export default async function NewSeasonPage() {
         items={[{ label: 'Saisonplanung', href: '/admin/seasons' }, { label: 'Neue Saison' }]}
       />
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/seasons" aria-label="Zurück zu den Saisons">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/admin/seasons" aria-label="Zurück zu den Saisons">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Zurück zu den Saisons</TooltipContent>
+        </Tooltip>
         <PageHeader
           title="Neue Saison erstellen"
           description="Noch nicht möglich — der Verein ist dafür nicht eingerichtet"

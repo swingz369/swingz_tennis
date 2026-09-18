@@ -19,6 +19,7 @@ import type { WeeklyAvailability, TimeSlot } from '@/lib/types/season-planning';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface PreferenceFormPageProps {
   params: {
@@ -131,13 +132,19 @@ export default function PreferenceFormPage({ params }: PreferenceFormPageProps) 
       />
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push(`/admin/seasons/${params.id}`)}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push(`/admin/seasons/${params.id}`)}
+              aria-label="Zurück zur Saison"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Zurück zur Saison</TooltipContent>
+        </Tooltip>
         <PageHeader
           title="Verfügbarkeit angeben"
           description="Geben Sie Ihre wöchentliche Verfügbarkeit für diese Saison an"
@@ -263,14 +270,20 @@ export default function PreferenceFormPage({ params }: PreferenceFormPageProps) 
                             onChange={(e) => updateTimeSlot(day.key, index, 'end', e.target.value)}
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeTimeSlot(day.key, index)}
-                          >
-                            ✕
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeTimeSlot(day.key, index)}
+                                aria-label="Zeitfenster entfernen"
+                              >
+                                ✕
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Zeitfenster entfernen</TooltipContent>
+                          </Tooltip>
                         </div>
                       ))}
                     </div>

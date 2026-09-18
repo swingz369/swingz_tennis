@@ -63,6 +63,7 @@ import type { Court } from '@/lib/types/court-booking';
 import { CenteredModal } from '@/components/ui/centered-modal';
 import { NoCourtsBrandedEmptyState } from '@/components/ui/empty-state';
 import { apiFetch } from '@/lib/api-fetch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CourtType {
   id: string;
@@ -755,15 +756,20 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
           <CardHeader className="border-b border-border dark:border-white/10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleCloseForm}
-                  className="shrink-0"
-                  aria-label="Zurück"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleCloseForm}
+                      className="shrink-0"
+                      aria-label="Zurück"
+                    >
+                      <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Zurück</TooltipContent>
+                </Tooltip>
                 <div>
                   <CardTitle>
                     {showInlineForm === 'create' ? 'Neuen Platz anlegen' : `Platz bearbeiten`}
@@ -775,9 +781,19 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                   </p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={handleCloseForm} aria-label="Schließen">
-                <X className="h-5 w-5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleCloseForm}
+                    aria-label="Schließen"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Schließen</TooltipContent>
+              </Tooltip>
             </div>
           </CardHeader>
           <CardContent>
@@ -884,14 +900,19 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                         </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 flex-shrink-0"
-                              aria-label="Weitere Aktionen"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 flex-shrink-0"
+                                  aria-label="Weitere Aktionen"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Weitere Aktionen</TooltipContent>
+                            </Tooltip>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => handleEdit(court)}>
@@ -1069,9 +1090,18 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                           <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" aria-label="Weitere Aktionen">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      aria-label="Weitere Aktionen"
+                                    >
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Weitere Aktionen</TooltipContent>
+                                </Tooltip>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => handleEdit(court)}>
@@ -1172,14 +1202,19 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 flex-shrink-0"
-                                aria-label="Weitere Aktionen"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 flex-shrink-0"
+                                    aria-label="Weitere Aktionen"
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Weitere Aktionen</TooltipContent>
+                              </Tooltip>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => handleCTEdit(type)}>

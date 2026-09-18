@@ -59,6 +59,7 @@ import { useUserRole } from '@/hooks/use-user-role';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
 import { createLogger } from '@/lib/logger';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const log = createLogger('admin:trainers:[id]:trainer-detail-client');
 
@@ -1051,15 +1052,23 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                       Reguläre Wochenverfügbarkeit
                     </h3>
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => loadAllSlots(trainer.userId)}
-                        disabled={weeklyLoading}
-                      >
-                        <RefreshCw className={`h-4 w-4 ${weeklyLoading ? 'animate-spin' : ''}`} />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => loadAllSlots(trainer.userId)}
+                            disabled={weeklyLoading}
+                            aria-label="Aktualisieren"
+                          >
+                            <RefreshCw
+                              className={`h-4 w-4 ${weeklyLoading ? 'animate-spin' : ''}`}
+                            />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Aktualisieren</TooltipContent>
+                      </Tooltip>
                       <Button
                         variant="outline"
                         size="sm"
@@ -1100,14 +1109,20 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                                       Verfügbar
                                     </Badge>
                                   </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    onClick={() => slot.id && handleDeleteWeeklySlot(slot.id)}
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5 text-error-400 hover:text-error-600" />
-                                  </Button>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={() => slot.id && handleDeleteWeeklySlot(slot.id)}
+                                        aria-label="Löschen"
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5 text-error-400 hover:text-error-600" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Löschen</TooltipContent>
+                                  </Tooltip>
                                 </div>
                               ))}
                             </div>
@@ -1132,14 +1147,20 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
               <CenteredModal open={weeklyDialogOpen} onClose={() => setWeeklyDialogOpen(false)}>
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold">Neue wöchentliche Verfügbarkeit</h3>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setWeeklyDialogOpen(false)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setWeeklyDialogOpen(false)}
+                        aria-label="Schließen"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Schließen</TooltipContent>
+                  </Tooltip>
                 </div>
                 <div className="space-y-3">
                   <div>
@@ -1212,15 +1233,23 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                       Konkrete Verfügbarkeiten
                     </h3>
                     <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => loadAllSlots(trainer.userId)}
-                        disabled={availLoading}
-                      >
-                        <RefreshCw className={`h-4 w-4 ${availLoading ? 'animate-spin' : ''}`} />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => loadAllSlots(trainer.userId)}
+                            disabled={availLoading}
+                            aria-label="Aktualisieren"
+                          >
+                            <RefreshCw
+                              className={`h-4 w-4 ${availLoading ? 'animate-spin' : ''}`}
+                            />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Aktualisieren</TooltipContent>
+                      </Tooltip>
                       <Button
                         variant="outline"
                         size="sm"
@@ -1270,14 +1299,20 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                             </p>
                           </div>
                           {slot.status !== 'booked' && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 shrink-0"
-                              onClick={() => handleDeleteSlot(slot.id)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 text-error-400 hover:text-error-600" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 shrink-0"
+                                  onClick={() => handleDeleteSlot(slot.id)}
+                                  aria-label="Löschen"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 text-error-400 hover:text-error-600" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Löschen</TooltipContent>
+                            </Tooltip>
                           )}
                         </div>
                       ))}
@@ -1298,14 +1333,20 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
               <CenteredModal open={slotDialogOpen} onClose={() => setSlotDialogOpen(false)}>
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold">Neue Verfügbarkeit</h3>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setSlotDialogOpen(false)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setSlotDialogOpen(false)}
+                        aria-label="Schließen"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Schließen</TooltipContent>
+                  </Tooltip>
                 </div>
                 <div className="space-y-3">
                   <div>
@@ -1403,15 +1444,21 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                       <Sparkles className="h-4 w-4 text-brand-accent" />
                       Probetrainings
                     </h3>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => trainer && loadTrialTrainings(trainer.userId)}
-                      disabled={trialsLoading}
-                    >
-                      <RefreshCw className={`h-4 w-4 ${trialsLoading ? 'animate-spin' : ''}`} />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => trainer && loadTrialTrainings(trainer.userId)}
+                          disabled={trialsLoading}
+                          aria-label="Aktualisieren"
+                        >
+                          <RefreshCw className={`h-4 w-4 ${trialsLoading ? 'animate-spin' : ''}`} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Aktualisieren</TooltipContent>
+                    </Tooltip>
                   </div>
                   {trialsLoading ? (
                     <div className="space-y-3">
@@ -1562,14 +1609,20 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
       <CenteredModal open={absenceDialogOpen} onClose={() => setAbsenceDialogOpen(false)}>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold">Abwesenheit eintragen</h3>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setAbsenceDialogOpen(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setAbsenceDialogOpen(false)}
+                aria-label="Schließen"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Schließen</TooltipContent>
+          </Tooltip>
         </div>
         <p className="text-sm text-muted-foreground">
           Trainer: {trainer.firstName} {trainer.lastName}

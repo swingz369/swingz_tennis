@@ -24,6 +24,7 @@ import {
   PositionedClosureBlock,
   DroppableHourZone,
 } from '@/components/calendar/calendar-primitives';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export interface DayViewProps {
   targetDate: Date;
@@ -107,9 +108,20 @@ export function DayView({
       {/* Day navigation mini-header — hidden when used inside mobile week pills */}
       {!embedded && (
         <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-primary/[0.04] to-transparent border-b border-border/40">
-          <Button variant="outline" size="icon" className="h-7 w-7" onClick={goToPrevious}>
-            <ChevronLeft className="h-3.5 w-3.5" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7"
+                onClick={goToPrevious}
+                aria-label="Vorheriger Tag"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Vorheriger Tag</TooltipContent>
+          </Tooltip>
           <div className="text-center flex-1 min-w-0">
             <span className={`font-bold text-foreground ${isMobile ? 'text-sm' : 'text-base'}`}>
               {format(targetDate, 'EEEE', { locale: de })}
@@ -123,9 +135,20 @@ export function DayView({
               </span>
             )}
           </div>
-          <Button variant="outline" size="icon" className="h-7 w-7" onClick={goToNext}>
-            <ChevronRight className="h-3.5 w-3.5" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7"
+                onClick={goToNext}
+                aria-label="Nächster Tag"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Nächster Tag</TooltipContent>
+          </Tooltip>
         </div>
       )}
 

@@ -13,6 +13,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { ConflictList } from '@/components/season-planning/conflict-list';
 import { conflictFixTarget } from '@/lib/season-planning/conflict-utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ConflictsData {
   conflicts: ConflictDetectionResult[];
@@ -133,13 +134,19 @@ export default function ConflictsPage({ params }: { params: Promise<{ id: string
         ]}
       />
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push(`/admin/seasons/${seasonId}`)}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push(`/admin/seasons/${seasonId}`)}
+              aria-label="Zurück zur Saison"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Zurück zur Saison</TooltipContent>
+        </Tooltip>
         <PageHeader
           title="Planungskonflikte"
           description={`${conflicts.length} erkannt — ${open} offen, ${conflicts.length - open} erledigt`}

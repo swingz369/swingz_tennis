@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { apiFetch, fetchJson } from '@/lib/api-fetch';
 import { ListState } from '@/components/ui/list-state';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const CATEGORIES = ['satzung', 'protokoll', 'beschluss', 'lizenz', 'vertrag', 'sonstige'];
 
@@ -174,19 +175,35 @@ export function DocumentsClient() {
                   <Badge variant="secondary" className="text-xs shrink-0">
                     {doc.category}
                   </Badge>
-                  <a href={doc.file_url} target="_blank" rel="noreferrer">
-                    <Button size="icon" variant="ghost" className="h-8 w-8">
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </a>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 text-destructive"
-                    onClick={() => handleDelete(doc.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" asChild>
+                        <a
+                          href={doc.file_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="Herunterladen"
+                        >
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Herunterladen</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => handleDelete(doc.id)}
+                        aria-label="Löschen"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Löschen</TooltipContent>
+                  </Tooltip>
                 </div>
               ))}
             </div>

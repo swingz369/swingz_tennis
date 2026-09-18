@@ -4,6 +4,7 @@ import { FileText, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { fetchJson } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
 import { ListState } from '@/components/ui/list-state';
@@ -67,11 +68,21 @@ export default function MemberDocumentsPage() {
                   <Badge variant="secondary" className="text-xs shrink-0">
                     {doc.category}
                   </Badge>
-                  <a href={doc.file_url} target="_blank" rel="noreferrer">
-                    <Button size="icon" variant="ghost" className="h-8 w-8">
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </a>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" asChild>
+                        <a
+                          href={doc.file_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="Herunterladen"
+                        >
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Herunterladen</TooltipContent>
+                  </Tooltip>
                 </div>
               ))}
             </div>

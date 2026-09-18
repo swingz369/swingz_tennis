@@ -12,6 +12,7 @@ import {
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ALL_LIMIT, type PaginationMeta } from '@/lib/pagination';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface PaginationNavProps {
   /** Pagination metadata from `buildPaginationMeta()`. */
@@ -113,50 +114,62 @@ export function PaginationNav({
 
     if (onPageChange) {
       return (
-        <Button
-          key={key}
-          variant={btnVariant}
-          size="icon"
-          className="h-8 w-8 text-xs"
-          disabled={!enabled}
-          aria-label={label}
-          aria-current={isActive ? 'page' : undefined}
-          onClick={() => onPageChange(targetPage)}
-        >
-          {showNum !== undefined ? showNum : icon}
-        </Button>
+        <Tooltip key={key}>
+          <TooltipTrigger asChild>
+            <Button
+              variant={btnVariant}
+              size="icon"
+              className="h-8 w-8 text-xs"
+              disabled={!enabled}
+              aria-label={label}
+              aria-current={isActive ? 'page' : undefined}
+              onClick={() => onPageChange(targetPage)}
+            >
+              {showNum !== undefined ? showNum : icon}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{label}</TooltipContent>
+        </Tooltip>
       );
     }
 
     if (enabled && buildUrl) {
       return (
-        <Button
-          key={key}
-          variant={btnVariant}
-          size="icon"
-          className="h-8 w-8 text-xs"
-          aria-label={label}
-          aria-current={isActive ? 'page' : undefined}
-          asChild
-        >
-          <Link href={buildUrl(targetPage)} prefetch={false}>
-            {showNum !== undefined ? showNum : icon}
-          </Link>
-        </Button>
+        <Tooltip key={key}>
+          <TooltipTrigger asChild>
+            <Button
+              variant={btnVariant}
+              size="icon"
+              className="h-8 w-8 text-xs"
+              aria-label={label}
+              aria-current={isActive ? 'page' : undefined}
+              asChild
+            >
+              <Link href={buildUrl(targetPage)} prefetch={false}>
+                {showNum !== undefined ? showNum : icon}
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{label}</TooltipContent>
+        </Tooltip>
       );
     }
 
     return (
-      <Button
-        key={key}
-        variant={btnVariant}
-        size="icon"
-        className="h-8 w-8 text-xs"
-        disabled
-        aria-label={label}
-      >
-        {showNum !== undefined ? showNum : icon}
-      </Button>
+      <Tooltip key={key}>
+        <TooltipTrigger asChild>
+          <Button
+            variant={btnVariant}
+            size="icon"
+            className="h-8 w-8 text-xs"
+            disabled
+            aria-label={label}
+          >
+            {showNum !== undefined ? showNum : icon}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
     );
   };
 
