@@ -1,10 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { GroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
-import { getUserDb } from '@/infrastructure/db';
-import { GroupEntity } from '@/domain/entities/group.entity';
-import { ClubId } from '@/domain/value-objects';
+import {
+  ApiException,
+  errorResponse,
+  internalErrorResponse,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { GroupService } from '@/application/services/group.service';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
@@ -42,8 +44,7 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-      const groupRepo = new GroupRepository(getUserDb(auth));
-      const groups = await groupRepo.findByClubId(ClubId.fromString(clubId));
+      const groups = await new GroupService(auth).listByClub(clubId);
       return NextResponse.json({
         groups: groups.map((g) => ({
           id: g.getId().getValue(),
@@ -59,8 +60,10 @@ export async function GET(req: NextRequest) {
         })),
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      log.error('Error fetching groups:', message);
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
+      log.error('Error fetching groups:', error instanceof Error ? error : undefined);
       return internalErrorResponse();
     }
   });
@@ -93,16 +96,13 @@ export async function POST(req: NextRequest) {
         return forbiddenResponse('Kein Zugriff auf diesen Verein');
       }
 
-      const group = GroupEntity.create(
-        ClubId.fromString(clubId),
+      const group = await new GroupService(auth).create({
+        clubId,
         name,
         level,
         ageGroup,
-        description === null ? undefined : description
-      );
-
-      const groupRepo = new GroupRepository(getUserDb(auth));
-      await groupRepo.save(group);
+        description,
+      });
 
       return NextResponse.json(
         {
@@ -121,8 +121,10 @@ export async function POST(req: NextRequest) {
         { status: 201 }
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      log.error('Error creating group:', message);
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
+      log.error('Error creating group:', error instanceof Error ? error : undefined);
       return internalErrorResponse();
     }
   });

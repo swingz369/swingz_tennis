@@ -1,9 +1,13 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { GroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
-import { getUserDb } from '@/infrastructure/db';
-import { GroupId, MemberId } from '@/domain/value-objects';
+import {
+  ApiException,
+  errorResponse,
+  internalErrorResponse,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { GroupService } from '@/application/services/group.service';
+import { MemberId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
@@ -33,11 +37,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id } = await params;
 
     try {
-      const groupRepo = new GroupRepository(getUserDb(auth));
-      const group = await groupRepo.findById(GroupId.fromString(id));
-      if (!group) {
-        return NextResponse.json({ error: 'Gruppe nicht gefunden' }, { status: 404 });
-      }
+      const group = await new GroupService(auth).getById(id);
 
       return NextResponse.json({
         id: group.getId().getValue(),
@@ -53,8 +53,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         updatedAt: group.getUpdatedAt(),
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      log.error('Error fetching group:', message);
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
+      log.error('Error fetching group:', error instanceof Error ? error : undefined);
       return internalErrorResponse();
     }
   });
@@ -83,27 +85,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         );
       }
 
-      const groupRepo = new GroupRepository(getUserDb(auth));
-      const group = await groupRepo.findById(GroupId.fromString(id));
-      if (!group) {
-        return NextResponse.json({ error: 'Gruppe nicht gefunden' }, { status: 404 });
-      }
-
-      if (validation.data.name !== undefined) group.setName(validation.data.name);
-      if (validation.data.description !== undefined) {
-        group.setDescription(
-          validation.data.description === null ? undefined : validation.data.description
-        );
-      }
-      if (validation.data.isActive !== undefined) {
-        if (validation.data.isActive) {
-          group.activate();
-        } else {
-          group.deactivate();
-        }
-      }
-
-      await groupRepo.save(group);
+      const group = await new GroupService(auth).update(id, validation.data);
 
       return NextResponse.json({
         success: true,
@@ -118,8 +100,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         },
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      log.error('Error updating group:', message);
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
+      log.error('Error updating group:', error instanceof Error ? error : undefined);
       return internalErrorResponse();
     }
   });
@@ -139,19 +123,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const { id } = await params;
 
     try {
-      const groupRepo = new GroupRepository(getUserDb(auth));
-      const group = await groupRepo.findById(GroupId.fromString(id));
-      if (!group) {
-        return NextResponse.json({ error: 'Gruppe nicht gefunden' }, { status: 404 });
-      }
-
-      group.deactivate();
-      await groupRepo.save(group);
+      await new GroupService(auth).deactivate(id);
 
       return NextResponse.json({ success: true, message: 'Gruppe deaktiviert' });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      log.error('Error deleting group:', message);
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
+      log.error('Error deleting group:', error instanceof Error ? error : undefined);
       return internalErrorResponse();
     }
   });

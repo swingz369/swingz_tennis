@@ -86,18 +86,4 @@ export class GroupRepository {
       assertNoError(error, 'Anlegen der Gruppe fehlgeschlagen');
     }
   }
-
-  async addMemberToGroup(groupId: GroupId, memberId: MemberId): Promise<void> {
-    const group = await this.findById(groupId);
-    if (!group) throw new Error('Group not found');
-    group.addMember(memberId);
-    await this.save(group);
-  }
-
-  async removeMemberFromGroup(groupId: GroupId, memberId: MemberId): Promise<void> {
-    const group = await this.findById(groupId);
-    if (!group) throw new Error('Group not found');
-    group.removeMember(memberId);
-    await this.save(group);
-  }
 }
