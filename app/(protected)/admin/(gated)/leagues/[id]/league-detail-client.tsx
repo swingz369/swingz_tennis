@@ -582,6 +582,16 @@ export default function LeagueDetailClient({
           </Link>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-primary">{league.name}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {[
+                sportLabels[league.sport] ?? league.sport,
+                league.season_year,
+                league.division,
+                league.age_group,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </p>
             <div className="flex gap-2 mt-2 flex-wrap">
               {league.nuliga_url && (
                 <Badge
@@ -591,10 +601,6 @@ export default function LeagueDetailClient({
                   <Link2 className="h-3 w-3" /> nuLiga verbunden
                 </Badge>
               )}
-              <Badge variant="secondary">{sportLabels[league.sport] ?? league.sport}</Badge>
-              <Badge variant="outline">{league.season_year}</Badge>
-              {league.division && <Badge variant="outline">{league.division}</Badge>}
-              {league.age_group && <Badge variant="outline">{league.age_group}</Badge>}
               <Badge
                 className={
                   league.status === 'active'
