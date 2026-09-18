@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2; §6 Phase 4.4 ergänzt: loading/error/not-found vererben im App Router, keine echte Lücke; §6 Phase 4.5 ergänzt: „Laden" ohne Auslassungspunkte vereinheitlicht; §8 Icon-Button-Regel für Phase 5.1 ergänzt: aria-label + Tooltip pflicht, globale TooltipProvider, Test-Query per Rolle statt title)
+> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2; §6 Phase 4.4 ergänzt: loading/error/not-found vererben im App Router, keine echte Lücke; §6 Phase 4.5 ergänzt: „Laden" ohne Auslassungspunkte vereinheitlicht; §8 Icon-Button-Regel für Phase 5.1 ergänzt: aria-label + Tooltip pflicht, globale TooltipProvider, Test-Query per Rolle statt title; §8 Kalender-Tastaturbedienung für Phase 5.2 ergänzt: Pfeiltasten-Fokusnavigation per Zell-ID, Tastatur-Drag-Bug behoben — eigener onKeyDown überschrieb dnd-kits Aktivierungs-Listener)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -306,6 +306,30 @@ zugunsten von `aria-label` entfernt (Doppel-Tooltip aus nativem `title` und Radi
 Ein Button mit `asChild`, der einen `Link`/`<a>` rendert, trägt sein `aria-label` auf dem
 Kind-Element (Radix `Slot` merged es auf das tatsächliche DOM-Element) — nicht zusätzlich auf
 `Button` selbst.
+
+**Kalender-Tastaturbedienung (Sanierungsplan Phase 5.2, 18.09.2026):**
+
+- Wochenraster (`week-view.tsx`) und Agenda-Ansicht (`agenda-view.tsx`) hatten bereits
+  `role="button"` + `tabIndex` + Enter/Leertaste zum Öffnen — was fehlte, war die
+  Pfeiltasten-Navigation zwischen den Zellen. Jede Zelle hat jetzt eine stabile DOM-`id`
+  (`wv-slot-<courtId>-<yyyy-MM-dd>-<HH:MM>` bzw. `agenda-slot-<HH:MM>`); Pfeiltasten
+  verschieben den Fokus per `document.getElementById(...)?.focus()` direkt — kein
+  zusätzlicher React-State für „welche Zelle ist aktiv". Wochenraster: hoch/runter = Zeit,
+  links/rechts = Tag. Agenda: hoch/runter = Zeit. Escape schließt das aufgeklappte
+  Inline-Panel der Agenda (Modale schließen bereits nativ über `CenteredModal`).
+- **Tastatur-Drag im Tageskalender war unbenutzbar, obwohl der `KeyboardSensor`
+  konfiguriert war:** `PositionedSessionBlock` (`calendar-primitives.tsx`) spreadete
+  `dragListeners` und überschrieb danach `onKeyDown` mit einem eigenen Handler — genau das
+  `onKeyDown`, über das dnd-kits `KeyboardSensor` die Leertaste abfängt, um den Drag zu
+  starten. Der eigene Handler rief `dragListeners.onKeyDown` nie auf, der Tastatur-Drag
+  aktivierte sich also nie, unabhängig vom Sensor-Setup. Fix: der Handler ruft jetzt zuerst
+  `dragListeners?.onKeyDown?.(e)` auf. Da dnd-kits Default-Aktivierungstasten (Leertaste
+  **und** Enter) sonst mit dem bestehenden „Enter öffnet/entsperrt" kollidieren würden, ist
+  der `KeyboardSensor` in `hooks/use-court-session-dnd.ts` auf `keyboardCodes: { start:
+['Space'], end: ['Space'], cancel: ['Escape'] }` eingeschränkt — Enter bleibt für Klick-
+  Semantik reserviert, Leertaste greift/bewegt/lässt los.
+- Tests: `src/__tests__/components/week-view-keyboard.test.tsx`,
+  `agenda-view-keyboard.test.tsx`.
 
 ---
 

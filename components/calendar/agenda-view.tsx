@@ -176,7 +176,7 @@ export function AgendaView({
       {/* Agenda-Liste */}
       {activeCourtId && (
         <div className="flex flex-col gap-2">
-          {TIME_SLOTS.map((timeSlot) => {
+          {TIME_SLOTS.map((timeSlot, timeIdx) => {
             const { status, session, closure, closedDay } = getSlotStatus(
               activeCourtId,
               selectedDate,
@@ -279,22 +279,33 @@ export function AgendaView({
             return (
               <div key={timeSlot}>
                 <div
+                  id={`agenda-slot-${timeSlot}`}
                   className={`relative flex items-center gap-3 rounded-xl border pl-4 pr-3 py-2.5 transition-colors ${cardClass} ${
                     clickable ? 'cursor-pointer hover:shadow-sm' : ''
                   }`}
                   role="button"
                   tabIndex={clickable ? 0 : -1}
                   onClick={clickable ? activateCard : undefined}
-                  onKeyDown={
-                    clickable
-                      ? (e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            activateCard();
-                          }
-                        }
-                      : undefined
-                  }
+                  onKeyDown={(e) => {
+                    // Pfeiltasten bewegen die Auswahl zwischen Zeit-Slots, Escape
+                    // schließt das aufgeklappte Inline-Panel (Sanierungsplan Phase 5.2).
+                    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      const nextIdx = e.key === 'ArrowUp' ? timeIdx - 1 : timeIdx + 1;
+                      if (nextIdx < 0 || nextIdx >= TIME_SLOTS.length) return;
+                      document.getElementById(`agenda-slot-${TIME_SLOTS[nextIdx]}`)?.focus();
+                      return;
+                    }
+                    if (e.key === 'Escape' && isExpanded) {
+                      e.preventDefault();
+                      setAgendaExpandedSlot(null);
+                      return;
+                    }
+                    if (clickable && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault();
+                      activateCard();
+                    }
+                  }}
                 >
                   {bar && (
                     <span

@@ -41,6 +41,12 @@ import {
 } from '@/components/calendar/calendar-primitives';
 import { DayView } from '@/components/calendar/day-view';
 
+/** Stable DOM id für einen Wochenraster-Slot — Ziel der Pfeiltasten-Navigation
+ *  (siehe onKeyDown weiter unten, Sanierungsplan Phase 5.2). */
+function weekSlotId(courtId: string, day: Date, timeSlot: string): string {
+  return `wv-slot-${courtId}-${format(day, 'yyyy-MM-dd')}-${timeSlot}`;
+}
+
 export interface WeekViewProps {
   isMobile: boolean;
   weekDays: Date[];
@@ -208,7 +214,7 @@ export function WeekView({
         <div key={court.id} className="border-b border-border/40 last:border-b-0">
           <div className="grid grid-cols-[180px_repeat(7,1fr)]">
             <CourtRowHeader court={court} />
-            {weekDays.map((day) => {
+            {weekDays.map((day, dayIdx) => {
               const planEntriesForDay = getPlanEntriesForCourtAndDay(court.id, dateFnsGetDay(day));
 
               return (
@@ -220,7 +226,7 @@ export function WeekView({
                 >
                   {/* Time slots */}
                   <div className="space-y-0.5">
-                    {TIME_SLOTS.map((timeSlot) => {
+                    {TIME_SLOTS.map((timeSlot, timeIdx) => {
                       const { status, session, closure, planEntry, closedDay } = getSlotStatus(
                         court.id,
                         day,
@@ -237,6 +243,7 @@ export function WeekView({
                       return (
                         <DroppableSlot key={timeSlot} id={dropTargetId} isAdmin={isAdmin}>
                           <div
+                            id={weekSlotId(court.id, day, timeSlot)}
                             className={`group min-h-[44px] rounded-xl text-2xs flex items-center transition-all duration-150 ${
                               status === 'blocked' && isAdmin && !closedDay
                                 ? SLOT_STATUS_STYLES_ADMIN_BLOCKED
@@ -264,6 +271,48 @@ export function WeekView({
                                         : undefined
                             }
                             onKeyDown={(e) => {
+                              // Pfeiltasten bewegen die Auswahl im Wochenraster:
+                              // hoch/runter = Zeit, links/rechts = Tag (Sanierungsplan
+                              // Phase 5.2). Direkter Fokuswechsel statt State, das
+                              // Raster hat bereits eine stabile Zell-ID je Slot.
+                              if (
+                                e.key === 'ArrowUp' ||
+                                e.key === 'ArrowDown' ||
+                                e.key === 'ArrowLeft' ||
+                                e.key === 'ArrowRight'
+                              ) {
+                                e.preventDefault();
+                                const nextTimeIdx =
+                                  e.key === 'ArrowUp'
+                                    ? timeIdx - 1
+                                    : e.key === 'ArrowDown'
+                                      ? timeIdx + 1
+                                      : timeIdx;
+                                const nextDayIdx =
+                                  e.key === 'ArrowLeft'
+                                    ? dayIdx - 1
+                                    : e.key === 'ArrowRight'
+                                      ? dayIdx + 1
+                                      : dayIdx;
+                                if (
+                                  nextTimeIdx < 0 ||
+                                  nextTimeIdx >= TIME_SLOTS.length ||
+                                  nextDayIdx < 0 ||
+                                  nextDayIdx >= weekDays.length
+                                ) {
+                                  return;
+                                }
+                                document
+                                  .getElementById(
+                                    weekSlotId(
+                                      court.id,
+                                      weekDays[nextDayIdx],
+                                      TIME_SLOTS[nextTimeIdx]
+                                    )
+                                  )
+                                  ?.focus();
+                                return;
+                              }
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
                                 if (isAdmin && status === 'available') {

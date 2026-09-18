@@ -180,6 +180,9 @@ export function PositionedSessionBlock({
   }
 
   const isClickable = (!isAdmin && isOpen) || (isAdmin && (isOpen || isBlocked));
+  // Admin-Blöcke sind immer greifbar (Pointer- oder Tastatur-Drag), auch wenn
+  // sie selbst nicht klickbar sind (z. B. eine fremde Buchung verschieben).
+  const isFocusable = isClickable || isAdmin;
 
   return (
     <div
@@ -197,14 +200,18 @@ export function PositionedSessionBlock({
       }`}
       style={{ top: `${topPx}px`, height: `${heightPx}px` }}
       role="button"
-      tabIndex={isClickable ? 0 : -1}
+      tabIndex={isFocusable ? 0 : -1}
       onClick={() => {
         if (!isAdmin && isOpen) onBook();
         else if (isAdmin && isOpen) onBlock();
         else if (isAdmin && isBlocked) onUnblock(session.id);
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        // Leertaste zuerst an dnd-kit reichen — sie startet/bestätigt/bewegt
+        // den Tastatur-Drag (KeyboardSensor ist auf Space beschränkt, s.
+        // useCourtSessionDnd). Enter bleibt für „öffnen"/„entsperren" reserviert.
+        if (isAdmin) dragListeners?.onKeyDown?.(e);
+        if (e.key === 'Enter') {
           e.preventDefault();
           if (!isAdmin && isOpen) onBook();
           else if (isAdmin && isOpen) onBlock();

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useSensor, useSensors, KeyboardSensor, PointerSensor } from '@dnd-kit/core';
+import { useSensor, useSensors, KeyboardCode, KeyboardSensor, PointerSensor } from '@dnd-kit/core';
 import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { toast } from 'sonner';
@@ -17,7 +17,18 @@ export function useCourtSessionDnd(sessions: Session[]) {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    // Nur Leertaste greift eine Session — Enter bleibt für „öffnen"/„entsperren"
+    // reserviert (siehe onKeyDown in PositionedSessionBlock). Mit den
+    // dnd-kit-Standardcodes (Space + Enter) würde Enter beide Aktionen zugleich
+    // auslösen.
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+      keyboardCodes: {
+        start: [KeyboardCode.Space],
+        cancel: [KeyboardCode.Esc],
+        end: [KeyboardCode.Space],
+      },
+    })
   );
 
   const handleDragStart = useCallback(
