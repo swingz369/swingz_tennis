@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Check, Loader2, X } from 'lucide-react';
+import { Ban, Check, Loader2, RotateCcw, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -51,6 +51,7 @@ function makeKey(groupId: string, weekMonday: string): string {
 export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: Props) {
   const [data, setData] = useState<SeasonCalendarData>(initialData);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const [pendingWeek, setPendingWeek] = useState<string | null>(null);
   const [filterActiveOnly, setFilterActiveOnly] = useState(false);
 
   const monthGroups = useMemo(() => groupWeeksByMonth(data.weeks), [data.weeks]);
@@ -187,6 +188,73 @@ export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: 
     [getStatus, seasonId, updateLocalStatus]
   );
 
+  // Spaltenaktion (Sanierungsplan Phase 5.5): eine Woche für ALLE Gruppen
+  // aussetzen/aktivieren — der häufigste reale Vorgang sind Schulferien. Das
+  // Bulk-API kennt nur "mehrere Wochen für eine Gruppe", daher ein PATCH je
+  // Gruppe (jeweils mit einer einzigen week_monday), parallel abgefeuert.
+  const handleColumnToggle = useCallback(
+    async (week: CalendarWeek, isActive: boolean) => {
+      const groups = data.groups;
+      if (groups.length === 0) return;
+      setPendingWeek(week.monday);
+
+      const original = new Map<string, GroupWeekStatus>();
+      for (const g of groups) {
+        const cur = getStatus(g.id, week.monday);
+        original.set(
+          g.id,
+          cur ?? { groupId: g.id, weekMonday: week.monday, isActive: !isActive, reason: null }
+        );
+        updateLocalStatus(g.id, week.monday, {
+          groupId: g.id,
+          weekMonday: week.monday,
+          isActive,
+          reason: cur?.reason ?? null,
+        });
+      }
+
+      const results = await Promise.allSettled(
+        groups.map((g) =>
+          apiFetch(`/api/seasons/${seasonId}/calendar/toggle`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              group_id: g.id,
+              week_mondays: [week.monday],
+              is_active: isActive,
+            }),
+          }).then((res) => {
+            if (!res.ok) throw new Error();
+            return g.id;
+          })
+        )
+      );
+
+      const failed = new Set(groups.map((g) => g.id));
+      for (const r of results) {
+        if (r.status === 'fulfilled') failed.delete(r.value);
+      }
+      for (const groupId of failed) {
+        const prev = original.get(groupId);
+        if (prev) updateLocalStatus(groupId, week.monday, prev);
+      }
+
+      setPendingWeek(null);
+
+      const okCount = groups.length - failed.size;
+      if (failed.size === 0) {
+        toast.success(
+          `KW ${week.isoWeek} für ${okCount} Gruppen ${isActive ? 'aktiviert' : 'ausgesetzt'}`
+        );
+      } else {
+        toast.error(
+          `${failed.size} von ${groups.length} Gruppen konnten nicht aktualisiert werden`
+        );
+      }
+    },
+    [data.groups, getStatus, seasonId, updateLocalStatus]
+  );
+
   const filteredGroups = useMemo(() => {
     if (!filterActiveOnly) return data.groups;
     return data.groups.filter((g) => (data.stats.activeWeeksByGroup[g.id] ?? 0) > 0);
@@ -235,51 +303,102 @@ export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: 
         ) : (
           <ScrollArea className="w-full whitespace-nowrap rounded-md border">
             <div className="min-w-max">
-              {/* Header rows */}
-              <div className="sticky top-0 z-20 bg-background border-b">
-                {/* Month row */}
-                <div className="flex">
-                  <div className="w-56 shrink-0 px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/40 border-r">
-                    Gruppe
-                  </div>
-                  <div className="flex">
-                    {monthGroups.map((mg) => (
-                      <div
-                        key={mg.monthKey}
-                        className="px-2 py-1 text-xs font-semibold text-center border-r bg-muted/40"
-                        style={{ width: mg.weeks.length * 40 }}
-                      >
-                        {mg.monthLabel}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {/* KW row */}
-                <div className="flex">
-                  <div className="w-56 shrink-0 px-3 py-1 text-xs text-muted-foreground border-r bg-muted/20" />
-                  <div className="flex">
-                    {data.weeks.map((w) => (
-                      <div
-                        key={w.monday}
-                        className={cn(
-                          'w-10 shrink-0 text-center text-2xs font-medium border-r py-1',
-                          w.isHolidayWeek
-                            ? 'bg-warning-50 text-warning-900'
-                            : 'text-muted-foreground'
-                        )}
-                        title={`KW ${w.isoWeek} · ${w.rangeLabel}${
-                          w.holidayNames.length > 0 ? ` · ${w.holidayNames.join(', ')}` : ''
-                        }`}
-                      >
-                        {w.isoWeek}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Body rows */}
               <TooltipProvider delayDuration={150}>
+                {/* Header rows */}
+                <div className="sticky top-0 z-20 bg-background border-b">
+                  {/* Month row */}
+                  <div className="flex">
+                    <div className="w-56 shrink-0 px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/40 border-r">
+                      Gruppe
+                    </div>
+                    <div className="flex">
+                      {monthGroups.map((mg) => (
+                        <div
+                          key={mg.monthKey}
+                          className="px-2 py-1 text-xs font-semibold text-center border-r bg-muted/40"
+                          style={{ width: mg.weeks.length * 40 }}
+                        >
+                          {mg.monthLabel}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {/* KW row */}
+                  <div className="flex">
+                    <div className="w-56 shrink-0 px-3 py-1 text-xs text-muted-foreground border-r bg-muted/20" />
+                    <div className="flex">
+                      {data.weeks.map((w) => {
+                        // Mehrheitszustand über alle Gruppen: solange auch nur eine
+                        // aktiv ist, ist "aussetzen" die naheliegende Aktion — erst
+                        // wenn wirklich alle pausiert sind, bietet der Knopf das
+                        // Gegenteil (Ferienwoche wieder aufheben) an.
+                        const anyActive = data.groups.some(
+                          (g) => getStatus(g.id, w.monday)?.isActive ?? true
+                        );
+                        const isColumnPending = pendingWeek === w.monday;
+                        return (
+                          <Tooltip key={w.monday}>
+                            <TooltipTrigger asChild>
+                              <div
+                                className={cn(
+                                  'group relative w-10 shrink-0 text-center text-2xs font-medium border-r py-1',
+                                  w.isHolidayWeek
+                                    ? 'bg-warning-50 text-warning-900'
+                                    : 'text-muted-foreground'
+                                )}
+                              >
+                                <span className="group-hover:opacity-0 transition-opacity">
+                                  {w.isoWeek}
+                                </span>
+                                <button
+                                  type="button"
+                                  disabled={isColumnPending || data.groups.length === 0}
+                                  onClick={() => handleColumnToggle(w, !anyActive)}
+                                  aria-label={
+                                    anyActive
+                                      ? `KW ${w.isoWeek} für alle Gruppen aussetzen`
+                                      : `KW ${w.isoWeek} für alle Gruppen aktivieren`
+                                  }
+                                  className={cn(
+                                    'absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity',
+                                    'hover:bg-primary/10 focus-visible:opacity-100 disabled:opacity-50'
+                                  )}
+                                >
+                                  {isColumnPending ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : anyActive ? (
+                                    <Ban className="h-3 w-3" />
+                                  ) : (
+                                    <RotateCcw className="h-3 w-3" />
+                                  )}
+                                </button>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <div className="text-xs">
+                                <div className="font-medium">
+                                  KW {w.isoWeek} · {w.rangeLabel}
+                                </div>
+                                {w.holidayNames.length > 0 && (
+                                  <div className="text-warning-700">
+                                    Ferien: {w.holidayNames.join(', ')}
+                                  </div>
+                                )}
+                                <div className="mt-1">
+                                  {anyActive
+                                    ? 'Für alle Gruppen aussetzen'
+                                    : 'Für alle Gruppen aktivieren'}
+                                </div>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Body rows */}
                 {filteredGroups.map((group) => {
                   const activeCount = data.stats.activeWeeksByGroup[group.id] ?? 0;
                   return (
