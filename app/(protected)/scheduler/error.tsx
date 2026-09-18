@@ -21,7 +21,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-background p-4">
       <Card className="max-w-md w-full">
         <CardHeader>
           <div className="flex justify-center mb-4">
@@ -40,6 +40,7 @@ export default function Error({
           </Button>
           <Button
             variant="outline"
+            // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- bewusster Vollreload, kein Router-Wechsel
             onClick={() => (window.location.href = '/dashboard')}
             className="w-full"
           >

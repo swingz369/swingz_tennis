@@ -35,7 +35,7 @@ export default function GlobalError({
   return (
     <html lang="de">
       <body>
-        <div className="flex min-h-screen items-center justify-center bg-muted px-4 dark:bg-background">
+        <div className="flex min-h-dvh items-center justify-center bg-muted px-4 dark:bg-background">
           <div className="w-full max-w-md text-center">
             <div className="mb-8">
               <svg
@@ -76,6 +76,7 @@ export default function GlobalError({
               </button>
 
               <button
+                // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- bewusster Vollreload, kein Router-Wechsel
                 onClick={() => (window.location.href = '/')}
                 className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-6 py-3 text-base font-medium text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
               >

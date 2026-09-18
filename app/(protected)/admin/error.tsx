@@ -41,7 +41,7 @@ export default function AdminError({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted px-4 dark:bg-background">
+    <div className="flex min-h-dvh items-center justify-center bg-muted px-4 dark:bg-background">
       <div className="w-full max-w-lg rounded-xl bg-card p-8 shadow-lg">
         <div className="mb-6 flex items-start">
           <div className="flex-shrink-0">
@@ -94,6 +94,7 @@ export default function AdminError({
 
         <div className="mt-4 text-center">
           <button
+            // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- bewusster Vollreload, kein Router-Wechsel
             onClick={() => (window.location.href = '/')}
             className="text-sm text-muted-foreground hover:text-foreground hover:underline"
           >
