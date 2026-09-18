@@ -2297,7 +2297,9 @@ export type Database = {
       league_players: {
         Row: {
           club_id: string;
+          birth_year: number | null;
           created_at: string;
+          dtb_id: string | null;
           id: string;
           league_id: string;
           lk: string | null;
@@ -2309,7 +2311,9 @@ export type Database = {
         };
         Insert: {
           club_id: string;
+          birth_year?: number | null;
           created_at?: string;
+          dtb_id?: string | null;
           id?: string;
           league_id: string;
           lk?: string | null;
@@ -2321,7 +2325,9 @@ export type Database = {
         };
         Update: {
           club_id?: string;
+          birth_year?: number | null;
           created_at?: string;
+          dtb_id?: string | null;
           id?: string;
           league_id?: string;
           lk?: string | null;
