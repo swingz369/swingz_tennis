@@ -35,6 +35,15 @@ DTB-ID, besonders bei Jugendlichen) in Datenschutzerklärung und Verzeichnis der
 Verarbeitungstätigkeiten aufnehmen. Gespeichert werden nur Daten der **eigenen** Mannschaft;
 Tabelle und Ergebnisse enthalten keine Personen. Kein Ersatz für Rechtsberatung.
 
+### Automatische Auslieferung und Auto-Migration
+
+`deploy.yml` deployt jeden grünen Push auf `main` nach Produktion; mit `AUTO_MIGRATE=true`
+laufen dabei auch die Migrationen ohne Rückfrage. Für die Entwicklungsphase gewollt.
+**Vor dem Launch:** Repo-Variable `AUTO_MIGRATE` löschen (Migrationen wieder von Hand nach
+Sichtung mit `pnpm db:status:prod`), und entscheiden, ob Pull Requests mit Freigabe wieder
+Pflicht werden. Einrichtung: Secret `VERCEL_TOKEN` setzen, vorher `pnpm db:status:prod`
+prüfen, erst dann `gh variable set AUTO_MIGRATE --body true`.
+
 ### Bezahlschranke ist abgeschaltet
 
 `SUBSCRIPTION_ENFORCEMENT=off` ist gesetzt (lokal und in Vercel Production).
