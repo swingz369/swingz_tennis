@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 14. September 2026 (Autorisierungs-Check in `generate_season_invoices_atomic` nachgetragen); davor 28. August 2026 (`training_groups` entfernt; davor 16. August 2026: Migrations-Tracking ersetzt, Owner-UPDATE-Policy auf `clubs`, Audit-Trigger auf den Finanztabellen; Live-Prüfung per postgres-js auf `supabase.swingz.cloud:6543`)
+> Zuletzt verifiziert: 18. September 2026 (`league_players.dtb_id`/`birth_year` ergänzt); davor 14. September 2026 (Autorisierungs-Check in `generate_season_invoices_atomic` nachgetragen); davor 28. August 2026 (`training_groups` entfernt; davor 16. August 2026: Migrations-Tracking ersetzt, Owner-UPDATE-Policy auf `clubs`, Audit-Trigger auf den Finanztabellen; Live-Prüfung per postgres-js auf `supabase.swingz.cloud:6543`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -424,6 +424,14 @@ Meldelisten-Tabelle `league_players` an (Name, LK, Meldeposition, optionale `mem
 - **Personenbezug:** In `league_players` stehen Klarnamen und LK. Importiert wird ausschließlich
   die Meldeliste der **eigenen** Mannschaft (Vereinsmitglieder). Fremde Spieler werden nicht
   gespeichert; für deren Aufstellung steht nur der Link in `match_days.nuliga_report_url`.
+
+- **`dtb_id`, `birth_year` (Migration `20260918100000_league_players_dtb_id.sql`, 18.09.2026):**
+  DTB-ID und Jahrgang aus der Meldeliste. Sie machen die Zuordnung zu Vereinsmitgliedern
+  sync-fest: Der Kader wird bei jedem Sync neu geschrieben, die Zuordnung läuft automatisch nur
+  über die DTB-ID (`users.dtb_id`), bestehende Zuordnungen bleiben erhalten. Namenstreffer sind
+  nur Vorschläge, die das Mitglied oder der Admin bestätigt (`POST /api/member/leagues/claim`,
+  `PATCH /api/leagues/[id]/roster`); bei der Bestätigung wird die DTB-ID ins Profil geschrieben.
+  Noch **nicht** in Produktion angewendet — `npm run db:migrate:prod` nach dem Merge.
 
 **Live-Verifikation nach dem Einspielen (15.08.2026, `docker exec supabase-db psql`):** alle vier
 Spalten vorhanden, vier Policies aktiv, `relrowsecurity = true` **und** `relforcerowsecurity = true`,

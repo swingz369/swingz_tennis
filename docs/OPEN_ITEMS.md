@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 17. September 2026 (Auslieferung von 33 Commits nach main, 8 Migrationen
+> Zuletzt verifiziert: 18. September 2026 (nuLiga-Rechtsklärung als Launch-Punkt ergänzt); davor 17. September 2026 (Auslieferung von 33 Commits nach main, 8 Migrationen
 > auf Produktion angewendet, Deploy-Kette geprüft — drei neue Befunde unten); davor 16. September
 > 2026 (ADR-005-Migrationsfortschritt am Code geprüft); 30. August 2026 (Bezahlschranke
 > abgeschaltet — siehe unten)
@@ -24,6 +24,16 @@ Quellen: die vier Archiv-Snapshots vom 13.08.2026 (`docs/ARCHIV/2026-08-13-*`),
 ---
 
 ## Vor dem Launch — zwingend zurückdrehen
+
+### nuLiga: Erlaubnis des Betreibers klären
+
+SwingZ liest nuLiga-Seiten der Verbände per Scraping aus (`lib/services/nuliga-scraper.ts`).
+„Öffentlich einsehbar" heißt nicht „frei verwendbar": Datenbankherstellerrecht (§ 87b UrhG) und
+mögliche Nutzungsbedingungen der Verbände/des nuLiga-Betreibers sind ungeklärt. Vor dem Launch
+schriftlich anfragen (Erlaubnis oder offizielle Schnittstelle) und die Meldeliste (Namen, LK,
+DTB-ID, besonders bei Jugendlichen) in Datenschutzerklärung und Verzeichnis der
+Verarbeitungstätigkeiten aufnehmen. Gespeichert werden nur Daten der **eigenen** Mannschaft;
+Tabelle und Ergebnisse enthalten keine Personen. Kein Ersatz für Rechtsberatung.
 
 ### Bezahlschranke ist abgeschaltet
 
