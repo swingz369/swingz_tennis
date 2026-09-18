@@ -8,6 +8,11 @@
  * JSDoc in ../helpers/api-route) und der Resend-Versand sind kontrolliert.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Der Versandpfad braucht einen API-Key; ohne .env.local (CI) fehlt er.
+vi.hoisted(() => {
+  process.env.RESEND_API_KEY ??= 'test-resend-key';
+});
 import { installSupabaseMock, makeApiRequest, makeFakeSupabaseClient } from '../helpers/api-route';
 
 const supa = installSupabaseMock();

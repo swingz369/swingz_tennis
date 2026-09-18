@@ -13,6 +13,14 @@
  * generische Harness-Client so nicht chaint).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Preis-IDs kommen lokal aus .env.local, in CI gibt es sie nicht.
+vi.hoisted(() => {
+  process.env.STRIPE_PRICE_SOLO_S ??= 'price_solo_s_test';
+  process.env.STRIPE_PRICE_SOLO_L ??= 'price_solo_l_test';
+  process.env.STRIPE_PRICE_SCHOOL_S ??= 'price_school_s_test';
+  process.env.STRIPE_PRICE_SCHOOL_L ??= 'price_school_l_test';
+});
 import { makeApiRequest } from '../helpers/api-route';
 
 type TableHandler = (state: {
