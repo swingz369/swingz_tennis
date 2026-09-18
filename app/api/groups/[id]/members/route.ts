@@ -1,9 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { GroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
-import { getUserDb } from '@/infrastructure/db';
-import { GroupId, MemberId } from '@/domain/value-objects';
+import {
+  ApiException,
+  errorResponse,
+  internalErrorResponse,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { GroupService } from '@/application/services/group.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
@@ -38,16 +41,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         );
       }
 
-      const groupRepo = new GroupRepository(getUserDb(auth));
-      await groupRepo.addMemberToGroup(
-        GroupId.fromString(id),
-        MemberId.fromString(validation.data.memberId)
-      );
+      await new GroupService(auth).addMember(id, validation.data.memberId);
 
       return NextResponse.json({ success: true });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      log.error('Error adding member to group:', message);
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
+      log.error('Error adding member to group:', error instanceof Error ? error : undefined);
       return internalErrorResponse();
     }
   });

@@ -1,9 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { GroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
-import { getUserDb } from '@/infrastructure/db';
-import { GroupId, MemberId } from '@/domain/value-objects';
+import {
+  ApiException,
+  errorResponse,
+  internalErrorResponse,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { GroupService } from '@/application/services/group.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -27,12 +30,13 @@ export async function DELETE(
     const { id, memberId } = await params;
 
     try {
-      const groupRepo = new GroupRepository(getUserDb(auth));
-      await groupRepo.removeMemberFromGroup(GroupId.fromString(id), MemberId.fromString(memberId));
+      await new GroupService(auth).removeMember(id, memberId);
       return NextResponse.json({ success: true });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      log.error('Error removing member from group:', message);
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
+      log.error('Error removing member from group:', error instanceof Error ? error : undefined);
       return internalErrorResponse();
     }
   });
