@@ -157,9 +157,8 @@ in Vercel verborgen und gehört hoffentlich zum selben Resend-Team wie die Domai
 ### ✅ Erledigt (Stand 18.09.2026 geprüft) — Rohe SQL-/DB-Fehler
 
 Alle `error.message`-Treffer in `app/api/` sind Logzeilen; der Catch in `withApiAuth`
-(`lib/api-auth.ts`) filtert Handler-Fehler zentral. Der in `CLAUDE.md` genannte Test
-`no-raw-db-errors.test.ts` existiert im Repo **nicht** — entweder anlegen oder die Erwähnung
-streichen.
+(`lib/api-auth.ts`) filtert Handler-Fehler zentral. Bewacht wird das von
+`src/__tests__/security/no-raw-db-errors.test.ts`.
 
 ### Drizzle-Service-Pfad umgeht RLS komplett
 

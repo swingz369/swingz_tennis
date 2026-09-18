@@ -79,7 +79,11 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           test -n "$VERCEL_TOKEN" || { echo "::error::Secret VERCEL_TOKEN fehlt"; exit 1; }
-          npx vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN"
+          # --no-wait: die CLI hängt sonst nach "Completing…" bis zum Job-Timeout, obwohl
+          # der Deploy längst fertig ist. Stattdessen gezielt auf READY warten.
+          url=$(npx vercel@latest deploy --prod --yes --no-wait --token "$VERCEL_TOKEN" | tail -1)
+          echo "Deployment: $url"
+          npx vercel@latest inspect "$url" --wait --timeout 10m --token "$VERCEL_TOKEN"
 
       - name: Health-Check (Produktion)
         run: |

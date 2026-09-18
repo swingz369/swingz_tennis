@@ -113,6 +113,7 @@ const PUBLIC_ROUTES = [
   '/api/auth/logout',
   '/api/auth/register',
   '/api/auth/register-interest',
+  '/api/auth/forgot-password', // Wer sein Passwort vergessen hat, ist nicht eingeloggt und hat kein CSRF-Cookie
   '/api/auth/join',
   '/api/public/club',
   '/api/public', // Public platform stats and trial endpoints
