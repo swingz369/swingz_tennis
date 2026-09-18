@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt)
+> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -123,6 +123,12 @@ wiederverwenden statt eigene Größen zu erfinden):
 | xl    | `p-8`    | Große Sektionen                                |
 
 **Sprint 3 — Card-Padding normalisiert:** `card.tsx`-Padding-Skala an DESIGN.md angeglichen. `md` von `p-6` auf `p-4`, `CardHeader`/`CardContent`/`CardFooter` von `p-6` auf `px-4 py-4`.
+
+**Gap-Regel (Sanierungsplan Phase 3.5, 18.09.2026):** In Karten und Formularen ist `gap-3`/
+`gap-4` die Regel für Abstand zwischen Abschnitten, Feldgruppen und Listen-Items — Inhalt soll
+atmen. `gap-1`/`gap-2` bleibt die **Ausnahme** für echte Gruppen zusammengehöriger Elemente:
+Icon+Label, Checkbox+Beschriftung, Badge-Inhalt, Button-Icon+Text — Dinge, die visuell ein
+einziges Element bilden, nicht mehrere.
 
 ### 4.4 Motion-Strategie
 
