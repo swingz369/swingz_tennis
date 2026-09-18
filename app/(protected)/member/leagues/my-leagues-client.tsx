@@ -67,7 +67,7 @@ export function MyLeaguesClient() {
   }, []);
 
   if (teams === null) {
-    return <div className="py-20 text-center text-muted-foreground">Laden…</div>;
+    return <div className="py-20 text-center text-muted-foreground">Laden</div>;
   }
 
   return (

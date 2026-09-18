@@ -80,7 +80,7 @@ function WorkDutiesHubTabsInner({ members, duties, memberStats }: Props) {
 
 export function WorkDutiesHubTabs(props: Props) {
   return (
-    <Suspense fallback={<div className="py-12 text-center text-muted-foreground">Laden…</div>}>
+    <Suspense fallback={<div className="py-12 text-center text-muted-foreground">Laden</div>}>
       <WorkDutiesHubTabsInner {...props} />
     </Suspense>
   );

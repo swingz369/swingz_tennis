@@ -188,7 +188,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-muted-foreground">Laden…</div>
+      <div className="flex items-center justify-center py-20 text-muted-foreground">Laden</div>
     );
   }
 

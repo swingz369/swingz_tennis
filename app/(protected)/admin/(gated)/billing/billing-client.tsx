@@ -502,7 +502,7 @@ export default function BillingClient({
             {loadingInvoices ? (
               <div className="flex items-center justify-center py-8 text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                Laden…
+                Laden
               </div>
             ) : invoices.length === 0 ? (
               <NoInvoicesBrandedEmptyState />

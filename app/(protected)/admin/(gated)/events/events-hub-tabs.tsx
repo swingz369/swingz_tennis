@@ -63,7 +63,7 @@ function EventsHubTabsInner({ initialTournaments, pagination, showTournaments }:
 
 export function EventsHubTabs(props: Props) {
   return (
-    <Suspense fallback={<div className="py-12 text-center text-muted-foreground">Laden…</div>}>
+    <Suspense fallback={<div className="py-12 text-center text-muted-foreground">Laden</div>}>
       <EventsHubTabsInner {...props} />
     </Suspense>
   );

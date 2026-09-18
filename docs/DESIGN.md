@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2)
+> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2; §6 Phase 4.4 ergänzt: loading/error/not-found vererben im App Router, keine echte Lücke; §6 Phase 4.5 ergänzt: „Laden" ohne Auslassungspunkte vereinheitlicht)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -244,6 +244,24 @@ Mitglieder und Trainer). `Breadcrumb` verlinkt immer zuerst auf `/dashboard`, da
 übergebenen `items` (letztes Item ohne `href` = aktuelle Seite). Ergänzt die vorhandenen
 Zurück-Buttons, ersetzt sie nicht — der Button springt eine Ebene zurück, der Breadcrumb zeigt
 den vollen Pfad.
+
+**Lade-/Fehler-/Not-Found-Zustände (Sanierungsplan Phase 4.4, 18.09.2026):** `loading.tsx`,
+`error.tsx` und `not-found.tsx` sind Next.js-App-Router-Dateikonventionen, die **entlang des
+Routenbaums vererben** — eine Seite ohne eigene Datei fällt automatisch auf die nächste
+Vorfahren-Datei zurück, nicht auf einen unstyled Next.js-Default. `app/(protected)/loading.tsx`
+(`PageLoading`, Shimmer-Balken) und `app/(protected)/error.tsx` (Retry-Button + Sentry) sowie das
+globale `app/not-found.tsx` (deutsch, gebrandet) decken damit **jede** geschützte Seite ab, auch
+ohne eigene Datei — die "67 von 122 haben `loading.tsx`"-Zahl aus der Ursprungs-Analyse zählte
+nur eigene Overrides, keine echte Lücke. Eine Seite bekommt eine **eigene** `loading.tsx` nur,
+wenn der generische Shimmer-Balken zu wenig Kontext gibt (Listen/Tabellen mit sichtbarem
+Layout-Sprung) — dann ein `*Skeleton` aus `@/components/ui/loading-skeletons`, das die reale
+Struktur nachzeichnet. Ein roher `Loader2`-Spinner ist **nur** für Aktionen in Schaltflächen
+erlaubt (z. B. „Speichern…" während eines Requests), nie als `loading.tsx`-Fallback einer ganzen
+Seite — das gilt bereits durchgehend (0 Treffer im Audit).
+
+**Mikrotext „Laden" (Sanierungsplan Phase 4.5, 18.09.2026):** Eine Schreibweise, projektweit:
+`Laden` — ohne Auslassungspunkte. `Laden…`/`Laden...` waren 12 Ausreißer (dominante Schreibweise
+`Laden` lag bereits bei 55 von 67 Stellen) und sind vereinheitlicht.
 
 ---
 

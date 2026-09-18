@@ -6,7 +6,7 @@ export default function MemberBillingPage() {
     <Suspense
       fallback={
         <div className="p-6">
-          <div className="text-center py-12 text-muted-foreground">Laden...</div>
+          <div className="text-center py-12 text-muted-foreground">Laden</div>
         </div>
       }
     >

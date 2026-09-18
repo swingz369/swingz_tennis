@@ -555,7 +555,7 @@ export default function LeagueDetailClient({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-muted-foreground">Laden…</div>
+      <div className="flex items-center justify-center py-20 text-muted-foreground">Laden</div>
     );
   }
 
@@ -1351,7 +1351,7 @@ export default function LeagueDetailClient({
               </CardHeader>
               <CardContent>
                 {loadingHistory ? (
-                  <p className="text-sm text-muted-foreground py-4 text-center">Laden…</p>
+                  <p className="text-sm text-muted-foreground py-4 text-center">Laden</p>
                 ) : syncHistory.length === 0 ? (
                   <p className="text-sm text-muted-foreground py-4 text-center">
                     Noch keine Sync-Einträge vorhanden

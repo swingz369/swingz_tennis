@@ -65,7 +65,7 @@ function CourtsHubTabsInner({ clubId, initialCourts, courtTypes, showWeather }: 
 
 export function CourtsHubTabs(props: Props) {
   return (
-    <Suspense fallback={<div className="text-center py-12 text-muted-foreground">Laden...</div>}>
+    <Suspense fallback={<div className="text-center py-12 text-muted-foreground">Laden</div>}>
       <CourtsHubTabsInner {...props} />
     </Suspense>
   );
