@@ -48,7 +48,11 @@ export default function LeagueDetailClient({
 }) {
   const [league, setLeague] = useState<League | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('teams');
+  const [selectedTab, setActiveTab] = useState<string | null>(null);
+
+  const nuligaLinked = !!(league?.nuliga_url || league?.nuliga_roster_url);
+  // nuLiga-Ligen öffnen auf der Tabelle: Teams sind dort die Tabellenzeilen, nichts zum Anlegen.
+  const activeTab = selectedTab ?? (nuligaLinked ? 'standings' : 'teams');
 
   const [editingLeague, setEditingLeague] = useState(false);
   const [leagueForm, setLeagueForm] = useState({
@@ -412,6 +416,7 @@ export default function LeagueDetailClient({
             leagueId={leagueId}
             teams={league.teams}
             members={members}
+            nuligaLinked={nuligaLinked}
             onChanged={fetchLeague}
           />
         </TabsContent>

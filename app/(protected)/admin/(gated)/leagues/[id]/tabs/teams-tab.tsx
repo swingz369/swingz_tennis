@@ -16,11 +16,13 @@ export function TeamsTab({
   leagueId,
   teams,
   members,
+  nuligaLinked = false,
   onChanged,
 }: {
   leagueId: string;
   teams: Team[];
   members: Member[];
+  nuligaLinked?: boolean;
   onChanged: () => void;
 }) {
   const [showNewTeam, setShowNewTeam] = useState(false);
@@ -112,9 +114,11 @@ export function TeamsTab({
     <>
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Mannschaften</h2>
-        <Button size="sm" onClick={() => setShowNewTeam(true)} className="gap-1.5">
-          <Plus className="h-4 w-4" /> Neues Team
-        </Button>
+        {!nuligaLinked && (
+          <Button size="sm" onClick={() => setShowNewTeam(true)} className="gap-1.5">
+            <Plus className="h-4 w-4" /> Neues Team
+          </Button>
+        )}
       </div>
 
       {teams.length === 0 ? (
@@ -122,7 +126,9 @@ export function TeamsTab({
           <Users className="h-10 w-10 mx-auto mb-2 text-muted-foreground/40" />
           <p className="font-medium text-muted-foreground">Noch keine Teams angelegt</p>
           <p className="text-sm text-muted-foreground mt-1">
-            Erstelle dein erstes Team für diese Liga.
+            {nuligaLinked
+              ? 'Die Teams kommen aus der nuLiga-Tabelle — oben „Synchronisieren" wählen.'
+              : 'Erstelle dein erstes Team für diese Liga.'}
           </p>
         </div>
       ) : (
