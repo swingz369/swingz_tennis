@@ -38,6 +38,20 @@ export async function POST(req: NextRequest) {
 
     if (!leagueId) return NextResponse.json({ error: 'leagueId fehlt' }, { status: 400 });
 
+    // Mandantengrenze: Der Service-Client unten umgeht RLS. Ohne diese Prüfung
+    // könnte ein Admin über eine fremde leagueId in die Liga eines anderen
+    // Vereins schreiben. Die Abfrage läuft im Nutzerkontext — RLS liefert nur
+    // Ligen des eigenen Vereins.
+    const { data: league } = await auth.supabase
+      .from('leagues')
+      .select('id, club_id')
+      .eq('id', leagueId)
+      .maybeSingle();
+    if (!league?.club_id) {
+      return NextResponse.json({ error: 'Liga nicht gefunden' }, { status: 404 });
+    }
+    const clubId = league.club_id;
+
     const sb = createServiceClient();
     let standingsImported = 0;
     let matchesImported = 0;
@@ -51,7 +65,7 @@ export async function POST(req: NextRequest) {
         const { error } = await sb.from('teams').upsert(
           rows.map((row) => ({
             league_id: leagueId,
-            club_id: auth.clubId!,
+            club_id: clubId,
             name: row.name,
             position: row.rank,
             matches_played: row.matchesPlayed,
@@ -89,7 +103,7 @@ export async function POST(req: NextRequest) {
         try {
           await sb.from('nuliga_sync_log').insert({
             league_id: leagueId,
-            club_id: auth.clubId!,
+            club_id: clubId,
             trigger: 'csv_import',
             status: 'success',
             teams_created: standingsImported,

@@ -106,7 +106,9 @@ export async function GET(request: NextRequest) {
           .from('leagues')
           .update({
             last_synced_at: completedAt.toISOString(),
-            ...(result.ownTeam && !league.own_team_name ? { own_team_name: result.ownTeam } : {}),
+            ...(result.ownTeam && result.ownTeam !== league.own_team_name
+              ? { own_team_name: result.ownTeam }
+              : {}),
           })
           .eq('id', league.id);
 
