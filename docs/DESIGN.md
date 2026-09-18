@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2; §6 Phase 4.4 ergänzt: loading/error/not-found vererben im App Router, keine echte Lücke; §6 Phase 4.5 ergänzt: „Laden" ohne Auslassungspunkte vereinheitlicht; §8 Icon-Button-Regel für Phase 5.1 ergänzt: aria-label + Tooltip pflicht, globale TooltipProvider, Test-Query per Rolle statt title; §8 Kalender-Tastaturbedienung für Phase 5.2 ergänzt: Pfeiltasten-Fokusnavigation per Zell-ID, Tastatur-Drag-Bug behoben — eigener onKeyDown überschrieb dnd-kits Aktivierungs-Listener)
+> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2; §6 Phase 4.4 ergänzt: loading/error/not-found vererben im App Router, keine echte Lücke; §6 Phase 4.5 ergänzt: „Laden" ohne Auslassungspunkte vereinheitlicht; §8 Icon-Button-Regel für Phase 5.1 ergänzt: aria-label + Tooltip pflicht, globale TooltipProvider, Test-Query per Rolle statt title; §8 Kalender-Tastaturbedienung für Phase 5.2 ergänzt: Pfeiltasten-Fokusnavigation per Zell-ID, Tastatur-Drag-Bug behoben — eigener onKeyDown überschrieb dnd-kits Aktivierungs-Listener; §8 Phase 5.3 geprüft: globale :focus-visible-Regel deckt bereits alle Elemente inkl. Kalenderzellen ab; §8 Phase 5.4 geprüft: Leerzustände haben durchweg schon einen Weg nach vorn oder sind zu Recht ohne Aktion)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -330,6 +330,30 @@ Kind-Element (Radix `Slot` merged es auf das tatsächliche DOM-Element) — nich
   Semantik reserviert, Leertaste greift/bewegt/lässt los.
 - Tests: `src/__tests__/components/week-view-keyboard.test.tsx`,
   `agenda-view-keyboard.test.tsx`.
+
+**Fokus sichtbar geprüft (Sanierungsplan Phase 5.3, 18.09.2026):** `app/globals.css` hat
+bereits eine globale `:focus-visible`-Regel (Zeile ~383) mit eigenem Ring pro Theme
+(`--tw-ring-color` aus `--ring` im Light-Mode, aus `--brand-primary-light` im Dark-Mode via
+`.dark :focus-visible`) — sie gilt für **jedes** fokussierbare Element, auch für die
+`role="button"`-Divs im Kalender (Wochenraster, Agenda, Tagesansicht), nicht nur für
+`<button>`. Codeweite Suche nach `outline-none` ohne begleitenden Ring fand nur
+Radix-interne Menü-/Select-Items, die stattdessen `focus:bg-accent` als sichtbare Markierung
+nutzen (gültige Alternative). Kein Nachbesserungsbedarf gefunden — visuelle
+Stichprobenprüfung in beiden Themes steht noch aus (Chrome-Extension in dieser Session nicht
+verbunden).
+
+**Leerzustände geprüft (Sanierungsplan Phase 5.4, 18.09.2026):** Codeweite Suche nach „Keine …
+gefunden"/„Noch keine …"-Mustern fand 86 Treffer. Beim Durchsehen zeigte sich: die meisten
+sind entweder bereits über `ListState` (`emptyHint`, z. B. `meetings-client.tsx`) oder
+`EmptyState`/`TennisBallEmptyState` (Action-Button, 15 Konsumenten von
+`components/ui/empty-state.tsx`) mit einem Weg nach vorn versehen, oder Fehlalarme (Toast-Text,
+Code-Kommentare, Inline-Hinweis mit `<Link>` statt `emptyHint`-Prop — traf die Regex nicht, ist
+aber vorhanden). Die verbleibenden bloßen „Keine X"-Texte sind durchweg Fälle, für die eine
+Erstell-Aktion nicht passt: Suchergebnisse (`command-palette.tsx`), eingehende Anfragen
+(`owner/access/page.tsx` — man kann keine fremde Anfrage „anlegen"), Analytics/Charts ohne
+Daten, die Bio eines Profils, oder die Buchungs-/Rechnungshistorie eines **anderen** Nutzers in
+der Admin-Detailansicht. Kein Nachbesserungsbedarf gefunden, der eine echte „hier fehlt der Weg
+nach vorn"-Lücke wäre.
 
 ---
 
