@@ -42,7 +42,7 @@ interface Slide {
 /* ───────────── Mock-Oberflächen (Beispieldaten) ───────────── */
 
 const PANEL = 'flex h-full w-full flex-col bg-[#f1f0ed] text-[#141a17] p-6 font-sans';
-const CARD = 'rounded-2xl border border-black/10 bg-[#fbfaf8]';
+const CARD = 'rounded-xl border border-black/10 bg-[#fbfaf8]';
 
 const ROW = 84;
 
@@ -61,9 +61,9 @@ function PlatzKalender() {
     [3, 3, 1, 'Mitglied · Wolf', 'b'],
   ];
   const tone = {
-    g: 'bg-emerald-600/15 border-emerald-700/30 text-emerald-900',
-    b: 'bg-sky-600/15 border-sky-700/30 text-sky-900',
-    o: 'bg-amber-500/20 border-amber-700/30 text-amber-900',
+    g: 'bg-success-50 border-success-200 text-success-700',
+    b: 'bg-info-50 border-info-200 text-info-700',
+    o: 'bg-warning-50 border-warning-200 text-warning-700',
   };
   return (
     <div className={PANEL}>
@@ -108,7 +108,7 @@ function PlatzKalender() {
                     <div
                       key={title}
                       className={cn(
-                        'absolute inset-x-1.5 top-1.5 z-10 rounded-lg border px-3 py-2 text-[14px] font-semibold leading-tight',
+                        'absolute inset-x-1.5 top-1.5 z-10 rounded-md border px-3 py-2 text-[14px] font-semibold leading-tight',
                         tone[t]
                       )}
                       style={{ height: len * ROW - 12 }}
@@ -155,10 +155,10 @@ function Saisonplanung() {
     ],
   ];
   const tone = {
-    g: 'border-l-emerald-600',
-    b: 'border-l-sky-600',
-    o: 'border-l-amber-500',
-    p: 'border-l-violet-600',
+    g: 'border-l-success-600',
+    b: 'border-l-info-600',
+    o: 'border-l-warning-600',
+    p: 'border-l-brand-primary',
   };
   return (
     <div className={PANEL}>
@@ -169,7 +169,7 @@ function Saisonplanung() {
             Vorschlag aus Trainerkapazität, Gruppenwünschen und Platzbelegung
           </p>
         </div>
-        <div className="rounded-full bg-emerald-700/15 px-4 py-2 text-[15px] font-bold text-emerald-900">
+        <div className="rounded-full bg-success-50 px-4 py-2 text-[15px] font-bold text-success-700">
           0 Konflikte
         </div>
       </div>
@@ -184,7 +184,7 @@ function Saisonplanung() {
                 <div
                   key={time + group}
                   className={cn(
-                    'rounded-lg border border-black/10 border-l-4 bg-white px-3 py-3.5',
+                    'rounded-md border border-black/10 border-l-4 bg-white px-3 py-3.5',
                     tone[t]
                   )}
                 >
@@ -218,9 +218,9 @@ function Abrechnung() {
     ['R-2026-0146', 'Tim Hartmann', '92,00 €', 'paid'],
   ];
   const badge = {
-    paid: ['Bezahlt', 'bg-emerald-600/15 text-emerald-900'],
-    open: ['Offen', 'bg-sky-600/15 text-sky-900'],
-    due: ['Überfällig', 'bg-red-600/15 text-red-900'],
+    paid: ['Bezahlt', 'bg-success-50 text-success-700'],
+    open: ['Offen', 'bg-info-50 text-info-700'],
+    due: ['Überfällig', 'bg-error-50 text-error-700'],
   };
   return (
     <div className={PANEL}>
@@ -361,14 +361,14 @@ export function HeroShowcase() {
       {/* Zweite und dritte Ebene für Tiefe */}
       <div
         aria-hidden="true"
-        className="absolute inset-x-6 -bottom-3 h-full rounded-2xl border border-white/10 bg-white/5"
+        className="absolute inset-x-6 -bottom-3 h-full rounded-xl border border-white/10 bg-white/5"
       />
       <div
         aria-hidden="true"
-        className="absolute inset-x-12 -bottom-6 h-full rounded-2xl border border-white/5 bg-white/[0.03]"
+        className="absolute inset-x-12 -bottom-6 h-full rounded-xl border border-white/5 bg-white/[0.03]"
       />
 
-      <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-[#0d1b14] shadow-2xl shadow-black/40 ring-1 ring-black/20">
+      <div className="relative overflow-hidden rounded-xl border border-white/15 bg-[#0d1b14] shadow-2xl shadow-black/40 ring-1 ring-black/20">
         {/* Fensterleiste mit Tabs */}
         <div className="flex items-center gap-3 border-b border-white/10 bg-white/5 px-4 py-2.5">
           <div className="flex gap-1.5" aria-hidden="true">
