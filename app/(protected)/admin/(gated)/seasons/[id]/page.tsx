@@ -49,6 +49,7 @@ import {
   SEASON_WORKFLOW_PHASES,
 } from '@/lib/season-planning/status-labels';
 import { SeasonPlanningTabs } from '@/components/admin/season-planning-tabs';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { apiFetch } from '@/lib/api-fetch';
 import { SeasonCalendarTab } from '@/components/admin/season-calendar-tab';
 
@@ -546,6 +547,9 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[{ label: 'Saisonplanung', href: '/admin/seasons' }, { label: season.name }]}
+      />
       <SeasonPlanningTabs seasonId={id} />
       <ConfirmDialog
         open={publishConfirmOpen}

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
 import {
   User,
   Euro,
@@ -16,11 +15,10 @@ import {
   Globe,
   Briefcase,
   Edit,
-  ChevronRight,
   AlertCircle,
-  ArrowLeft,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -316,20 +314,10 @@ export default function TrainerProfilePage() {
 
   return (
     <div className="animate-in">
-      {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
-      <nav className="mb-4 flex items-center gap-1.5 text-sm">
-        <Link
-          href="/trainer/profile"
-          className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Profil
-        </Link>
-        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-        <span className="font-medium text-foreground">
-          {profile.firstName} {profile.lastName}
-        </span>
-      </nav>
+      <Breadcrumb
+        items={[{ label: `${profile.firstName} ${profile.lastName}` }]}
+        className="mb-4"
+      />
 
       <div className="bg-background dark:bg-surface-dark rounded-xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}

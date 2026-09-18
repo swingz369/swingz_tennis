@@ -4,6 +4,7 @@ import { extractErrorMessage } from '@/lib/typed-helpers';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -572,6 +573,9 @@ export default function LeagueDetailClient({
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[{ label: 'Liga & Mannschaft', href: '/admin/leagues' }, { label: league.name }]}
+      />
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">

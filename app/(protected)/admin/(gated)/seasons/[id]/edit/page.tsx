@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
 import { SeasonPlanningTabs } from '@/components/admin/season-planning-tabs';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface Season {
   id: string;
@@ -155,6 +156,13 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { label: 'Saisonplanung', href: '/admin/seasons' },
+          { label: season.name, href: `/admin/seasons/${id}` },
+          { label: 'Bearbeiten' },
+        ]}
+      />
       <SeasonPlanningTabs seasonId={id} />
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => router.push(`/admin/seasons/${id}`)}>

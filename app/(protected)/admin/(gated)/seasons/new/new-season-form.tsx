@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { useUserClub } from '@/hooks/use-user-data';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 export function NewSeasonForm() {
   const router = useRouter();
@@ -108,6 +109,9 @@ export function NewSeasonForm() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[{ label: 'Saisonplanung', href: '/admin/seasons' }, { label: 'Neue Saison' }]}
+      />
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => router.push('/admin/seasons')}>

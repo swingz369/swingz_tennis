@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen)
+> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -235,6 +235,15 @@ mit zentriertem Einzelinhalt (`bookings/payment-success`, `shop/success`) und De
 Zurück-Navigation, Badge neben dem Titel oder Inline-Controls wie einem Status-Select
 (`admin/tournaments/[id]`, `admin/seasons/[id]`) — dafür deckt `PageHeader`s Actions-API (nur
 Buttons) den Bedarf nicht ab.
+
+**Breadcrumb-Regel (Sanierungsplan Phase 4.3, 18.09.2026):** Jede Seite, deren Route tiefer als
+zwei Ebenen liegt (z. B. `admin/seasons/[id]/preferences/new`), bekommt `Breadcrumb` aus
+`@/components/ui/breadcrumb` als erstes Element vor dem restlichen Seiteninhalt — nie eine
+handgerollte `nav`+`ChevronRight`-Nachbildung (gab es zuvor doppelt in den Detailseiten für
+Mitglieder und Trainer). `Breadcrumb` verlinkt immer zuerst auf `/dashboard`, dann die
+übergebenen `items` (letztes Item ohne `href` = aktuelle Seite). Ergänzt die vorhandenen
+Zurück-Buttons, ersetzt sie nicht — der Button springt eine Ebene zurück, der Breadcrumb zeigt
+den vollen Pfad.
 
 ---
 

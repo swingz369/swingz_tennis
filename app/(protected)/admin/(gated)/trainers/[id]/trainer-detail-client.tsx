@@ -2,9 +2,9 @@
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -26,7 +26,6 @@ import {
   Calendar,
   MapPin,
   CheckCircle,
-  ChevronRight,
   AlertCircle,
   Edit,
   Save,
@@ -544,20 +543,13 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
 
   return (
     <div className="animate-in">
-      {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
-      <nav className="mb-4 flex items-center gap-1.5 text-sm">
-        <Link
-          href="/admin/trainers"
-          className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Trainer
-        </Link>
-        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-        <span className="font-medium text-foreground">
-          {trainer.firstName} {trainer.lastName}
-        </span>
-      </nav>
+      <Breadcrumb
+        items={[
+          { label: 'Trainer-Verwaltung', href: '/admin/trainers' },
+          { label: `${trainer.firstName} ${trainer.lastName}` },
+        ]}
+        className="mb-4"
+      />
 
       <div className="bg-background dark:bg-surface-dark rounded-xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}

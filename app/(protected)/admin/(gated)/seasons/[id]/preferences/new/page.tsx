@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import type { WeeklyAvailability, TimeSlot } from '@/lib/types/season-planning';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface PreferenceFormPageProps {
   params: {
@@ -120,6 +121,14 @@ export default function PreferenceFormPage({ params }: PreferenceFormPageProps) 
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { label: 'Saisonplanung', href: '/admin/seasons' },
+          { label: 'Saison', href: `/admin/seasons/${params.id}` },
+          { label: 'Präferenzen', href: `/admin/seasons/${params.id}/preferences` },
+          { label: 'Neu' },
+        ]}
+      />
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button

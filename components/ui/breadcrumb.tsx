@@ -2,17 +2,18 @@
 
 import Link from 'next/link';
 import { ChevronRight, Home } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface BreadcrumbItem {
   label: string;
   href?: string;
 }
 
-export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
+export function Breadcrumb({ items, className }: { items: BreadcrumbItem[]; className?: string }) {
   return (
     <nav
       aria-label="Breadcrumb"
-      className="flex items-center gap-1.5 text-sm text-muted-foreground"
+      className={cn('flex items-center gap-1.5 text-sm text-muted-foreground', className)}
     >
       <Link
         href="/dashboard"

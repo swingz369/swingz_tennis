@@ -5,6 +5,7 @@ import { getSetupCounts, missingSeasonPrerequisites } from '@/lib/setup-checklis
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { NewSeasonForm } from './new-season-form';
 
 export const dynamic = 'force-dynamic';
@@ -24,6 +25,9 @@ export default async function NewSeasonPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[{ label: 'Saisonplanung', href: '/admin/seasons' }, { label: 'Neue Saison' }]}
+      />
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/admin/seasons" aria-label="Zurück zu den Saisons">

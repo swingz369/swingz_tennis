@@ -37,6 +37,7 @@ import {
 } from '@/src/constants/tournaments';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { apiFetch } from '@/lib/api-fetch';
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -222,6 +223,12 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="space-y-6 animate-in">
+      <Breadcrumb
+        items={[
+          { label: 'Turniere', href: '/admin/events?tab=tournaments' },
+          { label: tournament.name },
+        ]}
+      />
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-start gap-4">

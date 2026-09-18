@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import type { ConflictDetectionResult } from '@/lib/season-planning/types';
 import { PageHeader } from '@/components/ui/page-header';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { ConflictList } from '@/components/season-planning/conflict-list';
 import { conflictFixTarget } from '@/lib/season-planning/conflict-utils';
 
@@ -124,6 +125,13 @@ export default function ConflictsPage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { label: 'Saisonplanung', href: '/admin/seasons' },
+          { label: 'Saison', href: `/admin/seasons/${seasonId}` },
+          { label: 'Konflikte' },
+        ]}
+      />
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"

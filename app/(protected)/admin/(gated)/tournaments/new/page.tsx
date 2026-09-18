@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 export default function NewTournamentPage() {
   const router = useRouter();
@@ -76,6 +77,9 @@ export default function NewTournamentPage() {
 
   return (
     <div className="space-y-5">
+      <Breadcrumb
+        items={[{ label: 'Turniere', href: '/admin/events?tab=tournaments' }, { label: 'Neu' }]}
+      />
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" asChild className="p-1 h-auto">
           <Link href="/admin/events?tab=tournaments">

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/page-header';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { ArrowLeft, Clock, Users } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 
@@ -71,6 +72,13 @@ export default function SeasonPreferencesPage({ params }: PreferencesPageProps) 
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { label: 'Saisonplanung', href: '/admin/seasons' },
+          { label: 'Saison', href: `/admin/seasons/${seasonId}` },
+          { label: 'Präferenzen' },
+        ]}
+      />
       <PageHeader
         title="Eingereichte Präferenzen"
         description={`${submittedCount} von ${preferences.length} eingereicht`}

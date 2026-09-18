@@ -4,7 +4,7 @@ import { formatMemberNumber } from '@/lib/format';
 
 import { useState, useEffect, useCallback } from 'react';
 import { CenteredModal } from '@/components/ui/centered-modal';
-import Link from 'next/link';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +31,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
-  ArrowLeft,
   User,
   Mail,
   Calendar,
@@ -44,7 +43,6 @@ import {
   Edit,
   AlertCircle,
   Target,
-  ChevronRight,
   Euro,
   UserX,
 } from 'lucide-react';
@@ -464,18 +462,13 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
 
   return (
     <div className="animate-in">
-      {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
-      <nav className="mb-4 flex items-center gap-1.5 text-sm">
-        <Link
-          href="/admin/members"
-          className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Mitglieder
-        </Link>
-        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-        <span className="font-medium text-foreground truncate">{member.full_name}</span>
-      </nav>
+      <Breadcrumb
+        items={[
+          { label: 'Mitgliederverwaltung', href: '/admin/members' },
+          { label: member.full_name },
+        ]}
+        className="mb-4"
+      />
 
       <div className="bg-background dark:bg-surface-dark rounded-xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}

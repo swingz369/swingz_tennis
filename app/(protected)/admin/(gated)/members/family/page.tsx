@@ -20,6 +20,7 @@ import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
 import { PageHeader } from '@/components/ui/page-header';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 const log = createLogger('admin:members:family');
 
@@ -165,6 +166,12 @@ export default function AdminFamilyPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { label: 'Mitgliederverwaltung', href: '/admin/members' },
+          { label: 'Familienkonten' },
+        ]}
+      />
       <PageHeader
         title="Familienkonten"
         description="Familiengruppen im Verein anlegen und verwalten"
