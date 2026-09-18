@@ -1,0 +1,93 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# .github/workflows/deploy.yml
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Push nach main -> CI grün -> (Migrationen) -> vercel deploy --prod -> Health-Check.
+#
+# Warum per CLI statt Vercel-Git-Deploy: der steht seit dem 16.08.2026 auf
+# BLOCKED (Hobby-Plan, privates Repo, Commit-Autor != Kontoinhaber — siehe
+# docs/CONTRIBUTING.md). CLI-Deploys mit Token sind davon nicht betroffen.
+#
+# Voraussetzungen (Repo-Secrets/-Variablen):
+#   secrets.VERCEL_TOKEN       Vercel-Token des Kontoinhabers
+#   secrets.DATABASE_URL_PROD  (existiert) für die Migrationen
+#   vars.AUTO_MIGRATE='true'   schaltet die Migrationen ein (Standard: aus)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+name: deploy
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Nie zwei Deploys gleichzeitig; ein neuerer wartet, statt den laufenden abzubrechen
+# (ein abgebrochener Deploy nach halber Migration wäre schlimmer als warten).
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  VERCEL_ORG_ID: team_dSBFnKE7SAwXNOOm7YAAFjCx
+  VERCEL_PROJECT_ID: prj_9HU04ZBawZkaD2O3kJ59qEr4Wj5f
+  PROD_URL: https://swingz.vercel.app
+
+jobs:
+  deploy:
+    name: Migrationen, Deploy, Health-Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Checkout (exakt der geprüfte Commit)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Offene Migrationen anzeigen
+        if: ${{ vars.AUTO_MIGRATE == 'true' }}
+        env:
+          MIGRATE_ENV: prod
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+        run: pnpm db:status:prod
+
+      - name: Migrationen auf Produktion anwenden
+        if: ${{ vars.AUTO_MIGRATE == 'true' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+        run: pnpm db:migrate:prod
+
+      - name: Deploy nach Produktion
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          test -n "$VERCEL_TOKEN" || { echo "::error::Secret VERCEL_TOKEN fehlt"; exit 1; }
+          npx vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN"
+
+      - name: Health-Check (Produktion)
+        run: |
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o /tmp/health.json -w '%{http_code}' "$PROD_URL/api/health" || true)
+            if [ "$code" = "200" ] && grep -q '"status":"ok"' /tmp/health.json; then
+              echo "Health OK"; cat /tmp/health.json; exit 0
+            fi
+            echo "Versuch $i: HTTP $code"; sleep 15
+          done
+          echo "::error::/api/health nicht grün nach dem Deploy"; cat /tmp/health.json || true; exit 1
