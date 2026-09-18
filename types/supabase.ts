@@ -2296,8 +2296,8 @@ export type Database = {
       };
       league_players: {
         Row: {
-          club_id: string;
           birth_year: number | null;
+          club_id: string;
           created_at: string;
           dtb_id: string | null;
           id: string;
@@ -2310,8 +2310,8 @@ export type Database = {
           synced_at: string;
         };
         Insert: {
-          club_id: string;
           birth_year?: number | null;
+          club_id: string;
           created_at?: string;
           dtb_id?: string | null;
           id?: string;
@@ -2324,8 +2324,8 @@ export type Database = {
           synced_at?: string;
         };
         Update: {
-          club_id?: string;
           birth_year?: number | null;
+          club_id?: string;
           created_at?: string;
           dtb_id?: string | null;
           id?: string;
@@ -3823,50 +3823,74 @@ export type Database = {
       };
       pricing_rules: {
         Row: {
+          advance_booking_days: number | null;
           applies_to: string | null;
+          applies_to_groups: Json | null;
+          applies_to_member_types: Json | null;
           club_id: string;
+          court_id: string | null;
           created_at: string | null;
           days_of_week: number[] | null;
           description: string | null;
           id: string;
           is_active: boolean | null;
+          max_booking_hours: number | null;
+          min_booking_hours: number | null;
           name: string;
           price_per_hour: number | null;
+          priority: number;
           rule_type: string | null;
           season_id: string | null;
           time_ranges: Json | null;
+          updated_at: string;
           valid_from: string | null;
           valid_until: string | null;
         };
         Insert: {
+          advance_booking_days?: number | null;
           applies_to?: string | null;
+          applies_to_groups?: Json | null;
+          applies_to_member_types?: Json | null;
           club_id: string;
+          court_id?: string | null;
           created_at?: string | null;
           days_of_week?: number[] | null;
           description?: string | null;
           id?: string;
           is_active?: boolean | null;
+          max_booking_hours?: number | null;
+          min_booking_hours?: number | null;
           name: string;
           price_per_hour?: number | null;
+          priority?: number;
           rule_type?: string | null;
           season_id?: string | null;
           time_ranges?: Json | null;
+          updated_at?: string;
           valid_from?: string | null;
           valid_until?: string | null;
         };
         Update: {
+          advance_booking_days?: number | null;
           applies_to?: string | null;
+          applies_to_groups?: Json | null;
+          applies_to_member_types?: Json | null;
           club_id?: string;
+          court_id?: string | null;
           created_at?: string | null;
           days_of_week?: number[] | null;
           description?: string | null;
           id?: string;
           is_active?: boolean | null;
+          max_booking_hours?: number | null;
+          min_booking_hours?: number | null;
           name?: string;
           price_per_hour?: number | null;
+          priority?: number;
           rule_type?: string | null;
           season_id?: string | null;
           time_ranges?: Json | null;
+          updated_at?: string;
           valid_from?: string | null;
           valid_until?: string | null;
         };
@@ -3876,6 +3900,13 @@ export type Database = {
             columns: ['club_id'];
             isOneToOne: false;
             referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'pricing_rules_court_id_fkey';
+            columns: ['court_id'];
+            isOneToOne: false;
+            referencedRelation: 'courts';
             referencedColumns: ['id'];
           },
           {
@@ -6683,116 +6714,6 @@ export type Database = {
           },
         ];
       };
-      training_group_memberships: {
-        Row: {
-          club_id: string;
-          created_at: string;
-          created_by: string | null;
-          id: string;
-          joined_at: string;
-          left_at: string | null;
-          left_reason: string | null;
-          member_id: string;
-          training_group_id: string;
-        };
-        Insert: {
-          club_id: string;
-          created_at?: string;
-          created_by?: string | null;
-          id?: string;
-          joined_at: string;
-          left_at?: string | null;
-          left_reason?: string | null;
-          member_id: string;
-          training_group_id: string;
-        };
-        Update: {
-          club_id?: string;
-          created_at?: string;
-          created_by?: string | null;
-          id?: string;
-          joined_at?: string;
-          left_at?: string | null;
-          left_reason?: string | null;
-          member_id?: string;
-          training_group_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'training_group_memberships_club_id_fkey';
-            columns: ['club_id'];
-            isOneToOne: false;
-            referencedRelation: 'clubs';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'training_group_memberships_created_by_fkey';
-            columns: ['created_by'];
-            isOneToOne: false;
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'training_group_memberships_member_id_fkey';
-            columns: ['member_id'];
-            isOneToOne: false;
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'training_group_memberships_training_group_id_fkey';
-            columns: ['training_group_id'];
-            isOneToOne: false;
-            referencedRelation: 'training_groups';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
-      training_groups: {
-        Row: {
-          age_group: string;
-          club_id: string;
-          id: string;
-          is_active: boolean;
-          level: string;
-          name: string;
-          schedule_id: string;
-        };
-        Insert: {
-          age_group?: string;
-          club_id: string;
-          id?: string;
-          is_active?: boolean;
-          level?: string;
-          name: string;
-          schedule_id: string;
-        };
-        Update: {
-          age_group?: string;
-          club_id?: string;
-          id?: string;
-          is_active?: boolean;
-          level?: string;
-          name?: string;
-          schedule_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'training_groups_club_id_clubs_id_fk';
-            columns: ['club_id'];
-            isOneToOne: false;
-            referencedRelation: 'clubs';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'training_groups_schedule_id_schedules_id_fk';
-            columns: ['schedule_id'];
-            isOneToOne: false;
-            referencedRelation: 'schedules';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       trial_trainings: {
         Row: {
           club_id: string;
@@ -7835,6 +7756,10 @@ export type Database = {
       shift_session_waitlist_positions: {
         Args: { p_session_id: string };
         Returns: undefined;
+      };
+      soft_delete_club: {
+        Args: { p_club_id: string; p_reason?: string };
+        Returns: number;
       };
       start_job: { Args: { p_job_id: string }; Returns: boolean };
       timeslots_overlap: {

@@ -1,15 +1,13 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { DrizzlePricingRuleRepository } from '@/infrastructure/persistence/repositories/pricing-rule.repository';
+import { PricingRuleService } from '@/application/services/pricing-rule.service';
 import { ClubId, CourtId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:pricing-rules:calculate');
-
-const repo = new DrizzlePricingRuleRepository();
 
 // GET /api/pricing-rules/calculate?clubId=...&courtId=...&startTime=...&dayOfWeek=...&bookingHours=...
 export async function GET(req: NextRequest) {
@@ -37,7 +35,7 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-      const result = await repo.calculatePrice(ClubId.fromString(clubId), {
+      const result = await new PricingRuleService(auth).calculatePrice(ClubId.fromString(clubId), {
         courtId: courtId ? CourtId.fromString(courtId) : undefined,
         memberType: memberType || undefined,
         bookingHours: bookingHours ? Number(bookingHours) : undefined,

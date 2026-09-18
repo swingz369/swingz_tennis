@@ -212,13 +212,18 @@ Service-Client erreichbar. → **Fix:** Policies definieren oder bewusst dokumen
 - **✅ Erledigt 17.09.2026** — Repository war umgezogen (`swingz369/swingz` →
   `swingz369/swingz_tennis`), `git remote` und `docs/SERVICES.md` zeigten noch auf den alten
   Namen. Beides nachgezogen.
-- **ADR-005: Service-Schicht in 14 migrierten Routen übersprungen.** `app/api/groups/*` (4),
-  `app/api/pricing-rules/*` (3), `app/api/analytics/*` (3), `bookings`, `schedule`,
-  `stripe/checkout`, `clubs/[id]` importieren ein Repository direkt in der Route statt über
-  einen Service — RLS-Disziplin (`getUserDb`) eingehalten, aber Fachlogik landet in der Route
-  statt in `src/application/services/`, wie es ADR-005 vorschreibt. → **Fix:** pro Domäne einen
-  dünnen Service nachziehen.
-  → Quelle: `docs/ARCHIV/2026-09-16-adr-005-migrationsfortschritt-befund.md` (Befund 2).
+- **✅ Erledigt 18.09.2026 — ADR-005: Service-Schicht in migrierten Routen.** Gruppen,
+  Preisregeln, Auswertungen (`analytics/*`) und `clubs/[id]` laufen über je einen Service; die
+  Drizzle-Repositories für Buchungen, Termine und Vereine sind entfernt. `bookings`,
+  `stripe/checkout` und `schedule` greifen nicht mehr auf Repositories zu.
+- **Umsatz-Export (`/api/analytics/revenue/export`) liefert Platzhalterdaten.** Pauschal 15 €
+  je bestätigter Buchung, Zahlungsmethode **zufällig**, Mitgliedsname „Member N“ — stammt aus dem
+  alten Use-Case und wurde 1:1 übernommen. → **Entscheiden:** auf `invoices` umstellen oder den
+  Export entfernen, bevor ein Verein ihn für die Buchhaltung nutzt.
+- **Insights (`/api/analytics/insights`) sind Attrappe.** `lastVisit` wird nie befüllt, damit gilt
+  jedes Mitglied als „hohes Abwanderungsrisiko“.
+- **RLS auf `bookings` zu weit.** Policy `booking_access` (ALL) lässt jedes Vereinsmitglied alle
+  Buchungen des Vereins lesen und ändern.
 - **Architektur-Baseline-Datei (`dependency-cruiser`) nicht aktuell gehalten.**
   `.dependency-cruiser-known-violations.json` ist seit dem 13.09.2026 eingefroren; `npm run
 arch:check` läuft mit `--ignore-known` dagegen und meldet "grün", obwohl der reale Verstoß-Stand

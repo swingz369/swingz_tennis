@@ -1,6 +1,15 @@
 [
   {
     "type": "module",
+    "from": "lib/database-errors.ts",
+    "to": "lib/database-errors.ts",
+    "rule": {
+      "severity": "warn",
+      "name": "no-orphans"
+    }
+  },
+  {
+    "type": "module",
     "from": "lib/services/elo.service.ts",
     "to": "lib/services/elo.service.ts",
     "rule": {
@@ -572,61 +581,6 @@
   },
   {
     "type": "dependency",
-    "from": "app/api/analytics/bookings/export/route.ts",
-    "to": "src/infrastructure/persistence/repositories/booking.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/booking.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/analytics/bookings/export/route.ts",
-    "to": "src/infrastructure/persistence/repositories/club.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/club.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/analytics/bookings/export/route.ts",
-    "to": "src/infrastructure/persistence/repositories/schedule.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/schedule.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/analytics/insights/route.ts",
-    "to": "src/infrastructure/persistence/repositories/club.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/club.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/analytics/insights/route.ts",
-    "to": "src/infrastructure/persistence/repositories/member.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/member.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "app/api/analytics/members/export/route.ts",
     "to": "lib/supabase/service.ts",
     "unresolvedTo": "@/lib/supabase/service",
@@ -637,39 +591,6 @@
       "local",
       "import"
     ],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/analytics/revenue/export/route.ts",
-    "to": "src/infrastructure/persistence/repositories/booking.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/booking.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/analytics/revenue/export/route.ts",
-    "to": "src/infrastructure/persistence/repositories/club.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/club.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/analytics/revenue/export/route.ts",
-    "to": "src/infrastructure/persistence/repositories/schedule.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/schedule.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
     "rule": {
       "severity": "warn",
       "name": "routes-no-direct-db-baseline"
@@ -830,40 +751,6 @@
   },
   {
     "type": "dependency",
-    "from": "app/api/billing/dunning/route.ts",
-    "to": "lib/supabase/service.ts",
-    "unresolvedTo": "@/lib/supabase/service",
-    "dependencyTypes": [
-      "aliased",
-      "aliased-tsconfig",
-      "aliased-tsconfig-base-url",
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/billing/invoices/[id]/route.ts",
-    "to": "lib/supabase/service.ts",
-    "unresolvedTo": "@/lib/supabase/service",
-    "dependencyTypes": [
-      "aliased",
-      "aliased-tsconfig",
-      "aliased-tsconfig-base-url",
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "app/api/billing/monthly-overview/route.ts",
     "to": "lib/supabase/service.ts",
     "unresolvedTo": "@/lib/supabase/service",
@@ -949,17 +836,6 @@
   },
   {
     "type": "dependency",
-    "from": "app/api/bookings/route.ts",
-    "to": "src/infrastructure/persistence/repositories/pricing-rule.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/pricing-rule.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "app/api/club-logo/upload/route.ts",
     "to": "lib/supabase/service.ts",
     "unresolvedTo": "@/lib/supabase/service",
@@ -1006,56 +882,6 @@
   {
     "type": "dependency",
     "from": "app/api/clubs/[id]/restore/route.ts",
-    "to": "src/infrastructure/persistence/schema.ts",
-    "unresolvedTo": "@/infrastructure/persistence/schema",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/clubs/[id]/route.ts",
-    "to": "lib/supabase/service.ts",
-    "unresolvedTo": "@/lib/supabase/service",
-    "dependencyTypes": [
-      "aliased",
-      "aliased-tsconfig",
-      "aliased-tsconfig-base-url",
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/clubs/[id]/route.ts",
-    "to": "src/infrastructure/persistence/db.ts",
-    "unresolvedTo": "@/infrastructure/persistence/db",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/clubs/[id]/route.ts",
-    "to": "src/infrastructure/persistence/repositories/club.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/club.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/clubs/[id]/route.ts",
     "to": "src/infrastructure/persistence/schema.ts",
     "unresolvedTo": "@/infrastructure/persistence/schema",
     "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
@@ -1321,50 +1147,6 @@
   },
   {
     "type": "dependency",
-    "from": "app/api/groups/[id]/members/[memberId]/route.ts",
-    "to": "src/infrastructure/persistence/repositories/group.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/group.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/groups/[id]/members/route.ts",
-    "to": "src/infrastructure/persistence/repositories/group.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/group.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/groups/[id]/route.ts",
-    "to": "src/infrastructure/persistence/repositories/group.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/group.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/groups/route.ts",
-    "to": "src/infrastructure/persistence/repositories/group.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/group.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "app/api/health/route.ts",
     "to": "lib/supabase/service.ts",
     "unresolvedTo": "@/lib/supabase/service",
@@ -1417,6 +1199,57 @@
   {
     "type": "dependency",
     "from": "app/api/leagues/[id]/matchdays/route.ts",
+    "to": "lib/supabase/service.ts",
+    "unresolvedTo": "@/lib/supabase/service",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "warn",
+      "name": "routes-no-direct-db-baseline"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "app/api/leagues/[id]/roster/route.ts",
+    "to": "lib/supabase/service.ts",
+    "unresolvedTo": "@/lib/supabase/service",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "warn",
+      "name": "routes-no-direct-db-baseline"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "app/api/member/leagues/claim/route.ts",
+    "to": "lib/supabase/service.ts",
+    "unresolvedTo": "@/lib/supabase/service",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "warn",
+      "name": "routes-no-direct-db-baseline"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "app/api/member/leagues/route.ts",
     "to": "lib/supabase/service.ts",
     "unresolvedTo": "@/lib/supabase/service",
     "dependencyTypes": [
@@ -1671,39 +1504,6 @@
   },
   {
     "type": "dependency",
-    "from": "app/api/pricing-rules/[id]/route.ts",
-    "to": "src/infrastructure/persistence/repositories/pricing-rule.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/pricing-rule.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/pricing-rules/calculate/route.ts",
-    "to": "src/infrastructure/persistence/repositories/pricing-rule.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/pricing-rule.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/pricing-rules/route.ts",
-    "to": "src/infrastructure/persistence/repositories/pricing-rule.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/pricing-rule.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "app/api/public/club/[id]/route.ts",
     "to": "lib/supabase/service.ts",
     "unresolvedTo": "@/lib/supabase/service",
@@ -1804,56 +1604,6 @@
       "local",
       "import"
     ],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/schedule/route.ts",
-    "to": "src/infrastructure/persistence/db.ts",
-    "unresolvedTo": "@/src/infrastructure/persistence/db",
-    "dependencyTypes": [
-      "aliased",
-      "aliased-tsconfig",
-      "aliased-tsconfig-base-url",
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/schedule/route.ts",
-    "to": "src/infrastructure/persistence/repositories/schedule.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/schedule.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/schedule/route.ts",
-    "to": "src/infrastructure/persistence/repositories/trainer.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/trainer.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/schedule/route.ts",
-    "to": "src/infrastructure/persistence/schema.ts",
-    "unresolvedTo": "@/infrastructure/persistence/schema",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
     "rule": {
       "severity": "warn",
       "name": "routes-no-direct-db-baseline"
@@ -2534,17 +2284,6 @@
       "local",
       "import"
     ],
-    "rule": {
-      "severity": "warn",
-      "name": "routes-no-direct-db-baseline"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "app/api/stripe/checkout/route.ts",
-    "to": "src/infrastructure/persistence/repositories/pricing-rule.repository.ts",
-    "unresolvedTo": "@/infrastructure/persistence/repositories/pricing-rule.repository",
-    "dependencyTypes": ["aliased", "aliased-tsconfig", "aliased-tsconfig-paths", "local", "import"],
     "rule": {
       "severity": "warn",
       "name": "routes-no-direct-db-baseline"

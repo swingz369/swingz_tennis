@@ -12,12 +12,10 @@ import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { getStripe } from '@/lib/stripe/client';
 import { createLogger } from '@/lib/logger';
 import { appBaseUrl } from '@/lib/app-url';
-import { DrizzlePricingRuleRepository } from '@/infrastructure/persistence/repositories/pricing-rule.repository';
+import { PricingRuleService } from '@/application/services/pricing-rule.service';
 import { ClubId, CourtId } from '@/domain/value-objects';
 
 const log = createLogger('api:stripe:checkout');
-const pricingRepo = new DrizzlePricingRuleRepository();
-
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
@@ -128,13 +126,16 @@ export async function POST(_request: NextRequest) {
           }
         }
 
-        const pricing = await pricingRepo.calculatePrice(ClubId.fromString(booking.club_id), {
-          courtId: booking.court_id ? CourtId.fromString(booking.court_id) : undefined,
-          startTime: sessionStart,
-          dayOfWeek: sessionStart.getDay(),
-          bookingHours,
-          basePricePerHour,
-        });
+        const pricing = await new PricingRuleService(auth).calculatePrice(
+          ClubId.fromString(booking.club_id),
+          {
+            courtId: booking.court_id ? CourtId.fromString(booking.court_id) : undefined,
+            startTime: sessionStart,
+            dayOfWeek: sessionStart.getDay(),
+            bookingHours,
+            basePricePerHour,
+          }
+        );
 
         const effectivePricePerHour = pricing.pricePerHour * pricing.multiplier;
         resolvedAmount = Math.round(effectivePricePerHour * bookingHours * 100);

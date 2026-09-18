@@ -1,152 +1,74 @@
-import { eq, inArray, sql, and, gte, lt } from 'drizzle-orm';
-import { db } from '../db';
-import { clubs, userClubMemberships } from '../schema';
-import { Club } from '@/domain/entities/club';
-import type { MemberId } from '@/domain/value-objects';
-import { ClubId } from '@/domain/value-objects';
-import type { ClubRepository } from '@/domain/repositories/club-repository.interface';
+/**
+ * Vereins-Stammdaten für ADR-005. Ein Repository, Supabase-Client mit
+ * Nutzer-Token (RLS: clubs_update = Vereins-Admin/Owner, clubs_delete =
+ * Superadmin des Vereins). Endgültiges Löschen durch den Owner läuft über
+ * `systemDb` im Service, nicht hier.
+ */
+import 'server-only';
+import type { AuthContext } from '@/lib/api-auth';
+import type { Tables, TablesUpdate } from '@/types/supabase';
+import { createLogger } from '@/lib/logger';
 
-export class DrizzleClubRepository implements ClubRepository {
-  async findById(id: ClubId): Promise<Club | null> {
-    const result = await db.select().from(clubs).where(eq(clubs.id, id.getValue())).limit(1);
-    if (result.length === 0) return null;
-    return this.mapToDomain(result[0]);
+const log = createLogger('infrastructure:club.repository');
+
+export type ClubRow = Tables<'clubs'>;
+
+function assertNoError(error: { message: string } | null, action: string): void {
+  if (error) {
+    log.error(action, new Error(error.message));
+    throw new Error(action);
+  }
+}
+
+export class ClubRepository {
+  constructor(private readonly db: AuthContext['supabase']) {}
+
+  async findById(id: string): Promise<ClubRow | null> {
+    const { data, error } = await this.db.from('clubs').select().eq('id', id).maybeSingle();
+    assertNoError(error, 'Lesen des Vereins fehlgeschlagen');
+    return data;
   }
 
-  async findByName(name: string): Promise<Club | null> {
-    const result = await db.select().from(clubs).where(eq(clubs.name, name)).limit(1);
-    if (result.length === 0) return null;
-    return this.mapToDomain(result[0]);
+  async update(id: string, patch: TablesUpdate<'clubs'>): Promise<void> {
+    const { error } = await this.db
+      .from('clubs')
+      .update({ ...patch, updated_at: new Date().toISOString() })
+      .eq('id', id);
+    assertNoError(error, 'Speichern des Vereins fehlgeschlagen');
   }
 
-  async save(club: Club): Promise<void> {
-    const now = new Date();
-    const clubData = {
-      id: club.getId().getValue(),
-      name: club.getName(),
-      max_members: club.getMaxMembers(),
-      opening_hours: club.getOpeningHours(),
-      status: club.getStatus(),
-      updated_at: now,
-    };
-
-    const existing = await this.findById(club.getId());
-    if (existing) {
-      await db.update(clubs).set(clubData).where(eq(clubs.id, club.getId().getValue()));
-    } else {
-      await db.insert(clubs).values(clubData);
-    }
+  async countActiveMembers(id: string): Promise<number> {
+    const { count, error } = await this.db
+      .from('user_club_memberships')
+      .select('id', { count: 'exact', head: true })
+      .eq('club_id', id)
+      .eq('role', 'member')
+      .eq('is_active', true);
+    assertNoError(error, 'Zählen der Mitglieder fehlgeschlagen');
+    return count ?? 0;
   }
 
-  async delete(id: ClubId): Promise<void> {
-    await db.delete(clubs).where(eq(clubs.id, id.getValue()));
+  async countMemberships(id: string): Promise<number> {
+    const { count, error } = await this.db
+      .from('user_club_memberships')
+      .select('id', { count: 'exact', head: true })
+      .eq('club_id', id);
+    assertNoError(error, 'Zählen der Mitgliedschaften fehlgeschlagen');
+    return count ?? 0;
   }
 
-  async findAll(): Promise<Club[]> {
-    const result = await db.select().from(clubs).orderBy(clubs.created_at);
-    return result.map((row: typeof clubs.$inferSelect) => this.mapToDomain(row));
+  /** Atomar: Status 'deleted' + alle Mitgliedschaften deaktivieren. Liefert deren Anzahl. */
+  async softDelete(id: string, reason: string | null): Promise<number> {
+    const { data, error } = await this.db.rpc('soft_delete_club', {
+      p_club_id: id,
+      p_reason: reason ?? undefined,
+    });
+    assertNoError(error, 'Löschen des Vereins fehlgeschlagen');
+    return data ?? 0;
   }
 
-  async findByMemberId(memberId: MemberId): Promise<Club[]> {
-    const memberships = await db
-      .select()
-      .from(userClubMemberships)
-      .where(eq(userClubMemberships.user_id, memberId.getValue()));
-    const clubIds = memberships.map((r: typeof userClubMemberships.$inferSelect) => r.club_id);
-    if (clubIds.length === 0) return [];
-    const clubsData = await db.select().from(clubs).where(inArray(clubs.id, clubIds));
-    return clubsData.map((row: typeof clubs.$inferSelect) => this.mapToDomain(row));
-  }
-
-  async exists(id: ClubId): Promise<boolean> {
-    const result = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(clubs)
-      .where(eq(clubs.id, id.getValue()));
-    return result[0]?.count > 0;
-  }
-
-  async getMemberStats(
-    clubId: ClubId,
-    startDate: Date,
-    endDate: Date
-  ): Promise<{ total: number; new: number; active: number }> {
-    const totalResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(userClubMemberships)
-      .where(eq(userClubMemberships.club_id, clubId.getValue()));
-    const newResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(userClubMemberships)
-      .where(
-        and(
-          eq(userClubMemberships.club_id, clubId.getValue()),
-          gte(userClubMemberships.joined_at, startDate),
-          lt(userClubMemberships.joined_at, endDate)
-        )
-      );
-    const activeResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(userClubMemberships)
-      .where(
-        and(
-          eq(userClubMemberships.club_id, clubId.getValue()),
-          eq(userClubMemberships.is_active, true)
-        )
-      );
-
-    return {
-      total: Number(totalResult[0]?.count) || 0,
-      new: Number(newResult[0]?.count) || 0,
-      active: Number(activeResult[0]?.count) || 0,
-    };
-  }
-
-  async getMemberGrowthHistory(
-    clubId: ClubId,
-    startDate: Date,
-    endDate: Date
-  ): Promise<Array<{ month: string; count: number }>> {
-    const result = await db
-      .select({
-        month: sql<Date>`date_trunc('month', ${userClubMemberships.joined_at})`,
-        count: sql<number>`count(*)`,
-      })
-      .from(userClubMemberships)
-      .where(
-        and(
-          eq(userClubMemberships.club_id, clubId.getValue()),
-          gte(userClubMemberships.joined_at, startDate),
-          lt(userClubMemberships.joined_at, endDate),
-          eq(userClubMemberships.is_active, true)
-        )
-      )
-      .groupBy(sql`date_trunc('month', ${userClubMemberships.joined_at})`)
-      .orderBy(sql`date_trunc('month', ${userClubMemberships.joined_at})`);
-
-    return result.map((row: { month: Date; count: number }) => ({
-      month: this.formatMonth(row.month),
-      count: Number(row.count) || 0,
-    }));
-  }
-
-  private formatMonth(date: Date): string {
-    const d = new Date(date);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-  }
-
-  private mapToDomain(row: typeof clubs.$inferSelect): Club {
-    return Club.reconstitute(
-      ClubId.fromString(row.id),
-      row.name,
-      [],
-      [],
-      [],
-      row.max_members,
-      row.opening_hours,
-      row.status as Club['status'],
-      new Date(row.created_at),
-      new Date(row.updated_at)
-    );
+  async hardDelete(id: string): Promise<void> {
+    const { error } = await this.db.from('clubs').delete().eq('id', id);
+    assertNoError(error, 'Endgültiges Löschen des Vereins fehlgeschlagen');
   }
 }

@@ -1,19 +1,19 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { errorResponse, internalErrorResponse } from '@/lib/api-error';
+import {
+  ApiException,
+  errorResponse,
+  internalErrorResponse,
+  safeErrorMessage,
+} from '@/lib/api-error';
 import { z } from 'zod';
-import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories/club.repository';
-import { ClubId } from '@/domain/value-objects';
+import { ClubService } from '@/application/services/club.service';
 import { updateClubSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
 import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { verifyHardDeleteToken } from '@/lib/security/hard-delete-token';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { clubs, userClubMemberships } from '@/infrastructure/persistence/schema';
-import { db } from '@/infrastructure/persistence/db';
-import { eq } from 'drizzle-orm';
-import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:clubs:[id]');
@@ -23,7 +23,6 @@ const deletionBodySchema = z.object({
   deletion_reason: z.string().max(500).optional(),
 });
 
-const clubRepo = new DrizzleClubRepository();
 const auditService = new AuditServiceImpl();
 
 /**
@@ -60,42 +59,24 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     try {
-      const club = await clubRepo.findById(ClubId.fromString(id));
-      if (!club) {
-        return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
-      }
-      const result = await db
-        .select({
-          bundesland: clubs.bundesland,
-          billing_unit_minutes: clubs.billing_unit_minutes,
-          tax_rate: clubs.tax_rate,
-          default_payment_method: clubs.default_payment_method,
-          invoice_number_prefix: clubs.invoice_number_prefix,
-          city: clubs.city,
-          description: clubs.description,
-          logo_url: clubs.logo_url,
-        })
-        .from(clubs)
-        .where(eq(clubs.id, id))
-        .limit(1);
-      const row = result[0];
+      const service = new ClubService(auth);
+      const { club: row, memberCount } = await service.getWithMemberCount(id);
 
       const baseResponse = {
-        id: club.getId().getValue(),
-        name: club.getName(),
-        maxMembers: club.getMaxMembers(),
-        openingHours: club.getOpeningHours(),
-        status: club.getStatus(),
-        memberCount: club.getMemberCount(),
-        bundesland: row?.bundesland ?? null,
-        billing_unit_minutes: row?.billing_unit_minutes ?? 60,
-        tax_rate: row?.tax_rate ?? 0,
-        default_payment_method: row?.default_payment_method ?? 'transfer',
-        invoice_number_prefix: row?.invoice_number_prefix ?? '',
-        // Phase 2 neu im Snapshot — DB hat die Spalten schon seit Migrationsbeginn
-        city: row?.city ?? null,
-        description: row?.description ?? null,
-        logo_url: row?.logo_url ?? null,
+        id: row.id,
+        name: row.name,
+        maxMembers: row.max_members,
+        openingHours: row.opening_hours,
+        status: row.status,
+        memberCount,
+        bundesland: row.bundesland,
+        billing_unit_minutes: row.billing_unit_minutes,
+        tax_rate: row.tax_rate,
+        default_payment_method: row.default_payment_method,
+        invoice_number_prefix: row.invoice_number_prefix,
+        city: row.city,
+        description: row.description,
+        logo_url: row.logo_url,
       };
 
       // Platform-staff sehen zusätzlich Admin + Stripe — beide Felder
@@ -106,45 +87,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         return NextResponse.json(baseResponse);
       }
 
-      const sb = createServiceClient();
-
-      // Vereins-Admin (genau 1, weil admin = genau 1 Verein)
-      const { data: adminMembership } = await sb
-        .from('user_club_memberships')
-        .select('user_id')
-        .eq('club_id', id)
-        .eq('role', 'admin')
-        .eq('is_active', true)
-        .maybeSingle();
-
-      let adminSnapshot: {
-        email: string;
-        full_name: string | null;
-        subscription_tier: string | null;
-        subscription_status: string | null;
-        current_period_end: string | null;
-        stripe_customer_id: string | null;
-      } | null = null;
-
-      if (adminMembership?.user_id) {
-        const { data: adminUser } = await sb
-          .from('users')
-          .select(
-            'id, email, full_name, subscription_tier, subscription_status, current_period_end, stripe_customer_id'
-          )
-          .eq('id', adminMembership.user_id)
-          .maybeSingle();
-        if (adminUser) {
-          adminSnapshot = {
-            email: adminUser.email,
-            full_name: adminUser.full_name,
-            subscription_tier: adminUser.subscription_tier,
-            subscription_status: adminUser.subscription_status,
-            current_period_end: adminUser.current_period_end,
-            stripe_customer_id: adminUser.stripe_customer_id,
-          };
-        }
-      }
+      const adminSnapshot = await service.getPlatformSnapshot(id);
 
       return NextResponse.json({
         ...baseResponse,
@@ -152,6 +95,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         stripe_live_mode: !!process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_'),
       });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Error getting club:', error);
       return internalErrorResponse();
     }
@@ -178,67 +124,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     return withValidation(updateClubSchema, async (input) => {
       try {
-        const clubId = ClubId.fromString(id);
-        const existing = await clubRepo.findById(clubId);
-        if (!existing) {
-          return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
-        }
-
-        // Update domain fields (name, maxMembers, openingHours, status)
-        if (input.name !== undefined) {
-          existing.setName(input.name);
-        }
-        if (input.maxMembers !== undefined) {
-          existing.setMaxMembers(input.maxMembers);
-        }
-        if (input.openingHours !== undefined) {
-          existing.setOpeningHours(
-            input.openingHours as Parameters<typeof existing.setOpeningHours>[0]
-          );
-        }
-        if (input.status !== undefined) {
-          existing.setStatus(input.status as 'active' | 'inactive' | 'suspended');
-        }
-
-        await clubRepo.save(existing);
-
-        // Die Domain-Entity spiegelt city/description/logo_url/bundesland
-        // aktuell nicht — diese werden direkt über Drizzle geschrieben.
-        // Hier explizit aufzunehmen ist sicherer als auf der Domain zu schummeln.
-        const hasExtraUpdates =
-          input.bundesland !== undefined ||
-          input.billing_unit_minutes !== undefined ||
-          input.tax_rate !== undefined ||
-          input.default_payment_method !== undefined ||
-          input.invoice_number_prefix !== undefined ||
-          input.city !== undefined ||
-          input.description !== undefined ||
-          input.logo_url !== undefined;
-
-        if (hasExtraUpdates) {
-          await db
-            .update(clubs)
-            .set({
-              ...(input.bundesland !== undefined && { bundesland: input.bundesland }),
-              ...(input.billing_unit_minutes !== undefined && {
-                billing_unit_minutes: input.billing_unit_minutes,
-              }),
-              ...(input.tax_rate !== undefined && { tax_rate: input.tax_rate }),
-              ...(input.default_payment_method !== undefined && {
-                default_payment_method: input.default_payment_method,
-              }),
-              ...(input.invoice_number_prefix !== undefined && {
-                invoice_number_prefix: input.invoice_number_prefix,
-              }),
-              // Phase 2 (Owner-Master-Drawer): city/description/logo_url
-              // explizit nullable erlauben, damit der Owner ein gesetztes
-              // Logo oder eine Stadt auch wieder leeren kann.
-              ...(input.city !== undefined && { city: input.city }),
-              ...(input.description !== undefined && { description: input.description }),
-              ...(input.logo_url !== undefined && { logo_url: input.logo_url }),
-            })
-            .where(eq(clubs.id, clubId.getValue()));
-        }
+        await new ClubService(auth).update(id, input);
 
         try {
           await auditService.log({
@@ -255,6 +141,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
         return NextResponse.json({ success: true });
       } catch (error) {
+        if (error instanceof ApiException) {
+          return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+        }
         log.error('Error updating club:', error);
         return errorResponse('VALIDATION_ERROR', 'Verein konnte nicht aktualisiert werden');
       }
@@ -302,11 +191,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     try {
-      const clubId = ClubId.fromString(id);
-      const existing = await clubRepo.findById(clubId);
-      if (!existing) {
-        return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
-      }
+      const service = new ClubService(auth);
+      await service.getById(id); // 404 vor der Token-Prüfung
 
       // Hard-Delete-Pfad?
       // Token kommt im Format `${ts}.${hmac}` aus POST /api/clubs/[id]/hard-delete-token.
@@ -339,13 +225,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       // zukünftige Audit-Einträge, die `mode` für andere Konzepte brauchen
       // (`preview`, `dry_run`...), nicht kollidieren.
       if (wantsHardDelete && hardDeleteConfirmed) {
-        const memberRows = await db
-          .select({ id: userClubMemberships.id })
-          .from(userClubMemberships)
-          .where(eq(userClubMemberships.club_id, clubId.getValue()));
-        const deactivatedCount = memberRows.length;
-
-        await db.delete(clubs).where(eq(clubs.id, clubId.getValue()));
+        const { name, deactivated: deactivatedCount } = await service.hardDelete(id);
 
         try {
           await auditService.log({
@@ -355,7 +235,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
             entityId: id,
             details: {
               delete_mode: 'hard',
-              club_name_before_delete: existing.getName(),
+              club_name_before_delete: name,
               deactivated_members_count: deactivatedCount,
               stripe_refund_triggered: false, // Plattform-Customer überlebt; Refund-Event hier nicht anwendbar.
             },
@@ -387,29 +267,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         // Kein Body oder kein JSON — deletion_reason bleibt undefined.
       }
 
-      // Beide Updates (Memberships deaktivieren + Club soft-deleten) in einer
-      // Transaktion: Falls die zweite fehlschlägt, wird die erste per ROLLBACK
-      // zurückgenommen — sonst kaputter Zustand (Memberships weg, Club active).
-      const softDeleteResult = await db.transaction(async (tx) => {
-        const deactivatedMemberships = await tx
-          .update(userClubMemberships)
-          .set({ is_active: false })
-          .where(eq(userClubMemberships.club_id, clubId.getValue()))
-          .returning({ id: userClubMemberships.id });
-
-        await tx
-          .update(clubs)
-          .set({
-            status: 'deleted',
-            deleted_at: new Date(),
-            deleted_by: auth.user.id,
-            deletion_reason: deletionReason ?? null,
-            updated_at: new Date(),
-          })
-          .where(eq(clubs.id, clubId.getValue()));
-
-        return deactivatedMemberships.length;
-      });
+      // Status + Memberships atomar in der DB (soft_delete_club).
+      const { name, deactivated: softDeleteResult } = await service.softDelete(id, deletionReason);
 
       try {
         await auditService.log({
@@ -420,7 +279,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
           clubId: id,
           details: {
             delete_mode: 'soft',
-            club_name_before_delete: existing.getName(),
+            club_name_before_delete: name,
             deletion_reason: deletionReason,
             deactivated_members_count: softDeleteResult,
             stripe_refund_triggered: false, // bewusst: Kunde entscheidet
@@ -436,6 +295,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         deactivated_members_count: softDeleteResult,
       });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Error deleting club:', error);
       return internalErrorResponse();
     }

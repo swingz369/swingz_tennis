@@ -1,10 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { getClubBookingsUseCase } from '@/application/bookings/get-club-bookings.use-case';
-import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositories/booking.repository';
-import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories/club.repository';
-import { DrizzleScheduleRepository } from '@/infrastructure/persistence/repositories/schedule.repository';
+import { AnalyticsService } from '@/application/services/analytics.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { toCsv, csvHeaders } from '@/lib/csv';
@@ -33,11 +30,7 @@ export async function GET(_request: NextRequest) {
     }
 
     try {
-      const bookingRepository = new DrizzleBookingRepository();
-      const clubRepository = new DrizzleClubRepository();
-      const scheduleRepository = new DrizzleScheduleRepository();
-      const useCase = getClubBookingsUseCase(bookingRepository, clubRepository, scheduleRepository);
-      const bookings = await useCase.execute(clubId);
+      const bookings = await new AnalyticsService(auth).listBookings(clubId);
 
       const csv = toCsv(bookings as unknown as Record<string, unknown>[]);
       return new NextResponse(csv, { headers: csvHeaders(`buchungen-${clubId}`) });

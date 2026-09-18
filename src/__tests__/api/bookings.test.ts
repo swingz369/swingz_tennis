@@ -25,10 +25,10 @@ vi.doMock('@/lib/supabase/service', () => ({
   createServiceClient: () => makeFakeSupabaseClient(),
 }));
 
-vi.doMock('@/infrastructure/persistence/repositories/pricing-rule.repository', () => ({
-  // `new DrizzlePricingRuleRepository()` braucht eine echte (nicht-Arrow-)
-  // Funktion, damit sie als Konstruktor aufrufbar ist.
-  DrizzlePricingRuleRepository: function DrizzlePricingRuleRepository() {
+vi.doMock('@/application/services/pricing-rule.service', () => ({
+  // `new PricingRuleService()` braucht eine echte (nicht-Arrow-) Funktion,
+  // damit sie als Konstruktor aufrufbar ist.
+  PricingRuleService: function PricingRuleService() {
     return {
       calculatePrice: vi.fn(async () => ({ pricePerHour: 20, multiplier: 1, source: 'default' })),
     };

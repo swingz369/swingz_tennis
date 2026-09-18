@@ -13,7 +13,7 @@ import { createBookingSafe } from '@/lib/booking/safe-booking';
 import { isDayClosed, CLOSED_DAY_ERROR } from '@/lib/booking/opening-hours';
 import { resolveEffectiveMemberId } from '@/lib/family/family-auth';
 import { createServiceClient } from '@/lib/supabase/service';
-import { DrizzlePricingRuleRepository } from '@/infrastructure/persistence/repositories/pricing-rule.repository';
+import { PricingRuleService } from '@/application/services/pricing-rule.service';
 import { ClubId, CourtId } from '@/domain/value-objects';
 import { createLogger } from '@/lib/logger';
 import {
@@ -23,8 +23,6 @@ import {
 } from '@/lib/validation-schemas';
 
 const log = createLogger('api:bookings');
-const pricingRepo = new DrizzlePricingRuleRepository();
-
 // POST /api/bookings
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -212,7 +210,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const result = await pricingRepo.calculatePrice(ClubId.fromString(clubId), {
+      const result = await new PricingRuleService(auth).calculatePrice(ClubId.fromString(clubId), {
         courtId: session.court_id ? CourtId.fromString(session.court_id) : undefined,
         startTime: sessionStart,
         dayOfWeek: sessionStart.getDay(),

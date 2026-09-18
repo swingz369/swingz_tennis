@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 18. September 2026 (`league_players.dtb_id`/`birth_year` ergänzt); davor 14. September 2026 (Autorisierungs-Check in `generate_season_invoices_atomic` nachgetragen); davor 28. August 2026 (`training_groups` entfernt; davor 16. August 2026: Migrations-Tracking ersetzt, Owner-UPDATE-Policy auf `clubs`, Audit-Trigger auf den Finanztabellen; Live-Prüfung per postgres-js auf `supabase.swingz.cloud:6543`)
+> Zuletzt verifiziert: 18. September 2026 (`pricing_rules` um fehlende Spalten ergänzt; davor `league_players.dtb_id`/`birth_year` ergänzt); davor 14. September 2026 (Autorisierungs-Check in `generate_season_invoices_atomic` nachgetragen); davor 28. August 2026 (`training_groups` entfernt; davor 16. August 2026: Migrations-Tracking ersetzt, Owner-UPDATE-Policy auf `clubs`, Audit-Trigger auf den Finanztabellen; Live-Prüfung per postgres-js auf `supabase.swingz.cloud:6543`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -170,6 +170,25 @@ docker exec supabase-db psql -U postgres -c "select proname from pg_proc where p
 # Ist eine Tabelle echt befüllt oder totes Gerüst?
 docker exec supabase-db psql -U postgres -c "select count(*) from <table>;"
 ```
+
+## `pricing_rules` — fehlende Spalten ergänzt (Stand 18.09.2026, lokal angewendet)
+
+Die Baseline-Tabelle kannte nur das Rumpfmodell (`name`, `price_per_hour`, `time_ranges`, …).
+`court_id`, `min_/max_booking_hours`, `advance_booking_days`, `applies_to_member_types`,
+`applies_to_groups`, `priority`, `updated_at` fehlten, obwohl Repository und Admin-Seite sie
+verlangten: jede Abfrage scheiterte mit `column court_id does not exist` (Admin-Seite Preise
+lieferte 500, die Preisermittlung bei Buchung/Checkout fiel still auf den Platztyp-Preis zurück).
+Migration `20260918200000_pricing_rules_missing_columns.sql`, rein additiv mit Defaults. Policies
+unverändert (`admins_manage_pricing`, `club_members_see_pricing`, beide über `club_id`).
+**Produktion:** noch nicht angewendet — nach Merge über den üblichen Migrationsweg.
+
+## `soft_delete_club()` — Verein atomar soft-löschen (Stand 18.09.2026)
+
+`SECURITY INVOKER`-Funktion (Migration `20260918210000_soft_delete_club_function.sql`): setzt
+`clubs.status='deleted'` und deaktiviert alle Mitgliedschaften in einer Transaktion. Ersetzt die
+Drizzle-Transaktion in `DELETE /api/clubs/[id]`. RLS des Aufrufers gilt (`clubs_update`,
+`memberships_manage_admin`); ein fremder Verein liefert `P0002`. Hard-Delete bleibt außerhalb:
+`clubs_delete` kennt nur `is_superadmin_of`, der Owner hat keine Membership → `systemDb`.
 
 ## Datenzugriffsmuster (ADR-005) — Diagramm
 

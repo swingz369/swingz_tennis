@@ -1,15 +1,21 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { DrizzlePricingRuleRepository } from '@/infrastructure/persistence/repositories/pricing-rule.repository';
+import {
+  ApiException,
+  errorResponse,
+  internalErrorResponse,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import {
+  PricingRuleService,
+  type UpdatePricingRuleInput,
+} from '@/application/services/pricing-rule.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:pricing-rules:[id]');
-
-const repo = new DrizzlePricingRuleRepository();
 
 const updateSchema = z.object({
   ruleType: z.enum(['hourly', 'member', 'trial', 'group', 'season']).optional(),
@@ -50,11 +56,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const { id } = await params;
 
     try {
-      const existing = await repo.findById(id);
-      if (!existing) {
-        return NextResponse.json({ error: 'Preisregel nicht gefunden' }, { status: 404 });
-      }
-
       const body = await req.json();
       const validation = updateSchema.safeParse(body);
       if (!validation.success) {
@@ -66,40 +67,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
       const data = validation.data;
 
-      const updated = {
-        ...existing,
-        ruleType: data.ruleType ?? existing.ruleType,
-        name: data.name !== undefined ? (data.name ?? undefined) : existing.name,
-        description:
-          data.description !== undefined ? (data.description ?? undefined) : existing.description,
-        minBookingHours: data.minBookingHours ?? existing.minBookingHours,
-        maxBookingHours: data.maxBookingHours ?? existing.maxBookingHours,
-        pricePerHour: data.pricePerHour ?? existing.pricePerHour,
-        advanceBookingDays: data.advanceBookingDays ?? existing.advanceBookingDays,
-        appliesToMemberTypes: data.appliesToMemberTypes ?? existing.appliesToMemberTypes,
-        appliesToGroups: data.appliesToGroups ?? existing.appliesToGroups,
-        timeRanges: data.timeRanges ?? existing.timeRanges,
-        daysOfWeek:
-          data.daysOfWeek !== undefined ? (data.daysOfWeek ?? undefined) : existing.daysOfWeek,
-        seasonId: data.seasonId !== undefined ? (data.seasonId ?? undefined) : existing.seasonId,
-        validFrom:
-          data.validFrom !== undefined
-            ? data.validFrom
-              ? new Date(data.validFrom)
-              : undefined
-            : existing.validFrom,
-        validUntil:
-          data.validUntil !== undefined
-            ? data.validUntil
-              ? new Date(data.validUntil)
-              : undefined
-            : existing.validUntil,
-        priority: data.priority ?? existing.priority,
-        isActive: data.isActive ?? existing.isActive,
-        updatedAt: new Date(),
+      // null leert ein optionales Feld, fehlendes Feld lässt es unverändert.
+      const nullToUndefined = <T>(v: T | null | undefined) => (v === null ? undefined : v);
+      const patch: UpdatePricingRuleInput = {
+        ...data,
+        name: nullToUndefined(data.name),
+        description: nullToUndefined(data.description),
+        daysOfWeek: nullToUndefined(data.daysOfWeek),
+        seasonId: nullToUndefined(data.seasonId),
+        validFrom: data.validFrom ? new Date(data.validFrom) : undefined,
+        validUntil: data.validUntil ? new Date(data.validUntil) : undefined,
       };
-
-      await repo.save(updated);
+      const updated = await new PricingRuleService(auth).update(id, patch);
 
       return NextResponse.json({
         success: true,
@@ -114,6 +93,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         },
       });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error updating pricing rule:', message);
       return internalErrorResponse();
@@ -133,14 +115,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const { id } = await params;
 
     try {
-      const existing = await repo.findById(id);
-      if (!existing) {
-        return NextResponse.json({ error: 'Preisregel nicht gefunden' }, { status: 404 });
-      }
-
-      await repo.delete(id);
+      await new PricingRuleService(auth).delete(id);
       return NextResponse.json({ success: true });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error deleting pricing rule:', message);
       return internalErrorResponse();

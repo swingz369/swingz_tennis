@@ -1,17 +1,18 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { DrizzlePricingRuleRepository } from '@/infrastructure/persistence/repositories/pricing-rule.repository';
-import { ClubId, CourtId } from '@/domain/value-objects';
+import {
+  ApiException,
+  errorResponse,
+  internalErrorResponse,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { PricingRuleService } from '@/application/services/pricing-rule.service';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
-import { randomUUID } from 'crypto';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:pricing-rules');
-
-const repo = new DrizzlePricingRuleRepository();
 
 const timeRangeSchema = z.object({
   start: z.string().regex(/^\d{2}:\d{2}$/),
@@ -62,7 +63,7 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-      const rules = await repo.findByClubId(ClubId.fromString(clubId));
+      const rules = await new PricingRuleService(auth).listByClub(clubId);
       return NextResponse.json({
         pricingRules: rules.map((r) => ({
           id: r.id,
@@ -87,6 +88,9 @@ export async function GET(req: NextRequest) {
         })),
       });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error fetching pricing rules:', message);
       return internalErrorResponse();
@@ -119,31 +123,13 @@ export async function POST(req: NextRequest) {
       if (!verifyClubAccess(auth, data.clubId)) {
         return forbiddenResponse('Kein Zugriff auf diesen Verein');
       }
-      const rule = {
-        id: randomUUID(),
-        clubId: ClubId.fromString(data.clubId),
-        courtId: data.courtId ? CourtId.fromString(data.courtId) : undefined,
-        ruleType: data.ruleType,
-        name: data.name,
-        description: data.description,
-        minBookingHours: data.minBookingHours,
-        maxBookingHours: data.maxBookingHours,
-        pricePerHour: data.pricePerHour,
-        advanceBookingDays: data.advanceBookingDays,
-        appliesToMemberTypes: data.appliesToMemberTypes,
-        appliesToGroups: data.appliesToGroups,
-        timeRanges: data.timeRanges,
-        daysOfWeek: data.daysOfWeek,
+      const rule = await new PricingRuleService(auth).create({
+        ...data,
+        courtId: data.courtId,
         seasonId: data.seasonId ?? undefined,
         validFrom: data.validFrom ? new Date(data.validFrom) : undefined,
         validUntil: data.validUntil ? new Date(data.validUntil) : undefined,
-        priority: data.priority,
-        isActive: data.isActive,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      await repo.save(rule);
+      });
 
       return NextResponse.json(
         {
@@ -163,6 +149,9 @@ export async function POST(req: NextRequest) {
         { status: 201 }
       );
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       const message = error instanceof Error ? error.message : 'Unknown error';
       log.error('Error creating pricing rule:', message);
       return internalErrorResponse();

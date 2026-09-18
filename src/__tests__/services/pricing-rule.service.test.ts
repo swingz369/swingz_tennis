@@ -1,11 +1,13 @@
 /**
- * Unit tests for PricingRuleRepository — findBestMatch and calculatePrice.
+ * Unit tests for PricingRuleService — findBestMatch and calculatePrice.
  *
  * Tests the pure filtering/sorting/multiplier logic by mocking findByClubId
  * to return controlled test data. No database connectivity required.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { DrizzlePricingRuleRepository } from '@/infrastructure/persistence/repositories/pricing-rule.repository';
+import { fakeAuth } from '../helpers/auth';
+import { PricingRuleService } from '@/application/services/pricing-rule.service';
+import { PricingRuleRepository } from '@/infrastructure/persistence/repositories/pricing-rule.repository';
 import { ClubId, CourtId } from '@/domain/value-objects';
 import type { PricingRule, TimeRange } from '@/domain/entities/pricing-rule.entity';
 
@@ -117,15 +119,15 @@ const futureRule = makeRule({
 
 // ── Test Suite ────────────────────────────────────────────────────────────
 
-describe('PricingRuleRepository — findBestMatch', () => {
-  let repo: DrizzlePricingRuleRepository;
+describe('PricingRuleService — findBestMatch', () => {
+  let repo: PricingRuleService;
 
   beforeEach(() => {
-    repo = new DrizzlePricingRuleRepository();
+    repo = new PricingRuleService(fakeAuth());
   });
 
   function mockRules(rules: PricingRule[]) {
-    vi.spyOn(repo, 'findByClubId').mockResolvedValue(rules);
+    vi.spyOn(PricingRuleRepository.prototype, 'findByClubId').mockResolvedValue(rules);
     return repo;
   }
 
@@ -561,15 +563,15 @@ describe('PricingRuleRepository — findBestMatch', () => {
 
 // ── calculatePrice tests ──────────────────────────────────────────────────
 
-describe('PricingRuleRepository — calculatePrice', () => {
-  let repo: DrizzlePricingRuleRepository;
+describe('PricingRuleService — calculatePrice', () => {
+  let repo: PricingRuleService;
 
   beforeEach(() => {
-    repo = new DrizzlePricingRuleRepository();
+    repo = new PricingRuleService(fakeAuth());
   });
 
   function mockRules(rules: PricingRule[]) {
-    vi.spyOn(repo, 'findByClubId').mockResolvedValue(rules);
+    vi.spyOn(PricingRuleRepository.prototype, 'findByClubId').mockResolvedValue(rules);
     return repo;
   }
 
@@ -741,7 +743,9 @@ describe('PricingRuleRepository — calculatePrice', () => {
     });
 
     it('returns default when findByClubId throws', async () => {
-      vi.spyOn(repo, 'findByClubId').mockRejectedValue(new Error('DB error'));
+      vi.spyOn(PricingRuleRepository.prototype, 'findByClubId').mockRejectedValue(
+        new Error('DB error')
+      );
       // calculatePrice calls findBestMatch which calls findByClubId
       // But findBestMatch doesn't catch errors — it will throw.
       // calculatePrice doesn't catch either. So this would actually throw.
