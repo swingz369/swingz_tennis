@@ -53,7 +53,7 @@ export function QuickActions({
                 {action.label}
               </p>
               {action.description && (
-                <p className="text-xs text-muted-foreground">{action.description}</p>
+                <p className="text-sm text-muted-foreground">{action.description}</p>
               )}
             </Link>
           ))}

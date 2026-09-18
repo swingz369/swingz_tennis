@@ -147,7 +147,7 @@ export function MaintenanceTab() {
                   </Badge>
                 </div>
                 {item.description && (
-                  <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">{item.description}</p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
                   {new Date(item.start_date).toLocaleDateString('de-DE')} –{' '}

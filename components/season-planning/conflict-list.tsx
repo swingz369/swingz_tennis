@@ -202,13 +202,13 @@ function ConflictCard({
             </p>
           )}
           {conflict.suggestedResolution && (
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+            <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
               <Sparkles className="h-3 w-3 text-primary shrink-0" />
               {conflict.suggestedResolution}
             </p>
           )}
           {isOpen && (
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+            <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
               <Wrench className="h-3 w-3 shrink-0" />
               {fixTarget.hint}
             </p>

@@ -134,7 +134,7 @@ export function MeetingsClient() {
                   </p>
                 )}
                 {m.description && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{m.description}</p>
                 )}
               </div>
               <Button

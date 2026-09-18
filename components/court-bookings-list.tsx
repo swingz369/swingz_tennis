@@ -459,7 +459,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                   <td colSpan={7} className="p-8 text-center text-muted-foreground">
                     <AlertTriangle className="h-5 w-5 mx-auto mb-2 text-error-500" />
                     <p>Fehler beim Laden der Buchungen</p>
-                    <p className="text-xs mt-1">{(error as Error).message}</p>
+                    <p className="text-sm mt-1">{(error as Error).message}</p>
                   </td>
                 </tr>
               ) : bookings.length === 0 ? (
