@@ -13,6 +13,7 @@ import {
   Users,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
 import {
   Table,
   TableBody,
@@ -186,14 +187,10 @@ export default async function MemberPage() {
       {/* ── Greeting ── */}
       {/* Ohne Avatar-Initiale: das Nutzerbild steht bereits im Header rechts.
           Ohne Hero-Pills: dieselben Ziele stehen direkt darunter als Kacheln. */}
-      <div>
-        <h1 className="font-display text-[28px] sm:text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground dark:text-white">
-          Hallo, {firstName}
-        </h1>
-        <p className="text-[15px] text-muted-foreground mt-1.5">
-          {club?.name ?? 'Mein Verein'} · Mitglied
-        </p>
-      </div>
+      <PageHeader
+        title={`Hallo, ${firstName}`}
+        description={`${club?.name ?? 'Mein Verein'} · Mitglied`}
+      />
 
       {/* ── Stat Cards ── */}
       {/* Stehen vor dem Schnellzugriff: erst der Status („was liegt an?"),

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -100,15 +101,10 @@ export default function FamilyPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight font-display text-foreground dark:text-white">
-          Familienkonto
-        </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Verwalte die Konten deiner Familie — buche für deine Kinder und behalte die Abrechnung im
-          Blick.
-        </p>
-      </div>
+      <PageHeader
+        title="Familienkonto"
+        description="Verwalte die Konten deiner Familie — buche für deine Kinder und behalte die Abrechnung im Blick."
+      />
 
       {family.hasFamily ? (
         <>

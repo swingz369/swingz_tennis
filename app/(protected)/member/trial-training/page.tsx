@@ -2,6 +2,7 @@ import { requireAuth } from '@/lib/auth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page-header';
 import {
   Sparkles,
   Calendar,
@@ -130,24 +131,11 @@ export default async function MemberTrialTrainingPage() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-white flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            Probetrainings
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Lade Freunde und Familie zu einem kostenlosen Schnuppertermin ein
-          </p>
-        </div>
-        <Link href={publicTrialUrl}>
-          <Button className="gap-2">
-            <Sparkles className="h-4 w-4" />
-            Freunde einladen
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Probetrainings"
+        description="Lade Freunde und Familie zu einem kostenlosen Schnuppertermin ein"
+        actions={[{ label: 'Freunde einladen', icon: Sparkles, href: publicTrialUrl }]}
+      />
 
       {/* Empty State */}
       {trainings.length === 0 && (

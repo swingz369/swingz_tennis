@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente)
+> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -212,6 +212,14 @@ Code in `protected-client-layout.tsx:52`: `showSidebar = isOwner || isSuperAdmin
 | Persistent  | BottomNav  | `max-w-3xl`, `pb-20` |
 
 **Keine Sidebar auf keiner Bildschirmgröße für Trainer/Member.**
+
+**Seitenrahmen-Regel (Sanierungsplan Phase 4.1, 18.09.2026):** Jede geschützte Seite mit
+einfachem Titel + optionaler Beschreibung + optionalen Aktionsbuttons nutzt `PageHeader` aus
+`@/components/ui/page-header` statt eines eigenen `<h1>`. Ausnahmen bewusst: Bestätigungsseiten
+mit zentriertem Einzelinhalt (`bookings/payment-success`, `shop/success`) und Detailseiten mit
+Zurück-Navigation, Badge neben dem Titel oder Inline-Controls wie einem Status-Select
+(`admin/tournaments/[id]`, `admin/seasons/[id]`) — dafür deckt `PageHeader`s Actions-API (nur
+Buttons) den Bedarf nicht ab.
 
 ---
 
