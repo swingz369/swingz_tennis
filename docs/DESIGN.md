@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2; §6 Phase 4.4 ergänzt: loading/error/not-found vererben im App Router, keine echte Lücke; §6 Phase 4.5 ergänzt: „Laden" ohne Auslassungspunkte vereinheitlicht; §8 Icon-Button-Regel für Phase 5.1 ergänzt: aria-label + Tooltip pflicht, globale TooltipProvider, Test-Query per Rolle statt title; §8 Kalender-Tastaturbedienung für Phase 5.2 ergänzt: Pfeiltasten-Fokusnavigation per Zell-ID, Tastatur-Drag-Bug behoben — eigener onKeyDown überschrieb dnd-kits Aktivierungs-Listener; §8 Phase 5.3 geprüft: globale :focus-visible-Regel deckt bereits alle Elemente inkl. Kalenderzellen ab; §8 Phase 5.4 geprüft: Leerzustände haben durchweg schon einen Weg nach vorn oder sind zu Recht ohne Aktion; §8 Phase 5.5 ergänzt: Spaltenaktion im Saisonkalender — Woche für alle Gruppen aussetzen/aktivieren per Bulk-PATCH je Gruppe)
+> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2; §6 Phase 4.4 ergänzt: loading/error/not-found vererben im App Router, keine echte Lücke; §6 Phase 4.5 ergänzt: „Laden" ohne Auslassungspunkte vereinheitlicht; §8 Icon-Button-Regel für Phase 5.1 ergänzt: aria-label + Tooltip pflicht, globale TooltipProvider, Test-Query per Rolle statt title; §8 Kalender-Tastaturbedienung für Phase 5.2 ergänzt: Pfeiltasten-Fokusnavigation per Zell-ID, Tastatur-Drag-Bug behoben — eigener onKeyDown überschrieb dnd-kits Aktivierungs-Listener; §8 Phase 5.3 geprüft: globale :focus-visible-Regel deckt bereits alle Elemente inkl. Kalenderzellen ab; §8 Phase 5.4 geprüft: Leerzustände haben durchweg schon einen Weg nach vorn oder sind zu Recht ohne Aktion; §8 Phase 5.5 ergänzt: Spaltenaktion im Saisonkalender — Woche für alle Gruppen aussetzen/aktivieren per Bulk-PATCH je Gruppe; §8 Phase 6 ergänzt: league-detail-client.tsx in Tab-Dateien + Hook zerlegt, 1772 → 450 Zeilen)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -365,6 +365,16 @@ nur eine Gruppe pro Aufruf), parallel per `Promise.allSettled` — Optimistic Up
 fehlgeschlagene Gruppen werden einzeln zurückgerollt, eine Sammel-Toast-Meldung nennt Erfolge/
 Fehlschläge. Der einzelne Button ist per `aria-label` + Tooltip (Radix) beschriftet, folgt damit
 derselben Regel wie Phase 5.1.
+
+**God-Komponenten (Sanierungsplan Phase 6, 18.09.2026):** `league-detail-client.tsx` (1772 Z.)
+in `app/(protected)/admin/(gated)/leagues/[id]/tabs/` zerlegt — ein Tab eine Datei
+(`teams-tab.tsx`, `matchdays-tab.tsx`, `roster-tab.tsx`, `standings-tab.tsx`, gemeinsame Typen
+in `types.ts`), Fachlogik des Spieltage-Tabs in `use-matchdays.ts` ausgelagert (der Header
+außerhalb des Tabs — nuLiga-Sync/-Historie/Import-Buttons — steuert denselben Zustand, daher
+Hook statt reiner Tab-Datei). Haupt-Datei jetzt 450 Z., keine neue Datei über 800 Z. Reine
+Verschiebung, kein Verhaltensunterschied. Die übrigen sechs God-Komponenten aus dem Befund
+(`trainer-detail-client`, `courts-manage-client`, `members-detail-client`, `work-duties-client`,
+`shop/page`, `messages/page`) bleiben laut Plan unangetastet, bis dort ohnehin gearbeitet wird.
 
 ---
 
