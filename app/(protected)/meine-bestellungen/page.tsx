@@ -110,7 +110,7 @@ export default function MeineBestellungenPage() {
     }).format(new Date(dateStr));
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6">
       {/* Header */}
       <PageHeader title="Meine Bestellungen" description="Verfolge deine Shop-Bestellungen" />
 

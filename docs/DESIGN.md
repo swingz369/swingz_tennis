@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt)
+> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -194,24 +194,39 @@ Aktiv im Code verwendet. Kein Handlungsbedarf — als Pattern für neue KI-Featu
 
 ---
 
-## 6. Layout — Zwei Modi
+## 6. Layout — Ein Rahmen für alle Rollen
 
-Code in `protected-client-layout.tsx:52`: `showSidebar = isOwner || isSuperAdmin || isAdmin`
+**Korrektur (Sanierungsplan Phase 4.2, 18.09.2026):** Dieser Abschnitt beschrieb bis heute ein
+Zwei-Modi-System (Sidebar nur für Owner/Superadmin/Admin, reines BottomNav für Trainer/Member
+mit eigenem, schmalerem Rahmen). Das ist überholt — `protected-client-layout.tsx` rendert seit
+der Navigations-Vereinheitlichung **ein** Layout für alle Rollen: Sidebar ab `md`
+(Rollen-Sektionen aus `lib/navigation.ts`), darunter BottomNav + Sidebar-Overlay. Trainer und
+Member hatten vorher keine Sidebar und damit keinen Zugriff auf alles, was nicht in die 4–5
+Bottom-Tabs passte.
 
-### Modus A — Sidebar-Layout (Owner, Superadmin, Admin)
+| Gerät            | Navigation                                | Content                                       |
+| ---------------- | ----------------------------------------- | --------------------------------------------- |
+| Mobile (<768px)  | BottomNav (`md:hidden`) + Sidebar-Overlay | Full width, `pb-20`                           |
+| Desktop (≥768px) | Sidebar w-64 (alle Rollen)                | Rahmen `max-w-[1600px] mx-auto` (siehe unten) |
 
-| Gerät            | Navigation                                | Content              |
-| ---------------- | ----------------------------------------- | -------------------- |
-| Mobile (<768px)  | BottomNav (`md:hidden`) + Sidebar-Overlay | Full width           |
-| Desktop (≥768px) | Sidebar w-64                              | `ml-64`, `max-w-7xl` |
+Der `max-w-[1600px]`-Rahmen in `protected-client-layout.tsx:171` ist für **jede** Rolle
+identisch — beim Rollen- bzw. Seitenwechsel horizontal springender Inhalt (unterschiedliche
+Rahmenbreite je nach Modus) ist damit strukturell ausgeschlossen, nicht nur per Konvention.
 
-### Modus B — BottomNav-Layout (Trainer, Member)
+### Inhaltsbreite je Seitentyp (Sanierungsplan Phase 4.2)
 
-| Alle Geräte | Navigation | Content              |
-| ----------- | ---------- | -------------------- |
-| Persistent  | BottomNav  | `max-w-3xl`, `pb-20` |
+Innerhalb des 1600-px-Rahmens legt jede Seite selbst fest, ob sie ihn ausfüllt oder zusätzlich
+einschränkt. Drei Kategorien, durchgehalten:
 
-**Keine Sidebar auf keiner Bildschirmgröße für Trainer/Member.**
+| Seitentyp                                                | Regel                                                                            | Beispiele                                                                     |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Listen, Tabellen, Dashboards, Karten-Listen              | Kein eigener `max-w` — voller Rahmen                                             | `bookings`, `member/family`, `meine-bestellungen`                             |
+| Formulare, Einstellungen (einspaltig)                    | `max-w-2xl`                                                                      | `member/preferences`, `trainer/planning-preferences`, `member/trial-training` |
+| Plan-/Tarifvergleich (mehrspaltige Karten nebeneinander) | `max-w-3xl` — bewusste Ausnahme, `max-w-2xl` wäre für zwei Plan-Karten zu schmal | `admin/subscription`, `superadmin/subscription`                               |
+
+Bestätigungsseiten mit zentriertem Einzelinhalt (`bookings/payment-success`, `shop/success`)
+fallen unter keine der drei Kategorien — eigener, schmalerer Rahmen bleibt dort bewusst
+(siehe Phase-4.1-Regel oben).
 
 **Seitenrahmen-Regel (Sanierungsplan Phase 4.1, 18.09.2026):** Jede geschützte Seite mit
 einfachem Titel + optionaler Beschreibung + optionalen Aktionsbuttons nutzt `PageHeader` aus
