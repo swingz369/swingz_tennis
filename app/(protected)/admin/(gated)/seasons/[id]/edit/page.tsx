@@ -64,7 +64,7 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
     const load = async () => {
       try {
         const res = await apiFetch(`/api/seasons/${id}`);
-        if (!res.ok) throw new Error('Season nicht gefunden');
+        if (!res.ok) throw new Error('Saison nicht gefunden');
         const data = await res.json();
         const s: Season = data.season;
         setSeason(s);

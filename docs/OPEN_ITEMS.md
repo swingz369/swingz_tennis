@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 18. September 2026 (nuLiga-Rechtsklärung als Launch-Punkt ergänzt); davor 17. September 2026 (Auslieferung von 33 Commits nach main, 8 Migrationen
+> Zuletzt verifiziert: 18. September 2026 (Abgleich gegen Code und Produktion: E-Mail, rohe DB-Fehler, CI-Mocks, P3-Punkte erledigt; nuLiga-Rechtsklärung als Launch-Punkt ergänzt); davor 17. September 2026 (Auslieferung von 33 Commits nach main, 8 Migrationen
 > auf Produktion angewendet, Deploy-Kette geprüft — drei neue Befunde unten); davor 16. September
 > 2026 (ADR-005-Migrationsfortschritt am Code geprüft); 30. August 2026 (Bezahlschranke
 > abgeschaltet — siehe unten)
@@ -127,7 +127,8 @@ hängen an der Umgebung statt an der Logik. Zwei verschiedene Ursachen:
    (UTC) rot, weil das Fixture `2026-06-08T00:00:00+02:00` unter UTC auf den 7. Juni zurückfällt.
    `vitest.config.ts` nagelt den Lauf jetzt hart auf `Europe/Berlin`. Gegengeprüft mit erzwungenem
    `TZ=UTC`: 48 von 48 grün.
-2. **Unvollständige Mocks — offen.** `api/email-campaigns.test.ts`, `api/stripe-subscribe.test.ts`
+2. **Unvollständige Mocks — behoben 18.09.2026** (fehlende `RESEND_API_KEY`/`STRIPE_PRICE_*` per `vi.hoisted` gesetzt; Lauf ohne `.env.local` grün, 20/20).
+   Ursprüngliche Beschreibung: `api/email-campaigns.test.ts`, `api/stripe-subscribe.test.ts`
    und `api/webhooks-stripe.test.ts` antworten in CI mit 500/503. Sie bestehen lokal nur, weil
    `src/__tests__/setup.ts` die `.env.local` lädt und damit eine echte lokale Supabase-Instanz
    trifft; in CI stehen dort bewusst Platzhalter (`ci.yml`, Kommentar im `env:`-Block), und die
@@ -136,22 +137,20 @@ hängen an der Umgebung statt an der Logik. Zwei verschiedene Ursachen:
    `.env.local` bestehen. Gegenprobe: Lauf ohne geladene `.env.local` muss grün sein.
    Ein Test, der eine laufende lokale Datenbank voraussetzt, schützt in CI nichts.
 
-### E-Mail-Versand ist komplett tot
+### ✅ Erledigt (Stand 18.09.2026 geprüft) — E-Mail-Versand
 
-`swingz.cloud` ist bei Resend nicht verifiziert. Damit geht **keine einzige** Mail raus:
-Rechnungsversand (`POST /api/billing/invoices/[id]/send-email`) antwortet 500 und lässt die
-Rechnung auf `draft`, das Mahnwesen erreicht niemanden, Saisonbestätigungen kommen nicht an.
-Einladungen fallen auf den Einladungslink zurück (Sicherheitsnetz, kein Ersatz).
-→ **Fix:** Domain verifizieren oder `EMAIL_FROM` auf eine verifizierte Domain umstellen.
-→ Quelle: `docs/EMAIL_SETUP.md`, `docs/ARCHIV/2026-08-13-kernmodul-durchlauf.md` (F8).
+Die Annahme „`swingz.cloud` nicht verifiziert" ist überholt: Resend meldet `swingz.cloud` als
+`verified` (eu-west-1), Vercel Production hat `EMAIL_FROM="SwingZ <noreply@swingz.cloud>"` und
+`RESEND_API_KEY`. → **Noch nicht belegt:** ein echter Versand aus der Produktion (der Prod-Key ist
+in Vercel verborgen und gehört hoffentlich zum selben Resend-Team wie die Domain, siehe
+`docs/EMAIL_SETUP.md` Falle 3). Einmal eine Rechnung/Testmail in Produktion auslösen.
 
-### Rohe SQL-/DB-Fehler erreichen den Client
+### ✅ Erledigt (Stand 18.09.2026 geprüft) — Rohe SQL-/DB-Fehler
 
-Der `auto-plan`-500 lieferte das komplette Drizzle-Statement inkl. Tabellen-/Spaltennamen an den
-Browser. Der auslösende Bug ist behoben, das **ungefilterte Durchreichen** von `error.message`
-nicht. → **Fix:** alle Routen prüfen, die `error.message` in die Antwort schreiben; deutsche
-Fehlermeldung, kein Stack-/SQL-Trace (Regel aus `CLAUDE.md`).
-→ Quelle: `docs/ARCHIV/2026-08-13-nav-workflow-audit.md` (P0).
+Alle `error.message`-Treffer in `app/api/` sind Logzeilen; der Catch in `withApiAuth`
+(`lib/api-auth.ts`) filtert Handler-Fehler zentral. Der in `CLAUDE.md` genannte Test
+`no-raw-db-errors.test.ts` existiert im Repo **nicht** — entweder anlegen oder die Erwähnung
+streichen.
 
 ### Drizzle-Service-Pfad umgeht RLS komplett
 
@@ -280,7 +279,7 @@ arch:check` läuft mit `--ignore-known` dagegen und meldet "grün", obwohl der r
 
 ## P2 — Politur & Ehrlichkeit der Oberfläche
 
-- **Denglisch „Season"** in sichtbaren Texten der Saison-Unterseiten (`seasons/[id]/page.tsx`,
+- **Denglisch „Season"** (18.09.2026: drei Fehlertexte auf „Saison" gezogen; Rest ungeprüft) in sichtbaren Texten der Saison-Unterseiten (`seasons/[id]/page.tsx`,
   `seasons/[id]/edit/…`, `seasons/[id]/planning/steps/*`, `seasons/loading.tsx`). UI-Text von
   Code-Bezeichnern trennen — keine pauschale Ersetzung.
   → Quelle: `docs/ARCHIV/2026-08-13-nav-workflow-audit.md`.
@@ -309,11 +308,10 @@ arch:check` läuft mit `--ignore-known` dagegen und meldet "grün", obwohl der r
 
 ## P3 — Kleinigkeiten
 
-- `PUT /api/clubs/[id]/setup` gibt ein nacktes 405 ohne Fehlertext (nur `PATCH` existiert).
-- Empty State der Preiskategorien erklärt nicht, wozu Kategorien dienen (Gegenbeispiel:
-  vorbildlicher Platz-Empty-State).
-- Rechnungsdialog zeigt bei leerer Suche „Keine Ergebnisse für ‚'" statt der vorhandenen Mitglieder.
-- `/admin/courts`: „Platztypen verwalten · 0 Typen" passt nicht zur Auswahl im Formular.
+- ✅ 18.09.2026 erledigt bzw. gegenstandslos: Preiskategorien-Empty-State erklärt den Zweck;
+  Rechnungsdialog zeigt bei leerer Suche „Keine Mitglieder vorhanden"; `/admin/courts` wählt den
+  Belag statt des (leeren) Platztyps; `PUT …/setup` → 405 ist Standardverhalten, aufgerufen wird
+  nur `PATCH`.
 - `tests/e2e/all-pages-render.spec.ts:32` prüft `/member/preferences` nur gegen einen
   Überschriften-Regex — belegt keine Funktion.
 
