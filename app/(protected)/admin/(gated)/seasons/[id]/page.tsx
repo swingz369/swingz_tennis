@@ -356,7 +356,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
       const response = await apiFetch(`/api/seasons/${id}`);
 
       if (!response.ok) {
-        throw new Error('Fehler beim Laden der Season');
+        throw new Error('Fehler beim Laden der Saison');
       }
 
       const data = await response.json();
@@ -521,7 +521,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">{error || 'Season nicht gefunden'}</p>
+          <p className="text-sm text-muted-foreground">{error || 'Saison nicht gefunden'}</p>
           <Button onClick={() => router.push('/admin/seasons')} className="mt-4" variant="outline">
             Zurück zur Übersicht
           </Button>

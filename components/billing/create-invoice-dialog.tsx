@@ -245,7 +245,9 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
                     ))
                   ) : (
                     <div className="px-3 py-4 text-sm text-muted-foreground text-center">
-                      Keine Ergebnisse für „{memberSearch}"
+                      {memberSearch.trim()
+                        ? `Keine Ergebnisse für „${memberSearch}"`
+                        : 'Keine Mitglieder vorhanden'}
                     </div>
                   )}
                 </div>
