@@ -459,7 +459,7 @@ export default function TrainerHoursLogsPage() {
                       </p>
                     )}
                     {log.status === 'rejected' && log.rejection_reason && (
-                      <p className="text-xs text-error-500 mt-1">Grund: {log.rejection_reason}</p>
+                      <p className="text-sm text-error-500 mt-1">Grund: {log.rejection_reason}</p>
                     )}
                     {log.status === 'approved' && log.approved_at && (
                       <p className="text-xs text-success-500">

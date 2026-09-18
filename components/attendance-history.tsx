@@ -184,7 +184,7 @@ export default function AttendanceHistory() {
                     {formatTime(r.end_time)}
                   </p>
                   {r.notes && (
-                    <p className="text-xs text-muted-foreground mt-0.5 italic">{r.notes}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5 italic">{r.notes}</p>
                   )}
                 </div>
               </CardContent>

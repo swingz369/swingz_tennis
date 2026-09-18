@@ -58,7 +58,7 @@ export default async function NewSeasonPage() {
             >
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground">{step.label}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{step.hint}</p>
+                <p className="text-sm text-muted-foreground mt-0.5">{step.hint}</p>
               </div>
               <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </Link>

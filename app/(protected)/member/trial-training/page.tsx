@@ -241,7 +241,7 @@ export default async function MemberTrialTrainingPage() {
 
                 {/* Notes */}
                 {t.notes && (
-                  <p className="text-xs text-muted-foreground mt-3 italic">&quot;{t.notes}&quot;</p>
+                  <p className="text-sm text-muted-foreground mt-3 italic">&quot;{t.notes}&quot;</p>
                 )}
 
                 {/* Converted State */}

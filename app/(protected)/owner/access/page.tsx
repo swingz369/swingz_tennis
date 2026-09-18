@@ -154,7 +154,7 @@ export default async function OwnerAccessPage() {
                       {r.email}
                     </a>
                     {r.message && (
-                      <p className="text-xs text-muted-foreground italic mt-1">"{r.message}"</p>
+                      <p className="text-sm text-muted-foreground italic mt-1">"{r.message}"</p>
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-2 shrink-0">

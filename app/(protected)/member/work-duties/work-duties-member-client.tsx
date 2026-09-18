@@ -272,7 +272,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
                       <div>
                         <h3 className="font-medium text-sm">{duty.title}</h3>
                         {duty.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5">{duty.description}</p>
+                          <p className="text-sm text-muted-foreground mt-0.5">{duty.description}</p>
                         )}
                         <div className="flex flex-wrap gap-2 mt-2">
                           <Badge className={`${typeInfo.color} text-xs`}>{typeInfo.label}</Badge>

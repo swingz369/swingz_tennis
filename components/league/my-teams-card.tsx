@@ -139,7 +139,7 @@ export function MyTeamsCard() {
                 </span>
               </div>
             ) : (
-              <p className="mt-2 text-xs text-muted-foreground">Keine Spieltage hinterlegt.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Keine Spieltage hinterlegt.</p>
             )}
           </div>
         ))}
