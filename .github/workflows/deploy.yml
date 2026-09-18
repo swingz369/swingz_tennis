@@ -83,7 +83,20 @@ jobs:
           # der Deploy längst fertig ist. Stattdessen gezielt auf READY warten.
           url=$(npx vercel@latest deploy --prod --yes --no-wait --token "$VERCEL_TOKEN" | tail -1)
           echo "Deployment: $url"
-          npx vercel@latest inspect "$url" --wait --timeout 10m --token "$VERCEL_TOKEN"
+          # `vercel inspect` scheitert mit Team-Token ("User not found") — direkt die API fragen.
+          host=${url#https://}
+          for i in $(seq 1 60); do
+            state=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v13/deployments/$host?teamId=$VERCEL_ORG_ID" \
+              | python3 -c 'import sys,json; print(json.load(sys.stdin).get("readyState","?"))')
+            echo "Deployment: $state"
+            case "$state" in
+              READY) exit 0 ;;
+              ERROR|CANCELED) echo "::error::Deployment $state"; exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "::error::Deployment nicht READY nach 10 Minuten"; exit 1
 
       - name: Health-Check (Produktion)
         run: |
