@@ -19,13 +19,13 @@ import type { Session } from '@supabase/supabase-js';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import { analytics } from '@/lib/analytics';
 import { ArrowRight, Trophy, ShieldCheck, Server } from 'lucide-react';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
 
 import { SectionReveal } from './_components/section-reveal';
 import { BentoSection } from './_components/bento-section';
 import { FooterSection } from './_components/footer-section';
+import { HeroShowcase } from './_components/hero-showcase';
 
 // PricingSection ist die einzige Client-Komponente mit interaktivem State
 // (Billing-Toggle) — lazy-hydrieren, initiales HTML rendert trotzdem (ssr:true).
@@ -173,15 +173,7 @@ export default function LandingPage() {
           </div>
 
           <div className="animate-in animate-in-delay-3">
-            <Image
-              src="/landing/kalender.png"
-              alt="Admin-Dashboard mit Mitgliederzahlen und den nächsten Trainingseinheiten (Beispieldaten)"
-              width={1280}
-              height={780}
-              priority
-              sizes="(min-width: 1024px) 55vw, 100vw"
-              className="rounded-xl border border-white/15 shadow-2xl"
-            />
+            <HeroShowcase />
           </div>
         </div>
       </section>
