@@ -56,6 +56,7 @@ function SignOutLink() {
         }
         // Server-Route statt router.push — siehe Begründung in header.tsx:
         // clientseitiges signOut() lässt die httpOnly-Cookies stehen.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- bewusster Vollreload, kein Router-Wechsel
         window.location.href = '/api/auth/logout';
       }}
       className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-2"
@@ -114,7 +115,7 @@ export function ProtectedClientLayout({
             Inhaltsspalte. Vorher spannte sich der Header über beides und
             schnitt die Sidebar oben ab — mit der dunklen Sidebar wäre daraus
             eine sichtbare Stufe geworden. */}
-        <div className="flex min-h-screen">
+        <div className="flex min-h-dvh">
           <SkipToContent />
           <Sidebar
             roles={user.roles ?? []}

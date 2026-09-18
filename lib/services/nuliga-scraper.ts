@@ -227,6 +227,21 @@ function parseMatchSchedule($: cheerio.CheerioAPI, sourceUrl: string): NuligaMat
   let currentDate = '';
   const rows = table.find('tr');
 
+  // Spalten über die Kopfzeile finden (colspan aufgelöst). Seit Sommer 2026 hat
+  // nuLiga eine Spalte „Spielort" eingeschoben — die festen Indizes unten
+  // lasen danach Spielort/Heim statt Heim/Gast, und jede Begegnung fiel weg.
+  const col: Record<string, number> = {};
+  let pos = 0;
+  rows
+    .first()
+    .find('th')
+    .each((_: number, th: any) => {
+      const label = $(th).text().trim().toLowerCase();
+      if (!(label in col)) col[label] = pos;
+      pos += parseInt($(th).attr('colspan') ?? '1', 10) || 1;
+    });
+  const byHeader = col.heimmannschaft !== undefined && col.gastmannschaft !== undefined;
+
   rows.each((i: number, row: any) => {
     if (i === 0) return; // skip header row
 
@@ -237,6 +252,38 @@ function parseMatchSchedule($: cheerio.CheerioAPI, sourceUrl: string): NuligaMat
     cells.each((_: number, cell: any) => {
       cellTexts.push($(cell).text().trim());
     });
+
+    if (byHeader) {
+      const dateCell = cellTexts
+        .slice(0, col.heimmannschaft)
+        .find((t) => /\d{2}\.\d{2}\.\d{4}/.test(t));
+      if (dateCell) currentDate = dateCell;
+
+      const homeTeam = cellTexts[col.heimmannschaft] ?? '';
+      const awayTeam = cellTexts[col.gastmannschaft] ?? '';
+      if (!homeTeam || !awayTeam) return;
+
+      const score = (label: string) => {
+        const v = col[label] !== undefined ? cellTexts[col[label]] : undefined;
+        return v && /^\d+:\d+$/.test(v) ? v : null;
+      };
+      const matchPoints = score('matchpunkte');
+      const status: 'completed' | 'pending' = matchPoints ? 'completed' : 'pending';
+      const reportHref =
+        col.spielbericht !== undefined ? $(cells[col.spielbericht]).find('a').attr('href') : null;
+
+      matches.push({
+        date: currentDate,
+        homeTeam,
+        awayTeam,
+        matchPoints,
+        sets: status === 'completed' ? score('sätze') : null,
+        games: status === 'completed' ? score('spiele') : null,
+        status,
+        reportUrl: reportHref ? absolutize(reportHref, sourceUrl) : null,
+      });
+      return;
+    }
 
     // nuLiga schedule layout (observed from HTV):
     // Column 0: Weekday ("Sa.", "So.") or empty for continuation rows
@@ -341,6 +388,8 @@ export interface NuligaRosterPlayer {
   lk: string | null;
   /** DTB-ID aus der Spalte "ID-Nummer" — stabiler Schlüssel zum Vereinsmitglied. */
   dtbId: string | null;
+  /** Jahrgang aus der Klammer hinter dem Namen — trennt gleichnamige Personen. */
+  birthYear: number | null;
 }
 
 /**
@@ -481,11 +530,18 @@ function parseRosterTable($: cheerio.CheerioAPI): NuligaRosterPlayer[] {
         name: normalizePlayerName(rawName),
         lk: lkIdx >= 0 ? cellTexts[lkIdx] || null : null,
         dtbId: idIdx >= 0 ? cellTexts[idIdx] || null : null,
+        birthYear: extractBirthYear(rawName),
       });
     });
   });
 
   return players;
+}
+
+/** "Mustermann, Max (1989)" → 1989. */
+export function extractBirthYear(raw: string): number | null {
+  const m = raw.match(/\(\s*(\d{4})\s*\)/);
+  return m ? parseInt(m[1], 10) : null;
 }
 
 /**

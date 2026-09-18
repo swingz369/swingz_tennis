@@ -61,7 +61,7 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-dark via-surface-dark to-brand-secondary/40 flex flex-col">
+    <div className="min-h-dvh bg-gradient-to-br from-brand-dark via-surface-dark to-brand-secondary/40 flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-5 border-b border-white/10">
         <div className="flex items-center gap-3">

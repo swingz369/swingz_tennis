@@ -46,6 +46,8 @@ export interface LeaguePlayer {
   lk: string | null;
   position_number: number | null;
   member_id: string | null;
+  /** Nur für Admin/Mannschaftsführer: eindeutiger Namenstreffer, noch nicht bestätigt. */
+  suggested_member_id?: string | null;
   synced_at: string;
 }
 

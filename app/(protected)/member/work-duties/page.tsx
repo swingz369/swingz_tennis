@@ -3,7 +3,7 @@ import WorkDutiesMemberClient from './work-duties-member-client';
 import { PageHeader } from '@/components/ui/page-header';
 
 export const metadata = {
-  title: 'Meine Arbeitsdienste — SwingZ',
+  title: 'Meine Arbeitsdienste | SwingZ',
 };
 
 export default async function MemberWorkDutiesPage() {

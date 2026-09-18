@@ -9,7 +9,7 @@ export default function NotFound() {
   const router = useRouter();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-8">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-background p-8">
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="rounded-full bg-muted p-4">
@@ -34,8 +34,8 @@ export default function NotFound() {
           </Button>
 
           <Button size="lg" variant="outline" className="gap-2" onClick={() => router.back()}>
-              <ArrowLeft className="h-5 w-5" />
-              Zurück
+            <ArrowLeft className="h-5 w-5" />
+            Zurück
           </Button>
         </div>
       </div>

@@ -27,13 +27,14 @@ export default function GlobalError({
   }, [error]);
 
   const handleGoHome = () => {
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- bewusster Vollreload, kein Router-Wechsel
     window.location.href = '/';
   };
 
   return (
     <html lang="de">
       <body>
-        <div className="flex min-h-screen flex-col items-center justify-center bg-background p-8">
+        <div className="flex min-h-dvh flex-col items-center justify-center bg-background p-8">
           <div className="mx-auto max-w-md text-center">
             <div className="mb-6 flex justify-center">
               <div className="rounded-full bg-destructive/10 p-4">

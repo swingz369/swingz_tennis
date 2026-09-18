@@ -8,7 +8,7 @@ import { EventsHubTabs } from './events-hub-tabs';
 const log = createLogger('admin:events:page');
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Veranstaltungen — SwingZ' };
+export const metadata = { title: 'Veranstaltungen | SwingZ' };
 
 type TournamentsClientProps = Parameters<typeof TournamentsClient>[0];
 

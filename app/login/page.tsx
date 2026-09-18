@@ -41,6 +41,7 @@ export default function LoginPage() {
       }
 
       analytics.login('email', true);
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- bewusster Vollreload, kein Router-Wechsel
       window.location.href = '/dashboard';
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login fehlgeschlagen';
@@ -52,7 +53,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex relative overflow-hidden">
+    <div className="min-h-dvh flex relative overflow-hidden">
       {/* ── Left: Brand Panel ── */}
       <div className="hidden lg:flex lg:flex-1 relative">
         <div className="absolute inset-0">
@@ -87,12 +88,11 @@ export default function LoginPage() {
             </Link>
 
             <h1 className="text-4xl font-extrabold leading-tight max-w-md">
-              Die Zukunft des <span className="text-brand-light">Tennisclub-Managements</span>
+              Dein Tennisclub, <span className="text-brand-light">übersichtlich verwaltet</span>
             </h1>
 
             <p className="mt-6 text-white/55 text-lg max-w-md leading-relaxed">
-              Automatisierte Trainingsplanung, intuitive Buchungsverwaltung und smarter Club-Betrieb
-              — ab sofort verfügbar.
+              Trainingsplanung, Buchungen und Abrechnung an einem Ort.
             </p>
           </div>
 

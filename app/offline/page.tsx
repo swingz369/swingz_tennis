@@ -8,7 +8,7 @@
  */
 export default function OfflinePage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-muted p-6 dark:bg-background">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-muted p-6 dark:bg-background">
       <div className="w-full max-w-md text-center">
         {/* Offline Icon */}
         <div className="mb-6 flex justify-center">

@@ -55,6 +55,9 @@ export function RosterTab({
     }
   };
 
+  const suggestedName = (p: LeaguePlayer) =>
+    p.suggested_member_id ? members.find((m) => m.id === p.suggested_member_id)?.name : undefined;
+
   const handleAssignPlayer = async (playerId: string, memberId: string | null) => {
     try {
       const res = await apiFetch(`/api/leagues/${leagueId}/roster`, {
@@ -143,19 +146,32 @@ export function RosterTab({
                     </Badge>
                   </button>
                 ) : (
-                  <select
-                    aria-label={`Mitglied für ${p.name} zuordnen`}
-                    value=""
-                    onChange={(e) => handleAssignPlayer(p.id, e.target.value || null)}
-                    className="text-xs p-1.5 rounded border bg-background max-w-[14rem]"
-                  >
-                    <option value="">— Mitglied zuordnen —</option>
-                    {members.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    {suggestedName(p) && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7"
+                        onClick={() => handleAssignPlayer(p.id, p.suggested_member_id ?? null)}
+                      >
+                        Ist {suggestedName(p)}?
+                      </Button>
+                    )}
+                    <select
+                      aria-label={`Mitglied für ${p.name} zuordnen`}
+                      value=""
+                      onChange={(e) => handleAssignPlayer(p.id, e.target.value || null)}
+                      className="text-xs p-1.5 rounded border bg-background max-w-[14rem]"
+                    >
+                      <option value="">— Mitglied zuordnen —</option>
+                      {members.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 )}
               </CardContent>
             </Card>

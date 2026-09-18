@@ -8,7 +8,7 @@ import {
 } from './work-duties-hub-tabs';
 
 export const metadata = {
-  title: 'Arbeitsdienst — SwingZ',
+  title: 'Arbeitsdienst | SwingZ',
 };
 
 export default async function WorkDutiesPage() {

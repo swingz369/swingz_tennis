@@ -11,7 +11,7 @@ export default function ApiDocsPage() {
   if (process.env.NODE_ENV === 'production') notFound();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <SwaggerUI url="/api/docs" />
     </div>
   );

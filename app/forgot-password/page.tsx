@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex relative overflow-hidden">
+    <div className="min-h-dvh flex relative overflow-hidden">
       {/* ── Left: Brand Panel ── */}
       <div className="hidden lg:flex lg:flex-1 relative">
         <div className="absolute inset-0">

@@ -1,10 +1,7 @@
 'use client';
 
 /**
- * Pricing-Sektion — App-Design
- *
- * Client Component wegen des Monatlich/Jährlich-Toggles.
- * shadcn Card + Switch + Button statt der früheren Editorial-Hairline-Karten.
+ * Pricing-Sektion. Client Component wegen des Monatlich/Jährlich-Toggles.
  */
 
 import { useState } from 'react';
@@ -51,7 +48,7 @@ const PRICING_PLANS: Plan[] = [
     savings: '58 €',
     period: '/Monat',
     description:
-      'Alles, was ein Verein braucht — bis zu 200 Mitglieder. Danach wechselt ihr automatisch zu Professional.',
+      'Alles, was ein Verein braucht, bis zu 200 Mitglieder. Danach wechselt ihr automatisch zu Professional.',
     features: ['Bis zu 200 Mitglieder', ...COMMON_FEATURES],
     cta: 'Jetzt registrieren',
     ctaHref: '/register',
@@ -66,7 +63,7 @@ const PRICING_PLANS: Plan[] = [
     savings: '98 €',
     period: '/Monat',
     description:
-      'Der gleiche Funktionsumfang wie Starter — der einzige Unterschied ist die Mitgliederanzahl.',
+      'Der gleiche Funktionsumfang wie Starter, nur die Mitgliederanzahl unterscheidet sich.',
     features: ['Ab 201 Mitglieder', ...COMMON_FEATURES],
     cta: 'Jetzt registrieren',
     ctaHref: '/register',
@@ -100,16 +97,12 @@ export function PricingSection() {
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       {/* ── Header ── */}
       <div className="text-center mb-12 sm:mb-16">
-        <p className="text-sm font-semibold uppercase tracking-wider text-brand-accent mb-3">
-          Preise
-        </p>
-        <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+        <h2
+          id="pricing-heading"
+          className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground"
+        >
           Für jeden Verein die richtige Lösung
         </h2>
-        <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-          Flexible Modelle — vom kleinen Verein bis zur Tennisschule mit mehreren Vereinen. Klar,
-          ohne Kleingedrucktes.
-        </p>
 
         {/* ── Billing Toggle ── */}
         <div className="mt-8 inline-flex items-center gap-3">
@@ -149,7 +142,7 @@ export function PricingSection() {
             }`}
           >
             {plan.popular && (
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-primary px-3 py-1 text-xs font-semibold text-white shadow-md">
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
                 Am beliebtesten
               </span>
             )}
@@ -166,7 +159,7 @@ export function PricingSection() {
             </div>
             {billingYearly && (
               <p className="mt-1.5 text-xs text-muted-foreground">
-                €{plan.yearlyPricePerMonth} / Monat · {plan.savings} gespart
+                €{plan.yearlyPricePerMonth} / Monat, {plan.savings} gespart
               </p>
             )}
 

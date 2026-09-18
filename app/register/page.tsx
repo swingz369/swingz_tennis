@@ -42,7 +42,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-dvh flex flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-background">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <nav className="flex h-16 items-center justify-between">
@@ -71,8 +71,8 @@ export default function RegisterPage() {
               </div>
               <h2 className="text-xl font-bold">Anfrage eingegangen!</h2>
               <p className="text-sm text-muted-foreground">
-                Wir melden uns bei dir unter <strong>{email}</strong> — in der Regel innerhalb von
-                1–2 Werktagen.
+                Wir melden uns bei dir unter <strong>{email}</strong>. In der Regel innerhalb von 1
+                bis 2 Werktagen.
               </p>
               <Link href="/login" className="text-sm text-primary hover:underline block">
                 Zum Login
@@ -83,7 +83,7 @@ export default function RegisterPage() {
               <div className="text-center space-y-1">
                 <h1 className="text-2xl font-bold">Zugang anfragen</h1>
                 <p className="text-sm text-muted-foreground">
-                  Kein Self-Service — wir richten deinen Zugang manuell ein.
+                  Kein Self-Service: Wir richten deinen Zugang manuell ein.
                 </p>
               </div>
               <Card className="p-6">

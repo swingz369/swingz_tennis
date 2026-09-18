@@ -331,7 +331,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-primary/5 flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-gradient-to-br from-gray-50 via-white to-primary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <Card className="border-0 shadow-xl shadow-gray-200/50 ring-1 ring-gray-100">
           <CardHeader className="pb-2">{renderStepper()}</CardHeader>

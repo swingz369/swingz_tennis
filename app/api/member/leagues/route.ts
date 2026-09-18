@@ -13,6 +13,8 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/service';
+import { loadMemberCandidates, suggestByName } from '@/lib/services/nuliga-sync';
 
 const log = createLogger('api:member:leagues');
 
@@ -33,12 +35,16 @@ export async function GET(request: NextRequest) {
       log.error('Kader-Zuordnung nicht abrufbar', { error: error.message });
       return NextResponse.json({ error: 'Mannschaften nicht abrufbar' }, { status: 500 });
     }
-    if (!entries || entries.length === 0) return NextResponse.json({ teams: [] });
+    const suggestions = await findSuggestions(auth.clubId, auth.user.id);
+    if (!entries || entries.length === 0) return NextResponse.json({ teams: [], suggestions });
 
     const leagueIds = entries.map((e: { league_id: string }) => e.league_id);
 
-    const [leaguesRes, matchesRes] = await Promise.all([
-      sb.from('leagues').select('id, name, season_year, division, age_group').in('id', leagueIds),
+    const [leaguesRes, matchesRes, standingsRes, rosterRes] = await Promise.all([
+      sb
+        .from('leagues')
+        .select('id, name, season_year, division, age_group, own_team_name')
+        .in('id', leagueIds),
       // Alle Spieltage der Liga: die Aufteilung in "kommt noch" und "war" macht
       // der Code unten. Eine Medenrunde hat gut ein Dutzend Spieltage — dafür
       // lohnt keine zweite Abfrage.
@@ -49,6 +55,22 @@ export async function GET(request: NextRequest) {
         )
         .in('league_id', leagueIds)
         .order('scheduled_date', { ascending: true }),
+      // Tabelle: nur Mannschaftsnamen und Zahlen — keine Personen.
+      sb
+        .from('teams')
+        .select(
+          'id, league_id, name, position, points, matches_played, matches_won, matches_drawn, matches_lost'
+        )
+        .in('league_id', leagueIds)
+        .order('position', { ascending: true }),
+      // Kader der EIGENEN Mannschaft, sichtbar nur für Mitglieder desselben Vereins
+      // (RLS + club_id-Filter). Fremde Vereine sind nie enthalten.
+      sb
+        .from('league_players')
+        .select('league_id, name, lk, position_number, member_id')
+        .in('league_id', leagueIds)
+        .eq('club_id', auth.clubId)
+        .order('position_number', { ascending: true, nullsFirst: false }),
     ]);
 
     const leagueById = new Map<string, Record<string, unknown>>(
@@ -78,6 +100,7 @@ export async function GET(request: NextRequest) {
           season_year: league.season_year,
           division: league.division,
           age_group: league.age_group,
+          own_team_name: league.own_team_name,
           position_number: e.position_number,
           lk: e.lk,
           next_match: upcoming[0] ?? null,
@@ -86,10 +109,63 @@ export async function GET(request: NextRequest) {
           // Vollständige Liste für /member/leagues. Die Dashboard-Karte nutzt
           // nur next_match/last_match und ignoriert das hier.
           matches,
+          standings: (standingsRes.data ?? []).filter(
+            (t: { league_id: string }) => t.league_id === e.league_id
+          ),
+          roster: (rosterRes.data ?? [])
+            .filter((r: { league_id: string }) => r.league_id === e.league_id)
+            .map(
+              (r: {
+                name: string;
+                lk: string | null;
+                position_number: number | null;
+                member_id: string | null;
+              }) => ({
+                name: r.name,
+                lk: r.lk,
+                position_number: r.position_number,
+                is_me: r.member_id === auth.user.id,
+              })
+            ),
         };
       })
       .filter(Boolean);
 
-    return NextResponse.json({ teams });
+    return NextResponse.json({ teams, suggestions });
   });
+}
+
+/**
+ * "Bist du das?" — Kadereinträge, die noch niemandem zugeordnet sind, aber
+ * eindeutig auf den Namen dieses Mitglieds passen. Nur über den eigenen Namen
+ * gefunden, nie eine Liste fremder Personen. Service-Client, weil die
+ * Eindeutigkeit gegen ALLE Vereinsmitglieder geprüft werden muss (RLS zeigt
+ * einem Mitglied nur sein eigenes Profil) — zurück geht nur der eigene Treffer.
+ */
+async function findSuggestions(clubId: string, userId: string) {
+  const sb = createServiceClient();
+  const [members, { data: open }] = await Promise.all([
+    loadMemberCandidates(sb, clubId),
+    sb
+      .from('league_players')
+      .select('id, league_id, name, lk, birth_year')
+      .eq('club_id', clubId)
+      .is('member_id', null),
+  ]);
+  const mine = (open ?? []).filter(
+    (p) => suggestByName({ name: p.name, birthYear: p.birth_year }, members) === userId
+  );
+  if (mine.length === 0) return [];
+
+  const { data: leagues } = await sb
+    .from('leagues')
+    .select('id, name, season_year')
+    .in('id', [...new Set(mine.map((p) => p.league_id))]);
+  const leagueName = new Map((leagues ?? []).map((l) => [l.id, `${l.name} ${l.season_year}`]));
+  return mine.map((p) => ({
+    player_id: p.id,
+    name: p.name,
+    lk: p.lk,
+    league_name: leagueName.get(p.league_id) ?? '',
+  }));
 }

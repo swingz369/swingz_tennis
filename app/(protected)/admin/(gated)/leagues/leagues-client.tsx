@@ -186,6 +186,34 @@ export default function LeaguesClient() {
       setDiscovered(null);
       setPicked(new Set());
       fetchLeagues();
+
+      // Erst-Sync sofort: Sonst bleiben die Ligen bis zum nächsten Cron leer und
+      // der Import wirkt wie "geht nicht". Nacheinander (nicht parallel), damit
+      // nuLiga höflich abgefragt wird und kein Function-Timeout droht.
+      const created: { id: string }[] = data.leagues ?? [];
+      let failed = 0;
+      for (const [i, l] of created.entries()) {
+        toast.loading(`Erste Synchronisierung ${i + 1}/${created.length}`, {
+          id: 'nuliga-first-sync',
+        });
+        const syncRes = await apiFetch(`/api/leagues/${l.id}/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}',
+        }).catch(() => null);
+        if (!syncRes?.ok) failed++;
+      }
+      if (created.length > 0) {
+        toast.dismiss('nuliga-first-sync');
+        if (failed > 0) {
+          toast.error(
+            `${failed} Mannschaft(en) konnten nicht synchronisiert werden — später erneut versuchen`
+          );
+        } else {
+          toast.success('Spielplan, Tabelle und Kader sind übernommen');
+        }
+        fetchLeagues();
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Übernahme fehlgeschlagen');
     } finally {

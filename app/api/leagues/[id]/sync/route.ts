@@ -85,7 +85,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         nuliga_url: nuligaUrl,
         // Konnte die eigene Mannschaft über den Vereinsnamen aufgelöst werden,
         // merken wir sie — der nächste Sync muss dann nicht mehr raten.
-        ...(result.ownTeam && !league.own_team_name ? { own_team_name: result.ownTeam } : {}),
+        ...(result.ownTeam && result.ownTeam !== league.own_team_name
+          ? { own_team_name: result.ownTeam }
+          : {}),
       })
       .eq('id', id);
 

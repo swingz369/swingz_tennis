@@ -98,9 +98,13 @@ export function normalizeTeamName(name: string): string {
  * Welche Mannschaft der Gruppe ist unsere? (nur für den Gruppenseiten-Pfad —
  * das Mannschaftsportrait sagt es selbst)
  *
- * 1. `own_team_name` gesetzt → diese, kanonisiert auf die Schreibweise der Tabelle.
+ * 1. `own_team_name` steht so in der Tabelle → diese, in deren Schreibweise.
  * 2. Sonst: genau ein Tabelleneintrag, der mit dem Vereinsnamen beginnt.
  * 3. Sonst null — dann wird der Spielplan NICHT importiert, statt ihn zu raten.
+ *
+ * Ein `own_team_name`, der nicht in der Tabelle steht, zählt nicht als Treffer:
+ * Der Import legte dort früher die Altersklasse ab („Herren 40"), und der Sync
+ * filterte danach stillschweigend jede Begegnung weg — ohne Warnung.
  */
 export function resolveOwnTeam(
   standings: NuligaStanding[],
@@ -110,7 +114,7 @@ export function resolveOwnTeam(
   if (ownTeamName?.trim()) {
     const wanted = normalizeTeamName(ownTeamName);
     const hit = standings.find((s) => normalizeTeamName(s.teamName) === wanted);
-    return hit?.teamName ?? ownTeamName.trim();
+    if (hit) return hit.teamName;
   }
 
   if (clubName?.trim()) {
@@ -209,12 +213,8 @@ async function syncFromGroupPage(
   // Die Tabelle enthält legitim ALLE Mannschaften der Gruppe, auch fremde.
   const teamStats = await upsertStandings(sb, league, data.standings);
 
-  let clubName: string | null = null;
-  if (!league.own_team_name) {
-    const { data: club } = await sb.from('clubs').select('name').eq('id', league.club_id).single();
-    clubName = club?.name ?? null;
-  }
-  const ownTeam = resolveOwnTeam(data.standings, league.own_team_name, clubName);
+  const { data: club } = await sb.from('clubs').select('name').eq('id', league.club_id).single();
+  const ownTeam = resolveOwnTeam(data.standings, league.own_team_name, club?.name ?? null);
 
   if (!ownTeam) {
     log.warn('Eigene Mannschaft nicht bestimmbar — Spielplan übersprungen', {
@@ -486,12 +486,94 @@ async function upsertMatches(
   return { created: toInsert.length, updated: toUpdate.length, skipped };
 }
 
+export interface MemberCandidate {
+  id: string;
+  full_name: string | null;
+  dtb_id: string | null;
+  date_of_birth: string | null;
+}
+
+/** Jahrgang aus dem Geburtsdatum, null wenn unbekannt. */
+function birthYearOf(dob: string | null): number | null {
+  const y = dob ? parseInt(dob.slice(0, 4), 10) : NaN;
+  return Number.isNaN(y) ? null : y;
+}
+
+/**
+ * Sicherer Treffer: DTB-ID stimmt überein und ist unter den Mitgliedern
+ * eindeutig. Nur das wird automatisch zugeordnet.
+ */
+export function matchByDtbId(
+  player: { dtbId: string | null },
+  members: MemberCandidate[]
+): string | null {
+  const id = player.dtbId?.trim();
+  if (!id) return null;
+  const hits = members.filter((m) => m.dtb_id?.trim() === id);
+  return hits.length === 1 ? hits[0].id : null;
+}
+
+/**
+ * Vorschlag über den Namen — bewusst KEINE automatische Zuordnung: Namen sind
+ * nicht eindeutig, und eine falsche Zuordnung würde einem Mitglied fremde
+ * Mannschaften anzeigen. Das Mitglied bestätigt selbst (oder der Admin).
+ *
+ * Nur ein Treffer zählt; widerspricht der Jahrgang dem Geburtsdatum, ist es
+ * eine andere Person.
+ */
+export function suggestByName(
+  player: { name: string; birthYear: number | null },
+  members: MemberCandidate[]
+): string | null {
+  const wanted = normalizeTeamName(player.name);
+  const hits = members.filter((m) => {
+    if (!m.full_name || normalizeTeamName(m.full_name) !== wanted) return false;
+    const y = birthYearOf(m.date_of_birth);
+    return !(y && player.birthYear && y !== player.birthYear);
+  });
+  return hits.length === 1 ? hits[0].id : null;
+}
+
+/** Lädt die aktiven Mitglieder eines Vereins in der Form für den Abgleich. */
+export async function loadMemberCandidates(sb: Sb, clubId: string): Promise<MemberCandidate[]> {
+  const { data: memberships } = await sb
+    .from('user_club_memberships')
+    .select('user_id')
+    .eq('club_id', clubId)
+    .eq('is_active', true);
+  const ids = (memberships ?? []).map((m: { user_id: string }) => m.user_id);
+  if (ids.length === 0) return [];
+  const { data: users } = await sb
+    .from('users')
+    .select('id, full_name, dtb_id, date_of_birth')
+    .in('id', ids);
+  return (users ?? []) as MemberCandidate[];
+}
+
+/**
+ * Die DTB-ID beim Mitglied festhalten, sobald eine Zuordnung bestätigt ist.
+ * Der Kader wird bei jedem Sync neu geschrieben — mit der ID am Nutzer läuft die
+ * Zuordnung danach (und in der nächsten Saison) ohne Namensabgleich.
+ * Überschreibt nie eine vorhandene ID. `sb` muss den Nutzer beschreiben dürfen
+ * (Service-Client), der Aufrufer prüft vorher die Vereinszugehörigkeit.
+ */
+export async function persistDtbId(sb: Sb, memberId: string, dtbId: string | null): Promise<void> {
+  if (!dtbId) return;
+  const { error } = await sb
+    .from('users')
+    .update({ dtb_id: dtbId })
+    .eq('id', memberId)
+    .is('dtb_id', null);
+  if (error) log.warn('DTB-ID konnte nicht gespeichert werden', { memberId });
+}
+
 /**
  * Meldeliste übernehmen. Die Liste vom Verband ist die Wahrheit — wer nicht
  * mehr gemeldet ist, verschwindet auch bei uns.
  *
- * Zuordnung zum Vereinsmitglied: zuerst über die DTB-ID (stabil, eindeutig),
- * ersatzweise über den Klarnamen.
+ * Zuordnung zum Vereinsmitglied: automatisch nur über die DTB-ID. Bereits
+ * bestätigte Zuordnungen (Admin oder Mitglied) bleiben über den Sync erhalten.
+ * Namenstreffer sind Vorschläge und werden hier nicht verknüpft.
  */
 export async function upsertRoster(
   sb: Sb,
@@ -501,36 +583,36 @@ export async function upsertRoster(
 ): Promise<{ imported: number; linked: number }> {
   if (players.length === 0) return { imported: 0, linked: 0 };
 
-  const { data: memberships } = await sb
-    .from('user_club_memberships')
-    .select('user_id')
+  const members = await loadMemberCandidates(sb, league.club_id);
+  const memberIds = new Set(members.map((m) => m.id));
+
+  // Bisherige Zuordnungen retten, bevor der Kader neu geschrieben wird.
+  const { data: previous } = await sb
+    .from('league_players')
+    .select('name, dtb_id, member_id')
+    .eq('league_id', league.id)
     .eq('club_id', league.club_id)
-    .eq('is_active', true);
-
-  const memberIds = (memberships ?? []).map((m: { user_id: string }) => m.user_id);
-  const byDtbId = new Map<string, string>();
-  const byName = new Map<string, string>();
-
-  if (memberIds.length > 0) {
-    const { data: users } = await sb
-      .from('users')
-      .select('id, full_name, dtb_id')
-      .in('id', memberIds);
-    for (const u of users ?? []) {
-      if (u.dtb_id) byDtbId.set(String(u.dtb_id).trim(), u.id);
-      if (u.full_name) byName.set(normalizeTeamName(u.full_name), u.id);
-    }
+    .not('member_id', 'is', null);
+  const keptByDtb = new Map<string, string>();
+  const keptByName = new Map<string, string>();
+  for (const r of previous ?? []) {
+    if (!r.member_id || !memberIds.has(r.member_id)) continue;
+    if (r.dtb_id) keptByDtb.set(r.dtb_id, r.member_id);
+    keptByName.set(normalizeTeamName(r.name), r.member_id);
   }
 
   const rows = players.map((p) => ({
     league_id: league.id,
     club_id: league.club_id,
     member_id:
-      (p.dtbId ? byDtbId.get(p.dtbId.trim()) : undefined) ??
-      byName.get(normalizeTeamName(p.name)) ??
+      matchByDtbId(p, members) ??
+      (p.dtbId ? keptByDtb.get(p.dtbId) : undefined) ??
+      keptByName.get(normalizeTeamName(p.name)) ??
       null,
     name: p.name,
     lk: p.lk,
+    dtb_id: p.dtbId,
+    birth_year: p.birthYear,
     position_number: p.position,
     source_url: sourceUrl,
     synced_at: new Date().toISOString(),

@@ -45,7 +45,7 @@ export default async function TrialSignupPage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-primary/5 to-brand-light/5 dark:bg-card">
+    <div className="min-h-dvh bg-gradient-to-br from-brand-primary/5 to-brand-light/5 dark:bg-card">
       <div className="max-w-3xl mx-auto px-4 py-12">
         {UUID_RE.test(participantId) ? (
           <TrialSignupForm

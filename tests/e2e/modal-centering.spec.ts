@@ -10,7 +10,7 @@ import { navigateToFirstSeason } from '../helpers/navigation';
  * regression test for the createPortal fix (commit d8f338e) that guarantees
  * modals are not affected by ancestor `transform`/`filter`/`backdrop-filter`
  * containing blocks (which would break the
- * `min-h-screen flex items-center justify-center` centering).
+ * `min-h-dvh flex items-center justify-center` centering).
  *
  * For each route, the test:
  *   1. Logs in as admin (skips gracefully if creds missing / login fails).
@@ -25,7 +25,7 @@ import { navigateToFirstSeason } from '../helpers/navigation';
  * The bounding-box assertion catches regressions like:
  *   - Modal renders inside a transformed/filtered ancestor (centering broken)
  *   - Modal renders with `items-center` only (centers against own height, not viewport)
- *   - Missing `min-h-screen` (overlay collapses, modal sticks to top)
+ *   - Missing `min-h-dvh` (overlay collapses, modal sticks to top)
  */
 
 const CENTERING_TOLERANCE_PX = 50;

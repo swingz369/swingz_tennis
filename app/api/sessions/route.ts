@@ -58,9 +58,9 @@ export async function GET(req: NextRequest) {
       // Fetch upcoming sessions for this club (via schedule)
       const dateFromParam = url.searchParams.get('dateFrom');
       const dateToParam = url.searchParams.get('dateTo');
-      const now = new Date().toISOString();
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const fourWeeksLater = new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toISOString();
-      const rangeFrom = dateFromParam ?? now;
+      const rangeFrom = dateFromParam ?? weekAgo;
       const rangeTo = dateToParam ?? fourWeeksLater;
 
       const { data: sessions, error: sessionsError } = await supabase

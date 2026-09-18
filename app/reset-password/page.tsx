@@ -137,12 +137,13 @@ export default function ResetPasswordPage() {
     await supabase.auth.signOut();
     setState('success');
     setTimeout(() => {
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- bewusster Vollreload, kein Router-Wechsel
       window.location.href = '/login';
     }, 3000);
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
       <header className="relative overflow-hidden bg-brand-secondary">
         <div className="absolute inset-0">

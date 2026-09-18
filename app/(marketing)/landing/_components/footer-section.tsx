@@ -1,8 +1,5 @@
 /**
- * Footer — App-Design
- *
- * 5-Spalten-Link-Grid (Brand / Produkt / Unternehmen / Rechtliches / Konto)
- * in normaler App-Typografie. Server Component.
+ * Footer: 5-Spalten-Link-Grid. Server Component.
  */
 
 import Link from 'next/link';
@@ -56,7 +53,7 @@ export function FooterSection() {
               </span>
             </Link>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-              Tennisclub-Management, das im Hintergrund arbeitet — damit das Vereinsleben im
+              Tennisclub-Management, das im Hintergrund arbeitet, damit das Vereinsleben im
               Vordergrund bleibt.
             </p>
           </div>
@@ -79,8 +76,8 @@ export function FooterSection() {
           ))}
         </div>
         <div className="pt-6 border-t border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-sm text-muted-foreground">
-          <p>© 2026 SWINGZ GmbH · Alle Rechte vorbehalten</p>
-          <p>München · DE · EU-Hosting · DSGVO-konform</p>
+          <p>© 2026 SWINGZ GmbH. Alle Rechte vorbehalten.</p>
+          <p>München, DSGVO-konform, Hosting in der EU</p>
         </div>
       </div>
     </footer>

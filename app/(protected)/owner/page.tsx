@@ -164,7 +164,7 @@ export default async function OwnerPage() {
       */}
       <PageHeader
         title="Plattform-Übersicht"
-        description={<>Hallo {firstName} — Swingz Plattform-Dashboard</>}
+        description={<>Hallo {firstName} | Swingz Plattform-Dashboard</>}
       />
 
       {/* KPI-Band statt vier Karten — gleiche Behandlung wie im

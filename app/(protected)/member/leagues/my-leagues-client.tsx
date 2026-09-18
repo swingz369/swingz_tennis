@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trophy, ExternalLink, MapPin } from 'lucide-react';
+import { ArrowLeft, Trophy, ExternalLink, MapPin, UserCheck } from 'lucide-react';
+import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Match {
@@ -22,6 +24,31 @@ interface Match {
   nuliga_report_url: string | null;
 }
 
+interface Standing {
+  id: string;
+  name: string;
+  position: number | null;
+  points: number | null;
+  matches_played: number | null;
+  matches_won: number | null;
+  matches_drawn: number | null;
+  matches_lost: number | null;
+}
+
+interface RosterEntry {
+  name: string;
+  lk: string | null;
+  position_number: number | null;
+  is_me: boolean;
+}
+
+interface Suggestion {
+  player_id: string;
+  name: string;
+  lk: string | null;
+  league_name: string;
+}
+
 interface MyTeam {
   league_id: string;
   league_name: string;
@@ -30,7 +57,10 @@ interface MyTeam {
   age_group: string | null;
   position_number: number | null;
   lk: string | null;
+  own_team_name: string | null;
   matches: Match[];
+  standings: Standing[];
+  roster: RosterEntry[];
 }
 
 const RESULT_STYLE: Record<string, string> = {
@@ -59,13 +89,35 @@ function formatDate(iso: string | null): string {
 
 export function MyLeaguesClient() {
   const [teams, setTeams] = useState<MyTeam[] | null>(null);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     apiFetch('/api/member/leagues')
-      .then((res) => (res.ok ? res.json() : { teams: [] }))
-      .then((data) => setTeams(data.teams ?? []))
+      .then((res) => (res.ok ? res.json() : { teams: [], suggestions: [] }))
+      .then((data) => {
+        setTeams(data.teams ?? []);
+        setSuggestions(data.suggestions ?? []);
+      })
       .catch(() => setTeams([]));
   }, []);
+
+  useEffect(load, [load]);
+
+  const claim = async (playerId: string) => {
+    try {
+      const res = await apiFetch('/api/member/leagues/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player_id: playerId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Zuordnung fehlgeschlagen');
+      toast.success('Deine Mannschaft ist verknüpft');
+      load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Zuordnung fehlgeschlagen');
+    }
+  };
 
   if (teams === null) {
     return <div className="py-20 text-center text-muted-foreground">Laden</div>;
@@ -92,6 +144,29 @@ export function MyLeaguesClient() {
         </div>
       </div>
 
+      {suggestions.map((sg) => (
+        <Card key={sg.player_id} className="border-info-200 dark:border-info-800/40">
+          <CardContent className="flex items-center justify-between gap-3 flex-wrap py-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <UserCheck className="h-5 w-5 text-info-600 dark:text-info-400 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium">
+                  Bist du {sg.name}
+                  {sg.lk ? ` (${sg.lk})` : ''}?
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Du stehst in der Meldeliste {sg.league_name}. Bestätige es, dann siehst du hier
+                  deine Spiele.
+                </p>
+              </div>
+            </div>
+            <Button size="sm" onClick={() => claim(sg.player_id)}>
+              Ja, das bin ich
+            </Button>
+          </CardContent>
+        </Card>
+      ))}
+
       {teams.length === 0 ? (
         <div className="text-center py-16 border-2 border-dashed rounded-xl">
           <Trophy className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
@@ -99,7 +174,8 @@ export function MyLeaguesClient() {
             Du stehst aktuell in keiner Mannschaftsmeldung.
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Sobald dich der Sportwart in einer Meldeliste zuordnet, erscheinen deine Spieltage hier.
+            Sobald deine DTB-ID im Profil steht oder der Sportwart dich zuordnet, erscheinen deine
+            Spieltage hier.
           </p>
         </div>
       ) : (
@@ -173,6 +249,78 @@ export function MyLeaguesClient() {
                     </div>
                   </div>
                 ))
+              )}
+
+              {team.standings.length > 0 && (
+                <div className="pt-4">
+                  <h3 className="text-sm font-semibold mb-2">Tabelle</h3>
+                  <div className="overflow-x-auto rounded-xl border border-border/60">
+                    <table className="w-full text-sm">
+                      <thead className="text-xs text-muted-foreground">
+                        <tr className="border-b border-border/60">
+                          <th className="p-2 text-left w-8">#</th>
+                          <th className="p-2 text-left">Mannschaft</th>
+                          <th className="p-2 text-right">Sp.</th>
+                          <th className="p-2 text-right">S</th>
+                          <th className="p-2 text-right">U</th>
+                          <th className="p-2 text-right">N</th>
+                          <th className="p-2 text-right">Pkt.</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {team.standings.map((row) => {
+                          const own =
+                            !!team.own_team_name &&
+                            row.name.trim().toLowerCase() ===
+                              team.own_team_name.trim().toLowerCase();
+                          return (
+                            <tr
+                              key={row.id}
+                              className={`border-b border-border/40 last:border-0 ${own ? 'bg-brand-light/10 font-medium' : ''}`}
+                            >
+                              <td className="p-2 tabular-nums">{row.position ?? '–'}</td>
+                              <td className="p-2">{row.name}</td>
+                              <td className="p-2 text-right tabular-nums">{row.matches_played}</td>
+                              <td className="p-2 text-right tabular-nums">{row.matches_won}</td>
+                              <td className="p-2 text-right tabular-nums">{row.matches_drawn}</td>
+                              <td className="p-2 text-right tabular-nums">{row.matches_lost}</td>
+                              <td className="p-2 text-right tabular-nums">{row.points}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {team.roster.length > 0 && (
+                <div className="pt-4">
+                  <h3 className="text-sm font-semibold mb-2">Meldeliste</h3>
+                  <ul className="space-y-1">
+                    {team.roster.map((r) => (
+                      <li
+                        key={`${r.position_number}-${r.name}`}
+                        className="flex items-center gap-3 text-sm"
+                      >
+                        <span className="w-6 tabular-nums text-muted-foreground">
+                          {r.position_number ?? '–'}
+                        </span>
+                        <span className={r.is_me ? 'font-medium' : ''}>{r.name}</span>
+                        {r.lk && (
+                          <Badge variant="outline" className="text-xs">
+                            {r.lk}
+                          </Badge>
+                        )}
+                        {r.is_me && (
+                          <Badge variant="secondary" className="text-2xs">
+                            Du
+                          </Badge>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </CardContent>
           </Card>

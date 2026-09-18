@@ -16,7 +16,7 @@ import { CopyCommand } from '@/components/dev/copy-command';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Dev-Schnellzugriff — SWINGZ',
+  title: 'Dev-Schnellzugriff | SWINGZ',
   description: 'Lokale Übersicht aller Dienste, Links und Zugänge (nur im Dev-Modus).',
   robots: { index: false, follow: false },
 };
@@ -180,7 +180,7 @@ export default function DevOverviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
       <header className="border-b border-border bg-brand-secondary">
         <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">

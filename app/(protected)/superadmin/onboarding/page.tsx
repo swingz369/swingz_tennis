@@ -128,6 +128,7 @@ export default function SuperadminOnboardingPage() {
         const setupOk = await markSetupComplete();
         if (!setupOk) return;
         // Reload to pick up new cookie
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- bewusster Vollreload, kein Router-Wechsel
         window.location.href = '/admin';
         return;
       }
@@ -448,7 +449,7 @@ export default function SuperadminOnboardingPage() {
   const isOptionalStep = step === 3;
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <Card className="border border-border dark:border-white/10">
           <CardHeader className="pb-2">{renderStepper()}</CardHeader>

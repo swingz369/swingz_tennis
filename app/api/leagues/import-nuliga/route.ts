@@ -134,7 +134,10 @@ export async function POST(request: NextRequest) {
         nuliga_url: t.portraitUrl ?? t.groupUrl,
         // Eine Meldeliste gibt es nur im Portrait — ohne Portrait bleibt das leer.
         nuliga_roster_url: t.portraitUrl,
-        own_team_name: t.teamName,
+        // Nicht t.teamName: Die Vereinsseite nennt die Altersklasse („Herren 40"),
+        // in Tabelle und Spielplan heißt die Mannschaft „TC Musterstadt II".
+        // Der erste Sync trägt den echten Namen ein.
+        own_team_name: null,
         notes: t.groupUrl ? `Gruppenseite (Tabelle): ${t.groupUrl}` : null,
       }));
 

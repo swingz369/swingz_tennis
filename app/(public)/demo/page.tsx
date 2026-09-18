@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/table';
 
 export const metadata: Metadata = {
-  title: 'Live-Demo — SWINGZ',
+  title: 'Live-Demo | SWINGZ',
   description:
     'Sieh dir SWINGZ live an, ganz ohne Registrierung: Mitgliederverwaltung, Trainerplanung, Saisonplanung und Abrechnung am Beispiel eines Tennisvereins.',
   alternates: { canonical: '/demo' },
@@ -48,7 +48,7 @@ const UPCOMING_SESSIONS = [
 
 export default function DemoPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       {/* ═══════════ NAV ═══════════ */}
       <header className="sticky top-0 z-40 border-b border-border bg-background">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -75,7 +75,7 @@ export default function DemoPage() {
           <div className="flex items-center gap-2 text-sm">
             <Badge variant="accent">Demo-Modus</Badge>
             <span className="text-muted-foreground">
-              Beispieldaten von &ldquo;TC Musterstadt&rdquo; — nichts wird gespeichert
+              Beispieldaten von &ldquo;TC Musterstadt&rdquo;. Nichts wird gespeichert
             </span>
           </div>
           <Link href="/register" className="text-sm font-medium text-brand-primary hover:underline">

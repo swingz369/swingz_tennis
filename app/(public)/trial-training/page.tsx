@@ -9,7 +9,7 @@ import { createLogger } from '@/lib/logger';
 const log = createLogger('trial-training:page');
 
 export const metadata: Metadata = {
-  title: 'Probetraining buchen — SWINGZ',
+  title: 'Probetraining buchen | SWINGZ',
   description: 'Buche jetzt ein kostenloses Probetraining bei deinem Tennisclub über SWINGZ.',
   alternates: {
     canonical: '/trial-training',
@@ -54,7 +54,7 @@ export default async function PublicTrialBookingPage({ searchParams }: PageProps
   const clubInfo = clubId ? await fetchClubInfo(clubId) : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-primary/5 to-brand-light/5 dark:bg-card">
+    <div className="min-h-dvh bg-gradient-to-br from-brand-primary/5 to-brand-light/5 dark:bg-card">
       <div className="max-w-3xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-8">

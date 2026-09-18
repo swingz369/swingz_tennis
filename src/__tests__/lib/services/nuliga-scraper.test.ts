@@ -265,3 +265,49 @@ describe('nuliga-scraper: input validation (regression)', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
+
+describe('nuliga-scraper: Spielplan mit Spalte „Spielort" (Layout Sommer 2026)', () => {
+  // Echter Aufbau: „Datum" mit colspan=3, dann Spielort, Heim, Gast, … —
+  // die alten festen Indizes lasen hier Spielort/Heim statt Heim/Gast.
+  const HTML = `<html><body>
+    <h2>Spielplan</h2>
+    <table class="result-set">
+      <tr><th colspan="3">Datum</th><th>Spielort</th><th>Heimmannschaft</th><th>Gastmannschaft</th>
+        <th>Matchpunkte</th><th>Sätze</th><th>Spiele</th><th>Spielbericht</th></tr>
+      <tr><td>So</td><td>10.05.2026 14:00</td><td></td><td></td><td>TC A</td><td>TC B</td>
+        <td>3:3</td><td>6:7</td><td>53:61</td><td><a href="meetingReport?meeting=1">anzeigen</a></td></tr>
+      <tr><td></td><td></td><td></td><td>Sportpark X</td><td>TC C</td><td>TC D</td>
+        <td></td><td></td><td></td><td></td></tr>
+    </table></body></html>`;
+
+  it('liest Heim/Gast/Ergebnis über die Kopfzeile, Folgezeilen erben das Datum', async () => {
+    mockFetchSequence([{ body: HTML }]);
+    const { matches } = await fetchNuligaGroupPage(VALID_URL);
+    expect(matches).toHaveLength(2);
+    expect(matches[0]).toMatchObject({
+      date: '10.05.2026 14:00',
+      homeTeam: 'TC A',
+      awayTeam: 'TC B',
+      matchPoints: '3:3',
+      sets: '6:7',
+      games: '53:61',
+      status: 'completed',
+    });
+    expect(matches[0].reportUrl).toContain('/wa/meetingReport?meeting=1');
+    expect(matches[1]).toMatchObject({
+      date: '10.05.2026 14:00',
+      homeTeam: 'TC C',
+      awayTeam: 'TC D',
+      status: 'pending',
+    });
+  });
+});
+
+describe('nuliga-scraper: Jahrgang', () => {
+  it('liest den Jahrgang aus der Klammer hinter dem Namen', async () => {
+    const { extractBirthYear, normalizePlayerName } = await import('@/lib/services/nuliga-scraper');
+    expect(extractBirthYear('Muster, Lisa (2014)')).toBe(2014);
+    expect(extractBirthYear('Muster, Lisa')).toBeNull();
+    expect(normalizePlayerName('Muster, Lisa (2014)')).toBe('Lisa Muster');
+  });
+});
