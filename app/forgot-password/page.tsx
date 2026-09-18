@@ -103,7 +103,7 @@ export default function ForgotPasswordPage() {
                   Falls ein Konto mit <strong>{email}</strong> existiert, haben wir dir gerade einen
                   Link zum Zurücksetzen des Passworts gesendet. Bitte prüfe auch deinen Spam-Ordner.
                 </p>
-                <p className="text-xs text-muted-foreground">Der Link ist 60 Minuten gültig.</p>
+                <p className="text-sm text-muted-foreground">Der Link ist 60 Minuten gültig.</p>
                 <div className="pt-4 flex flex-col gap-2">
                   <Link href="/login">
                     <Button variant="primary" className="w-full">

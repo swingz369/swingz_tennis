@@ -302,7 +302,7 @@ export function SettingsEditorClient({ settings }: { settings: EditableSetting[]
                 <div className="min-w-0">
                   <span className="text-sm font-mono font-semibold">{s.key}</span>
                   {s.description && (
-                    <p className="text-xs text-muted-foreground">{s.description}</p>
+                    <p className="text-sm text-muted-foreground">{s.description}</p>
                   )}
                 </div>
                 <Badge variant="secondary" className="font-mono text-xs">

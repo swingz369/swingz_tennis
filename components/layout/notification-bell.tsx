@@ -234,7 +234,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                         {n.title}
                       </p>
                       {n.message && (
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">{n.message}</p>
+                        <p className="text-sm text-muted-foreground truncate mt-0.5">{n.message}</p>
                       )}
                       <p className="text-2xs text-muted-foreground/60 mt-0.5">
                         {timeAgo(n.created_at)}

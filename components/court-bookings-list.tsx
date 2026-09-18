@@ -807,7 +807,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                     })}
                   </div>
                   {selectedBooking.cancellation_reason && (
-                    <div className="text-xs mt-1">Grund: {selectedBooking.cancellation_reason}</div>
+                    <div className="text-sm mt-1">Grund: {selectedBooking.cancellation_reason}</div>
                   )}
                 </div>
               )}

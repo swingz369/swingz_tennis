@@ -474,7 +474,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
             </button>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground">Keine Auswahl = gilt für alle Tage</p>
+        <p className="text-sm text-muted-foreground">Keine Auswahl = gilt für alle Tage</p>
       </div>
 
       {/* Time Ranges (Dynamic Pricing) */}

@@ -563,7 +563,7 @@ function MessageList({
               >
                 {msg.subject}
               </p>
-              <p className="text-xs text-muted-foreground/70 truncate mt-0.5">
+              <p className="text-sm text-muted-foreground/70 truncate mt-0.5">
                 {stripHtml(msg.content).substring(0, 80)}
               </p>
             </div>

@@ -480,7 +480,7 @@ export default function OpenMatches({ clubId, userId }: Props) {
                     </div>
                   </div>
                   {match.description && (
-                    <CardDescription className="line-clamp-2 text-xs">
+                    <CardDescription className="line-clamp-2 text-sm">
                       {match.description}
                     </CardDescription>
                   )}
