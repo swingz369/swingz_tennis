@@ -38,7 +38,7 @@
 # Canonical email — MUST match the GitHub-account-email that Vercel
 # validates commit-author-email against. Wrong value here = Vercel
 # deployment-block on every push to main.
-EXPECTED_EMAIL="mike.swinger@gmx.de"
+EXPECTED_EMAIL="bartmz@gmx.de"
 
 # Canonical display-name — cosmetic only (Vercel does NOT validate name
 # against GitHub-account-name, only email). Maintain for consistency

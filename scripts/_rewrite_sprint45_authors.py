@@ -46,7 +46,7 @@ from pathlib import Path
 
 # Target identity (commit-author-rewrite target = real GitHub-account-email)
 NEW_NAME = "Bart Mz"
-NEW_EMAIL = "mike.swinger@gmx.de"
+NEW_EMAIL = "bartmz@gmx.de"
 
 N_COMMITS = 12
 BACKUP_TAG = "backup-pre-author-fix-20260628"

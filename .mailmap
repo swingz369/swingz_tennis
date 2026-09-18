@@ -24,8 +24,8 @@
 # Format per row: <wrong-name> <wrong-email> <canonical-name> <canonical-email>
 
 # Sprint-4/5 rewrite (→ historical artifact: 12 commits have backend rewrites)
-Bart Mz <mike.swinger@gmx.de> Codebuff-CI-Validator <ci-validate@swingz.local>
-Bart Mz <mike.swinger@gmx.de> Bart Mz <bartmz@gmx.de>
+Bart Mz <bartmz@gmx.de> Codebuff-CI-Validator <ci-validate@swingz.local>
+Bart Mz <bartmz@gmx.de> Bart Mz <mike.swinger@gmx.de>
 
 # Earlier AI-session variants (if you encounter these in `git log`, add a row):
 # Add more rows here when a new wrong-identity pattern emerges.
