@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { loadMemberCandidates, suggestByName } from '@/lib/services/nuliga-sync';
 
 /**
  * GET /api/leagues/[id] — Get league with teams and match days
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const [rosterRes, closuresRes] = await Promise.all([
       auth.supabase
         .from('league_players')
-        .select('id, name, lk, position_number, member_id, synced_at')
+        .select('id, name, lk, position_number, member_id, synced_at, birth_year')
         .eq('league_id', id)
         .order('position_number', { ascending: true, nullsFirst: false }),
       matchDayIds.length > 0
@@ -112,12 +113,27 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       team_members: undefined,
     }));
 
+    // Namensvorschläge für noch nicht zugeordnete Spieler — nur für Admins, die
+    // sie bestätigen können; Mitglieder sehen keine fremden Vorschläge.
+    let players = (rosterRes.data ?? []) as Array<
+      NonNullable<typeof rosterRes.data>[number] & { suggested_member_id?: string | null }
+    >;
+    if (players.some((p) => !p.member_id) && (await verifyRole(auth, 'admin')) && league.club_id) {
+      const candidates = await loadMemberCandidates(auth.supabase, league.club_id);
+      players = players.map((p) => ({
+        ...p,
+        suggested_member_id: p.member_id
+          ? null
+          : suggestByName({ name: p.name, birthYear: p.birth_year }, candidates),
+      }));
+    }
+
     return NextResponse.json({
       league: {
         ...league,
         teams: enrichedTeams,
         match_days: enrichedMatchDays,
-        players: rosterRes.data ?? [],
+        players,
       },
     });
   });

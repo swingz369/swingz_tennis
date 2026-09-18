@@ -21,7 +21,13 @@ import {
   isNuligaTeamPortraitUrl,
   isValidNuligaUrl,
 } from '@/lib/services/nuliga-scraper';
-import { upsertRoster } from '@/lib/services/nuliga-sync';
+import { createServiceClient } from '@/lib/supabase/service';
+import {
+  upsertRoster,
+  loadMemberCandidates,
+  suggestByName,
+  persistDtbId,
+} from '@/lib/services/nuliga-sync';
 
 const log = createLogger('api:leagues:roster');
 
@@ -33,13 +39,30 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params;
     const { data, error } = await auth.supabase
       .from('league_players')
-      .select('id, name, lk, position_number, member_id, synced_at, source_url')
+      .select('id, name, lk, position_number, member_id, synced_at, source_url, birth_year')
       .eq('league_id', id)
       .eq('club_id', auth.clubId)
       .order('position_number', { ascending: true, nullsFirst: false });
 
     if (error) return NextResponse.json({ error: 'Kader nicht abrufbar' }, { status: 500 });
-    return NextResponse.json({ players: data ?? [] });
+
+    // Für nicht zugeordnete Spieler einen Namensvorschlag mitliefern — der
+    // Sportwart bestätigt mit einem Klick statt in einer Liste zu suchen.
+    // Nur für Admin/Mannschaftsführer: Mitglieder brauchen die Vorschläge anderer nicht.
+    const players = data ?? [];
+    const canEdit =
+      (await verifyRole(auth, 'admin')) || (await verifyOffice(auth, 'mannschaftsfuehrer'));
+    if (!canEdit || players.every((p) => p.member_id)) return NextResponse.json({ players });
+
+    const members = await loadMemberCandidates(auth.supabase, auth.clubId);
+    return NextResponse.json({
+      players: players.map((p) => ({
+        ...p,
+        suggested_member_id: p.member_id
+          ? null
+          : suggestByName({ name: p.name, birthYear: p.birth_year }, members),
+      })),
+    });
   });
 }
 
@@ -92,12 +115,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .eq('id', playerId)
       .eq('league_id', id)
       .eq('club_id', clubId)
-      .select('id');
+      .select('id, dtb_id');
 
     if (error) return NextResponse.json({ error: 'Zuordnung fehlgeschlagen' }, { status: 500 });
     if (!data || data.length === 0) {
       return NextResponse.json({ error: 'Kadereintrag nicht gefunden' }, { status: 404 });
     }
+
+    // Bestätigte Zuordnung dauerhaft machen: DTB-ID am Mitglied festhalten.
+    // Service-Client, weil der Admin fremde Profile nicht beschreiben darf; die
+    // Vereinszugehörigkeit des Mitglieds ist oben geprüft.
+    if (memberId) await persistDtbId(createServiceClient(), memberId, data[0].dtb_id);
     return NextResponse.json({ success: true });
   });
 }
