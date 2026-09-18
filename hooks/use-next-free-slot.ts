@@ -8,8 +8,9 @@ import {
 import type { Session } from '@/hooks/use-sessions';
 import type { PlanEntry } from '@/components/calendar/types';
 
+// Saisonplan-Konvention: 0 = Montag … 6 = Sonntag (JS: 0 = Sonntag)
 function jsDayToApiDay(jsDay: number): number {
-  return jsDay === 0 ? 7 : jsDay;
+  return (jsDay + 6) % 7;
 }
 
 /**
