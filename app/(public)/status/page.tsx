@@ -7,7 +7,7 @@ const log = createLogger('page:status');
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Systemstatus — SwingZ',
+  title: 'Systemstatus | SwingZ',
   description: 'Aktuelle Verfügbarkeit von SwingZ.',
   robots: { index: false },
 };
@@ -100,7 +100,7 @@ export default async function StatusPage() {
       <p className="mt-2 text-muted-foreground">
         {alles
           ? 'Alle Systeme arbeiten normal.'
-          : 'Mindestens ein System ist beeinträchtigt — Einzelheiten unten.'}
+          : 'Mindestens ein System ist beeinträchtigt. Einzelheiten unten.'}
       </p>
 
       <div className="mt-8 rounded-xl border border-border bg-card px-5">

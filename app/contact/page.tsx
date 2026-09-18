@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Trophy, ArrowRight, Mail, MapPin, Sparkles, Zap } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Kontakt — SWINGZ',
+  title: 'Kontakt | SWINGZ',
   description:
-    'Fragen zu SWINGZ? Kontaktiere unser Team — wir antworten persönlich innerhalb von 24 Stunden.',
+    'Fragen zu SWINGZ? Kontaktiere unser Team. Wir antworten persönlich innerhalb von 24 Stunden.',
   alternates: {
     canonical: '/contact',
   },
@@ -16,7 +16,7 @@ import { ContactFormClient } from './contact-form-client';
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
       <header className="relative overflow-hidden bg-brand-secondary">
         <div className="absolute inset-0">
@@ -59,8 +59,8 @@ export default function ContactPage() {
             Kontakt aufnehmen
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Fragen zu SWINGZ oder deinem Verein? Schreib uns — wir melden uns persönlich. Oder
-            starte direkt mit 14 Tagen kostenlos testen.
+            Fragen zu SWINGZ oder deinem Verein? Schreib uns, wir melden uns persönlich. Oder starte
+            direkt mit 14 Tagen kostenlos testen.
           </p>
         </div>
       </section>

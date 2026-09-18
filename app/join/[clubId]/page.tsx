@@ -52,7 +52,7 @@ export default function JoinPage() {
 
   if (notFound)
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-dvh flex items-center justify-center p-4">
         <Card className="p-8 max-w-sm w-full text-center space-y-4">
           <p className="font-semibold">Verein nicht gefunden</p>
           <p className="text-sm text-muted-foreground">
@@ -67,7 +67,7 @@ export default function JoinPage() {
 
   if (success)
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-dvh flex items-center justify-center p-4">
         <Card className="p-8 max-w-sm w-full text-center space-y-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success-100 dark:bg-success-900/20 mx-auto">
             <Trophy className="h-6 w-6 text-success-600" />
@@ -79,7 +79,7 @@ export default function JoinPage() {
     );
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+    <div className="min-h-dvh flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary mx-auto">

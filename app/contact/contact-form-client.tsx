@@ -56,8 +56,8 @@ export function ContactFormClient() {
         </div>
         <h3 className="text-xl font-bold text-foreground mb-2">Nachricht gesendet!</h3>
         <p className="text-muted-foreground">
-          Danke für dein Interesse! Wir melden uns persönlich bei dir — in der Regel innerhalb von
-          24 Stunden.
+          Danke für dein Interesse! Wir melden uns persönlich bei dir. In der Regel innerhalb von 24
+          Stunden.
         </p>
         <Button variant="outline" className="mt-6" onClick={() => setSubmitted(false)}>
           Weitere Anfrage stellen

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
 
 export const metadata: Metadata = {
-  title: 'Über uns — SWINGZ',
+  title: 'Über uns | SWINGZ',
   description:
     'SWINGZ ist ein junges Startup: Trainingsplanung soll einfach, intelligent und für jeden Club zugänglich sein.',
   alternates: {
@@ -26,7 +26,7 @@ import {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
       <header className="relative overflow-hidden bg-brand-secondary">
         <div className="absolute inset-0">
@@ -69,7 +69,7 @@ export default function AboutPage() {
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             SWINGZ ist ein junges Startup mit einer klaren Vision: Trainingsplanung soll einfach,
-            intelligent und für jeden Club zugänglich sein — vom kleinen Verein bis zum großen
+            intelligent und für jeden Club zugänglich sein, vom kleinen Verein bis zum großen
             Verband.
           </p>
         </div>
@@ -87,7 +87,7 @@ export default function AboutPage() {
                 Warum wir SWINGZ bauen
               </h2>
               <p className="mt-6 text-muted-foreground leading-relaxed text-lg">
-                Tennisclubs stecken Stunden in manuelle Saisonplanung — Tabellen, E-Mails,
+                Tennisclubs stecken Stunden in manuelle Saisonplanung: Tabellen, E-Mails,
                 Telefonate. Trainer-Verfügbarkeiten, Platzbelegungen und Gruppenaufteilungen müssen
                 mühsam koordiniert werden.
               </p>
@@ -113,7 +113,7 @@ export default function AboutPage() {
                 {
                   icon: Users,
                   title: 'Für alle Rollen',
-                  description: 'Admins, Trainer und Mitglieder — jeder hat seinen Zugang.',
+                  description: 'Admins, Trainer und Mitglieder, jeder hat seinen Zugang.',
                 },
                 {
                   icon: Shield,
@@ -154,7 +154,7 @@ export default function AboutPage() {
                 icon: Brain,
                 title: 'Intelligente Automatisierung',
                 description:
-                  'Jeder Tennisclub soll Zugang zu automatischer Saisonplanung haben — unabhängig von der Größe oder dem Budget.',
+                  'Jeder Tennisclub soll Zugang zu automatischer Saisonplanung haben, unabhängig von der Größe oder dem Budget.',
               },
               {
                 icon: Users,
@@ -166,7 +166,7 @@ export default function AboutPage() {
                 icon: Heart,
                 title: 'Nachhaltiges Wachstum',
                 description:
-                  'SWINGZ soll Clubs helfen, effizienter zu arbeiten und nachhaltig zu wachsen — ohne mehr Aufwand.',
+                  'SWINGZ soll Clubs helfen, effizienter zu arbeiten und nachhaltig zu wachsen, ohne mehr Aufwand.',
               },
             ].map((vision, idx) => (
               <div
@@ -230,7 +230,7 @@ export default function AboutPage() {
             Bereit, die Zukunft mitzugestalten?
           </h2>
           <p className="mt-4 text-lg text-white/70">
-            Teste SWINGZ 14 Tage kostenlos und überzeuge dich selbst — ohne Kreditkarte.
+            Teste SWINGZ 14 Tage kostenlos und überzeuge dich selbst, ohne Kreditkarte.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register">
@@ -254,7 +254,7 @@ export default function AboutPage() {
       {/* Footer */}
       <footer className="bg-brand-secondary py-8 border-t border-border">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center text-sm text-muted-foreground">
-          <p>© 2026 SWINGZ — Alle Rechte vorbehalten.</p>
+          <p>© 2026 SWINGZ GmbH. Alle Rechte vorbehalten.</p>
         </div>
       </footer>
     </div>

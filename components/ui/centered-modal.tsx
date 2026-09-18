@@ -14,7 +14,7 @@ export interface CenteredModalProps {
    * Modal content. The wrapper applies `max-h-[90vh] overflow-y-auto sm:max-h-[85vh]`
    * by default so long forms scroll inside the dialog instead of clipping the page.
    * Pass `scrollInside={false}` to disable this and let the content grow naturally
-   * (capped only by `min-h-screen` on the overlay).
+   * (capped only by `min-h-dvh` on the overlay).
    */
   children: ReactNode;
   /** Extra classes for the inner content panel (the card-like surface). */
@@ -35,7 +35,7 @@ export interface CenteredModalProps {
  * CenteredModal — the canonical modal wrapper for SwingZ.
  *
  * Combines the most common modal patterns into one component:
- * - Viewport-centering via `min-h-screen flex items-center justify-center` (not just
+ * - Viewport-centering via `min-h-dvh flex items-center justify-center` (not just
  *   `items-center` alone, which centers against the content's own height)
  * - `p-4` so tall modals have breathing room from the viewport edges
  * - Body scroll lock (prevents the page behind from scrolling while modal is open)
@@ -141,7 +141,7 @@ export function CenteredModal({
   // in the DOM is <body> regardless of where the component is mounted in the React
   // tree, so no ancestor can establish a containing block for `position: fixed`
   // via `transform`, `filter`, `backdrop-filter`, `will-change`, `contain`, or
-  // `perspective`. The overlay's `min-h-screen flex items-center justify-center`
+  // `perspective`. The overlay's `min-h-dvh flex items-center justify-center`
   // is therefore always computed against the viewport, not a local parent.
   return createPortal(
     <div
@@ -149,7 +149,7 @@ export function CenteredModal({
       onClick={handleOverlayClick}
       onKeyDown={handleOverlayKeyDown}
       className={cn(
-        'fixed inset-0 z-50 flex items-center justify-center min-h-screen p-4',
+        'fixed inset-0 z-50 flex items-center justify-center min-h-dvh p-4',
         overlayClassName ?? 'bg-black/40 backdrop-blur-sm'
       )}
     >

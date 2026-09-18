@@ -4,7 +4,7 @@ import { IconBox } from '@/components/ui/icon-box';
 import { Trophy, FileText, ShieldCheck, Server, AlertCircle, Scale } from 'lucide-react';
 
 export const metadata = {
-  title: 'Auftragsverarbeitungsvertrag (AVV) – SWINGZ',
+  title: 'Auftragsverarbeitungsvertrag (AVV) | SWINGZ',
   description:
     'Vertrag zur Auftragsverarbeitung gemäß Art. 28 DSGVO zwischen Verein (Verantwortlicher) und SWINGZ GmbH (Auftragsverarbeiter).',
   alternates: {
@@ -15,7 +15,7 @@ export const metadata = {
 export default function AVVPage() {
   const lastUpdated = '16. August 2026';
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
       <header className="relative overflow-hidden bg-brand-secondary">
         <div className="absolute inset-0">
@@ -293,7 +293,7 @@ export default function AVVPage() {
               AVV
             </Link>
           </div>
-          <p>© 2026 SWINGZ – Premium Tennis Club Management</p>
+          <p>© 2026 SWINGZ GmbH. Alle Rechte vorbehalten.</p>
         </div>
       </footer>
     </div>

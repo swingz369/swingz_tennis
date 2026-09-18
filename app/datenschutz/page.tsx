@@ -4,7 +4,7 @@ import { IconBox } from '@/components/ui/icon-box';
 import { Trophy, Shield, Mail, Database, Lock, Eye, Trash2, FileText } from 'lucide-react';
 
 export const metadata = {
-  title: 'Datenschutzerklärung – SWINGZ',
+  title: 'Datenschutzerklärung | SWINGZ',
   description: 'Datenschutzerklärung der SWINGZ-Plattform gemäß DSGVO.',
   alternates: {
     canonical: '/datenschutz',
@@ -14,7 +14,7 @@ export const metadata = {
 export default function DatenschutzPage() {
   const lastUpdated = '10. Juni 2026';
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
       <header className="relative overflow-hidden bg-brand-secondary">
         <div className="absolute inset-0">
@@ -306,7 +306,7 @@ export default function DatenschutzPage() {
               AVV
             </Link>
           </div>
-          <p>© 2026 SWINGZ – Premium Tennis Club Management</p>
+          <p>© 2026 SWINGZ GmbH. Alle Rechte vorbehalten.</p>
         </div>
       </footer>
     </div>

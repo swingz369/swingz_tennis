@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Anmelden — SWINGZ',
+  title: 'Anmelden | SWINGZ',
   description:
     'Melde dich bei SWINGZ an und verwalte deinen Tennisclub. Trainingsplanung, Buchungsmanagement und mehr.',
   robots: { index: false, follow: true },

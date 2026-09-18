@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const metadata = {
-  title: 'Support – SWINGZ',
+  title: 'Support | SWINGZ',
   description: 'Hilfe und Support für die SWINGZ-Plattform.',
   alternates: {
     canonical: '/support',
@@ -65,7 +65,7 @@ const CHANNELS = [
     icon: <MessageCircle className="h-6 w-6" />,
     title: 'Live-Chat',
     description: 'Im Dashboard verfügbar',
-    note: 'Mo–Fr 9:00–17:00 Uhr',
+    note: 'Mo-Fr 9:00-17:00 Uhr',
     href: '/login',
     color: 'text-brand-accent',
     bg: 'bg-brand-accent/10',
@@ -83,7 +83,7 @@ const CHANNELS = [
 
 export default function SupportPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
       <header className="relative overflow-hidden bg-brand-secondary">
         <div className="absolute inset-0">
@@ -269,7 +269,7 @@ export default function SupportPage() {
               Datenschutz
             </Link>
           </div>
-          <p>© 2026 SWINGZ – Premium Tennis Club Management</p>
+          <p>© 2026 SWINGZ GmbH. Alle Rechte vorbehalten.</p>
         </div>
       </footer>
     </div>

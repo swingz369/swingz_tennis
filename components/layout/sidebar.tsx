@@ -516,8 +516,8 @@ export function Sidebar({
         'sidebar-surface w-64 shrink-0 overflow-y-auto transition-transform duration-300 ease-out will-change-transform',
         'md:translate-x-0',
         open
-          ? 'fixed inset-y-0 left-0 z-50 h-screen translate-x-0 shadow-2xl shadow-black/10'
-          : 'fixed inset-y-0 left-0 z-50 h-screen -translate-x-full md:sticky md:top-0 md:translate-x-0 md:shadow-none'
+          ? 'fixed inset-y-0 left-0 z-50 h-dvh translate-x-0 shadow-2xl shadow-black/10'
+          : 'fixed inset-y-0 left-0 z-50 h-dvh -translate-x-full md:sticky md:top-0 md:translate-x-0 md:shadow-none'
       )}
       role="navigation"
       aria-label="Seitennavigation"

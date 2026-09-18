@@ -1,21 +1,14 @@
 'use client';
 
 /**
- * Landing Page — App-Design
+ * Landing Page
  *
  * Nutzt dieselbe Designsprache wie die App (Login/Dashboard):
  * dunkelgrüner Gradient-Hero mit Aurora-Blobs (wie /login),
  * font-display Headlines, shadcn Button/Card, FeatureCard-Grid.
  *
- * Sections:
- *  1. Skip-Link (a11y)
- *  2. Site Nav (sticky, glass)
- *  3. Hero (bg-login-hero, Aurora, 2 CTAs)
- *  4. Features (FeatureCard-Grid)
- *  5. Ablauf (3 Schritte)
- *  6. Preise (Client-Chunk, lazy via next/dynamic — Billing-Toggle)
- *  7. CTA (gradient-primary Panel)
- *  8. Footer
+ * Sections: Skip-Link, Nav, Hero (Split mit Produktbild), Trust-Band,
+ * Features (asymmetrisches Raster), Ablauf (Liste), Preise (lazy), CTA, Footer.
  */
 
 import { useEffect } from 'react';
@@ -25,10 +18,10 @@ import Link from 'next/link';
 import type { Session } from '@supabase/supabase-js';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import { analytics } from '@/lib/analytics';
-import { ArrowRight, Trophy, Sparkles } from 'lucide-react';
+import { ArrowRight, Trophy, ShieldCheck, Server } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
-import { Card } from '@/components/ui/card';
 
 import { SectionReveal } from './_components/section-reveal';
 import { BentoSection } from './_components/bento-section';
@@ -142,59 +135,70 @@ export default function LandingPage() {
         aria-labelledby="hero-heading"
         className="relative overflow-hidden bg-login-hero text-white"
       >
-        <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 pt-20 sm:pt-28 lg:pt-32 pb-20 sm:pb-28">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm text-white/80 mb-8 animate-in">
-            <Sparkles className="h-3.5 w-3.5 text-brand-accent" aria-hidden="true" />
-            Modernes Tennisclub-Management
-          </div>
-
-          {/* Headline */}
-          <h1
-            id="hero-heading"
-            className="font-display text-4xl sm:text-hero-md lg:text-hero-lg font-extrabold tracking-tight max-w-4xl animate-in animate-in-delay-1"
-          >
-            Dein Tennisclub.
-            <span className="block text-brand-light">Intelligent verwaltet.</span>
-          </h1>
-
-          {/* Sub */}
-          <p className="mt-6 max-w-2xl text-lg sm:text-xl text-white/70 leading-relaxed animate-in animate-in-delay-2">
-            Eine Plattform für Trainingsplanung, Buchungen und Abrechnung — damit ihr euch aufs
-            Vereinsleben konzentrieren könnt. Hergestellt in München, gehostet in der EU.
-          </p>
-
-          {/* CTAs */}
-          <div className="mt-10 flex flex-col sm:flex-row items-start sm:items-center gap-3 animate-in animate-in-delay-3">
-            <Button size="lg" asChild>
-              <Link
-                href="/register"
-                onClick={() => analytics.signUp('hero_cta_primary', 'default')}
-              >
-                Jetzt registrieren
-                <ArrowRight className="h-5 w-5" aria-hidden="true" />
-              </Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white/20 text-white hover:border-white/40 hover:text-white hover:bg-white/5"
-              asChild
+        <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 pt-16 lg:pt-24 pb-16 sm:pb-20 grid gap-12 lg:grid-cols-[1.15fr_1fr] lg:items-center">
+          <div>
+            <h1
+              id="hero-heading"
+              className="font-display text-4xl sm:text-5xl xl:text-6xl font-extrabold tracking-tight animate-in"
             >
-              <Link href="/demo" onClick={() => analytics.featureUsed('hero_cta_demo')}>
-                Demo ansehen
-              </Link>
-            </Button>
+              Dein Tennisclub.
+              <span className="block text-brand-light">Übersichtlich verwaltet.</span>
+            </h1>
+
+            <p className="mt-6 max-w-xl text-lg sm:text-xl text-white/70 leading-relaxed animate-in animate-in-delay-1">
+              Trainingsplanung, Buchungen und Abrechnung an einem Ort. Gehostet in der EU.
+            </p>
+
+            <div className="mt-10 flex flex-col sm:flex-row items-start sm:items-center gap-3 animate-in animate-in-delay-2">
+              <Button size="lg" asChild>
+                <Link
+                  href="/register"
+                  onClick={() => analytics.signUp('hero_cta_primary', 'default')}
+                >
+                  Jetzt registrieren
+                  <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white/20 text-white hover:border-white/40 hover:text-white hover:bg-white/5"
+                asChild
+              >
+                <Link href="/demo" onClick={() => analytics.featureUsed('hero_cta_demo')}>
+                  Demo ansehen
+                </Link>
+              </Button>
+            </div>
           </div>
 
-          {/* Trust strip */}
-          <div className="mt-16 pt-6 border-t border-white/10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/50 animate-in animate-in-delay-4">
-            <span>DSGVO-konform</span>
-            <span aria-hidden="true">·</span>
-            <span>EU-Hosting</span>
+          <div className="animate-in animate-in-delay-3">
+            <Image
+              src="/landing/kalender.png"
+              alt="Admin-Dashboard mit Mitgliederzahlen und den nächsten Trainingseinheiten (Beispieldaten)"
+              width={1280}
+              height={780}
+              priority
+              sizes="(min-width: 1024px) 55vw, 100vw"
+              className="rounded-xl border border-white/15 shadow-2xl"
+            />
           </div>
         </div>
       </section>
+
+      {/* ═══════════ TRUST-BAND ═══════════ */}
+      <div className="border-b border-border bg-muted/40">
+        <ul className="mx-auto max-w-7xl px-6 lg:px-8 py-4 flex flex-wrap items-center gap-x-8 gap-y-2 text-sm text-muted-foreground">
+          <li className="inline-flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-brand-primary" aria-hidden="true" />
+            DSGVO-konform
+          </li>
+          <li className="inline-flex items-center gap-2">
+            <Server className="h-4 w-4 text-brand-primary" aria-hidden="true" />
+            Hosting in der EU
+          </li>
+        </ul>
+      </div>
 
       {/* ═══════════ FEATURES ═══════════ */}
       <BentoSection />
@@ -206,34 +210,27 @@ export default function LandingPage() {
         aria-labelledby="how-heading"
         className="py-20 sm:py-28 bg-muted/50"
       >
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="text-center mb-12 sm:mb-16">
-            <p className="text-sm font-semibold uppercase tracking-wider text-brand-accent mb-3">
-              In drei Schritten
-            </p>
-            <h2
-              id="how-heading"
-              className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground max-w-3xl mx-auto"
-            >
-              Von der Anmeldung zur ganzen Saison
-            </h2>
-          </div>
+        <div className="mx-auto max-w-3xl px-6 lg:px-8">
+          <h2
+            id="how-heading"
+            className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground mb-10 sm:mb-14"
+          >
+            Von der Anmeldung zur ganzen Saison
+          </h2>
 
-          <ol className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <ol className="divide-y divide-border">
             {HOW_STEPS.map((step) => (
-              <li key={step.step}>
-                <Card padding="xl" className="h-full">
-                  <div
-                    className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-primary to-brand-light text-white text-lg font-bold shadow-lg"
-                    aria-hidden="true"
-                  >
-                    {step.step}
-                  </div>
-                  <h3 className="text-xl font-bold text-foreground dark:text-white mb-2">
-                    {step.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{step.body}</p>
-                </Card>
+              <li key={step.step} className="flex gap-6 py-6 first:pt-0 last:pb-0">
+                <span
+                  className="font-display text-4xl font-extrabold text-brand-primary/40 tabular-nums w-10 shrink-0"
+                  aria-hidden="true"
+                >
+                  {step.step}
+                </span>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">{step.title}</h3>
+                  <p className="mt-1 text-muted-foreground leading-relaxed">{step.body}</p>
+                </div>
               </li>
             ))}
           </ol>
@@ -247,47 +244,41 @@ export default function LandingPage() {
         aria-labelledby="pricing-heading"
         className="py-20 sm:py-28"
       >
-        <h2 id="pricing-heading" className="sr-only">
-          Preise
-        </h2>
         <PricingSection />
       </SectionReveal>
 
       {/* ═══════════ CTA ═══════════ */}
       <SectionReveal as="section" aria-labelledby="cta-heading" className="pb-20 sm:pb-28">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-xl bg-gradient-primary text-white px-6 py-16 sm:px-16 sm:py-20 text-center shadow-strong">
-            <div className="relative">
-              <h2
-                id="cta-heading"
-                className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight"
+          <div className="rounded-xl bg-brand-secondary text-white px-6 py-14 sm:px-16 sm:py-16 text-center">
+            <h2
+              id="cta-heading"
+              className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight"
+            >
+              Bereit für die neue Saison?
+            </h2>
+            <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-white/75 leading-relaxed">
+              Transparente Preise. Auf Wunsch richten wir deinen Club persönlich ein.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button
+                size="lg"
+                className="bg-white text-brand-secondary hover:bg-white/90 hover:brightness-100"
+                asChild
               >
-                Bereit für die neue Saison?
-              </h2>
-              <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-white/75 leading-relaxed">
-                Volle Plattform, transparente Preise. Auf Wunsch richten wir deinen Club persönlich
-                ein.
-              </p>
-              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Button
-                  size="lg"
-                  className="bg-white text-brand-primary hover:bg-white/90 hover:brightness-100"
-                  asChild
-                >
-                  <Link href="/register">
-                    Jetzt registrieren
-                    <ArrowRight className="h-5 w-5" aria-hidden="true" />
-                  </Link>
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-white/30 text-white hover:border-white/60 hover:text-white hover:bg-white/5"
-                  asChild
-                >
-                  <Link href="/contact">Persönlich sprechen</Link>
-                </Button>
-              </div>
+                <Link href="/register">
+                  Jetzt registrieren
+                  <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white/30 text-white hover:border-white/60 hover:text-white hover:bg-white/5"
+                asChild
+              >
+                <Link href="/contact">Persönlich sprechen</Link>
+              </Button>
             </div>
           </div>
         </div>

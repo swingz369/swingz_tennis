@@ -2,7 +2,7 @@ import LeaguesClient from './leagues-client';
 import { PageHeader } from '@/components/ui/page-header';
 
 export const metadata = {
-  title: 'Liga & Mannschaft — SwingZ',
+  title: 'Liga & Mannschaft | SwingZ',
 };
 
 export default function LeaguesPage() {

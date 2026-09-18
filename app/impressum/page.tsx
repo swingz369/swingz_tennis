@@ -4,7 +4,7 @@ import { IconBox } from '@/components/ui/icon-box';
 import { Trophy, FileText, Mail, MapPin, Globe } from 'lucide-react';
 
 export const metadata = {
-  title: 'Impressum – SWINGZ',
+  title: 'Impressum | SWINGZ',
   description: 'Impressum der SWINGZ-Plattform gemäß § 5 TMG.',
   alternates: {
     canonical: '/impressum',
@@ -13,7 +13,7 @@ export const metadata = {
 
 export default function ImpressumPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
       <header className="relative overflow-hidden bg-brand-secondary">
         <div className="absolute inset-0">
@@ -181,7 +181,7 @@ export default function ImpressumPage() {
               AVV
             </Link>
           </div>
-          <p>© 2026 SWINGZ – Premium Tennis Club Management</p>
+          <p>© 2026 SWINGZ GmbH. Alle Rechte vorbehalten.</p>
         </div>
       </footer>
     </div>

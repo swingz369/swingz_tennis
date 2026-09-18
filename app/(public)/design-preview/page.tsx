@@ -217,7 +217,7 @@ export default function DesignPreviewPage() {
   const [animKey, setAnimKey] = useState(0);
 
   return (
-    <div className="min-h-screen bg-muted/50 dark:bg-[#0a120e]">
+    <div className="min-h-dvh bg-muted/50 dark:bg-[#0a120e]">
       {/* ── Hero ── */}
       <div className="relative overflow-hidden bg-gradient-hero">
         <div className="absolute inset-0 bg-grid opacity-[0.04]" />

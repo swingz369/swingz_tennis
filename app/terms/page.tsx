@@ -4,7 +4,7 @@ import { IconBox } from '@/components/ui/icon-box';
 import { Trophy, FileText, Scale, AlertCircle, CreditCard, LogOut } from 'lucide-react';
 
 export const metadata = {
-  title: 'Nutzungsbedingungen – SWINGZ',
+  title: 'Nutzungsbedingungen | SWINGZ',
   description: 'Allgemeine Geschäftsbedingungen (AGB) der SWINGZ-Plattform.',
   alternates: {
     canonical: '/terms',
@@ -14,7 +14,7 @@ export const metadata = {
 export default function TermsPage() {
   const lastUpdated = '10. Juni 2026';
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
       <header className="relative overflow-hidden bg-brand-secondary">
         <div className="absolute inset-0">
