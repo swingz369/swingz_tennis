@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
+import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 import { getSetupCounts, missingSeasonPrerequisites } from '@/lib/setup-checklist';
 
@@ -179,7 +180,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'start_date muss vor end_date liegen' }, { status: 400 });
       }
 
-      const supabase = auth.supabase;
+      // Der Owner hat keine Vereins-Mitgliedschaft; RLS zeigt ihm weder Plätze noch
+      // Mitglieder und lässt keinen Insert zu. Rechte sind oben geprüft — für ihn
+      // läuft der Zugriff über den Service-Client.
+      const supabase = auth.role === 'owner' ? createServiceClient() : auth.supabase;
 
       // Ohne Plätze, Trainer und Mitglieder erzeugt die Planung einen leeren
       // Plan statt einer Fehlermeldung — deshalb hier die Sperre. Die UI
