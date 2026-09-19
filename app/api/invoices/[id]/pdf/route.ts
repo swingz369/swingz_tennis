@@ -24,6 +24,13 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         return NextResponse.json({ error: 'Rechnung nicht gefunden' }, { status: 404 });
       }
 
+      // Fremde Rechnung = "nicht gefunden": Existenz nicht verraten. billingEngine liest ohne RLS.
+      const inClub =
+        auth.role === 'owner' || auth.memberships.some((m) => m.club_id === invoice.club_id);
+      if (!inClub) {
+        return NextResponse.json({ error: 'Rechnung nicht gefunden' }, { status: 404 });
+      }
+
       const isAdminOrTrainer = await verifyRole(auth, 'trainer');
       const isOwner = invoice.member_id === auth.user.id;
 

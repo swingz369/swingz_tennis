@@ -245,7 +245,12 @@ In `notifications`-Tabelle via Service-Client einfügen.
 npx tsc --noEmit          # Vor jedem Commit — muss 0 Errors geben
 npx vitest run            # Unit Tests
 npx playwright test       # E2E Tests
+npm run test:tenant       # Mandanten-Isolation: Alpha-Admin ruft alle GET-Routen mit Gamma-IDs auf
+                          # (braucht Dev-Server mit DISABLE_RATE_LIMITING=true + lokale DB)
 ```
+
+`test:tenant` ist das Sicherheitsnetz vor jeder Migration einer Domäne (ADR-005). Neue Befunde
+brechen ihn; `KNOWN_LEAKS` in `tests/browser/tenant-isolation-http.test.ts` bleibt leer.
 
 Component-Tests verwenden `TestProviders` aus `src/__tests__/test-utils.tsx`.
 

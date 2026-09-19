@@ -46,16 +46,15 @@ export async function GET(request: NextRequest, context: RouteContext) {
         return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
       }
 
-      // Verify user has access to this club
+      // Vereinszugehörigkeit gilt für jede Rolle — auch Admins (die Route liest per Drizzle ohne RLS).
+      const hasClubAccess =
+        auth.role === 'owner' || auth.memberships.some((m) => m.club_id === season.club_id);
+      if (!hasClubAccess) {
+        return forbiddenResponse('Kein Zugriff auf diese Saison');
+      }
+
       const isAdmin = await verifyRole(auth, 'admin');
       const isSuperadmin = await verifyRole(auth, 'superadmin');
-
-      if (!isAdmin && !isSuperadmin) {
-        const hasClubAccess = auth.memberships.some((m) => m.club_id === season.club_id);
-        if (!hasClubAccess) {
-          return forbiddenResponse('Kein Zugriff auf diese Saison');
-        }
-      }
 
       // Build query conditions
       const conditions = [eq(userTrainingPreferences.season_id, seasonId)];

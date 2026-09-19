@@ -10,7 +10,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
@@ -31,6 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ memb
     if (!clubId) {
       return NextResponse.json({ error: 'clubId fehlt' }, { status: 400 });
     }
+    if (!verifyClubAccess(auth, clubId)) return forbiddenResponse('Kein Zugriff auf diesen Verein');
 
     const since = new Date();
     since.setDate(since.getDate() - LOOKBACK_DAYS);

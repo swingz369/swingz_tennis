@@ -39,6 +39,7 @@
     "test:e2e:full": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:audit": "QA_AUDIT=1 playwright test --config=playwright.audit.config.ts",
+    "test:tenant": "RUN_BROWSER_E2E=true vitest run tests/browser/tenant-isolation-http.test.ts",
     "test:e2e-browser": "RUN_BROWSER_E2E=true vitest run tests/browser/",
     "bench:ci": "vitest bench tests/bench/clustering.bench.ts",
     "bench:report": "tsx scripts/generate-perf-report.ts",
