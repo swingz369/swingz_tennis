@@ -19,12 +19,21 @@ const log = createLogger('api:user:export');
  * Personenbezug ergänzt, ergänzt sie hier — sonst ist die Auskunft
  * unvollständig und das fällt niemandem auf.
  */
-const PERSONAL_DATA: ReadonlyArray<{ table: string; columns: string[]; label: string }> = [
+// `columns` enthalten die User-ID. `trainerColumns` verweisen auf `trainers.id` (nicht auf die
+// User-ID), `viaInvoice` heißt: die Tabelle kennt nur `invoice_id` und hängt über die Rechnungen
+// des Nutzers an ihm.
+const PERSONAL_DATA: ReadonlyArray<{
+  table: string;
+  columns: string[];
+  trainerColumns?: string[];
+  viaInvoice?: boolean;
+  label: string;
+}> = [
   { table: 'user_club_memberships', columns: ['user_id'], label: 'Mitgliedschaften' },
   { table: 'bookings', columns: ['member_id'], label: 'Platzbuchungen' },
   { table: 'invoices', columns: ['member_id', 'trainer_id'], label: 'Rechnungen' },
-  { table: 'invoice_installments', columns: ['member_id'], label: 'Ratenzahlungen' },
-  { table: 'payments', columns: ['user_id'], label: 'Zahlungen' },
+  { table: 'invoice_installments', columns: [], viaInvoice: true, label: 'Ratenzahlungen' },
+  { table: 'payments', columns: [], viaInvoice: true, label: 'Zahlungen' },
   { table: 'dunning_records', columns: ['member_id'], label: 'Mahnungen' },
   { table: 'sepa_mandates', columns: ['member_id'], label: 'SEPA-Mandate' },
   { table: 'member_balances', columns: ['member_id'], label: 'Guthabenkonto' },
@@ -33,13 +42,29 @@ const PERSONAL_DATA: ReadonlyArray<{ table: string; columns: string[]; label: st
   { table: 'session_rsvps', columns: ['member_id'], label: 'Trainings-Zu-/Absagen' },
   {
     table: 'attendance_records',
-    columns: ['participant_id', 'trainer_id'],
+    columns: ['participant_id'],
+    trainerColumns: ['trainer_id'],
     label: 'Anwesenheiten',
   },
-  { table: 'hours_logs', columns: ['trainer_id'], label: 'Erfasste Trainerstunden' },
-  { table: 'trainer_absences', columns: ['trainer_id'], label: 'Abwesenheiten' },
-  { table: 'trainer_availability', columns: ['user_id'], label: 'Verfügbarkeiten' },
-  { table: 'trainer_profiles', columns: ['trainer_id'], label: 'Trainerprofil' },
+  {
+    table: 'hours_logs',
+    columns: [],
+    trainerColumns: ['trainer_id'],
+    label: 'Erfasste Trainerstunden',
+  },
+  {
+    table: 'trainer_absences',
+    columns: [],
+    trainerColumns: ['trainer_id'],
+    label: 'Abwesenheiten',
+  },
+  {
+    table: 'trainer_availabilities',
+    columns: [],
+    trainerColumns: ['trainer_id'],
+    label: 'Verfügbarkeiten',
+  },
+  { table: 'trainer_profiles', columns: ['user_id'], label: 'Trainerprofil' },
   { table: 'trainer_member_notes', columns: ['member_id'], label: 'Notizen über Sie' },
   { table: 'trainer_feedback', columns: ['member_id', 'trainer_id'], label: 'Feedback' },
   { table: 'season_waitlists', columns: ['member_id'], label: 'Wartelisten (Saison)' },
@@ -79,13 +104,34 @@ export async function GET(request: NextRequest) {
       from: (t: string) => {
         select: (c: string) => {
           or: (f: string) => Promise<{ data: unknown[] | null; error: { message: string } | null }>;
+          in: (
+            c: string,
+            v: string[]
+          ) => Promise<{ data: unknown[] | null; error: { message: string } | null }>;
         };
       };
     };
 
-    for (const { table, columns, label } of PERSONAL_DATA) {
-      const filter = columns.map((c) => `${c}.eq.${user.id}`).join(',');
-      const { data, error } = await untyped.from(table).select('*').or(filter);
+    // IDs, über die andere Tabellen an den Nutzer hängen (siehe PERSONAL_DATA).
+    const { data: trainerRows } = await sb.from('trainers').select('id').eq('user_id', user.id);
+    const trainerIds = (trainerRows ?? []).map((t) => t.id);
+    const { data: invoiceRows } = await sb.from('invoices').select('id').eq('member_id', user.id);
+    const invoiceIds = (invoiceRows ?? []).map((i) => i.id);
+
+    for (const { table, columns, trainerColumns = [], viaInvoice, label } of PERSONAL_DATA) {
+      const filters = [
+        ...columns.map((c) => `${c}.eq.${user.id}`),
+        ...trainerIds.flatMap((id) => trainerColumns.map((c) => `${c}.eq.${id}`)),
+      ];
+      let result: { data: unknown[] | null; error: { message: string } | null };
+      if (viaInvoice) {
+        if (invoiceIds.length === 0) continue;
+        result = await untyped.from(table).select('*').in('invoice_id', invoiceIds);
+      } else {
+        if (filters.length === 0) continue; // kein Trainer: nichts zu lesen, kein Fehler
+        result = await untyped.from(table).select('*').or(filters.join(','));
+      }
+      const { data, error } = result;
       if (error) {
         log.error(`Auskunft: ${table} nicht lesbar`, new Error(error.message));
         unvollstaendig.push(label);

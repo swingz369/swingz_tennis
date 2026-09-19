@@ -69,6 +69,12 @@ export async function GET(request: NextRequest) {
 
   return withApiAuth(request, async (auth) => {
     try {
+      // Kontakt-, Geburts- und Adressdaten sind Vereinsverwaltung, nichts für Mitglieder.
+      // Namenslisten für Auswahlfelder: /api/members/directory.
+      if (!(await verifyRole(auth, 'trainer'))) {
+        return forbiddenResponse('Keine Berechtigung zum Abrufen der Mitgliederliste');
+      }
+
       const { searchParams } = new URL(request.url);
 
       // Validate query parameters with Zod

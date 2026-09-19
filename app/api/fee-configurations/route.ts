@@ -77,6 +77,11 @@ export async function GET(_request: NextRequest) {
       return rateLimitError;
     }
 
+    const clubId = auth.clubId;
+    if (!clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
+
     try {
       const { searchParams } = new URL(_request.url);
       const type = searchParams.get('type');
@@ -93,26 +98,29 @@ export async function GET(_request: NextRequest) {
         }
         const configs = await feeConfigurationService.calculateFeeForMember(
           memberType,
-          memberAgeNum
+          memberAgeNum,
+          clubId
         );
         return NextResponse.json({ feeConfigurations: configs });
       }
 
       if (type) {
         const configs = await feeConfigurationService.getFeeConfigurationsByType(
-          type as 'membership' | 'training' | 'court' | 'other'
+          type as 'membership' | 'training' | 'court' | 'other',
+          clubId
         );
         return NextResponse.json({ feeConfigurations: configs });
       }
 
       if (billingCycle) {
         const configs = await feeConfigurationService.getFeeConfigurationsByBillingCycle(
-          billingCycle as 'monthly' | 'quarterly' | 'yearly' | 'one_time'
+          billingCycle as 'monthly' | 'quarterly' | 'yearly' | 'one_time',
+          clubId
         );
         return NextResponse.json({ feeConfigurations: configs });
       }
 
-      const allConfigs = await feeConfigurationService.getAllFeeConfigurations();
+      const allConfigs = await feeConfigurationService.getAllFeeConfigurations(clubId);
       return NextResponse.json({ feeConfigurations: allConfigs });
     } catch (error) {
       log.error('Fee configurations fetch error:', error);

@@ -799,13 +799,18 @@ function ComposeDialog({
   useEffect(() => {
     if (!clubId || (recipientMode !== 'individual' && recipientMode !== 'multi')) return;
     setMembersLoading(true);
-    apiFetch(`/api/members?clubId=${clubId}&limit=100&active=true`)
+    // Admins sehen die volle Liste; alle anderen nur Namen (Kontaktdaten sind Vereinsverwaltung).
+    apiFetch(
+      isAdmin
+        ? `/api/members?clubId=${clubId}&limit=100&active=true`
+        : `/api/members/directory?clubId=${clubId}`
+    )
       .then((res) => res.json())
       .then((data) => {
         const items = (data.members ?? []).map((m: any) => ({
           id: m.userId ?? m.id,
-          full_name: [m.firstName, m.lastName].filter(Boolean).join(' ') || m.email,
-          email: m.email,
+          full_name: m.name ?? ([m.firstName, m.lastName].filter(Boolean).join(' ') || m.email),
+          email: m.email ?? '',
           role: m.role ?? 'member',
         }));
         setMembers(items);
@@ -819,7 +824,7 @@ function ComposeDialog({
         console.error('Mitgliederliste konnte nicht geladen werden', err);
       })
       .finally(() => setMembersLoading(false));
-  }, [clubId, recipientMode, replyTo?.sender_id, initialReceiverId]);
+  }, [clubId, isAdmin, recipientMode, replyTo?.sender_id, initialReceiverId]);
 
   const toggleReceiver = (id: string) => {
     setSelectedReceiverIds((prev) =>

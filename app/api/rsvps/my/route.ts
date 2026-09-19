@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
         .eq('member_id', userId)
         .eq('club_id', clubId)
         .gte('sessions.timeslot_start', now)
-        .order('sessions.timeslot_start', { ascending: true });
+        .order('timeslot_start', { referencedTable: 'sessions', ascending: true });
 
       if (error) throw error;
 

@@ -17,7 +17,6 @@ import { cn } from '@/lib/utils';
 interface Member {
   id: string;
   full_name: string;
-  email: string;
 }
 
 interface RecentMatch {
@@ -61,10 +60,10 @@ export default function HeadToHead({ myUserId, clubId }: HeadToHeadProps) {
   useEffect(() => {
     async function loadMembers() {
       try {
-        const res = await apiFetch(`/api/members?clubId=${clubId}&active=true&limit=200`);
+        const res = await apiFetch(`/api/members/directory?clubId=${clubId}`);
         if (!res.ok) throw new Error('Fehler beim Laden der Mitglieder');
-        const json = (await res.json()) as { members: Member[] };
-        setMembers(json.members.filter((m) => m.id !== myUserId));
+        const json = (await res.json()) as { members: { id: string; name: string }[] };
+        setMembers(json.members.map((m) => ({ id: m.id, full_name: m.name })));
       } catch {
         setError('Mitgliederliste konnte nicht geladen werden');
       } finally {
@@ -127,7 +126,7 @@ export default function HeadToHead({ myUserId, clubId }: HeadToHeadProps) {
               <SelectContent>
                 {members.map((m) => (
                   <SelectItem key={m.id} value={m.id}>
-                    {m.full_name || m.email}
+                    {m.full_name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -154,9 +153,7 @@ export default function HeadToHead({ myUserId, clubId }: HeadToHeadProps) {
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-foreground">{data.opponentWins}</div>
-                <div className="mt-0.5 text-xs text-muted-foreground">
-                  {opponent.full_name || opponent.email}
-                </div>
+                <div className="mt-0.5 text-xs text-muted-foreground">{opponent.full_name}</div>
               </div>
             </div>
 
@@ -179,7 +176,7 @@ export default function HeadToHead({ myUserId, clubId }: HeadToHeadProps) {
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span className="text-success-600 dark:text-success-400">{myWinPct}% Ich</span>
                   <span className="text-error-500 dark:text-error-400">
-                    {oppWinPct}% {opponent.full_name || opponent.email}
+                    {oppWinPct}% {opponent.full_name}
                   </span>
                 </div>
               </div>
