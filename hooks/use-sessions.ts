@@ -200,7 +200,7 @@ export function useCancelBooking() {
       clubId: string;
     }) => {
       const res = await apiFetch(`/api/bookings/${bookingId}/cancel`, {
-        method: 'PATCH',
+        method: 'POST',
         body: JSON.stringify({ reason: 'member_request' }),
       });
 

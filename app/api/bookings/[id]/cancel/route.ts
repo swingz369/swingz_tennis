@@ -116,10 +116,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           ]);
 
           if (trainer?.user_id) {
-            // timeslot_start ist eine naive timestamp-Spalte, die den UTC-Zeitpunkt
-            // hält — ohne das angehängte Z läse new Date() sie als Ortszeit.
             const termin = session.timeslot_start
-              ? new Date(`${session.timeslot_start}Z`).toLocaleString('de-DE', {
+              ? new Date(session.timeslot_start).toLocaleString('de-DE', {
                   timeZone: 'Europe/Berlin',
                   dateStyle: 'short',
                   timeStyle: 'short',

@@ -5,6 +5,7 @@ import { createClient } from '@/src/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
+import { berlinDateTime, berlinParts } from '@/lib/berlin-time';
 
 const log = createLogger('api:sessions:[id]');
 
@@ -86,30 +87,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       // We need to find the date for the given dayOfWeek in the current week or schedule week
       // The sessions table stores timeslot_start as timestamp; we need to preserve the date portion
       // For simplicity, assume we keep the same week and just change day/time
-      const currentStartDate = new Date(session.timeslot_start);
-      const currentDayOfWeek = currentStartDate.getDay(); // 0=Sun, 1=Mon, ...
-      const dayDiff = dayOfWeek - currentDayOfWeek;
-      const newStartDate = new Date(currentStartDate);
-      newStartDate.setDate(newStartDate.getDate() + dayDiff);
-      newStartDate.setHours(
-        parseInt(startTime.split(':')[0]),
-        parseInt(startTime.split(':')[1]),
-        0,
-        0
-      );
+      // Wochentag und Uhrzeit sind Berliner Wandzeit — unabhängig von der Serverzeitzone.
+      const current = berlinParts(new Date(session.timeslot_start));
+      const dayDiff = dayOfWeek - current.dayOfWeek; // 0=Sun, 1=Mon, ...
+      const targetDay = new Date(`${current.date}T00:00:00Z`);
+      targetDay.setUTCDate(targetDay.getUTCDate() + dayDiff);
+      const targetDate = targetDay.toISOString().slice(0, 10);
+      const newStartDate = berlinDateTime(targetDate, startTime);
 
       // Calculate end time: either provided or same duration as before
-      let newEndDate: Date;
-      if (endTime) {
-        newEndDate = new Date(newStartDate);
-        const [endHour, endMin] = endTime.split(':').map(Number);
-        newEndDate.setHours(endHour, endMin, 0, 0);
-      } else {
-        // Preserve duration
-        const oldDuration =
-          new Date(session.timeslot_end).getTime() - new Date(session.timeslot_start).getTime();
-        newEndDate = new Date(newStartDate.getTime() + oldDuration);
-      }
+      const newEndDate = endTime
+        ? berlinDateTime(targetDate, endTime)
+        : new Date(
+            newStartDate.getTime() +
+              (new Date(session.timeslot_end).getTime() -
+                new Date(session.timeslot_start).getTime())
+          );
 
       // Optional: Check for conflicts on the new court and timeslot
       const { data: conflicts } = await supabase

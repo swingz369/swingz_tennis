@@ -14,6 +14,7 @@ import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
 import { isDayClosed, CLOSED_DAY_ERROR } from '@/lib/booking/opening-hours';
 import { resolveEffectiveMemberId } from '@/lib/family/family-auth';
+import { berlinDateTime } from '@/lib/berlin-time';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:bookings:direct');
@@ -54,8 +55,8 @@ export async function POST(req: NextRequest) {
     const effectiveMemberId = resolution.effectiveMemberId;
 
     // Build timestamps
-    const timeslotStart = new Date(`${date}T${startTime}:00`);
-    const timeslotEnd = new Date(`${date}T${endTime}:00`);
+    const timeslotStart = berlinDateTime(date, startTime);
+    const timeslotEnd = berlinDateTime(date, endTime);
 
     if (isNaN(timeslotStart.getTime()) || isNaN(timeslotEnd.getTime())) {
       return NextResponse.json({ error: 'Ungültiges Datums-/Zeitformat' }, { status: 400 });

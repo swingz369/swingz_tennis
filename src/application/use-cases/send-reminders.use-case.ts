@@ -120,10 +120,12 @@ export class ReminderService {
             } = {
               memberName: member.full_name || 'Member',
               sessionStartFormatted: new Date(session.timeslot_start).toLocaleTimeString('de-DE', {
+                timeZone: 'Europe/Berlin',
                 hour: '2-digit',
                 minute: '2-digit',
               }),
               sessionEndFormatted: new Date(session.timeslot_end).toLocaleTimeString('de-DE', {
+                timeZone: 'Europe/Berlin',
                 hour: '2-digit',
                 minute: '2-digit',
               }),

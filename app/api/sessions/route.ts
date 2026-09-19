@@ -14,6 +14,7 @@ import { resolveEffectiveMemberId } from '@/lib/family/family-auth';
 import type { Database } from '@/types/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '@/lib/logger';
+import { berlinParts } from '@/lib/berlin-time';
 
 const log = createLogger('api:sessions');
 
@@ -222,7 +223,8 @@ export async function GET(req: NextRequest) {
         const start = new Date(s.timeslot_start);
         const end = new Date(s.timeslot_end);
         // dayOfWeek: JS convention 0=Sun, 1=Mon, ..., 6=Sat → API uses 1-7
-        const jsDay = start.getDay();
+        const startBerlin = berlinParts(start);
+        const jsDay = startBerlin.dayOfWeek;
         const dayOfWeek = jsDay === 0 ? 7 : jsDay;
 
         const court = Array.isArray(s.courts) ? s.courts[0] : s.courts;
@@ -237,8 +239,8 @@ export async function GET(req: NextRequest) {
         return {
           id: s.id,
           dayOfWeek,
-          startTime: start.toTimeString().substring(0, 5),
-          endTime: end.toTimeString().substring(0, 5),
+          startTime: startBerlin.time,
+          endTime: berlinParts(end).time,
           timeslotStart: s.timeslot_start,
           timeslotEnd: s.timeslot_end,
           trainerId: s.trainer_id,

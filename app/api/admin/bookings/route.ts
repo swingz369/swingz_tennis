@@ -20,6 +20,7 @@ import {
 import type { Database } from '@/types/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '@/lib/logger';
+import { berlinParts } from '@/lib/berlin-time';
 
 const log = createLogger('api:admin:bookings');
 
@@ -295,11 +296,9 @@ export async function GET(req: NextRequest) {
             const court = unwrapJoin(s.courts) ?? DEFAULT_COURT;
             const trainer = unwrapJoin(s.trainers) ?? DEFAULT_TRAINER;
             const startTime = s.timeslot_start
-              ? new Date(s.timeslot_start).toTimeString().substring(0, 5)
+              ? berlinParts(new Date(s.timeslot_start)).time
               : null;
-            const endTime = s.timeslot_end
-              ? new Date(s.timeslot_end).toTimeString().substring(0, 5)
-              : null;
+            const endTime = s.timeslot_end ? berlinParts(new Date(s.timeslot_end)).time : null;
 
             return {
               id: s.id,

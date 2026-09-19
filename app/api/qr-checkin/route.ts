@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import { berlinParts } from '@/lib/berlin-time';
 
 const log = createLogger('api:qr-checkin');
 
@@ -64,12 +65,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if session is today
-    const sessionDate = new Date(session.timeslot_start);
-    const now = new Date();
     const isToday =
-      sessionDate.getDate() === now.getDate() &&
-      sessionDate.getMonth() === now.getMonth() &&
-      sessionDate.getFullYear() === now.getFullYear();
+      berlinParts(new Date(session.timeslot_start)).date === berlinParts(new Date()).date;
 
     if (!isToday) {
       return NextResponse.json(

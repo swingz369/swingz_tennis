@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { berlinWallClock } from '@/lib/berlin-time';
+import { berlinWallClock, berlinDateTime, berlinParts } from '@/lib/berlin-time';
 
 describe('berlinWallClock', () => {
   it('bildet Sommerzeit ab (17:00 Berlin = 15:00 UTC)', () => {
@@ -34,5 +34,26 @@ describe('berlinWallClock', () => {
     expect(ist).toBe(soll);
     // getTimezoneOffset der Laufzeit darf das Ergebnis nicht verschoben haben
     expect(ist % (60 * 60 * 1000)).toBe(0);
+  });
+});
+
+describe('berlinDateTime / berlinParts', () => {
+  it('19:00 Berliner Sommerzeit ist 17:00 UTC, unabhängig von der Serverzeitzone', () => {
+    expect(berlinDateTime('2026-09-19', '19:00').toISOString()).toBe('2026-09-19T17:00:00.000Z');
+    expect(berlinDateTime('2026-01-15', '19:00').toISOString()).toBe('2026-01-15T18:00:00.000Z');
+  });
+
+  it('berlinParts ist die Umkehrung, auch über Mitternacht UTC hinweg', () => {
+    expect(berlinParts(new Date('2026-09-19T17:00:00Z'))).toEqual({
+      date: '2026-09-19',
+      time: '19:00',
+      dayOfWeek: 6,
+    });
+    // 22:30 UTC ist in Berlin (CEST) schon der nächste Tag, ein Sonntag
+    expect(berlinParts(new Date('2026-09-19T22:30:00Z'))).toEqual({
+      date: '2026-09-20',
+      time: '00:30',
+      dayOfWeek: 0,
+    });
   });
 });

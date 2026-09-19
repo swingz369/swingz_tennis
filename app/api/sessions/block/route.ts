@@ -19,6 +19,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
+import { berlinDateTime } from '@/lib/berlin-time';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:sessions:block');
@@ -59,8 +60,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Build timestamps
-    const timeslotStart = new Date(`${date}T${startTime}:00`);
-    const timeslotEnd = new Date(`${date}T${endTime}:00`);
+    const timeslotStart = berlinDateTime(date, startTime);
+    const timeslotEnd = berlinDateTime(date, endTime);
 
     if (isNaN(timeslotStart.getTime()) || isNaN(timeslotEnd.getTime())) {
       return NextResponse.json({ error: 'Ungültiges Datums-/Zeitformat' }, { status: 400 });

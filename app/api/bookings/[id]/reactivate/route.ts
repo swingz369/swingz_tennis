@@ -113,7 +113,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
           if (trainer?.user_id) {
             const termin = session.timeslot_start
-              ? new Date(`${session.timeslot_start}Z`).toLocaleString('de-DE', {
+              ? new Date(session.timeslot_start).toLocaleString('de-DE', {
                   timeZone: 'Europe/Berlin',
                   dateStyle: 'short',
                   timeStyle: 'short',

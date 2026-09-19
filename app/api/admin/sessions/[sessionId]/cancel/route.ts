@@ -100,12 +100,14 @@ export async function POST(
     // Datum/Zeit für Benachrichtigungstext
     const sessionDate = new Date(session.timeslot_start);
     const dateStr = sessionDate.toLocaleDateString('de-DE', {
+      timeZone: 'Europe/Berlin',
       weekday: 'long',
       day: '2-digit',
       month: 'long',
       year: 'numeric',
     });
     const timeStr = sessionDate.toLocaleTimeString('de-DE', {
+      timeZone: 'Europe/Berlin',
       hour: '2-digit',
       minute: '2-digit',
     });
