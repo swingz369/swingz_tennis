@@ -2,9 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { runSeasonDryRun } from '@/lib/season-planning/dry-run.service';
-import { db } from '@/src/infrastructure/persistence/db';
-import { seasons } from '@/src/infrastructure/persistence/schema';
-import { eq } from 'drizzle-orm';
+import { clusteringRepositoryFor } from '@/infrastructure/persistence/repositories/season-clustering.repository';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:dry-run');
@@ -27,7 +25,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       return NextResponse.json({ ok: false, error: 'season_id erforderlich' }, { status: 400 });
     }
 
-    const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
+    const repo = clusteringRepositoryFor(auth);
+    const season = await repo.findSeason(seasonId);
     if (!season) {
       return NextResponse.json({ ok: false, error: 'Saison nicht gefunden' }, { status: 404 });
     }
@@ -39,7 +38,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     }
 
     try {
-      const result = await runSeasonDryRun(seasonId, auth);
+      const result = await runSeasonDryRun(seasonId, auth, repo);
       if (!result.ok) {
         const status = result.code === 'season_not_found' ? 404 : 400;
         return NextResponse.json(result, { status });

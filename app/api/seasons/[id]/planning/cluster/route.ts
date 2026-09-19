@@ -8,6 +8,7 @@ import { withApiAuth } from '@/lib/api-auth';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { SeasonClusteringEngine } from '@/lib/season-planning/clustering-engine';
+import { clusteringRepositoryFor } from '@/infrastructure/persistence/repositories/season-clustering.repository';
 import type { RunClusteringRequest } from '@/lib/season-planning/types';
 import { createLogger } from '@/lib/logger';
 
@@ -37,7 +38,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const body: RunClusteringRequest = await request.json();
       const dryRun = body.dryRun !== false;
 
-      const engine = new SeasonClusteringEngine(seasonId, season.club_id, body.config);
+      const engine = new SeasonClusteringEngine(
+        seasonId,
+        season.club_id,
+        body.config,
+        clusteringRepositoryFor(auth)
+      );
       const result = await engine.runClustering(dryRun);
 
       return NextResponse.json({

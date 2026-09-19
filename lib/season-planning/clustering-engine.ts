@@ -2,33 +2,10 @@
 // Implements Schritt 4a (hard constraints), 4b (soft constraints),
 // 4c (niveau development), and 4d (waitlist logic)
 
-import { db } from '@/src/infrastructure/persistence/db';
-import {
-  seasons,
-  users,
-  trainers,
-  userTrainingPreferences,
-  groups,
-  courts,
-  seasonPlanEntries,
-  userClubMemberships,
-  trainerClubs,
-  memberSchedulePreferences,
-  clubs,
-  sessions,
-  bookings,
-  courtClosures,
-} from '@/src/infrastructure/persistence/schema';
-import {
-  seasonWaitlists,
-  trainerFeedback,
-  seasonStatistics,
-  seasonPlanningConfigs,
-} from '@/src/infrastructure/persistence/season-planning-schema';
+import type { SeasonClusteringRepository } from '@/infrastructure/persistence/repositories/season-clustering.repository';
 import { createLogger } from '@/lib/logger';
 import { isMinorByBirthdate } from './conflict-utils';
 import { DAY_LABELS, LEVEL_RANK, LEVEL_LABEL } from './schedule-constants';
-import { createServiceClient } from '@/lib/supabase/service';
 import {
   timeSlotsOverlap,
   computeNiveauMatchScore,
@@ -42,7 +19,6 @@ const log = createLogger('season-clustering-engine');
 
 /** Spätestes Ende einer Trainingseinheit mit Minderjährigen. */
 const MINOR_LATEST_END = '20:00';
-import { and, eq, asc, gte, inArray } from 'drizzle-orm';
 import {
   resolveBundeslandCode,
   tryResolveBundeslandCode,
@@ -406,10 +382,24 @@ export class SeasonClusteringEngine {
     { name: string; level: SkillLevel; ageGroup: 'kids' | 'adult' }
   >();
 
-  constructor(seasonId: string, clubId: string, config?: Partial<ClusteringConfig>) {
+  /** `repo` ist für alle Lade-/Speicherpfade nötig; rein algorithmische Tests kommen ohne aus. */
+  constructor(
+    seasonId: string,
+    clubId: string,
+    config?: Partial<ClusteringConfig>,
+    repo?: SeasonClusteringRepository
+  ) {
     this.seasonId = seasonId;
     this.clubId = clubId;
     this.config = { ...DEFAULT_CONFIG, ...config };
+    this._repo = repo;
+  }
+
+  private _repo: SeasonClusteringRepository | undefined;
+
+  private get repo(): SeasonClusteringRepository {
+    if (!this._repo) throw new Error('SeasonClusteringEngine: Repository fehlt');
+    return this._repo;
   }
 
   // ============================================
@@ -534,10 +524,10 @@ export class SeasonClusteringEngine {
     }
 
     // Step 7b: Fix 5 — Mindest-Trainingswochen prüfen
-    const [currentSeason] = await db
-      .select({ start: seasons.start_date, end: seasons.end_date })
-      .from(seasons)
-      .where(eq(seasons.id, this.seasonId));
+    const seasonRow = await this.repo.findSeason(this.seasonId);
+    const currentSeason = seasonRow
+      ? { start: seasonRow.start_date, end: seasonRow.end_date }
+      : undefined;
     const trainingWeekWarnings: string[] = [];
     if (currentSeason?.start && currentSeason?.end) {
       const totalWeeks = Math.round(
@@ -555,17 +545,13 @@ export class SeasonClusteringEngine {
     const holidayWarnings: string[] = [];
     let holidayFallbackWarning: string | null = null;
     try {
-      const [clubRow] = await db
-        .select({ bundesland: clubs.bundesland })
-        .from(clubs)
-        .where(eq(clubs.id, this.clubId))
-        .limit(1);
+      const clubBundesland = await this.repo.clubBundesland(this.clubId);
       // Bundesland-Eingabe kommt aus clubs.bundesland (freier Text, optional).
       // `resolveBundeslandCode` akzeptiert Kürzel/Klarnamen und fällt für
       // unbekannte Eingaben dokumentiert auf 'HE' (Hessen) zurück — Ferien
       // werden dadurch nie «leise» übersprungen. Hier unterscheiden wir die
       // beiden Fallback-Fälle (NULL vs. unbekannter Text) für den Admin.
-      const rawBundesland = clubRow?.bundesland ?? null;
+      const rawBundesland = clubBundesland;
       const code = resolveBundeslandCode(rawBundesland);
       const holidays = await loadHolidaysForState(code);
       if (holidays.length > 0) {
@@ -643,15 +629,7 @@ export class SeasonClusteringEngine {
   // ============================================
 
   private async loadConfig(): Promise<void> {
-    const [dbConfig] = await db
-      .select()
-      .from(seasonPlanningConfigs)
-      .where(
-        and(
-          eq(seasonPlanningConfigs.club_id, this.clubId),
-          eq(seasonPlanningConfigs.season_id, this.seasonId)
-        )
-      );
+    const dbConfig = await this.repo.planningConfig(this.clubId, this.seasonId);
 
     if (dbConfig) {
       this.config = {
@@ -719,24 +697,7 @@ export class SeasonClusteringEngine {
     // Members who submitted the per-season form via the planning wizard. These
     // carry the richest data (unavailable_dates, avoid_member_ids,
     // self_assessed_level) and take precedence over the club-wide baseline.
-    const seasonPrefs = await db
-      .select({
-        pref: userTrainingPreferences,
-        user_name: users.full_name,
-        user_email: users.email,
-        user_experience: users.experience_months,
-        user_skill_level: users.skill_level,
-        user_dob: users.date_of_birth,
-      })
-      .from(userTrainingPreferences)
-      .innerJoin(users, eq(userTrainingPreferences.user_id, users.id))
-      .where(
-        and(
-          eq(userTrainingPreferences.season_id, this.seasonId),
-          eq(userTrainingPreferences.is_submitted, true),
-          eq(userTrainingPreferences.user_role, 'member')
-        )
-      );
+    const seasonPrefs = await this.repo.submittedMemberPrefs(this.seasonId);
     const seasonMemberIds = new Set<string>();
     for (const p of seasonPrefs) seasonMemberIds.add(p.pref.user_id);
 
@@ -745,33 +706,13 @@ export class SeasonClusteringEngine {
     // (writes here, per club) but never submitted per-season prefs in the
     // planning wizard. Without this row, the engine would return 0 groups for
     // any season whose members happen to all live in this table — bug fix.
-    const baselinePrefs = await db
-      .select({
-        pref: memberSchedulePreferences,
-        user_name: users.full_name,
-        user_email: users.email,
-        user_experience: users.experience_months,
-        user_skill_level: users.skill_level,
-        user_dob: users.date_of_birth,
-      })
-      .from(memberSchedulePreferences)
-      .innerJoin(users, eq(memberSchedulePreferences.user_id, users.id))
-      .where(eq(memberSchedulePreferences.club_id, this.clubId));
+    const baselinePrefs = await this.repo.baselineMemberPrefs(this.clubId);
 
     // Also load user_club_memberships to:
     //   (a) check is_minor / age_group info
     //   (b) filter baseline rows to active 'member' role in this club
     //       (skip admins / trainers / superadmins accidentally present in msp)
-    const memberships = await db
-      .select({
-        user_id: userClubMemberships.user_id,
-        role: userClubMemberships.role,
-        include_in_planning: userClubMemberships.include_in_planning,
-      })
-      .from(userClubMemberships)
-      .where(
-        and(eq(userClubMemberships.club_id, this.clubId), eq(userClubMemberships.is_active, true))
-      );
+    const memberships = await this.repo.activeMemberships(this.clubId);
     const membershipRoleMap = new Map<string, string>();
     for (const m of memberships) {
       membershipRoleMap.set(m.user_id, m.role);
@@ -802,15 +743,14 @@ export class SeasonClusteringEngine {
     >();
 
     if (previousSeasonId) {
-      const feedback = await db
-        .select()
-        .from(trainerFeedback)
-        .where(eq(trainerFeedback.season_id, previousSeasonId));
+      const feedback = await this.repo.trainerFeedback(previousSeasonId);
       for (const fb of feedback) {
         feedbackMap.set(fb.member_id, {
           ready: fb.ready_for_next_level === 'yes',
           level: fb.recommended_level as SkillLevel | null,
-          attendance: fb.attendance_quote ? Number(fb.attendance_quote) : null,
+          // `numeric` kommt als number (früher String "0.00" → truthy): nur null/undefined
+          // bedeutet "keine Angabe".
+          attendance: fb.attendance_quote != null ? Number(fb.attendance_quote) : null,
         });
       }
     }
@@ -848,7 +788,7 @@ export class SeasonClusteringEngine {
       };
     };
     const mergedRows: MergedPrefRow[] = [
-      ...seasonPrefs,
+      ...(seasonPrefs as unknown as MergedPrefRow[]),
       // TS2352 fires on a direct `as MergedPrefRow[]` cast because the
       // upstream `bp.pref` (memberSchedulePreferences row) has different
       // JSON-cast shapes than userTrainingPreferences (e.g.
@@ -959,17 +899,7 @@ export class SeasonClusteringEngine {
 
     if (missingIds.length > 0) {
       const defaultAvailability = this.buildDefaultAvailability();
-      const profiles = await db
-        .select({
-          id: users.id,
-          full_name: users.full_name,
-          email: users.email,
-          skill_level: users.skill_level,
-          experience_months: users.experience_months,
-          date_of_birth: users.date_of_birth,
-        })
-        .from(users)
-        .where(inArray(users.id, missingIds));
+      const profiles = await this.repo.userProfiles(missingIds);
 
       for (const u of profiles) {
         const fb = feedbackMap.get(u.id);
@@ -1008,22 +938,7 @@ export class SeasonClusteringEngine {
   private async loadTrainers(): Promise<TrainerWithDetails[]> {
     if (this._cachedTrainers) return this._cachedTrainers;
     // 1. Get trainers who submitted preferences
-    const prefs = await db
-      .select({
-        pref: userTrainingPreferences,
-        trainer_name: users.full_name,
-        trainer: trainers,
-      })
-      .from(userTrainingPreferences)
-      .innerJoin(users, eq(userTrainingPreferences.user_id, users.id))
-      .innerJoin(trainers, eq(users.id, trainers.user_id))
-      .where(
-        and(
-          eq(userTrainingPreferences.season_id, this.seasonId),
-          eq(userTrainingPreferences.is_submitted, true),
-          eq(userTrainingPreferences.user_role, 'trainer')
-        )
-      );
+    const prefs = await this.repo.submittedTrainerPrefs(this.seasonId);
 
     const submittedTrainerIds = new Set<string>();
 
@@ -1055,29 +970,14 @@ export class SeasonClusteringEngine {
     const defaultAvailability = this.buildDefaultAvailability();
 
     // Primary source: trainer_clubs join
-    let clubTrainers = await db
-      .select({ trainer: trainers })
-      .from(trainers)
-      .innerJoin(trainerClubs, eq(trainers.id, trainerClubs.trainer_id))
-      .where(and(eq(trainerClubs.club_id, this.clubId), eq(trainers.is_active, true)));
+    let clubTrainers = await this.repo.activeClubTrainers(this.clubId);
 
     // Fallback: user_club_memberships with role='trainer'
     if (clubTrainers.length === 0) {
-      clubTrainers = await db
-        .select({ trainer: trainers })
-        .from(userClubMemberships)
-        .innerJoin(trainers, eq(userClubMemberships.user_id, trainers.user_id))
-        .where(
-          and(
-            eq(userClubMemberships.club_id, this.clubId),
-            eq(userClubMemberships.role, 'trainer'),
-            eq(userClubMemberships.is_active, true),
-            eq(trainers.is_active, true)
-          )
-        );
+      clubTrainers = await this.repo.activeTrainersByMembership(this.clubId);
     }
 
-    for (const { trainer } of clubTrainers) {
+    for (const trainer of clubTrainers) {
       if (submittedTrainerIds.has(trainer.id)) continue;
       loadedTrainers.push({
         id: trainer.id,
@@ -1138,10 +1038,7 @@ export class SeasonClusteringEngine {
     if (this._blockedCourtDays) return this._blockedCourtDays;
 
     const blocked = new Set<string>();
-    const [season] = await db
-      .select({ start_date: seasons.start_date, end_date: seasons.end_date })
-      .from(seasons)
-      .where(eq(seasons.id, this.seasonId));
+    const season = await this.repo.findSeason(this.seasonId);
     if (!season) {
       this._blockedCourtDays = blocked;
       return blocked;
@@ -1150,14 +1047,7 @@ export class SeasonClusteringEngine {
     const von = new Date(season.start_date);
     const bis = new Date(season.end_date);
 
-    const closures = await db
-      .select({
-        court_id: courtClosures.court_id,
-        start_date: courtClosures.start_date,
-        end_date: courtClosures.end_date,
-      })
-      .from(courtClosures)
-      .where(and(eq(courtClosures.club_id, this.clubId), eq(courtClosures.is_active, true)));
+    const closures = await this.repo.activeClosures(this.clubId);
 
     // Wie oft kommt jeder Wochentag in der Saison vor? Nenner der Schwelle.
     const wochentagVorkommen = new Array(7).fill(0);
@@ -1198,43 +1088,18 @@ export class SeasonClusteringEngine {
     if (this._cachedCourts) return this._cachedCourts;
 
     // Winter-Saison: nur Hallen-Courts (has_indoor=true). Sommer: alle aktiven Courts.
-    const [currentSeason] = await db
-      .select({ season_type: seasons.season_type })
-      .from(seasons)
-      .where(eq(seasons.id, this.seasonId));
+    const currentSeason = await this.repo.findSeason(this.seasonId);
     const isWinter = currentSeason?.season_type === 'winter';
     this._istWinter = isWinter;
 
-    const filter = isWinter
-      ? and(
-          eq(courts.club_id, this.clubId),
-          eq(courts.is_active, true),
-          eq(courts.usable_for_training, true),
-          eq(courts.has_indoor, true)
-        )
-      : and(
-          eq(courts.club_id, this.clubId),
-          eq(courts.is_active, true),
-          eq(courts.usable_for_training, true)
-        );
-
-    let courtRows = await db.select().from(courts).where(filter);
+    let courtRows = await this.repo.trainingCourts(this.clubId, isWinter);
 
     // Ein Verein ohne Halle hätte im Winter sonst gar keinen Platz — die Planung
     // liefe durch und erzeugte lautlos Gruppen ohne Platz, für die beim
     // Veröffentlichen keine Buchungen entstehen. Viele Vereine spielen im Winter
     // auf Freiplätzen weiter; die Außenplätze sind hier die richtige Rückfallebene.
     if (isWinter && courtRows.length === 0) {
-      courtRows = await db
-        .select()
-        .from(courts)
-        .where(
-          and(
-            eq(courts.club_id, this.clubId),
-            eq(courts.is_active, true),
-            eq(courts.usable_for_training, true)
-          )
-        );
+      courtRows = await this.repo.trainingCourts(this.clubId, false);
       if (courtRows.length > 0) {
         log.warn('Wintersaison ohne Hallenplatz — Planung weicht auf Außenplätze aus', {
           clubId: this.clubId,
@@ -1256,15 +1121,8 @@ export class SeasonClusteringEngine {
 
   private async loadGroups(): Promise<GroupInfo[]> {
     if (this._cachedGroups) return this._cachedGroups;
-    // Supabase REST, not Drizzle — direct postgres/Drizzle connections are
-    // unreliable from the dev environment (see CLAUDE.md).
-    const { data: groupRows, error } = await createServiceClient()
-      .from('groups')
-      .select('id, name, level, age_group, max_size')
-      .eq('club_id', this.clubId)
-      .eq('is_active', true);
-    if (error) throw new Error(`Failed to load groups: ${error.message}`);
-    const result = (groupRows ?? []).map((g) => ({
+    const groupRows = await this.repo.activeGroups(this.clubId);
+    const result = groupRows.map((g) => ({
       id: g.id,
       name: g.name,
       level: g.level as SkillLevel,
@@ -1278,11 +1136,7 @@ export class SeasonClusteringEngine {
 
   private async loadSlotFailureRates(): Promise<Record<string, number>> {
     if (this._cachedSlotFailureRates) return this._cachedSlotFailureRates;
-    const stats = await db
-      .select()
-      .from(seasonStatistics)
-      .where(eq(seasonStatistics.club_id, this.clubId))
-      .orderBy(asc(seasonStatistics.computed_at));
+    const stats = await this.repo.seasonStatistics(this.clubId);
 
     const rates: Record<string, number> = {};
     for (const stat of stats) {
@@ -1309,20 +1163,13 @@ export class SeasonClusteringEngine {
       return this._cachedHistoricGroups;
     }
 
-    const entries = await db
-      .select()
-      .from(seasonPlanEntries)
-      .where(eq(seasonPlanEntries.season_id, previousSeasonId));
-
-    const feedback = await db
-      .select()
-      .from(trainerFeedback)
-      .where(eq(trainerFeedback.season_id, previousSeasonId));
+    const entries = await this.repo.planEntries(previousSeasonId);
+    const feedback = await this.repo.trainerFeedback(previousSeasonId);
 
     // Group attendance by group
     const groupAttendance = new Map<string, number[]>();
     for (const fb of feedback) {
-      if (fb.group_id && fb.attendance_quote) {
+      if (fb.group_id && fb.attendance_quote != null) {
         const arr = groupAttendance.get(fb.group_id) || [];
         arr.push(Number(fb.attendance_quote));
         groupAttendance.set(fb.group_id, arr);
@@ -1352,17 +1199,13 @@ export class SeasonClusteringEngine {
 
   private async getPreviousSeasonId(): Promise<string | null> {
     if (this._cachedPreviousSeasonId !== undefined) return this._cachedPreviousSeasonId;
-    const [currentSeason] = await db.select().from(seasons).where(eq(seasons.id, this.seasonId));
+    const currentSeason = await this.repo.findSeason(this.seasonId);
 
     if (!currentSeason) return null;
 
-    const previousSeasons = await db
-      .select()
-      .from(seasons)
-      .where(
-        and(eq(seasons.club_id, this.clubId), eq(seasons.season_type, currentSeason.season_type))
-      )
-      .orderBy(asc(seasons.year));
+    const previousSeasons = (
+      await this.repo.seasonIdsOfType(this.clubId, currentSeason.season_type)
+    ).map((id) => ({ id }));
 
     // Find the season just before current one
     const idx = previousSeasons.findIndex((s) => s.id === this.seasonId);
@@ -1386,13 +1229,7 @@ export class SeasonClusteringEngine {
     const previousSeasonId = await this.getPreviousSeasonId();
     if (!previousSeasonId) return result;
 
-    const entries = await db
-      .select({
-        group_id: seasonPlanEntries.group_id,
-        expected_participants: seasonPlanEntries.expected_participants,
-      })
-      .from(seasonPlanEntries)
-      .where(eq(seasonPlanEntries.season_id, previousSeasonId));
+    const entries = await this.repo.planEntries(previousSeasonId);
 
     for (const entry of entries) {
       if (!entry.group_id) continue;
@@ -3191,45 +3028,22 @@ export class SeasonClusteringEngine {
     // Veröffentlichen kollidieren sie dann mit den neuen Terminen auf demselben
     // Platz, und der Vorgang scheitert mit einem rohen SQL-Fehler. Künftige
     // Termine werden deshalb hier mit verworfen; stattgefundene bleiben Historie.
-    const existingEntries = await db
-      .select({ id: seasonPlanEntries.id })
-      .from(seasonPlanEntries)
-      .where(eq(seasonPlanEntries.season_id, this.seasonId));
-
-    if (existingEntries.length > 0) {
-      const staleSessions = await db
-        .select({ id: sessions.id })
-        .from(sessions)
-        .where(
-          and(
-            inArray(
-              sessions.plan_entry_id,
-              existingEntries.map((e) => e.id)
-            ),
-            gte(sessions.timeslot_start, new Date())
-          )
-        );
-      const staleIds = staleSessions.map((s) => s.id);
+    const staleIds = await this.repo.futureSessionIdsOfSeason(this.seasonId);
+    if (staleIds.length > 0) {
       // ponytail: 500er-Blöcke wegen des Postgres-Parameterlimits, wie im
-      // Veröffentlichen-Pfad.
-      for (let i = 0; i < staleIds.length; i += 500) {
-        const chunk = staleIds.slice(i, i + 500);
-        await db.delete(bookings).where(inArray(bookings.session_id, chunk));
-        await db.delete(sessions).where(inArray(sessions.id, chunk));
-      }
-      if (staleIds.length > 0) {
-        log.info('Neuplanung: künftige veröffentlichte Einheiten verworfen', {
-          seasonId: this.seasonId,
-          sessions: staleIds.length,
-        });
-      }
+      // Veröffentlichen-Pfad (im Repository).
+      await this.repo.deleteSessionsWithBookings(staleIds);
+      log.info('Neuplanung: künftige veröffentlichte Einheiten verworfen', {
+        seasonId: this.seasonId,
+        sessions: staleIds.length,
+      });
     }
 
     // Delete existing plan entries for this season (re-planning)
-    await db.delete(seasonPlanEntries).where(eq(seasonPlanEntries.season_id, this.seasonId));
+    await this.repo.deletePlanEntries(this.seasonId);
 
     // Delete existing waitlists
-    await db.delete(seasonWaitlists).where(eq(seasonWaitlists.season_id, this.seasonId));
+    await this.repo.deleteWaitlists(this.seasonId);
 
     // Der "Einzeltraining …"-Name entsteht im Moment der Gruppenanlage, als die
     // Gruppe noch aus einer Person bestand. Kommen später Teilnehmer dazu (zweite
@@ -3254,7 +3068,7 @@ export class SeasonClusteringEngine {
       }
 
       if (!isPlaceholder) {
-        if (renamed) await db.update(groups).set({ name: renamed }).where(eq(groups.id, g.groupId));
+        if (renamed) await this.repo.renameGroup(g.groupId, renamed);
         continue;
       }
 
@@ -3262,21 +3076,18 @@ export class SeasonClusteringEngine {
       // Platzhalter erzeugt (siehe `pendingGroups`). Damit legen Dry Runs und
       // verworfene Multi-Start-Varianten keine verwaisten Zeilen mehr an.
       const pending = this.pendingGroups.get(g.groupId);
-      const [newGroup] = await db
-        .insert(groups)
-        .values({
-          club_id: this.clubId,
-          name: g.groupName,
-          level: pending?.level ?? 'beginner',
-          age_group: pending?.ageGroup ?? 'adult',
-          is_active: true,
-          member_ids: [],
-        })
-        .returning({ id: groups.id });
+      const newGroupId = await this.repo.insertGroup({
+        club_id: this.clubId,
+        name: g.groupName,
+        level: pending?.level ?? 'beginner',
+        age_group: pending?.ageGroup ?? 'adult',
+        is_active: true,
+        member_ids: [],
+      });
 
       // Planeinträge und Warteliste unten lesen `g.groupId` bzw. den Namen —
       // beides zeigt ab hier auf die echte Zeile.
-      g.groupId = newGroup.id;
+      g.groupId = newGroupId;
     }
 
     // Insert new plan entries
@@ -3306,24 +3117,15 @@ export class SeasonClusteringEngine {
       // Default — war zuvor blind this.config.groupMaxSize für ALLE Einträge.
       max_participants: g.maxSize,
       expected_participants: g.memberIds,
-      preference_match_score: String(
+      preference_match_score:
         g.memberDetails.reduce((sum, d) => sum + d.niveauMatch, 0) /
-          Math.max(1, g.memberDetails.length)
-      ),
-      optimization_score: '0',
-      conflict_score: String(g.warnings.length * 10),
+        Math.max(1, g.memberDetails.length),
+      optimization_score: 0,
+      conflict_score: g.warnings.length * 10,
       status: 'planned',
     }));
 
-    if (entriesToInsert.length > 0) {
-      // Typed via Drizzle's $inferInsert — documents the intended payload shape
-      // (one object per row) instead of `as never`. The `unknown` bridge is needed
-      // because the in-memory mapper may set fields to `undefined` or omit them,
-      // which Drizzle's strict `.values()` overloads reject when handed Partial<T>.
-      const typedPlanEntries =
-        entriesToInsert as unknown as (typeof seasonPlanEntries.$inferInsert)[];
-      await db.insert(seasonPlanEntries).values(typedPlanEntries);
-    }
+    await this.repo.insertPlanEntries(entriesToInsert);
 
     // Insert waitlist entries.
     //
@@ -3361,19 +3163,12 @@ export class SeasonClusteringEngine {
       });
     }
 
-    if (waitlistToInsert.length > 0) {
-      // Typed via Drizzle's $inferInsert — see comment above on the plan-entries cast.
-      const typedWaitlist = waitlistToInsert as unknown as (typeof seasonWaitlists.$inferInsert)[];
-      await db.insert(seasonWaitlists).values(typedWaitlist);
-    }
+    await this.repo.insertWaitlist(waitlistToInsert);
 
     // Update season status
-    await db
-      .update(seasons)
-      .set({
-        planning_status: 'manual_review',
-        last_planned_at: new Date(),
-      })
-      .where(eq(seasons.id, this.seasonId));
+    await this.repo.updateSeason(this.seasonId, {
+      planning_status: 'manual_review',
+      last_planned_at: new Date().toISOString(),
+    });
   }
 }

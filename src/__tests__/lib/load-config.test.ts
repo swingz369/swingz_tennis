@@ -1,89 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// ═══ Hoisted mock state + Thenable chain factory ════════════════════════
+// ═══ Repository-Stub: loadConfig liest nur planningConfig ═══════════════
 const h = vi.hoisted(() => {
-  // The DB row we control per test. Use `null` to simulate NULL columns.
+  // The DB row we control per test. Use `null` to simulate NULL columns / no row.
   let dbRow: any = null;
-
-  // Thenable chain that dispatches by the `__table` sentinel set in the schema mock.
-  const makeSelectChain = () => {
-    let currentTable: any = null;
-    const chain: any = {
-      from: (t: any) => {
-        currentTable = t;
-        return chain;
-      },
-      innerJoin: (t: any) => {
-        currentTable = t;
-        return chain;
-      },
-      leftJoin: (t: any) => {
-        currentTable = t;
-        return chain;
-      },
-      where: () => chain,
-      orderBy: () => chain,
-      limit: () => chain,
-      groupBy: () => chain,
-      then: (resolve: any, reject: any) => {
-        const name = currentTable?.__table;
-        if (name === 'seasonPlanningConfigs') {
-          // loadConfig does `const [dbConfig] = await ...` so we always return an
-          // array of length 0 or 1. When `dbRow` is null, return an empty array
-          // (the [destructure] yields undefined, the if-check skips assignment).
-          return Promise.resolve(dbRow ? [dbRow] : []).then(resolve, reject);
-        }
-        return Promise.resolve([]).then(resolve, reject);
-      },
-    };
-    return chain;
-  };
-
   return {
-    getDbRow: () => dbRow,
     setDbRow: (row: any) => {
       dbRow = row;
     },
-    makeSelectChain,
+    repo: { planningConfig: async () => dbRow } as any,
   };
 });
-
-// ═══ Mock the DB module ══════════════════════════════════════════════════
-vi.mock('@/src/infrastructure/persistence/db', () => ({
-  db: {
-    select: vi.fn(() => h.makeSelectChain()),
-    insert: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-  },
-}));
-
-// ═══ Mock the schema modules with __table sentinels ══════════════════════
-vi.mock('@/src/infrastructure/persistence/schema', () => ({
-  seasons: { __table: 'seasons' },
-  users: { __table: 'users' },
-  trainers: { __table: 'trainers' },
-  userTrainingPreferences: { __table: 'userTrainingPreferences' },
-  groups: { __table: 'groups' },
-  courts: { __table: 'courts' },
-  seasonPlanEntries: { __table: 'seasonPlanEntries' },
-  userClubMemberships: { __table: 'userClubMemberships' },
-  trainerClubs: { __table: 'trainerClubs' },
-}));
-
-vi.mock('@/src/infrastructure/persistence/season-planning-schema', () => ({
-  // Minimal shape — loadConfig only reads these two columns
-  seasonPlanningConfigs: { __table: 'seasonPlanningConfigs' },
-  seasonWaitlists: { __table: 'seasonWaitlists' },
-  trainerFeedback: { __table: 'trainerFeedback' },
-  seasonStatistics: { __table: 'seasonStatistics' },
-}));
-
-vi.mock('drizzle-orm', () => ({
-  and: vi.fn((...args) => ({ __and: args })),
-  eq: vi.fn((a: any, b: any) => ({ __eq: [a, b] })),
-  asc: vi.fn((a: any) => ({ __asc: a })),
-}));
 
 // ═══ Import engine AFTER all mocks are registered ════════════════════════
 import { SeasonClusteringEngine } from '@/lib/season-planning/clustering-engine';
@@ -117,7 +44,7 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
       slot_duration_minutes: 60,
     });
 
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', undefined, h.repo) as any;
     await engine.loadConfig();
 
     // Typed access on the new fields
@@ -140,7 +67,7 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
       backtrack_depth: 2, // mixed: one set, one NULL
     });
 
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', undefined, h.repo) as any;
     await engine.loadConfig();
 
     expect(engine.config.treatHighFailureAsHard).toBe(DEFAULT_TREAT_HIGH_FAILURE_AS_HARD);
@@ -158,7 +85,7 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
       backtrack_depth: null,
     });
 
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', undefined, h.repo) as any;
     await engine.loadConfig();
 
     expect(engine.config.backtrackDepth).toBe(DEFAULT_BACKTRACK_DEPTH);
@@ -175,7 +102,7 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
       backtrack_depth: null,
     });
 
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', undefined, h.repo) as any;
     await engine.loadConfig();
 
     expect(engine.config.treatHighFailureAsHard).toBe(false);
@@ -183,12 +110,17 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
   });
 
   it('keeps constructor config when DB returns no row at all', async () => {
-    h.setDbRow(null); // Empty array from select → [destructure] → undefined → no assignment
+    h.setDbRow(null); // Kein Konfig-Datensatz → nichts wird überschrieben
 
-    const engine = new SeasonClusteringEngine('s1', 'c1', {
-      treatHighFailureAsHard: true,
-      backtrackDepth: 3,
-    }) as any;
+    const engine = new SeasonClusteringEngine(
+      's1',
+      'c1',
+      {
+        treatHighFailureAsHard: true,
+        backtrackDepth: 3,
+      },
+      h.repo
+    ) as any;
 
     await engine.loadConfig();
 
@@ -206,10 +138,15 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
       backtrack_depth: 0,
     });
 
-    const engine = new SeasonClusteringEngine('s1', 'c1', {
-      treatHighFailureAsHard: true,
-      backtrackDepth: 3,
-    }) as any;
+    const engine = new SeasonClusteringEngine(
+      's1',
+      'c1',
+      {
+        treatHighFailureAsHard: true,
+        backtrackDepth: 3,
+      },
+      h.repo
+    ) as any;
 
     await engine.loadConfig();
 
@@ -228,7 +165,7 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
       // No treat_high_failure_as_hard, no backtrack_depth
     });
 
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', undefined, h.repo) as any;
     await engine.loadConfig();
 
     // The ?? operator treats undefined as a missing value → default
@@ -244,7 +181,7 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
       unassigned_rate_threshold: 0.1,
     });
 
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', undefined, h.repo) as any;
     await engine.loadConfig();
 
     // The DB value is read end-to-end and overrides DEFAULT_CONFIG
@@ -259,7 +196,7 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
       unassigned_rate_threshold: null,
     });
 
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', undefined, h.repo) as any;
     await engine.loadConfig();
 
     // ?? operator falls back to DEFAULT_CONFIG.unassignedRateThreshold

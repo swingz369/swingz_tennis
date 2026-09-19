@@ -2,22 +2,9 @@
 // Optimizes season planning based on user preferences and constraints
 // Supports both deterministic greedy algorithm and AI-powered scheduling (V2)
 
-import { db } from '@/src/infrastructure/persistence/db';
-import {
-  seasons,
-  userTrainingPreferences,
-  seasonPlanEntries,
-  planningConflicts,
-  seasonPlanningHistory,
-  courts,
-  groups,
-  trainers,
-  trainerClubs,
-  userClubMemberships,
-} from '@/src/infrastructure/persistence/schema';
-import { and, eq, sql } from 'drizzle-orm';
+import type { Tables } from '@/types/supabase';
+import type { SeasonClusteringRepository } from '@/infrastructure/persistence/repositories/season-clustering.repository';
 import { jsonColumn } from '@/lib/typed-helpers';
-import type { InferSelectModel } from 'drizzle-orm';
 import type {
   AutoPlanConfig,
   AlgorithmMetrics,
@@ -28,8 +15,8 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('auto-planning');
 
-type CourtRow = InferSelectModel<typeof courts>;
-type GroupRow = InferSelectModel<typeof groups>;
+type CourtRow = Tables<'courts'>;
+type GroupRow = Tables<'groups'>;
 
 interface TrainerPreference {
   trainer_id: string;
@@ -72,7 +59,8 @@ export class AutoPlanningService {
   static async generatePlan(
     seasonId: string,
     config: AutoPlanConfig,
-    dryRun: boolean = false
+    dryRun: boolean,
+    repo: SeasonClusteringRepository
   ): Promise<{
     entries: PlanningSlot[];
     conflicts: Array<{ type: string; description: string; severity: string }>;
@@ -81,48 +69,19 @@ export class AutoPlanningService {
     const startTime = Date.now();
 
     // 1. Fetch season data
-    const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
+    const season = await repo.findSeason(seasonId);
     if (!season) {
       throw new Error('Season not found');
     }
 
     // 2. Fetch all preferences
-    const allPreferences = await db
-      .select({
-        pref: userTrainingPreferences,
-        user_name: sql<string>`COALESCE(users.full_name, users.email)`,
-      })
-      .from(userTrainingPreferences)
-      .leftJoin(sql`users`, sql`users.id = ${userTrainingPreferences.user_id}`)
-      .where(
-        and(
-          eq(userTrainingPreferences.season_id, seasonId),
-          eq(userTrainingPreferences.is_submitted, true)
-        )
-      );
+    const allPreferences = await repo.submittedPrefsWithNames(seasonId);
 
     // Fetch all active trainers for the club (including those without submitted prefs)
-    // Primary source: trainer_clubs join
-    let clubTrainers = await db
-      .select({ trainer: trainers })
-      .from(trainers)
-      .innerJoin(trainerClubs, eq(trainers.id, trainerClubs.trainer_id))
-      .where(and(eq(trainerClubs.club_id, season.club_id), eq(trainers.is_active, true)));
-
-    // Fallback: user_club_memberships with role='trainer'
+    // Primary source: trainer_club; Fallback: user_club_memberships with role='trainer'
+    let clubTrainers = await repo.activeClubTrainers(season.club_id);
     if (clubTrainers.length === 0) {
-      clubTrainers = await db
-        .select({ trainer: trainers })
-        .from(userClubMemberships)
-        .innerJoin(trainers, eq(userClubMemberships.user_id, trainers.user_id))
-        .where(
-          and(
-            eq(userClubMemberships.club_id, season.club_id),
-            eq(userClubMemberships.role, 'trainer'),
-            eq(userClubMemberships.is_active, true),
-            eq(trainers.is_active, true)
-          )
-        );
+      clubTrainers = await repo.activeTrainersByMembership(season.club_id);
     }
 
     // Separate trainers and members
@@ -160,7 +119,7 @@ export class AutoPlanningService {
     }
 
     // Add unsubmitted trainers from club trainers table
-    for (const { trainer } of clubTrainers) {
+    for (const trainer of clubTrainers) {
       if (trainer.user_id && submittedTrainerIds.has(trainer.user_id)) continue;
       trainerPrefs.push({
         trainer_id: trainer.user_id || trainer.id,
@@ -174,16 +133,10 @@ export class AutoPlanningService {
     }
 
     // 3. Fetch available courts
-    const availableCourts = await db
-      .select()
-      .from(courts)
-      .where(and(eq(courts.club_id, season.club_id), eq(courts.is_active, true)));
+    const availableCourts = await repo.activeCourts(season.club_id);
 
     // 4. Fetch groups
-    const availableGroups = await db
-      .select()
-      .from(groups)
-      .where(and(eq(groups.club_id, season.club_id), eq(groups.is_active, true)));
+    const availableGroups = await repo.activeGroupRows(season.club_id);
 
     // 5. Run optimization algorithm
     const { entries: plannedSlots, conflicts: detectedConflicts } = await this.runOptimization({
@@ -213,7 +166,8 @@ export class AutoPlanningService {
         season.club_id,
         plannedSlots,
         detectedConflicts,
-        metrics
+        metrics,
+        repo
       );
     }
 
@@ -426,7 +380,8 @@ export class AutoPlanningService {
     clubId: string,
     slots: PlanningSlot[],
     conflicts: Array<{ type: string; description: string; severity: string }>,
-    metrics: AlgorithmMetrics
+    metrics: AlgorithmMetrics,
+    repo: SeasonClusteringRepository
   ): Promise<void> {
     // HARD CONSTRAINT backstop: kein Trainingsbetrieb am Sonntag (day_of_week=6).
     // Greift sowohl für den deterministischen Algorithmus (oben bereits auf Mo-Sa
@@ -442,56 +397,51 @@ export class AutoPlanningService {
     }
 
     // Delete existing plan entries (if re-planning)
-    await db.delete(seasonPlanEntries).where(eq(seasonPlanEntries.season_id, seasonId));
+    await repo.deletePlanEntries(seasonId);
 
     // Insert new plan entries
-    if (slots.length > 0) {
-      await db.insert(seasonPlanEntries).values(
-        slots.map((slot) => ({
-          season_id: seasonId,
-          club_id: clubId,
-          trainer_id: slot.trainer_id,
-          court_id: slot.court_id,
-          group_id: slot.group_id,
-          day_of_week: slot.day_of_week,
-          start_time: slot.start_time,
-          end_time: slot.end_time,
-          duration_minutes: slot.duration_minutes,
-          starts_from_week: 1,
-          ends_at_week: null,
-          entry_type: 'training',
-          planning_source: 'auto',
-          max_participants: 10,
-          expected_participants: slot.expected_participants,
-          preference_match_score: slot.preference_match_score.toFixed(2),
-          conflict_score: slot.conflict_score.toFixed(2),
-          optimization_score: (
-            (slot.preference_match_score + (100 - slot.conflict_score)) /
-            2
-          ).toFixed(2),
-          status: 'planned',
-          notes: null,
-          admin_notes: null,
-        }))
-      );
-    }
+    await repo.insertPlanEntries(
+      slots.map((slot) => ({
+        season_id: seasonId,
+        club_id: clubId,
+        trainer_id: slot.trainer_id,
+        court_id: slot.court_id,
+        group_id: slot.group_id,
+        day_of_week: slot.day_of_week,
+        start_time: slot.start_time,
+        end_time: slot.end_time,
+        duration_minutes: slot.duration_minutes,
+        starts_from_week: 1,
+        ends_at_week: null,
+        entry_type: 'training',
+        planning_source: 'auto',
+        max_participants: 10,
+        expected_participants: slot.expected_participants,
+        preference_match_score: Number(slot.preference_match_score.toFixed(2)),
+        conflict_score: Number(slot.conflict_score.toFixed(2)),
+        optimization_score: Number(
+          ((slot.preference_match_score + (100 - slot.conflict_score)) / 2).toFixed(2)
+        ),
+        status: 'planned',
+        notes: null,
+        admin_notes: null,
+      }))
+    );
 
     // Save conflicts
-    if (conflicts.length > 0) {
-      await db.insert(planningConflicts).values(
-        conflicts.map((conflict) => ({
-          season_id: seasonId,
-          club_id: clubId,
-          conflict_type: conflict.type,
-          severity: conflict.severity,
-          affected_plan_entry_ids: [],
-          description: conflict.description,
-          status: 'open',
-          detected_at: new Date(),
-          detection_source: 'auto_planner',
-        }))
-      );
-    }
+    await repo.insertPlanningConflicts(
+      conflicts.map((conflict) => ({
+        season_id: seasonId,
+        club_id: clubId,
+        conflict_type: conflict.type,
+        severity: conflict.severity,
+        affected_plan_entry_ids: [],
+        description: conflict.description,
+        status: 'open',
+        detected_at: new Date().toISOString(),
+        detection_source: 'auto_planner',
+      }))
+    );
 
     // Log to history
     //
@@ -499,7 +449,7 @@ export class AutoPlanningService {
     // 'auto_plan_completed' steht dort live NICHT drin — der Insert warf 23514 und
     // riss die komplette Auto-Planung mit (500 pro Aufruf, in jedem Verein).
     // 'plan_created' ist erlaubt, produktiv sonst unbenutzt und trifft die Semantik.
-    await db.insert(seasonPlanningHistory).values({
+    await repo.insertPlanningHistory({
       season_id: seasonId,
       club_id: clubId,
       action_type: 'plan_created',
@@ -509,17 +459,14 @@ export class AutoPlanningService {
       },
       entries_affected: slots.length,
       conflicts_created: conflicts.length,
-      algorithm_metrics: metrics as unknown as Record<string, unknown>,
+      algorithm_metrics: metrics as unknown as Record<string, unknown> as never,
     });
 
     // Update season status
-    await db
-      .update(seasons)
-      .set({
-        planning_status: 'manual_review',
-        last_planned_at: new Date(),
-      })
-      .where(eq(seasons.id, seasonId));
+    await repo.updateSeason(seasonId, {
+      planning_status: 'manual_review',
+      last_planned_at: new Date().toISOString(),
+    });
   }
 
   // Helper methods

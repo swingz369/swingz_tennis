@@ -5,9 +5,7 @@ import { withApiAuth } from '@/lib/api-auth';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
-import { db } from '@/src/infrastructure/persistence/db';
-import { seasons } from '@/src/infrastructure/persistence/schema';
-import { eq } from 'drizzle-orm';
+import { clusteringRepositoryFor } from '@/infrastructure/persistence/repositories/season-clustering.repository';
 import { AutoPlanningService } from '@/lib/services/auto-planning.service';
 import type { AutoPlanRequest } from '@/lib/types/season-planning';
 import { createLogger } from '@/lib/logger';
@@ -87,10 +85,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         // Update season status
         if (!dryRun) {
-          await db
-            .update(seasons)
-            .set({ planning_status: 'auto_planning' })
-            .where(eq(seasons.id, seasonId));
+          await clusteringRepositoryFor(auth).updateSeason(seasonId, {
+            planning_status: 'auto_planning',
+          });
         }
 
         // Ausschließlich der deterministische Algorithmus — der frühere KI-Pfad
@@ -102,14 +99,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
         let result;
 
         try {
-          result = await AutoPlanningService.generatePlan(seasonId, finalConfig, dryRun);
+          result = await AutoPlanningService.generatePlan(
+            seasonId,
+            finalConfig,
+            dryRun,
+            clusteringRepositoryFor(auth)
+          );
         } catch (error) {
           // Revert status on failure
           if (!dryRun) {
-            await db
-              .update(seasons)
-              .set({ planning_status: 'manual_review' })
-              .where(eq(seasons.id, seasonId));
+            await clusteringRepositoryFor(auth).updateSeason(seasonId, {
+              planning_status: 'manual_review',
+            });
           }
           throw error;
         }

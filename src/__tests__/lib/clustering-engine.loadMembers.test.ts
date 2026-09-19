@@ -18,54 +18,29 @@
  * will be missing the 3 optional fields and downstream consumers will
  * hit runtime "cannot read property X of undefined" errors.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  userTrainingPreferences,
-  memberSchedulePreferences,
-  userClubMemberships,
-  trainerFeedback,
-} from '@/src/infrastructure/persistence/schema';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 // ───────────────────────────────────────────────────────────────────────
-// Per-table DB mock, Drizzle-style: `loadMembers()` calls
-// `db.select({...}).from(table).innerJoin(...).where(...)`, which resolves
-// (when awaited) directly to a plain row array — not a Supabase-style
-// `{ data, error }` envelope. Keyed by the real table object (imported
-// above) so `.from(userTrainingPreferences)` picks the right canned rows.
+// Repository-Stub (ADR-005): `loadMembers()` liest über SeasonClusteringRepository.
+// Die Stub-Methoden liefern die Zeilenform des echten Repositorys (Präferenz +
+// Nutzerfelder, bereits zusammengesetzt).
 // ───────────────────────────────────────────────────────────────────────
-const tableResponses = new Map<unknown, unknown[]>();
-function setResp(table: unknown, rows: unknown[]) {
-  tableResponses.set(table, rows);
+type Resp = { season: unknown[]; baseline: unknown[]; memberships: unknown[] };
+let resp: Resp;
+function setResp(patch: Partial<Resp>) {
+  resp = { ...resp, ...patch };
 }
 function clearResps() {
-  tableResponses.clear();
+  resp = { season: [], baseline: [], memberships: [] };
 }
-
-function makeChainable(table: unknown) {
-  const resolve = () => tableResponses.get(table) ?? [];
-  const chain: unknown = new Proxy(
-    {},
-    {
-      get(_target, prop: string | symbol) {
-        if (prop === 'then') {
-          return (onResolve: (val: unknown[]) => void) => onResolve(resolve());
-        }
-        // Any intermediate method (.innerJoin(...), .where(...), .orderBy(...))
-        // just re-enters the same table-bound chain.
-        return (..._args: unknown[]) => chain;
-      },
-    }
-  );
-  return chain;
-}
-
-const selectMock = vi.fn(() => ({
-  from: (table: unknown) => makeChainable(table),
-}));
-
-vi.mock('@/src/infrastructure/persistence/db', () => ({
-  db: { select: selectMock },
-}));
+const repoStub = {
+  submittedMemberPrefs: async () => resp.season,
+  baselineMemberPrefs: async () => resp.baseline,
+  activeMemberships: async () => resp.memberships,
+  findSeason: async () => null,
+  trainerFeedback: async () => [],
+  userProfiles: async () => [],
+} as never;
 
 // ───────────────────────────────────────────────────────────────────────
 // Tests
@@ -79,51 +54,54 @@ interface MemberResultRow {
 describe('SeasonClusteringEngine.loadMembers — Sprint-4 cast-widening regression guard', () => {
   beforeEach(() => {
     clearResps();
-    selectMock.mockClear();
   });
 
   it('returns MERGED rows from BOTH seasonPrefs AND eligibleBaseline paths', async () => {
     // 1) primary source: user_training_preferences (seasonPrefs path)
-    setResp(userTrainingPreferences, [
-      {
-        pref: {
-          user_id: 'utp-alpha',
-          preferred_times: 'Tue 18:00',
-          unavailable_dates: ['2026-07-01'],
-          avoid_member_ids: ['user-x'],
-          self_assessed_level: 7,
+    setResp({
+      season: [
+        {
+          pref: {
+            user_id: 'utp-alpha',
+            preferred_times: 'Tue 18:00',
+            unavailable_dates: ['2026-07-01'],
+            avoid_member_ids: ['user-x'],
+            self_assessed_level: 7,
+          },
+          user_name: 'Alpha',
+          user_email: '',
+          user_experience: 0,
+          user_skill_level: null,
         },
-        user_name: 'Alpha',
-        user_email: '',
-        user_experience: 0,
-        user_skill_level: null,
-      },
-    ]);
+      ],
+    });
     // 2) baseline pref path: member_schedule_preferences
-    setResp(memberSchedulePreferences, [
-      {
-        pref: {
-          user_id: 'baseline-bravo',
-          preferred_days: ['Mon'],
-          weekly_availability: [{ day: 'Mon', time: '18:00' }],
+    setResp({
+      baseline: [
+        {
+          pref: {
+            user_id: 'baseline-bravo',
+            preferred_days: ['Mon'],
+            weekly_availability: [{ day: 'Mon', time: '18:00' }],
+          },
+          user_name: 'Bravo',
+          user_email: '',
+          user_experience: 0,
+          user_skill_level: null,
         },
-        user_name: 'Bravo',
-        user_email: '',
-        user_experience: 0,
-        user_skill_level: null,
-      },
-    ]);
+      ],
+    });
     // 3) active-baseline filter: user_club_memberships
-    setResp(userClubMemberships, [{ user_id: 'baseline-bravo', role: 'member' }]);
-    // 4) trainerFeedback (previous-season data) — empty OK
-    setResp(trainerFeedback, []);
+    setResp({ memberships: [{ user_id: 'baseline-bravo', role: 'member' }] });
 
     const { SeasonClusteringEngine } = await import('@/lib/season-planning/clustering-engine');
     // Constructor takes positional (seasonId, clubId, config?). Default
     // config is acceptable for the regression test.
     const engine = new SeasonClusteringEngine(
       's0000000-0000-0000-0000-000000000001',
-      'c0000000-0000-0000-0000-000000000001'
+      'c0000000-0000-0000-0000-000000000001',
+      undefined,
+      repoStub
     );
 
     // loadMembers is private; access via canonical `as unknown as` cast
@@ -148,37 +126,42 @@ describe('SeasonClusteringEngine.loadMembers — Sprint-4 cast-widening regressi
   });
 
   it('excludes baseline row when its user already has a seasonPref (no duplication)', async () => {
-    setResp(userTrainingPreferences, [
-      {
-        pref: {
-          user_id: 'dup',
-          preferred_times: 'Tue',
-          unavailable_dates: null,
-          avoid_member_ids: null,
-          self_assessed_level: 5,
+    setResp({
+      season: [
+        {
+          pref: {
+            user_id: 'dup',
+            preferred_times: 'Tue',
+            unavailable_dates: null,
+            avoid_member_ids: null,
+            self_assessed_level: 5,
+          },
+          user_name: 'Dup',
+          user_email: '',
+          user_experience: 0,
+          user_skill_level: null,
         },
-        user_name: 'Dup',
-        user_email: '',
-        user_experience: 0,
-        user_skill_level: null,
-      },
-    ]);
-    setResp(memberSchedulePreferences, [
-      {
-        pref: { user_id: 'dup', preferred_days: ['Mon'] },
-        user_name: 'Dup',
-        user_email: '',
-        user_experience: 0,
-        user_skill_level: null,
-      },
-    ]);
-    setResp(userClubMemberships, [{ user_id: 'dup', role: 'member' }]);
-    setResp(trainerFeedback, []);
+      ],
+    });
+    setResp({
+      baseline: [
+        {
+          pref: { user_id: 'dup', preferred_days: ['Mon'] },
+          user_name: 'Dup',
+          user_email: '',
+          user_experience: 0,
+          user_skill_level: null,
+        },
+      ],
+    });
+    setResp({ memberships: [{ user_id: 'dup', role: 'member' }] });
 
     const { SeasonClusteringEngine } = await import('@/lib/season-planning/clustering-engine');
     const engine = new SeasonClusteringEngine(
       's0000000-0000-0000-0000-000000000001',
-      'c0000000-0000-0000-0000-000000000001'
+      'c0000000-0000-0000-0000-000000000001',
+      undefined,
+      repoStub
     );
 
     const merged = (await (
@@ -196,7 +179,9 @@ describe('SeasonClusteringEngine.loadMembers — Sprint-4 cast-widening regressi
     const { SeasonClusteringEngine } = await import('@/lib/season-planning/clustering-engine');
     const engine = new SeasonClusteringEngine(
       's0000000-0000-0000-0000-000000000001',
-      'c0000000-0000-0000-0000-000000000001'
+      'c0000000-0000-0000-0000-000000000001',
+      undefined,
+      repoStub
     );
 
     const merged = (await (

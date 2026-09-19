@@ -7,23 +7,24 @@
  *  3. requireClubMembership default (true): matching membership + role whitelist
  *  4. requireClubMembership = false: role-only path
  *
- * Mocks `@/src/infrastructure/persistence/db` so the helper is tested in
+ * Mocks `@/infrastructure/db` (getUserDb/systemDb) so the helper is tested in
  * isolation — no Supabase fixture required.
  */
 
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 
-// ── Mock the DB BEFORE the helper import resolves. The helper imports
-//    `db` from the persistence barrel; this mock intercepts that import.
-vi.mock('@/src/infrastructure/persistence/db', () => ({
-  db: {
-    select: vi.fn(),
-  },
-}));
+// ── Mock the DB access BEFORE the helper import resolves. Both getUserDb and
+//    systemDb hand out the same fake client; its seasons query is steered per test.
+const maybeSingle = vi.hoisted(() => vi.fn());
+vi.mock('@/infrastructure/db', () => {
+  const client = {
+    from: () => ({ select: () => ({ eq: () => ({ maybeSingle }) }) }),
+  };
+  return { getUserDb: () => client, systemDb: () => client };
+});
 
-import { authorizeSeasonAccess, loadSeasonRow } from '@/lib/season-auth';
+import { authorizeSeasonAccess } from '@/lib/season-auth';
 import type { AuthContext } from '@/lib/api-auth';
-import { db } from '@/src/infrastructure/persistence/db';
 
 // ── Test fixtures
 const SEASON_UUID = '11111111-1111-1111-1111-111111111111';
@@ -49,15 +50,9 @@ function makeAuth(
   } as unknown as AuthContext;
 }
 
-/**
- * Make the mocked `db.select().from(...).where(...).limit(1)` chain resolve
- * to `[row]`. The helper uses exactly this shape.
- */
+/** Lets the fake seasons query resolve to `row` (or "not found"). */
 function mockSeasonRow(row: { id: string; club_id: string } | null): void {
-  const limit = vi.fn().mockResolvedValue(row ? [row] : []);
-  const where = vi.fn().mockReturnValue({ limit });
-  const from = vi.fn().mockReturnValue({ where });
-  vi.mocked(db.select).mockReturnValue({ from } as never);
+  maybeSingle.mockResolvedValue({ data: row, error: null });
 }
 
 beforeEach(() => {
@@ -82,10 +77,7 @@ describe('authorizeSeasonAccess — season lookup', () => {
   });
 
   it('returns 500 when the DB throws', async () => {
-    const limit = vi.fn().mockRejectedValue(new Error('connection refused'));
-    const where = vi.fn().mockReturnValue({ limit });
-    const from = vi.fn().mockReturnValue({ where });
-    vi.mocked(db.select).mockReturnValue({ from } as never);
+    maybeSingle.mockRejectedValue(new Error('connection refused'));
 
     const result = await authorizeSeasonAccess(makeAuth('admin'), SEASON_UUID);
     expect(result.ok).toBe(false);
@@ -211,24 +203,5 @@ describe('authorizeSeasonAccess — role-only mode', () => {
     });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.response.status).toBe(403);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────
-// loadSeasonRow (no auth check) — sanity
-// ─────────────────────────────────────────────────────────────────────
-describe('loadSeasonRow', () => {
-  it('returns the season row on hit', async () => {
-    mockSeasonRow({ id: SEASON_UUID, club_id: CLUB_A });
-    const result = await loadSeasonRow(SEASON_UUID);
-    expect(result.ok).toBe(true);
-    if (result.ok) expect(result.season.club_id).toBe(CLUB_A);
-  });
-
-  it('returns 404 on miss', async () => {
-    mockSeasonRow(null);
-    const result = await loadSeasonRow(SEASON_UUID);
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.response.status).toBe(404);
   });
 });

@@ -14,15 +14,10 @@
  * before they become real-world consequences.
  */
 
-import { eq, inArray, and, isNotNull } from 'drizzle-orm';
-import { db } from '@/src/infrastructure/persistence/db';
 import {
-  seasons,
-  seasonPlanEntries,
-  sessions as sessionsTable,
-  sessionRsvps,
-  clubs,
-} from '@/src/infrastructure/persistence/schema';
+  clusteringRepositoryFor,
+  type SeasonClusteringRepository,
+} from '@/infrastructure/persistence/repositories/season-clustering.repository';
 import { conflictRepositoryFor } from '@/infrastructure/persistence/repositories/conflict-detection.repository';
 import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
 import { SeasonBillingService } from '@/application/services/season-billing.service';
@@ -654,7 +649,10 @@ export function simulateSessionBuckets(
  * Returns an empty array on failure (caller treats this as "no published
  * state" → all buckets become `would_create`).
  */
-async function loadPublishedSessionsForDiff(seasonId: string): Promise<
+async function loadPublishedSessionsForDiff(
+  seasonId: string,
+  repo: SeasonClusteringRepository
+): Promise<
   Array<{
     id: string;
     timeslotStart: string;
@@ -666,40 +664,10 @@ async function loadPublishedSessionsForDiff(seasonId: string): Promise<
   }>
 > {
   try {
-    const rows = await db
-      .select({
-        id: sessionsTable.id,
-        timeslotStart: sessionsTable.timeslot_start,
-        trainerId: sessionsTable.trainer_id,
-        courtId: sessionsTable.court_id,
-        dayOfWeek: seasonPlanEntries.day_of_week,
-        groupId: seasonPlanEntries.group_id,
-        startTime: seasonPlanEntries.start_time,
-      })
-      .from(seasonPlanEntries)
-      .innerJoin(sessionsTable, eq(sessionsTable.id, seasonPlanEntries.published_session_id))
-      .where(
-        and(
-          eq(seasonPlanEntries.season_id, seasonId),
-          isNotNull(seasonPlanEntries.published_session_id)
-        )
-      );
-
-    return rows.map((r) => {
-      const ts =
-        r.timeslotStart instanceof Date ? r.timeslotStart.toISOString() : String(r.timeslotStart);
-      return {
-        id: r.id,
-        timeslotStart: ts,
-        trainerId: r.trainerId,
-        courtId: r.courtId,
-        dayOfWeek: r.dayOfWeek,
-        groupId: r.groupId,
-        // Drizzle's time() column comes back as a string "HH:MM:SS" — keep it
-        // verbatim so computeDryRunDiff can normalize it to "HH:00".
-        startTime: String(r.startTime ?? '00:00:00'),
-      };
-    });
+    const rows = await repo.publishedSessionsForDiff(seasonId);
+    // `time`-Spalte kommt als "HH:MM:SS" — unverändert lassen, computeDryRunDiff
+    // normalisiert auf "HH:00".
+    return rows.map((r) => ({ ...r, startTime: String(r.startTime ?? '00:00:00') }));
   } catch (err) {
     log.warn('[DryRun] loadPublishedSessionsForDiff failed:', err);
     return [];
@@ -713,31 +681,24 @@ async function loadPublishedSessionsForDiff(seasonId: string): Promise<
  * Returns `null` when there are no published sessions or RSVPs yet
  * (e.g. first publish of a brand-new season).
  */
-async function loadRsvpDistribution(seasonId: string): Promise<DryRunRsvpDistribution | null> {
+async function loadRsvpDistribution(
+  seasonId: string,
+  repo: SeasonClusteringRepository
+): Promise<DryRunRsvpDistribution | null> {
   try {
-    const sessionRows = await db
-      .select({ id: sessionsTable.id })
-      .from(sessionsTable)
-      .where(eq(sessionsTable.schedule_id, seasonId));
-    // Note: sessions table links to schedules, not seasons directly.
-    // The most reliable link is schedule_id (= season's id) because the
-    // publish flow creates a new schedule per season. If that's empty,
-    // we fall back to selecting all RSVPs from this club via a richer query.
-    if (sessionRows.length === 0) {
+    // Einheiten hängen über schedule_id (= Saison-ID, das Veröffentlichen legt je
+    // Saison einen Schedule an) an der Saison.
+    const { sessionCount, rows } = await repo.rsvpStatuses(seasonId);
+    if (sessionCount === 0) {
       return null;
     }
-    const sessionIds = sessionRows.map((s) => s.id);
-    const rsvpRows = await db
-      .select({ status: sessionRsvps.status })
-      .from(sessionRsvps)
-      .where(inArray(sessionRsvps.session_id, sessionIds));
-    const dist = aggregateRsvpRows(rsvpRows);
+    const dist = aggregateRsvpRows(rows);
     return {
       ...dist,
-      sessionSampleSize: sessionIds.length,
+      sessionSampleSize: sessionCount,
     };
   } catch (err) {
-    // The table might not exist yet, or the join may fail in dev — non-fatal.
+    // Non-fatal — Vorhersage entfällt.
     log.warn('[DryRun] RSVP distribution load failed:', err);
     return null;
   }
@@ -749,20 +710,18 @@ async function loadRsvpDistribution(seasonId: string): Promise<DryRunRsvpDistrib
  */
 export async function runSeasonDryRun(
   seasonId: string,
-  auth: AuthContext
+  auth: AuthContext,
+  repo: SeasonClusteringRepository = clusteringRepositoryFor(auth)
 ): Promise<DryRunReport | DryRunError> {
   try {
     // 1. Load season
-    const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
+    const season = await repo.findSeason(seasonId);
     if (!season) {
       return { ok: false, error: 'Saison nicht gefunden', code: 'season_not_found' };
     }
 
     // 2. Load entries
-    const entries = await db
-      .select()
-      .from(seasonPlanEntries)
-      .where(eq(seasonPlanEntries.season_id, seasonId));
+    const entries = await repo.planEntries(seasonId);
 
     if (entries.length === 0) {
       return {
@@ -776,12 +735,7 @@ export async function runSeasonDryRun(
     let holidays: Holiday[] = [];
     let bundesland: string | null = null;
     try {
-      const [club] = await db
-        .select({ bundesland: clubs.bundesland })
-        .from(clubs)
-        .where(eq(clubs.id, season.club_id))
-        .limit(1);
-      bundesland = club?.bundesland ?? null;
+      bundesland = await repo.clubBundesland(season.club_id);
       if (bundesland) {
         const code = resolveBundeslandCode(bundesland);
         holidays = await loadHolidaysForState(code);
@@ -859,13 +813,13 @@ export async function runSeasonDryRun(
 
     // 7b. RSVP distribution across the season's already-published sessions.
     //     Forecasts the attendance mix the new sessions will likely see.
-    const rsvpDistribution = await loadRsvpDistribution(seasonId);
+    const rsvpDistribution = await loadRsvpDistribution(seasonId, repo);
 
     // 7c. Dry-Run Diff vs. currently published plan (P2.22). `null` when
     //     the season has never been published (first publish → no diff).
     let diff: DryRunDiff | null = null;
     try {
-      const publishedSessions = await loadPublishedSessionsForDiff(seasonId);
+      const publishedSessions = await loadPublishedSessionsForDiff(seasonId, repo);
       diff = computeDryRunDiff(
         sim.buckets.map((b) => ({
           groupId: b.groupId,
@@ -980,14 +934,8 @@ export async function runSeasonDryRun(
         id: season.id,
         name: season.name,
         clubId: season.club_id,
-        startDate:
-          season.start_date instanceof Date
-            ? season.start_date.toISOString().slice(0, 10)
-            : String(season.start_date).slice(0, 10),
-        endDate:
-          season.end_date instanceof Date
-            ? season.end_date.toISOString().slice(0, 10)
-            : String(season.end_date).slice(0, 10),
+        startDate: String(season.start_date).slice(0, 10),
+        endDate: String(season.end_date).slice(0, 10),
         seasonType: season.season_type,
         bundesland,
       },

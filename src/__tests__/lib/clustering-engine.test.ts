@@ -21,294 +21,63 @@ const h = vi.hoisted(() => {
     updatedSeasons: [] as any[],
   };
 
-  // Dispatch data based on a __table sentinel (set in the schema mock below).
-  const dispatchTable = (table: any): any[] => {
-    const name = table?.__table;
-    if (!name) return [];
-    switch (name) {
-      case 'courts':
-        return state.courts;
-      case 'groups':
-        return state.groups;
-      case 'trainers':
-        return state.trainers;
-      case 'users':
-        return state.members;
-      case 'userTrainingPreferences':
-        return state.members;
-      case 'userClubMemberships':
-        return state.memberships;
-      case 'trainerFeedback':
-        return state.feedback;
-      case 'seasonStatistics':
-        return state.stats;
-      case 'seasonPlanningConfigs':
-        return state.config ? [state.config] : [];
-      case 'seasons':
-        return state.seasons;
-      case 'seasonPlanEntries':
-        return state.planEntries;
-      case 'memberSchedulePreferences':
-        return state.baselinePrefs;
-      case 'clubs':
-        return state.clubs;
-      default:
-        return [];
-    }
-  };
-
-  // Thenable chain: every method returns the same chain (or a new chain via from/join),
-  // and awaiting the chain at any point resolves with the data for the most recently
-  // set table. This mirrors Drizzle's query-builder semantics.
-  const makeSelectChain = () => {
-    let currentTable: any = null;
-    const chain: any = {
-      from: (t: any) => {
-        currentTable = t;
-        return chain;
-      },
-      innerJoin: (t: any) => {
-        currentTable = t;
-        return chain;
-      },
-      leftJoin: (t: any) => {
-        currentTable = t;
-        return chain;
-      },
-      where: () => chain,
-      orderBy: () => chain,
-      limit: () => chain,
-      groupBy: () => chain,
-      then: (resolve: any, reject: any) => {
-        const result = dispatchTable(currentTable);
-        return Promise.resolve(result).then(resolve, reject);
-      },
-    };
-    return chain;
-  };
-
-  return { state, makeSelectChain };
+  return { state };
 });
 
-// ═══ Mock the Supabase service client ═══════════════════════════════════
-// The engine loads `groups` over Supabase REST, not Drizzle (see
-// clustering-engine.ts loadGroups). Mocking only the Drizzle module let those
-// calls escape to the live database, where the non-UUID fixture ids ('c1')
-// failed with "invalid input syntax for type uuid".
-vi.mock('@/lib/supabase/service', () => ({
-  createServiceClient: () => {
-    const chain: any = {
-      from: () => chain,
-      select: () => chain,
-      eq: () => chain,
-      then: (resolve: any, reject: any) =>
-        Promise.resolve({ data: h.state.groups, error: null }).then(resolve, reject),
-    };
-    return chain;
+// ═══ Repository-Fake ════════════════════════════════════════════════════
+// Die Engine liest und schreibt ausschliesslich über SeasonClusteringRepository
+// (ADR-005). Der Fake liefert die Zeilenform des echten Repositorys aus `h.state`.
+const fakeRepo = {
+  findSeason: async () => h.state.seasons[0] ?? null,
+  seasonIdsOfType: async () => h.state.seasons.map((s: any) => s.id),
+  clubBundesland: async () => null,
+  planningConfig: async () => h.state.config,
+  submittedMemberPrefs: async () => h.state.members,
+  baselineMemberPrefs: async () => h.state.baselinePrefs,
+  activeMemberships: async () => h.state.memberships,
+  userProfiles: async () => [],
+  trainerFeedback: async () => h.state.feedback,
+  submittedTrainerPrefs: async () => [],
+  activeClubTrainers: async () => h.state.trainers,
+  activeTrainersByMembership: async () => [],
+  activeClosures: async () => [],
+  trainingCourts: async () => h.state.courts,
+  activeGroups: async () => h.state.groups,
+  seasonStatistics: async () => h.state.stats,
+  planEntries: async () => h.state.planEntries,
+  futureSessionIdsOfSeason: async () => [],
+  deleteSessionsWithBookings: async () => {},
+  deletePlanEntries: async () => {},
+  deleteWaitlists: async () => {},
+  renameGroup: async () => {},
+  insertGroup: async (row: any) => {
+    h.state.insertedGroups.push(row);
+    return `inserted-${h.state.insertedGroups.length}`;
   },
-}));
-
-// ═══ Mock the DB module ══════════════════════════════════════════════════
-vi.mock('@/src/infrastructure/persistence/db', () => ({
-  db: {
-    select: vi.fn(() => h.makeSelectChain()),
-    insert: vi.fn((table: any) => ({
-      values: (rows: any) => {
-        const arr = Array.isArray(rows) ? rows : [rows];
-        for (const r of arr) {
-          if (r.member_id !== undefined && table?.__table === 'seasonWaitlists') {
-            h.state.insertedWaitlist.push(r);
-          } else if (r.trainer_id !== undefined && table?.__table === 'seasonPlanEntries') {
-            h.state.insertedPlanEntries.push(r);
-          } else if (r.name !== undefined && r.level !== undefined) {
-            h.state.insertedGroups.push(r);
-          }
-        }
-        return {
-          returning: async (_cols?: any) =>
-            arr.map((r: any, i: number) => ({
-              id: r.id ?? `inserted-${h.state.insertedGroups.length}-${i}`,
-              name: r.name,
-              level: r.level,
-              age_group: r.age_group,
-            })),
-        };
-      },
-    })),
-    update: vi.fn(() => ({
-      set: (values: any) => ({
-        where: async (_cond: any) => {
-          h.state.updatedSeasons.push(values);
-          return { rowCount: 1 };
-        },
-      }),
-    })),
-    delete: vi.fn(() => ({
-      where: async () => ({ rowCount: 0 }),
-    })),
+  insertPlanEntries: async (rows: any[]) => {
+    h.state.insertedPlanEntries.push(...rows);
   },
-}));
-
-// ═══ Mock the schema modules with __table sentinels for dispatch ════════
-vi.mock('@/src/infrastructure/persistence/schema', () => ({
-  seasons: {
-    __table: 'seasons',
-    id: 'id',
-    club_id: 'club_id',
-    season_type: 'season_type',
-    year: 'year',
+  insertWaitlist: async (rows: any[]) => {
+    h.state.insertedWaitlist.push(...rows);
   },
-  users: {
-    __table: 'users',
-    id: 'id',
-    full_name: 'full_name',
-    email: 'email',
-    experience_months: 'experience_months',
-    skill_level: 'skill_level',
+  updateSeason: async (_id: string, patch: any) => {
+    h.state.updatedSeasons.push(patch);
   },
-  trainers: {
-    __table: 'trainers',
-    id: 'id',
-    user_id: 'user_id',
-    name: 'name',
-    email: 'email',
-    max_hours_per_week: 'max_hours_per_week',
-    specialties: 'specialties',
-    is_active: 'is_active',
-  },
-  userTrainingPreferences: {
-    __table: 'userTrainingPreferences',
-    id: 'id',
-    season_id: 'season_id',
-    user_id: 'user_id',
-    club_id: 'club_id',
-    user_role: 'user_role',
-    is_submitted: 'is_submitted',
-    preferred_level: 'preferred_level',
-    preferred_age_group: 'preferred_age_group',
-    weekly_availability: 'weekly_availability',
-    wish_partner_ids: 'wish_partner_ids',
-    avoid_member_ids: 'avoid_member_ids',
-    self_assessed_level: 'self_assessed_level',
-    max_sessions_per_week: 'max_sessions_per_week',
-    preferred_court_ids: 'preferred_court_ids',
-    can_teach_groups: 'can_teach_groups',
-  },
-  groups: {
-    __table: 'groups',
-    id: 'id',
-    club_id: 'club_id',
-    name: 'name',
-    level: 'level',
-    age_group: 'age_group',
-    is_active: 'is_active',
-    member_ids: 'member_ids',
-  },
-  courts: {
-    __table: 'courts',
-    id: 'id',
-    club_id: 'club_id',
-    name: 'name',
-    surface: 'surface',
-    is_active: 'is_active',
-  },
-  seasonPlanEntries: {
-    __table: 'seasonPlanEntries',
-    id: 'id',
-    season_id: 'season_id',
-    club_id: 'club_id',
-    trainer_id: 'trainer_id',
-    court_id: 'court_id',
-    group_id: 'group_id',
-    day_of_week: 'day_of_week',
-    start_time: 'start_time',
-    end_time: 'end_time',
-    duration_minutes: 'duration_minutes',
-  },
-  userClubMemberships: {
-    __table: 'userClubMemberships',
-    user_id: 'user_id',
-    club_id: 'club_id',
-    role: 'role',
-    is_active: 'is_active',
-  },
-  trainerClubs: {
-    __table: 'trainerClubs',
-    trainer_id: 'trainer_id',
-    club_id: 'club_id',
-  },
-  memberSchedulePreferences: {
-    __table: 'memberSchedulePreferences',
-    id: 'id',
-    user_id: 'user_id',
-    club_id: 'club_id',
-    weekly_availability: 'weekly_availability',
-    wish_partner_ids: 'wish_partner_ids',
-  },
-  clubs: {
-    __table: 'clubs',
-    id: 'id',
-    bundesland: 'bundesland',
-  },
-}));
-
-vi.mock('@/src/infrastructure/persistence/season-planning-schema', () => ({
-  seasonWaitlists: {
-    __table: 'seasonWaitlists',
-    id: 'id',
-    season_id: 'season_id',
-    member_id: 'member_id',
-    group_id: 'group_id',
-    position: 'position',
-  },
-  trainerFeedback: {
-    __table: 'trainerFeedback',
-    id: 'id',
-    season_id: 'season_id',
-    member_id: 'member_id',
-    group_id: 'group_id',
-    ready_for_next_level: 'ready_for_next_level',
-    recommended_level: 'recommended_level',
-    attendance_quote: 'attendance_quote',
-  },
-  seasonStatistics: {
-    __table: 'seasonStatistics',
-    id: 'id',
-    club_id: 'club_id',
-    slot_failure_rates: 'slot_failure_rates',
-    computed_at: 'computed_at',
-  },
-  seasonPlanningConfigs: {
-    __table: 'seasonPlanningConfigs',
-    id: 'id',
-    club_id: 'club_id',
-    season_id: 'season_id',
-    max_niveau_span_beginner_months: 'max_niveau_span_beginner_months',
-    max_niveau_span_advanced_months: 'max_niveau_span_advanced_months',
-    trainer_utilization_max_pct: 'trainer_utilization_max_pct',
-    group_max_size: 'group_max_size',
-    group_min_size: 'group_min_size',
-    proven_group_attendance_threshold_pct: 'proven_group_attendance_threshold_pct',
-    slot_failure_rate_threshold_pct: 'slot_failure_rate_threshold_pct',
-    waitlist_priority_rule: 'waitlist_priority_rule',
-    prefer_historic_groups: 'prefer_historic_groups',
-    avoid_high_failure_slots: 'avoid_high_failure_slots',
-    treat_high_failure_as_hard: 'treat_high_failure_as_hard',
-    backtrack_depth: 'backtrack_depth',
-    kids_group_max_size: 'kids_group_max_size',
-    kids_group_min_size: 'kids_group_min_size',
-    slot_duration_minutes: 'slot_duration_minutes',
-  },
-}));
-
-vi.mock('drizzle-orm', () => ({
-  and: vi.fn((...args) => ({ __and: args })),
-  eq: vi.fn((a: any, b: any) => ({ __eq: [a, b] })),
-  asc: vi.fn((a: any) => ({ __asc: a })),
-}));
+} as any;
 
 // ═══ Import engine AFTER all mocks are registered ════════════════════════
-import { SeasonClusteringEngine } from '@/lib/season-planning/clustering-engine';
+import { SeasonClusteringEngine as RealEngine } from '@/lib/season-planning/clustering-engine';
+
+/** Engine mit dem Repository-Fake — die Testfälle konstruieren weiter mit (Saison, Verein, Config). */
+class SeasonClusteringEngine extends RealEngine {
+  constructor(
+    seasonId: string,
+    clubId: string,
+    config?: ConstructorParameters<typeof RealEngine>[2]
+  ) {
+    super(seasonId, clubId, config, fakeRepo);
+  }
+}
 import type {
   MemberWithDetails,
   TrainerWithDetails,

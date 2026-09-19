@@ -11,7 +11,7 @@
  * │   2. const isAdmin = await verifyRole(auth, 'admin')                   │
  * │   3. const isSuperadmin = await verifyRole(auth, 'superadmin')         │
  * │   4. if (!isAdmin && !isSuperadmin) return forbiddenResponse(...)      │
- * │   5. const [season] = await db.select().from(seasons).where(...)      │
+ * │   5. Saison laden (RLS-Client; Owner über systemDb)                    │
  * │   6. if (!season) return 404                                            │
  * │   7. if (!isSuperadmin && !memberships.some(...)) return forbidden     │
  * │                                                                        │
@@ -45,9 +45,8 @@
  */
 
 import { NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
-import { db } from '@/src/infrastructure/persistence/db';
-import { seasons } from '@/src/infrastructure/persistence/schema';
+import type { Tables } from '@/types/supabase';
+import { getUserDb, systemDb } from '@/infrastructure/db';
 import { type AuthContext, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 
 // ───────────────────────────────────────────────────────────────────────
@@ -78,7 +77,7 @@ export interface AuthorizeSeasonAccessOptions {
 export interface SeasonAccessGranted {
   ok: true;
   /** The resolved season row from the DB. */
-  season: typeof seasons.$inferSelect;
+  season: Tables<'seasons'>;
   /**
    * The role the caller effectively plays FOR THIS SEASON (NOT their global
    * role). Use this in business logic to branch read/write behavior — e.g.
@@ -127,13 +126,19 @@ export async function authorizeSeasonAccess(
     };
   }
 
-  let season: typeof seasons.$inferSelect | null = null;
+  // ADR-005: Nutzer lesen die Saison mit RLS (fremde Vereine sind unsichtbar → 404);
+  // Owner haben keine Membership, für sie systemDb.
+  let season: Tables<'seasons'> | null = null;
   try {
-    const [row] = await db.select().from(seasons).where(eq(seasons.id, seasonId)).limit(1);
-    season = row ?? null;
+    const client =
+      auth.role === 'owner'
+        ? systemDb('Owner: Saison-Zugriffsprüfung aller Vereine')
+        : getUserDb(auth);
+    const { data, error } = await client.from('seasons').select().eq('id', seasonId).maybeSingle();
+    if (error) throw new Error(error.message);
+    season = data;
   } catch {
-    // DB error → 500-shaped response, but go through forbiddenResponse to keep
-    // a single error wire format.
+    // DB error → 500-shaped response, single error wire format.
     return {
       ok: false,
       response: NextResponse.json({ error: 'Season lookup failed' }, { status: 500 }),
@@ -224,32 +229,4 @@ function pickEffectiveRole(
     if (allowed.includes(m.role as SeasonAccessRole)) return m.role as SeasonAccessRole;
   }
   return auth.role;
-}
-
-// ───────────────────────────────────────────────────────────────────────
-// Convenience helper: lookup-season-only (used by routes that don't need
-// authorization at the route level, e.g. those that authenticate at a
-// different envelope like the public trial-training form).
-// ───────────────────────────────────────────────────────────────────────
-
-/** Returns the season row or a 404 response. No auth check. */
-export async function loadSeasonRow(
-  seasonId: string
-): Promise<
-  { ok: true; season: typeof seasons.$inferSelect } | { ok: false; response: NextResponse }
-> {
-  if (!seasonId || typeof seasonId !== 'string') {
-    return {
-      ok: false,
-      response: NextResponse.json({ error: 'Season not found' }, { status: 404 }),
-    };
-  }
-  const [row] = await db.select().from(seasons).where(eq(seasons.id, seasonId)).limit(1);
-  if (!row) {
-    return {
-      ok: false,
-      response: NextResponse.json({ error: 'Season not found' }, { status: 404 }),
-    };
-  }
-  return { ok: true, season: row };
 }
