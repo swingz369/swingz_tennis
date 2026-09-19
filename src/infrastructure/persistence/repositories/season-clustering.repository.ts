@@ -9,9 +9,10 @@
  */
 import 'server-only';
 import type { AuthContext } from '@/lib/api-auth';
-import type { Tables, TablesInsert, TablesUpdate } from '@/types/supabase';
+import type { Json, Tables, TablesUpdate } from '@/types/supabase';
 import { getUserDb, systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
+import { fetchAll, fetchAllIn } from './paged';
 
 const log = createLogger('infrastructure:season-clustering.repository');
 
@@ -23,29 +24,12 @@ export type UserBrief = Pick<
   'full_name' | 'email' | 'experience_months' | 'skill_level' | 'date_of_birth'
 >;
 
-const CHUNK = 100;
-
 function ok<T>(res: { data: T; error: { message: string } | null }, action: string): T {
   if (res.error) {
     log.error(action, new Error(res.error.message));
     throw new Error(action);
   }
   return res.data;
-}
-
-async function inChunks<T>(
-  ids: string[],
-  fetchChunk: (
-    chunk: string[]
-  ) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
-  action: string,
-  size = CHUNK
-): Promise<T[]> {
-  const out: T[] = [];
-  for (let i = 0; i < ids.length; i += size) {
-    out.push(...(ok(await fetchChunk(ids.slice(i, i + size)), action) ?? []));
-  }
-  return out;
 }
 
 /** `timestamp without time zone` kommt ohne Offset — als UTC lesen wie zuvor Drizzle. */
@@ -82,13 +66,15 @@ export class SeasonClusteringRepository {
 
   /** Saisons desselben Typs im Verein, aufsteigend nach Jahr (Vorsaison-Ermittlung). */
   async seasonIdsOfType(clubId: string, seasonType: string): Promise<string[]> {
-    const rows = ok(
-      await this.db
-        .from('seasons')
-        .select('id')
-        .eq('club_id', clubId)
-        .eq('season_type', seasonType)
-        .order('year', { ascending: true }),
+    const rows = await fetchAll(
+      () =>
+        this.db
+          .from('seasons')
+          .select('id')
+          .eq('club_id', clubId)
+          .eq('season_type', seasonType)
+          .order('year', { ascending: true })
+          .order('id'),
       'Lesen der Saisons fehlgeschlagen'
     );
     return (rows ?? []).map((r) => r.id);
@@ -118,7 +104,7 @@ export class SeasonClusteringRepository {
   // ── Mitglieder ─────────────────────────────────────────────────────────
 
   private async usersById(ids: string[]): Promise<Map<string, UserBrief & { id: string }>> {
-    const rows = await inChunks(
+    const rows = await fetchAllIn(
       ids,
       (chunk) =>
         this.db
@@ -152,13 +138,15 @@ export class SeasonClusteringRepository {
 
   /** Eingereichte Saison-Präferenzen der Mitglieder samt Nutzerdaten. */
   async submittedMemberPrefs(seasonId: string) {
-    const prefs = ok(
-      await this.db
-        .from('user_training_preferences')
-        .select()
-        .eq('season_id', seasonId)
-        .eq('is_submitted', true)
-        .eq('user_role', 'member'),
+    const prefs = await fetchAll(
+      () =>
+        this.db
+          .from('user_training_preferences')
+          .select()
+          .eq('season_id', seasonId)
+          .eq('is_submitted', true)
+          .eq('user_role', 'member')
+          .order('id'),
       'Lesen der Präferenzen fehlgeschlagen'
     );
     return this.withUsers(prefs ?? []);
@@ -166,8 +154,8 @@ export class SeasonClusteringRepository {
 
   /** Vereinsweite Wunschzeiten (member_schedule_preferences) samt Nutzerdaten. */
   async baselineMemberPrefs(clubId: string) {
-    const prefs = ok(
-      await this.db.from('member_schedule_preferences').select().eq('club_id', clubId),
+    const prefs = await fetchAll(
+      () => this.db.from('member_schedule_preferences').select().eq('club_id', clubId).order('id'),
       'Lesen der Wunschzeiten fehlgeschlagen'
     );
     return this.withUsers(prefs ?? []);
@@ -175,14 +163,16 @@ export class SeasonClusteringRepository {
 
   async activeMemberships(clubId: string) {
     return (
-      ok(
-        await this.db
-          .from('user_club_memberships')
-          .select('user_id, role, include_in_planning')
-          .eq('club_id', clubId)
-          .eq('is_active', true),
+      (await fetchAll(
+        () =>
+          this.db
+            .from('user_club_memberships')
+            .select('user_id, role, include_in_planning')
+            .eq('club_id', clubId)
+            .eq('is_active', true)
+            .order('id'),
         'Lesen der Mitgliedschaften fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
@@ -193,10 +183,10 @@ export class SeasonClusteringRepository {
 
   async trainerFeedback(seasonId: string) {
     return (
-      ok(
-        await this.db.from('trainer_feedback').select().eq('season_id', seasonId),
+      (await fetchAll(
+        () => this.db.from('trainer_feedback').select().eq('season_id', seasonId).order('id'),
         'Lesen des Trainer-Feedbacks fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
@@ -205,18 +195,20 @@ export class SeasonClusteringRepository {
   /** Eingereichte Trainer-Präferenzen mit Nutzername und Trainerzeile (Inner-Join). */
   async submittedTrainerPrefs(seasonId: string) {
     const prefs =
-      ok(
-        await this.db
-          .from('user_training_preferences')
-          .select()
-          .eq('season_id', seasonId)
-          .eq('is_submitted', true)
-          .eq('user_role', 'trainer'),
+      (await fetchAll(
+        () =>
+          this.db
+            .from('user_training_preferences')
+            .select()
+            .eq('season_id', seasonId)
+            .eq('is_submitted', true)
+            .eq('user_role', 'trainer')
+            .order('id'),
         'Lesen der Trainer-Präferenzen fehlgeschlagen'
-      ) ?? [];
+      )) ?? [];
     const userIds = [...new Set(prefs.map((p) => p.user_id))];
     const users = await this.usersById(userIds);
-    const trainers = await inChunks(
+    const trainers = await fetchAllIn(
       userIds,
       (chunk) => this.db.from('trainers').select().in('user_id', chunk),
       'Lesen der Trainer fehlgeschlagen'
@@ -230,7 +222,7 @@ export class SeasonClusteringRepository {
   }
 
   private async activeTrainersByIds(ids: string[]): Promise<TrainerRow[]> {
-    const rows = await inChunks(
+    const rows = await fetchAllIn(
       ids,
       (chunk) => this.db.from('trainers').select().in('id', chunk).eq('is_active', true),
       'Lesen der Trainer fehlgeschlagen'
@@ -240,8 +232,8 @@ export class SeasonClusteringRepository {
 
   /** Aktive Trainer des Vereins über trainer_club. */
   async activeClubTrainers(clubId: string): Promise<TrainerRow[]> {
-    const links = ok(
-      await this.db.from('trainer_club').select('trainer_id').eq('club_id', clubId),
+    const links = await fetchAll(
+      () => this.db.from('trainer_club').select('trainer_id').eq('club_id', clubId),
       'Lesen der Trainer-Zuordnung fehlgeschlagen'
     );
     return this.activeTrainersByIds((links ?? []).map((l) => l.trainer_id));
@@ -249,16 +241,18 @@ export class SeasonClusteringRepository {
 
   /** Rückfall: aktive Trainer über Mitgliedschaft mit Rolle `trainer`. */
   async activeTrainersByMembership(clubId: string): Promise<TrainerRow[]> {
-    const ms = ok(
-      await this.db
-        .from('user_club_memberships')
-        .select('user_id')
-        .eq('club_id', clubId)
-        .eq('role', 'trainer')
-        .eq('is_active', true),
+    const ms = await fetchAll(
+      () =>
+        this.db
+          .from('user_club_memberships')
+          .select('user_id')
+          .eq('club_id', clubId)
+          .eq('role', 'trainer')
+          .eq('is_active', true)
+          .order('id'),
       'Lesen der Trainer-Mitgliedschaften fehlgeschlagen'
     );
-    const rows = await inChunks(
+    const rows = await fetchAllIn(
       (ms ?? []).map((m) => m.user_id),
       (chunk) => this.db.from('trainers').select().in('user_id', chunk).eq('is_active', true),
       'Lesen der Trainer fehlgeschlagen'
@@ -270,14 +264,16 @@ export class SeasonClusteringRepository {
 
   async activeClosures(clubId: string) {
     return (
-      ok(
-        await this.db
-          .from('court_closures')
-          .select('court_id, start_date, end_date')
-          .eq('club_id', clubId)
-          .eq('is_active', true),
+      (await fetchAll(
+        () =>
+          this.db
+            .from('court_closures')
+            .select('court_id, start_date, end_date')
+            .eq('club_id', clubId)
+            .eq('is_active', true)
+            .order('id'),
         'Lesen der Platzsperren fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
@@ -294,36 +290,40 @@ export class SeasonClusteringRepository {
 
   async activeGroups(clubId: string) {
     return (
-      ok(
-        await this.db
-          .from('groups')
-          .select('id, name, level, age_group, max_size')
-          .eq('club_id', clubId)
-          .eq('is_active', true),
+      (await fetchAll(
+        () =>
+          this.db
+            .from('groups')
+            .select('id, name, level, age_group, max_size')
+            .eq('club_id', clubId)
+            .eq('is_active', true)
+            .order('id'),
         'Lesen der Gruppen fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
   async seasonStatistics(clubId: string) {
     return (
-      ok(
-        await this.db
-          .from('season_statistics')
-          .select()
-          .eq('club_id', clubId)
-          .order('computed_at', { ascending: true }),
+      (await fetchAll(
+        () =>
+          this.db
+            .from('season_statistics')
+            .select()
+            .eq('club_id', clubId)
+            .order('computed_at', { ascending: true })
+            .order('id'),
         'Lesen der Saisonstatistik fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
   async planEntries(seasonId: string): Promise<PlanEntry[]> {
     return (
-      ok(
-        await this.db.from('season_plan_entries').select().eq('season_id', seasonId),
+      (await fetchAll(
+        () => this.db.from('season_plan_entries').select().eq('season_id', seasonId).order('id'),
         'Lesen der Planeinträge fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
@@ -331,17 +331,18 @@ export class SeasonClusteringRepository {
 
   /** Planeinträge mit veröffentlichter Einheit (Inner-Join auf sessions). */
   async publishedSessionsForDiff(seasonId: string) {
-    const entries =
-      ok(
-        await this.db
+    const entries = await fetchAll(
+      () =>
+        this.db
           .from('season_plan_entries')
           .select('day_of_week, group_id, start_time, published_session_id')
           .eq('season_id', seasonId)
-          .not('published_session_id', 'is', null),
-        'Lesen der veröffentlichten Planeinträge fehlgeschlagen'
-      ) ?? [];
+          .not('published_session_id', 'is', null)
+          .order('id'),
+      'Lesen der veröffentlichten Planeinträge fehlgeschlagen'
+    );
     const sessionIds = entries.map((e) => e.published_session_id as string);
-    const sessions = await inChunks(
+    const sessions = await fetchAllIn(
       sessionIds,
       (chunk) =>
         this.db.from('sessions').select('id, timeslot_start, trainer_id, court_id').in('id', chunk),
@@ -370,14 +371,14 @@ export class SeasonClusteringRepository {
   async rsvpStatuses(
     seasonId: string
   ): Promise<{ sessionCount: number; rows: { status: string }[] }> {
-    const sessions = ok(
-      await this.db.from('sessions').select('id').eq('schedule_id', seasonId),
+    const sessions = await fetchAll(
+      () => this.db.from('sessions').select('id').eq('schedule_id', seasonId).order('id'),
       'Lesen der Einheiten fehlgeschlagen'
     );
-    const ids = (sessions ?? []).map((s) => s.id);
-    const rsvps = await inChunks(
+    const ids = sessions.map((s) => s.id);
+    const rsvps = await fetchAllIn(
       ids,
-      (chunk) => this.db.from('session_rsvps').select('status').in('session_id', chunk),
+      (chunk) => this.db.from('session_rsvps').select('status').in('session_id', chunk).order('id'),
       'Lesen der Zusagen fehlgeschlagen'
     );
     return { sessionCount: ids.length, rows: rsvps };
@@ -385,94 +386,21 @@ export class SeasonClusteringRepository {
 
   // ── Schreiben (saveToDatabase) ─────────────────────────────────────────
 
-  /** IDs künftiger Einheiten, die an den Planeinträgen der Saison hängen. */
-  async futureSessionIdsOfSeason(seasonId: string): Promise<string[]> {
-    const entries = await this.planEntries(seasonId);
-    if (entries.length === 0) return [];
-    const now = new Date().toISOString();
-    const rows = await inChunks(
-      entries.map((e) => e.id),
-      (chunk) =>
-        this.db.from('sessions').select('id').in('plan_entry_id', chunk).gte('timeslot_start', now),
-      'Lesen der künftigen Einheiten fehlgeschlagen'
-    );
-    return rows.map((r) => r.id);
-  }
-
-  /** Löscht Buchungen und Einheiten in 500er-Blöcken (Parameterlimit). */
-  async deleteSessionsWithBookings(sessionIds: string[]): Promise<void> {
-    for (let i = 0; i < sessionIds.length; i += 500) {
-      const chunk = sessionIds.slice(i, i + 500);
-      ok(
-        await this.db.from('bookings').delete().in('session_id', chunk).select('id'),
-        'Löschen der Buchungen fehlgeschlagen'
-      );
-      ok(
-        await this.db.from('sessions').delete().in('id', chunk).select('id'),
-        'Löschen der Einheiten fehlgeschlagen'
-      );
-    }
-  }
-
-  async deletePlanEntries(seasonId: string): Promise<void> {
-    ok(
-      await this.db.from('season_plan_entries').delete().eq('season_id', seasonId).select('id'),
-      'Löschen der Planeinträge fehlgeschlagen'
-    );
-  }
-
-  async deleteWaitlists(seasonId: string): Promise<void> {
-    ok(
-      await this.db.from('season_waitlists').delete().eq('season_id', seasonId).select('id'),
-      'Löschen der Wartelisten fehlgeschlagen'
-    );
-  }
-
-  async renameGroup(groupId: string, name: string): Promise<void> {
-    ok(
-      await this.db.from('groups').update({ name }).eq('id', groupId).select('id'),
-      'Umbenennen der Gruppe fehlgeschlagen'
-    );
-  }
-
-  async insertGroup(input: TablesInsert<'groups'>): Promise<string> {
-    const row = ok(
-      await this.db.from('groups').insert(input).select('id').single(),
-      'Anlegen der Gruppe fehlgeschlagen'
-    );
-    if (!row) throw new Error('Anlegen der Gruppe fehlgeschlagen');
-    return row.id;
-  }
-
-  async insertPlanEntries(rows: TablesInsert<'season_plan_entries'>[]): Promise<void> {
-    if (rows.length === 0) return;
-    ok(
-      await this.db.from('season_plan_entries').insert(rows).select('id'),
-      'Speichern der Planeinträge fehlgeschlagen'
-    );
-  }
-
-  async insertWaitlist(rows: TablesInsert<'season_waitlists'>[]): Promise<void> {
-    if (rows.length === 0) return;
-    ok(
-      await this.db.from('season_waitlists').insert(rows).select('id'),
-      'Speichern der Warteliste fehlgeschlagen'
-    );
-  }
-
   // ── Auto-Planung (AutoPlanningService) ─────────────────────────────────
 
   /** Alle eingereichten Präferenzen der Saison (jede Rolle); der Name fehlt, wenn RLS den Nutzer verbirgt. */
   async submittedPrefsWithNames(seasonId: string) {
     const prefs =
-      ok(
-        await this.db
-          .from('user_training_preferences')
-          .select()
-          .eq('season_id', seasonId)
-          .eq('is_submitted', true),
+      (await fetchAll(
+        () =>
+          this.db
+            .from('user_training_preferences')
+            .select()
+            .eq('season_id', seasonId)
+            .eq('is_submitted', true)
+            .order('id'),
         'Lesen der Präferenzen fehlgeschlagen'
-      ) ?? [];
+      )) ?? [];
     const users = await this.usersById([...new Set(prefs.map((p) => p.user_id))]);
     return prefs.map((pref) => {
       const u = users.get(pref.user_id);
@@ -482,34 +410,49 @@ export class SeasonClusteringRepository {
 
   async activeCourts(clubId: string) {
     return (
-      ok(
-        await this.db.from('courts').select().eq('club_id', clubId).eq('is_active', true),
+      (await fetchAll(
+        () =>
+          this.db.from('courts').select().eq('club_id', clubId).eq('is_active', true).order('id'),
         'Lesen der Plätze fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
   async activeGroupRows(clubId: string) {
     return (
-      ok(
-        await this.db.from('groups').select().eq('club_id', clubId).eq('is_active', true),
+      (await fetchAll(
+        () =>
+          this.db.from('groups').select().eq('club_id', clubId).eq('is_active', true).order('id'),
         'Lesen der Gruppen fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
-  async insertPlanningConflicts(rows: TablesInsert<'planning_conflicts'>[]): Promise<void> {
-    if (rows.length === 0) return;
-    ok(
-      await this.db.from('planning_conflicts').insert(rows).select('id'),
-      'Speichern der Konflikte fehlgeschlagen'
-    );
-  }
-
-  async insertPlanningHistory(row: TablesInsert<'season_planning_history'>): Promise<void> {
-    ok(
-      await this.db.from('season_planning_history').insert(row).select('id'),
-      'Speichern des Planungsverlaufs fehlgeschlagen'
-    );
+  /**
+   * Speichert einen Planungslauf atomar (DB-Funktion `save_season_clustering`, eine Transaktion):
+   * künftige Einheiten verwerfen, Planeinträge/Wartelisten ersetzen, Gruppen anlegen bzw.
+   * umbenennen, Saison-Status setzen. Gibt die IDs der Gruppen je Schlüssel zurück.
+   */
+  async saveClustering(args: {
+    seasonId: string;
+    groups: Json;
+    entries: Json;
+    waitlist: Json;
+    conflicts?: Json;
+    history?: Json;
+  }): Promise<Record<string, string>> {
+    const data = ok(
+      await this.db.rpc('save_season_clustering', {
+        p_season_id: args.seasonId,
+        p_now: new Date().toISOString(),
+        p_groups: args.groups,
+        p_entries: args.entries,
+        p_waitlist: args.waitlist,
+        p_conflicts: args.conflicts ?? [],
+        p_history: args.history,
+      }),
+      'Speichern des Plans fehlgeschlagen'
+    ) as { groups: Record<string, string> } | null;
+    return data?.groups ?? {};
   }
 }

@@ -3022,43 +3022,34 @@ export class SeasonClusteringEngine {
   // ============================================
 
   private async saveToDatabase(result: ClusteringResult): Promise<void> {
-    // Eine Neuplanung löscht die Planeinträge. Bereits veröffentlichte Einheiten
-    // hängen per FK daran — aber mit ON DELETE SET NULL: sie verlieren nur ihren
-    // Verweis und bleiben samt Buchungen im Kalender stehen. Beim nächsten
-    // Veröffentlichen kollidieren sie dann mit den neuen Terminen auf demselben
-    // Platz, und der Vorgang scheitert mit einem rohen SQL-Fehler. Künftige
-    // Termine werden deshalb hier mit verworfen; stattgefundene bleiben Historie.
-    const staleIds = await this.repo.futureSessionIdsOfSeason(this.seasonId);
-    if (staleIds.length > 0) {
-      // ponytail: 500er-Blöcke wegen des Postgres-Parameterlimits, wie im
-      // Veröffentlichen-Pfad (im Repository).
-      await this.repo.deleteSessionsWithBookings(staleIds);
-      log.info('Neuplanung: künftige veröffentlichte Einheiten verworfen', {
-        seasonId: this.seasonId,
-        sessions: staleIds.length,
-      });
-    }
+    // Eine Neuplanung ersetzt Planeinträge und Wartelisten. Bereits veröffentlichte Einheiten
+    // hängen per FK daran (ON DELETE SET NULL): sie blieben samt Buchungen im Kalender stehen
+    // und kollidierten beim nächsten Veröffentlichen mit den neuen Terminen. Künftige Termine
+    // werden deshalb mit verworfen; stattgefundene bleiben Historie. Das alles — samt Anlegen
+    // neuer Gruppen — passiert atomar in `save_season_clustering`: ein Abbruch hinterlässt
+    // keinen Teilzustand.
 
-    // Delete existing plan entries for this season (re-planning)
-    await this.repo.deletePlanEntries(this.seasonId);
-
-    // Delete existing waitlists
-    await this.repo.deleteWaitlists(this.seasonId);
-
-    // Der "Einzeltraining …"-Name entsteht im Moment der Gruppenanlage, als die
-    // Gruppe noch aus einer Person bestand. Kommen später Teilnehmer dazu (zweite
-    // Runde, Backtracking), stand bisher der Name eines einzelnen Mitglieds über
-    // einer Vierergruppe — sichtbar für Trainer und alle Teilnehmer. Hier steht die
-    // endgültige Belegung fest, also wird der Name hier geradegezogen.
+    // Der "Einzeltraining …"-Name entsteht im Moment der Gruppenanlage, als die Gruppe noch aus
+    // einer Person bestand. Kommen später Teilnehmer dazu (zweite Runde, Backtracking), stand
+    // bisher der Name eines einzelnen Mitglieds über einer Vierergruppe — sichtbar für Trainer
+    // und alle Teilnehmer. Hier steht die endgültige Belegung fest, also wird der Name hier
+    // geradegezogen.
+    const groupPayload: {
+      key: string;
+      existing_id: string | null;
+      name?: string;
+      level?: string;
+      age_group?: string;
+    }[] = [];
+    const keyOf = new Map<ClusteringResult['groups'][number], string>();
     for (const [idx, g] of result.groups.entries()) {
       const isPlaceholder = g.groupId.startsWith(PLACEHOLDER_GROUP_PREFIX);
       let renamed: string | null = null;
       if (g.memberIds.length > 1 && g.groupName.startsWith('Einzeltraining ')) {
         const prefix = g.groupName.replace(/^Einzeltraining /, '').split(' — ')[0];
         renamed = `${prefix} Gruppe ${idx + 1}`;
-        // Die Warteliste referenziert Gruppen unten über den NAMEN. Ohne diesen
-        // Abgleich zeigte ein umbenannter Eintrag ins Leere und wurde mit
-        // group_id = '' geschrieben.
+        // Die Warteliste referenziert Gruppen unten über den NAMEN. Ohne diesen Abgleich zeigte
+        // ein umbenannter Eintrag ins Leere.
         const oldName = g.groupName;
         for (const w of result.waitlistSummary) {
           if (w.groupName === oldName) w.groupName = renamed;
@@ -3067,54 +3058,46 @@ export class SeasonClusteringEngine {
         g.groupName = renamed;
       }
 
-      if (!isPlaceholder) {
-        if (renamed) await this.repo.renameGroup(g.groupId, renamed);
-        continue;
+      const key = String(idx);
+      if (isPlaceholder) {
+        // Erst hier entsteht die Gruppe wirklich — der Rechenlauf hat nur einen Platzhalter
+        // erzeugt (siehe `pendingGroups`). Dry Runs und verworfene Multi-Start-Varianten legen
+        // so keine verwaisten Zeilen an.
+        const pending = this.pendingGroups.get(g.groupId);
+        groupPayload.push({
+          key,
+          existing_id: null,
+          name: g.groupName,
+          level: pending?.level ?? 'beginner',
+          age_group: pending?.ageGroup ?? 'adult',
+        });
+        keyOf.set(g, key);
+      } else if (realGroupId(g.groupId)) {
+        groupPayload.push({
+          key,
+          existing_id: g.groupId,
+          ...(renamed ? { name: renamed } : {}),
+        });
+        keyOf.set(g, key);
       }
-
-      // Erst hier entsteht die Gruppe wirklich — der Rechenlauf hat nur einen
-      // Platzhalter erzeugt (siehe `pendingGroups`). Damit legen Dry Runs und
-      // verworfene Multi-Start-Varianten keine verwaisten Zeilen mehr an.
-      const pending = this.pendingGroups.get(g.groupId);
-      const newGroupId = await this.repo.insertGroup({
-        club_id: this.clubId,
-        name: g.groupName,
-        level: pending?.level ?? 'beginner',
-        age_group: pending?.ageGroup ?? 'adult',
-        is_active: true,
-        member_ids: [],
-      });
-
-      // Planeinträge und Warteliste unten lesen `g.groupId` bzw. den Namen —
-      // beides zeigt ab hier auf die echte Zeile.
-      g.groupId = newGroupId;
     }
 
-    // Insert new plan entries
-    const entriesToInsert = result.groups.map((g) => ({
-      season_id: this.seasonId,
-      club_id: this.clubId,
+    const entries = result.groups.map((g) => ({
+      group_key: keyOf.get(g) ?? null,
       trainer_id: g.trainerId,
       court_id: g.courtId,
-      group_id: realGroupId(g.groupId),
       day_of_week: g.dayOfWeek,
       start_time: `${g.startTime}:00`,
       end_time: `${g.endTime}:00`,
       // Use configured slot duration instead of recomputing from HH:MM diff
       // (more robust against malformed times, single source of truth)
       duration_minutes: this.config.slotDurationMinutes,
-      starts_from_week: 1,
-      ends_at_week: null,
       // Q2-Audit (Punkt 11): eine Session mit genau 1 Teilnehmer ist ein Einzeltraining
-      // ('private_lesson' ist ein bereits vorhandener, DB-seitig erlaubter Wert — siehe
-      // CHECK-Constraint in season_planning_groups-Migration), kein "Gruppentraining
-      // mit 1 Person". Deckt Haupt-Pass, Second-Pass-Reste und Backtracking-Solo-
-      // Zuweisungen gleichermaßen ab, ohne dass jede Entstehungsstelle das explizit
-      // markieren muss.
+      // ('private_lesson' ist ein bereits vorhandener, DB-seitig erlaubter Wert), kein
+      // "Gruppentraining mit 1 Person". Deckt Haupt-Pass, Second-Pass-Reste und
+      // Backtracking-Solo-Zuweisungen gleichermaßen ab.
       entry_type: g.memberIds.length === 1 ? 'private_lesson' : 'training',
-      planning_source: 'auto',
-      // Q2-Audit (Punkt 11): individuelle Gruppenkapazität statt immer dem globalen
-      // Default — war zuvor blind this.config.groupMaxSize für ALLE Einträge.
+      // Q2-Audit (Punkt 11): individuelle Gruppenkapazität statt globalem Default.
       max_participants: g.maxSize,
       expected_participants: g.memberIds,
       preference_match_score:
@@ -3122,39 +3105,26 @@ export class SeasonClusteringEngine {
         Math.max(1, g.memberDetails.length),
       optimization_score: 0,
       conflict_score: g.warnings.length * 10,
-      status: 'planned',
     }));
 
-    await this.repo.insertPlanEntries(entriesToInsert);
-
-    // Insert waitlist entries.
-    //
-    // `season_waitlists.group_id` ist NOT NULL — ein Wartender wartet immer auf
-    // eine bestimmte Gruppe. Findet sich dazu keine echte Gruppe (etwa weil das
-    // Backtracking eine Ersatzgruppe ohne DB-Entsprechung erzeugt hat), lässt
-    // sich der Eintrag nicht speichern. Bis zum 16.08.2026 wurde in dem Fall ein
-    // leerer String eingesetzt, was den gesamten Speichervorgang abbrechen liess
-    // — mitsamt der bereits berechneten Planung. Solche Einträge werden jetzt
-    // übersprungen und gezählt, statt alles scheitern zu lassen.
+    // `season_waitlists.group_id` ist NOT NULL — ein Wartender wartet immer auf eine bestimmte
+    // Gruppe. Findet sich dazu keine echte Gruppe (etwa weil das Backtracking eine Ersatzgruppe
+    // ohne DB-Entsprechung erzeugt hat), wird der Eintrag übersprungen und gezählt, statt den
+    // ganzen Speichervorgang scheitern zu lassen.
+    const groupByName = (name: string | null | undefined) =>
+      result.groups.find((g) => g.groupName === name);
     const waitlistCandidates = result.waitlistSummary.map((w) => ({
-      season_id: this.seasonId,
-      club_id: this.clubId,
-      group_id: realGroupId(result.groups.find((g) => g.groupName === w.groupName)?.groupId),
+      group_key: keyOf.get(groupByName(w.groupName)!) ?? null,
+      alternative_group_key: w.alternativeGroupName
+        ? (keyOf.get(groupByName(w.alternativeGroupName)!) ?? null)
+        : null,
       member_id: w.memberId,
       position: w.position,
       priority: 5,
       priority_reason: this.config.waitlistPriorityRule,
-      status: 'waiting' as const,
-      alternative_group_id: w.alternativeGroupName
-        ? realGroupId(result.groups.find((g) => g.groupName === w.alternativeGroupName)?.groupId)
-        : null,
     }));
-
-    const waitlistToInsert = waitlistCandidates.filter(
-      (w): w is typeof w & { group_id: string } => w.group_id !== null
-    );
-
-    const uebersprungen = waitlistCandidates.length - waitlistToInsert.length;
+    const waitlist = waitlistCandidates.filter((w) => w.group_key !== null);
+    const uebersprungen = waitlistCandidates.length - waitlist.length;
     if (uebersprungen > 0) {
       log.warn('Wartelisteneinträge ohne echte Gruppe übersprungen', {
         seasonId: this.seasonId,
@@ -3163,12 +3133,14 @@ export class SeasonClusteringEngine {
       });
     }
 
-    await this.repo.insertWaitlist(waitlistToInsert);
-
-    // Update season status
-    await this.repo.updateSeason(this.seasonId, {
-      planning_status: 'manual_review',
-      last_planned_at: new Date().toISOString(),
+    const groupIds = await this.repo.saveClustering({
+      seasonId: this.seasonId,
+      groups: groupPayload,
+      entries,
+      waitlist,
     });
+
+    // Antwort und Aufrufer erwarten ab hier die echten Gruppen-IDs.
+    for (const [g, key] of keyOf) if (groupIds[key]) g.groupId = groupIds[key];
   }
 }

@@ -2,7 +2,7 @@
 // Optimizes season planning based on user preferences and constraints
 // Supports both deterministic greedy algorithm and AI-powered scheduling (V2)
 
-import type { Tables } from '@/types/supabase';
+import type { Json, Tables } from '@/types/supabase';
 import type { SeasonClusteringRepository } from '@/infrastructure/persistence/repositories/season-clustering.repository';
 import { jsonColumn } from '@/lib/typed-helpers';
 import type {
@@ -17,6 +17,19 @@ const log = createLogger('auto-planning');
 
 type CourtRow = Tables<'courts'>;
 type GroupRow = Tables<'groups'>;
+
+/**
+ * Der Algorithmus benennt Konflikte anders, als es die CHECK-Constraints von `planning_conflicts`
+ * erlauben (`conflict_type`, `severity`). Ein ungemappter Wert warf 23514 und riss das Speichern
+ * der gesamten Planung mit — die Antwort an die Oberfläche behält die Algorithmus-Namen.
+ */
+const CONFLICT_TYPE_DB: Record<string, string> = {
+  resource_not_available: 'no_trainer_assigned',
+  court_double_booking: 'no_court_assigned',
+  user_unavailable: 'member_unavailable',
+  preference_mismatch: 'member_unplanned',
+};
+const SEVERITY_DB: Record<string, string> = { high: 'critical', medium: 'warning', low: 'info' };
 
 interface TrainerPreference {
   trainer_id: string;
@@ -161,14 +174,7 @@ export class AutoPlanningService {
 
     // 7. Save to database if not dry run
     if (!dryRun) {
-      await this.savePlanToDatabase(
-        seasonId,
-        season.club_id,
-        plannedSlots,
-        detectedConflicts,
-        metrics,
-        repo
-      );
+      await this.savePlanToDatabase(seasonId, plannedSlots, detectedConflicts, metrics, repo);
     }
 
     return {
@@ -377,7 +383,6 @@ export class AutoPlanningService {
    */
   private static async savePlanToDatabase(
     seasonId: string,
-    clubId: string,
     slots: PlanningSlot[],
     conflicts: Array<{ type: string; description: string; severity: string }>,
     metrics: AlgorithmMetrics,
@@ -396,25 +401,25 @@ export class AutoPlanningService {
       slots = slots.filter((s) => s.day_of_week !== 6);
     }
 
-    // Delete existing plan entries (if re-planning)
-    await repo.deletePlanEntries(seasonId);
-
-    // Insert new plan entries
-    await repo.insertPlanEntries(
-      slots.map((slot) => ({
-        season_id: seasonId,
-        club_id: clubId,
+    // Ersetzen der Planeinträge, Konflikte, Verlauf und Saison-Status in EINER Transaktion
+    // (Migration save_season_clustering) — ein Abbruch hinterlässt keine halb geplante Saison.
+    //
+    // `action_type` unterliegt dem CHECK `season_planning_history_action_type_check`.
+    // 'auto_plan_completed' steht dort live NICHT drin — der Insert warf 23514 und riss die
+    // komplette Auto-Planung mit (500 pro Aufruf, in jedem Verein). 'plan_created' ist erlaubt,
+    // produktiv sonst unbenutzt und trifft die Semantik.
+    await repo.saveClustering({
+      seasonId,
+      groups: [],
+      entries: slots.map((slot) => ({
+        group_id: slot.group_id,
         trainer_id: slot.trainer_id,
         court_id: slot.court_id,
-        group_id: slot.group_id,
         day_of_week: slot.day_of_week,
         start_time: slot.start_time,
         end_time: slot.end_time,
         duration_minutes: slot.duration_minutes,
-        starts_from_week: 1,
-        ends_at_week: null,
         entry_type: 'training',
-        planning_source: 'auto',
         max_participants: 10,
         expected_participants: slot.expected_participants,
         preference_match_score: Number(slot.preference_match_score.toFixed(2)),
@@ -422,50 +427,20 @@ export class AutoPlanningService {
         optimization_score: Number(
           ((slot.preference_match_score + (100 - slot.conflict_score)) / 2).toFixed(2)
         ),
-        status: 'planned',
-        notes: null,
-        admin_notes: null,
-      }))
-    );
-
-    // Save conflicts
-    await repo.insertPlanningConflicts(
-      conflicts.map((conflict) => ({
-        season_id: seasonId,
-        club_id: clubId,
-        conflict_type: conflict.type,
-        severity: conflict.severity,
-        affected_plan_entry_ids: [],
-        description: conflict.description,
-        status: 'open',
-        detected_at: new Date().toISOString(),
-        detection_source: 'auto_planner',
-      }))
-    );
-
-    // Log to history
-    //
-    // `action_type` unterliegt dem CHECK `season_planning_history_action_type_check`.
-    // 'auto_plan_completed' steht dort live NICHT drin — der Insert warf 23514 und
-    // riss die komplette Auto-Planung mit (500 pro Aufruf, in jedem Verein).
-    // 'plan_created' ist erlaubt, produktiv sonst unbenutzt und trifft die Semantik.
-    await repo.insertPlanningHistory({
-      season_id: seasonId,
-      club_id: clubId,
-      action_type: 'plan_created',
-      details: {
-        entries_created: slots.length,
-        conflicts_detected: conflicts.length,
+      })),
+      waitlist: [],
+      conflicts: conflicts.map((c) => ({
+        conflict_type: CONFLICT_TYPE_DB[c.type] ?? 'no_trainer_assigned',
+        severity: SEVERITY_DB[c.severity] ?? 'warning',
+        description: c.description,
+      })),
+      history: {
+        action_type: 'plan_created',
+        details: { entries_created: slots.length, conflicts_detected: conflicts.length },
+        entries_affected: slots.length,
+        conflicts_created: conflicts.length,
+        algorithm_metrics: metrics as unknown as Json,
       },
-      entries_affected: slots.length,
-      conflicts_created: conflicts.length,
-      algorithm_metrics: metrics as unknown as Record<string, unknown> as never,
-    });
-
-    // Update season status
-    await repo.updateSeason(seasonId, {
-      planning_status: 'manual_review',
-      last_planned_at: new Date().toISOString(),
     });
   }
 

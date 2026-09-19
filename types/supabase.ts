@@ -7763,6 +7763,18 @@ export type Database = {
         };
         Returns: Json;
       };
+      save_season_clustering: {
+        Args: {
+          p_conflicts?: Json;
+          p_entries: Json;
+          p_groups: Json;
+          p_history?: Json;
+          p_now: string;
+          p_season_id: string;
+          p_waitlist: Json;
+        };
+        Returns: Json;
+      };
       shares_active_club_with: {
         Args: { target_user_id: string };
         Returns: boolean;
