@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader } from '@/components/ui/page-header';
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -28,12 +29,7 @@ export function CalendarShell({
 }) {
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
-          {subtitle && <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>}
-        </div>
-      </div>
+      <PageHeader title={title} description={subtitle} />
 
       {(nav || controls) && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-sm px-3 py-2">

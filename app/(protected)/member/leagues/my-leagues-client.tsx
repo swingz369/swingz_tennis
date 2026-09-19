@@ -1,15 +1,14 @@
 'use client';
 
+import { PageHeader } from '@/components/ui/page-header';
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Trophy, ExternalLink, MapPin, UserCheck } from 'lucide-react';
+import { Trophy, ExternalLink, MapPin, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import { extractErrorMessage } from '@/lib/typed-helpers';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Match {
   id: string;
@@ -125,24 +124,11 @@ export function MyLeaguesClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/member" aria-label="Zurück zum Dashboard">
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Zurück zum Dashboard</TooltipContent>
-        </Tooltip>
-        <div>
-          <h1 className="text-xl font-semibold">Meine Mannschaften</h1>
-          <p className="text-sm text-muted-foreground">
-            Deine Medenspiele, gemeldet über den Verband.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Meine Mannschaften"
+        description="Deine Medenspiele, gemeldet über den Verband."
+        back={{ href: '/member', label: 'Zurück zum Dashboard' }}
+      />
 
       {suggestions.map((sg) => (
         <Card key={sg.player_id} className="border-info-200 dark:border-info-800/40">

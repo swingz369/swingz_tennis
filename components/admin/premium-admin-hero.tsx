@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/ui/page-header';
 import { AnimatedCounter } from '@/components/animations';
 import { cn } from '@/lib/utils';
 
@@ -87,34 +88,29 @@ export function PremiumAdminHero({
         </span>
       </div>
 
-      {/* Greeting — grösser und enger gesetzt: die Begrüssung ist das Einzige
-          auf der Seite, das keine Zahl ist, und darf deshalb Platz nehmen. */}
-      <h1 className="text-3xl sm:text-[34px] font-bold font-display text-foreground leading-[1.05] tracking-[-0.038em]">
-        {greeting}, {firstName}.
-      </h1>
-
-      {/* Lagebericht in einem Satz: was heute läuft, was Geld kostet, und ob
-          sonst etwas offen ist. Der Vereinsname steht nicht mehr drin — er
-          steht im Vereins-Umschalter der Sidebar, direkt links daneben, und
-          war hier nur eine zweite Kopie ohne neue Information. */}
-      <p className="text-sm text-muted-foreground mt-1.5">
-        Heute{' '}
-        <strong className="text-foreground dark:text-white font-semibold">
-          <AnimatedCounter value={todaySessionCount} />
-        </strong>{' '}
-        {todaySessionCount === 1 ? 'Session' : 'Sessions'}
-        {openInvoiceCount > 0 && (
+      <PageHeader
+        title={`${greeting}, ${firstName}.`}
+        description={
           <>
-            ,{' '}
+            Heute{' '}
             <strong className="text-foreground dark:text-white font-semibold">
-              {openInvoiceCount} {openInvoiceCount === 1 ? 'Rechnung' : 'Rechnungen'}
+              <AnimatedCounter value={todaySessionCount} />
             </strong>{' '}
-            {overdueInvoiceCount > 0 ? 'überfällig' : 'fällig'}
-            {dueLabel ? ` ${overdueInvoiceCount > 0 ? 'seit' : 'zum'} ${dueLabel}` : ''}
+            {todaySessionCount === 1 ? 'Session' : 'Sessions'}
+            {openInvoiceCount > 0 && (
+              <>
+                ,{' '}
+                <strong className="text-foreground dark:text-white font-semibold">
+                  {openInvoiceCount} {openInvoiceCount === 1 ? 'Rechnung' : 'Rechnungen'}
+                </strong>{' '}
+                {overdueInvoiceCount > 0 ? 'überfällig' : 'fällig'}
+                {dueLabel ? ` ${overdueInvoiceCount > 0 ? 'seit' : 'zum'} ${dueLabel}` : ''}
+              </>
+            )}
+            {overdueInvoiceCount > 0 ? '.' : ' — sonst läuft alles.'}
           </>
-        )}
-        {overdueInvoiceCount > 0 ? '.' : ' — sonst läuft alles.'}
-      </p>
+        }
+      />
     </div>
   );
 }

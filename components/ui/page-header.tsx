@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import type { LucideIcon } from 'lucide-react';
+import { ArrowLeft, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 export interface PageHeaderAction {
@@ -18,16 +18,38 @@ interface PageHeaderProps {
   title: string;
   /** Optional description below the title (Text oder einfacher JSX-Inhalt) */
   description?: ReactNode;
-  /** Action buttons rendered on the right */
-  actions?: PageHeaderAction[];
+  /** Action buttons rendered on the right (oder freier Knoten, z. B. Status-Select) */
+  actions?: PageHeaderAction[] | ReactNode;
+  /** Zurück-Link oberhalb des Titels (Detailseiten) */
+  back?: { href: string; label: string };
+  /** Badge neben dem Titel (z. B. Status) */
+  badge?: ReactNode;
   /** Optional extra content rendered below the header */
   children?: ReactNode;
   className?: string;
 }
 
-export function PageHeader({ title, description, actions, children, className }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  description,
+  actions,
+  back,
+  badge,
+  children,
+  className,
+}: PageHeaderProps) {
+  const actionList = Array.isArray(actions) ? actions : null;
   return (
     <div className={cn('space-y-3', className)}>
+      {back && (
+        <Link
+          href={back.href}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          {back.label}
+        </Link>
+      )}
       {/* Title row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         {/* ── Typografische Hierarchie (18.08.2026) ──
@@ -38,9 +60,12 @@ export function PageHeader({ title, description, actions, children, className }:
             das und wirkt erst dadurch gesetzt statt fett), die Beschreibung
             wird etwas grösser, aber ruhig. */}
         <div className="min-w-0">
-          <h1 className="font-display text-[28px] sm:text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground dark:text-white">
-            {title}
-          </h1>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h1 className="font-display text-[28px] sm:text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground">
+              {title}
+            </h1>
+            {badge}
+          </div>
           {description && (
             <p className="text-[15px] leading-snug text-muted-foreground mt-1.5 max-w-[60ch]">
               {description}
@@ -49,9 +74,12 @@ export function PageHeader({ title, description, actions, children, className }:
         </div>
 
         {/* Actions */}
-        {actions && actions.length > 0 && (
+        {actions && !actionList && (
+          <div className="flex items-center gap-2 shrink-0">{actions as ReactNode}</div>
+        )}
+        {actionList && actionList.length > 0 && (
           <div className="flex items-center gap-2 shrink-0">
-            {actions.map((action, i) => {
+            {actionList.map((action, i) => {
               const Icon = action.icon;
               const btnContent = (
                 <>

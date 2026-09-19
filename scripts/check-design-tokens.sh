@@ -26,6 +26,30 @@ if [ -n "$RADIUS" ]; then
   FAIL=1
 fi
 
+# ── Muster-Ratsche (UI-Einheitlichkeit, docs/ARCHIV/2026-09-19-ui-einheitlichkeit-analyse-und-plan.md) ──
+# Die Token-Prüfung oben fängt Farben und Radius. Diese Zähler fangen Muster:
+# jede Regel hat eine Obergrenze = Stand beim Einführen. Sie darf nur sinken —
+# beim Umstellen die Grenze hier mitsenken, nie anheben.
+UI_SCOPE=(app/\(protected\) components)
+ratchet() { # name max pattern [exclude-regex]
+  local name="$1" max="$2" pat="$3" excl="${4:-^$}"
+  local hits count
+  hits=$(grep -rEn "$pat" "${UI_SCOPE[@]}" --include='*.tsx' 2>/dev/null | grep -Ev "$excl")
+  count=$(printf '%s' "$hits" | grep -c . || true)
+  if [ "$count" -gt "$max" ]; then
+    echo "❌ Muster-Ratsche '$name': $count Treffer, erlaubt sind $max (Baukasten: docs/DESIGN.md § 6a)."
+    echo "$hits" | head -10
+    FAIL=1
+  fi
+}
+# <h1> gehört in PageHeader. Ausnahmen: Vollbild-/Bestätigungsseiten ohne Seitenrahmen und Fehlerseiten,
+# das Profil (Personenname als Titel).
+ratchet 'h1 außerhalb PageHeader' 0 '<h1' 'components/ui/page-header|payment-success|shop/success|select-admin-club|/error\.tsx|subscription-dunning-block|components/member-profile\.tsx'
+ratchet 'window.confirm statt ConfirmDialog' 10 '(^|[^A-Za-z.])(window\.)?confirm\(' 'onConfirm|handleConfirm'
+ratchet 'rohe <table> statt <Table>' 10 '<table' 'components/ui/table\.tsx'
+ratchet 'Pixel-Schriftgrößen text-[Npx]' 9 'text-\[[0-9]+px\]' 'components/ui/'
+ratchet 'CenteredModal außerhalb ui/' 29 '<CenteredModal' 'components/ui/'
+
 if [ "$FAIL" -eq 0 ]; then
   echo "✅ Design-Tokens sauber — keine hartcodierten Palette-Klassen, Radius-Skala eingehalten."
 fi

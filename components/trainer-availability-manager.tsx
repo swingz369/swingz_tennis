@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getErrorMessage } from '@/lib/typed-helpers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -252,12 +253,7 @@ export default function TrainerAvailabilityManager() {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">Verfügbarkeit</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Deine wöchentlichen Trainingszeiten
-          </p>
-        </div>
+        <PageHeader title="Verfügbarkeit" description="Deine wöchentlichen Trainingszeiten" />
         <div className="flex items-center gap-2 flex-wrap">
           <Button
             size="sm"

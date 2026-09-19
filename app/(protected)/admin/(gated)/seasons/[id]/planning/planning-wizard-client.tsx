@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import {
-  ArrowLeft,
   Settings,
   LayoutGrid,
   ClipboardCheck,
@@ -30,7 +29,7 @@ import { ConfigStep } from './steps/config-step';
 import { TrainerScheduleStep } from './steps/trainer-schedule-step';
 import { PlanEditStep } from './steps/plan-edit-step';
 import { FinalizeStep } from './steps/finalize-step';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { PageHeader } from '@/components/ui/page-header';
 
 // ============================================
 // STEP DEFINITIONS
@@ -154,36 +153,16 @@ function WizardContent({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => router.push('/admin/seasons')}
-                aria-label="Zurück zur Saisonübersicht"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Zurück zur Saisonübersicht</TooltipContent>
-          </Tooltip>
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{seasonType === 'summer' ? '☀️' : '❄️'}</span>
-              <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-white">
-                {seasonName}
-              </h1>
-              <Badge variant="secondary" className="text-xs">
-                {seasonYear}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">Automatische Saisonplanung</p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={`${seasonType === 'summer' ? '☀️' : '❄️'} ${seasonName}`}
+        back={{ href: '/admin/seasons', label: 'Zurück zur Saisonübersicht' }}
+        description="Automatische Saisonplanung"
+        badge={
+          <Badge variant="secondary" className="text-xs">
+            {seasonYear}
+          </Badge>
+        }
+      />
 
       {/* Step Navigation */}
       <nav className="flex items-center gap-1 overflow-x-auto" aria-label="Wizard steps">

@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 18.09.2026 (§4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2; §6 Phase 4.4 ergänzt: loading/error/not-found vererben im App Router, keine echte Lücke; §6 Phase 4.5 ergänzt: „Laden" ohne Auslassungspunkte vereinheitlicht; §8 Icon-Button-Regel für Phase 5.1 ergänzt: aria-label + Tooltip pflicht, globale TooltipProvider, Test-Query per Rolle statt title; §8 Kalender-Tastaturbedienung für Phase 5.2 ergänzt: Pfeiltasten-Fokusnavigation per Zell-ID, Tastatur-Drag-Bug behoben — eigener onKeyDown überschrieb dnd-kits Aktivierungs-Listener; §8 Phase 5.3 geprüft: globale :focus-visible-Regel deckt bereits alle Elemente inkl. Kalenderzellen ab; §8 Phase 5.4 geprüft: Leerzustände haben durchweg schon einen Weg nach vorn oder sind zu Recht ohne Aktion; §8 Phase 5.5 ergänzt: Spaltenaktion im Saisonkalender — Woche für alle Gruppen aussetzen/aktivieren per Bulk-PATCH je Gruppe; §8 Phase 6 ergänzt: league-detail-client.tsx in Tab-Dateien + Hook zerlegt, 1772 → 450 Zeilen)
+> Zuletzt verifiziert: 19.09.2026 (§6 Seitenkopf-Regel erweitert: `PageHeader` mit `back`/`badge`/freien `actions`, Detailseiten-Ausnahmen entfallen; §6a Baukasten + Muster-Ratsche in `check:design` ergänzt; davor 18.09.2026: §4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2; §6 Phase 4.4 ergänzt: loading/error/not-found vererben im App Router, keine echte Lücke; §6 Phase 4.5 ergänzt: „Laden" ohne Auslassungspunkte vereinheitlicht; §8 Icon-Button-Regel für Phase 5.1 ergänzt: aria-label + Tooltip pflicht, globale TooltipProvider, Test-Query per Rolle statt title; §8 Kalender-Tastaturbedienung für Phase 5.2 ergänzt: Pfeiltasten-Fokusnavigation per Zell-ID, Tastatur-Drag-Bug behoben — eigener onKeyDown überschrieb dnd-kits Aktivierungs-Listener; §8 Phase 5.3 geprüft: globale :focus-visible-Regel deckt bereits alle Elemente inkl. Kalenderzellen ab; §8 Phase 5.4 geprüft: Leerzustände haben durchweg schon einen Weg nach vorn oder sind zu Recht ohne Aktion; §8 Phase 5.5 ergänzt: Spaltenaktion im Saisonkalender — Woche für alle Gruppen aussetzen/aktivieren per Bulk-PATCH je Gruppe; §8 Phase 6 ergänzt: league-detail-client.tsx in Tab-Dateien + Hook zerlegt, 1772 → 450 Zeilen)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -228,13 +228,31 @@ Bestätigungsseiten mit zentriertem Einzelinhalt (`bookings/payment-success`, `s
 fallen unter keine der drei Kategorien — eigener, schmalerer Rahmen bleibt dort bewusst
 (siehe Phase-4.1-Regel oben).
 
-**Seitenrahmen-Regel (Sanierungsplan Phase 4.1, 18.09.2026):** Jede geschützte Seite mit
-einfachem Titel + optionaler Beschreibung + optionalen Aktionsbuttons nutzt `PageHeader` aus
-`@/components/ui/page-header` statt eines eigenen `<h1>`. Ausnahmen bewusst: Bestätigungsseiten
-mit zentriertem Einzelinhalt (`bookings/payment-success`, `shop/success`) und Detailseiten mit
-Zurück-Navigation, Badge neben dem Titel oder Inline-Controls wie einem Status-Select
-(`admin/tournaments/[id]`, `admin/seasons/[id]`) — dafür deckt `PageHeader`s Actions-API (nur
-Buttons) den Bedarf nicht ab.
+**Seitenrahmen-Regel (Sanierungsplan Phase 4.1, erweitert 19.09.2026):** Jede geschützte Seite
+setzt ihren Titel über `PageHeader` aus `@/components/ui/page-header` — auch wenn der Titel in
+einer geteilten Komponente unter `components/` steht. `PageHeader` deckt Detailseiten ab:
+`back` (Zurück-Link über dem Titel), `badge` (Status neben dem Titel) und `actions` als
+Button-Liste **oder** freier Knoten (Status-Select, Dropdown). Ein eigenes `<h1>` gibt es nur
+noch auf Vollbild-/Bestätigungsseiten ohne Seitenrahmen (`bookings/payment-success`,
+`shop/success`, `select-admin-club`, `error.tsx`, Abo-Sperre) und im Profil (Personenname als
+Titel). Die Muster-Ratsche (§ 6a) hält das fest.
+
+### 6a. Baukasten — ein Muster, eine Komponente
+
+Für jedes wiederkehrende Muster gibt es genau eine Komponente. `npm run check:design`
+(`scripts/check-design-tokens.sh`, läuft in CI) zählt die Handbauten je Regel gegen eine
+Obergrenze (Ratsche): Die Grenze darf nur sinken — wer Handbauten umstellt, senkt sie im selben
+Commit. Plan und Begründung: `ARCHIV/2026-09-19-ui-einheitlichkeit-analyse-und-plan.md`.
+
+| Muster                | Komponente                                  | Nicht mehr                    | Ratsche |
+| --------------------- | ------------------------------------------- | ----------------------------- | ------- |
+| Seitentitel           | `PageHeader` (+ `back`, `badge`, `actions`) | eigenes `<h1>`                | ✅ 0    |
+| Bestätigung           | `ConfirmDialog`                             | `window.confirm()`            | ✅      |
+| Liste / Tabelle       | `Table` + `PaginationNav`                   | rohe `<table>`                | ✅      |
+| Schriftgröße          | Typo-Skala § 4.2                            | `text-[Npx]`                  | ✅      |
+| Dialog                | shadcn `Dialog`                             | neue `CenteredModal`-Nutzer   | ✅      |
+| Kennzahlen (Phase 3)  | `KpiBand` / `StatCard`                      | Zahl als `text-3xl` in `Card` | offen   |
+| Leerzustand (Phase 4) | `EmptyState` / `ListState`                  | loser „Keine …"-Text          | offen   |
 
 **Breadcrumb-Regel (Sanierungsplan Phase 4.3, 18.09.2026):** Jede Seite, deren Route tiefer als
 zwei Ebenen liegt (z. B. `admin/seasons/[id]/preferences/new`), bekommt `Breadcrumb` aus

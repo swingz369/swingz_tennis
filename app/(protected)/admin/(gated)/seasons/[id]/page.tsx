@@ -1,4 +1,5 @@
 'use client';
+import { PageHeader } from '@/components/ui/page-header';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, use } from 'react';
@@ -11,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import {
-  ArrowLeft,
   Users,
   AlertCircle,
   TrendingUp,
@@ -595,106 +595,86 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
         onConfirm={handleDelete}
       />
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Tooltip>
-            <TooltipTrigger asChild>
+      <PageHeader
+        title={`${season.season_type === 'summer' ? '☀️' : '❄️'} ${season.name}`}
+        back={{ href: '/admin/seasons', label: 'Zurück zur Saisonübersicht' }}
+        description={`${new Date(season.start_date).toLocaleDateString('de-DE')} - ${new Date(season.end_date).toLocaleDateString('de-DE')}`}
+        badge={
+          season.is_active && (
+            <Badge variant="default">
+              <CheckCircle className="mr-1 h-3 w-3" />
+              Aktiv
+            </Badge>
+          )
+        }
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            {canQuickStart && (
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => router.push('/admin/seasons')}
-                aria-label="Zurück zur Saisonübersicht"
+                variant="default"
+                onClick={handleQuickStart}
+                disabled={quickStarting}
+                title="Erstellt sofort einen automatischen Plan mit den Standard-Einstellungen und öffnet ihn zur Prüfung im Wizard — ohne die Konfiguration vorher zu zeigen."
               >
-                <ArrowLeft className="h-4 w-4" />
+                {quickStarting ? (
+                  <Clock className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Zap className="mr-2 h-4 w-4" />
+                )}
+                Schnellstart
               </Button>
-            </TooltipTrigger>
-            <TooltipContent>Zurück zur Saisonübersicht</TooltipContent>
-          </Tooltip>
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">{season.season_type === 'summer' ? '☀️' : '❄️'}</span>
-              <h1 className="text-2xl font-bold tracking-tight">{season.name}</h1>
-              {season.is_active && (
-                <Badge variant="default">
-                  <CheckCircle className="mr-1 h-3 w-3" />
-                  Aktiv
-                </Badge>
-              )}
-            </div>
-            <p className="text-muted-foreground">
-              {new Date(season.start_date).toLocaleDateString('de-DE')} -{' '}
-              {new Date(season.end_date).toLocaleDateString('de-DE')}
-            </p>
+            )}
+            <Link href={`/admin/seasons/${id}/planning`}>
+              <Button variant={canQuickStart ? 'outline' : 'default'}>
+                <Play className="mr-2 h-4 w-4" />
+                {['published', 'active', 'completed', 'archived'].includes(
+                  season.planning_status ?? ''
+                )
+                  ? 'Saisonplanung ansehen'
+                  : season.planning_status === 'draft'
+                    ? 'Wizard öffnen'
+                    : 'Planung fortsetzen'}
+              </Button>
+            </Link>
+            {canOpenPreferences && (
+              <Button onClick={handleOpenPreferences}>
+                <Users className="mr-2 h-4 w-4" />
+                Präferenzen öffnen
+              </Button>
+            )}
+
+            {canPublish && (
+              <Button onClick={handlePublish} variant={isRepublish ? 'outline' : 'default'}>
+                <FileText className="mr-2 h-4 w-4" />
+                {isRepublish ? 'Erneut veröffentlichen' : 'Veröffentlichen'}
+              </Button>
+            )}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" aria-label="Weitere Aktionen">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Weitere Aktionen</TooltipContent>
+                </Tooltip>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => setDeleteConfirmOpen(true)}
+                  disabled={deleting}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Löschen
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {canQuickStart && (
-            <Button
-              variant="default"
-              onClick={handleQuickStart}
-              disabled={quickStarting}
-              title="Erstellt sofort einen automatischen Plan mit den Standard-Einstellungen und öffnet ihn zur Prüfung im Wizard — ohne die Konfiguration vorher zu zeigen."
-            >
-              {quickStarting ? (
-                <Clock className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Zap className="mr-2 h-4 w-4" />
-              )}
-              Schnellstart
-            </Button>
-          )}
-          <Link href={`/admin/seasons/${id}/planning`}>
-            <Button variant={canQuickStart ? 'outline' : 'default'}>
-              <Play className="mr-2 h-4 w-4" />
-              {['published', 'active', 'completed', 'archived'].includes(
-                season.planning_status ?? ''
-              )
-                ? 'Saisonplanung ansehen'
-                : season.planning_status === 'draft'
-                  ? 'Wizard öffnen'
-                  : 'Planung fortsetzen'}
-            </Button>
-          </Link>
-          {canOpenPreferences && (
-            <Button onClick={handleOpenPreferences}>
-              <Users className="mr-2 h-4 w-4" />
-              Präferenzen öffnen
-            </Button>
-          )}
-
-          {canPublish && (
-            <Button onClick={handlePublish} variant={isRepublish ? 'outline' : 'default'}>
-              <FileText className="mr-2 h-4 w-4" />
-              {isRepublish ? 'Erneut veröffentlichen' : 'Veröffentlichen'}
-            </Button>
-          )}
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" aria-label="Weitere Aktionen">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Weitere Aktionen</TooltipContent>
-              </Tooltip>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => setDeleteConfirmOpen(true)}
-                disabled={deleting}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Löschen
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+        }
+      />
 
       {/* Workflow-Fortschritt */}
       <Card>

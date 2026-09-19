@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Trophy, Star, Medal, Flame } from 'lucide-react';
@@ -71,10 +72,7 @@ export default function GamificationDashboard() {
   if (disabled) {
     return (
       <div className="space-y-5">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">Dein Fortschritt</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Punkte, Badges & Rangliste</p>
-        </div>
+        <PageHeader title="Dein Fortschritt" description="Punkte, Badges & Rangliste" />
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             Das Gamification-Modul ist für deinen Verein nicht aktiviert.
@@ -86,10 +84,7 @@ export default function GamificationDashboard() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-primary">Dein Fortschritt</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Punkte, Badges & Rangliste</p>
-      </div>
+      <PageHeader title="Dein Fortschritt" description="Punkte, Badges & Rangliste" />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

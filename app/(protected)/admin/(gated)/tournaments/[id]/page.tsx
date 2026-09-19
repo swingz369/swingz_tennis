@@ -37,6 +37,7 @@ import {
 } from '@/src/constants/tournaments';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { PageHeader } from '@/components/ui/page-header';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { apiFetch } from '@/lib/api-fetch';
 
@@ -229,60 +230,50 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
           { label: tournament.name },
         ]}
       />
-      {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="sm" asChild className="p-1 h-auto mt-1">
-            <Link href="/admin/events?tab=tournaments">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl font-bold tracking-tight text-primary">{tournament.name}</h1>
-              <Badge variant={SHARED_STATUS_VARIANTS[tournament.status ?? 'draft'] ?? 'secondary'}>
-                {STATUS_LABELS[tournament.status ?? 'draft'] ?? tournament.status}
-              </Badge>
+      <PageHeader
+        title={tournament.name}
+        back={{ href: '/admin/events?tab=tournaments', label: 'Zurück zu den Turnieren' }}
+        description={`Erstellt am ${formatDateTime(tournament.created_at)}`}
+        badge={
+          <Badge variant={SHARED_STATUS_VARIANTS[tournament.status ?? 'draft'] ?? 'secondary'}>
+            {STATUS_LABELS[tournament.status ?? 'draft'] ?? tournament.status}
+          </Badge>
+        }
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Status:</span>
+              <Select
+                value={tournament.status ?? 'draft'}
+                onValueChange={handleStatusChange}
+                disabled={statusUpdating}
+              >
+                <SelectTrigger className="w-40 h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Entwurf</SelectItem>
+                  <SelectItem value="registration">Anmeldung offen</SelectItem>
+                  <SelectItem value="active">Aktiv</SelectItem>
+                  <SelectItem value="completed">Abgeschlossen</SelectItem>
+                  <SelectItem value="cancelled">Abgesagt</SelectItem>
+                </SelectContent>
+              </Select>
+              {statusUpdating && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
             </div>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Erstellt am {formatDateTime(tournament.created_at)}
-            </p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Status:</span>
-            <Select
-              value={tournament.status ?? 'draft'}
-              onValueChange={handleStatusChange}
-              disabled={statusUpdating}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDeleteConfirmOpen(true)}
+              className="text-destructive border-destructive/30 hover:bg-destructive/10"
             >
-              <SelectTrigger className="w-40 h-9 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="draft">Entwurf</SelectItem>
-                <SelectItem value="registration">Anmeldung offen</SelectItem>
-                <SelectItem value="active">Aktiv</SelectItem>
-                <SelectItem value="completed">Abgeschlossen</SelectItem>
-                <SelectItem value="cancelled">Abgesagt</SelectItem>
-              </SelectContent>
-            </Select>
-            {statusUpdating && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              <Trash2 className="h-4 w-4 mr-1" />
+              Löschen
+            </Button>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setDeleteConfirmOpen(true)}
-            className="text-destructive border-destructive/30 hover:bg-destructive/10"
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            Löschen
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
       <ConfirmDialog
         open={deleteConfirmOpen}

@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -76,12 +77,10 @@ export default function AttendanceHistory() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-primary">Anwesenheitshistorie</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Deine Trainings-Anwesenheit im Überblick
-        </p>
-      </div>
+      <PageHeader
+        title="Anwesenheitshistorie"
+        description="Deine Trainings-Anwesenheit im Überblick"
+      />
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

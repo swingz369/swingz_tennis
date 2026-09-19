@@ -1,4 +1,5 @@
 'use client';
+import { PageHeader } from '@/components/ui/page-header';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
@@ -265,12 +266,10 @@ export default function MemberBilling() {
     <div className="p-4 md:p-6 space-y-6">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">Rechnungen & Zahlungen</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Verwalte deine Rechnungen und Zahlungen
-          </p>
-        </div>
+        <PageHeader
+          title="Rechnungen & Zahlungen"
+          description="Verwalte deine Rechnungen und Zahlungen"
+        />
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={goToToday}>
             Heute

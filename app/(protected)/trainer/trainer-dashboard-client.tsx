@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader } from '@/components/ui/page-header';
 import Link from 'next/link';
 import { useState } from 'react';
 import {
@@ -31,7 +32,6 @@ import { KpiBand } from '@/components/ui/kpi-band';
 import { QuickActions } from '@/components/ui/quick-actions';
 import { TrainerRsvpList } from '@/components/trainer-rsvp-list';
 import { ScrollReveal } from '@/components/animations';
-import { Button } from '@/components/ui/button';
 
 // Zeilenmasse wie im Admin-, Owner- und Superadmin-Dashboard.
 const HEAD_CELL = 'h-auto px-5 pb-2.5 pt-0 text-2xs uppercase tracking-[0.09em]';
@@ -108,23 +108,17 @@ export default function TrainerDashboardClient({
           „Willkommen zurück" / „Deine Übersicht über Sessions, Anwesenheit und
           mehr") plus rechts eine Pille mit derselben Zahl, die zwei Zeilen
           tiefer noch einmal als Kachel kam. Jetzt: wer, und was heute ansteht. */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="font-display text-[28px] sm:text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground dark:text-white">
-            {trainerName ? `Hallo, ${trainerName.split(' ')[0]}` : 'Trainer-Übersicht'}
-          </h1>
-          <p className="mt-1.5 text-[15px] text-muted-foreground">
-            {todaySessions.length > 0
-              ? `${todaySessions.length} ${todaySessions.length === 1 ? 'Einheit' : 'Einheiten'} heute`
-              : stats.upcomingSessions > 0
-                ? `Heute nichts — ${stats.upcomingSessions} kommende ${stats.upcomingSessions === 1 ? 'Einheit' : 'Einheiten'}`
-                : 'Keine Einheiten geplant'}
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/scheduler">Alle Einheiten</Link>
-        </Button>
-      </div>
+      <PageHeader
+        title={trainerName ? `Hallo, ${trainerName.split(' ')[0]}` : 'Trainer-Übersicht'}
+        description={
+          todaySessions.length > 0
+            ? `${todaySessions.length} ${todaySessions.length === 1 ? 'Einheit' : 'Einheiten'} heute`
+            : stats.upcomingSessions > 0
+              ? `Heute nichts — ${stats.upcomingSessions} kommende ${stats.upcomingSessions === 1 ? 'Einheit' : 'Einheiten'}`
+              : 'Keine Einheiten geplant'
+        }
+        actions={[{ label: 'Alle Einheiten', href: '/scheduler', variant: 'outline' }]}
+      />
 
       {/* Kennzahlen als Band statt als vier gerahmte Kacheln — gleiche
           Begründung wie in components/ui/kpi-band.tsx. */}

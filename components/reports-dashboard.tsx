@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { IconBox } from '@/components/ui/icon-box';
@@ -93,10 +94,7 @@ export default function ReportsDashboard() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">Reports & Exporte</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Vereins-Kennzahlen und Datenexport</p>
-        </div>
+        <PageHeader title="Reports & Exporte" description="Vereins-Kennzahlen und Datenexport" />
       </div>
 
       {/* KPI Grid */}
