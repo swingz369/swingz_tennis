@@ -55,7 +55,7 @@ export async function TennisdeWidget({
   return (
     <div className="space-y-2">
       {/* Fremde Seite mit hellem Hintergrund — deshalb weißer Rahmen auch im Dark Mode. */}
-      <div className="overflow-hidden rounded-lg border bg-white">
+      <div className="overflow-hidden rounded-xl border bg-white">
         <iframe
           title="Mannschaften und Spielplan (tennis.de)"
           src={src}
