@@ -143,7 +143,7 @@ export default function PublicTrialBooking({
 
   if (success) {
     return (
-      <Card className="border-2 border-success-200 bg-success-50/50 dark:bg-success-900/10 max-w-2xl mx-auto">
+      <Card className="border-2 border-success-200 bg-success-50/50 max-w-2xl mx-auto">
         <CardContent className="p-8 text-center space-y-4">
           {clubLogo && (
             <div className="flex justify-center">
@@ -159,10 +159,8 @@ export default function PublicTrialBooking({
           <div className="flex items-center justify-center">
             <CheckCircle className="h-16 w-16 text-success-500" />
           </div>
-          <h2 className="text-xl font-bold text-success-800 dark:text-success-300">
-            Probetraining angefragt!
-          </h2>
-          <p className="text-success-700 dark:text-success-400 max-w-md mx-auto">
+          <h2 className="text-xl font-semibold text-success-800">Probetraining angefragt!</h2>
+          <p className="text-success-700 max-w-md mx-auto">
             Vielen Dank für deine Anfrage{clubName ? ` bei ${clubName}` : ''}! Wir prüfen deinen
             Wunschtermin und melden uns in Kürze per E-Mail mit einer Bestätigung.
           </p>
@@ -215,9 +213,9 @@ export default function PublicTrialBooking({
       </CardHeader>
       <CardContent>
         {/* Info Banner */}
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-info-50 border border-info-200 dark:bg-info-900/10 dark:border-info-800 mb-6">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-info-50 border border-info-200 mb-6">
           <Info className="h-5 w-5 text-info-600 mt-0.5 shrink-0" />
-          <div className="text-sm text-info-800 dark:text-info-300 space-y-1">
+          <div className="text-sm text-info-800 space-y-1">
             <p className="font-medium">So funktioniert&apos;s:</p>
             <ol className="list-decimal list-inside space-y-0.5">
               <li>Formular ausfüllen und Wunschtermin angeben</li>

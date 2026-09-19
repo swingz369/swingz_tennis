@@ -222,10 +222,7 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
                       </h4>
                       <div className="max-h-40 overflow-y-auto space-y-2">
                         {result.invalid.map((item, index) => (
-                          <div
-                            key={index}
-                            className="text-xs bg-warning-50 dark:bg-warning-900/20 p-2 rounded"
-                          >
+                          <div key={index} className="text-xs bg-warning-50 p-2 rounded">
                             <div className="font-medium">{item.record.email || 'Unbekannt'}</div>
                             <div className="text-muted-foreground">{item.errors.join(', ')}</div>
                           </div>
@@ -243,10 +240,7 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
                       </h4>
                       <div className="max-h-40 overflow-y-auto space-y-2">
                         {result.errors.map((item, index) => (
-                          <div
-                            key={index}
-                            className="text-xs bg-error-50 dark:bg-error-900/20 p-2 rounded"
-                          >
+                          <div key={index} className="text-xs bg-error-50 p-2 rounded">
                             <div className="font-medium">{item.record.email || 'Unbekannt'}</div>
                             <div className="text-muted-foreground">{item.error}</div>
                           </div>
@@ -257,7 +251,7 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
 
                   {/* Skipped Info */}
                   {result.skipped > 0 && (
-                    <div className="flex items-center text-sm text-info-600 dark:text-info-400">
+                    <div className="flex items-center text-sm text-info-600">
                       <Users className="h-4 w-4 mr-2" />
                       {result.skipped} Mitglied{result.skipped !== 1 ? 'er' : ''} bereits im Verein
                       — übersprungen

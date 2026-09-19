@@ -1,5 +1,6 @@
 'use client';
 
+import { ListState } from '@/components/ui/list-state';
 import { useState, useTransition, type Dispatch, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building2, Power, PowerOff, Loader2 } from 'lucide-react';
@@ -93,9 +94,7 @@ export function AdminsTableClient({ rows: initialRows }: { rows: AdminRow[] }) {
   };
 
   if (initialRows.length === 0) {
-    return (
-      <p className="px-5 py-8 text-sm text-center text-muted-foreground">Keine Admins gefunden.</p>
-    );
+    return <ListState empty emptyTitle="Keine Admins gefunden" />;
   }
 
   return (

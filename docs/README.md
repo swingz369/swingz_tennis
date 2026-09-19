@@ -38,7 +38,9 @@ Architektur-Analyse Datenzugriff: [`ARCHIV/2026-09-13-architektur-analyse-datenz
 
 Diagramm zum Zielbild: [`diagrams/adr-005-datenzugriff.html`](diagrams/adr-005-datenzugriff.html) — Route → Service → Repository → Postgres (RLS) vs. Altdomänen-Pfad über Drizzle; interaktiv (Pan/Zoom, Light/Dark), lokal im Browser öffnen.
 
-Aktuellster Archiv-Snapshot: [`ARCHIV/2026-09-17-ux-analyse-und-sanierungsprompt.md`](ARCHIV/2026-09-17-ux-analyse-und-sanierungsprompt.md) — UX-/Kohäsions-Analyse am Code gemessen (79 % aller Textklassen `text-sm`/`text-xs`, fünf unabhängige Datums-Raster, kein URL-Zustand in Platzkalender und Saisonplanungs-Wizard, 3 Breadcrumbs auf 122 Seiten) plus daraus abgeleiteter Sanierungsprompt in 6 Phasen. Entscheidung zum Kalender → [ADR-006](decisions/adr-006-ein-kalender-fuer-alle-rollen.md).
+Aktuellster Archiv-Snapshot: [`ARCHIV/2026-09-19-ui-einheitlichkeit-analyse-und-plan.md`](ARCHIV/2026-09-19-ui-einheitlichkeit-analyse-und-plan.md) — Folgeanalyse zur UX-Sanierung: Rahmen und Token sind einheitlich, die Muster nicht (13 `<h1>`-Stile, 41 handgebaute Kennzahl-Kacheln, 10 × `window.confirm()`, zwei Dialog-Systeme, 16 handgebaute Leerzustände, fünf Dashboard-Bauarten). Plan in 6 Phasen mit Muster-Guardrail als Ratsche plus Umsetzungsprompt je Phase.
+
+Davor: [`ARCHIV/2026-09-17-ux-analyse-und-sanierungsprompt.md`](ARCHIV/2026-09-17-ux-analyse-und-sanierungsprompt.md) — UX-/Kohäsions-Analyse am Code gemessen (79 % aller Textklassen `text-sm`/`text-xs`, fünf unabhängige Datums-Raster, kein URL-Zustand in Platzkalender und Saisonplanungs-Wizard, 3 Breadcrumbs auf 122 Seiten) plus daraus abgeleiteter Sanierungsprompt in 6 Phasen. Entscheidung zum Kalender → [ADR-006](decisions/adr-006-ein-kalender-fuer-alle-rollen.md).
 
 Davor: [`ARCHIV/2026-09-16-adr-005-migrationsfortschritt-befund.md`](ARCHIV/2026-09-16-adr-005-migrationsfortschritt-befund.md) — Befund am Code zum ADR-005-Migrationsfortschritt: Architektur-Baseline seit 13.09. eingefroren, 14 migrierte Routen überspringen die Service-Schicht, `createServiceClient`-Bypass kaum reduziert (84 von ~86). Offene Punkte gebündelt in [`OPEN_ITEMS.md`](OPEN_ITEMS.md) (P0/P1).
 

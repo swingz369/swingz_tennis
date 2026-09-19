@@ -56,7 +56,7 @@ export default function TrialFeedbackForm({
       <Card className="max-w-lg mx-auto border-2 border-success-200 bg-success-50/50">
         <CardContent className="p-8 text-center space-y-3">
           <CheckCircle className="h-12 w-12 text-success-500 mx-auto" />
-          <h2 className="text-xl font-bold">Vielen Dank für dein Feedback!</h2>
+          <h2 className="text-xl font-semibold">Vielen Dank für dein Feedback!</h2>
           <p className="text-sm text-muted-foreground">
             Deine Bewertung hilft uns, das Probetraining zu verbessern.
           </p>

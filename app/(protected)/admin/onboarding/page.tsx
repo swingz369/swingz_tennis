@@ -214,7 +214,7 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Willkommen bei SwingZ!</h2>
+              <h2 className="text-2xl font-semibold text-foreground">Willkommen bei SwingZ!</h2>
               <p className="text-muted-foreground text-sm mt-1">
                 Drei Angaben, dann geht es los. Plätze, Trainer und Mitglieder legst du danach
                 direkt im Dashboard an — die Einrichtungs-Checkliste führt dich durch.
@@ -270,7 +270,7 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Module wählen</h2>
+              <h2 className="text-2xl font-semibold text-foreground">Module wählen</h2>
               <p className="text-muted-foreground text-sm mt-1">
                 Bestimmt, was dein Verein in der App sieht. Jederzeit änderbar unter Einstellungen →
                 Module.
@@ -300,7 +300,7 @@ export default function OnboardingPage() {
               <CheckCircle2 className="w-12 h-12 text-primary" />
             </div>
             <div className="space-y-3">
-              <h2 className="text-3xl font-bold text-foreground">Verein angelegt!</h2>
+              <h2 className="text-3xl font-semibold text-foreground">Verein angelegt!</h2>
               <p className="text-muted-foreground text-lg max-w-md mx-auto">
                 Weiter geht es mit den Plätzen — danach Trainer und Mitglieder. Erst wenn die drei
                 stehen, lässt sich eine Saison planen. Die Checkliste auf dem Dashboard führt dich
@@ -333,7 +333,7 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-dvh bg-gradient-to-br from-gray-50 via-white to-primary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
-        <Card className="border-0 shadow-xl shadow-gray-200/50 ring-1 ring-gray-100">
+        <Card className="border-0 shadow-lg ring-1 ring-gray-100">
           <CardHeader className="pb-2">{renderStepper()}</CardHeader>
 
           <Separator />

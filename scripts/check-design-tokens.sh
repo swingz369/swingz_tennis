@@ -26,6 +26,62 @@ if [ -n "$RADIUS" ]; then
   FAIL=1
 fi
 
+# ── Muster-Ratsche (UI-Einheitlichkeit, docs/ARCHIV/2026-09-19-ui-einheitlichkeit-analyse-und-plan.md) ──
+# Die Token-Prüfung oben fängt Farben und Radius. Diese Zähler fangen Muster:
+# jede Regel hat eine Obergrenze = Stand beim Einführen. Sie darf nur sinken —
+# beim Umstellen die Grenze hier mitsenken, nie anheben.
+UI_SCOPE=(app/\(protected\) components)
+ratchet() { # name max pattern [exclude-regex]
+  local name="$1" max="$2" pat="$3" excl="${4:-^$}"
+  local hits count
+  hits=$(grep -rEn "$pat" "${UI_SCOPE[@]}" --include='*.tsx' 2>/dev/null | grep -Ev "$excl")
+  count=$(printf '%s' "$hits" | grep -c . || true)
+  if [ "$count" -gt "$max" ]; then
+    echo "❌ Muster-Ratsche '$name': $count Treffer, erlaubt sind $max (Baukasten: docs/DESIGN.md § 6a)."
+    echo "$hits" | head -10
+    FAIL=1
+  fi
+}
+# <h1> gehört in PageHeader. Ausnahmen: Vollbild-/Bestätigungsseiten ohne Seitenrahmen und Fehlerseiten,
+# das Profil (Personenname als Titel).
+ratchet 'h1 außerhalb PageHeader' 0 '<h1' 'components/ui/page-header|payment-success|shop/success|select-admin-club|/error\.tsx|subscription-dunning-block|components/member-profile\.tsx'
+ratchet 'window.confirm statt ConfirmDialog' 0 '(^|[^A-Za-z.])(window\.)?confirm\(' 'onConfirm|handleConfirm|await confirm\('
+ratchet 'rohe <table> statt <Table>' 0 '<table' 'components/ui/table\.tsx'
+ratchet 'Pixel-Schriftgrößen text-[Npx]' 9 'text-\[[0-9]+px\]' 'components/ui/'
+ratchet 'CenteredModal außerhalb ui/' 29 '<CenteredModal' 'components/ui/'
+
+ratchet 'Schwebende Flächen: shadow-lg statt shadow-xl/2xl' 0 '\bshadow-(xl|2xl)\b' 'components/ui/'
+ratchet 'h2 semibold statt bold (wie PageHeader)' 0 '<h2[^>]*font-bold' 'components/ui/'
+
+# Statusflächen sind themefähig (globals.css: --success-50 … --info-text-900 kippen im .dark von selbst).
+# Ein zusätzliches dark:-Gegenstück derselben Farbe ist doppelt gepflegt und driftet.
+ratchet 'Statusfläche mit redundantem dark:-Paar' 0 '\b(bg|border)-(success|warning|error|info)-(50|100|200|300)\b[^"'"'"'`]* dark:\1-\2-([5-9]00|950)|\btext-(success|warning|error|info)-(600|700|800|900)[^"'"'"'`]* dark:text-\5-([1-4]00|50)\b' 'components/ui/'
+
+# Kennzahl-Kacheln: Dateien, die eine Zahl als text-2xl/3xl font-bold in eine Card setzen,
+# ohne KpiBand/StatCard. Dateiweise gezählt (ein Treffer je Datei), Kennzahlen gehören in KpiBand.
+KACHELN=$(grep -rlE 'className="[^"]*text-(2xl|3xl) font-bold' "${UI_SCOPE[@]}" --include='*.tsx' 2>/dev/null \
+  | grep -v 'components/ui/' | while read -r f; do
+      grep -q '<Card' "$f" && ! grep -qE 'KpiBand|StatCard' "$f" && echo "$f"
+    done)
+KACHELN_N=$(printf '%s' "$KACHELN" | grep -c . || true)
+if [ "$KACHELN_N" -gt 26 ]; then
+  echo "❌ Muster-Ratsche 'Kennzahl-Kachel statt KpiBand': $KACHELN_N Dateien, erlaubt sind 26 (docs/DESIGN.md § 6a)."
+  echo "$KACHELN" | head -10
+  FAIL=1
+fi
+
+# Leerzustände: loser „Keine … gefunden/vorhanden"-Text statt EmptyState/ListState — dateiweise gezählt.
+LEER=$(grep -rlE '>\s*Keine [^<]*(gefunden|vorhanden)' "${UI_SCOPE[@]}" --include='*.tsx' 2>/dev/null \
+  | grep -v 'components/ui/' | while read -r f; do
+      grep -qE 'EmptyState|ListState' "$f" || echo "$f"
+    done)
+LEER_N=$(printf '%s' "$LEER" | grep -c . || true)
+if [ "$LEER_N" -gt 17 ]; then
+  echo "❌ Muster-Ratsche 'loser Leerzustand statt EmptyState/ListState': $LEER_N Dateien, erlaubt sind 17 (docs/DESIGN.md § 6a)."
+  echo "$LEER" | head -10
+  FAIL=1
+fi
+
 if [ "$FAIL" -eq 0 ]; then
   echo "✅ Design-Tokens sauber — keine hartcodierten Palette-Klassen, Radius-Skala eingehalten."
 fi

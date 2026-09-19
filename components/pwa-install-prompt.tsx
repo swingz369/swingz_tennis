@@ -77,7 +77,7 @@ export function PwaInstallPrompt() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-6 md:bottom-6 md:max-w-sm animate-in slide-in-from-bottom-5 duration-500 motion-reduce:animate-none">
-      <div className="relative rounded-xl border border-border bg-card p-4 shadow-2xl backdrop-blur-sm">
+      <div className="relative rounded-xl border border-border bg-card p-4 shadow-lg backdrop-blur-sm">
         {/* Dismiss button */}
         <button
           onClick={handleDismiss}

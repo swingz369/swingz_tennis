@@ -1,4 +1,5 @@
 'use client';
+import { PageHeader } from '@/components/ui/page-header';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
@@ -184,7 +185,7 @@ export default function MemberBilling() {
     if (status === 'paid') {
       return {
         label: 'Bezahlt',
-        color: 'bg-success-100 text-success-700 dark:bg-success-900/20 dark:text-success-400',
+        color: 'bg-success-100 text-success-700',
         isPaid: true,
       };
     }
@@ -198,13 +199,13 @@ export default function MemberBilling() {
     if (invoice.dueDate && invoice.dueDate < now) {
       return {
         label: 'Überfällig',
-        color: 'bg-error-100 text-error-700 dark:bg-error-900/20 dark:text-error-400',
+        color: 'bg-error-100 text-error-700',
         isPaid: false,
       };
     }
     return {
       label: 'Ausstehend',
-      color: 'bg-warning-100 text-warning-700 dark:bg-warning-900/20 dark:text-warning-400',
+      color: 'bg-warning-100 text-warning-700',
       isPaid: false,
     };
   };
@@ -239,10 +240,10 @@ export default function MemberBilling() {
     return (
       <div className="p-4 md:p-6">
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="h-16 w-16 rounded-xl bg-warning-100 dark:bg-warning-900/20 flex items-center justify-center mb-4">
-            <AlertCircle className="h-8 w-8 text-warning-600 dark:text-warning-400" />
+          <div className="h-16 w-16 rounded-xl bg-warning-100 flex items-center justify-center mb-4">
+            <AlertCircle className="h-8 w-8 text-warning-600" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Zugang eingeschränkt</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Zugang eingeschränkt</h2>
           <p className="text-muted-foreground max-w-md">
             Rechnungen und Zahlungen werden von deinen Eltern verwaltet. Bitte wende dich an deine
             Eltern oder Erziehungsberechtigten.
@@ -265,12 +266,10 @@ export default function MemberBilling() {
     <div className="p-4 md:p-6 space-y-6">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">Rechnungen & Zahlungen</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Verwalte deine Rechnungen und Zahlungen
-          </p>
-        </div>
+        <PageHeader
+          title="Rechnungen & Zahlungen"
+          description="Verwalte deine Rechnungen und Zahlungen"
+        />
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={goToToday}>
             Heute
@@ -395,9 +394,9 @@ export default function MemberBilling() {
               <>
                 <div className="grid gap-3">
                   {membershipCosts > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-info-50 dark:bg-info-900/30 border border-info-200 dark:border-info-800">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-info-50 border border-info-200">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-info-100 dark:bg-info-900/40">
+                        <div className="p-2 rounded-xl bg-info-100">
                           <CreditCard className="h-4 w-4 text-info-600" />
                         </div>
                         <div>
@@ -409,9 +408,9 @@ export default function MemberBilling() {
                     </div>
                   )}
                   {trainingCosts > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-success-50 dark:bg-success-900/30 border border-success-200 dark:border-success-800">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-success-50 border border-success-200">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-success-100 dark:bg-success-900/40">
+                        <div className="p-2 rounded-xl bg-success-100">
                           <Calendar className="h-4 w-4 text-success-600" />
                         </div>
                         <div>
@@ -441,9 +440,9 @@ export default function MemberBilling() {
                     </div>
                   )}
                   {otherCosts > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-info-50 dark:bg-info-900/30 border border-info-200 dark:border-info-800">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-info-50 border border-info-200">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-info-100 dark:bg-info-900/40">
+                        <div className="p-2 rounded-xl bg-info-100">
                           <Receipt className="h-4 w-4 text-info-600" />
                         </div>
                         <div>

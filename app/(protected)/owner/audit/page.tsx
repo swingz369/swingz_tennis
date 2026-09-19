@@ -43,7 +43,7 @@ export default async function OwnerAuditLogPage() {
         />
         <Badge
           variant="outline"
-          className="flex items-center gap-1 border-info-300 text-info-700 dark:border-info-700 dark:text-info-300 shrink-0"
+          className="flex items-center gap-1 border-info-300 text-info-700 shrink-0"
         >
           <Shield className="h-3 w-3" /> Owner-only
         </Badge>

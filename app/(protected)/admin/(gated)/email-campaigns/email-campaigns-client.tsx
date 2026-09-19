@@ -443,12 +443,12 @@ export default function EmailCampaignsClient({
 
           {/* Broadcast info */}
           {recipientMode === 'all' && (
-            <div className="rounded-xl bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-700/30 px-3 py-2 text-sm text-info-800 dark:text-info-300">
+            <div className="rounded-xl bg-info-50 border border-info-200 px-3 py-2 text-sm text-info-800">
               📣 E-Mail wird an alle aktiven Vereinsmitglieder gesendet.
             </div>
           )}
           {recipientMode === 'trainers' && (
-            <div className="rounded-xl bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-700/30 px-3 py-2 text-sm text-info-800 dark:text-info-300">
+            <div className="rounded-xl bg-info-50 border border-info-200 px-3 py-2 text-sm text-info-800">
               📣 E-Mail wird an alle Trainer des Vereins gesendet.
             </div>
           )}

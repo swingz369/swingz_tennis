@@ -1,15 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  ArrowLeft,
   Users,
   Calendar,
   Trophy,
@@ -25,7 +24,6 @@ import { CateringTab } from '@/components/league/catering-tab';
 import { NuligaImport } from '@/components/admin/nuliga-import';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { League, Member } from './tabs/types';
 import { TeamsTab } from './tabs/teams-tab';
 import { MatchdaysTab } from './tabs/matchdays-tab';
@@ -159,122 +157,109 @@ export default function LeagueDetailClient({
       <Breadcrumb
         items={[{ label: 'Liga & Mannschaft', href: '/admin/leagues' }, { label: league.name }]}
       />
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-3">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="mt-1" asChild>
-                <Link href="/admin/leagues" aria-label="Zurück zur Ligaübersicht">
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Zurück zur Ligaübersicht</TooltipContent>
-          </Tooltip>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-primary">{league.name}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {[
-                sportLabels[league.sport] ?? league.sport,
-                league.season_year,
-                league.division,
-                league.age_group,
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </p>
-            <div className="flex gap-2 mt-2 flex-wrap">
-              {league.nuliga_url && (
-                <Badge
-                  variant="outline"
-                  className="gap-1 text-info-600 dark:text-info-400 border-info-200 dark:border-info-800/40"
-                >
-                  <Link2 className="h-3 w-3" /> nuLiga verbunden
-                </Badge>
-              )}
-              <Badge
-                className={
-                  league.status === 'active'
-                    ? 'bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-300'
-                    : 'bg-muted text-muted-foreground'
-                }
-              >
-                {league.status === 'active' ? 'Aktiv' : 'Abgeschlossen'}
+      <PageHeader
+        title={league.name}
+        back={{ href: '/admin/leagues', label: 'Zurück zur Ligaübersicht' }}
+        description={[
+          sportLabels[league.sport] ?? league.sport,
+          league.season_year,
+          league.division,
+          league.age_group,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+        badge={
+          <>
+            {league.nuliga_url && (
+              <Badge variant="outline" className="gap-1 text-info-600 border-info-200">
+                <Link2 className="h-3 w-3" /> nuLiga verbunden
               </Badge>
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <NuligaImport leagueId={leagueId} teamName={league.name} />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              matchdays.setShowNuligaConfig(!matchdays.showNuligaConfig);
-              if (!matchdays.showNuligaConfig) matchdays.loadSyncHistory();
-            }}
-            className="gap-1.5"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${matchdays.syncing ? 'animate-spin' : ''}`} />
-            nuLiga Sync
-          </Button>
-          {league.last_synced_at && (
+            )}
+            <Badge
+              className={
+                league.status === 'active'
+                  ? 'bg-success-100 text-success-800'
+                  : 'bg-muted text-muted-foreground'
+              }
+            >
+              {league.status === 'active' ? 'Aktiv' : 'Abgeschlossen'}
+            </Badge>
+          </>
+        }
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <NuligaImport leagueId={leagueId} teamName={league.name} />
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => {
-                matchdays.setShowSyncHistory(!matchdays.showSyncHistory);
-                if (!matchdays.showSyncHistory) matchdays.loadSyncHistory();
+                matchdays.setShowNuligaConfig(!matchdays.showNuligaConfig);
+                if (!matchdays.showNuligaConfig) matchdays.loadSyncHistory();
               }}
-              className="gap-1.5 text-muted-foreground"
+              className="gap-1.5"
             >
-              <History className="h-3.5 w-3.5" />
-              Historie
+              <RefreshCw className={`h-3.5 w-3.5 ${matchdays.syncing ? 'animate-spin' : ''}`} />
+              nuLiga Sync
             </Button>
-          )}
-          <Button variant="outline" size="sm" onClick={handleExportCsv} className="gap-1.5">
-            <Download className="h-3.5 w-3.5" />
-            CSV Export
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => matchdays.setShowImport(!matchdays.showImport)}
-            className="gap-1.5"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            CSV Import
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setLeagueForm({
-                name: league.name,
-                season_year: league.season_year,
-                division: league.division ?? '',
-                age_group: league.age_group ?? '',
-                notes: league.notes ?? '',
-                nuliga_url: league.nuliga_url ?? '',
-                own_team_name: league.own_team_name ?? '',
-              });
-              setEditingLeague(true);
-            }}
-            className="gap-1.5"
-          >
-            <Edit2 className="h-3.5 w-3.5" />
-            Bearbeiten
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleStatusChange(league.status === 'active' ? 'completed' : 'active')}
-          >
-            {league.status === 'active' ? 'Abschließen' : 'Reaktivieren'}
-          </Button>
-        </div>
-      </div>
+            {league.last_synced_at && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  matchdays.setShowSyncHistory(!matchdays.showSyncHistory);
+                  if (!matchdays.showSyncHistory) matchdays.loadSyncHistory();
+                }}
+                className="gap-1.5 text-muted-foreground"
+              >
+                <History className="h-3.5 w-3.5" />
+                Historie
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={handleExportCsv} className="gap-1.5">
+              <Download className="h-3.5 w-3.5" />
+              CSV Export
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => matchdays.setShowImport(!matchdays.showImport)}
+              className="gap-1.5"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              CSV Import
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setLeagueForm({
+                  name: league.name,
+                  season_year: league.season_year,
+                  division: league.division ?? '',
+                  age_group: league.age_group ?? '',
+                  notes: league.notes ?? '',
+                  nuliga_url: league.nuliga_url ?? '',
+                  own_team_name: league.own_team_name ?? '',
+                });
+                setEditingLeague(true);
+              }}
+              className="gap-1.5"
+            >
+              <Edit2 className="h-3.5 w-3.5" />
+              Bearbeiten
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                handleStatusChange(league.status === 'active' ? 'completed' : 'active')
+              }
+            >
+              {league.status === 'active' ? 'Abschließen' : 'Reaktivieren'}
+            </Button>
+          </div>
+        }
+      />
 
       {/* Inline Liga Edit Form */}
       {editingLeague && (

@@ -71,7 +71,7 @@ export function PremiumUpsell({
         <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-brand-accent text-white shadow-lg shadow-brand-accent/20">
           <Sparkles className="h-6 w-6" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">
+        <h2 className="text-xl font-semibold text-foreground">
           Deine KI-Trainerin hat gerade Vollgas gegeben
         </h2>
         <p className="text-sm text-muted-foreground max-w-md leading-relaxed">{stats.headline}</p>

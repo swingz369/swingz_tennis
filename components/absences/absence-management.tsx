@@ -1,4 +1,5 @@
 'use client';
+import { ListState } from '@/components/ui/list-state';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useCallback, useEffect, useState } from 'react';
@@ -273,7 +274,7 @@ export function AbsenceManagement({
               Abwesenheiten werden geladen …
             </div>
           ) : absences.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">Keine Abwesenheiten vorhanden.</p>
+            <ListState empty emptyTitle="Keine Abwesenheiten vorhanden" />
           ) : (
             <div className="overflow-x-auto">
               <Table>

@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -167,10 +168,10 @@ export default function NotificationSettings() {
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">Benachrichtigungen</h1>
-          <p className="text-muted-foreground">Verwalte deine Benachrichtigungseinstellungen</p>
-        </div>
+        <PageHeader
+          title="Benachrichtigungen"
+          description="Verwalte deine Benachrichtigungseinstellungen"
+        />
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
             <Badge variant="default" className="gap-1">

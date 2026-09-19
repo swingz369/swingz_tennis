@@ -183,8 +183,8 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
       </div>
 
       {!isDraft && (
-        <Card className="border-warning-200 bg-warning-50 dark:bg-warning-900/20">
-          <CardContent className="pt-4 pb-4 flex items-center gap-3 text-sm text-warning-800 dark:text-warning-300">
+        <Card className="border-warning-200 bg-warning-50">
+          <CardContent className="pt-4 pb-4 flex items-center gap-3 text-sm text-warning-800">
             <AlertCircle className="h-4 w-4 shrink-0" />
             Diese Saison ist bereits veröffentlicht (Status:{' '}
             <strong className="mx-1">{statusLabel}</strong>). Saison-Typ, Jahr und Zeitraum sind
@@ -368,8 +368,8 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
       </form>
 
       {!isDraft && (
-        <Card className="border-warning-200 bg-warning-50 dark:bg-warning-900/20">
-          <CardContent className="pt-4 pb-4 flex items-center gap-3 text-sm text-warning-800 dark:text-warning-300">
+        <Card className="border-warning-200 bg-warning-50">
+          <CardContent className="pt-4 pb-4 flex items-center gap-3 text-sm text-warning-800">
             <AlertCircle className="h-4 w-4 shrink-0" />
             Löschen ist nur bei Saisons im Status <strong className="mx-1">Entwurf</strong> möglich.
             Aktive oder abgeschlossene Saisons können nicht gelöscht werden.

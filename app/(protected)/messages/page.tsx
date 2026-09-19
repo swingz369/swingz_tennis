@@ -550,7 +550,7 @@ function MessageList({
                   {person.full_name}
                 </span>
                 {isBroadcast && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-info-50 dark:bg-info-900/20 text-3xs font-semibold text-info-700 dark:text-info-300 border border-info-100 dark:border-info-700/30">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-info-50 text-3xs font-semibold text-info-700 border border-info-100">
                     <Users className="h-2.5 w-2.5" />
                     Rundnachricht
                   </span>
@@ -678,7 +678,7 @@ function MessageDetail({
           <TooltipContent>Zurück zur Übersicht</TooltipContent>
         </Tooltip>
         <div className="flex-1 min-w-0">
-          <h2 className="text-base font-bold text-foreground truncate">{message.subject}</h2>
+          <h2 className="text-base font-semibold text-foreground truncate">{message.subject}</h2>
           <p className="text-xs text-muted-foreground">
             {folder === 'sent' ? 'An' : 'Von'}: {person.full_name} ({person.email}){' · '}
             {format(new Date(message.created_at), 'dd. MMMM yyyy, HH:mm', { locale: de })}
@@ -907,7 +907,7 @@ function ComposeDialog({
   return (
     <CenteredModal open={open} onClose={onClose}>
       <div className="space-y-1.5">
-        <h2 className="text-lg font-bold flex items-center gap-2">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
           <PenSquare className="h-5 w-5" />
           Neue Nachricht
         </h2>
@@ -1136,7 +1136,7 @@ function ComposeDialog({
 
         {/* Broadcast info */}
         {isAdmin && recipientMode !== 'individual' && recipientMode !== 'multi' && (
-          <div className="rounded-xl bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-700/30 px-3 py-2 text-sm text-info-800 dark:text-info-300">
+          <div className="rounded-xl bg-info-50 border border-info-200 px-3 py-2 text-sm text-info-800">
             {recipientMode === 'all' &&
               '📣 Nachricht wird an alle aktiven Vereinsmitglieder gesendet.'}
             {recipientMode === 'trainers' &&

@@ -771,7 +771,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
       >
         <form onSubmit={showForm === 'create' ? handleCreate : handleUpdate}>
           <div className="space-y-1.5">
-            <h2 className="text-lg font-bold">
+            <h2 className="text-lg font-semibold">
               {showForm === 'create' ? 'Neue Preisregel' : 'Preisregel bearbeiten'}
             </h2>
             <p className="text-sm text-muted-foreground">

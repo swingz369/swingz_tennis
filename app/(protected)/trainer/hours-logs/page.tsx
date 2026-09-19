@@ -348,21 +348,15 @@ export default function TrainerHoursLogsPage() {
 
       {/* Approved Hours Summary */}
       {stats.approvedHours > 0 && (
-        <div className="rounded-xl bg-success-50 dark:bg-success-900/10 border border-success-200 dark:border-success-900/20 p-4 flex items-center justify-between">
+        <div className="rounded-xl bg-success-50 border border-success-200 p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <CheckCircle className="h-5 w-5 text-success-600" />
             <div>
-              <p className="text-sm font-medium text-success-800 dark:text-success-200">
-                Bestätigte Stunden
-              </p>
-              <p className="text-xs text-success-600 dark:text-success-400">
-                Bereits von deinem Verein genehmigt
-              </p>
+              <p className="text-sm font-medium text-success-800">Bestätigte Stunden</p>
+              <p className="text-xs text-success-600">Bereits von deinem Verein genehmigt</p>
             </div>
           </div>
-          <p className="text-2xl font-bold text-success-700 dark:text-success-300">
-            {stats.approvedHours.toFixed(1)}h
-          </p>
+          <p className="text-2xl font-bold text-success-700">{stats.approvedHours.toFixed(1)}h</p>
         </div>
       )}
 

@@ -1,10 +1,12 @@
 'use client';
 
+import { KpiBand } from '@/components/ui/kpi-band';
+import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { IconBox } from '@/components/ui/icon-box';
-import { Loader2, CheckCircle, XCircle, Clock, Calendar, Filter } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import { buildPaginationMeta } from '@/lib/pagination';
@@ -76,58 +78,32 @@ export default function AttendanceHistory() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-primary">Anwesenheitshistorie</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Deine Trainings-Anwesenheit im Überblick
-        </p>
-      </div>
+      <PageHeader
+        title="Anwesenheitshistorie"
+        description="Deine Trainings-Anwesenheit im Überblick"
+      />
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
+      <KpiBand
+        items={[
           {
             label: 'Gesamt',
             value: stats.total,
-            icon: Calendar,
-            color: 'text-info-600',
-            bg: 'bg-info-50 dark:bg-info-900/20',
           },
           {
             label: 'Anwesend',
             value: stats.attended,
-            icon: CheckCircle,
-            color: 'text-success-600',
-            bg: 'bg-success-50 dark:bg-success-900/20',
           },
           {
             label: 'Verpasst',
             value: stats.missed,
-            icon: XCircle,
-            color: 'text-error-600',
-            bg: 'bg-error-50 dark:bg-error-900/20',
           },
           {
             label: 'Quote',
             value: `${stats.rate}%`,
-            icon: Clock,
-            color: 'text-warning-600',
-            bg: 'bg-warning-50 dark:bg-warning-900/20',
           },
-        ].map((s) => (
-          <Card key={s.label} className="border-0 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-muted-foreground">{s.label}</p>
-                <div className={`flex h-7 w-7 items-center justify-center rounded-xl ${s.bg}`}>
-                  <s.icon className={`h-3.5 w-3.5 ${s.color}`} />
-                </div>
-              </div>
-              <p className="text-2xl font-bold tabular-nums">{s.value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+        ]}
+      />
 
       {/* Filter */}
       <div className="flex gap-2">

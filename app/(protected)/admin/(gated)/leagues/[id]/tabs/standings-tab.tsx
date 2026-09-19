@@ -1,4 +1,4 @@
-import { Trophy } from 'lucide-react';
+import { ListState } from '@/components/ui/list-state';
 import {
   Table,
   TableBody,
@@ -14,10 +14,7 @@ export function StandingsTab({ teams }: { teams: Team[] }) {
     <>
       <h2 className="text-lg font-semibold">Tabelle</h2>
       {teams.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Trophy className="h-10 w-10 mx-auto mb-2 opacity-40" />
-          <p>Keine Teams vorhanden</p>
-        </div>
+        <ListState empty emptyTitle="Keine Teams vorhanden" />
       ) : (
         <div className="rounded-md border overflow-hidden">
           <Table>
@@ -44,13 +41,13 @@ export function StandingsTab({ teams }: { teams: Team[] }) {
                     <TableCell className="text-center tabular-nums">
                       {team.matches_played}
                     </TableCell>
-                    <TableCell className="text-center tabular-nums text-success-600 dark:text-success-400">
+                    <TableCell className="text-center tabular-nums text-success-600">
                       {team.matches_won}
                     </TableCell>
-                    <TableCell className="text-center tabular-nums text-warning-600 dark:text-warning-400">
+                    <TableCell className="text-center tabular-nums text-warning-600">
                       {team.matches_drawn}
                     </TableCell>
-                    <TableCell className="text-center tabular-nums text-error-600 dark:text-error-400">
+                    <TableCell className="text-center tabular-nums text-error-600">
                       {team.matches_lost}
                     </TableCell>
                     <TableCell className="text-right font-bold tabular-nums">

@@ -539,7 +539,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                             {member.full_name}
                           </span>
                           {member.is_honorary && (
-                            <span className="ml-1.5 inline-flex items-center rounded-full bg-warning-100 dark:bg-warning-900/30 px-1.5 py-0.5 text-2xs font-medium text-warning-700 dark:text-warning-400">
+                            <span className="ml-1.5 inline-flex items-center rounded-full bg-warning-100 px-1.5 py-0.5 text-2xs font-medium text-warning-700">
                               Ehren
                             </span>
                           )}

@@ -119,7 +119,7 @@ export function TrainerAvailabilityPanel() {
 
   if (error) {
     return (
-      <Card className="border-error-200 bg-error-50 dark:bg-error-900/10">
+      <Card className="border-error-200 bg-error-50">
         <CardContent className="p-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-error-600 text-sm">
@@ -138,7 +138,7 @@ export function TrainerAvailabilityPanel() {
 
   if (trainers.length === 0) {
     return (
-      <Card className="border-warning-200 bg-warning-50 dark:bg-warning-900/10">
+      <Card className="border-warning-200 bg-warning-50">
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-warning-700 text-sm">
             <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -191,7 +191,7 @@ export function TrainerAvailabilityPanel() {
           </div>
         </div>
         {pendingCount > 0 && (
-          <p className="text-xs text-warning-600 dark:text-warning-400 mt-1">
+          <p className="text-xs text-warning-600 mt-1">
             {pendingCount} Trainer {pendingCount === 1 ? 'hat' : 'haben'} noch keine
             Planungspräferenzen eingereicht — Trainer können diese unter{' '}
             <a href="/trainer/planning-preferences" className="underline font-medium">
@@ -215,12 +215,12 @@ export function TrainerAvailabilityPanel() {
                 key={trainer.trainerId}
                 className={`flex items-center justify-between p-3 rounded-xl border text-sm ${
                   !trainer.hasSubmittedPreferences
-                    ? 'bg-warning-50 border-warning-200 dark:bg-warning-900/10 dark:border-warning-800'
+                    ? 'bg-warning-50 border-warning-200'
                     : trainer.utilizationStatus === 'over'
-                      ? 'bg-error-50 border-error-200 dark:bg-error-900/10 dark:border-error-800'
+                      ? 'bg-error-50 border-error-200'
                       : trainer.utilizationStatus === 'near_limit'
-                        ? 'bg-warning-50 border-warning-200 dark:bg-warning-900/10 dark:border-warning-800'
-                        : 'bg-success-50 border-success-200 dark:bg-success-900/10 dark:border-success-800'
+                        ? 'bg-warning-50 border-warning-200'
+                        : 'bg-success-50 border-success-200'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -271,12 +271,10 @@ export function TrainerAvailabilityPanel() {
         </div>
 
         {burnoutWarnings.length > 0 && (
-          <div className="mt-3 p-3 rounded-xl bg-error-50 border border-error-200 dark:bg-error-900/10 dark:border-error-800">
-            <p className="text-xs font-medium text-error-700 dark:text-error-400 mb-1">
-              Burnout-Risiko
-            </p>
+          <div className="mt-3 p-3 rounded-xl bg-error-50 border border-error-200">
+            <p className="text-xs font-medium text-error-700 mb-1">Burnout-Risiko</p>
             {burnoutWarnings.map((w, i) => (
-              <p key={i} className="text-xs text-error-600 dark:text-error-300">
+              <p key={i} className="text-xs text-error-600">
                 {w}
               </p>
             ))}

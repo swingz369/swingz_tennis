@@ -115,3 +115,40 @@ export function ConfirmDialog({
     </CenteredModal>
   );
 }
+
+type ConfirmOptions = Pick<
+  ConfirmDialogProps,
+  'title' | 'description' | 'confirmLabel' | 'cancelLabel' | 'variant'
+>;
+
+/**
+ * Ersatz für `window.confirm()`: `if (!(await confirm({ title: '…' }))) return;`
+ * `dialog` einmal im JSX der Komponente rendern.
+ */
+export function useConfirmDialog() {
+  const [state, setState] = React.useState<{
+    options: ConfirmOptions;
+    resolve: (ok: boolean) => void;
+  } | null>(null);
+
+  const confirm = React.useCallback(
+    (options: ConfirmOptions) => new Promise<boolean>((resolve) => setState({ options, resolve })),
+    []
+  );
+
+  const settle = (ok: boolean) => {
+    state?.resolve(ok);
+    setState(null);
+  };
+
+  const dialog = state ? (
+    <ConfirmDialog
+      open
+      onOpenChange={(open) => !open && settle(false)}
+      onConfirm={() => settle(true)}
+      {...state.options}
+    />
+  ) : null;
+
+  return [confirm, dialog] as const;
+}

@@ -315,9 +315,7 @@ function AssignClubsDialog({
                 key={c.id}
                 onClick={() => toggle(c.id)}
                 className={`w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-left transition-colors ${
-                  checked
-                    ? 'bg-info-50 dark:bg-info-900/20 ring-1 ring-info-300/50'
-                    : 'hover:bg-muted/50'
+                  checked ? 'bg-info-50 ring-1 ring-info-300/50' : 'hover:bg-muted/50'
                 }`}
               >
                 <div

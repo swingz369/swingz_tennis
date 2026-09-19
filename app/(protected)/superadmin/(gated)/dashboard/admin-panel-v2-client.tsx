@@ -63,6 +63,7 @@ export function AdminPanelV2Client({
   const [activeTab, setActiveTab] = useState('overview');
 
   function handleClubSwitch(clubId: string) {
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- API-Route setzt das Vereins-Cookie und leitet weiter, braucht echte Navigation
     window.location.href = `/api/admin/switch-club-redirect?clubId=${encodeURIComponent(clubId)}`;
   }
 
@@ -77,7 +78,7 @@ export function AdminPanelV2Client({
         <div className="flex items-center gap-3">
           {/* Club Switcher Dropdown */}
           <Select onValueChange={handleClubSwitch}>
-            <SelectTrigger className="w-full sm:w-[260px] border-info-200 dark:border-info-800 hover:border-info-400 transition-colors">
+            <SelectTrigger className="w-full sm:w-[260px] border-info-200 hover:border-info-400 transition-colors">
               <ArrowRightLeft className="h-4 w-4 text-info-500 dark:text-info-400 mr-2 shrink-0" />
               <SelectValue placeholder="Verein auswählen…" />
             </SelectTrigger>
@@ -102,7 +103,7 @@ export function AdminPanelV2Client({
           </Select>
           <Badge
             variant="outline"
-            className="flex items-center gap-1 border-info-300 text-info-700 dark:border-info-700 dark:text-info-300 shrink-0"
+            className="flex items-center gap-1 border-info-300 text-info-700 shrink-0"
           >
             <Shield className="h-3 w-3" /> {userRole}
           </Badge>
@@ -116,29 +117,29 @@ export function AdminPanelV2Client({
             label: 'Vereine',
             value: platformStats.totalClubs,
             icon: Building2,
-            color: 'text-info-600 dark:text-info-400',
-            bg: 'bg-info-50 dark:bg-info-900/20',
+            color: 'text-info-600',
+            bg: 'bg-info-50',
           },
           {
             label: 'Mitglieder gesamt',
             value: platformStats.totalMembers,
             icon: Users,
             color: 'text-info-600',
-            bg: 'bg-info-50 dark:bg-info-900/20',
+            bg: 'bg-info-50',
           },
           {
             label: 'Trainer gesamt',
             value: platformStats.totalTrainers,
             icon: GraduationCap,
             color: 'text-warning-600',
-            bg: 'bg-warning-50 dark:bg-warning-900/20',
+            bg: 'bg-warning-50',
           },
           {
             label: 'Aktiv',
             value: clubs.filter((c) => c.status === 'active').length,
             icon: Activity,
             color: 'text-success-600',
-            bg: 'bg-success-50 dark:bg-success-900/20',
+            bg: 'bg-success-50',
           },
         ].map((stat) => (
           <Card key={stat.label} className="border-0 shadow-sm">
@@ -163,7 +164,7 @@ export function AdminPanelV2Client({
           <h2 className="text-lg font-semibold text-foreground dark:text-gray-200">Alle Vereine</h2>
           <Link
             href="/superadmin/clubs"
-            className="text-xs text-info-600 dark:text-info-400 hover:underline font-medium flex items-center gap-1"
+            className="text-xs text-info-600 hover:underline font-medium flex items-center gap-1"
           >
             Verwalten <ChevronRight className="h-3 w-3" />
           </Link>
@@ -177,8 +178,8 @@ export function AdminPanelV2Client({
             >
               <CardContent className="p-5">
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-50 dark:bg-info-900/20 shrink-0">
-                    <Building2 className="h-5 w-5 text-info-600 dark:text-info-400" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-50 shrink-0">
+                    <Building2 className="h-5 w-5 text-info-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">{club.name}</p>
@@ -227,10 +228,7 @@ export function AdminPanelV2Client({
               <p className="font-medium">Keine Vereine gefunden</p>
               <p className="text-sm mt-1">
                 Erstelle einen neuen Verein unter{' '}
-                <Link
-                  href="/superadmin/clubs"
-                  className="text-info-600 dark:text-info-400 hover:underline"
-                >
+                <Link href="/superadmin/clubs" className="text-info-600 hover:underline">
                   Club-Verwaltung
                 </Link>
               </p>
@@ -268,7 +266,7 @@ export function AdminPanelV2Client({
           <Card>
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-info-600 dark:text-info-400" />
+                <TrendingUp className="h-5 w-5 text-info-600" />
                 Plattform-Statistiken
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -300,7 +298,7 @@ export function AdminPanelV2Client({
                     key={item.label}
                     className="text-center p-4 bg-muted dark:bg-card/5 rounded-xl"
                   >
-                    <p className="text-2xl font-bold text-info-600 dark:text-info-400">
+                    <p className="text-2xl font-bold text-info-600">
                       {item.value.toLocaleString('de-DE')}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
@@ -330,7 +328,7 @@ export function AdminPanelV2Client({
               </p>
               <Link
                 href="#club-overview"
-                className="text-sm text-info-600 dark:text-info-400 hover:underline font-medium"
+                className="text-sm text-info-600 hover:underline font-medium"
               >
                 Zur Vereinsübersicht ↑
               </Link>
@@ -349,7 +347,7 @@ export function AdminPanelV2Client({
               </p>
               <Link
                 href="#club-overview"
-                className="text-sm text-info-600 dark:text-info-400 hover:underline font-medium"
+                className="text-sm text-info-600 hover:underline font-medium"
               >
                 Zur Vereinsübersicht ↑
               </Link>

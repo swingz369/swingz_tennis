@@ -60,7 +60,7 @@ export default function AdminError({
             </svg>
           </div>
           <div className="ml-4">
-            <h2 className="text-2xl font-bold text-foreground">Admin-Fehler</h2>
+            <h2 className="text-2xl font-semibold text-foreground">Admin-Fehler</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Beim Laden der Admin-Oberfläche ist ein Fehler aufgetreten.
             </p>

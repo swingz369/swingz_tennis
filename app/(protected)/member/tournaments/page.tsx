@@ -107,7 +107,7 @@ export default function MemberTournamentsPage() {
       <PageHeader title="Turniere" description="Vereinsturniere und Anmeldung" />
 
       {registerSuccess && (
-        <div className="flex items-center gap-2 rounded-xl bg-success-50 dark:bg-success-900/20 p-4 text-success-700 dark:text-success-300 text-sm">
+        <div className="flex items-center gap-2 rounded-xl bg-success-50 p-4 text-success-700 text-sm">
           <CheckCircle className="h-4 w-4 shrink-0" />
           Du wurdest für &quot;{registerSuccess}&quot; angemeldet!
         </div>
@@ -247,7 +247,7 @@ export default function MemberTournamentsPage() {
       >
         {confirmTournament && (
           <div className="space-y-3 py-2">
-            <div className="rounded-xl bg-warning-50 dark:bg-warning-900/10 p-4 space-y-2">
+            <div className="rounded-xl bg-warning-50 p-4 space-y-2">
               <p className="font-semibold text-sm">{confirmTournament.name}</p>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />

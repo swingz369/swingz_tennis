@@ -39,22 +39,19 @@ const statusConfig: Record<
   requested: {
     label: 'Angefragt',
     icon: AlertCircle,
-    color:
-      'bg-warning-50 text-warning-700 border-warning-200 dark:bg-warning-900/20 dark:text-warning-300 dark:border-warning-800',
+    color: 'bg-warning-50 text-warning-700 border-warning-200',
     description: 'Deine Anfrage ist eingegangen. Wir melden uns in Kürze mit einem Termin.',
   },
   scheduled: {
     label: 'Terminiert',
     icon: Calendar,
-    color:
-      'bg-info-50 text-info-700 border-info-200 dark:bg-info-900/20 dark:text-info-300 dark:border-info-800',
+    color: 'bg-info-50 text-info-700 border-info-200',
     description: 'Dein Probetraining ist terminiert. Wir freuen uns auf dich!',
   },
   completed: {
     label: 'Abgeschlossen',
     icon: CheckCircle2,
-    color:
-      'bg-success-50 text-success-700 border-success-200 dark:bg-success-900/20 dark:text-success-300 dark:border-success-800',
+    color: 'bg-success-50 text-success-700 border-success-200',
     description: 'Dein Probetraining ist abgeschlossen. Willkommen im Verein!',
   },
   cancelled: {
@@ -67,15 +64,13 @@ const statusConfig: Record<
   no_show: {
     label: 'Nicht erschienen',
     icon: XCircle,
-    color:
-      'bg-error-50 text-error-700 border-error-200 dark:bg-error-900/20 dark:text-error-300 dark:border-error-800',
+    color: 'bg-error-50 text-error-700 border-error-200',
     description: 'Leider bist du nicht zum Probetraining erschienen.',
   },
   converted: {
     label: 'Mitglied geworden',
     icon: Sparkles,
-    color:
-      'bg-success-50 text-success-700 border-success-200 dark:bg-success-900/20 dark:text-success-300 dark:border-success-800',
+    color: 'bg-success-50 text-success-700 border-success-200',
     description: 'Super! Du bist jetzt offizielles Mitglied. Willkommen!',
   },
 };
@@ -234,19 +229,15 @@ export default async function MemberTrialTrainingPage() {
 
                 {/* Converted State */}
                 {t.status === 'converted' && (
-                  <div className="mt-4 p-3 rounded-xl bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800">
+                  <div className="mt-4 p-3 rounded-xl bg-success-50 border border-success-200">
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success-600" />
-                      <p className="text-sm font-medium text-success-700 dark:text-success-300">
+                      <p className="text-sm font-medium text-success-700">
                         Willkommen im Verein! Du kannst jetzt alle Mitgliederfunktionen nutzen.
                       </p>
                     </div>
                     <Link href="/member">
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="mt-1 h-auto p-0 text-success-700 dark:text-success-300"
-                      >
+                      <Button variant="link" size="sm" className="mt-1 h-auto p-0 text-success-700">
                         Zum Mitglieder-Dashboard →
                       </Button>
                     </Link>

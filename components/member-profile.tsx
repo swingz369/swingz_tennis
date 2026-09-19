@@ -676,7 +676,7 @@ export default function MemberProfile() {
 
                   {mfaEnrolled ? (
                     <div className="space-y-4 max-w-md">
-                      <div className="flex items-center gap-2 text-sm text-success-700 dark:text-success-400">
+                      <div className="flex items-center gap-2 text-sm text-success-700">
                         <CheckCircle className="h-4 w-4" />
                         2FA ist aktiv
                       </div>

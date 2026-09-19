@@ -37,8 +37,8 @@ interface Club {
 // Kontrast, Abstände und Interaktionsmuster bleiben identisch.
 const roleColors = {
   owner: {
-    bg: 'bg-info-50 dark:bg-info-900/20',
-    text: 'text-info-700 dark:text-info-300',
+    bg: 'bg-info-50',
+    text: 'text-info-700',
     light: 'info',
     ring: 'ring-info-300/50',
   },
@@ -55,8 +55,8 @@ const roleColors = {
     ring: 'ring-brand-primary/30',
   },
   trainer: {
-    bg: 'bg-success-50 dark:bg-success-900/20',
-    text: 'text-success-600 dark:text-success-300',
+    bg: 'bg-success-50',
+    text: 'text-success-600',
     light: 'success',
     ring: 'ring-success-300/40',
   },
@@ -516,7 +516,7 @@ export function Sidebar({
         'sidebar-surface w-64 shrink-0 overflow-y-auto transition-transform duration-300 ease-out will-change-transform',
         'md:translate-x-0',
         open
-          ? 'fixed inset-y-0 left-0 z-50 h-dvh translate-x-0 shadow-2xl shadow-black/10'
+          ? 'fixed inset-y-0 left-0 z-50 h-dvh translate-x-0 shadow-lg shadow-black/10'
           : 'fixed inset-y-0 left-0 z-50 h-dvh -translate-x-full md:sticky md:top-0 md:translate-x-0 md:shadow-none'
       )}
       role="navigation"
@@ -624,7 +624,7 @@ export function Sidebar({
                     className={cn(
                       'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
                       club.id === (selectedClubId ?? activeClub?.id)
-                        ? 'bg-info-50 dark:bg-info-900/20 text-info-700 dark:text-info-300 font-medium'
+                        ? 'bg-info-50 text-info-700 font-medium'
                         : 'text-muted-foreground hover:bg-muted'
                     )}
                   >

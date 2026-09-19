@@ -1,4 +1,12 @@
 'use client';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -471,44 +479,44 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
             </div>
             <div className="rounded-md border border-border overflow-hidden">
               <div className="max-h-[260px] overflow-y-auto">
-                <table className="w-full text-xs">
-                  <thead className="bg-muted/30 sticky top-0">
-                    <tr>
-                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
+                <Table className="w-full text-xs">
+                  <TableHeader className="bg-muted/30 sticky top-0">
+                    <TableRow>
+                      <TableHead className="text-left px-2 py-1.5 font-medium text-muted-foreground">
                         Datum
-                      </th>
-                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
+                      </TableHead>
+                      <TableHead className="text-left px-2 py-1.5 font-medium text-muted-foreground">
                         Tag
-                      </th>
-                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
+                      </TableHead>
+                      <TableHead className="text-left px-2 py-1.5 font-medium text-muted-foreground">
                         Uhr
-                      </th>
-                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
+                      </TableHead>
+                      <TableHead className="text-left px-2 py-1.5 font-medium text-muted-foreground">
                         Status
-                      </th>
-                      <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
+                      </TableHead>
+                      <TableHead className="text-left px-2 py-1.5 font-medium text-muted-foreground">
                         Grund
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {(showAllSessions ? sessions.sample : sessions.sample.slice(0, 12)).map(
                       (s, i) => (
-                        <tr
+                        <TableRow
                           key={`${s.date}-${s.hour}-${i}`}
                           className={cn(
                             'border-t border-border',
                             !s.wouldCreate && 'bg-warning-50/40'
                           )}
                         >
-                          <td className="px-2 py-1.5 tabular-nums">{s.date}</td>
-                          <td className="px-2 py-1.5">
+                          <TableCell className="px-2 py-1.5 tabular-nums">{s.date}</TableCell>
+                          <TableCell className="px-2 py-1.5">
                             {['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][s.dayOfWeek] ?? '?'}
-                          </td>
-                          <td className="px-2 py-1.5 tabular-nums">
+                          </TableCell>
+                          <TableCell className="px-2 py-1.5 tabular-nums">
                             {String(s.hour).padStart(2, '0')}:00
-                          </td>
-                          <td className="px-2 py-1.5">
+                          </TableCell>
+                          <TableCell className="px-2 py-1.5">
                             {s.wouldCreate ? (
                               <Badge className="bg-success-100 text-success-700 text-2xs h-4">
                                 Erstellen
@@ -518,17 +526,17 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
                                 Überspringen
                               </Badge>
                             )}
-                          </td>
-                          <td className="px-2 py-1.5 text-muted-foreground">
+                          </TableCell>
+                          <TableCell className="px-2 py-1.5 text-muted-foreground">
                             {s.skipReason === 'holiday' && s.holidayNames.length > 0
                               ? s.holidayNames.join(', ')
                               : (s.skipReason ?? '—')}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       )
                     )}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             </div>
           </div>

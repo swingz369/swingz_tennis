@@ -181,9 +181,9 @@ export default function SuperadminOnboardingPage() {
                 <span
                   className={`text-xs font-medium whitespace-nowrap hidden sm:block transition-colors duration-300 ${
                     isCurrent
-                      ? 'text-info-600 dark:text-info-400 font-semibold'
+                      ? 'text-info-600 font-semibold'
                       : isCompleted
-                        ? 'text-info-600/70 dark:text-info-400/70'
+                        ? 'text-info-600/70/70'
                         : 'text-muted-foreground'
                   }`}
                 >
@@ -204,18 +204,18 @@ export default function SuperadminOnboardingPage() {
       case 1:
         return (
           <div className="text-center space-y-8 py-6">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-info-100 dark:bg-info-900/20 rounded-full">
-              <Zap className="w-12 h-12 text-info-600 dark:text-info-400" />
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-info-100 rounded-full">
+              <Zap className="w-12 h-12 text-info-600" />
             </div>
             <div className="space-y-3">
-              <h2 className="text-3xl font-bold text-foreground">
+              <h2 className="text-3xl font-semibold text-foreground">
                 Willkommen auf der SwingZ-Plattform!
               </h2>
               <p className="text-muted-foreground text-lg max-w-md mx-auto">
                 Als{' '}
                 <Badge
                   variant="secondary"
-                  className="mx-1 bg-info-100 dark:bg-info-900/20 text-info-700 dark:text-info-300 border-info-200 dark:border-info-700"
+                  className="mx-1 bg-info-100 text-info-700 border-info-200"
                 >
                   Superadmin
                 </Badge>{' '}
@@ -246,17 +246,17 @@ export default function SuperadminOnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Plattform-Tour</h2>
+              <h2 className="text-2xl font-semibold text-foreground">Plattform-Tour</h2>
               <p className="text-muted-foreground text-sm mt-1">
                 Hier ist, was du als Superadmin alles tun kannst:
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Card className="border-info-200 dark:border-info-700/30 bg-info-50/30 dark:bg-info-900/10">
+              <Card className="border-info-200 bg-info-50/30">
                 <CardContent className="pt-5 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-info-100 dark:bg-info-900/20 flex items-center justify-center">
-                      <BarChart3 className="w-4 h-4 text-info-600 dark:text-info-400" />
+                    <div className="w-8 h-8 rounded-full bg-info-100 flex items-center justify-center">
+                      <BarChart3 className="w-4 h-4 text-info-600" />
                     </div>
                     <h3 className="font-semibold text-sm">Dashboard</h3>
                   </div>
@@ -266,11 +266,11 @@ export default function SuperadminOnboardingPage() {
                   </p>
                 </CardContent>
               </Card>
-              <Card className="border-info-200 dark:border-info-700/30 bg-info-50/30 dark:bg-info-900/10">
+              <Card className="border-info-200 bg-info-50/30">
                 <CardContent className="pt-5 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-info-100 dark:bg-info-900/20 flex items-center justify-center">
-                      <Building2 className="w-4 h-4 text-info-600 dark:text-info-400" />
+                    <div className="w-8 h-8 rounded-full bg-info-100 flex items-center justify-center">
+                      <Building2 className="w-4 h-4 text-info-600" />
                     </div>
                     <h3 className="font-semibold text-sm">Vereinsübersicht</h3>
                   </div>
@@ -279,11 +279,11 @@ export default function SuperadminOnboardingPage() {
                   </p>
                 </CardContent>
               </Card>
-              <Card className="border-info-200 dark:border-info-700/30 bg-info-50/30 dark:bg-info-900/10">
+              <Card className="border-info-200 bg-info-50/30">
                 <CardContent className="pt-5 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-info-100 dark:bg-info-900/20 flex items-center justify-center">
-                      <Users className="w-4 h-4 text-info-600 dark:text-info-400" />
+                    <div className="w-8 h-8 rounded-full bg-info-100 flex items-center justify-center">
+                      <Users className="w-4 h-4 text-info-600" />
                     </div>
                     <h3 className="font-semibold text-sm">Club-Verwaltung</h3>
                   </div>
@@ -292,11 +292,11 @@ export default function SuperadminOnboardingPage() {
                   </p>
                 </CardContent>
               </Card>
-              <Card className="border-info-200 dark:border-info-700/30 bg-info-50/30 dark:bg-info-900/10">
+              <Card className="border-info-200 bg-info-50/30">
                 <CardContent className="pt-5 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-info-100 dark:bg-info-900/20 flex items-center justify-center">
-                      <ArrowLeftRight className="w-4 h-4 text-info-600 dark:text-info-400" />
+                    <div className="w-8 h-8 rounded-full bg-info-100 flex items-center justify-center">
+                      <ArrowLeftRight className="w-4 h-4 text-info-600" />
                     </div>
                     <h3 className="font-semibold text-sm">Club-Wechsel</h3>
                   </div>
@@ -306,8 +306,8 @@ export default function SuperadminOnboardingPage() {
                 </CardContent>
               </Card>
             </div>
-            <Card className="bg-info-50/50 dark:bg-info-900/10 border-info-200 dark:border-info-700/30">
-              <CardContent className="pt-4 text-sm text-info-800 dark:text-info-300">
+            <Card className="bg-info-50/50 border-info-200">
+              <CardContent className="pt-4 text-sm text-info-800">
                 <strong>Tipp:</strong> Du kannst jederzeit zwischen deiner Superadmin-Ansicht und
                 der Admin-Ansicht einzelner Vereine wechseln.
               </CardContent>
@@ -319,7 +319,7 @@ export default function SuperadminOnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Ersten Verein anlegen</h2>
+              <h2 className="text-2xl font-semibold text-foreground">Ersten Verein anlegen</h2>
               <p className="text-muted-foreground text-sm mt-1">
                 Erstelle deinen ersten Tennisverein – oder überspringe diesen Schritt.
               </p>
@@ -327,8 +327,8 @@ export default function SuperadminOnboardingPage() {
 
             {createdClubId ? (
               <div className="text-center space-y-6 py-4">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-success-100 dark:bg-success-900/20 rounded-full">
-                  <CheckCircle2 className="w-8 h-8 text-success-600 dark:text-success-400" />
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-success-100 rounded-full">
+                  <CheckCircle2 className="w-8 h-8 text-success-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">
@@ -402,11 +402,11 @@ export default function SuperadminOnboardingPage() {
       case 4:
         return (
           <div className="text-center space-y-8 py-6">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-info-100 dark:bg-info-900/20 rounded-full">
-              <CheckCircle2 className="w-12 h-12 text-info-600 dark:text-info-400" />
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-info-100 rounded-full">
+              <CheckCircle2 className="w-12 h-12 text-info-600" />
             </div>
             <div className="space-y-3">
-              <h2 className="text-3xl font-bold text-foreground">
+              <h2 className="text-3xl font-semibold text-foreground">
                 Superadmin-Setup abgeschlossen!
               </h2>
               <p className="text-muted-foreground text-lg max-w-md mx-auto">
@@ -418,9 +418,9 @@ export default function SuperadminOnboardingPage() {
                 <Badge
                   key={s.label}
                   variant="secondary"
-                  className="gap-1.5 px-3 py-1.5 bg-info-100 dark:bg-info-900/20 border-info-200 dark:border-info-700"
+                  className="gap-1.5 px-3 py-1.5 bg-info-100 border-info-200"
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-info-600 dark:text-info-400" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-info-600" />
                   {s.label}
                 </Badge>
               ))}

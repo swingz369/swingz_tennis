@@ -402,7 +402,7 @@ export default function OwnerClubsPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-7 w-7 p-0 text-error-600 hover:bg-error-50 hover:text-error-700 dark:text-error-400 dark:hover:bg-error-900/20"
+                              className="h-7 w-7 p-0 text-error-600 hover:bg-error-50 hover:text-error-700 dark:hover:bg-error-900/20"
                               aria-label={`${club.name} löschen`}
                               onClick={() => {
                                 setDeleteClubId(club.id);

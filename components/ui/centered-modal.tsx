@@ -160,7 +160,7 @@ export function CenteredModal({
         aria-label={ariaLabel}
         tabIndex={-1}
         className={cn(
-          'bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md',
+          'bg-background dark:bg-card rounded-xl shadow-lg p-6 w-full max-w-md',
           scrollInside && 'max-h-[90vh] overflow-y-auto sm:max-h-[85vh]',
           className
         )}

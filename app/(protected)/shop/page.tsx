@@ -258,7 +258,7 @@ function ShopContent() {
 
       {/* Cart slide-over panel */}
       <div
-        className={`fixed top-0 right-0 z-50 h-full w-full sm:w-96 bg-background dark:bg-card shadow-2xl transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 z-50 h-full w-full sm:w-96 bg-background dark:bg-card shadow-lg transform transition-transform duration-300 ease-in-out ${
           cartOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -267,7 +267,7 @@ function ShopContent() {
           <div className="flex items-center justify-between px-5 py-4 border-b">
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-5 w-5 text-brand-light" />
-              <h2 className="text-lg font-bold text-foreground dark:text-foreground">Warenkorb</h2>
+              <h2 className="text-lg font-semibold text-foreground">Warenkorb</h2>
               {cartCount > 0 && (
                 <Badge className="bg-brand-light/10 text-brand-light text-xs">{cartCount}</Badge>
               )}

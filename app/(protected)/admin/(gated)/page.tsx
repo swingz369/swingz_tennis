@@ -735,7 +735,7 @@ export default async function AdminPage() {
                   <div
                     className={`flex items-start gap-3 rounded-xl px-3 py-2.5 h-full transition-all ${
                       item.done
-                        ? 'bg-success-50 dark:bg-success-900/20 cursor-default'
+                        ? 'bg-success-50 cursor-default'
                         : item.blocked
                           ? 'bg-muted/40 border border-dashed border-border cursor-not-allowed'
                           : 'bg-background border border-border hover:border-brand-light/40 cursor-pointer'
@@ -743,13 +743,11 @@ export default async function AdminPage() {
                   >
                     <div
                       className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full shrink-0 ${
-                        item.done ? 'bg-success-100 dark:bg-success-800' : 'border-2 border-border'
+                        item.done ? 'bg-success-100' : 'border-2 border-border'
                       }`}
                     >
                       {item.done ? (
-                        <span className="text-success-600 dark:text-success-400 text-xs font-bold">
-                          ✓
-                        </span>
+                        <span className="text-success-600 text-xs font-bold">✓</span>
                       ) : item.blocked ? (
                         <LockKeyhole className="h-3 w-3 text-muted-foreground" />
                       ) : null}

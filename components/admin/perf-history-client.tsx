@@ -1,5 +1,13 @@
 'use client';
 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -222,51 +230,53 @@ export function PerfHistoryClient() {
       {points.length > 0 && (
         <Card variant="bordered" className="p-4 md:p-6 overflow-x-auto">
           <h3 className="text-sm font-semibold mb-3">Roh-Daten ({points.length})</h3>
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="text-left text-muted-foreground border-b border-border/60 dark:border-white/10">
-                <th className="py-2 pr-3 font-medium">Zeitpunkt</th>
-                <th className="py-2 pr-3 font-medium">Label</th>
-                <th className="py-2 pr-3 font-medium">Quelle</th>
-                <th className="py-2 pr-3 font-medium text-right">Mitglieder</th>
-                <th className="py-2 pr-3 font-medium text-right">mean (ms)</th>
-                <th className="py-2 pr-3 font-medium text-right">min</th>
-                <th className="py-2 pr-3 font-medium text-right">max</th>
-                <th className="py-2 pr-3 font-medium text-right">unassigned</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table className="w-full text-xs">
+            <TableHeader>
+              <TableRow className="text-left text-muted-foreground border-b border-border/60 dark:border-white/10">
+                <TableHead className="py-2 pr-3 font-medium">Zeitpunkt</TableHead>
+                <TableHead className="py-2 pr-3 font-medium">Label</TableHead>
+                <TableHead className="py-2 pr-3 font-medium">Quelle</TableHead>
+                <TableHead className="py-2 pr-3 font-medium text-right">Mitglieder</TableHead>
+                <TableHead className="py-2 pr-3 font-medium text-right">mean (ms)</TableHead>
+                <TableHead className="py-2 pr-3 font-medium text-right">min</TableHead>
+                <TableHead className="py-2 pr-3 font-medium text-right">max</TableHead>
+                <TableHead className="py-2 pr-3 font-medium text-right">unassigned</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {points
                 .slice()
                 .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
                 .slice(0, 50)
                 .map((p, i) => (
-                  <tr
+                  <TableRow
                     key={`${p.runId}-${i}`}
                     className="border-b border-border/30 dark:border-white/5 hover:bg-muted/40 dark:hover:bg-background/40"
                   >
-                    <td className="py-2 pr-3 tabular-nums">
+                    <TableCell className="py-2 pr-3 tabular-nums">
                       {new Date(p.timestamp).toLocaleString('de-DE')}
-                    </td>
-                    <td className="py-2 pr-3 font-mono text-2xs">{p.label}</td>
-                    <td className="py-2 pr-3 text-muted-foreground">{p.source}</td>
-                    <td className="py-2 pr-3 tabular-nums text-right">{p.numMembers ?? '—'}</td>
-                    <td className="py-2 pr-3 tabular-nums text-right font-semibold">
+                    </TableCell>
+                    <TableCell className="py-2 pr-3 font-mono text-2xs">{p.label}</TableCell>
+                    <TableCell className="py-2 pr-3 text-muted-foreground">{p.source}</TableCell>
+                    <TableCell className="py-2 pr-3 tabular-nums text-right">
+                      {p.numMembers ?? '—'}
+                    </TableCell>
+                    <TableCell className="py-2 pr-3 tabular-nums text-right font-semibold">
                       {p.meanMs.toFixed(2)}
-                    </td>
-                    <td className="py-2 pr-3 tabular-nums text-right text-muted-foreground">
+                    </TableCell>
+                    <TableCell className="py-2 pr-3 tabular-nums text-right text-muted-foreground">
                       {p.minMs != null ? p.minMs.toFixed(2) : '—'}
-                    </td>
-                    <td className="py-2 pr-3 tabular-nums text-right text-muted-foreground">
+                    </TableCell>
+                    <TableCell className="py-2 pr-3 tabular-nums text-right text-muted-foreground">
                       {p.maxMs != null ? p.maxMs.toFixed(2) : '—'}
-                    </td>
-                    <td className="py-2 pr-3 tabular-nums text-right text-muted-foreground">
+                    </TableCell>
+                    <TableCell className="py-2 pr-3 tabular-nums text-right text-muted-foreground">
                       {p.unassignedCount ?? '—'}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
           {points.length > 50 && (
             <p className="text-xs text-muted-foreground mt-2">
               Zeige die 50 neuesten von {points.length} Datenpunkten.

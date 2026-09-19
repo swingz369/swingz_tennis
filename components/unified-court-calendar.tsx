@@ -62,6 +62,7 @@ import { useMemberGroupIds } from '@/hooks/use-member-groups';
 import { exportSessionsToICS } from '@/lib/calendar-export';
 import { getSurfaceLabel, getCalendarLegendItems } from '@/lib/court-calendar-utils';
 import { CourtCalendarHeader, CourtCalendarLegend } from '@/components/court-calendar-shared';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { apiFetch } from '@/lib/api-fetch';
 import { BlockCourtDialog } from '@/components/block-court-dialog';
 import { AdHocSessionDialog } from '@/components/ad-hoc-session-dialog';
@@ -227,9 +228,16 @@ export default function UnifiedCourtCalendar({
   });
   const openBlockDialog = blockDialog.open;
 
+  const [confirm, confirmDialog] = useConfirmDialog();
+
   const handleUnblockSlot = useCallback(
     async (sessionId: string) => {
-      const confirmed = window.confirm('Sperrung aufheben? Der Platz wird wieder freigegeben.');
+      const confirmed = await confirm({
+        title: 'Sperrung aufheben',
+        description: 'Sperrung aufheben? Der Platz wird wieder freigegeben.',
+        confirmLabel: 'Aufheben',
+        variant: 'warning',
+      });
       if (!confirmed) return;
       try {
         const res = await apiFetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
@@ -244,14 +252,19 @@ export default function UnifiedCourtCalendar({
         toast.error('Netzwerkfehler beim Entsperren');
       }
     },
-    [queryClient]
+    [confirm, queryClient]
   );
 
   // ── Closure (court_closures) unblock — separate von handleUnblockSlot, das nur
   //    sessions-basierte Blocks kennt ──
   const handleRemoveClosure = useCallback(
     async (closureId: string) => {
-      const confirmed = window.confirm('Sperrung aufheben? Der Platz wird wieder freigegeben.');
+      const confirmed = await confirm({
+        title: 'Sperrung aufheben',
+        description: 'Sperrung aufheben? Der Platz wird wieder freigegeben.',
+        confirmLabel: 'Aufheben',
+        variant: 'warning',
+      });
       if (!confirmed) return;
       try {
         const res = await apiFetch(`/api/weather/closures/${closureId}`, { method: 'DELETE' });
@@ -265,7 +278,7 @@ export default function UnifiedCourtCalendar({
         toast.error('Netzwerkfehler beim Entsperren');
       }
     },
-    [refetchClosures]
+    [confirm, refetchClosures]
   );
 
   // ── Trainer: einmalige Einheit eintragen — Zustand + Absende-Logik in
@@ -647,6 +660,7 @@ export default function UnifiedCourtCalendar({
       {blockDialogEl}
       {adHocDialogEl}
       {sessionCancelDialogEl}
+      {confirmDialog}
       <BookingConfirmDialog {...bookingDialog} clubId={clubId} memberId={memberId} />
     </>
   ) : (
@@ -655,6 +669,7 @@ export default function UnifiedCourtCalendar({
       {blockDialogEl}
       {adHocDialogEl}
       {sessionCancelDialogEl}
+      {confirmDialog}
       <BookingConfirmDialog {...bookingDialog} clubId={clubId} memberId={memberId} />
     </>
   );

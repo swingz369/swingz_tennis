@@ -1,4 +1,5 @@
 'use client';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
@@ -130,8 +131,15 @@ export function SubstituteTrainerPanel() {
     }
   };
 
+  const [confirm, confirmDialog] = useConfirmDialog();
+
   const handleRemove = async (groupId: string) => {
-    if (!confirm('Vertretung wirklich löschen?')) return;
+    const ok = await confirm({
+      title: 'Vertretung löschen',
+      description: 'Vertretung wirklich löschen?',
+      confirmLabel: 'Löschen',
+    });
+    if (!ok) return;
 
     setSaving(true);
     try {
@@ -157,6 +165,7 @@ export function SubstituteTrainerPanel() {
 
   return (
     <Card>
+      {confirmDialog}
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>

@@ -453,7 +453,7 @@ export default function BillingClient({
                 20 Einzelklicks — die Rechnungen bleiben dann als Entwurf liegen
                 und das Mitglied sieht nie eine Forderung. */}
             {selectedIds.size === 0 && draftInvoiceIds.length > 0 && (
-              <div className="flex items-center gap-3 mt-3 p-3 rounded-xl bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-800">
+              <div className="flex items-center gap-3 mt-3 p-3 rounded-xl bg-info-50 border border-info-200">
                 <span className="text-sm">
                   {draftInvoiceIds.length} Rechnung{draftInvoiceIds.length !== 1 ? 'en' : ''} im
                   Entwurf — für Mitglieder noch nicht sichtbar
@@ -645,7 +645,7 @@ export default function BillingClient({
       {/* Bulk Delete Confirmation Dialog */}
       <CenteredModal open={bulkDeleteConfirmOpen} onClose={() => setBulkDeleteConfirmOpen(false)}>
         <div className="space-y-1.5">
-          <h2 className="text-lg font-bold text-error-600">
+          <h2 className="text-lg font-semibold text-error-600">
             {selectedIds.size} Rechnung{selectedIds.size !== 1 ? 'en' : ''} löschen?
           </h2>
           <div className="text-sm text-muted-foreground space-y-2">
@@ -704,7 +704,7 @@ export default function BillingClient({
         }}
       >
         <div className="space-y-1.5">
-          <h2 className="text-lg font-bold text-error-600">Rechnung löschen?</h2>
+          <h2 className="text-lg font-semibold text-error-600">Rechnung löschen?</h2>
           <p className="text-sm text-muted-foreground">
             Möchtest du Rechnung <strong>{invoiceToDelete?.invoiceNumber}</strong> wirklich löschen?
             {invoiceToDelete && !['draft', 'open'].includes(invoiceToDelete.status) && (
@@ -749,7 +749,7 @@ export default function BillingClient({
         }}
       >
         <div className="space-y-1.5">
-          <h2 className="text-lg font-bold flex items-center gap-2">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             Rechnungen generieren
           </h2>

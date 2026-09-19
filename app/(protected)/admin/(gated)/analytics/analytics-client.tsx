@@ -1,5 +1,6 @@
 'use client';
 
+import { ListState } from '@/components/ui/list-state';
 import dynamic from 'next/dynamic';
 import { StatCard } from '@/components/ui/stat-card';
 import { TrendingUp, Users, DollarSign, Calendar } from 'lucide-react';
@@ -44,7 +45,7 @@ interface AnalyticsClientProps {
 
 export function AnalyticsClient({ data }: AnalyticsClientProps) {
   if (!data) {
-    return <div className="text-center py-12 text-muted-foreground">Keine Vereine gefunden.</div>;
+    return <ListState empty emptyTitle="Keine Vereine gefunden" />;
   }
 
   const kpiCards = [

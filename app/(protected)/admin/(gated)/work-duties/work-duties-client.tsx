@@ -1,4 +1,5 @@
 'use client';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -57,27 +58,27 @@ const dutyTypeLabels: Record<string, { label: string; icon: typeof HardHat; colo
   court_maintenance: {
     label: 'Platzpflege',
     icon: Wrench,
-    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
+    color: 'bg-info-100 text-info-800',
   },
   event_support: {
     label: 'Veranstaltung',
     icon: Calendar,
-    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
+    color: 'bg-info-100 text-info-800',
   },
   bar_duty: {
     label: 'Schankdienst',
     icon: GlassWater,
-    color: 'bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300',
+    color: 'bg-warning-100 text-warning-800',
   },
   cleaning: {
     label: 'Reinigung',
     icon: Sparkles,
-    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
+    color: 'bg-info-100 text-info-800',
   },
   coaching_assist: {
     label: 'Trainerhilfe',
     icon: Users,
-    color: 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300',
+    color: 'bg-success-100 text-success-800',
   },
   other: {
     label: 'Sonstiges',
@@ -90,17 +91,17 @@ const statusConfig: Record<string, { label: string; icon: typeof CheckCircle2; c
   open: {
     label: 'Offen',
     icon: AlertCircle,
-    color: 'bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300',
+    color: 'bg-warning-100 text-warning-800',
   },
   assigned: {
     label: 'Zugewiesen',
     icon: Users,
-    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
+    color: 'bg-info-100 text-info-800',
   },
   completed: {
     label: 'Erledigt',
     icon: CheckCircle2,
-    color: 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300',
+    color: 'bg-success-100 text-success-800',
   },
   cancelled: {
     label: 'Storniert',
@@ -111,8 +112,8 @@ const statusConfig: Record<string, { label: string; icon: typeof CheckCircle2; c
 
 const priorityColors: Record<string, string> = {
   low: 'bg-gray-100 text-gray-600 dark:bg-gray-800/40 dark:text-gray-300',
-  medium: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
-  high: 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-300',
+  medium: 'bg-info-100 text-info-700',
+  high: 'bg-error-100 text-error-700',
 };
 
 export default function WorkDutiesClient({
@@ -271,8 +272,15 @@ export default function WorkDutiesClient({
     }
   };
 
+  const [confirm, confirmDialog] = useConfirmDialog();
+
   const handleDeleteDuty = async (dutyId: string) => {
-    if (!confirm('Arbeitsdienst wirklich löschen?')) return;
+    const ok = await confirm({
+      title: 'Arbeitsdienst löschen',
+      description: 'Arbeitsdienst wirklich löschen?',
+      confirmLabel: 'Löschen',
+    });
+    if (!ok) return;
     try {
       const res = await apiFetch(`/api/work-duties/${dutyId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed');
@@ -425,6 +433,7 @@ export default function WorkDutiesClient({
 
   return (
     <div className="space-y-6">
+      {confirmDialog}
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[

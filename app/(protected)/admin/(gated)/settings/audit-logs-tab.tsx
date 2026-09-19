@@ -1,5 +1,6 @@
 'use client';
 
+import { ListState } from '@/components/ui/list-state';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -89,7 +90,7 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-bold text-primary">Audit-Logs</h2>
+        <h2 className="text-lg font-semibold text-primary">Audit-Logs</h2>
         <p className="text-sm text-muted-foreground">Sicherheitsrelevante Aktivitäten im Verein</p>
       </div>
 
@@ -98,10 +99,7 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
           <Loader2 className="h-8 w-8 animate-spin text-brand-light" />
         </div>
       ) : logs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <ShieldAlert className="h-12 w-12 text-muted-foreground/50 mb-4" />
-          <p className="text-sm text-muted-foreground">Keine Audit-Logs vorhanden.</p>
-        </div>
+        <ListState empty emptyTitle="Keine Audit-Logs vorhanden" />
       ) : (
         <Card className="border border-border dark:border-white/10">
           <CardContent className="p-0 divide-y divide-border dark:divide-white/5">

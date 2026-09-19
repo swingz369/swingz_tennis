@@ -1,4 +1,6 @@
 'use client';
+import { ListState } from '@/components/ui/list-state';
+import { KpiBand } from '@/components/ui/kpi-band';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
@@ -14,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { CheckCircle2, XCircle, Clock, Users, Search, BarChart3, ArrowUpDown } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Search, BarChart3, ArrowUpDown } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 
@@ -144,13 +146,13 @@ export default function AssignmentsClient({
     switch (status) {
       case 'assigned':
         return (
-          <Badge className="bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300 text-xs gap-1">
+          <Badge className="bg-info-100 text-info-800 text-xs gap-1">
             <Clock className="h-3 w-3" /> Ausstehend
           </Badge>
         );
       case 'completed':
         return (
-          <Badge className="bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300 text-xs gap-1">
+          <Badge className="bg-success-100 text-success-800 text-xs gap-1">
             <CheckCircle2 className="h-3 w-3" /> Erledigt
           </Badge>
         );
@@ -172,36 +174,20 @@ export default function AssignmentsClient({
   return (
     <div className="space-y-6">
       {/* Stats Summary */}
-      <div className="grid grid-cols-4 gap-3">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-foreground">{allAssignments.length}</p>
-            <p className="text-xs text-muted-foreground">Gesamt Zuweisungen</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-info-600">
-              {allAssignments.filter((a) => a.status === 'assigned').length}
-            </p>
-            <p className="text-xs text-muted-foreground">Ausstehend</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-success-600">
-              {allAssignments.filter((a) => a.status === 'completed').length}
-            </p>
-            <p className="text-xs text-muted-foreground">Erledigt</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-warning-600">{Object.keys(memberStats).length}</p>
-            <p className="text-xs text-muted-foreground">Aktive Mitglieder</p>
-          </CardContent>
-        </Card>
-      </div>
+      <KpiBand
+        items={[
+          { label: 'Gesamt Zuweisungen', value: allAssignments.length },
+          {
+            label: 'Ausstehend',
+            value: allAssignments.filter((a) => a.status === 'assigned').length,
+          },
+          {
+            label: 'Erledigt',
+            value: allAssignments.filter((a) => a.status === 'completed').length,
+          },
+          { label: 'Aktive Mitglieder', value: Object.keys(memberStats).length },
+        ]}
+      />
 
       {/* View Toggle + Search */}
       <div className="flex items-center justify-between gap-4">
@@ -269,10 +255,7 @@ export default function AssignmentsClient({
 
           {/* Assignments List */}
           {filteredAssignments.length === 0 ? (
-            <div className="text-center py-16 border-2 border-dashed rounded-xl">
-              <Users className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
-              <p className="font-medium text-muted-foreground">Keine Zuweisungen gefunden</p>
-            </div>
+            <ListState empty emptyTitle="Keine Zuweisungen gefunden" />
           ) : (
             <div className="space-y-2">
               {filteredAssignments.map((a) => (
@@ -335,7 +318,7 @@ export default function AssignmentsClient({
           </CardHeader>
           <CardContent>
             {memberStatsArray.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">Keine Daten vorhanden</p>
+              <ListState empty emptyTitle="Keine Daten vorhanden" />
             ) : (
               <Table>
                 <TableHeader>
@@ -384,10 +367,10 @@ export default function AssignmentsClient({
                         <Badge
                           className={`text-xs ${
                             m.rate >= 80
-                              ? 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300'
+                              ? 'bg-success-100 text-success-800'
                               : m.rate >= 50
-                                ? 'bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300'
-                                : 'bg-error-100 text-error-800 dark:bg-error-900/30 dark:text-error-300'
+                                ? 'bg-warning-100 text-warning-800'
+                                : 'bg-error-100 text-error-800'
                           }`}
                         >
                           {m.rate}%

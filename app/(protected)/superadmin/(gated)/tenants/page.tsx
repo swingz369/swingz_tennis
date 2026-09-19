@@ -1,5 +1,6 @@
 'use client';
 
+import { ListState } from '@/components/ui/list-state';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -125,7 +126,7 @@ export default function SuperadminTenantsPage() {
       {clubs.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground">Keine aktiven Vereine gefunden.</p>
+            <ListState empty emptyTitle="Keine aktiven Vereine gefunden" />
           </CardContent>
         </Card>
       ) : (

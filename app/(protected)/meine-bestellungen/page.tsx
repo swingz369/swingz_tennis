@@ -55,14 +55,10 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending:
-    'text-warning-600 dark:text-warning-400 bg-warning-50 dark:bg-warning-900/20 border-warning-200 dark:border-warning-800/30',
-  confirmed:
-    'text-info-600 dark:text-info-400 bg-info-50 dark:bg-info-900/20 border-info-200 dark:border-info-800/30',
-  shipped:
-    'text-success-600 dark:text-success-400 bg-success-50 dark:bg-success-900/20 border-success-200 dark:border-success-800/30',
-  cancelled:
-    'text-error-600 dark:text-error-400 bg-error-50 dark:bg-error-900/20 border-error-200 dark:border-error-800/30',
+  pending: 'text-warning-600 bg-warning-50 border-warning-200',
+  confirmed: 'text-info-600 bg-info-50 border-info-200',
+  shipped: 'text-success-600 bg-success-50 border-success-200',
+  cancelled: 'text-error-600 bg-error-50 border-error-200',
 };
 
 const FILTER_TABS = [
@@ -194,7 +190,7 @@ export default function MeineBestellungenPage() {
                             variant="outline"
                             className={`text-2xs px-1.5 py-0 ${
                               order.payment_status === 'paid'
-                                ? 'border-success-200 dark:border-success-800/30 text-success-600 dark:text-success-400'
+                                ? 'border-success-200 text-success-600'
                                 : 'border-border dark:border-white/10 text-muted-foreground'
                             }`}
                           >
@@ -241,10 +237,10 @@ export default function MeineBestellungenPage() {
             tabIndex={0}
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-            <Card className="max-w-lg w-full shadow-2xl pointer-events-auto">
+            <Card className="max-w-lg w-full shadow-lg pointer-events-auto">
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-foreground dark:text-white">
+                  <h2 className="text-lg font-semibold text-foreground">
                     Bestellung #{selectedOrder.id.slice(0, 8)}
                   </h2>
                   <Button
@@ -272,7 +268,7 @@ export default function MeineBestellungenPage() {
                     variant="outline"
                     className={`text-xs px-2 py-0.5 ${
                       selectedOrder.payment_status === 'paid'
-                        ? 'border-success-200 dark:border-success-800/30 text-success-600 dark:text-success-400'
+                        ? 'border-success-200 text-success-600'
                         : 'border-border dark:border-white/10 text-muted-foreground'
                     }`}
                   >

@@ -61,7 +61,7 @@ export function BlockCourtDialog({
   return (
     <CenteredModal open={open} onClose={onClose}>
       <div className="space-y-1.5">
-        <h2 className="text-lg font-bold flex items-center gap-2">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
           <Lock className="h-5 w-5" />
           Platz sperren
         </h2>

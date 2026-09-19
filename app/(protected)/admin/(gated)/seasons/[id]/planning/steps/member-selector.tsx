@@ -1,5 +1,14 @@
 'use client';
 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { ListState } from '@/components/ui/list-state';
 import { useState, useEffect, useCallback } from 'react';
 import { Users, TrendingUp, Clock, Star, AlertCircle, CheckCircle, Search } from 'lucide-react';
 import { useWizard } from '@/lib/season-planning/wizard-context';
@@ -118,11 +127,11 @@ export function MemberSelector() {
   };
 
   const levelBadgeColor: Record<string, string> = {
-    beginner: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400',
-    intermediate: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400',
+    beginner: 'bg-info-100 text-info-700',
+    intermediate: 'bg-success-100 text-success-700',
     advanced:
       'bg-brand-accent-100 text-brand-accent-700 dark:bg-brand-accent-900/30 dark:text-brand-accent-400',
-    professional: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400',
+    professional: 'bg-info-100 text-info-700',
   };
 
   const filteredMembers = members.filter((m) => {
@@ -271,55 +280,55 @@ export function MemberSelector() {
       {/* Members Table */}
       <div className="rounded-xl border bg-background dark:bg-surface-dark overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-muted dark:bg-muted/50">
-                <th className="w-10 px-4 py-3 text-left"></th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+          <Table className="w-full">
+            <TableHeader>
+              <TableRow className="border-b bg-muted dark:bg-muted/50">
+                <TableHead className="w-10 px-4 py-3 text-left"></TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                   Name
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                </TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                   Niveau
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                </TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                   Erfahrung
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                </TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                   Anwesenheit
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
+                </TableHead>
+                <TableHead className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                   Hinweise
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y">
               {filteredMembers.map((member) => {
                 const isSelected = state.selectedMemberIds.includes(member.id);
                 const isPromoted = promotedMembers.some((p) => p.memberId === member.id);
                 const isWaitlisted = waitlistCarryovers.some((w) => w.memberId === member.id);
 
                 return (
-                  <tr
+                  <TableRow
                     key={member.id}
                     className={`transition-colors hover:bg-muted dark:hover:bg-gray-800/30 ${
                       isSelected ? 'bg-brand-light/5' : ''
                     }`}
                   >
-                    <td className="px-4 py-3">
+                    <TableCell className="px-4 py-3">
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => toggleMember(member.id)}
                       />
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <div>
                         <p className="text-sm font-medium text-foreground dark:text-white">
                           {member.name}
                         </p>
                         <p className="text-xs text-muted-foreground">{member.email}</p>
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <Badge
                         className={`text-xs ${levelBadgeColor[member.skillLevel] || ''}`}
                         variant="outline"
@@ -333,9 +342,11 @@ export function MemberSelector() {
                           </Badge>
                         </div>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-sm">{member.experienceMonths} Mon.</td>
-                    <td className="px-4 py-3 text-sm">
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-sm">
+                      {member.experienceMonths} Mon.
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-sm">
                       {member.attendanceQuote !== null ? (
                         <span
                           className={
@@ -351,8 +362,8 @@ export function MemberSelector() {
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {member.includeInPlanning === false && (
                           <Badge className="text-xs bg-muted text-muted-foreground border-border flex items-center gap-1">
@@ -376,24 +387,19 @@ export function MemberSelector() {
                           <span className="text-xs text-muted-foreground">-</span>
                         )}
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
-        {filteredMembers.length === 0 && (
-          <div className="py-12 text-center">
-            <Users className="h-8 w-8 text-muted-foreground mx-auto" />
-            <p className="mt-2 text-sm text-muted-foreground">Keine Mitglieder gefunden</p>
-          </div>
-        )}
+        {filteredMembers.length === 0 && <ListState empty emptyTitle="Keine Mitglieder gefunden" />}
       </div>
 
       {/* Promoted Members Detail */}
       {promotedMembers.length > 0 && (
-        <Card className="border-warning-200 bg-warning-50/50 dark:bg-warning-900/10">
+        <Card className="border-warning-200 bg-warning-50/50">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Star className="h-4 w-4 text-warning-500" />

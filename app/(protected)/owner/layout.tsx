@@ -39,18 +39,15 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
       <div
         role="status"
         aria-label="Owner-Bedienpanel: Plattform-Konsole"
-        className="border-b border-info-200/60 dark:border-info-700/30 bg-gradient-to-r from-info-50 via-info-50/80 to-info-50/60 dark:from-info-900/25 dark:via-info-900/15 dark:to-info-900/20"
+        className="border-b border-info-200/60 bg-gradient-to-r from-info-50 via-info-50/80 to-info-50/60 dark:from-info-900/25 dark:via-info-900/15 dark:to-info-900/20"
       >
         <div className="mx-auto max-w-7xl flex items-center gap-2.5 px-4 sm:px-6 lg:px-8 py-2 text-sm">
-          <Shield
-            className="h-4 w-4 shrink-0 text-info-700 dark:text-info-300"
-            aria-hidden="true"
-          />
-          <span className="font-semibold text-info-900 dark:text-info-100">Plattform-Konsole</span>
-          <span className="text-info-700/80 dark:text-info-300/80 text-xs hidden md:inline">
+          <Shield className="h-4 w-4 shrink-0 text-info-700" aria-hidden="true" />
+          <span className="font-semibold text-info-900">Plattform-Konsole</span>
+          <span className="text-info-700/80/80 text-xs hidden md:inline">
             · Eigentümer-Bedienpanel über allen Vereinen
           </span>
-          <div className="ml-auto flex items-center gap-2 text-xs text-info-700/70 dark:text-info-300/70">
+          <div className="ml-auto flex items-center gap-2 text-xs text-info-700/70/70">
             <Sparkles className="h-3 w-3 shrink-0" aria-hidden="true" />
             <span>
               {firstName

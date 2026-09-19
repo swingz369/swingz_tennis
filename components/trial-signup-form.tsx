@@ -55,7 +55,7 @@ export default function TrialSignupForm({
       <Card className="max-w-lg mx-auto border-2 border-success-200 bg-success-50/50">
         <CardContent className="p-8 text-center space-y-4">
           <CheckCircle className="h-12 w-12 text-success-500 mx-auto" />
-          <h2 className="text-xl font-bold">Willkommen im Verein!</h2>
+          <h2 className="text-xl font-semibold">Willkommen im Verein!</h2>
           <p className="text-sm text-muted-foreground">
             {clubName
               ? `Du bist jetzt offizielles Mitglied bei ${clubName}.`

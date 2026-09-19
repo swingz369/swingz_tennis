@@ -1,5 +1,13 @@
 'use client';
 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -170,6 +178,7 @@ export function OwnerAuditClient({ clubOptions }: { clubOptions: ClubOption[] })
     if (filters.from) params.set('from', filters.from);
     if (filters.to) params.set('to', filters.to);
     // Direkt im Browser — kein Page-Reload, kein Routing-Wechsel.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- Datei-Download (API-Route), kein Seitenwechsel
     window.location.href = `/api/owner/audit-logs/export?${params.toString()}`;
   }, [filters]);
 
@@ -353,53 +362,59 @@ export function OwnerAuditClient({ clubOptions }: { clubOptions: ClubOption[] })
 
           {!loading && logs.length > 0 && (
             <div className="overflow-x-auto -mx-2">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border dark:border-white/10 text-left">
-                    <th className="px-2 py-2 font-medium text-xs text-muted-foreground w-44">
+              <Table className="w-full text-sm">
+                <TableHeader>
+                  <TableRow className="border-b border-border dark:border-white/10 text-left">
+                    <TableHead className="px-2 py-2 font-medium text-xs text-muted-foreground w-44">
                       Zeit
-                    </th>
-                    <th className="px-2 py-2 font-medium text-xs text-muted-foreground">Akteur</th>
-                    <th className="px-2 py-2 font-medium text-xs text-muted-foreground">Verein</th>
-                    <th className="px-2 py-2 font-medium text-xs text-muted-foreground">Aktion</th>
-                    <th className="px-2 py-2 font-medium text-xs text-muted-foreground">
+                    </TableHead>
+                    <TableHead className="px-2 py-2 font-medium text-xs text-muted-foreground">
+                      Akteur
+                    </TableHead>
+                    <TableHead className="px-2 py-2 font-medium text-xs text-muted-foreground">
+                      Verein
+                    </TableHead>
+                    <TableHead className="px-2 py-2 font-medium text-xs text-muted-foreground">
+                      Aktion
+                    </TableHead>
+                    <TableHead className="px-2 py-2 font-medium text-xs text-muted-foreground">
                       Ressource
-                    </th>
-                    <th className="px-2 py-2 font-medium text-xs text-muted-foreground hidden 2xl:table-cell">
+                    </TableHead>
+                    <TableHead className="px-2 py-2 font-medium text-xs text-muted-foreground hidden 2xl:table-cell">
                       IP
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {logs.map((logEntry) => (
-                    <tr
+                    <TableRow
                       key={logEntry.id}
                       className="border-b border-border/40 dark:border-white/5 hover:bg-muted/40 dark:hover:bg-white/5 transition-colors"
                     >
-                      <td className="px-2 py-2 text-xs whitespace-nowrap text-muted-foreground">
+                      <TableCell className="px-2 py-2 text-xs whitespace-nowrap text-muted-foreground">
                         {formatDateTime(logEntry.created_at)}
-                      </td>
-                      <td className="px-2 py-2 text-xs">
+                      </TableCell>
+                      <TableCell className="px-2 py-2 text-xs">
                         <div className="font-medium text-foreground truncate max-w-[180px]">
                           {logEntry.actor_name ?? logEntry.actor_email ?? '—'}
                         </div>
                         <div className="text-muted-foreground truncate max-w-[180px]">
                           {logEntry.actor_email ?? logEntry.actor_id.slice(0, 8)}
                         </div>
-                      </td>
-                      <td className="px-2 py-2 text-xs">
+                      </TableCell>
+                      <TableCell className="px-2 py-2 text-xs">
                         {logEntry.club_name ?? (
                           <span className="text-muted-foreground italic">plattformweit</span>
                         )}
-                      </td>
-                      <td className="px-2 py-2 text-xs">
+                      </TableCell>
+                      <TableCell className="px-2 py-2 text-xs">
                         <ActionBadge action={logEntry.action} />
-                      </td>
+                      </TableCell>
                       {/* Vorher stand hier `resource_type · <erste 8 Zeichen der
                           UUID>` — eine Kennung, mit der niemand etwas anfangen
                           kann. Jetzt: benanntes Objekt plus die erklärenden
                           Felder aus `details`. */}
-                      <td className="px-2 py-2 text-xs">
+                      <TableCell className="px-2 py-2 text-xs">
                         <div className="font-medium text-foreground truncate max-w-[280px]">
                           {auditSubject(logEntry)}
                         </div>
@@ -410,14 +425,14 @@ export function OwnerAuditClient({ clubOptions }: { clubOptions: ClubOption[] })
                               .join(' · ')}
                           </div>
                         )}
-                      </td>
-                      <td className="px-2 py-2 text-xs font-mono text-muted-foreground hidden 2xl:table-cell">
+                      </TableCell>
+                      <TableCell className="px-2 py-2 text-xs font-mono text-muted-foreground hidden 2xl:table-cell">
                         {logEntry.ip_address ?? '—'}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
 
@@ -462,17 +477,13 @@ function ActionBadge({ action }: { action: string }) {
   // Subtile Farbcodierung nach Action-Klasse — verbessert Scannability großer Listen
   let className = 'bg-muted text-muted-foreground border-border';
   if (/create|invite|restripe|reactivate/.test(action)) {
-    className =
-      'bg-success-50 text-success-700 border-success-200 dark:bg-success-900/20 dark:text-success-300 dark:border-success-800';
+    className = 'bg-success-50 text-success-700 border-success-200';
   } else if (/update/.test(action)) {
-    className =
-      'bg-info-50 text-info-700 border-info-200 dark:bg-info-900/20 dark:text-info-300 dark:border-info-800';
+    className = 'bg-info-50 text-info-700 border-info-200';
   } else if (/delete|deactivate|suspend/.test(action)) {
-    className =
-      'bg-warning-50 text-warning-700 border-warning-200 dark:bg-warning-900/20 dark:text-warning-300 dark:border-warning-800';
+    className = 'bg-warning-50 text-warning-700 border-warning-200';
   } else if (/login|logout|PII_READ/.test(action)) {
-    className =
-      'bg-error-50 text-error-700 border-error-200 dark:bg-error-900/20 dark:text-error-300 dark:border-error-800';
+    className = 'bg-error-50 text-error-700 border-error-200';
   }
 
   return (

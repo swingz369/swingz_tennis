@@ -1,5 +1,6 @@
 'use client';
 
+import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -137,12 +138,15 @@ export default function AdminApprovals() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">Mitglieder-Genehmigungen</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {counts.pending} ausstehende{counts.pending !== 1 ? '' : 's'} von {counts.all} Anträgen
-          </p>
-        </div>
+        <PageHeader
+          title="Mitglieder-Genehmigungen"
+          description={
+            <>
+              {counts.pending} ausstehende{counts.pending !== 1 ? '' : 's'} von {counts.all}{' '}
+              Anträgen
+            </>
+          }
+        />
       </div>
 
       {/* Filter tabs */}

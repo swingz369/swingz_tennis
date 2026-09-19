@@ -1,4 +1,5 @@
 'use client';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -158,8 +159,15 @@ export default function FeeCategoriesClient({
     }
   };
 
+  const [confirm, confirmDialog] = useConfirmDialog();
+
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Kategorie "${name}" wirklich löschen?`)) return;
+    const ok = await confirm({
+      title: 'Kategorie löschen',
+      description: `Kategorie "${name}" wirklich löschen?`,
+      confirmLabel: 'Löschen',
+    });
+    if (!ok) return;
     setDeletingId(id);
     try {
       const res = await apiFetch(`/api/fee-configurations/${id}`, { method: 'DELETE' });
@@ -180,6 +188,7 @@ export default function FeeCategoriesClient({
 
   return (
     <div className="space-y-6">
+      {confirmDialog}
       <PageHeader
         title="Preiskategorien"
         actions={[
@@ -369,7 +378,7 @@ export default function FeeCategoriesClient({
                         <span
                           className={`text-xs px-2 py-0.5 rounded-full ${
                             cat.is_active
-                              ? 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300'
+                              ? 'bg-success-100 text-success-700'
                               : 'bg-muted text-muted-foreground'
                           }`}
                         >

@@ -1,5 +1,7 @@
 'use client';
 
+import { KpiBand } from '@/components/ui/kpi-band';
+import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Trophy, Star, Medal, Flame } from 'lucide-react';
@@ -71,10 +73,7 @@ export default function GamificationDashboard() {
   if (disabled) {
     return (
       <div className="space-y-5">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">Dein Fortschritt</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Punkte, Badges & Rangliste</p>
-        </div>
+        <PageHeader title="Dein Fortschritt" description="Punkte, Badges & Rangliste" />
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             Das Gamification-Modul ist für deinen Verein nicht aktiviert.
@@ -86,56 +85,29 @@ export default function GamificationDashboard() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-primary">Dein Fortschritt</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Punkte, Badges & Rangliste</p>
-      </div>
+      <PageHeader title="Dein Fortschritt" description="Punkte, Badges & Rangliste" />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
+      <KpiBand
+        items={[
           {
             label: 'Punkte',
             value: points,
-            icon: Star,
-            color: 'text-warning-500',
-            bg: 'bg-warning-50 dark:bg-warning-900/20',
           },
           {
             label: 'Badges',
             value: badges.length,
-            icon: Medal,
-            color: 'text-info-500',
-            bg: 'bg-info-50 dark:bg-info-900/20',
           },
           {
             label: 'Streak',
             value: `${streak} Tage`,
-            icon: Flame,
-            color: 'text-brand-accent-500',
-            bg: 'bg-brand-accent-50 dark:bg-brand-accent-900/20',
           },
           {
             label: 'Rang',
             value: `#${leaderboard.find((e) => e.name === 'Du')?.rank || '-'}`,
-            icon: Trophy,
-            color: 'text-brand-light',
-            bg: 'bg-brand-light/10',
           },
-        ].map((s) => (
-          <Card key={s.label} className="border-0 shadow-sm">
-            <CardContent className="p-4 text-center">
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-xl mx-auto mb-2 ${s.bg}`}
-              >
-                <s.icon className={`h-5 w-5 ${s.color}`} />
-              </div>
-              <p className="text-2xl font-bold tabular-nums">{s.value}</p>
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+        ]}
+      />
 
       {/* Badges */}
       {badges.length > 0 && (
@@ -151,7 +123,7 @@ export default function GamificationDashboard() {
               {badges.map((b) => (
                 <div
                   key={b.id}
-                  className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl bg-info-50 dark:bg-info-900/10"
+                  className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl bg-info-50"
                 >
                   <span className="text-2xl">{b.icon}</span>
                   <span className="text-xs font-semibold line-clamp-1">{b.name}</span>

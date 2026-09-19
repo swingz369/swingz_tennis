@@ -66,8 +66,8 @@ export const adminSectionColors: Record<string, AdminSectionColors> = {
   },
   trainer: {
     gradient: 'from-success-500 to-success-700',
-    bg: 'bg-success-50 dark:bg-success-900/20',
-    text: 'text-success-600 dark:text-success-300',
+    bg: 'bg-success-50',
+    text: 'text-success-600',
     light: 'success',
     ring: 'ring-success-300/40',
   },

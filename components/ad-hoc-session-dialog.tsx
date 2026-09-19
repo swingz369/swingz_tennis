@@ -52,7 +52,7 @@ export function AdHocSessionDialog({
   return (
     <CenteredModal open={open} onClose={onClose}>
       <div className="space-y-1.5">
-        <h2 className="text-lg font-bold flex items-center gap-2">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
           <CalendarIcon className="h-5 w-5" />
           Einheit eintragen
         </h2>

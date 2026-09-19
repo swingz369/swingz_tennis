@@ -109,8 +109,8 @@ export function MeetingsClient() {
         {meetings.map((m) => (
           <Card key={m.id}>
             <CardContent className="p-4 flex items-start gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-info-50 dark:bg-info-900/20 shrink-0 mt-0.5">
-                <Calendar className="h-4 w-4 text-info-600 dark:text-info-400" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-info-50 shrink-0 mt-0.5">
+                <Calendar className="h-4 w-4 text-info-600" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">

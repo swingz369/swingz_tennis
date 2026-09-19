@@ -1,4 +1,5 @@
 'use client';
+import { KpiBand } from '@/components/ui/kpi-band';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -46,27 +47,27 @@ const dutyTypeLabels: Record<string, { label: string; icon: typeof HardHat; colo
   court_maintenance: {
     label: 'Platzpflege',
     icon: Wrench,
-    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
+    color: 'bg-info-100 text-info-800',
   },
   event_support: {
     label: 'Veranstaltung',
     icon: Calendar,
-    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
+    color: 'bg-info-100 text-info-800',
   },
   bar_duty: {
     label: 'Schankdienst',
     icon: GlassWater,
-    color: 'bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300',
+    color: 'bg-warning-100 text-warning-800',
   },
   cleaning: {
     label: 'Reinigung',
     icon: Sparkles,
-    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
+    color: 'bg-info-100 text-info-800',
   },
   coaching_assist: {
     label: 'Trainerhilfe',
     icon: Users,
-    color: 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300',
+    color: 'bg-success-100 text-success-800',
   },
   other: {
     label: 'Sonstiges',
@@ -195,30 +196,19 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-info-600">
-              {myDuties.filter((d) => getMyAssignmentStatus(d) === 'assigned').length}
-            </p>
-            <p className="text-xs text-muted-foreground">Anstehend</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-success-600">
-              {myDuties.filter((d) => getMyAssignmentStatus(d) === 'completed').length}
-            </p>
-            <p className="text-xs text-muted-foreground">Erledigt</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-warning-600">{availableDuties.length}</p>
-            <p className="text-xs text-muted-foreground">Freiwillige Plätze</p>
-          </CardContent>
-        </Card>
-      </div>
+      <KpiBand
+        items={[
+          {
+            label: 'Anstehend',
+            value: myDuties.filter((d) => getMyAssignmentStatus(d) === 'assigned').length,
+          },
+          {
+            label: 'Erledigt',
+            value: myDuties.filter((d) => getMyAssignmentStatus(d) === 'completed').length,
+          },
+          { label: 'Freiwillige Plätze', value: availableDuties.length },
+        ]}
+      />
 
       {/* Tab Switcher — shadcn Tabs statt Inline-Pills, identisch zu den
           Admin-Tab-Leisten (members, settings, documents). Der Inhalt unten
@@ -280,8 +270,8 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
                             <Badge
                               className={`${
                                 myStatus === 'completed'
-                                  ? 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300'
-                                  : 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300'
+                                  ? 'bg-success-100 text-success-800'
+                                  : 'bg-info-100 text-info-800'
                               } text-xs gap-1`}
                             >
                               {myStatus === 'completed' ? (
@@ -359,7 +349,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
                     )}
 
                     {activeTab === 'my_duties' && myStatus === 'completed' && (
-                      <Badge className="bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300 text-xs gap-1">
+                      <Badge className="bg-success-100 text-success-800 text-xs gap-1">
                         <CheckCircle2 className="h-3 w-3" />
                         Erledigt — Vielen Dank!
                       </Badge>

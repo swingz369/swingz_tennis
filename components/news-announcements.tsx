@@ -1,4 +1,5 @@
 'use client';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -164,8 +165,15 @@ export default function NewsAnnouncements({
     }
   };
 
+  const [confirm, confirmDialog] = useConfirmDialog();
+
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Diese Nachricht wirklich löschen?')) return;
+    const ok = await confirm({
+      title: 'Nachricht löschen',
+      description: 'Diese Nachricht wirklich löschen?',
+      confirmLabel: 'Löschen',
+    });
+    if (!ok) return;
     setDeletingId(id);
     try {
       const res = await apiFetch(`/api/news/${id}`, { method: 'DELETE' });
@@ -256,6 +264,7 @@ export default function NewsAnnouncements({
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       {/* Admin create button */}
       {canManage && (
         <div className="flex justify-end">

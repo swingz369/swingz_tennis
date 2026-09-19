@@ -1,5 +1,6 @@
 'use client';
 
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -59,8 +60,15 @@ export function TeamsTab({
     }
   };
 
+  const [confirm, confirmDialog] = useConfirmDialog();
+
   const handleDeleteTeam = async (teamId: string) => {
-    if (!confirm('Team wirklich löschen? Alle Zuordnungen gehen verloren.')) return;
+    const ok = await confirm({
+      title: 'Team löschen',
+      description: 'Team wirklich löschen? Alle Zuordnungen gehen verloren.',
+      confirmLabel: 'Löschen',
+    });
+    if (!ok) return;
     try {
       const res = await apiFetch(`/api/leagues/${leagueId}/teams/${teamId}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
@@ -112,6 +120,7 @@ export function TeamsTab({
 
   return (
     <>
+      {confirmDialog}
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Mannschaften</h2>
         {!nuligaLinked && (

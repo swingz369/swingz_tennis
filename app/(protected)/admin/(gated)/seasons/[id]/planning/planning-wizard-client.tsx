@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import {
-  ArrowLeft,
   Settings,
   LayoutGrid,
   ClipboardCheck,
@@ -30,7 +29,7 @@ import { ConfigStep } from './steps/config-step';
 import { TrainerScheduleStep } from './steps/trainer-schedule-step';
 import { PlanEditStep } from './steps/plan-edit-step';
 import { FinalizeStep } from './steps/finalize-step';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { PageHeader } from '@/components/ui/page-header';
 
 // ============================================
 // STEP DEFINITIONS
@@ -56,7 +55,7 @@ class StepErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <Card className="border-error-200 bg-error-50 dark:bg-error-900/20 dark:border-error-800 p-6">
+        <Card className="border-error-200 bg-error-50 p-6">
           <div className="flex flex-col items-center text-center gap-3">
             <AlertTriangle className="h-8 w-8 text-error-500" />
             <h3 className="text-lg font-semibold text-error-700">
@@ -154,36 +153,16 @@ function WizardContent({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => router.push('/admin/seasons')}
-                aria-label="Zurück zur Saisonübersicht"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Zurück zur Saisonübersicht</TooltipContent>
-          </Tooltip>
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{seasonType === 'summer' ? '☀️' : '❄️'}</span>
-              <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-white">
-                {seasonName}
-              </h1>
-              <Badge variant="secondary" className="text-xs">
-                {seasonYear}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">Automatische Saisonplanung</p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={`${seasonType === 'summer' ? '☀️' : '❄️'} ${seasonName}`}
+        back={{ href: '/admin/seasons', label: 'Zurück zur Saisonübersicht' }}
+        description="Automatische Saisonplanung"
+        badge={
+          <Badge variant="secondary" className="text-xs">
+            {seasonYear}
+          </Badge>
+        }
+      />
 
       {/* Step Navigation */}
       <nav className="flex items-center gap-1 overflow-x-auto" aria-label="Wizard steps">
@@ -204,7 +183,7 @@ function WizardContent({
                   isActive
                     ? 'bg-primary text-white shadow-md shadow-primary/20'
                     : isCompleted
-                      ? 'bg-success-50 text-success-700 dark:bg-success-900/20 dark:text-success-400'
+                      ? 'bg-success-50 text-success-700'
                       : isClickable
                         ? 'bg-muted text-muted-foreground hover:bg-muted dark:bg-muted dark:text-foreground'
                         : 'bg-muted text-muted-foreground cursor-not-allowed dark:bg-muted/50'
@@ -232,12 +211,12 @@ function WizardContent({
 
       {/* Error Display */}
       {error && (
-        <Card className="border-error-200 bg-error-50 dark:bg-error-900/20 dark:border-error-800 p-4">
+        <Card className="border-error-200 bg-error-50 p-4">
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-error-500 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-error-700 dark:text-error-400">Fehler</p>
-              <p className="text-sm text-error-600 dark:text-error-300 mt-0.5">{error}</p>
+              <p className="text-sm font-medium text-error-700">Fehler</p>
+              <p className="text-sm text-error-600 mt-0.5">{error}</p>
             </div>
           </div>
         </Card>

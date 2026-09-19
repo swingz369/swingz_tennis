@@ -50,7 +50,7 @@ export function AuditStatStrip() {
                 {card.comingSoon && (
                   <Badge
                     variant="outline"
-                    className="border-info-300/70 text-info-700 dark:border-info-700/60 dark:text-info-300 text-2xs py-0 px-1.5"
+                    className="border-info-300/70 text-info-700 text-2xs py-0 px-1.5"
                   >
                     Bald
                   </Badge>
@@ -59,7 +59,7 @@ export function AuditStatStrip() {
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground leading-relaxed">{card.body}</p>
-              <p className="mt-2 text-xs tabular-nums text-info-600/70 dark:text-info-400/70">—</p>
+              <p className="mt-2 text-xs tabular-nums text-info-600/70/70">—</p>
             </CardContent>
             {/* dezenter Bau-Licht-Vermerk */}
             <div
@@ -73,11 +73,9 @@ export function AuditStatStrip() {
       </div>
 
       {/* Tipps-Karte */}
-      <Card className="border-info-200/60 dark:border-info-700/40 bg-info-50/40 dark:bg-info-900/10">
+      <Card className="border-info-200/60 bg-info-50/40">
         <CardContent className="py-4 px-5">
-          <p className="text-xs font-semibold text-info-700 dark:text-info-300 mb-1.5">
-            Schnellstart
-          </p>
+          <p className="text-xs font-semibold text-info-700 mb-1.5">Schnellstart</p>
           <ul className="space-y-1 text-sm text-foreground dark:text-info-100">
             <li className="flex gap-2">
               <span className="text-info-500 dark:text-info-400 shrink-0">①</span>

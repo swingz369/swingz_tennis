@@ -1,4 +1,5 @@
 'use client';
+import { PageHeader } from '@/components/ui/page-header';
 import { useUserClub } from '@/hooks/use-user-data';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
@@ -210,7 +211,7 @@ export default function SEPAMandateSigning() {
                 <CheckCircle className="h-16 w-16 text-success-600" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-success-900 mb-2">
+                <h2 className="text-2xl font-semibold text-success-900 mb-2">
                   SEPA-Mandat erfolgreich unterzeichnet
                 </h2>
                 <p className="text-success-700">
@@ -258,12 +259,10 @@ export default function SEPAMandateSigning() {
   return (
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-primary mb-2">SEPA-Lastschriftmandat</h1>
-        <p className="text-muted-foreground">
-          Unterschreibe dein SEPA-Mandat für automatische Zahlungen
-        </p>
-      </div>
+      <PageHeader
+        title="SEPA-Lastschriftmandat"
+        description="Unterschreibe dein SEPA-Mandat für automatische Zahlungen"
+      />
 
       {/* Info Alert */}
       <Alert>
