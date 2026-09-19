@@ -4,23 +4,7 @@
 
 import { createHash } from 'node:crypto';
 
-import { db } from '@/src/infrastructure/persistence/db';
-import {
-  seasonPlanEntries,
-  trainers,
-  trainerClubs,
-  courts,
-  groups,
-  planningConflicts,
-  users,
-  userClubMemberships,
-  userTrainingPreferences,
-} from '@/src/infrastructure/persistence/schema';
-import {
-  seasonStatistics,
-  seasonPlanningConfigs,
-} from '@/src/infrastructure/persistence/season-planning-schema';
-import { and, eq, inArray } from 'drizzle-orm';
+import type { ConflictDetectionRepository } from '@/infrastructure/persistence/repositories/conflict-detection.repository';
 
 import { createLogger } from '@/lib/logger';
 
@@ -39,13 +23,7 @@ import {
 
 const log = createLogger('season-planning:conflict-detector');
 
-/**
- * Minimal query-builder interface for the optional transaction parameter.
- * Drizzle's `PgTransaction` and `PostgresJsDatabase` both satisfy this.
- * The signatures are intentionally wide (accepting `any` for the table) so
- * that we can pass in either a transaction instance or the global db handle
- * without Drizzle's exact generic types clashing across call sites.
- */
+/** Minimale Query-Builder-Schnittstelle der Drizzle-Transaktion (nur für den Übergang, s. u.). */
 type DrizzleTransactionLike = {
   delete: (table: any) => { where: (filter: any) => Promise<any> };
   insert: (table: any) => { values: (rows: any | any[]) => Promise<any> };
@@ -664,7 +642,11 @@ export class ConflictDetector {
   private seasonId: string;
   private clubId: string;
 
-  constructor(seasonId: string, clubId: string) {
+  constructor(
+    seasonId: string,
+    clubId: string,
+    private readonly repo: ConflictDetectionRepository
+  ) {
     this.seasonId = seasonId;
     this.clubId = clubId;
   }
@@ -733,30 +715,14 @@ export class ConflictDetector {
 
   /**
    * Persist detected conflicts to the planning_conflicts table.
-   * Deletes existing unresolved conflicts for this season before inserting.
-   *
-   * @param conflicts - The conflicts to persist
-   * @param tx - Optional transaction scoped DB instance (from db.transaction()).
-   *   If provided, all queries run within that transaction; otherwise uses the global DB.
+   * Replaces the previously detected OPEN conflicts of this season (re-detect on each run);
+   * decided ones (resolved/ignored) stay untouched.
    */
   async persistConflicts(
     conflicts: ConflictDetectionResult[],
-    // Drizzle's PgTransaction type differs from PostgresJsDatabase, but both
-    // satisfy the query-builder interface (select/insert/update/delete).
-    // We type as `unknown` and let the minimal query-builder interface below
-    // validate the actual usage at the call sites.
     tx?: DrizzleTransactionLike
   ): Promise<number> {
     if (conflicts.length === 0) return 0;
-
-    const dbInstance = tx ?? db;
-
-    // Delete previously detected open conflicts for this season (re-detect on each run)
-    await dbInstance
-      .delete(planningConflicts)
-      .where(
-        and(eq(planningConflicts.season_id, this.seasonId), eq(planningConflicts.status, 'open'))
-      );
 
     const rows = conflicts.map((c) => ({
       season_id: this.seasonId,
@@ -768,21 +734,27 @@ export class ConflictDetector {
       affected_court_id: c.affectedEntities?.courtIds?.[0] || null,
       affected_user_ids: c.affectedEntities?.memberIds || [],
       affected_group_ids: c.affectedEntities?.groupIds || [],
-      conflict_time_slot: c.timeSlot,
+      conflict_time_slot: c.timeSlot as never,
       description: c.description,
       suggested_resolution: c.suggestedResolution,
       status: 'open',
       detection_source: 'auto_planner',
     }));
-
-    // Typed insert-cast: Drizzle's `.values()` requires the exact
-    // `$inferInsert` shape; we bridge via `unknown` because individual
-    // fields may be optional / partial in the input rows. The runtime
-    // shape is verified by the DB constraints (see planningConflicts
-    // schema in src/infrastructure/persistence/schema.ts).
-    await dbInstance
-      .insert(planningConflicts)
-      .values(rows as unknown as (typeof planningConflicts.$inferInsert)[]);
+    if (tx) {
+      // ponytail: Übergang — die Publish-Route schreibt noch in einer Drizzle-Transaktion, damit ein
+      // Fehler hier die Veröffentlichung zurückrollt. Entfällt mit der Postgres-Funktion
+      // `publish_season_plan` (siehe Plan: alles atomar, ohne Drizzle).
+      const { planningConflicts } = await import('@/src/infrastructure/persistence/schema');
+      const { and, eq } = await import('drizzle-orm');
+      await tx
+        .delete(planningConflicts)
+        .where(
+          and(eq(planningConflicts.season_id, this.seasonId), eq(planningConflicts.status, 'open'))
+        );
+      await tx.insert(planningConflicts).values(rows);
+      return rows.length;
+    }
+    await this.repo.replaceOpenConflicts(this.seasonId, rows);
     return rows.length;
   }
 
@@ -798,68 +770,13 @@ export class ConflictDetector {
     // antwortete dann mit 500. Parallel bleibt die Summe bei der langsamsten
     // Abfrage. (Der Verbindungspool steht auf max: 3, die Abfragen laufen also
     // in zwei Wellen statt sechs.)
-    const [entries, trainerRows, courtRows, memberRows, stats, dbConfigRows] = await Promise.all([
-      // Plan entries for this season (for checking against existing data)
-      db.select().from(seasonPlanEntries).where(eq(seasonPlanEntries.season_id, this.seasonId)),
-
-      // Trainer — über trainer_club auf den Verein eingegrenzt. Vorher lud das
-      // `select().from(trainers)` ALLE Trainer aller Vereine; die
-      // Auslastungsprüfung lief damit über vereinsfremde Trainer.
-      db
-        .select({
-          id: trainers.id,
-          name: trainers.name,
-          max_hours_per_week: trainers.max_hours_per_week,
-        })
-        .from(trainers)
-        .innerJoin(trainerClubs, eq(trainerClubs.trainer_id, trainers.id))
-        .where(eq(trainerClubs.club_id, this.clubId)),
-
-      db.select().from(courts).where(eq(courts.club_id, this.clubId)),
-
-      // Planungsrelevante Mitglieder samt eingereichter Wochenverfügbarkeit.
-      // Left join: wer keine Präferenzen abgegeben hat, muss trotzdem auftauchen —
-      // sonst fällt genau diese Gruppe wieder aus der Prüfung heraus.
-      db
-        .select({
-          id: users.id,
-          name: users.full_name,
-          skill_level: users.skill_level,
-          availability: userTrainingPreferences.weekly_availability,
-          submitted: userTrainingPreferences.is_submitted,
-          avoid_member_ids: userTrainingPreferences.avoid_member_ids,
-        })
-        .from(userClubMemberships)
-        .innerJoin(users, eq(userClubMemberships.user_id, users.id))
-        .leftJoin(
-          userTrainingPreferences,
-          and(
-            eq(userTrainingPreferences.user_id, users.id),
-            eq(userTrainingPreferences.season_id, this.seasonId),
-            eq(userTrainingPreferences.user_role, 'member')
-          )
-        )
-        .where(
-          and(
-            eq(userClubMemberships.club_id, this.clubId),
-            eq(userClubMemberships.role, 'member'),
-            eq(userClubMemberships.is_active, true),
-            eq(userClubMemberships.include_in_planning, true)
-          )
-        ),
-
-      // Slot failure rates from statistics
-      db.select().from(seasonStatistics).where(eq(seasonStatistics.club_id, this.clubId)),
-
-      db
-        .select()
-        .from(seasonPlanningConfigs)
-        .where(
-          and(
-            eq(seasonPlanningConfigs.club_id, this.clubId),
-            eq(seasonPlanningConfigs.season_id, this.seasonId)
-          )
-        ),
+    const [entries, trainerRows, courtRows, memberRows, stats, dbConfig] = await Promise.all([
+      this.repo.planEntries(this.seasonId),
+      this.repo.clubTrainers(this.clubId),
+      this.repo.courts(this.clubId),
+      this.repo.plannableMembers(this.seasonId, this.clubId),
+      this.repo.statistics(this.clubId),
+      this.repo.planningConfig(this.seasonId),
     ]);
 
     const slotFailureRates: Record<string, number> = {};
@@ -878,8 +795,6 @@ export class ConflictDetector {
         }
       }
     }
-
-    const [dbConfig] = dbConfigRows;
 
     return {
       seasonId: this.seasonId,
@@ -917,7 +832,7 @@ export class ConflictDetector {
         trainerUtilizationMaxPct: dbConfig?.trainer_utilization_max_pct || 80,
         slotFailureThreshold: dbConfig?.slot_failure_rate_threshold_pct || 30,
         maxNiveauLevelSteps:
-          (dbConfig as Record<string, unknown>)?.max_niveau_level_steps != null
+          (dbConfig as Record<string, unknown> | null)?.max_niveau_level_steps != null
             ? Number((dbConfig as Record<string, unknown>).max_niveau_level_steps)
             : 1,
         // Tier-2 (Audit): Slot-Dauer MUSS aus der DB-Config kommen, sonst
@@ -936,12 +851,16 @@ export class ConflictDetector {
  * `planning_conflicts` table, which is only ever populated once at
  * Publish-time and drifts out of sync as the plan changes afterwards.
  */
-export async function detectConflictsForSeason(seasonId: string, clubId: string) {
+export async function detectConflictsForSeason(
+  seasonId: string,
+  clubId: string,
+  repo: ConflictDetectionRepository
+) {
   // ponytail: hard timeout so a stuck Drizzle/Supavisor connection (max:1 pool,
   // seen intermittently on the self-hosted pooler) rejects instead of hanging
   // every page/route that awaits this forever. Callers already catch errors.
   return Promise.race([
-    detectConflictsForSeasonInner(seasonId, clubId),
+    detectConflictsForSeasonInner(seasonId, clubId, repo),
     new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('Konfliktprüfung: Datenbank-Timeout')), 8000)
     ),
@@ -975,25 +894,16 @@ export function conflictRowId(seasonId: string, conflictKey: string): string {
  */
 export async function buildAssignmentsFromPlanEntries(
   seasonId: string,
-  clubId: string
+  clubId: string,
+  repo: ConflictDetectionRepository
 ): Promise<GroupAssignment[]> {
-  const entries = await db
-    .select()
-    .from(seasonPlanEntries)
-    .where(eq(seasonPlanEntries.season_id, seasonId));
+  const entries = await repo.planEntries(seasonId);
   if (entries.length === 0) return [];
 
   const [trainerRows, courtRows, groupRows] = await Promise.all([
-    db
-      .select({ id: trainers.id, name: trainers.name })
-      .from(trainers)
-      .innerJoin(trainerClubs, eq(trainerClubs.trainer_id, trainers.id))
-      .where(eq(trainerClubs.club_id, clubId)),
-    db.select({ id: courts.id, name: courts.name }).from(courts).where(eq(courts.club_id, clubId)),
-    db
-      .select({ id: groups.id, name: groups.name, member_ids: groups.member_ids })
-      .from(groups)
-      .where(eq(groups.club_id, clubId)),
+    repo.clubTrainers(clubId),
+    repo.courts(clubId),
+    repo.groups(clubId),
   ]);
   const trainerNames = new Map(trainerRows.map((r) => [r.id, r.name]));
   const courtNames = new Map(courtRows.map((r) => [r.id, r.name]));
@@ -1011,13 +921,7 @@ export async function buildAssignmentsFromPlanEntries(
   };
 
   const memberIds = [...new Set(entries.flatMap(participantsOf))];
-  const memberRows =
-    memberIds.length > 0
-      ? await db
-          .select({ id: users.id, name: users.full_name })
-          .from(users)
-          .where(inArray(users.id, memberIds))
-      : [];
+  const memberRows = await repo.userNames(memberIds);
   const memberNames = new Map(memberRows.map((r) => [r.id, r.name ?? 'Unbekannt']));
 
   const bySlot = new Map<string, GroupAssignment>();
@@ -1072,9 +976,13 @@ export async function buildAssignmentsFromPlanEntries(
   }
 }
 
-async function detectConflictsForSeasonInner(seasonId: string, clubId: string) {
-  const detector = new ConflictDetector(seasonId, clubId);
-  const assignments = await buildAssignmentsFromPlanEntries(seasonId, clubId);
+async function detectConflictsForSeasonInner(
+  seasonId: string,
+  clubId: string,
+  repo: ConflictDetectionRepository
+) {
+  const detector = new ConflictDetector(seasonId, clubId, repo);
+  const assignments = await buildAssignmentsFromPlanEntries(seasonId, clubId, repo);
 
   const conflicts = await detector.detectAll(assignments);
 
@@ -1082,10 +990,7 @@ async function detectConflictsForSeasonInner(seasonId: string, clubId: string) {
   // Konflikte legen — sonst taucht ein ignorierter Konflikt bei jedem Reload
   // wieder als offen auf. Die Zusammenfassung zählt nur noch offene, damit
   // Badges und die Publish-Blockade der Entscheidung folgen.
-  const decided = await db
-    .select({ id: planningConflicts.id, status: planningConflicts.status })
-    .from(planningConflicts)
-    .where(eq(planningConflicts.season_id, seasonId));
+  const decided = await repo.conflictDecisions(seasonId);
   const decisionByRowId = new Map(decided.map((row) => [row.id, row.status]));
   for (const conflict of conflicts) {
     const status = decisionByRowId.get(conflictRowId(seasonId, conflict.id));

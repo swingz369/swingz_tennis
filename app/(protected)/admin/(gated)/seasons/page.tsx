@@ -2,6 +2,7 @@ import { requireAdminClub } from '@/lib/admin-context';
 import { getPagination, buildPaginationMeta } from '@/lib/pagination';
 import { SeasonsClient } from './seasons-client';
 import type { PaginationMeta } from '@/lib/pagination';
+import { ConflictDetectionRepository } from '@/infrastructure/persistence/repositories/conflict-detection.repository';
 import { detectConflictsForSeason } from '@/lib/season-planning/conflict-detector';
 
 import { createLogger } from '@/lib/logger';
@@ -110,7 +111,9 @@ export default async function SeasonsPage({
       // blank out the whole season list (see detectConflictsForSeason timeout).
       const results = await Promise.allSettled(
         displayedSeasonIds.map((sid) =>
-          detectConflictsForSeason(sid, clubId).then((r) => [sid, r.summary.total] as const)
+          detectConflictsForSeason(sid, clubId, new ConflictDetectionRepository(supabase)).then(
+            (r) => [sid, r.summary.total] as const
+          )
         )
       );
       for (const result of results) {

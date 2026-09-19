@@ -23,6 +23,7 @@ import {
   sessionRsvps,
   clubs,
 } from '@/src/infrastructure/persistence/schema';
+import { conflictRepositoryFor } from '@/infrastructure/persistence/repositories/conflict-detection.repository';
 import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
 import { SeasonBillingService } from '@/application/services/season-billing.service';
 import { seasonConfirmationEmailService } from '@/lib/season-planning/season-confirmation-email.service';
@@ -817,7 +818,7 @@ export async function runSeasonDryRun(
         max_participants: e.max_participants,
       }))
     );
-    const detector = new ConflictDetector(seasonId, season.club_id);
+    const detector = new ConflictDetector(seasonId, season.club_id, conflictRepositoryFor(auth));
     const conflicts = await detector.detectAll(assignments);
 
     // 6. Session simulation: build the same loop the confirm endpoint runs,

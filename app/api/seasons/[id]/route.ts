@@ -5,6 +5,7 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { createLogger } from '@/lib/logger';
+import { conflictRepositoryFor } from '@/infrastructure/persistence/repositories/conflict-detection.repository';
 import { detectConflictsForSeason } from '@/lib/season-planning/conflict-detector';
 
 const log = createLogger('api:seasons:[id]');
@@ -35,8 +36,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
         return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
       }
 
-      const isSuperadmin = await verifyRole(auth, 'superadmin');
-      if (!isSuperadmin) {
+      // Nur der Owner sieht Vereine ohne Membership; ein Superadmin nur seine zugewiesenen.
+      if (auth.role !== 'owner') {
         const hasClubAccess = auth.memberships.some((m) => m.club_id === season.club_id);
         if (!hasClubAccess) {
           return NextResponse.json({ error: 'Zugriff verweigert' }, { status: 403 });
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           .from('season_plan_entries')
           .select('id', { count: 'exact', head: true })
           .eq('season_id', seasonId),
-        detectConflictsForSeason(seasonId, clubId ?? ''),
+        detectConflictsForSeason(seasonId, clubId ?? '', conflictRepositoryFor(auth)),
         clubId
           ? supabase
               .from('user_club_memberships')
@@ -141,7 +142,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         if (fetchError || !existing) {
           return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
         }
-        if (!isSuperadmin) {
+        // Superadmin nur für zugewiesene Vereine (Membership), nicht plattformweit.
+        if (auth.role !== 'owner') {
           const hasClubAccess = auth.memberships.some(
             (m) => m.club_id === existing.club_id && (m.role === 'admin' || m.role === 'superadmin')
           );
@@ -244,7 +246,8 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         if (fetchError || !existing) {
           return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
         }
-        if (!isSuperadmin) {
+        // Superadmin nur für zugewiesene Vereine (Membership), nicht plattformweit.
+        if (auth.role !== 'owner') {
           const hasClubAccess = auth.memberships.some(
             (m) => m.club_id === existing.club_id && (m.role === 'admin' || m.role === 'superadmin')
           );

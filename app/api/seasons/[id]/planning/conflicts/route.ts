@@ -8,6 +8,7 @@ import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { db } from '@/src/infrastructure/persistence/db';
 import { planningConflicts } from '@/src/infrastructure/persistence/schema';
+import { conflictRepositoryFor } from '@/infrastructure/persistence/repositories/conflict-detection.repository';
 import { detectConflictsForSeason, conflictRowId } from '@/lib/season-planning/conflict-detector';
 import { createLogger } from '@/lib/logger';
 
@@ -34,7 +35,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
       if (!access.ok) return access.response;
       const { season } = access;
 
-      const { conflicts, summary } = await detectConflictsForSeason(seasonId, season.club_id);
+      const { conflicts, summary } = await detectConflictsForSeason(
+        seasonId,
+        season.club_id,
+        conflictRepositoryFor(auth)
+      );
 
       return NextResponse.json({
         success: true,
@@ -85,7 +90,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       // nicht als Zeile in planning_conflicts. Wir suchen den Konflikt in der
       // aktuellen Erkennung und schreiben die Entscheidung unter einer aus der
       // ID abgeleiteten, stabilen UUID fest (siehe conflictRowId).
-      const { conflicts } = await detectConflictsForSeason(seasonId, access.season.club_id);
+      const { conflicts } = await detectConflictsForSeason(
+        seasonId,
+        access.season.club_id,
+        conflictRepositoryFor(auth)
+      );
       const conflict = conflicts.find((c) => c.id === body.conflictId);
       if (!conflict) {
         return NextResponse.json({ error: 'Konflikt nicht gefunden' }, { status: 404 });

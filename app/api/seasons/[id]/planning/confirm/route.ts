@@ -19,6 +19,7 @@ import {
   bookings,
 } from '@/src/infrastructure/persistence/schema';
 import { eq, and, gte, inArray } from 'drizzle-orm';
+import { conflictRepositoryFor } from '@/infrastructure/persistence/repositories/conflict-detection.repository';
 import {
   ConflictDetector,
   detectConflictsForSeason,
@@ -87,8 +88,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
         // Entscheidungen: ein als gelöst markierter kritischer Konflikt
         // verschwand in der Oberfläche, blockierte das Veröffentlichen aber
         // weiter mit 409 — ohne dass der Admin noch etwas tun konnte.
-        const detector = new ConflictDetector(seasonId, season.club_id);
-        const { conflicts } = await detectConflictsForSeason(seasonId, season.club_id);
+        const conflictRepo = conflictRepositoryFor(auth);
+        const detector = new ConflictDetector(seasonId, season.club_id, conflictRepo);
+        const { conflicts } = await detectConflictsForSeason(
+          seasonId,
+          season.club_id,
+          conflictRepo
+        );
         const unresolvedCritical = conflicts.filter(
           (c) => c.severity === 'critical' && c.status === 'open'
         );
