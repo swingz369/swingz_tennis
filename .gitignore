@@ -198,3 +198,6 @@ tests/e2e/.auth/
 .tokensave
 .env*
 
+
+# Lokaler MCP-Zugang zur Produktions-DB (enthält Prod-Zugriff, nicht teilen)
+.mcp.json

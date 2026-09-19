@@ -1,6 +1,6 @@
 # SwingZ — Business Rules
 
-> Zuletzt aktualisiert: 16.08.2026 (Stand der letzten Code-Änderung an diesem Dokument)
+> Zuletzt aktualisiert: 19.09.2026 (Buchungsregeln, Rechnung/SEPA/Mail-Absender = Vereinsdaten ergänzt)
 
 > Verbindliche Produktregeln. Bei Widersprüchen zwischen Code und diesem Dokument gilt dieses Dokument als Referenz.
 
@@ -142,7 +142,12 @@ zu einer Tennisschule gehört, sieht deshalb keinen eigenen Abo-Eintrag.
 
 - Stripe-Checkout wird client-seitig über `@/lib/stripe/client.ts` initiiert (gibt `null` zurück wenn nicht konfiguriert).
 - Webhook-Verarbeitung über `@/lib/stripe/stripe-client.ts` (wirft Fehler wenn nicht konfiguriert — bewusst streng).
-- SEPA-Lastschrift: PAIN.008-XML-Export unter `/admin/billing/sepa`.
+- SEPA-Lastschrift: PAIN.008-XML-Export unter `/admin/billing/sepa`. Gläubiger-IBAN und
+  Gläubiger-ID kommen aus dem Verein (Einstellungen → Rechtliches), nicht aus
+  Plattform-Umgebungsvariablen; ein Mandat trägt die Gläubiger-ID seines Vereins.
+- Rechnungs-PDF: Logo, Akzentfarbe, Steuernummer, Register, Bankverbindung, Rechnungstext
+  und Fusszeile stammen aus dem Verein der Rechnung. Der Empfänger kommt aus der
+  Rechnung, nicht vom Betrachter.
 - Die Webhook-Handler prüfen ihre Datenbank-Updates auf Fehler und werfen bei
   einem Fehlschlag, damit Stripe erneut zustellt. Grund: bis 18.08.2026 kannte
   der CHECK-Constraint auf `users.subscription_tier` die Plan-Keys nicht, jedes
@@ -169,9 +174,24 @@ Nachgewiesen (nicht behauptet) durch
 
 ---
 
+## 6b. Platzbuchung
+
+Ein Klick im Kalender bucht nicht sofort: Ein Bestätigungsdialog zeigt Platz, Zeit und
+Verbrauch (Tag/Woche/offen) nach Vorprüfung über `POST /api/bookings/check`.
+
+Der Server prüft die Buchungsregeln des Vereins vollständig (`lib/booking/booking-rules.ts`):
+Dauer, Vorlauf, Wochenende, Prime-Time, Tages-, Wochen- und Gleichzeitig-Limit,
+Saisonfenster und Freigabepflicht. „Woche" ist Montag bis Sonntag nach Berliner Zeit,
+nicht Serverzeit. `clubId` und `courtId` werden gegen den Nutzer geprüft — Buchungen
+in einem fremden Verein werden abgelehnt.
+
+---
+
 ## 7. E-Mail
 
 - Absender-Domain: `@swingz.cloud` (verifiziert bei Resend).
 - Erlaubte Absenderadressen: `noreply@swingz.cloud`, `info@swingz.cloud`, `mail@swingz.cloud`.
 - Supabase Auth-E-Mails: SMTP via Resend, Absender `noreply@swingz.cloud`.
 - Keine `@mail.swingz.cloud`-Adressen — Subdomain nicht konfiguriert.
+- Anzeigename und Reply-To sind der Verein (`lib/email/club-sender.ts`); die Absenderadresse
+  bleibt eine der erlaubten `@swingz.cloud`-Adressen.
