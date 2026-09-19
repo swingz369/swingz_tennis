@@ -55,6 +55,23 @@ vi.mock('@sentry/nextjs', () => ({
 // ── Imports (must come AFTER the vi.mock factories) ────────────────────────
 import { fetchNuligaGroupPage } from '@/lib/services/nuliga-scraper';
 
+// Der Abruf ist standardmäßig aus (Kill-Switch) — die Parser-Tests brauchen ihn an.
+process.env.NULIGA_SCRAPING = 'on';
+
+describe('nuliga-scraper: Kill-Switch', () => {
+  it('wirft ohne NULIGA_SCRAPING=on, ohne einen Request abzusetzen', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    process.env.NULIGA_SCRAPING = 'off';
+    try {
+      await expect(fetchNuligaGroupPage('https://htv.liga.nu/x')).rejects.toThrow(/deaktiviert/);
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      process.env.NULIGA_SCRAPING = 'on';
+      fetchSpy.mockRestore();
+    }
+  });
+});
+
 // ── Fixtures ────────────────────────────────────────────────────────────────
 const VALID_URL =
   'https://htv.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/groupPage?championship=Test&group=1';

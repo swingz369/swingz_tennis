@@ -34,6 +34,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   }
 
+  // Abruf deaktiviert (AGB von tennis.de, siehe assertNuligaScrapingEnabled): nichts tun, aber
+  // Lebenszeichen schreiben, damit /api/health den Cron nicht als ausgefallen meldet.
+  if (process.env.NULIGA_SCRAPING !== 'on') {
+    await recordHeartbeat('cron-nuliga-sync', { skipped: 'NULIGA_SCRAPING nicht "on"' });
+    return NextResponse.json({ success: true, skipped: true, message: 'nuLiga-Abruf deaktiviert' });
+  }
+
   const checkInId = Sentry.captureCheckIn({
     monitorSlug: 'nuliga-sync',
     status: 'in_progress',

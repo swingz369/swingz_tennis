@@ -16,6 +16,18 @@ const log = createLogger('nuliga-scraper');
 
 // ── Types ────────────────────────────────────────────────────────────────
 
+/**
+ * Kill-Switch für jeden Abruf bei nuLiga. Die AGB von tennis.de untersagen Scraping und
+ * gewerbliche Weiterverwendung; solange das nicht geklärt ist, bleibt der Abruf aus.
+ * Nur exakt `NULIGA_SCRAPING=on` schaltet ihn ein (lokal für Tests/Entwicklung).
+ * Anzeige von Liga-Daten läuft über das tennis.de-Widget (`components/tennisde-widget.tsx`).
+ */
+export function assertNuligaScrapingEnabled(): void {
+  if (process.env.NULIGA_SCRAPING !== 'on') {
+    throw new Error('Der Abruf von nuLiga-Daten ist deaktiviert (nutze das tennis.de-Widget).');
+  }
+}
+
 export interface NuligaStanding {
   rank: number;
   teamName: string;
@@ -58,6 +70,7 @@ export interface NuligaGroupPage {
  * @returns Parsed standings and match schedule
  */
 export async function fetchNuligaGroupPage(url: string): Promise<NuligaGroupPage> {
+  assertNuligaScrapingEnabled();
   // Validate URL is from a known nuLiga domain
   const parsed = new URL(url);
   if (!parsed.hostname.endsWith('.liga.nu')) {
@@ -423,6 +436,7 @@ export function isNuligaTeamPortraitUrl(url: string): boolean {
  * Seite enthält keine fremden Spielernamen (siehe Migration 20260815130000).
  */
 export async function fetchNuligaTeamPortrait(url: string): Promise<NuligaTeamPortrait> {
+  assertNuligaScrapingEnabled();
   const parsed = new URL(url);
   if (!parsed.hostname.endsWith('.liga.nu')) {
     throw new Error(
@@ -786,6 +800,7 @@ function seasonYearFrom(text: string | null | undefined): number | null {
  *              andere Vereinsseite mit `club`-Parameter).
  */
 export async function fetchNuligaClubTeams(url: string): Promise<NuligaClubTeams> {
+  assertNuligaScrapingEnabled();
   const teamsUrl = toNuligaClubTeamsUrl(url);
   if (!teamsUrl) {
     throw new Error(
@@ -882,6 +897,7 @@ export async function searchNuligaClubs(
   federation: string,
   searchTerm: string
 ): Promise<Array<{ name: string; city: string | null; clubNumber: string; teamsUrl: string }>> {
+  assertNuligaScrapingEnabled();
   const origin = federationHost.startsWith('http') ? federationHost : `https://${federationHost}`;
   const parsed = new URL(origin);
   if (!parsed.hostname.endsWith('.liga.nu')) {
