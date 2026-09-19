@@ -211,9 +211,9 @@ Gleiches für `trainers_own` (`20260919120000_trainers_own_superadmin_scoped.sql
 `trainer_club` (`20260919130000_trainer_club_write_admin_only.sql`): Schreiben war für jedes aktive
 Vereinsmitglied offen; jetzt nur `is_club_admin`, Lesen für Vereinsmitglieder.
 
-Bekannte Altlast: `sessions_access` und `session_access_via_schedule` sind `FOR ALL` für jedes
-aktive Vereinsmitglied (Mitglieder könnten Termine ändern/löschen); Schreiben sollte auf
-`is_club_admin`/`is_club_trainer` beschränkt werden, sobald die Session-Routen migriert sind.
+`sessions` (`20260919140000_sessions_write_staff_only.sql`): `sessions_access` und
+`session_access_via_schedule` (FOR ALL für jedes Vereinsmitglied) entfernt; Lesen für Mitglieder,
+Schreiben nur Trainer/Admin (`sessions_insert/_update`, `sessions_delete`).
 
 Bekannte Altlast: weitere Policies nutzen noch das plattformweite `is_superadmin()` —
 `background_jobs`, `job_execution_log`, `clubs_insert`, `schedules`, `players`,
