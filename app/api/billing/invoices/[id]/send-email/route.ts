@@ -6,7 +6,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import { generateInvoicePDF, getInvoiceFileName } from '@/lib/pdf/invoice-pdf-utils';
@@ -32,15 +32,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const { id: invoiceId } = await context.params;
 
       const invoice = await billingEngine.getInvoiceById(invoiceId);
-      if (!invoice) {
+      // Fremde Rechnung = "nicht gefunden": Existenz nicht verraten. billingEngine liest ohne RLS.
+      if (!invoice || !verifyClubAccess(auth, invoice.club_id)) {
         return NextResponse.json({ error: 'Rechnung nicht gefunden' }, { status: 404 });
       }
 
-      // Fetch club info for PDF header
-      const clubId = auth.clubId;
-      if (!clubId) {
-        return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
-      }
+      // Fetch club info for PDF header — der Verein der Rechnung, nicht der aktive des Admins
+      const clubId = invoice.club_id;
       let clubData: {
         name?: string | null;
         address?: string | null;

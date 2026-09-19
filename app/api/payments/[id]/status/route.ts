@@ -1,9 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
-import type { PaymentStatus } from '@/lib/types/billing';
+import { PaymentStatus } from '@/lib/types/billing';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:payments:[id]:status');
@@ -26,13 +26,21 @@ export async function PATCH(
     try {
       const { id } = await params;
       const body = await _request.json();
-      const { status } = body;
+      const parsed = PaymentStatus.safeParse(body?.status);
 
-      if (!status) {
-        return NextResponse.json({ error: 'Status erforderlich' }, { status: 400 });
+      if (!parsed.success) {
+        return NextResponse.json({ error: 'Ungültiger Status' }, { status: 400 });
       }
 
-      const payment = await billingEngine.updatePaymentStatus(id, status as PaymentStatus);
+      // Zahlungen haben keine club_id — der Verein kommt von der Rechnung.
+      // Fremde Zahlung = "nicht gefunden": Existenz nicht verraten.
+      const existing = await billingEngine.getPaymentById(id);
+      const invoice = existing ? await billingEngine.getInvoiceById(existing.invoice_id) : null;
+      if (!invoice || !verifyClubAccess(auth, invoice.club_id)) {
+        return NextResponse.json({ error: 'Zahlung nicht gefunden' }, { status: 404 });
+      }
+
+      const payment = await billingEngine.updatePaymentStatus(id, parsed.data);
 
       return NextResponse.json({ payment });
     } catch (error) {

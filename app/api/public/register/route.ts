@@ -37,6 +37,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ohne Verein kann kein Admin den Antrag sehen (RLS: nur eigener Verein)
+    if (typeof clubId !== 'string' || !clubId) {
+      return NextResponse.json({ error: 'Verein erforderlich' }, { status: 400 });
+    }
+
     if (!email.includes('@')) {
       return NextResponse.json({ error: 'Gültige E-Mail-Adresse erforderlich' }, { status: 400 });
     }
@@ -83,7 +88,7 @@ export async function POST(request: NextRequest) {
       previous_club: previousClub?.trim() || null,
       motivation: motivation?.trim() || null,
       wants_trial_training: wantsTrialTraining ?? true,
-      club_id: clubId || null,
+      club_id: clubId,
       status: 'pending',
     });
 

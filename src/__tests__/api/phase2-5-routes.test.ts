@@ -190,6 +190,14 @@ describe('POST /api/public/register', () => {
     expect(body.error).toContain('Vorname');
   });
 
+  it('returns 400 when clubId is missing', async () => {
+    const res = await POST(
+      buildRequest('POST', { firstName: 'John', lastName: 'Doe', email: 'test@test.com' })
+    );
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toContain('Verein');
+  });
+
   it('returns 400 when email is missing', async () => {
     const res = await POST(buildRequest('POST', { firstName: 'John', lastName: 'Doe' }));
     expect(res.status).toBe(400);
@@ -197,7 +205,12 @@ describe('POST /api/public/register', () => {
 
   it('returns 400 for invalid email (no @)', async () => {
     const res = await POST(
-      buildRequest('POST', { firstName: 'John', lastName: 'Doe', email: 'invalid' })
+      buildRequest('POST', {
+        clubId: '11111111-1111-1111-1111-111111111111',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'invalid',
+      })
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -211,7 +224,12 @@ describe('POST /api/public/register', () => {
     mockCreateClient.mockResolvedValue(createMockSupabase(() => qb));
 
     const res = await POST(
-      buildRequest('POST', { firstName: 'John', lastName: 'Doe', email: 'dup@test.com' })
+      buildRequest('POST', {
+        clubId: '11111111-1111-1111-1111-111111111111',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'dup@test.com',
+      })
     );
     expect(res.status).toBe(409);
   });
@@ -233,7 +251,12 @@ describe('POST /api/public/register', () => {
     );
 
     const res = await POST(
-      buildRequest('POST', { firstName: 'John', lastName: 'Doe', email: 'existing@test.com' })
+      buildRequest('POST', {
+        clubId: '11111111-1111-1111-1111-111111111111',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'existing@test.com',
+      })
     );
     expect(res.status).toBe(409);
   });
@@ -262,6 +285,7 @@ describe('POST /api/public/register', () => {
       buildRequest('POST', {
         firstName: 'John',
         lastName: 'Doe',
+        clubId: '11111111-1111-1111-1111-111111111111',
         email: 'john@test.com',
         phone: '12345',
         playingLevel: 'advanced',
@@ -287,6 +311,7 @@ describe('POST /api/public/register', () => {
       buildRequest('POST', {
         firstName: '  John  ',
         lastName: '  Doe  ',
+        clubId: '11111111-1111-1111-1111-111111111111',
         email: '  JOHN@TEST.COM  ',
       })
     );

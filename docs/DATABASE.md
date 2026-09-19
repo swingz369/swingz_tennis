@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 19. September 2026 (`users_select_club_admin`, `save_season_clustering`, lokales Migrations-Tracking)
+> Zuletzt verifiziert: 20. September 2026 (Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -256,6 +256,29 @@ Zielbild und Migrationsstand als interaktives Architektur-Diagramm: [`diagrams/a
 (Route → Service → Repository → `getUserDb`/`systemDb` → Postgres mit RLS, plus der noch
 verbliebene Altdomänen-Pfad über Drizzle). Begründung der Entscheidung:
 [`decisions/adr-005-datenzugriff-supabase-repositories.md`](decisions/adr-005-datenzugriff-supabase-repositories.md).
+
+## Policies „Admin irgendeines Vereins" ersetzt (Stand 20.09.2026, lokal angewendet)
+
+Migrationen `20260920110000_rls_mandantentrennung.sql` und
+`20260920120000_rls_kein_admin_irgendeines_vereins.sql`. Bis dahin prüften Policies auf
+`coupons`, `email_campaigns`, `email_queue`, `shop_products`, `shop_orders`,
+`family_accounts`, `family_invites`, `qr_checkins`, `gamification_points`,
+`gamification_badges` und `registration_requests` nur, ob der Nutzer _irgendwo_ Admin ist —
+nicht ob im Verein der Zeile. `court_availability` (SELECT `public`), `gamification_points`
+(SELECT `authenticated`) und `gamification_badges` (INSERT `authenticated`) hatten
+`true`; `attendance_records` ließ jeden Trainer irgendeines Vereins einfügen.
+
+Jetzt: Tabellen mit `club_id` prüfen `is_owner() OR is_club_admin(club_id)`; Tabellen ohne
+`club_id` prüfen über den Nutzer der Zeile mit den neuen Helfern
+`is_admin_of_user(uuid)` (Admin/Superadmin im selben Verein oder Owner) und
+`is_staff_of_user(uuid)` (zusätzlich Trainer). `registration_requests` erlaubt öffentliches
+Einreichen nur als neuen Antrag mit existierender `club_id` (die Route verlangt `clubId`).
+Gekippt wurde ausserdem die öffentliche/„alle Nutzer"-Sichtbarkeit von Gutscheinen und
+Shop-Produkten: nur noch Mitglieder des eigenen Vereins.
+
+Wächter: `src/__tests__/integration/rls-policy-catalog.test.ts` (Policy ohne Vereinsbezug
+oder mit `true` bricht) und `src/__tests__/security/service-client-club-scope.test.ts`
+(Routen mit ID und Service-Client ohne Vereinsprüfung).
 
 ## Rollen-/Club-Scoping-Modell (aktueller, korrekter Stand)
 
