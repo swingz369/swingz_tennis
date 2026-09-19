@@ -56,6 +56,9 @@ describe('tenant isolation: app/api/seasons/[id]/**/route.ts', () => {
       // Repository liest per RLS-Client. Der Guard steht nicht mehr im Route-Quelltext.
       'preferences/route.ts',
       'preferences/[userId]/route.ts',
+      // ADR-005: `SeasonPlanService` prüft die Rolle im Verein der Saison, RLS trennt die Vereine.
+      'plan-entries/route.ts',
+      'plan-grid/route.ts',
     ].map((p) => path.join(seasonsIdDir, p))
   );
 

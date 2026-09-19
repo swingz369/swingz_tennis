@@ -15,8 +15,7 @@ import {
 
 /**
  * Saison-Präferenzen (ADR-005). Fachregeln hier, Datenzugriff im Repository, Mandantentrennung
- * in der Datenbank (RLS). Die Vereinsprüfung im Service ist zusätzlich — Superadmins sehen Saisons
- * per RLS auch fremder Vereine (`is_superadmin()`), zugewiesen sind ihnen aber nur eigene.
+ * in der Datenbank (RLS). Die Vereinsprüfung im Service ist zusätzlich (Rolle im Verein der Saison).
  */
 export class SeasonPreferenceService {
   private readonly repo: SeasonPreferenceRepository;
