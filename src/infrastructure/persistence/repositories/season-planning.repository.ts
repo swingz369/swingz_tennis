@@ -6,6 +6,7 @@ import 'server-only';
 import type { AuthContext } from '@/lib/api-auth';
 import type { Json, Tables, TablesInsert, TablesUpdate } from '@/types/supabase';
 import { createLogger } from '@/lib/logger';
+import { fetchAll } from './paged';
 
 const log = createLogger('infrastructure:season-planning.repository');
 
@@ -36,13 +37,15 @@ export class SeasonPlanningRepository {
   // ── Inaktive Wochen ───────────────────────────────────────────────
   async listGroupWeeks(seasonId: string) {
     return (
-      ok(
-        await this.db
-          .from('season_group_weeks')
-          .select('id, group_id, week_number, is_active')
-          .eq('season_id', seasonId),
+      (await fetchAll(
+        () =>
+          this.db
+            .from('season_group_weeks')
+            .select('id, group_id, week_number, is_active')
+            .eq('season_id', seasonId)
+            .order('id'),
         'Lesen der Wochen fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
@@ -66,13 +69,15 @@ export class SeasonPlanningRepository {
 
   // ── Warteliste ────────────────────────────────────────────────────
   async listWaitlist(seasonId: string) {
-    const rows = ok(
-      await this.db
-        .from('season_waitlists')
-        .select('*, users(full_name)')
-        .eq('season_id', seasonId)
-        .order('group_id', { ascending: true })
-        .order('position', { ascending: true }),
+    const rows = await fetchAll(
+      () =>
+        this.db
+          .from('season_waitlists')
+          .select('*, users(full_name)')
+          .eq('season_id', seasonId)
+          .order('group_id', { ascending: true })
+          .order('position', { ascending: true })
+          .order('id'),
       'Lesen der Warteliste fehlgeschlagen'
     );
     return (rows ?? []).map(({ users, ...entry }) => ({
@@ -97,23 +102,25 @@ export class SeasonPlanningRepository {
 
   async listEntriesForGroup(seasonId: string, groupId: string): Promise<PlanEntry[]> {
     return (
-      ok(
-        await this.db
-          .from('season_plan_entries')
-          .select()
-          .eq('season_id', seasonId)
-          .eq('group_id', groupId),
+      (await fetchAll(
+        () =>
+          this.db
+            .from('season_plan_entries')
+            .select()
+            .eq('season_id', seasonId)
+            .eq('group_id', groupId)
+            .order('id'),
         'Lesen der Planeinträge fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
   async listEntries(seasonId: string): Promise<PlanEntry[]> {
     return (
-      ok(
-        await this.db.from('season_plan_entries').select().eq('season_id', seasonId),
+      (await fetchAll(
+        () => this.db.from('season_plan_entries').select().eq('season_id', seasonId).order('id'),
         'Lesen der Planeinträge fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
@@ -129,12 +136,14 @@ export class SeasonPlanningRepository {
 
   // ── Planstände ────────────────────────────────────────────────────
   async listVersions(seasonId: string) {
-    const rows = ok(
-      await this.db
-        .from('season_plan_versions')
-        .select('id, label, created_at, slots, users(full_name)')
-        .eq('season_id', seasonId)
-        .order('created_at', { ascending: false }),
+    const rows = await fetchAll(
+      () =>
+        this.db
+          .from('season_plan_versions')
+          .select('id, label, created_at, slots, users(full_name)')
+          .eq('season_id', seasonId)
+          .order('created_at', { ascending: false })
+          .order('id'),
       'Lesen der Planstände fehlgeschlagen'
     );
     return (rows ?? []).map((r) => ({
@@ -154,12 +163,14 @@ export class SeasonPlanningRepository {
   }
 
   async listVersionIds(seasonId: string): Promise<string[]> {
-    const rows = ok(
-      await this.db
-        .from('season_plan_versions')
-        .select('id')
-        .eq('season_id', seasonId)
-        .order('created_at', { ascending: false }),
+    const rows = await fetchAll(
+      () =>
+        this.db
+          .from('season_plan_versions')
+          .select('id')
+          .eq('season_id', seasonId)
+          .order('created_at', { ascending: false })
+          .order('id'),
       'Lesen der Planstände fehlgeschlagen'
     );
     return (rows ?? []).map((r) => r.id);
@@ -186,12 +197,14 @@ export class SeasonPlanningRepository {
 
   // ── Präferenz-Übersicht ───────────────────────────────────────────
   async listMemberPreferences(seasonId: string) {
-    const rows = ok(
-      await this.db
-        .from('user_training_preferences')
-        .select('*, users(full_name, email, skill_level, experience_months)')
-        .eq('season_id', seasonId)
-        .eq('user_role', 'member'),
+    const rows = await fetchAll(
+      () =>
+        this.db
+          .from('user_training_preferences')
+          .select('*, users(full_name, email, skill_level, experience_months)')
+          .eq('season_id', seasonId)
+          .eq('user_role', 'member')
+          .order('id'),
       'Lesen der Präferenzen fehlgeschlagen'
     );
     return (rows ?? []).map(({ users, ...pref }) => {
@@ -225,22 +238,24 @@ export class SeasonPlanningRepository {
 
   async listStatistics(clubId: string) {
     return (
-      ok(
-        await this.db.from('season_statistics').select().eq('club_id', clubId),
+      (await fetchAll(
+        () => this.db.from('season_statistics').select().eq('club_id', clubId).order('id'),
         'Lesen der Statistik fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
   // ── Trainer-Übersicht ─────────────────────────────────────────────
   async listSubmittedTrainerPreferences(seasonId: string) {
-    const rows = ok(
-      await this.db
-        .from('user_training_preferences')
-        .select('*, users(full_name)')
-        .eq('season_id', seasonId)
-        .eq('is_submitted', true)
-        .eq('user_role', 'trainer'),
+    const rows = await fetchAll(
+      () =>
+        this.db
+          .from('user_training_preferences')
+          .select('*, users(full_name)')
+          .eq('season_id', seasonId)
+          .eq('is_submitted', true)
+          .eq('user_role', 'trainer')
+          .order('id'),
       'Lesen der Trainer-Präferenzen fehlgeschlagen'
     );
     return (rows ?? []).map(({ users, ...pref }) => ({
@@ -252,10 +267,10 @@ export class SeasonPlanningRepository {
   async trainersByUserIds(userIds: string[]): Promise<Trainer[]> {
     if (userIds.length === 0) return [];
     return (
-      ok(
-        await this.db.from('trainers').select().in('user_id', userIds),
+      (await fetchAll(
+        () => this.db.from('trainers').select().in('user_id', userIds).order('id'),
         'Lesen der Trainer fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
@@ -267,21 +282,23 @@ export class SeasonPlanningRepository {
     const ids = (links ?? []).map((l) => l.trainer_id);
     if (ids.length === 0) return [];
     return (
-      ok(
-        await this.db.from('trainers').select().in('id', ids).eq('is_active', true),
+      (await fetchAll(
+        () => this.db.from('trainers').select().in('id', ids).eq('is_active', true).order('id'),
         'Lesen der Trainer fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
   async trainerMembershipUserIds(clubId: string): Promise<string[]> {
-    const rows = ok(
-      await this.db
-        .from('user_club_memberships')
-        .select('user_id')
-        .eq('club_id', clubId)
-        .eq('role', 'trainer')
-        .eq('is_active', true),
+    const rows = await fetchAll(
+      () =>
+        this.db
+          .from('user_club_memberships')
+          .select('user_id')
+          .eq('club_id', clubId)
+          .eq('role', 'trainer')
+          .eq('is_active', true)
+          .order('id'),
       'Lesen der Trainer-Mitgliedschaften fehlgeschlagen'
     );
     return (rows ?? []).map((r) => r.user_id);
@@ -309,12 +326,14 @@ export class SeasonPlanningRepository {
       .eq('is_active', true);
     if (role === 'member') q = q.eq('include_in_planning', true);
     const members = ok(await q, 'Lesen der Mitglieder fehlgeschlagen') ?? [];
-    const submitted = ok(
-      await this.db
-        .from('user_training_preferences')
-        .select('user_id')
-        .eq('season_id', seasonId)
-        .eq('is_submitted', true),
+    const submitted = await fetchAll(
+      () =>
+        this.db
+          .from('user_training_preferences')
+          .select('user_id')
+          .eq('season_id', seasonId)
+          .eq('is_submitted', true)
+          .order('id'),
       'Lesen der Präferenzen fehlgeschlagen'
     );
     const done = new Set((submitted ?? []).map((r) => r.user_id));
@@ -329,14 +348,16 @@ export class SeasonPlanningRepository {
 
   // ── Vertretungen ──────────────────────────────────────────────────
   async listSubstitutes(seasonId: string) {
-    const rows = ok(
-      await this.db
-        .from('season_plan_entries')
-        .select(
-          'group_id, substitute_trainer_id, substitute_from_week, substitute_to_week, trainers!season_plan_entries_substitute_trainer_id_fkey(name)'
-        )
-        .eq('season_id', seasonId)
-        .not('substitute_trainer_id', 'is', null),
+    const rows = await fetchAll(
+      () =>
+        this.db
+          .from('season_plan_entries')
+          .select(
+            'group_id, substitute_trainer_id, substitute_from_week, substitute_to_week, trainers!season_plan_entries_substitute_trainer_id_fkey(name)'
+          )
+          .eq('season_id', seasonId)
+          .not('substitute_trainer_id', 'is', null)
+          .order('id'),
       'Lesen der Vertretungen fehlgeschlagen'
     );
     return (rows ?? []).map((r) => ({
@@ -370,14 +391,16 @@ export class SeasonPlanningRepository {
   }
 
   async sessionStarts(entryIds: string[], from: Date, to: Date): Promise<string[]> {
-    const rows = ok(
-      await this.db
-        .from('sessions')
-        .select('timeslot_start')
-        .in('plan_entry_id', entryIds)
-        .gte('timeslot_start', from.toISOString())
-        .lte('timeslot_start', to.toISOString())
-        .order('timeslot_start', { ascending: true }),
+    const rows = await fetchAll(
+      () =>
+        this.db
+          .from('sessions')
+          .select('timeslot_start')
+          .in('plan_entry_id', entryIds)
+          .gte('timeslot_start', from.toISOString())
+          .lte('timeslot_start', to.toISOString())
+          .order('timeslot_start', { ascending: true })
+          .order('id'),
       'Lesen der Termine fehlgeschlagen'
     );
     return (rows ?? []).map((r) => r.timeslot_start);

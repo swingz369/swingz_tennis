@@ -7,6 +7,7 @@ import type { AuthContext } from '@/lib/api-auth';
 import type { Json, Tables, TablesInsert } from '@/types/supabase';
 import { getUserDb, systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
+import { fetchAll } from './paged';
 
 const log = createLogger('infrastructure:conflict-detection.repository');
 
@@ -32,10 +33,10 @@ export class ConflictDetectionRepository {
 
   async planEntries(seasonId: string): Promise<PlanEntry[]> {
     return (
-      ok(
-        await this.db.from('season_plan_entries').select().eq('season_id', seasonId),
+      (await fetchAll(
+        () => this.db.from('season_plan_entries').select().eq('season_id', seasonId).order('id'),
         'Lesen der Planeinträge fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
@@ -48,35 +49,37 @@ export class ConflictDetectionRepository {
     const ids = (links ?? []).map((l) => l.trainer_id);
     if (ids.length === 0) return [];
     return (
-      ok(
-        await this.db.from('trainers').select('id, name, max_hours_per_week').in('id', ids),
+      (await fetchAll(
+        () =>
+          this.db.from('trainers').select('id, name, max_hours_per_week').in('id', ids).order('id'),
         'Lesen der Trainer fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
   async courts(clubId: string) {
     return (
-      ok(
-        await this.db.from('courts').select('id, name').eq('club_id', clubId),
+      (await fetchAll(
+        () => this.db.from('courts').select('id, name').eq('club_id', clubId).order('id'),
         'Lesen der Plätze fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
   async groups(clubId: string) {
     return (
-      ok(
-        await this.db.from('groups').select('id, name, member_ids').eq('club_id', clubId),
+      (await fetchAll(
+        () =>
+          this.db.from('groups').select('id, name, member_ids').eq('club_id', clubId).order('id'),
         'Lesen der Gruppen fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
   async userNames(ids: string[]): Promise<{ id: string; name: string | null }[]> {
     if (ids.length === 0) return [];
-    const rows = ok(
-      await this.db.from('users').select('id, full_name').in('id', ids),
+    const rows = await fetchAll(
+      () => this.db.from('users').select('id, full_name').in('id', ids).order('id'),
       'Lesen der Mitgliedernamen fehlgeschlagen'
     );
     return (rows ?? []).map((r) => ({ id: r.id, name: r.full_name }));
@@ -87,22 +90,26 @@ export class ConflictDetectionRepository {
    * auftauchen — sonst fällt genau diese Gruppe aus der Prüfung heraus.
    */
   async plannableMembers(seasonId: string, clubId: string) {
-    const memberships = ok(
-      await this.db
-        .from('user_club_memberships')
-        .select('user_id, users!user_club_memberships_user_id_fkey(full_name, skill_level)')
-        .eq('club_id', clubId)
-        .eq('role', 'member')
-        .eq('is_active', true)
-        .eq('include_in_planning', true),
+    const memberships = await fetchAll(
+      () =>
+        this.db
+          .from('user_club_memberships')
+          .select('user_id, users!user_club_memberships_user_id_fkey(full_name, skill_level)')
+          .eq('club_id', clubId)
+          .eq('role', 'member')
+          .eq('is_active', true)
+          .eq('include_in_planning', true)
+          .order('id'),
       'Lesen der Mitglieder fehlgeschlagen'
     );
-    const prefs = ok(
-      await this.db
-        .from('user_training_preferences')
-        .select('user_id, weekly_availability, is_submitted, avoid_member_ids')
-        .eq('season_id', seasonId)
-        .eq('user_role', 'member'),
+    const prefs = await fetchAll(
+      () =>
+        this.db
+          .from('user_training_preferences')
+          .select('user_id, weekly_availability, is_submitted, avoid_member_ids')
+          .eq('season_id', seasonId)
+          .eq('user_role', 'member')
+          .order('id'),
       'Lesen der Präferenzen fehlgeschlagen'
     );
     const prefBy = new Map((prefs ?? []).map((p) => [p.user_id, p]));
@@ -122,10 +129,15 @@ export class ConflictDetectionRepository {
 
   async statistics(clubId: string) {
     return (
-      ok(
-        await this.db.from('season_statistics').select('slot_failure_rates').eq('club_id', clubId),
+      (await fetchAll(
+        () =>
+          this.db
+            .from('season_statistics')
+            .select('slot_failure_rates')
+            .eq('club_id', clubId)
+            .order('id'),
         'Lesen der Statistik fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 
@@ -143,10 +155,15 @@ export class ConflictDetectionRepository {
   /** Gespeicherte Entscheidungen (gelöst/ignoriert) zu einer Saison. */
   async conflictDecisions(seasonId: string): Promise<{ id: string; status: string }[]> {
     return (
-      ok(
-        await this.db.from('planning_conflicts').select('id, status').eq('season_id', seasonId),
+      (await fetchAll(
+        () =>
+          this.db
+            .from('planning_conflicts')
+            .select('id, status')
+            .eq('season_id', seasonId)
+            .order('id'),
         'Lesen der Konflikt-Entscheidungen fehlgeschlagen'
-      ) ?? []
+      )) ?? []
     );
   }
 

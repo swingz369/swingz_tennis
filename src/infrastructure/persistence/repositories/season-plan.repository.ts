@@ -6,6 +6,7 @@ import 'server-only';
 import type { AuthContext } from '@/lib/api-auth';
 import type { Tables, TablesInsert, TablesUpdate } from '@/types/supabase';
 import { createLogger } from '@/lib/logger';
+import { fetchAll } from './paged';
 
 const log = createLogger('infrastructure:season-plan.repository');
 
@@ -52,18 +53,20 @@ export class SeasonPlanRepository {
   }
 
   async listEntries(seasonId: string, f: PlanEntryFilters = {}): Promise<PlanEntryWithNames[]> {
-    let q = this.db.from('season_plan_entries').select(WITH_NAMES).eq('season_id', seasonId);
-    if (f.trainerId) q = q.eq('trainer_id', f.trainerId);
-    if (f.courtId) q = q.eq('court_id', f.courtId);
-    if (f.groupId) q = q.eq('group_id', f.groupId);
-    if (f.dayOfWeek !== undefined) q = q.eq('day_of_week', f.dayOfWeek);
-    if (f.statuses?.length) q = q.in('status', f.statuses);
-    if (f.entryType) q = q.eq('entry_type', f.entryType);
-    const { data, error } = await q
-      .order('day_of_week', { ascending: true })
-      .order('start_time', { ascending: true });
-    assertNoError(error, 'Lesen der Planeinträge fehlgeschlagen');
-    return ((data ?? []) as unknown as Joined[]).map(({ trainers, courts, groups, ...entry }) => ({
+    const data = await fetchAll(() => {
+      let q = this.db.from('season_plan_entries').select(WITH_NAMES).eq('season_id', seasonId);
+      if (f.trainerId) q = q.eq('trainer_id', f.trainerId);
+      if (f.courtId) q = q.eq('court_id', f.courtId);
+      if (f.groupId) q = q.eq('group_id', f.groupId);
+      if (f.dayOfWeek !== undefined) q = q.eq('day_of_week', f.dayOfWeek);
+      if (f.statuses?.length) q = q.in('status', f.statuses);
+      if (f.entryType) q = q.eq('entry_type', f.entryType);
+      return q
+        .order('day_of_week', { ascending: true })
+        .order('start_time', { ascending: true })
+        .order('id');
+    }, 'Lesen der Planeinträge fehlgeschlagen');
+    return (data as unknown as Joined[]).map(({ trainers, courts, groups, ...entry }) => ({
       ...entry,
       trainer_name: trainers?.name ?? null,
       court_name: courts?.name ?? null,
