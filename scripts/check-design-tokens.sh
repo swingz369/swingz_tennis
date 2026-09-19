@@ -46,7 +46,7 @@ ratchet() { # name max pattern [exclude-regex]
 # das Profil (Personenname als Titel).
 ratchet 'h1 außerhalb PageHeader' 0 '<h1' 'components/ui/page-header|payment-success|shop/success|select-admin-club|/error\.tsx|subscription-dunning-block|components/member-profile\.tsx'
 ratchet 'window.confirm statt ConfirmDialog' 0 '(^|[^A-Za-z.])(window\.)?confirm\(' 'onConfirm|handleConfirm|await confirm\('
-ratchet 'rohe <table> statt <Table>' 10 '<table' 'components/ui/table\.tsx'
+ratchet 'rohe <table> statt <Table>' 0 '<table' 'components/ui/table\.tsx'
 ratchet 'Pixel-Schriftgrößen text-[Npx]' 9 'text-\[[0-9]+px\]' 'components/ui/'
 ratchet 'CenteredModal außerhalb ui/' 29 '<CenteredModal' 'components/ui/'
 
@@ -60,6 +60,18 @@ KACHELN_N=$(printf '%s' "$KACHELN" | grep -c . || true)
 if [ "$KACHELN_N" -gt 26 ]; then
   echo "❌ Muster-Ratsche 'Kennzahl-Kachel statt KpiBand': $KACHELN_N Dateien, erlaubt sind 26 (docs/DESIGN.md § 6a)."
   echo "$KACHELN" | head -10
+  FAIL=1
+fi
+
+# Leerzustände: loser „Keine … gefunden/vorhanden"-Text statt EmptyState/ListState — dateiweise gezählt.
+LEER=$(grep -rlE '>\s*Keine [^<]*(gefunden|vorhanden)' "${UI_SCOPE[@]}" --include='*.tsx' 2>/dev/null \
+  | grep -v 'components/ui/' | while read -r f; do
+      grep -qE 'EmptyState|ListState' "$f" || echo "$f"
+    done)
+LEER_N=$(printf '%s' "$LEER" | grep -c . || true)
+if [ "$LEER_N" -gt 17 ]; then
+  echo "❌ Muster-Ratsche 'loser Leerzustand statt EmptyState/ListState': $LEER_N Dateien, erlaubt sind 17 (docs/DESIGN.md § 6a)."
+  echo "$LEER" | head -10
   FAIL=1
 fi
 

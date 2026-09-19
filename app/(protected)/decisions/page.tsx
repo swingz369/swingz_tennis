@@ -1,10 +1,10 @@
 'use client';
 
+import { ListState } from '@/components/ui/list-state';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Gavel } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { DecisionVoteButton } from '@/components/decision-vote-button';
 import type {
@@ -82,9 +82,8 @@ export default function MemberDecisionsPage() {
         </div>
       ) : decisions.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Gavel className="h-8 w-8 mx-auto mb-2 opacity-40" />
-            <p>Keine Beschlüsse vorhanden</p>
+          <CardContent>
+            <ListState empty emptyTitle="Keine Beschlüsse vorhanden" />
           </CardContent>
         </Card>
       ) : (

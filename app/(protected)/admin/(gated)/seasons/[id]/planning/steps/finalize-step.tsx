@@ -1,4 +1,12 @@
 'use client';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { KpiBand } from '@/components/ui/kpi-band';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
@@ -358,68 +366,68 @@ export function FinalizeStep() {
                       Kostenzusammensetzung pro Gruppe
                     </h4>
                     <div className="rounded-xl border border-border overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="bg-muted/50 border-b border-border">
-                            <th className="text-left px-3 py-2 font-medium text-muted-foreground">
+                      <Table className="w-full text-sm">
+                        <TableHeader>
+                          <TableRow className="bg-muted/50 border-b border-border">
+                            <TableHead className="text-left px-3 py-2 font-medium text-muted-foreground">
                               Gruppe / Trainer
-                            </th>
-                            <th className="text-center px-3 py-2 font-medium text-muted-foreground">
+                            </TableHead>
+                            <TableHead className="text-center px-3 py-2 font-medium text-muted-foreground">
                               Stundensatz
-                            </th>
-                            <th className="text-center px-3 py-2 font-medium text-muted-foreground">
+                            </TableHead>
+                            <TableHead className="text-center px-3 py-2 font-medium text-muted-foreground">
                               Dauer
-                            </th>
-                            <th className="text-center px-3 py-2 font-medium text-muted-foreground">
+                            </TableHead>
+                            <TableHead className="text-center px-3 py-2 font-medium text-muted-foreground">
                               Termine
-                            </th>
-                            <th className="text-center px-3 py-2 font-medium text-muted-foreground">
+                            </TableHead>
+                            <TableHead className="text-center px-3 py-2 font-medium text-muted-foreground">
                               Teilnehmer
-                            </th>
-                            <th className="text-right px-3 py-2 font-medium text-muted-foreground">
+                            </TableHead>
+                            <TableHead className="text-right px-3 py-2 font-medium text-muted-foreground">
                               Gesamtkosten
-                            </th>
-                            <th className="text-right px-3 py-2 font-medium text-muted-foreground">
+                            </TableHead>
+                            <TableHead className="text-right px-3 py-2 font-medium text-muted-foreground">
                               Pro Person
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
                           {billingPreview.groupBreakdown.map((group, idx) => (
-                            <tr
+                            <TableRow
                               key={`${group.groupName}-${idx}`}
                               className={`border-b border-border last:border-0 ${
                                 idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'
                               } hover:bg-muted/30 transition-colors`}
                             >
-                              <td className="px-3 py-2.5">
+                              <TableCell className="px-3 py-2.5">
                                 <div className="font-medium text-foreground">{group.groupName}</div>
                                 <div className="text-xs text-muted-foreground">
                                   {group.trainerName}
                                 </div>
-                              </td>
-                              <td className="text-center px-3 py-2.5 tabular-nums">
+                              </TableCell>
+                              <TableCell className="text-center px-3 py-2.5 tabular-nums">
                                 {group.trainerHourlyRate.toFixed(2)} €
-                              </td>
-                              <td className="text-center px-3 py-2.5 tabular-nums">
+                              </TableCell>
+                              <TableCell className="text-center px-3 py-2.5 tabular-nums">
                                 {group.sessionDurationHours.toFixed(1)} h
-                              </td>
-                              <td className="text-center px-3 py-2.5 tabular-nums">
+                              </TableCell>
+                              <TableCell className="text-center px-3 py-2.5 tabular-nums">
                                 {group.totalSessions}
-                              </td>
-                              <td className="text-center px-3 py-2.5 tabular-nums">
+                              </TableCell>
+                              <TableCell className="text-center px-3 py-2.5 tabular-nums">
                                 {group.participantCount}
-                              </td>
-                              <td className="text-right px-3 py-2.5 tabular-nums font-medium">
+                              </TableCell>
+                              <TableCell className="text-right px-3 py-2.5 tabular-nums font-medium">
                                 {group.totalTrainerCost.toFixed(2)} €
-                              </td>
-                              <td className="text-right px-3 py-2.5 tabular-nums font-medium text-primary">
+                              </TableCell>
+                              <TableCell className="text-right px-3 py-2.5 tabular-nums font-medium text-primary">
                                 {group.costPerParticipant.toFixed(2)} €
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           ))}
-                        </tbody>
-                      </table>
+                        </TableBody>
+                      </Table>
                     </div>
                   </div>
 
@@ -433,38 +441,38 @@ export function FinalizeStep() {
                       </Badge>
                     </h4>
                     <div className="rounded-xl border border-border overflow-hidden max-h-[420px] overflow-y-auto">
-                      <table className="w-full text-sm">
-                        <thead className="sticky top-0 bg-muted/50 z-10">
-                          <tr className="border-b border-border">
-                            <th className="text-left px-3 py-2 font-medium text-muted-foreground">
+                      <Table className="w-full text-sm">
+                        <TableHeader className="sticky top-0 bg-muted/50 z-10">
+                          <TableRow className="border-b border-border">
+                            <TableHead className="text-left px-3 py-2 font-medium text-muted-foreground">
                               Mitglied
-                            </th>
-                            <th className="text-left px-3 py-2 font-medium text-muted-foreground">
+                            </TableHead>
+                            <TableHead className="text-left px-3 py-2 font-medium text-muted-foreground">
                               Gruppe
-                            </th>
-                            <th className="text-right px-3 py-2 font-medium text-muted-foreground">
+                            </TableHead>
+                            <TableHead className="text-right px-3 py-2 font-medium text-muted-foreground">
                               Training
-                            </th>
-                            <th className="text-right px-3 py-2 font-medium text-muted-foreground">
+                            </TableHead>
+                            <TableHead className="text-right px-3 py-2 font-medium text-muted-foreground">
                               Beitrag
-                            </th>
-                            <th className="text-right px-3 py-2 font-medium text-muted-foreground">
+                            </TableHead>
+                            <TableHead className="text-right px-3 py-2 font-medium text-muted-foreground">
                               Zusatz
-                            </th>
-                            <th className="text-right px-3 py-2 font-medium text-muted-foreground">
+                            </TableHead>
+                            <TableHead className="text-right px-3 py-2 font-medium text-muted-foreground">
                               Gesamt
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
                           {billingPreview.memberPreviews.map((member, idx) => (
-                            <tr
+                            <TableRow
                               key={member.memberId}
                               className={`border-b border-border last:border-0 ${
                                 idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'
                               } hover:bg-muted/30 transition-colors`}
                             >
-                              <td className="px-3 py-2.5 font-medium text-foreground">
+                              <TableCell className="px-3 py-2.5 font-medium text-foreground">
                                 <span className="inline-flex items-center gap-2">
                                   {member.memberName}
                                   {member.collectiveMembers &&
@@ -479,30 +487,30 @@ export function FinalizeStep() {
                                       </Badge>
                                     )}
                                 </span>
-                              </td>
-                              <td className="px-3 py-2.5 text-muted-foreground">
+                              </TableCell>
+                              <TableCell className="px-3 py-2.5 text-muted-foreground">
                                 {member.groupName}
-                              </td>
-                              <td className="text-right px-3 py-2.5 tabular-nums">
+                              </TableCell>
+                              <TableCell className="text-right px-3 py-2.5 tabular-nums">
                                 {member.trainingCost.toFixed(2)} €
-                              </td>
-                              <td className="text-right px-3 py-2.5 tabular-nums">
+                              </TableCell>
+                              <TableCell className="text-right px-3 py-2.5 tabular-nums">
                                 {member.membershipFee > 0
                                   ? `${member.membershipFee.toFixed(2)} €`
                                   : '–'}
-                              </td>
-                              <td className="text-right px-3 py-2.5 tabular-nums">
+                              </TableCell>
+                              <TableCell className="text-right px-3 py-2.5 tabular-nums">
                                 {member.additionalFees > 0
                                   ? `${member.additionalFees.toFixed(2)} €`
                                   : '–'}
-                              </td>
-                              <td className="text-right px-3 py-2.5 tabular-nums font-semibold text-primary">
+                              </TableCell>
+                              <TableCell className="text-right px-3 py-2.5 tabular-nums font-semibold text-primary">
                                 {member.totalAmount.toFixed(2)} €
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           ))}
-                        </tbody>
-                      </table>
+                        </TableBody>
+                      </Table>
                     </div>
                   </div>
 

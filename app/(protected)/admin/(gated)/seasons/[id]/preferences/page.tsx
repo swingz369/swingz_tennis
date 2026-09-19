@@ -1,4 +1,12 @@
 'use client';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useEffect, useState, use } from 'react';
@@ -111,46 +119,46 @@ export default function SeasonPreferencesPage({ params }: PreferencesPageProps) 
         <Card>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">
+              <Table className="w-full text-sm">
+                <TableHeader>
+                  <TableRow className="border-b border-border bg-muted/50">
+                    <TableHead className="text-left px-4 py-2.5 font-medium text-muted-foreground">
                       Name
-                    </th>
-                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">
+                    </TableHead>
+                    <TableHead className="text-left px-4 py-2.5 font-medium text-muted-foreground">
                       Rolle
-                    </th>
-                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">
+                    </TableHead>
+                    <TableHead className="text-left px-4 py-2.5 font-medium text-muted-foreground">
                       Status
-                    </th>
-                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">
+                    </TableHead>
+                    <TableHead className="text-left px-4 py-2.5 font-medium text-muted-foreground">
                       Level
-                    </th>
-                    <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">
+                    </TableHead>
+                    <TableHead className="text-center px-4 py-2.5 font-medium text-muted-foreground">
                       Zeitfenster
-                    </th>
-                    <th className="text-center px-4 py-2.5 font-medium text-muted-foreground">
+                    </TableHead>
+                    <TableHead className="text-center px-4 py-2.5 font-medium text-muted-foreground">
                       Wunschpartner
-                    </th>
-                    <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">
+                    </TableHead>
+                    <TableHead className="text-left px-4 py-2.5 font-medium text-muted-foreground">
                       Sonderwünsche
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {preferences.map((p, idx) => (
-                    <tr
+                    <TableRow
                       key={p.id}
                       className={`border-b border-border last:border-0 ${idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}`}
                     >
-                      <td className="px-4 py-2.5">
+                      <TableCell className="px-4 py-2.5">
                         <div className="font-medium text-foreground">{p.user_name ?? '—'}</div>
                         <div className="text-xs text-muted-foreground">{p.user_email}</div>
-                      </td>
-                      <td className="px-4 py-2.5 text-muted-foreground">
+                      </TableCell>
+                      <TableCell className="px-4 py-2.5 text-muted-foreground">
                         {p.user_role === 'trainer' ? 'Trainer' : 'Mitglied'}
-                      </td>
-                      <td className="px-4 py-2.5">
+                      </TableCell>
+                      <TableCell className="px-4 py-2.5">
                         {p.is_submitted ? (
                           <Badge variant="default" className="text-xs">
                             Eingereicht
@@ -163,25 +171,25 @@ export default function SeasonPreferencesPage({ params }: PreferencesPageProps) 
                             Offen
                           </Badge>
                         )}
-                      </td>
-                      <td className="px-4 py-2.5 text-muted-foreground">
+                      </TableCell>
+                      <TableCell className="px-4 py-2.5 text-muted-foreground">
                         {p.preferred_level
                           ? (LEVEL_LABELS[p.preferred_level] ?? p.preferred_level)
                           : '—'}
-                      </td>
-                      <td className="px-4 py-2.5 text-center tabular-nums">
+                      </TableCell>
+                      <TableCell className="px-4 py-2.5 text-center tabular-nums">
                         {availabilitySlotCount(p.weekly_availability)}
-                      </td>
-                      <td className="px-4 py-2.5 text-center tabular-nums">
+                      </TableCell>
+                      <TableCell className="px-4 py-2.5 text-center tabular-nums">
                         {p.wish_partner_ids?.length ?? 0}
-                      </td>
-                      <td className="px-4 py-2.5 text-muted-foreground max-w-xs truncate">
+                      </TableCell>
+                      <TableCell className="px-4 py-2.5 text-muted-foreground max-w-xs truncate">
                         {p.special_requests || '—'}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>

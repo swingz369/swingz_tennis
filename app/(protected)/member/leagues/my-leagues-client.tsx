@@ -1,5 +1,13 @@
 'use client';
 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { PageHeader } from '@/components/ui/page-header';
 import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -241,41 +249,53 @@ export function MyLeaguesClient() {
                 <div className="pt-4">
                   <h3 className="text-sm font-semibold mb-2">Tabelle</h3>
                   <div className="overflow-x-auto rounded-xl border border-border/60">
-                    <table className="w-full text-sm">
-                      <thead className="text-xs text-muted-foreground">
-                        <tr className="border-b border-border/60">
-                          <th className="p-2 text-left w-8">#</th>
-                          <th className="p-2 text-left">Mannschaft</th>
-                          <th className="p-2 text-right">Sp.</th>
-                          <th className="p-2 text-right">S</th>
-                          <th className="p-2 text-right">U</th>
-                          <th className="p-2 text-right">N</th>
-                          <th className="p-2 text-right">Pkt.</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                    <Table className="w-full text-sm">
+                      <TableHeader className="text-xs text-muted-foreground">
+                        <TableRow className="border-b border-border/60">
+                          <TableHead className="p-2 text-left w-8">#</TableHead>
+                          <TableHead className="p-2 text-left">Mannschaft</TableHead>
+                          <TableHead className="p-2 text-right">Sp.</TableHead>
+                          <TableHead className="p-2 text-right">S</TableHead>
+                          <TableHead className="p-2 text-right">U</TableHead>
+                          <TableHead className="p-2 text-right">N</TableHead>
+                          <TableHead className="p-2 text-right">Pkt.</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                         {team.standings.map((row) => {
                           const own =
                             !!team.own_team_name &&
                             row.name.trim().toLowerCase() ===
                               team.own_team_name.trim().toLowerCase();
                           return (
-                            <tr
+                            <TableRow
                               key={row.id}
                               className={`border-b border-border/40 last:border-0 ${own ? 'bg-brand-light/10 font-medium' : ''}`}
                             >
-                              <td className="p-2 tabular-nums">{row.position ?? '–'}</td>
-                              <td className="p-2">{row.name}</td>
-                              <td className="p-2 text-right tabular-nums">{row.matches_played}</td>
-                              <td className="p-2 text-right tabular-nums">{row.matches_won}</td>
-                              <td className="p-2 text-right tabular-nums">{row.matches_drawn}</td>
-                              <td className="p-2 text-right tabular-nums">{row.matches_lost}</td>
-                              <td className="p-2 text-right tabular-nums">{row.points}</td>
-                            </tr>
+                              <TableCell className="p-2 tabular-nums">
+                                {row.position ?? '–'}
+                              </TableCell>
+                              <TableCell className="p-2">{row.name}</TableCell>
+                              <TableCell className="p-2 text-right tabular-nums">
+                                {row.matches_played}
+                              </TableCell>
+                              <TableCell className="p-2 text-right tabular-nums">
+                                {row.matches_won}
+                              </TableCell>
+                              <TableCell className="p-2 text-right tabular-nums">
+                                {row.matches_drawn}
+                              </TableCell>
+                              <TableCell className="p-2 text-right tabular-nums">
+                                {row.matches_lost}
+                              </TableCell>
+                              <TableCell className="p-2 text-right tabular-nums">
+                                {row.points}
+                              </TableCell>
+                            </TableRow>
                           );
                         })}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               )}

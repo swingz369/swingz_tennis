@@ -1,5 +1,6 @@
 'use client';
 
+import { ListState } from '@/components/ui/list-state';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -218,7 +219,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
           {isLoading ? (
             <div className="p-8 text-center text-muted-foreground">Audit-Logs werden geladen…</div>
           ) : filteredLogs.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">Keine Audit-Logs vorhanden.</div>
+            <ListState empty emptyTitle="Keine Audit-Logs vorhanden" />
           ) : (
             <div className="divide-y">
               {filteredLogs.map((log) => (

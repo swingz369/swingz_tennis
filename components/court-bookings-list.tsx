@@ -1,4 +1,12 @@
 'use client';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useCallback, useEffect } from 'react';
@@ -406,66 +414,66 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
       {/* ── Table ──────────────────────────────────────────────────────────── */}
       <Card variant="bordered" className="overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-muted/50 border-b border-border">
-                <th
+          <Table className="w-full text-sm">
+            <TableHeader>
+              <TableRow className="bg-muted/50 border-b border-border">
+                <TableHead
                   className="text-left p-3 font-semibold text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
                   onClick={() => toggleSort('session_start_time')}
                 >
                   Datum / Zeit <SortIcon field="session_start_time" sortField={sortField} />
-                </th>
-                <th
+                </TableHead>
+                <TableHead
                   className="text-left p-3 font-semibold text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
                   onClick={() => toggleSort('member_name')}
                 >
                   Mitglied <SortIcon field="member_name" sortField={sortField} />
-                </th>
-                <th
+                </TableHead>
+                <TableHead
                   className="text-left p-3 font-semibold text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
                   onClick={() => toggleSort('court_name')}
                 >
                   Platz <SortIcon field="court_name" sortField={sortField} />
-                </th>
-                <th className="text-left p-3 font-semibold text-xs text-muted-foreground whitespace-nowrap">
+                </TableHead>
+                <TableHead className="text-left p-3 font-semibold text-xs text-muted-foreground whitespace-nowrap">
                   Herkunft
-                </th>
-                <th className="text-left p-3 font-semibold text-xs text-muted-foreground whitespace-nowrap">
+                </TableHead>
+                <TableHead className="text-left p-3 font-semibold text-xs text-muted-foreground whitespace-nowrap">
                   Typ
-                </th>
-                <th
+                </TableHead>
+                <TableHead
                   className="text-left p-3 font-semibold text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
                   onClick={() => toggleSort('status')}
                 >
                   Status <SortIcon field="status" sortField={sortField} />
-                </th>
-                <th className="text-right p-3 font-semibold text-xs text-muted-foreground whitespace-nowrap">
+                </TableHead>
+                <TableHead className="text-right p-3 font-semibold text-xs text-muted-foreground whitespace-nowrap">
                   Details
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-border">
+                  <TableRow key={i} className="border-b border-border">
                     {Array.from({ length: 7 }).map((_, j) => (
-                      <td key={j} className="p-3">
+                      <TableCell key={j} className="p-3">
                         <Skeleton className="h-4 w-full" />
-                      </td>
+                      </TableCell>
                     ))}
-                  </tr>
+                  </TableRow>
                 ))
               ) : error ? (
-                <tr>
-                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                <TableRow>
+                  <TableCell colSpan={7} className="p-8 text-center text-muted-foreground">
                     <AlertTriangle className="h-5 w-5 mx-auto mb-2 text-error-500" />
                     <p>Fehler beim Laden der Buchungen</p>
                     <p className="text-sm mt-1">{(error as Error).message}</p>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : bookings.length === 0 ? (
-                <tr>
-                  <td colSpan={7}>
+                <TableRow>
+                  <TableCell colSpan={7}>
                     <EmptyState
                       icon={CalendarIcon}
                       title="Keine Einträge gefunden"
@@ -481,8 +489,8 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                       }
                       size="sm"
                     />
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 bookings.map((booking) => {
                   const isSeasonPlan = booking.source === 'season_plan';
@@ -499,12 +507,12 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                           : 'Training';
 
                   return (
-                    <tr
+                    <TableRow
                       key={`${booking.source}-${booking.id}`}
                       className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
                       onClick={() => setSelectedBooking(booking)}
                     >
-                      <td className="p-3 whitespace-nowrap">
+                      <TableCell className="p-3 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <CalendarIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                           <div>
@@ -521,8 +529,8 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                             </div>
                           </div>
                         </div>
-                      </td>
-                      <td className="p-3 whitespace-nowrap">
+                      </TableCell>
+                      <TableCell className="p-3 whitespace-nowrap">
                         {isSeasonPlan ? (
                           <div className="flex items-center gap-2">
                             <div className="w-7 h-7 rounded-full bg-warning-100 flex items-center justify-center flex-shrink-0">
@@ -555,30 +563,30 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                             </div>
                           </div>
                         )}
-                      </td>
-                      <td className="p-3 whitespace-nowrap">
+                      </TableCell>
+                      <TableCell className="p-3 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                           <span>{booking.court_name}</span>
                         </div>
-                      </td>
-                      <td className="p-3 whitespace-nowrap">
+                      </TableCell>
+                      <TableCell className="p-3 whitespace-nowrap">
                         <Badge variant={sourceCfg.variant} size="sm">
                           {sourceCfg.label}
                         </Badge>
-                      </td>
-                      <td className="p-3 whitespace-nowrap">
+                      </TableCell>
+                      <TableCell className="p-3 whitespace-nowrap">
                         <Badge variant="secondary" size="sm">
                           {sessionTypeLabel}
                         </Badge>
-                      </td>
-                      <td className="p-3 whitespace-nowrap">
+                      </TableCell>
+                      <TableCell className="p-3 whitespace-nowrap">
                         <Badge variant={statusCfg.variant} size="sm" className="gap-1">
                           <StatusIcon className="h-3 w-3" />
                           {statusCfg.label}
                         </Badge>
-                      </td>
-                      <td className="p-3 text-right whitespace-nowrap">
+                      </TableCell>
+                      <TableCell className="p-3 text-right whitespace-nowrap">
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -592,13 +600,13 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                           </TooltipTrigger>
                           <TooltipContent>Details anzeigen</TooltipContent>
                         </Tooltip>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {/* ── Pagination ──────────────────────────────────────────────────── */}

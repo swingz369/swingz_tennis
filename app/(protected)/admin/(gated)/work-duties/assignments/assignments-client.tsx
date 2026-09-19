@@ -1,4 +1,5 @@
 'use client';
+import { ListState } from '@/components/ui/list-state';
 import { KpiBand } from '@/components/ui/kpi-band';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
@@ -15,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { CheckCircle2, XCircle, Clock, Users, Search, BarChart3, ArrowUpDown } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Search, BarChart3, ArrowUpDown } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 
@@ -254,10 +255,7 @@ export default function AssignmentsClient({
 
           {/* Assignments List */}
           {filteredAssignments.length === 0 ? (
-            <div className="text-center py-16 border-2 border-dashed rounded-xl">
-              <Users className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
-              <p className="font-medium text-muted-foreground">Keine Zuweisungen gefunden</p>
-            </div>
+            <ListState empty emptyTitle="Keine Zuweisungen gefunden" />
           ) : (
             <div className="space-y-2">
               {filteredAssignments.map((a) => (
@@ -320,7 +318,7 @@ export default function AssignmentsClient({
           </CardHeader>
           <CardContent>
             {memberStatsArray.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">Keine Daten vorhanden</p>
+              <ListState empty emptyTitle="Keine Daten vorhanden" />
             ) : (
               <Table>
                 <TableHeader>

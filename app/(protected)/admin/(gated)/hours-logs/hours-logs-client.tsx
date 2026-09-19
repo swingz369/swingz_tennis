@@ -1,4 +1,12 @@
 'use client';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -359,40 +367,40 @@ export default function HoursLogsClient() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-muted dark:bg-muted">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground">
+              <Table className="w-full">
+                <TableHeader className="bg-muted dark:bg-muted">
+                  <TableRow>
+                    <TableHead className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground">
                       Trainer
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground">
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground">
                       Datum
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground">
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground">
                       Zeit
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-foreground dark:text-foreground">
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-right text-xs font-semibold text-foreground dark:text-foreground">
                       Stunden
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground">
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground">
                       Status
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground hidden md:table-cell">
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground hidden md:table-cell">
                       Notizen
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-foreground dark:text-foreground">
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-right text-xs font-semibold text-foreground dark:text-foreground">
                       Aktionen
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border dark:divide-white/10">
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-border dark:divide-white/10">
                   {logs.map((log) => (
                     <>
-                      <tr
+                      <TableRow
                         key={log.id}
                         className="hover:bg-muted dark:hover:bg-background/5 transition-colors"
                       >
-                        <td className="px-4 py-3 whitespace-nowrap">
+                        <TableCell className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary text-xs font-semibold shrink-0">
                               {log.trainer_name.charAt(0).toUpperCase()}
@@ -401,23 +409,23 @@ export default function HoursLogsClient() {
                               {log.trainer_name}
                             </span>
                           </div>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground dark:text-muted-foreground">
+                        </TableCell>
+                        <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground dark:text-muted-foreground">
                           {format(parseISO(log.date), 'dd. MMM yyyy', { locale: de })}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground dark:text-muted-foreground">
+                        </TableCell>
+                        <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground dark:text-muted-foreground">
                           {getTypeLabel(log.hours, log.description)}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-right text-foreground dark:text-white">
+                        </TableCell>
+                        <TableCell className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-right text-foreground dark:text-white">
                           {log.hours.toFixed(1)}h
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
+                        </TableCell>
+                        <TableCell className="px-4 py-3 whitespace-nowrap">
                           {getStatusBadge(log.status)}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground dark:text-muted-foreground hidden md:table-cell max-w-[200px] truncate">
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-muted-foreground dark:text-muted-foreground hidden md:table-cell max-w-[200px] truncate">
                           {log.description || '—'}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right">
+                        </TableCell>
+                        <TableCell className="px-4 py-3 whitespace-nowrap text-right">
                           <div className="flex items-center justify-end gap-1">
                             {log.status === 'pending' && (
                               <>
@@ -469,23 +477,23 @@ export default function HoursLogsClient() {
                               <TooltipContent>Löschen</TooltipContent>
                             </Tooltip>
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                       {log.status === 'rejected' && log.rejection_reason && (
-                        <tr className="bg-error-50/50 dark:bg-error-900/5">
-                          <td
+                        <TableRow className="bg-error-50/50 dark:bg-error-900/5">
+                          <TableCell
                             colSpan={7}
                             className="px-4 py-2 text-xs text-error-600 dark:text-error-400"
                           >
                             <span className="font-medium">Ablehnungsgrund:</span>{' '}
                             {log.rejection_reason}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       )}
                     </>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>
