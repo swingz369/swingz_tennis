@@ -5,18 +5,11 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
+import { ApiException, internalErrorResponse, safeErrorMessage } from '@/lib/api-error';
 import { withApiAuth } from '@/lib/api-auth';
-import { authorizeSeasonAccess } from '@/lib/season-auth';
+import { SeasonPlanningService } from '@/application/services/season-planning.service';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
-import { db } from '@/src/infrastructure/persistence/db';
-import {
-  userClubMemberships,
-  userTrainingPreferences,
-  users,
-} from '@/src/infrastructure/persistence/schema';
-import { eq, and, or, isNull } from 'drizzle-orm';
 import { env } from '@/lib/env';
 import { EmailService } from '@/src/infrastructure/email/email.service';
 import { createLogger } from '@/lib/logger';
@@ -35,65 +28,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return withApiAuth(request, async (auth) => {
       try {
         const { id: seasonId } = await context.params;
-        // Zentrale Prüfung statt inline dupliziertem Rollen- und Clubcheck,
-        // siehe lib/season-auth.ts. Verhalten identisch: Superadmin und Owner
-        // über den Fast-Path, sonst Mitgliedschaft im Club der Saison mit
-        // Rolle admin oder superadmin.
-        const access = await authorizeSeasonAccess(auth, seasonId, {
-          allowedRoles: ['admin', 'superadmin'],
-        });
-        if (!access.ok) return access.response;
-        const { season } = access;
-
-        if (!season.preferences_open) {
-          return NextResponse.json(
-            { error: 'Präferenzen sind noch nicht geöffnet' },
-            { status: 400 }
-          );
-        }
-
-        if (!season.club_id) {
-          return NextResponse.json({ error: 'Saison hat keinen Verein' }, { status: 400 });
-        }
-
         const body = await request.json().catch(() => ({}) as { role?: string });
         const role: 'member' | 'trainer' = body?.role === 'trainer' ? 'trainer' : 'member';
 
         // Alle aktiven Mitglieder/Trainer des Vereins ohne eingereichte Präferenz —
-        // auch die, die noch gar keinen Entwurf angelegt haben (Left Join)
-        const roleFilters = [
-          eq(userClubMemberships.club_id, season.club_id),
-          eq(userClubMemberships.role, role),
-          eq(userClubMemberships.is_active, true),
-        ];
-        if (role === 'member') {
-          roleFilters.push(eq(userClubMemberships.include_in_planning, true));
-        }
-
-        const unsubmitted = await db
-          .selectDistinct({
-            user_id: users.id,
-            email: users.email,
-            full_name: users.full_name,
-          })
-          .from(userClubMemberships)
-          .innerJoin(users, eq(userClubMemberships.user_id, users.id))
-          .leftJoin(
-            userTrainingPreferences,
-            and(
-              eq(userTrainingPreferences.user_id, userClubMemberships.user_id),
-              eq(userTrainingPreferences.season_id, seasonId)
-            )
-          )
-          .where(
-            and(
-              ...roleFilters,
-              or(
-                isNull(userTrainingPreferences.id),
-                eq(userTrainingPreferences.is_submitted, false)
-              )
-            )
-          );
+        // auch die, die noch gar keinen Entwurf angelegt haben.
+        const { season, unsubmitted } = await new SeasonPlanningService(auth).remindTargets(
+          seasonId,
+          role
+        );
 
         if (unsubmitted.length === 0) {
           return NextResponse.json({
@@ -157,6 +100,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
           message: `${sentCount} von ${unsubmitted.length} Erinnerungen versendet`,
         });
       } catch (error) {
+        if (error instanceof ApiException) {
+          return NextResponse.json({ error: safeErrorMessage(error) }, { status: error.status });
+        }
         log.error('POST remind error:', error instanceof Error ? error : undefined);
         return internalErrorResponse();
       }

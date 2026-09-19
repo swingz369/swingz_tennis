@@ -195,4 +195,88 @@ export class SeasonPlanningService {
     }
     return { trainerPrefs, clubTrainers, entries, config };
   }
+
+  // ── Erinnerungen ──────────────────────────────────────────────────
+  async remindTargets(seasonId: string, role: 'member' | 'trainer') {
+    const season = await this.season(seasonId);
+    if (!season.preferences_open) {
+      throw new ApiException('VALIDATION_ERROR', 'Präferenzen sind noch nicht geöffnet');
+    }
+    return { season, unsubmitted: await this.repo.listUnsubmitted(seasonId, season.club_id, role) };
+  }
+
+  // ── Vertretungen ──────────────────────────────────────────────────
+  async substitutes(seasonId: string) {
+    await this.season(seasonId);
+    return (await this.repo.listSubstitutes(seasonId))
+      .filter((e) => e.groupId)
+      .map((e) => ({
+        groupId: e.groupId,
+        groupName: e.groupId,
+        fromWeek: e.fromWeek ?? 1,
+        toWeek: e.toWeek ?? 26,
+        substituteTrainerId: e.substituteTrainerId,
+        substituteTrainerName: e.trainerName ?? 'Unbekannt',
+      }));
+  }
+
+  async assignSubstitute(
+    seasonId: string,
+    input: { groupId?: string; fromWeek?: number; toWeek?: number; substituteTrainerId?: string }
+  ) {
+    const season = await this.season(seasonId);
+    const { groupId, substituteTrainerId } = input;
+    if (!groupId || !substituteTrainerId) {
+      throw new ApiException('VALIDATION_ERROR', 'Pflichtfelder fehlen');
+    }
+    const fromWeek = input.fromWeek ?? 1;
+    const toWeek = input.toWeek ?? 26;
+    // RLS zeigt nur Trainer der eigenen Vereine — ein fremder Trainer ist hier "nicht gefunden".
+    const trainerName = await this.repo.trainerName(substituteTrainerId);
+    if (!trainerName) throw new ApiException('NOT_FOUND', 'Trainer nicht gefunden');
+
+    // Kein blindes Update: Traf die Bedingung keine Zeile, wäre sonst "Erfolg" gemeldet worden.
+    const ids = await this.repo.setSubstitute(seasonId, groupId, {
+      substitute_trainer_id: substituteTrainerId,
+      substitute_from_week: fromWeek,
+      substitute_to_week: toWeek,
+    });
+    if (ids.length === 0) {
+      throw new ApiException(
+        'NOT_FOUND',
+        'Zu dieser Gruppe gibt es in dieser Saison keinen Trainingstermin'
+      );
+    }
+
+    // Der Admin denkt in Terminen, das System rechnet in Kalenderwochen ab Saisonbeginn (Ferien
+    // zählen mit). Ist die Saison veröffentlicht, stehen die echten Termine in `sessions`.
+    const seasonStart = new Date(season.start_date);
+    const rangeStart = new Date(seasonStart);
+    rangeStart.setDate(rangeStart.getDate() + (fromWeek - 1) * 7);
+    const rangeEnd = new Date(seasonStart);
+    rangeEnd.setDate(rangeEnd.getDate() + toWeek * 7);
+
+    const affectedDates = await this.repo.sessionStarts(ids, rangeStart, rangeEnd);
+    return {
+      affectedDates,
+      substitute: {
+        groupId,
+        groupName: groupId,
+        fromWeek,
+        toWeek,
+        substituteTrainerId,
+        substituteTrainerName: trainerName,
+      },
+    };
+  }
+
+  async clearSubstitute(seasonId: string, groupId?: string): Promise<void> {
+    await this.season(seasonId);
+    if (!groupId) throw new ApiException('VALIDATION_ERROR', 'groupId fehlt');
+    await this.repo.setSubstitute(seasonId, groupId, {
+      substitute_trainer_id: null,
+      substitute_from_week: null,
+      substitute_to_week: null,
+    });
+  }
 }

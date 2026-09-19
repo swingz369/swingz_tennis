@@ -297,4 +297,97 @@ export class SeasonPlanningRepository {
       'Lesen der Planungs-Konfiguration fehlgeschlagen'
     );
   }
+
+  // ── Erinnerungen ──────────────────────────────────────────────────
+  /** Aktive Mitglieder/Trainer des Vereins, die für die Saison noch nichts eingereicht haben. */
+  async listUnsubmitted(seasonId: string, clubId: string, role: 'member' | 'trainer') {
+    let q = this.db
+      .from('user_club_memberships')
+      .select('user_id, users!user_club_memberships_user_id_fkey(email, full_name)')
+      .eq('club_id', clubId)
+      .eq('role', role)
+      .eq('is_active', true);
+    if (role === 'member') q = q.eq('include_in_planning', true);
+    const members = ok(await q, 'Lesen der Mitglieder fehlgeschlagen') ?? [];
+    const submitted = ok(
+      await this.db
+        .from('user_training_preferences')
+        .select('user_id')
+        .eq('season_id', seasonId)
+        .eq('is_submitted', true),
+      'Lesen der Präferenzen fehlgeschlagen'
+    );
+    const done = new Set((submitted ?? []).map((r) => r.user_id));
+    const seen = new Set<string>();
+    return members.flatMap((m) => {
+      const u = m.users as { email: string; full_name: string | null } | null;
+      if (!u || done.has(m.user_id) || seen.has(m.user_id)) return [];
+      seen.add(m.user_id);
+      return [{ user_id: m.user_id, email: u.email, full_name: u.full_name }];
+    });
+  }
+
+  // ── Vertretungen ──────────────────────────────────────────────────
+  async listSubstitutes(seasonId: string) {
+    const rows = ok(
+      await this.db
+        .from('season_plan_entries')
+        .select(
+          'group_id, substitute_trainer_id, substitute_from_week, substitute_to_week, trainers!season_plan_entries_substitute_trainer_id_fkey(name)'
+        )
+        .eq('season_id', seasonId)
+        .not('substitute_trainer_id', 'is', null),
+      'Lesen der Vertretungen fehlgeschlagen'
+    );
+    return (rows ?? []).map((r) => ({
+      groupId: r.group_id,
+      substituteTrainerId: r.substitute_trainer_id,
+      fromWeek: r.substitute_from_week,
+      toWeek: r.substitute_to_week,
+      trainerName: (r.trainers as { name: string } | null)?.name ?? null,
+    }));
+  }
+
+  /** IDs der geänderten Einträge; leer, wenn es die Gruppe in der Saison nicht gibt (oder RLS sperrt). */
+  async setSubstitute(
+    seasonId: string,
+    groupId: string,
+    patch: Pick<
+      TablesUpdate<'season_plan_entries'>,
+      'substitute_trainer_id' | 'substitute_from_week' | 'substitute_to_week'
+    >
+  ): Promise<string[]> {
+    const rows = ok(
+      await this.db
+        .from('season_plan_entries')
+        .update(patch)
+        .eq('season_id', seasonId)
+        .eq('group_id', groupId)
+        .select('id'),
+      'Ändern der Vertretung fehlgeschlagen'
+    );
+    return (rows ?? []).map((r) => r.id);
+  }
+
+  async sessionStarts(entryIds: string[], from: Date, to: Date): Promise<string[]> {
+    const rows = ok(
+      await this.db
+        .from('sessions')
+        .select('timeslot_start')
+        .in('plan_entry_id', entryIds)
+        .gte('timeslot_start', from.toISOString())
+        .lte('timeslot_start', to.toISOString())
+        .order('timeslot_start', { ascending: true }),
+      'Lesen der Termine fehlgeschlagen'
+    );
+    return (rows ?? []).map((r) => r.timeslot_start);
+  }
+
+  async trainerName(trainerId: string): Promise<string | null> {
+    const row = ok(
+      await this.db.from('trainers').select('name').eq('id', trainerId).maybeSingle(),
+      'Lesen des Trainers fehlgeschlagen'
+    );
+    return row?.name ?? null;
+  }
 }
