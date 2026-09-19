@@ -14,7 +14,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/service';
-import { loadMemberCandidates, suggestByName } from '@/lib/services/nuliga-sync';
+import { loadMemberCandidates, suggestByName } from '@/lib/services/league-member-matching';
 
 const log = createLogger('api:member:leagues');
 

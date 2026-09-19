@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { loadMemberCandidates, suggestByName } from '@/lib/services/nuliga-sync';
+import { loadMemberCandidates, suggestByName } from '@/lib/services/league-member-matching';
 
 /**
  * GET /api/leagues/[id] — Get league with teams and match days

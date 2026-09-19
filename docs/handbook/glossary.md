@@ -173,7 +173,7 @@ Architektur-Muster: eine Datenbank, mehrere Vereine isoliert per `club_id`. DB-s
 
 ### nuLiga
 
-Externe Plattform des DTB für Liga-Verwaltung. CSV-Import-Route `app/api/admin/nuliga/import/route.ts`. Migration `20260715_nuliga_sync_log.sql` + `20260729_nuliga_import_unique_constraints.sql` (P0-Finding 9: UNIQUE-Constraint fehlt, Error-Rückgabe ignoriert).
+Externe Plattform des DTB für Liga-Verwaltung. Der Scraper und der automatische Sync wurden entfernt (AGB von tennis.de); übrig sind der manuelle CSV-Import `app/api/admin/nuliga/import/route.ts` und das eingebettete tennis.de-Mannschaftswidget (`components/tennisde-widget.tsx`). Migration `20260715_nuliga_sync_log.sql` + `20260729_nuliga_import_unique_constraints.sql` (P0-Finding 9: UNIQUE-Constraint fehlt, Error-Rückgabe ignoriert).
 
 ## O
 

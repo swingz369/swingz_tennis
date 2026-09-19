@@ -529,7 +529,8 @@ Meldelisten-Tabelle `league_players` an (Name, LK, Meldeposition, optionale `mem
 
 - **`dtb_id`, `birth_year` (Migration `20260918100000_league_players_dtb_id.sql`, 18.09.2026):**
   DTB-ID und Jahrgang aus der Meldeliste. Sie machen die Zuordnung zu Vereinsmitgliedern
-  sync-fest: Der Kader wird bei jedem Sync neu geschrieben, die Zuordnung läuft automatisch nur
+  stabil (der nuLiga-Sync, der den Kader befüllte, ist seit 20.09.2026 entfernt — es gibt derzeit
+  keinen Import für `league_players`); die Zuordnung läuft automatisch nur
   über die DTB-ID (`users.dtb_id`), bestehende Zuordnungen bleiben erhalten. Namenstreffer sind
   nur Vorschläge, die das Mitglied oder der Admin bestätigt (`POST /api/member/leagues/claim`,
   `PATCH /api/leagues/[id]/roster`); bei der Bestätigung wird die DTB-ID ins Profil geschrieben.

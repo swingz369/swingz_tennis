@@ -119,12 +119,7 @@ Beispiele (vollständige Liste wird beim Auto-Gen erzeugt):
 - `GET /api/leagues`
 - `POST /api/leagues`
 - `GET|PATCH|DELETE /api/leagues/[id]`
-- `POST /api/leagues/[id]/sync` — nuLiga-Abgleich. Erkennt am URL-Pfad, ob eine
-  Mannschaftsseite (`/wa/teamPortrait`) oder eine Gruppenseite (`/wa/groupPage`)
-  hinterlegt ist. Mannschaftsseite liefert eigene Spieltermine + Kader + (über den
-  verlinkten Gruppenlink) die Tabelle; Gruppenseite liefert die Tabelle und
-  filtert den Spielplan über `leagues.own_team_name`.
-- `GET|POST /api/leagues/[id]/roster` — Meldeliste (Kader mit LK), Zuordnung zum
+- `GET|PATCH /api/leagues/[id]/roster` — Meldeliste (Kader mit LK), Zuordnung zum
   Mitglied über DTB-ID, ersatzweise über den Namen
 - `POST|DELETE /api/leagues/[id]/matchdays/[matchdayId]/courts` — Plätze für ein
   Heimspiel sperren bzw. freigeben (`court_closures.match_day_id`)
@@ -176,7 +171,6 @@ Beispiele (vollständige Liste wird beim Auto-Gen erzeugt):
 - `POST /api/cron/overdue-invoices`
 - `POST /api/cron/season-reminders`
 - `POST /api/cron/dunning-sync`
-- `POST /api/cron/nuliga-sync`
 - `POST /api/cron/cleanup-sessions`
 - `POST /api/cron/reactivation-tracking`
 

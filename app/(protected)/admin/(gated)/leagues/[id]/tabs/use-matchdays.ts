@@ -1,15 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
-import type { League, MatchDay } from './types';
+import type { MatchDay } from './types';
 
 /** Fachlogik des "Spieltage"-Tabs — als Hook ausgelagert, weil der Header
- * (nuLiga-Sync-/Historie-/Import-Buttons) außerhalb des Tabs sitzt, aber
- * denselben Zustand steuert. */
-export function useMatchdays(leagueId: string, league: League | null, onChanged: () => void) {
+ * (Import-Buttons) außerhalb des Tabs sitzt, aber denselben Zustand steuert. */
+export function useMatchdays(leagueId: string, onChanged: () => void) {
   const [showNewMatchDay, setShowNewMatchDay] = useState(false);
   const [newMatchDay, setNewMatchDay] = useState({
     matchday_number: 1,
@@ -20,14 +19,6 @@ export function useMatchdays(leagueId: string, league: League | null, onChanged:
     notes: '',
   });
 
-  const [nuligaUrl, setNuligaUrl] = useState('');
-  const [showNuligaConfig, setShowNuligaConfig] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<Record<string, unknown> | null>(null);
-  const [showSyncHistory, setShowSyncHistory] = useState(false);
-  const [syncHistory, setSyncHistory] = useState<Record<string, unknown>[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
-
   const [showImport, setShowImport] = useState(false);
   const [importCsv, setImportCsv] = useState('');
   const [importing, setImporting] = useState(false);
@@ -36,10 +27,6 @@ export function useMatchdays(leagueId: string, league: League | null, onChanged:
 
   const [editingResultId, setEditingResultId] = useState<string | null>(null);
   const [resultForm, setResultForm] = useState({ result: 'win', score_home: 0, score_away: 0 });
-
-  useEffect(() => {
-    if (league?.nuliga_url) setNuligaUrl(league.nuliga_url);
-  }, [league?.nuliga_url]);
 
   const handleCreateMatchDay = async () => {
     if (!newMatchDay.opponent) {
@@ -105,44 +92,6 @@ export function useMatchdays(leagueId: string, league: League | null, onChanged:
     }
   };
 
-  const handleNuligaSync = async () => {
-    if (!nuligaUrl.trim()) {
-      toast.error('Bitte nuLiga-URL eingeben');
-      return;
-    }
-    setSyncing(true);
-    setSyncResult(null);
-    try {
-      const res = await apiFetch(`/api/leagues/${leagueId}/sync`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nuliga_url: nuligaUrl }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Sync fehlgeschlagen');
-
-      setSyncResult(data);
-      const parts: string[] = [];
-      if (data.teamsCreated > 0) parts.push(`${data.teamsCreated} Teams erstellt`);
-      if (data.teamsUpdated > 0) parts.push(`${data.teamsUpdated} Teams aktualisiert`);
-      if (data.matchesCreated > 0) parts.push(`${data.matchesCreated} Spieltage erstellt`);
-      if (data.matchesUpdated > 0) parts.push(`${data.matchesUpdated} Spieltage aktualisiert`);
-      if (data.playersImported > 0) {
-        parts.push(`${data.playersImported} Spieler im Kader (${data.playersLinked} verknüpft)`);
-      }
-      if (data.skippedForeign > 0) {
-        parts.push(`${data.skippedForeign} fremde Begegnungen übersprungen`);
-      }
-      toast.success(`Sync erfolgreich: ${parts.join(', ') || 'Alles aktuell'}`);
-      if (data.warning) toast.warning(data.warning, { duration: 10000 });
-      onChanged();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Fehler beim Sync');
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   const handleToggleCourtBlock = async (matchDay: MatchDay) => {
     setBlockingMatchday(matchDay.id);
     const blocked = matchDay.blocked_courts > 0;
@@ -162,19 +111,6 @@ export function useMatchdays(leagueId: string, league: League | null, onChanged:
       setBlockingMatchday(null);
     }
   };
-
-  const loadSyncHistory = useCallback(async () => {
-    setLoadingHistory(true);
-    try {
-      const res = await apiFetch(`/api/leagues/${leagueId}/sync-history?limit=15`);
-      const data = await res.json();
-      setSyncHistory(data.logs ?? []);
-    } catch {
-      toast.error('Fehler beim Laden der Sync-Historie');
-    } finally {
-      setLoadingHistory(false);
-    }
-  }, [leagueId]);
 
   const handleImportCsv = async () => {
     if (!importCsv.trim()) {
@@ -214,18 +150,6 @@ export function useMatchdays(leagueId: string, league: League | null, onChanged:
     newMatchDay,
     setNewMatchDay,
     handleCreateMatchDay,
-    nuligaUrl,
-    setNuligaUrl,
-    showNuligaConfig,
-    setShowNuligaConfig,
-    syncing,
-    syncResult,
-    handleNuligaSync,
-    showSyncHistory,
-    setShowSyncHistory,
-    syncHistory,
-    loadingHistory,
-    loadSyncHistory,
     showImport,
     setShowImport,
     importCsv,
