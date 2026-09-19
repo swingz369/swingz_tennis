@@ -824,7 +824,15 @@ async function seedClub(spec: ClubSpec): Promise<{ clubId: string; accounts: See
       date_of_birth: birthDate('adult', i + 5),
       bio: `Lizenzierte:r Tennistrainer:in mit Schwerpunkt ${LEVELS[i % LEVELS.length]}.`,
       qualifications: sql.json(['DTB C-Lizenz', ...(i % 2 ? ['DTB B-Lizenz'] : [])]),
-      specializations: sql.json([AGE_GROUPS[i % AGE_GROUPS.length]]),
+      specializations: sql.json([
+        {
+          id: `spec-${i}`,
+          name: { youth: 'Jugend', adult: 'Erwachsene', senior: 'Senioren' }[
+            AGE_GROUPS[i % AGE_GROUPS.length]
+          ],
+          level: LEVELS[i % LEVELS.length],
+        },
+      ]),
       hourly_rate: 35 + (i % 4) * 5,
       contracted_hourly_rate: 30 + (i % 4) * 5,
       status: 'active',
