@@ -390,4 +390,42 @@ export class SeasonPlanningRepository {
     );
     return row?.name ?? null;
   }
+
+  // ── Veröffentlichen ───────────────────────────────────────────────
+  async clubBundesland(clubId: string): Promise<string | null> {
+    const row = ok(
+      await this.db.from('clubs').select('bundesland').eq('id', clubId).maybeSingle(),
+      'Lesen des Vereins fehlgeschlagen'
+    );
+    return row?.bundesland ?? null;
+  }
+
+  /** Eine Transaktion in der Datenbank: `publish_season_plan` (siehe Migration). */
+  async publishPlan(args: {
+    seasonId: string;
+    republish: boolean;
+    now: Date;
+    schedule: Json;
+    sessions: Json;
+    bookings: Json;
+    entryUpdates: Json;
+    conflicts: Json;
+    history: Json;
+  }): Promise<{ removed_sessions: number; schedule_id: string | null }> {
+    const data = ok(
+      await this.db.rpc('publish_season_plan', {
+        p_season_id: args.seasonId,
+        p_republish: args.republish,
+        p_now: args.now.toISOString(),
+        p_schedule: args.schedule,
+        p_sessions: args.sessions,
+        p_bookings: args.bookings,
+        p_entry_updates: args.entryUpdates,
+        p_conflicts: args.conflicts,
+        p_history: args.history,
+      }),
+      'Veröffentlichen des Plans fehlgeschlagen'
+    );
+    return data as { removed_sessions: number; schedule_id: string | null };
+  }
 }

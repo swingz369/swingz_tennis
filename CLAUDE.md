@@ -63,7 +63,7 @@ umging RLS und verließ sich auf Anwendungscode für die Mandantentrennung — z
 Datenlecks im Juli waren die Folge. Neue und migrierte Domänen halten sich an dieses Muster.
 Bereits migriert: Stundensätze (`app/api/hourly-rates/`), SEPA-Mandate
 (`app/api/sepa-mandates/`), Zahlungseinstellungen (`app/api/payment-settings/`), Saison-Präferenzen
-(`app/api/seasons/[id]/preferences/`), Saisonplan (`plan-entries/`, `plan-grid/` ebenda) — je ein
+(`app/api/seasons/[id]/preferences/`), Saisonplan (`plan-entries/`, `plan-grid/`, `planning/*` ebenda; Veröffentlichen atomar per DB-Funktion `publish_season_plan`) — je ein
 Service unter `src/application/services/`, ein Repository unter
 `src/infrastructure/persistence/repositories/`:
 

@@ -23,11 +23,6 @@ import {
 
 const log = createLogger('season-planning:conflict-detector');
 
-/** Minimale Query-Builder-Schnittstelle der Drizzle-Transaktion (nur für den Übergang, s. u.). */
-type DrizzleTransactionLike = {
-  delete: (table: any) => { where: (filter: any) => Promise<any> };
-  insert: (table: any) => { values: (rows: any | any[]) => Promise<any> };
-};
 import type {
   ConflictDetectionResult,
   ConflictSeverityLevel,
@@ -718,10 +713,7 @@ export class ConflictDetector {
    * Replaces the previously detected OPEN conflicts of this season (re-detect on each run);
    * decided ones (resolved/ignored) stay untouched.
    */
-  async persistConflicts(
-    conflicts: ConflictDetectionResult[],
-    tx?: DrizzleTransactionLike
-  ): Promise<number> {
+  async persistConflicts(conflicts: ConflictDetectionResult[]): Promise<number> {
     if (conflicts.length === 0) return 0;
 
     const rows = conflicts.map((c) => ({
@@ -740,20 +732,6 @@ export class ConflictDetector {
       status: 'open',
       detection_source: 'auto_planner',
     }));
-    if (tx) {
-      // ponytail: Übergang — die Publish-Route schreibt noch in einer Drizzle-Transaktion, damit ein
-      // Fehler hier die Veröffentlichung zurückrollt. Entfällt mit der Postgres-Funktion
-      // `publish_season_plan` (siehe Plan: alles atomar, ohne Drizzle).
-      const { planningConflicts } = await import('@/src/infrastructure/persistence/schema');
-      const { and, eq } = await import('drizzle-orm');
-      await tx
-        .delete(planningConflicts)
-        .where(
-          and(eq(planningConflicts.season_id, this.seasonId), eq(planningConflicts.status, 'open'))
-        );
-      await tx.insert(planningConflicts).values(rows);
-      return rows.length;
-    }
     await this.repo.replaceOpenConflicts(this.seasonId, rows);
     return rows.length;
   }

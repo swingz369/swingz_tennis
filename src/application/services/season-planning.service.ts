@@ -1,6 +1,11 @@
 import type { AuthContext } from '@/lib/api-auth';
 import { ApiException } from '@/lib/api-error';
 import { formatDateTime } from '@/lib/format';
+import { buildPublishPlan } from '@/lib/season-planning/publish-plan';
+import { resolveBundeslandCode, type Holiday } from '@/lib/season-planning/holidays';
+import { loadHolidaysForState } from '@/lib/season-planning/holidays.server';
+import type { ConflictDetectionResult } from '@/lib/season-planning/types';
+import { createLogger } from '@/lib/logger';
 import type { ScheduleSlot } from '@/lib/season-planning/types';
 import { getUserDb, systemDb } from '@/infrastructure/db';
 import {
@@ -8,6 +13,8 @@ import {
   type Season,
   type Trainer,
 } from '@/infrastructure/persistence/repositories/season-planning.repository';
+
+const log = createLogger('service:season-planning');
 
 /** Ältere Stände fallen raus — ein Verein vergleicht ein paar Fassungen, kein Archiv. */
 const MAX_VERSIONS = 10;
@@ -278,5 +285,96 @@ export class SeasonPlanningService {
       substitute_from_week: null,
       substitute_to_week: null,
     });
+  }
+
+  // ── Veröffentlichen ───────────────────────────────────────────────
+  async planEntries(seasonId: string) {
+    await this.season(seasonId);
+    return this.repo.listEntries(seasonId);
+  }
+
+  /**
+   * Plan veröffentlichen: Termine berechnen (rein), dann atomar schreiben (`publish_season_plan`).
+   * Erneutes Veröffentlichen ersetzt künftige Sessions samt Buchungen; Maßgeblich ist
+   * `published_at`, nicht der Status (ein Planlauf setzt den Status auf manual_review zurück).
+   */
+  async publish(
+    season: Season,
+    entries: Awaited<ReturnType<SeasonPlanningService['planEntries']>>,
+    conflicts: ConflictDetectionResult[],
+    adminNotes: string | null
+  ) {
+    const isRepublish = season.published_at != null;
+    const now = new Date();
+
+    // Ferien sind nicht kritisch: schlägt das Laden fehl, gibt es keine Ferienfilterung.
+    let holidays: Holiday[] = [];
+    try {
+      const bundesland = await this.repo.clubBundesland(season.club_id);
+      if (bundesland) holidays = await loadHolidaysForState(resolveBundeslandCode(bundesland));
+    } catch (err) {
+      log.warn(
+        'Failed to load holidays, proceeding without',
+        err instanceof Error ? err : undefined
+      );
+    }
+
+    const inactiveWeeks = new Set(
+      (await this.repo.listGroupWeeks(season.id))
+        .filter((w) => !w.is_active)
+        .map((w) => `${w.group_id}|${w.week_number}`)
+    );
+
+    const plan = buildPublishPlan({ season, entries, holidays, inactiveWeeks, isRepublish, now });
+    const open = conflicts.filter((c) => c.status === 'open');
+    const decided = conflicts.filter((c) => c.status !== 'open');
+
+    const { removed_sessions: removedSessions } = await this.repo.publishPlan({
+      seasonId: season.id,
+      republish: isRepublish,
+      now,
+      schedule: plan.schedule,
+      sessions: plan.sessions as never,
+      bookings: plan.bookings as never,
+      entryUpdates: plan.entryUpdates,
+      conflicts: open.map((c) => ({
+        conflict_type: c.type,
+        severity: c.severity,
+        affected_plan_entry_ids: c.affectedEntities?.planEntryIds || [],
+        affected_trainer_id: c.affectedEntities?.trainerIds?.[0] || null,
+        affected_court_id: c.affectedEntities?.courtIds?.[0] || null,
+        affected_user_ids: c.affectedEntities?.memberIds || [],
+        affected_group_ids: c.affectedEntities?.groupIds || [],
+        conflict_time_slot: c.timeSlot,
+        description: c.description,
+        suggested_resolution: c.suggestedResolution,
+      })),
+      history: {
+        actor_id: this.auth.user.id,
+        actor_role: 'admin',
+        details: {
+          republish: isRepublish,
+          publishedSessions: plan.sessions.length,
+          entriesCount: entries.length,
+          conflictsDetected: conflicts.length,
+          openConflicts: open.length,
+          decidedConflicts: decided.map((c) => ({ id: c.id, status: c.status })),
+          adminNotes,
+        },
+        entries_affected: plan.sessions.length,
+        conflicts_created: open.length,
+        conflicts_resolved: decided.length,
+        // Text und verworfene Sessions ergänzt die Funktion; `notes` trägt die Eintragszahl.
+        notes: String(entries.length),
+      },
+    });
+
+    return {
+      publishedCount: plan.sessions.length,
+      publishedIds: plan.sessions.map((s) => s.id),
+      bookingsCreated: plan.bookings.length,
+      removedSessions,
+      isRepublish,
+    };
   }
 }

@@ -69,6 +69,7 @@ describe('tenant isolation: app/api/seasons/[id]/**/route.ts', () => {
       'planning/preferences-summary/route.ts',
       'planning/trainers/route.ts',
       'planning/remind/route.ts',
+      'planning/confirm/route.ts',
       'planning/substitutes/route.ts',
     ].map((p) => path.join(seasonsIdDir, p))
   );

@@ -7749,6 +7749,20 @@ export type Database = {
           deleted_security: number;
         }[];
       };
+      publish_season_plan: {
+        Args: {
+          p_bookings: Json;
+          p_conflicts: Json;
+          p_entry_updates: Json;
+          p_history: Json;
+          p_now: string;
+          p_republish: boolean;
+          p_schedule: Json;
+          p_season_id: string;
+          p_sessions: Json;
+        };
+        Returns: Json;
+      };
       shares_active_club_with: {
         Args: { target_user_id: string };
         Returns: boolean;
