@@ -273,9 +273,10 @@ const UUID_MUSTER = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
 /**
  * Nur echte Gruppen-IDs dürfen in die uuid-Spalte `group_id`.
  *
- * Der Backtracking-Pfad legt Ersatzgruppen mit synthetischen IDs an
- * (`backtrack-2-<memberId>`, siehe unten) — dahinter steht keine
- * Trainingsgruppe, die ID enthält sogar eine Mitglieds-UUID. Bis zum
+ * Der Backtracking-Pfad legte früher Ersatzgruppen mit synthetischen IDs an
+ * (`backtrack-2-<memberId>`) — dahinter stand keine Trainingsgruppe, die ID
+ * enthielt sogar eine Mitglieds-UUID. Seit 19.09.2026 sind auch sie
+ * Platzhalter (`new:…`) und werden in `saveToDatabase` angelegt. Bis zum
  * 16.08.2026 ging dieser Wert ungeprüft in den INSERT: sobald das Backtracking
  * griff, scheiterte jedes Speichern mit `22P02 invalid input syntax for uuid`,
  * und die Planerstellung antwortete mit 500. Der Trockenlauf blieb grün, weil
@@ -1798,10 +1799,24 @@ export class SeasonClusteringEngine {
           const hasAvoid = member.avoidMemberIds.some((id) => otherFreed.some((o) => o.id === id));
           if (hasAvoid) continue;
 
-          // Place the member in a new ghost group at the freed slot
+          // Place the member in a new solo group at the freed slot. Wie im Hauptpfad ein
+          // Platzhalter: die Gruppe entsteht erst in `saveToDatabase` als DB-Zeile. Früher
+          // trug sie eine synthetische ID ohne Platzhalter-Eintrag — sie wurde nie angelegt,
+          // ihr Planeintrag bekam `group_id = null` und ihre Wartelisteneinträge fielen weg.
+          const soloAgeGroup: 'kids' | 'adult' = member.isMinor ? 'kids' : 'adult';
+          const soloLevel = member.promotedLevel ?? member.skillLevel;
+          const soloName = `Einzeltraining ${
+            soloAgeGroup === 'kids' ? 'Kids' : LEVEL_LABEL[soloLevel]
+          } — ${member.name}`;
+          const soloGroupId = `${PLACEHOLDER_GROUP_PREFIX}${randomUUID()}`;
+          this.pendingGroups.set(soloGroupId, {
+            name: soloName,
+            level: soloLevel,
+            ageGroup: soloAgeGroup,
+          });
           const ghostAssignment: GroupAssignment = {
-            groupId: `backtrack-${retryCount}-${member.id}`,
-            groupName: `Backtrack Retry ${retryCount} - ${member.name}`,
+            groupId: soloGroupId,
+            groupName: soloName,
             trainerId: slot.trainerId,
             trainerName: slot.trainerName,
             dayOfWeek: slot.day as DayOfWeek,
