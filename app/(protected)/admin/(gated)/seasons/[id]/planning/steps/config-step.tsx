@@ -464,7 +464,7 @@ export function ConfigStep() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">
-                Max. Niveau-Stufen (1 = gleiches Level, 2 = ein Abstand)
+                Max. Niveau-Abstand in Stufen (0 = gleiches Level, 1 = eine Stufe Abstand)
               </Label>
               <Input
                 type="number"
