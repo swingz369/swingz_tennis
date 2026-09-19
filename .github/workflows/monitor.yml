@@ -61,8 +61,13 @@ jobs:
       - name: Supabase-Gateway auf dem VPS
         # Eigener Schritt, weil ein Ausfall hier eine andere Ursache hat als ein
         # Ausfall der App: Vercel ist fremdbetrieben, der VPS nicht.
+        # Das Gateway verlangt einen apikey (öffentlicher Anon-Key); ohne ihn antwortet es 401 —
+        # der Check meldete deshalb seit dem 18.09.2026 dauerhaft einen Ausfall, den es nicht gab.
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
           code=$(curl --silent --output /dev/null --write-out '%{http_code}' \
-                   --max-time 20 https://supabase.swingz.cloud/auth/v1/health)
+                   --max-time 20 -H "apikey: $SUPABASE_ANON_KEY" \
+                   https://supabase.swingz.cloud/auth/v1/health)
           echo "auth/v1/health → HTTP $code"
           [ "$code" = "200" ] || { echo "::error::Supabase auf dem VPS antwortet mit $code"; exit 1; }
