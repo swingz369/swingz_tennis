@@ -206,6 +206,12 @@ Drizzle. Zwei Lücken in den Policies mussten dafür geschlossen werden:
 Behoben (19.09.2026, `20260919110000_seasons_select_superadmin_scoped.sql`): `seasons_select` enthielt
 `is_superadmin()` — ein Superadmin sah per RLS Saisons aller Vereine. Jetzt nur `is_club_member(club_id)`;
 ebenso gibt `authorizeSeasonAccess` (`lib/season-auth.ts`) nur dem Owner Zugriff ohne Membership.
+Gleiches für `trainers_own` (`20260919120000_trainers_own_superadmin_scoped.sql`).
+
+Bekannte Altlast: weitere Policies nutzen noch das plattformweite `is_superadmin()` —
+`background_jobs`, `job_execution_log`, `clubs_insert`, `schedules`, `players`,
+`tournament_matches`/`tournament_registrations`, `school_holidays`. Bei Migration der jeweiligen
+Domäne auf `is_superadmin_of(club_id)` bzw. `is_club_member` umstellen.
 
 ## Datenzugriffsmuster (ADR-005) — Diagramm
 
