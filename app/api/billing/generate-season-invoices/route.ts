@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireAuth, verifyClubAccess } from '@/lib/api-auth';
+import { requireAuth, verifyClubAccess, verifyRole } from '@/lib/api-auth';
 import { SeasonBillingService } from '@/application/services/season-billing.service';
 import { createLogger } from '@/lib/logger';
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
   const { club_id, season_id, installment_count, installment_due_dates } = parsed.data;
 
-  if (!verifyClubAccess(auth, club_id)) {
+  if (!(await verifyRole(auth, 'admin')) || !verifyClubAccess(auth, club_id)) {
     return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
   }
 
