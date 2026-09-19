@@ -285,7 +285,7 @@ export default function TrainerAvailabilityManager() {
         <div
           className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm ${
             weeklyHours > maxHoursPerWeek
-              ? 'border-error-200 dark:border-error-800 bg-error-50 dark:bg-error-900/20 text-error-700 dark:text-error-400'
+              ? 'border-error-200 bg-error-50 text-error-700'
               : 'border-border bg-muted/30 text-foreground'
           }`}
         >
@@ -378,8 +378,8 @@ export default function TrainerAvailabilityManager() {
         <div
           className={`p-3 rounded-xl text-sm ${
             message.startsWith('Fehler')
-              ? 'bg-error-50 dark:bg-error-900/20 text-error-700 dark:text-error-400 border border-error-200 dark:border-error-800'
-              : 'bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-300 border border-success-200 dark:border-success-800'
+              ? 'bg-error-50 text-error-700 border border-error-200'
+              : 'bg-success-50 text-success-700 border border-success-200'
           }`}
         >
           {message}
@@ -438,7 +438,7 @@ export default function TrainerAvailabilityManager() {
                       </div>
                       <div className="flex items-center gap-2">
                         {count > 0 ? (
-                          <Badge className="bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300 border-success-200 dark:border-success-800">
+                          <Badge className="bg-success-100 text-success-700 border-success-200">
                             {count} {count === 1 ? 'Fenster' : 'Fenster'}
                           </Badge>
                         ) : (
@@ -493,15 +493,13 @@ export default function TrainerAvailabilityManager() {
                             key={slot.id}
                             className={`flex items-center gap-3 flex-wrap border rounded-xl p-3 ${
                               slot.isAvailable
-                                ? 'bg-success-50/50 dark:bg-success-900/10 border-success-100 dark:border-success-900/30'
+                                ? 'bg-success-50/50 border-success-100'
                                 : 'bg-muted/50 border-border'
                             }`}
                           >
                             <Clock
                               className={`h-4 w-4 flex-shrink-0 ${
-                                slot.isAvailable
-                                  ? 'text-success-600 dark:text-success-400'
-                                  : 'text-muted-foreground'
+                                slot.isAvailable ? 'text-success-600' : 'text-muted-foreground'
                               }`}
                             />
                             <div className="flex items-center gap-2">

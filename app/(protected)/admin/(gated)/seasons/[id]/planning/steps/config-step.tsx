@@ -92,19 +92,13 @@ function PreferencesStatusCard({
       {hasWarnings && (
         <CardContent className="space-y-2">
           {summary.slotFailureWarnings.map((w, i) => (
-            <div
-              key={`slot-${i}`}
-              className="flex items-start gap-2 text-sm text-warning-700 dark:text-warning-400"
-            >
+            <div key={`slot-${i}`} className="flex items-start gap-2 text-sm text-warning-700">
               <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
               <span>{w.warning}</span>
             </div>
           ))}
           {summary.incompatibleWishPartners.map((p, i) => (
-            <div
-              key={`wish-${i}`}
-              className="flex items-start gap-2 text-sm text-warning-700 dark:text-warning-400"
-            >
+            <div key={`wish-${i}`} className="flex items-start gap-2 text-sm text-warning-700">
               <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
               <span>
                 Wunschpartner-Konflikt: {p.memberA.name} &amp; {p.memberB.name} — {p.reason}
@@ -236,7 +230,7 @@ function CopyGroupsPanel({ seasonId, clubId }: { seasonId: string; clubId: strin
           </p>
         ) : (
           <>
-            <div className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800 dark:border-warning-800 dark:bg-warning-900 dark:text-warning-200">
+            <div className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800">
               Nur in eine Saison ohne eigenen Stundenplan. Hat diese Saison schon Einträge, wird
               nichts übernommen — erst leeren, dann kopieren.
             </div>

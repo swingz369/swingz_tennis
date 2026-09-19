@@ -41,13 +41,13 @@ export function StandingsTab({ teams }: { teams: Team[] }) {
                     <TableCell className="text-center tabular-nums">
                       {team.matches_played}
                     </TableCell>
-                    <TableCell className="text-center tabular-nums text-success-600 dark:text-success-400">
+                    <TableCell className="text-center tabular-nums text-success-600">
                       {team.matches_won}
                     </TableCell>
-                    <TableCell className="text-center tabular-nums text-warning-600 dark:text-warning-400">
+                    <TableCell className="text-center tabular-nums text-warning-600">
                       {team.matches_drawn}
                     </TableCell>
-                    <TableCell className="text-center tabular-nums text-error-600 dark:text-error-400">
+                    <TableCell className="text-center tabular-nums text-error-600">
                       {team.matches_lost}
                     </TableCell>
                     <TableCell className="text-right font-bold tabular-nums">

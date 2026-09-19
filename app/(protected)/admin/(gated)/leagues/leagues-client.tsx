@@ -527,7 +527,7 @@ export default function LeaguesClient() {
                     <Badge
                       className={
                         league.status === 'active'
-                          ? 'bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-300'
+                          ? 'bg-success-100 text-success-800'
                           : 'bg-muted text-muted-foreground'
                       }
                     >

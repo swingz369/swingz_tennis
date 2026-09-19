@@ -477,17 +477,13 @@ function ActionBadge({ action }: { action: string }) {
   // Subtile Farbcodierung nach Action-Klasse — verbessert Scannability großer Listen
   let className = 'bg-muted text-muted-foreground border-border';
   if (/create|invite|restripe|reactivate/.test(action)) {
-    className =
-      'bg-success-50 text-success-700 border-success-200 dark:bg-success-900/20 dark:text-success-300 dark:border-success-800';
+    className = 'bg-success-50 text-success-700 border-success-200';
   } else if (/update/.test(action)) {
-    className =
-      'bg-info-50 text-info-700 border-info-200 dark:bg-info-900/20 dark:text-info-300 dark:border-info-800';
+    className = 'bg-info-50 text-info-700 border-info-200';
   } else if (/delete|deactivate|suspend/.test(action)) {
-    className =
-      'bg-warning-50 text-warning-700 border-warning-200 dark:bg-warning-900/20 dark:text-warning-300 dark:border-warning-800';
+    className = 'bg-warning-50 text-warning-700 border-warning-200';
   } else if (/login|logout|PII_READ/.test(action)) {
-    className =
-      'bg-error-50 text-error-700 border-error-200 dark:bg-error-900/20 dark:text-error-300 dark:border-error-800';
+    className = 'bg-error-50 text-error-700 border-error-200';
   }
 
   return (

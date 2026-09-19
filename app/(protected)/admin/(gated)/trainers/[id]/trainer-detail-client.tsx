@@ -1098,7 +1098,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                               {daySlots.map((slot) => (
                                 <div
                                   key={slot.id}
-                                  className="flex items-center justify-between bg-success-50 border border-success-200 dark:bg-success-900/10 dark:border-success-800 rounded p-3"
+                                  className="flex items-center justify-between bg-success-50 border border-success-200 rounded p-3"
                                 >
                                   <div className="flex items-center gap-2">
                                     <Clock className="h-4 w-4 text-success-600" />
@@ -1274,11 +1274,11 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                           key={slot.id}
                           className={`flex items-center gap-3 p-3 rounded-xl border text-sm ${
                             slot.status === 'available'
-                              ? 'bg-success-50 border-success-200 dark:bg-success-900/10 dark:border-success-800'
+                              ? 'bg-success-50 border-success-200'
                               : slot.status === 'booked'
-                                ? 'bg-info-50 border-info-200 dark:bg-info-900/10 dark:border-info-800'
+                                ? 'bg-info-50 border-info-200'
                                 : slot.status === 'blocked'
-                                  ? 'bg-error-50 border-error-200 dark:bg-error-900/10 dark:border-error-800'
+                                  ? 'bg-error-50 border-error-200'
                                   : 'bg-muted border-border dark:bg-card/10 dark:border-border'
                           }`}
                         >
@@ -1473,10 +1473,10 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                           key={trial.id}
                           className={`p-4 rounded-xl border text-sm ${
                             trial.status === 'requested'
-                              ? 'bg-warning-50 border-warning-200 dark:bg-warning-900/10 dark:border-warning-800'
+                              ? 'bg-warning-50 border-warning-200'
                               : trial.status === 'scheduled'
-                                ? 'bg-success-50 border-success-200 dark:bg-success-900/10 dark:border-success-800'
-                                : 'bg-error-50 border-error-200 dark:bg-error-900/10 dark:border-error-800'
+                                ? 'bg-success-50 border-success-200'
+                                : 'bg-error-50 border-error-200'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-3">
@@ -1488,10 +1488,10 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                                 <Badge
                                   className={`text-xs ${
                                     trial.status === 'requested'
-                                      ? 'bg-warning-100 text-warning-700 border-warning-200 dark:bg-warning-900/20 dark:text-warning-300 dark:border-warning-800'
+                                      ? 'bg-warning-100 text-warning-700 border-warning-200'
                                       : trial.status === 'scheduled'
-                                        ? 'bg-success-100 text-success-700 border-success-200 dark:bg-success-900/20 dark:text-success-300 dark:border-success-800'
-                                        : 'bg-error-100 text-error-700 border-error-200 dark:bg-error-900/20 dark:text-error-300 dark:border-error-800'
+                                        ? 'bg-success-100 text-success-700 border-success-200'
+                                        : 'bg-error-100 text-error-700 border-error-200'
                                   }`}
                                 >
                                   {trial.status === 'requested'

@@ -113,10 +113,10 @@ export function MatchdaysTab({
                           <Badge
                             className={`text-xs font-semibold ${
                               md.result === 'win'
-                                ? 'bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-300'
+                                ? 'bg-success-100 text-success-800'
                                 : md.result === 'loss'
-                                  ? 'bg-error-100 text-error-800 dark:bg-error-900/20 dark:text-error-300'
-                                  : 'bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-300'
+                                  ? 'bg-error-100 text-error-800'
+                                  : 'bg-warning-100 text-warning-800'
                             }`}
                           >
                             {md.result === 'win'
@@ -297,7 +297,7 @@ export function MatchdaysTab({
 
       {/* nuLiga Sync Panel */}
       {showNuligaConfig && (
-        <Card className="border-2 border-info-200 bg-info-50/50 dark:bg-info-900/20 dark:border-info-800">
+        <Card className="border-2 border-info-200 bg-info-50/50">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <RefreshCw className="h-4 w-4" />
@@ -330,8 +330,8 @@ export function MatchdaysTab({
               </p>
             )}
             {syncResult && (
-              <div className="text-xs bg-success-50 dark:bg-success-900/30 border border-success-200 dark:border-success-800 rounded p-2 space-y-1">
-                <p className="font-medium text-success-700 dark:text-success-400">Sync-Ergebnis:</p>
+              <div className="text-xs bg-success-50 border border-success-200 rounded p-2 space-y-1">
+                <p className="font-medium text-success-700">Sync-Ergebnis:</p>
                 <p>
                   {String(syncResult.standings)} Teams, {String(syncResult.matches)} Spieltage
                   geladen
@@ -451,7 +451,7 @@ export function MatchdaysTab({
 
       {/* CSV Import Panel */}
       {showImport && (
-        <Card className="border-2 border-info-200 bg-info-50/50 dark:bg-info-900/20 dark:border-info-800">
+        <Card className="border-2 border-info-200 bg-info-50/50">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Upload className="h-4 w-4" />

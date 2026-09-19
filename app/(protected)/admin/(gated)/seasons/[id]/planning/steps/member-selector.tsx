@@ -127,11 +127,11 @@ export function MemberSelector() {
   };
 
   const levelBadgeColor: Record<string, string> = {
-    beginner: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400',
-    intermediate: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400',
+    beginner: 'bg-info-100 text-info-700',
+    intermediate: 'bg-success-100 text-success-700',
     advanced:
       'bg-brand-accent-100 text-brand-accent-700 dark:bg-brand-accent-900/30 dark:text-brand-accent-400',
-    professional: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400',
+    professional: 'bg-info-100 text-info-700',
   };
 
   const filteredMembers = members.filter((m) => {
@@ -399,7 +399,7 @@ export function MemberSelector() {
 
       {/* Promoted Members Detail */}
       {promotedMembers.length > 0 && (
-        <Card className="border-warning-200 bg-warning-50/50 dark:bg-warning-900/10">
+        <Card className="border-warning-200 bg-warning-50/50">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Star className="h-4 w-4 text-warning-500" />

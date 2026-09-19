@@ -221,9 +221,9 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                   <span
                     className={
                       isOwner
-                        ? 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-info-100 text-info-700 dark:bg-info-900/40 dark:text-info-300'
+                        ? 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-info-100 text-info-700'
                         : isSuperAdmin
-                          ? 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-info-100 text-info-700 dark:bg-info-900/40 dark:text-info-300'
+                          ? 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-info-100 text-info-700'
                           : 'inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-2xs font-medium bg-brand-light/10 text-brand-light dark:bg-brand-light/20 dark:text-success-300'
                     }
                   >
@@ -274,7 +274,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                 <button
                   onClick={handleSignOut}
                   disabled={isLoggingOut}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-error-600 dark:text-error-400 hover:bg-error-50 dark:hover:bg-error-500/10 disabled:opacity-50 transition-colors"
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-error-600 hover:bg-error-50 dark:hover:bg-error-500/10 disabled:opacity-50 transition-colors"
                   role="menuitem"
                 >
                   <LogOut className="h-4 w-4" aria-hidden="true" />

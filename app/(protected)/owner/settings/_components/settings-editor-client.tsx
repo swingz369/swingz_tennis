@@ -121,14 +121,14 @@ export function SettingsEditorClient({ settings }: { settings: EditableSetting[]
       {/* Diagnostic-Disclaimer */}
       <div
         role="status"
-        className="rounded-xl border border-info-200 bg-info-50 dark:border-info-800/50 dark:bg-info-900/20 p-4 flex items-start gap-3"
+        className="rounded-xl border border-info-200 bg-info-50 p-4 flex items-start gap-3"
       >
-        <Info className="h-5 w-5 text-info-600 dark:text-info-400 shrink-0 mt-0.5" />
+        <Info className="h-5 w-5 text-info-600 shrink-0 mt-0.5" />
         <div className="text-sm">
-          <p className="font-medium text-info-900 dark:text-info-100">
+          <p className="font-medium text-info-900">
             Plattform-Einstellungen — Mischbetrieb aus ENV-Vars und DB-Settings
           </p>
-          <p className="text-info-800 dark:text-info-200 mt-1">
+          <p className="text-info-800 mt-1">
             Werte wie <span className="font-mono">STRIPE_SECRET_KEY</span>, E-Mail-Absender und das
             Preismodell sind über Vercel-ENV-Vars und das Stripe-Dashboard gepflegt — bitte dort
             ändern. Nur die unten gelisteten globalen{' '}
@@ -280,14 +280,14 @@ export function SettingsEditorClient({ settings }: { settings: EditableSetting[]
           className="rounded-xl border border-border dark:border-white/10 bg-card p-5 sm:p-6"
         >
           <div className="flex items-center gap-2 mb-4">
-            <Shield className="h-4 w-4 text-warning-600 dark:text-warning-400" />
+            <Shield className="h-4 w-4 text-warning-600" />
             <h3 className="text-sm font-semibold">
               Gesperrte DB-Einstellungen ({lockedRo.length})
             </h3>
           </div>
-          <div className="rounded-md border border-warning-200 dark:border-warning-800/40 bg-warning-50 dark:bg-warning-900/20 p-3 flex items-start gap-2 mb-3">
-            <AlertTriangle className="h-4 w-4 text-warning-600 dark:text-warning-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-warning-800 dark:text-warning-200">
+          <div className="rounded-md border border-warning-200 bg-warning-50 p-3 flex items-start gap-2 mb-3">
+            <AlertTriangle className="h-4 w-4 text-warning-600 shrink-0 mt-0.5" />
+            <p className="text-xs text-warning-800">
               Diese Werte sind als <code className="font-mono">is_required</code> markiert und
               werden per Migration / ENV-Var gepflegt. Eine Änderung würde Application-Logik
               gefährden.

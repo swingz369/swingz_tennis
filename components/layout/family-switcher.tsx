@@ -100,7 +100,7 @@ export function FamilySwitcher({
                 className={cn(
                   'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
                   isActive
-                    ? 'bg-warning-50 dark:bg-warning-900/20 text-warning-700 dark:text-warning-300 font-medium'
+                    ? 'bg-warning-50 text-warning-700 font-medium'
                     : 'text-muted-foreground hover:bg-muted'
                 )}
               >
@@ -113,7 +113,7 @@ export function FamilySwitcher({
                 <Baby className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{child.fullName}</span>
                 {child.isMinor && (
-                  <span className="ml-auto text-3xs px-1.5 py-0.5 rounded-full bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 font-semibold">
+                  <span className="ml-auto text-3xs px-1.5 py-0.5 rounded-full bg-warning-100 text-warning-600 font-semibold">
                     Minderjährig
                   </span>
                 )}

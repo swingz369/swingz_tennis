@@ -47,7 +47,7 @@ export function ClubAdminBanner({
     // Deshalb: gedämpfte Fläche, dunkler Text, Button als einziger Vollton.
     <div
       role="alert"
-      className="sticky top-0 z-50 border-b-2 border-warning-500 bg-warning-50 text-warning-900 shadow-sm dark:border-warning-500/70 dark:bg-warning-900/30 dark:text-warning-100"
+      className="sticky top-0 z-50 border-b-2 border-warning-500 bg-warning-50 text-warning-900 shadow-sm dark:border-warning-500/70"
     >
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5">
         <span className="flex items-center gap-3">
@@ -57,13 +57,10 @@ export function ClubAdminBanner({
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning-500 opacity-60" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-warning-600 dark:bg-warning-400" />
           </span>
-          <ShieldAlert
-            className="h-5 w-5 shrink-0 text-warning-600 dark:text-warning-400"
-            aria-hidden="true"
-          />
+          <ShieldAlert className="h-5 w-5 shrink-0 text-warning-600" aria-hidden="true" />
           <span className="text-sm leading-tight">
             <strong className="block font-semibold">{titel}</strong>
-            <span className="text-warning-800 dark:text-warning-200/90">
+            <span className="text-warning-800/90">
               Du bist als <strong>{rolle}</strong> in der Vereinsverwaltung unterwegs. Änderungen
               wirken sich direkt auf diesen Verein aus.
             </span>

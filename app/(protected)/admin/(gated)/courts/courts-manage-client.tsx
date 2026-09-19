@@ -88,13 +88,10 @@ type ViewMode = 'grid' | 'list';
 
 const SURFACE_COLORS: Record<string, string> = {
   clay: 'bg-brand-accent-100 text-brand-accent-800 border-brand-accent-200 dark:bg-brand-accent-900/20 dark:text-brand-accent-300 dark:border-brand-accent-800/40',
-  hard: 'bg-info-100 text-info-800 border-info-200 dark:bg-info-900/20 dark:text-info-300 dark:border-info-800/40',
-  grass:
-    'bg-success-100 text-success-800 border-success-200 dark:bg-success-900/20 dark:text-success-300 dark:border-success-800/40',
-  carpet:
-    'bg-info-100 text-info-800 border-info-200 dark:bg-info-900/20 dark:text-info-300 dark:border-info-800/40',
-  artificial_grass:
-    'bg-info-100 text-info-800 border-info-200 dark:bg-info-900/20 dark:text-info-300 dark:border-info-800/40',
+  hard: 'bg-info-100 text-info-800 border-info-200',
+  grass: 'bg-success-100 text-success-800 border-success-200',
+  carpet: 'bg-info-100 text-info-800 border-info-200',
+  artificial_grass: 'bg-info-100 text-info-800 border-info-200',
 };
 
 function getSurfaceColorClass(surface: string) {
@@ -945,7 +942,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                           {getSurfaceLabel(surface) || getCourtTypeName(court.court_type_id)}
                         </span>
                         {court.has_lighting && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-warning-50 text-warning-700 border border-warning-200 dark:bg-warning-900/20 dark:text-warning-300 dark:border-warning-800/40">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-warning-50 text-warning-700 border border-warning-200">
                             <Lightbulb className="h-3 w-3" />
                             Flutlicht
                           </span>
@@ -1047,7 +1044,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                           </TableCell>
                           <TableCell>
                             {court.has_lighting ? (
-                              <span className="flex items-center gap-1 text-warning-600 dark:text-warning-400 text-sm">
+                              <span className="flex items-center gap-1 text-warning-600 text-sm">
                                 <Lightbulb className="h-4 w-4" /> Ja
                               </span>
                             ) : (
@@ -1075,7 +1072,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                                 className={cn(
                                   'text-xs transition-colors',
                                   court.is_active
-                                    ? 'bg-success-100 text-success-700 hover:bg-success-200 dark:bg-success-900/20 dark:text-success-300 dark:hover:bg-success-900/30'
+                                    ? 'bg-success-100 text-success-700 hover:bg-success-200 dark:hover:bg-success-900/30'
                                     : 'bg-muted text-muted-foreground hover:bg-muted'
                                 )}
                               >
@@ -1249,10 +1246,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                             </Badge>
                           )}
                           {type.requires_lighting && (
-                            <Badge
-                              variant="outline"
-                              className="text-xs gap-1 text-warning-600 dark:text-warning-400"
-                            >
+                            <Badge variant="outline" className="text-xs gap-1 text-warning-600">
                               <Lightbulb className="h-3 w-3" /> Flutlicht
                             </Badge>
                           )}
@@ -1269,7 +1263,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                             className={cn(
                               'text-xs',
                               type.is_active
-                                ? 'bg-success-100 text-success-700 dark:bg-success-900/20 dark:text-success-300'
+                                ? 'bg-success-100 text-success-700'
                                 : 'bg-muted text-foreground'
                             )}
                           >

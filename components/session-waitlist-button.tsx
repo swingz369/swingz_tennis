@@ -48,7 +48,7 @@ export default function SessionWaitlistButton({
   if (waitlistEntry) {
     return (
       <div className="mt-0.5 space-y-0.5">
-        <span className="inline-block text-2xs font-medium bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400 px-1.5 py-0.5 rounded-full leading-tight">
+        <span className="inline-block text-2xs font-medium bg-warning-100 text-warning-700 px-1.5 py-0.5 rounded-full leading-tight">
           Warteliste #{waitlistEntry.position}
         </span>
         <button
@@ -72,7 +72,7 @@ export default function SessionWaitlistButton({
         joinWaitlist.mutate({ sessionId, clubId });
       }}
       disabled={joinWaitlist.isPending}
-      className="mt-0.5 w-full text-left text-2xs font-medium bg-warning-50 dark:bg-warning-900/20 text-warning-700 dark:text-warning-400 hover:bg-warning-100 dark:hover:bg-warning-900/30 px-1.5 py-0.5 rounded transition-colors disabled:opacity-50 leading-tight"
+      className="mt-0.5 w-full text-left text-2xs font-medium bg-warning-50 text-warning-700 hover:bg-warning-100 dark:hover:bg-warning-900/30 px-1.5 py-0.5 rounded transition-colors disabled:opacity-50 leading-tight"
     >
       {joinWaitlist.isPending ? (
         <span className="flex items-center gap-1">

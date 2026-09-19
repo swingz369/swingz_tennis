@@ -15,19 +15,11 @@ export function SubscriptionDisabledBanner() {
   if (isSubscriptionEnforced()) return null;
 
   return (
-    <div
-      role="status"
-      className="border-b border-warning-300 bg-warning-50 dark:border-warning-800 dark:bg-warning-900/40"
-    >
+    <div role="status" className="border-b border-warning-300 bg-warning-50">
       <div className="mx-auto flex max-w-7xl items-center gap-2.5 px-4 py-2 text-sm sm:px-6 lg:px-8">
-        <AlertTriangle
-          className="h-4 w-4 shrink-0 text-warning-700 dark:text-warning-300"
-          aria-hidden="true"
-        />
-        <span className="font-semibold text-warning-900 dark:text-warning-100">
-          Bezahlschranke abgeschaltet
-        </span>
-        <span className="text-warning-800/80 dark:text-warning-200/80">
+        <AlertTriangle className="h-4 w-4 shrink-0 text-warning-700" aria-hidden="true" />
+        <span className="font-semibold text-warning-900">Bezahlschranke abgeschaltet</span>
+        <span className="text-warning-800/80/80">
           Alle Vereine haben Vollzugriff ohne Abo — Vorlaufbetrieb bis zum Launch.
           <span className="hidden md:inline">
             {' '}

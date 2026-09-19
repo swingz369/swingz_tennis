@@ -87,11 +87,11 @@ function getSkillBadge(level: string) {
   const map: Record<string, { label: string; className: string }> = {
     beginner: {
       label: 'Anfänger',
-      className: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300',
+      className: 'bg-success-100 text-success-700',
     },
     intermediate: {
       label: 'Mittel',
-      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
+      className: 'bg-info-100 text-info-700',
     },
     advanced: {
       label: 'Fortg.',
@@ -100,7 +100,7 @@ function getSkillBadge(level: string) {
     },
     tournament: {
       label: 'Turnier',
-      className: 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-300',
+      className: 'bg-error-100 text-error-700',
     },
     all: { label: 'Alle', className: 'bg-muted text-muted-foreground' },
   };

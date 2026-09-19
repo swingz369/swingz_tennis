@@ -71,9 +71,9 @@ interface MyTeam {
 }
 
 const RESULT_STYLE: Record<string, string> = {
-  win: 'bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-300',
-  loss: 'bg-error-100 text-error-800 dark:bg-error-900/20 dark:text-error-300',
-  draw: 'bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-300',
+  win: 'bg-success-100 text-success-800',
+  loss: 'bg-error-100 text-error-800',
+  draw: 'bg-warning-100 text-warning-800',
 };
 const RESULT_LABEL: Record<string, string> = {
   win: '✓ Sieg',
@@ -139,10 +139,10 @@ export function MyLeaguesClient() {
       />
 
       {suggestions.map((sg) => (
-        <Card key={sg.player_id} className="border-info-200 dark:border-info-800/40">
+        <Card key={sg.player_id} className="border-info-200">
           <CardContent className="flex items-center justify-between gap-3 flex-wrap py-4">
             <div className="flex items-center gap-3 min-w-0">
-              <UserCheck className="h-5 w-5 text-info-600 dark:text-info-400 shrink-0" />
+              <UserCheck className="h-5 w-5 text-info-600 shrink-0" />
               <div className="min-w-0">
                 <p className="text-sm font-medium">
                   Bist du {sg.name}

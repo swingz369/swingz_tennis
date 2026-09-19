@@ -123,7 +123,7 @@ export default function GamificationDashboard() {
               {badges.map((b) => (
                 <div
                   key={b.id}
-                  className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl bg-info-50 dark:bg-info-900/10"
+                  className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl bg-info-50"
                 >
                   <span className="text-2xl">{b.icon}</span>
                   <span className="text-xs font-semibold line-clamp-1">{b.name}</span>

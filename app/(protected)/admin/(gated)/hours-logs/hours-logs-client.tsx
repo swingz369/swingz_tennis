@@ -262,14 +262,14 @@ export default function HoursLogsClient() {
 
       {/* Pending Alert */}
       {stats.pending > 0 && (
-        <div className="rounded-xl bg-warning-50 dark:bg-warning-900/10 border border-warning-200 dark:border-warning-900/20 p-4 flex items-center justify-between">
+        <div className="rounded-xl bg-warning-50 border border-warning-200 p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-warning-600" />
             <div>
-              <p className="text-sm font-medium text-warning-800 dark:text-warning-200">
+              <p className="text-sm font-medium text-warning-800">
                 {stats.pending} ausstehende Stundennachweise
               </p>
-              <p className="text-xs text-warning-600 dark:text-warning-400">
+              <p className="text-xs text-warning-600">
                 {stats.pendingHours.toFixed(1)}h warten auf Genehmigung
               </p>
             </div>
@@ -480,11 +480,8 @@ export default function HoursLogsClient() {
                         </TableCell>
                       </TableRow>
                       {log.status === 'rejected' && log.rejection_reason && (
-                        <TableRow className="bg-error-50/50 dark:bg-error-900/5">
-                          <TableCell
-                            colSpan={7}
-                            className="px-4 py-2 text-xs text-error-600 dark:text-error-400"
-                          >
+                        <TableRow className="bg-error-50/50">
+                          <TableCell colSpan={7} className="px-4 py-2 text-xs text-error-600">
                             <span className="font-medium">Ablehnungsgrund:</span>{' '}
                             {log.rejection_reason}
                           </TableCell>

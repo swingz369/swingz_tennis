@@ -453,7 +453,7 @@ export default function BillingClient({
                 20 Einzelklicks — die Rechnungen bleiben dann als Entwurf liegen
                 und das Mitglied sieht nie eine Forderung. */}
             {selectedIds.size === 0 && draftInvoiceIds.length > 0 && (
-              <div className="flex items-center gap-3 mt-3 p-3 rounded-xl bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-800">
+              <div className="flex items-center gap-3 mt-3 p-3 rounded-xl bg-info-50 border border-info-200">
                 <span className="text-sm">
                   {draftInvoiceIds.length} Rechnung{draftInvoiceIds.length !== 1 ? 'en' : ''} im
                   Entwurf — für Mitglieder noch nicht sichtbar

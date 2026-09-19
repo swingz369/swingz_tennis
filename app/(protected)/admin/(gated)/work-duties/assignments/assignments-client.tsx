@@ -146,13 +146,13 @@ export default function AssignmentsClient({
     switch (status) {
       case 'assigned':
         return (
-          <Badge className="bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300 text-xs gap-1">
+          <Badge className="bg-info-100 text-info-800 text-xs gap-1">
             <Clock className="h-3 w-3" /> Ausstehend
           </Badge>
         );
       case 'completed':
         return (
-          <Badge className="bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300 text-xs gap-1">
+          <Badge className="bg-success-100 text-success-800 text-xs gap-1">
             <CheckCircle2 className="h-3 w-3" /> Erledigt
           </Badge>
         );
@@ -367,10 +367,10 @@ export default function AssignmentsClient({
                         <Badge
                           className={`text-xs ${
                             m.rate >= 80
-                              ? 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300'
+                              ? 'bg-success-100 text-success-800'
                               : m.rate >= 50
-                                ? 'bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300'
-                                : 'bg-error-100 text-error-800 dark:bg-error-900/30 dark:text-error-300'
+                                ? 'bg-warning-100 text-warning-800'
+                                : 'bg-error-100 text-error-800'
                           }`}
                         >
                           {m.rate}%

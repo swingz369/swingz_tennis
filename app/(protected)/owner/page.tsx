@@ -204,18 +204,18 @@ export default async function OwnerPage() {
             <Link
               key={item.key}
               href={item.href}
-              className="flex items-center gap-3 rounded-xl border border-warning-200 bg-warning-50 p-3 transition-colors hover:border-warning-400 dark:border-warning-700/40 dark:bg-warning-900/20"
+              className="flex items-center gap-3 rounded-xl border border-warning-200 bg-warning-50 p-3 transition-colors hover:border-warning-400"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warning-100 dark:bg-warning-800/40">
-                <item.icon className="h-4 w-4 text-warning-700 dark:text-warning-300" />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warning-100">
+                <item.icon className="h-4 w-4 text-warning-700" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-warning-900 dark:text-warning-100">
+                <p className="text-sm font-semibold text-warning-900">
                   {item.count} {item.label}
                 </p>
-                <p className="text-xs text-warning-800/80 dark:text-warning-200/70">{item.hint}</p>
+                <p className="text-xs text-warning-800/80/70">{item.hint}</p>
               </div>
-              <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-warning-700 dark:text-warning-300" />
+              <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-warning-700" />
             </Link>
           ))}
         </div>
@@ -279,7 +279,7 @@ export default async function OwnerPage() {
                       {club.status === 'inactive' ? (
                         <Badge variant="secondary">Inaktiv</Badge>
                       ) : !adminsByClub.get(club.id) ? (
-                        <span className="text-warning-700 dark:text-warning-300">kein Admin</span>
+                        <span className="text-warning-700">kein Admin</span>
                       ) : !club.setup_completed_at ? (
                         'Einrichtung offen'
                       ) : (

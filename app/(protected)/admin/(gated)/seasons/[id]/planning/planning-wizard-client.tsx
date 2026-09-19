@@ -55,7 +55,7 @@ class StepErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <Card className="border-error-200 bg-error-50 dark:bg-error-900/20 dark:border-error-800 p-6">
+        <Card className="border-error-200 bg-error-50 p-6">
           <div className="flex flex-col items-center text-center gap-3">
             <AlertTriangle className="h-8 w-8 text-error-500" />
             <h3 className="text-lg font-semibold text-error-700">
@@ -183,7 +183,7 @@ function WizardContent({
                   isActive
                     ? 'bg-primary text-white shadow-md shadow-primary/20'
                     : isCompleted
-                      ? 'bg-success-50 text-success-700 dark:bg-success-900/20 dark:text-success-400'
+                      ? 'bg-success-50 text-success-700'
                       : isClickable
                         ? 'bg-muted text-muted-foreground hover:bg-muted dark:bg-muted dark:text-foreground'
                         : 'bg-muted text-muted-foreground cursor-not-allowed dark:bg-muted/50'
@@ -211,12 +211,12 @@ function WizardContent({
 
       {/* Error Display */}
       {error && (
-        <Card className="border-error-200 bg-error-50 dark:bg-error-900/20 dark:border-error-800 p-4">
+        <Card className="border-error-200 bg-error-50 p-4">
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-error-500 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-error-700 dark:text-error-400">Fehler</p>
-              <p className="text-sm text-error-600 dark:text-error-300 mt-0.5">{error}</p>
+              <p className="text-sm font-medium text-error-700">Fehler</p>
+              <p className="text-sm text-error-600 mt-0.5">{error}</p>
             </div>
           </div>
         </Card>

@@ -263,7 +263,7 @@ export function ClubDetailSheet({
         ) : error ? (
           <div
             role="alert"
-            className="rounded-md border border-error-300 bg-error-50 p-4 text-sm text-error-700 dark:border-error-700/50 dark:bg-error-900/20 dark:text-error-300 mt-6"
+            className="rounded-md border border-error-300 bg-error-50 p-4 text-sm text-error-700 mt-6"
           >
             {error}
           </div>

@@ -1037,7 +1037,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
 
               {/* Umbuchen-Dialog */}
               {rescheduleBooking && (
-                <Card className="border-warning-200 dark:border-warning-800">
+                <Card className="border-warning-200">
                   <CardContent className="p-4 space-y-3">
                     <p className="text-sm font-medium">
                       Buchung umbuchen:{' '}

@@ -80,7 +80,7 @@ export function PremiumAdminHero({
           className={cn(
             'text-2xs font-semibold px-2 py-0.5 rounded-full',
             isPlatformStaff
-              ? 'bg-info-50 text-info-700 dark:bg-info-900/20 dark:text-info-300'
+              ? 'bg-info-50 text-info-700'
               : 'bg-brand-light/10 text-brand-light dark:bg-brand-light/20 dark:text-success-300'
           )}
         >

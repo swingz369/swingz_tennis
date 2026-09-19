@@ -47,27 +47,27 @@ const dutyTypeLabels: Record<string, { label: string; icon: typeof HardHat; colo
   court_maintenance: {
     label: 'Platzpflege',
     icon: Wrench,
-    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
+    color: 'bg-info-100 text-info-800',
   },
   event_support: {
     label: 'Veranstaltung',
     icon: Calendar,
-    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
+    color: 'bg-info-100 text-info-800',
   },
   bar_duty: {
     label: 'Schankdienst',
     icon: GlassWater,
-    color: 'bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300',
+    color: 'bg-warning-100 text-warning-800',
   },
   cleaning: {
     label: 'Reinigung',
     icon: Sparkles,
-    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
+    color: 'bg-info-100 text-info-800',
   },
   coaching_assist: {
     label: 'Trainerhilfe',
     icon: Users,
-    color: 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300',
+    color: 'bg-success-100 text-success-800',
   },
   other: {
     label: 'Sonstiges',
@@ -270,8 +270,8 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
                             <Badge
                               className={`${
                                 myStatus === 'completed'
-                                  ? 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300'
-                                  : 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300'
+                                  ? 'bg-success-100 text-success-800'
+                                  : 'bg-info-100 text-info-800'
                               } text-xs gap-1`}
                             >
                               {myStatus === 'completed' ? (
@@ -349,7 +349,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
                     )}
 
                     {activeTab === 'my_duties' && myStatus === 'completed' && (
-                      <Badge className="bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300 text-xs gap-1">
+                      <Badge className="bg-success-100 text-success-800 text-xs gap-1">
                         <CheckCircle2 className="h-3 w-3" />
                         Erledigt — Vielen Dank!
                       </Badge>

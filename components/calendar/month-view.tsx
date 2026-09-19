@@ -196,7 +196,7 @@ export function MonthView({
                             session.bookedByUser
                               ? 'bg-error-50 text-error-800 border border-error-200'
                               : (session.currentBookings ?? 0) >= session.maxParticipants
-                                ? 'bg-warning-50 text-warning-800 dark:bg-warning-900/20 dark:text-warning-300'
+                                ? 'bg-warning-50 text-warning-800'
                                 : 'bg-info-50 text-info-800 hover:bg-info-100 cursor-pointer'
                           }`}
                           role="button"

@@ -171,17 +171,14 @@ export default function LeagueDetailClient({
         badge={
           <>
             {league.nuliga_url && (
-              <Badge
-                variant="outline"
-                className="gap-1 text-info-600 dark:text-info-400 border-info-200 dark:border-info-800/40"
-              >
+              <Badge variant="outline" className="gap-1 text-info-600 border-info-200">
                 <Link2 className="h-3 w-3" /> nuLiga verbunden
               </Badge>
             )}
             <Badge
               className={
                 league.status === 'active'
-                  ? 'bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-300'
+                  ? 'bg-success-100 text-success-800'
                   : 'bg-muted text-muted-foreground'
               }
             >

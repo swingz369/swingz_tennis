@@ -319,37 +319,23 @@ export default function AdminTrialApprovals() {
     switch (status) {
       case 'requested':
         return (
-          <Badge className="bg-warning-100 text-warning-700 border-warning-200 dark:bg-warning-900/30 dark:text-warning-400 dark:border-warning-700/50">
-            Angefragt
-          </Badge>
+          <Badge className="bg-warning-100 text-warning-700 border-warning-200">Angefragt</Badge>
         );
       case 'scheduled':
         return (
-          <Badge className="bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-700/50">
-            Geplant
-          </Badge>
+          <Badge className="bg-success-100 text-success-700 border-success-200">Geplant</Badge>
         );
       case 'cancelled':
-        return (
-          <Badge className="bg-error-100 text-error-700 border-error-200 dark:bg-error-900/30 dark:text-error-400 dark:border-error-700/50">
-            Abgelehnt
-          </Badge>
-        );
+        return <Badge className="bg-error-100 text-error-700 border-error-200">Abgelehnt</Badge>;
       case 'completed':
-        return (
-          <Badge className="bg-info-100 text-info-700 border-info-200 dark:bg-info-900/30 dark:text-info-400 dark:border-info-700/50">
-            Abgeschlossen
-          </Badge>
-        );
+        return <Badge className="bg-info-100 text-info-700 border-info-200">Abgeschlossen</Badge>;
       case 'no_show':
         return (
-          <Badge className="bg-error-100 text-error-700 border-error-200 dark:bg-error-900/30 dark:text-error-400 dark:border-error-700/50">
-            Nicht erschienen
-          </Badge>
+          <Badge className="bg-error-100 text-error-700 border-error-200">Nicht erschienen</Badge>
         );
       case 'converted':
         return (
-          <Badge className="bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-700/50">
+          <Badge className="bg-success-100 text-success-700 border-success-200">
             Mitglied geworden
           </Badge>
         );
@@ -405,7 +391,7 @@ export default function AdminTrialApprovals() {
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-error-50 border border-error-200 text-error-700 text-sm dark:bg-error-900/20 dark:border-error-700/30 dark:text-error-400">
+        <div className="p-4 rounded-xl bg-error-50 border border-error-200 text-error-700 text-sm">
           {error}
         </div>
       )}
@@ -424,9 +410,9 @@ export default function AdminTrialApprovals() {
               key={r.id}
               className={
                 r.status === 'requested'
-                  ? 'border-warning-200 bg-warning-50/30 dark:border-warning-700/40 dark:bg-warning-900/10'
+                  ? 'border-warning-200 bg-warning-50/30'
                   : r.status === 'cancelled'
-                    ? 'border-error-100 bg-error-50/20 dark:border-error-800/30 dark:bg-error-900/10'
+                    ? 'border-error-100 bg-error-50/20'
                     : ''
               }
             >
@@ -553,7 +539,7 @@ export default function AdminTrialApprovals() {
                       <div className="pt-2 flex flex-wrap items-center gap-2">
                         {r.status === 'scheduled' &&
                           (reminderSentIds.has(r.id) ? (
-                            <Badge className="bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-700/50 gap-1">
+                            <Badge className="bg-success-100 text-success-700 border-success-200 gap-1">
                               <CheckCircle className="h-3 w-3" /> Erinnerung gesendet
                             </Badge>
                           ) : (
@@ -595,7 +581,7 @@ export default function AdminTrialApprovals() {
                           </>
                         )}
                         {convertedIds.has(r.id) ? (
-                          <Badge className="bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-700/50 gap-1">
+                          <Badge className="bg-success-100 text-success-700 border-success-200 gap-1">
                             <CheckCircle className="h-3 w-3" /> Konvertiert
                           </Badge>
                         ) : (
@@ -691,7 +677,7 @@ export default function AdminTrialApprovals() {
                       Trainer zuweisen
                     </label>
                     {trainers.length === 0 ? (
-                      <div className="flex items-center gap-2 p-3 rounded-xl bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700/30 text-warning-700 dark:text-warning-400 text-sm">
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-warning-50 border border-warning-200 text-warning-700 text-sm">
                         <AlertCircle className="h-4 w-4 shrink-0" />
                         Keine Trainer verfügbar. Bitte zuerst Trainer im System anlegen.
                       </div>
@@ -724,7 +710,7 @@ export default function AdminTrialApprovals() {
                       Platz zuweisen
                     </label>
                     {courts.length === 0 ? (
-                      <div className="flex items-center gap-2 p-3 rounded-xl bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700/30 text-warning-700 dark:text-warning-400 text-sm">
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-warning-50 border border-warning-200 text-warning-700 text-sm">
                         <AlertCircle className="h-4 w-4 shrink-0" />
                         Keine Plätze verfügbar. Bitte zuerst Plätze im System anlegen.
                       </div>
@@ -831,7 +817,7 @@ export default function AdminTrialApprovals() {
                   </p>
 
                   {convertError && (
-                    <div className="p-3 rounded-xl bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-700/30 text-error-700 dark:text-error-400 text-sm flex items-start gap-2">
+                    <div className="p-3 rounded-xl bg-error-50 border border-error-200 text-error-700 text-sm flex items-start gap-2">
                       <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                       {convertError}
                     </div>

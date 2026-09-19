@@ -111,7 +111,7 @@ export default function ClubsAdminPage() {
           <CardContent>
             <form onSubmit={handleCreateClub} className="space-y-4">
               {error && (
-                <div className="p-3 bg-error-50 dark:bg-error-900/10 border border-error-200 dark:border-error-700/30 rounded-xl text-error-700 dark:text-error-400 text-sm">
+                <div className="p-3 bg-error-50 border border-error-200 rounded-xl text-error-700 text-sm">
                   {error}
                 </div>
               )}

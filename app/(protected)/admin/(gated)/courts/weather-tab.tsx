@@ -49,17 +49,17 @@ function RecommendationBadge({ level }: { level: 'green' | 'yellow' | 'red' }) {
   const config = {
     green: {
       label: 'Freigegeben',
-      color: 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300',
+      color: 'bg-success-100 text-success-800',
       icon: Sun,
     },
     yellow: {
       label: 'Eingeschränkt',
-      color: 'bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300',
+      color: 'bg-warning-100 text-warning-800',
       icon: AlertTriangle,
     },
     red: {
       label: 'Gesperrt',
-      color: 'bg-error-100 text-error-800 dark:bg-error-900/30 dark:text-error-300',
+      color: 'bg-error-100 text-error-800',
       icon: CloudRain,
     },
   };
@@ -166,8 +166,8 @@ export default function WeatherClient() {
           </div>
         </div>
         {weather.recommendation !== 'green' && (
-          <div className="mt-4 p-3 rounded-xl bg-warning-50 dark:bg-warning-900/30 border border-warning-200 dark:border-warning-800">
-            <p className="text-sm text-warning-800 dark:text-warning-300">
+          <div className="mt-4 p-3 rounded-xl bg-warning-50 border border-warning-200">
+            <p className="text-sm text-warning-800">
               {weather.recommendation === 'red'
                 ? '⚠️ Achtung: Schlechte Wetterbedingungen — Außenplätze sollten gesperrt werden.'
                 : '⚡ Eingeschränkte Bedingungen — Bitte prüfe die Platzverhältnisse vor Ort.'}
