@@ -1,4 +1,5 @@
 'use client';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -271,8 +272,15 @@ export default function WorkDutiesClient({
     }
   };
 
+  const [confirm, confirmDialog] = useConfirmDialog();
+
   const handleDeleteDuty = async (dutyId: string) => {
-    if (!confirm('Arbeitsdienst wirklich löschen?')) return;
+    const ok = await confirm({
+      title: 'Arbeitsdienst löschen',
+      description: 'Arbeitsdienst wirklich löschen?',
+      confirmLabel: 'Löschen',
+    });
+    if (!ok) return;
     try {
       const res = await apiFetch(`/api/work-duties/${dutyId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed');
@@ -425,6 +433,7 @@ export default function WorkDutiesClient({
 
   return (
     <div className="space-y-6">
+      {confirmDialog}
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[

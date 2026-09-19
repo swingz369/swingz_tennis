@@ -45,7 +45,7 @@ ratchet() { # name max pattern [exclude-regex]
 # <h1> gehört in PageHeader. Ausnahmen: Vollbild-/Bestätigungsseiten ohne Seitenrahmen und Fehlerseiten,
 # das Profil (Personenname als Titel).
 ratchet 'h1 außerhalb PageHeader' 0 '<h1' 'components/ui/page-header|payment-success|shop/success|select-admin-club|/error\.tsx|subscription-dunning-block|components/member-profile\.tsx'
-ratchet 'window.confirm statt ConfirmDialog' 10 '(^|[^A-Za-z.])(window\.)?confirm\(' 'onConfirm|handleConfirm'
+ratchet 'window.confirm statt ConfirmDialog' 0 '(^|[^A-Za-z.])(window\.)?confirm\(' 'onConfirm|handleConfirm|await confirm\('
 ratchet 'rohe <table> statt <Table>' 10 '<table' 'components/ui/table\.tsx'
 ratchet 'Pixel-Schriftgrößen text-[Npx]' 9 'text-\[[0-9]+px\]' 'components/ui/'
 ratchet 'CenteredModal außerhalb ui/' 29 '<CenteredModal' 'components/ui/'

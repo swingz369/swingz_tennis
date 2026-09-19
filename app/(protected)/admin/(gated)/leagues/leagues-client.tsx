@@ -1,4 +1,5 @@
 'use client';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -225,15 +226,16 @@ export default function LeaguesClient() {
     fetchLeagues();
   }, [fetchLeagues]);
 
+  const [confirm, confirmDialog] = useConfirmDialog();
+
   const handleDelete = async (league: League) => {
     const teamHint = league.teams.length > 0 ? ` samt ${league.teams.length} Team(s)` : '';
-    if (
-      !confirm(
-        `Liga "${league.name}"${teamHint} und allen Spieltagen wirklich löschen? Das lässt sich nicht rückgängig machen.`
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Liga löschen',
+      description: `Liga "${league.name}"${teamHint} und allen Spieltagen wirklich löschen? Das lässt sich nicht rückgängig machen.`,
+      confirmLabel: 'Löschen',
+    });
+    if (!ok) return;
     try {
       const res = await apiFetch(`/api/leagues/${league.id}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
@@ -283,6 +285,7 @@ export default function LeaguesClient() {
 
   return (
     <div className="space-y-6">
+      {confirmDialog}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -132,8 +133,15 @@ export function SpecialEventsClient() {
     }
   };
 
+  const [confirm, confirmDialog] = useConfirmDialog();
+
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`"${name}" wirklich löschen?`)) return;
+    const ok = await confirm({
+      title: 'Veranstaltung löschen',
+      description: `"${name}" wirklich löschen?`,
+      confirmLabel: 'Löschen',
+    });
+    if (!ok) return;
     await apiFetch(`/api/admin/special-events/${id}`, { method: 'DELETE' });
     toast.success('Gelöscht');
     load();
@@ -141,6 +149,7 @@ export function SpecialEventsClient() {
 
   return (
     <div className="space-y-6">
+      {confirmDialog}
       <PageHeader
         title="Sonderveranstaltungen"
         description="Sommercamp, Intensivkurse, Schnupperstunden & mehr"

@@ -1,4 +1,5 @@
 'use client';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { extractErrorMessage, getErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -252,13 +253,16 @@ export default function AdminShopPage() {
     }
   };
 
+  const [confirm, confirmDialog] = useConfirmDialog();
+
   const handleCancelOrder = async (orderId: string) => {
-    if (
-      !confirm(
-        'Möchtest du diese Bestellung wirklich stornieren? Bei bereits bezahlten Bestellungen muss die Rückerstattung manuell über das Stripe-Dashboard erfolgen.'
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: 'Bestellung stornieren',
+      description:
+        'Möchtest du diese Bestellung wirklich stornieren? Bei bereits bezahlten Bestellungen muss die Rückerstattung manuell über das Stripe-Dashboard erfolgen.',
+      confirmLabel: 'Stornieren',
+    });
+    if (!ok) return;
     await handleAdvanceStatus(orderId, 'cancelled');
   };
 
@@ -421,6 +425,7 @@ export default function AdminShopPage() {
 
   return (
     <div className="space-y-6">
+      {confirmDialog}
       <PageHeader
         title="Shop verwalten"
         description="Produkte, Bestellungen & Vereinsshop"
