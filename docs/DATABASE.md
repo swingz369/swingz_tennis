@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 18. September 2026 (`pricing_rules` um fehlende Spalten ergänzt; davor `league_players.dtb_id`/`birth_year` ergänzt); davor 14. September 2026 (Autorisierungs-Check in `generate_season_invoices_atomic` nachgetragen); davor 28. August 2026 (`training_groups` entfernt; davor 16. August 2026: Migrations-Tracking ersetzt, Owner-UPDATE-Policy auf `clubs`, Audit-Trigger auf den Finanztabellen; Live-Prüfung per postgres-js auf `supabase.swingz.cloud:6543`)
+> Zuletzt verifiziert: 19. September 2026 (Policies auf `user_training_preferences` für Saison-Präferenzen)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -189,6 +189,22 @@ unverändert (`admins_manage_pricing`, `club_members_see_pricing`, beide über `
 Drizzle-Transaktion in `DELETE /api/clubs/[id]`. RLS des Aufrufers gilt (`clubs_update`,
 `memberships_manage_admin`); ein fremder Verein liefert `P0002`. Hard-Delete bleibt außerhalb:
 `clubs_delete` kennt nur `is_superadmin_of`, der Owner hat keine Membership → `systemDb`.
+
+## `user_training_preferences` — Policies für die Migration auf RLS (Stand 19.09.2026, lokal angewendet)
+
+Migration `20260919100000_preferences_rls_admin_update.sql`. Die Routen unter
+`app/api/seasons/[id]/preferences/` laufen jetzt über `SeasonPreferenceService` mit RLS statt
+Drizzle. Zwei Lücken in den Policies mussten dafür geschlossen werden:
+
+- **UPDATE für Admins fehlte.** Die Route erlaubt Vereins-Admins, Präferenzen ihres Vereins zu
+  ändern; unter RLS hätte das still 0 Zeilen getroffen. Neu: `Admins can update preferences in club`
+  (`is_club_admin(club_id)`).
+- **INSERT prüfte nur `user_id` und `preferences_open`.** Eine Zeile mit fremder `club_id` oder
+  ohne Vereinszugehörigkeit war möglich. `Users can insert own preferences while open` verlangt
+  jetzt `is_club_member(club_id)` und `seasons.club_id = club_id`.
+
+Zu wissen: `seasons_select` enthält `is_superadmin()` — ein Superadmin sieht per RLS auch Saisons
+von Vereinen, die ihm nicht zugewiesen sind. Der Service prüft deshalb zusätzlich die Mitgliedschaft.
 
 ## Datenzugriffsmuster (ADR-005) — Diagramm
 

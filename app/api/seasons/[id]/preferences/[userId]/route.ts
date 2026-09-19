@@ -1,29 +1,14 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { withApiAuth, forbiddenResponse } from '@/lib/api-auth';
+import { ApiException, internalErrorResponse, safeErrorMessage } from '@/lib/api-error';
+import { withApiAuth } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
-import { db } from '@/src/infrastructure/persistence/db';
-import { seasons, userTrainingPreferences, users } from '@/src/infrastructure/persistence/schema';
-import { and, eq } from 'drizzle-orm';
+import { SeasonPreferenceService } from '@/application/services/season-preference.service';
 import type { UpdatePreferencesRequest } from '@/lib/types/season-planning';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:[id]:preferences:[userId]');
-
-// Tenant isolation: verifyRole() checks only the caller's GLOBAL role, not
-// membership in the season's own club — an admin of club A could otherwise
-// read/write club B's member preferences. Own-preference access bypasses
-// this check on purpose (the row already belongs to the caller).
-function hasClubAdminAccess(
-  memberships: { club_id: string | null; role: string }[],
-  clubId: string
-) {
-  return memberships.some(
-    (m) => m.club_id === clubId && (m.role === 'admin' || m.role === 'superadmin')
-  );
-}
 
 interface RouteContext {
   params: Promise<{
@@ -32,230 +17,67 @@ interface RouteContext {
   }>;
 }
 
-/**
- * GET /api/seasons/[id]/preferences/[userId]
- * Get a specific user's preference for a season
- *
- * Users can only view their own preference
- * Admins can view any preference
- */
+/** Fachliche Fehler im bisherigen Format `{ error: string }` — Seiten lesen `error` als Text. */
+function fail(error: unknown) {
+  if (error instanceof ApiException) {
+    return NextResponse.json({ error: safeErrorMessage(error) }, { status: error.status });
+  }
+  log.error('preferences/[userId] error:', error);
+  return internalErrorResponse();
+}
+
+/** GET — Präferenz eines Nutzers. Nutzer sehen nur ihre eigene, Vereins-Admins jede. */
 export async function GET(request: NextRequest, context: RouteContext) {
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
   return withApiAuth(request, async (auth) => {
-    const { id: seasonId, userId } = await context.params;
     try {
-      // Verify season exists
-      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-
-      if (!season) {
-        return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
-      }
-
-      // Check permissions
-      const isOwnPreference = userId === auth.user?.id;
-      if (!isOwnPreference && !hasClubAdminAccess(auth.memberships, season.club_id)) {
-        return forbiddenResponse('Du kannst nur deine eigenen Präferenzen einsehen');
-      }
-
-      // Fetch preference with user details
-      const [result] = await db
-        .select({
-          preference: userTrainingPreferences,
-          user_name: users.full_name,
-          user_email: users.email,
-        })
-        .from(userTrainingPreferences)
-        .leftJoin(users, eq(userTrainingPreferences.user_id, users.id))
-        .where(
-          and(
-            eq(userTrainingPreferences.season_id, seasonId),
-            eq(userTrainingPreferences.user_id, userId)
-          )
-        );
-
-      if (!result) {
-        return NextResponse.json({ error: 'Präferenz nicht gefunden' }, { status: 404 });
-      }
-
-      return NextResponse.json({
-        success: true,
-        preference: {
-          ...result.preference,
-          user_name: result.user_name,
-          user_email: result.user_email,
-        },
-      });
+      const { id: seasonId, userId } = await context.params;
+      const preference = await new SeasonPreferenceService(auth).get(seasonId, userId);
+      return NextResponse.json({ success: true, preference });
     } catch (error) {
-      log.error(`GET /api/seasons/[id]/preferences/${userId} error:`, error);
-      return internalErrorResponse();
+      return fail(error);
     }
   });
 }
 
-/**
- * PATCH /api/seasons/[id]/preferences/[userId]
- * Update a user's preference (draft mode, not submitted)
- *
- * Users can only update their own preference
- * Admins can update any preference
- */
+/** PATCH — Präferenz ändern (Entwurf). Nutzer nur die eigene, solange offen; Vereins-Admins jede. */
 export async function PATCH(request: NextRequest, context: RouteContext) {
   return withCSRFProtection(request, async () => {
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
-      const { id: seasonId, userId } = await context.params;
       try {
-        // Verify season exists
-        const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-
-        if (!season) {
-          return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
-        }
-
-        // Check permissions
-        const isOwnPreference = userId === auth.user?.id;
-        const isClubAdmin = hasClubAdminAccess(auth.memberships, season.club_id);
-
-        if (!isOwnPreference && !isClubAdmin) {
-          return forbiddenResponse('Du kannst nur deine eigenen Präferenzen ändern');
-        }
-
-        // Check if preferences are still open
-        if (!season.preferences_open && !isClubAdmin) {
-          return NextResponse.json(
-            { error: 'Präferenzen sind für diese Saison nicht geöffnet' },
-            { status: 400 }
-          );
-        }
-
-        // Fetch existing preference
-        const [existingPreference] = await db
-          .select()
-          .from(userTrainingPreferences)
-          .where(
-            and(
-              eq(userTrainingPreferences.season_id, seasonId),
-              eq(userTrainingPreferences.user_id, userId)
-            )
-          );
-
-        if (!existingPreference) {
-          return NextResponse.json({ error: 'Präferenz nicht gefunden' }, { status: 404 });
-        }
-
+        const { id: seasonId, userId } = await context.params;
         const body: UpdatePreferencesRequest = await request.json();
-
-        // Build update object
-        const updateData: Partial<typeof userTrainingPreferences.$inferInsert> = {};
-
-        if (body.user_role !== undefined) updateData.user_role = body.user_role;
-        if (body.preferred_level !== undefined) updateData.preferred_level = body.preferred_level;
-        if (body.preferred_age_group !== undefined)
-          updateData.preferred_age_group = body.preferred_age_group;
-        if (body.preferred_group_ids !== undefined)
-          updateData.preferred_group_ids = body.preferred_group_ids;
-        if (body.weekly_availability !== undefined)
-          updateData.weekly_availability = body.weekly_availability;
-        if (body.unavailable_dates !== undefined)
-          updateData.unavailable_dates = body.unavailable_dates;
-        if (body.max_sessions_per_week !== undefined)
-          updateData.max_sessions_per_week = body.max_sessions_per_week;
-        if (body.preferred_court_ids !== undefined)
-          updateData.preferred_court_ids = body.preferred_court_ids;
-        if (body.can_teach_groups !== undefined)
-          updateData.can_teach_groups = body.can_teach_groups;
-        if (body.priority !== undefined) updateData.priority = body.priority;
-        if (body.special_requests !== undefined)
-          updateData.special_requests = body.special_requests;
-        if (body.notes !== undefined) updateData.notes = body.notes;
-
-        // Handle submission
-        if (body.is_submitted !== undefined) {
-          updateData.is_submitted = body.is_submitted;
-          if (body.is_submitted) {
-            updateData.submitted_at = new Date();
-          }
-        }
-
-        // Perform update
-        const [updatedPreference] = await db
-          .update(userTrainingPreferences)
-          .set(updateData)
-          .where(eq(userTrainingPreferences.id, existingPreference.id))
-          .returning();
-
+        const preference = await new SeasonPreferenceService(auth).update(seasonId, userId, body);
         return NextResponse.json({
           success: true,
-          preference: updatedPreference,
+          preference,
           message: 'Präferenz erfolgreich aktualisiert',
         });
       } catch (error) {
-        log.error(`PATCH /api/seasons/[id]/preferences/${userId} error:`, error);
-        return internalErrorResponse();
+        return fail(error);
       }
     });
   });
 }
 
-/**
- * DELETE /api/seasons/[id]/preferences/[userId]
- * Delete a user's preference
- *
- * Users can only delete their own preference
- * Admins can delete any preference
- */
+/** DELETE — Präferenz löschen. Nutzer nur die eigene, Vereins-Admins jede. */
 export async function DELETE(request: NextRequest, context: RouteContext) {
   return withCSRFProtection(request, async () => {
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
-      const { id: seasonId, userId } = await context.params;
       try {
-        // Verify season exists (needed to scope the admin-access check to
-        // THIS season's club, see hasClubAdminAccess above)
-        const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-        if (!season) {
-          return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
-        }
-
-        // Check permissions
-        const isOwnPreference = userId === auth.user?.id;
-        if (!isOwnPreference && !hasClubAdminAccess(auth.memberships, season.club_id)) {
-          return forbiddenResponse('Du kannst nur deine eigenen Präferenzen löschen');
-        }
-
-        // Fetch existing preference
-        const [existingPreference] = await db
-          .select()
-          .from(userTrainingPreferences)
-          .where(
-            and(
-              eq(userTrainingPreferences.season_id, seasonId),
-              eq(userTrainingPreferences.user_id, userId)
-            )
-          );
-
-        if (!existingPreference) {
-          return NextResponse.json({ error: 'Präferenz nicht gefunden' }, { status: 404 });
-        }
-
-        // Delete preference
-        await db
-          .delete(userTrainingPreferences)
-          .where(eq(userTrainingPreferences.id, existingPreference.id));
-
-        return NextResponse.json({
-          success: true,
-          message: 'Präferenz erfolgreich gelöscht',
-        });
+        const { id: seasonId, userId } = await context.params;
+        await new SeasonPreferenceService(auth).remove(seasonId, userId);
+        return NextResponse.json({ success: true, message: 'Präferenz erfolgreich gelöscht' });
       } catch (error) {
-        log.error(`DELETE /api/seasons/${seasonId}/preferences/${userId} error:`, error);
-        return internalErrorResponse();
+        return fail(error);
       }
     });
   });

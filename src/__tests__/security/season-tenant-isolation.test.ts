@@ -52,6 +52,10 @@ describe('tenant isolation: app/api/seasons/[id]/**/route.ts', () => {
       'copy-groups/route.ts',
       'calendar/route.ts',
       'calendar/toggle/route.ts',
+      // ADR-005: Service (`SeasonPreferenceService`) prüft die Mitgliedschaft in der Saison-Club,
+      // Repository liest per RLS-Client. Der Guard steht nicht mehr im Route-Quelltext.
+      'preferences/route.ts',
+      'preferences/[userId]/route.ts',
     ].map((p) => path.join(seasonsIdDir, p))
   );
 

@@ -1,12 +1,10 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { ApiException, internalErrorResponse, safeErrorMessage } from '@/lib/api-error';
+import { withApiAuth } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
-import { db } from '@/src/infrastructure/persistence/db';
-import { seasons, userTrainingPreferences, users } from '@/src/infrastructure/persistence/schema';
-import { and, eq, desc } from 'drizzle-orm';
+import { SeasonPreferenceService } from '@/application/services/season-preference.service';
 import type { SubmitPreferencesRequest } from '@/lib/types/season-planning';
 import { createLogger } from '@/lib/logger';
 
@@ -18,17 +16,20 @@ interface RouteContext {
   }>;
 }
 
+/** Fachliche Fehler im bisherigen Format `{ error: string }` — Seiten lesen `error` als Text. */
+function fail(error: unknown) {
+  if (error instanceof ApiException) {
+    return NextResponse.json({ error: safeErrorMessage(error) }, { status: error.status });
+  }
+  log.error('preferences error:', error);
+  return internalErrorResponse();
+}
+
 /**
  * GET /api/seasons/[id]/preferences
- * Get all user preferences for a season
+ * Vereins-Admins: alle Präferenzen der Saison. Alle anderen: nur die eigene.
  *
- * Admin/Superadmin: See all preferences
- * Others: See only their own preference
- *
- * Query params:
- * - user_id: Filter by user (admin only)
- * - is_submitted: Filter by submission status
- * - user_role: Filter by role (admin only)
+ * Query params (nur Admins): user_id, is_submitted, user_role
  */
 export async function GET(request: NextRequest, context: RouteContext) {
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
@@ -38,82 +39,23 @@ export async function GET(request: NextRequest, context: RouteContext) {
     try {
       const { id: seasonId } = await context.params;
       const { searchParams } = new URL(request.url);
+      const isSubmitted = searchParams.get('is_submitted');
 
-      // Verify season exists
-      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-
-      if (!season) {
-        return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
-      }
-
-      // Vereinszugehörigkeit gilt für jede Rolle — auch Admins (die Route liest per Drizzle ohne RLS).
-      const hasClubAccess =
-        auth.role === 'owner' || auth.memberships.some((m) => m.club_id === season.club_id);
-      if (!hasClubAccess) {
-        return forbiddenResponse('Kein Zugriff auf diese Saison');
-      }
-
-      const isAdmin = await verifyRole(auth, 'admin');
-      const isSuperadmin = await verifyRole(auth, 'superadmin');
-
-      // Build query conditions
-      const conditions = [eq(userTrainingPreferences.season_id, seasonId)];
-
-      // Non-admins can only see their own preferences
-      if (!isAdmin && !isSuperadmin) {
-        conditions.push(eq(userTrainingPreferences.user_id, auth.user?.id));
-      } else {
-        // Admin filters
-        const userIdFilter = searchParams.get('user_id');
-        const userRoleFilter = searchParams.get('user_role');
-        const isSubmittedFilter = searchParams.get('is_submitted');
-
-        if (userIdFilter) {
-          conditions.push(eq(userTrainingPreferences.user_id, userIdFilter));
-        }
-
-        if (userRoleFilter) {
-          conditions.push(eq(userTrainingPreferences.user_role, userRoleFilter));
-        }
-
-        if (isSubmittedFilter !== null) {
-          conditions.push(eq(userTrainingPreferences.is_submitted, isSubmittedFilter === 'true'));
-        }
-      }
-
-      // Fetch preferences with user details
-      const preferences = await db
-        .select({
-          preference: userTrainingPreferences,
-          user_name: users.full_name,
-          user_email: users.email,
-        })
-        .from(userTrainingPreferences)
-        .leftJoin(users, eq(userTrainingPreferences.user_id, users.id))
-        .where(and(...conditions))
-        .orderBy(desc(userTrainingPreferences.submitted_at));
-
-      return NextResponse.json({
-        success: true,
-        preferences: preferences.map((p) => ({
-          ...p.preference,
-          user_name: p.user_name,
-          user_email: p.user_email,
-        })),
-        count: preferences.length,
+      const preferences = await new SeasonPreferenceService(auth).list(seasonId, {
+        userId: searchParams.get('user_id') ?? undefined,
+        userRole: searchParams.get('user_role') ?? undefined,
+        isSubmitted: isSubmitted === null ? undefined : isSubmitted === 'true',
       });
+      return NextResponse.json({ success: true, preferences, count: preferences.length });
     } catch (error) {
-      log.error(`GET /api/seasons/[id]/preferences error:`, error);
-      return internalErrorResponse();
+      return fail(error);
     }
   });
 }
 
 /**
  * POST /api/seasons/[id]/preferences
- * Submit or update user preferences for a season
- *
- * Body: SubmitPreferencesRequest
+ * Eigene Präferenzen abgeben oder aktualisieren. Body: SubmitPreferencesRequest
  */
 export async function POST(request: NextRequest, context: RouteContext) {
   return withCSRFProtection(request, async () => {
@@ -123,119 +65,23 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return withApiAuth(request, async (auth) => {
       try {
         const { id: seasonId } = await context.params;
-
-        // Verify season exists
-        const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-
-        if (!season) {
-          return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
-        }
-
-        // Verify user has access to this club
-        const hasClubAccess = auth.memberships.some((m) => m.club_id === season.club_id);
-        if (!hasClubAccess) {
-          return forbiddenResponse('Kein Zugriff auf diese Saison');
-        }
-
-        // Check if preferences are open
-        if (!season.preferences_open) {
-          return NextResponse.json(
-            { error: 'Präferenzen sind für diese Saison nicht geöffnet' },
-            { status: 400 }
-          );
-        }
-
-        // Check deadline
-        if (season.preferences_deadline && new Date() > season.preferences_deadline) {
-          return NextResponse.json({ error: 'Präferenzfrist ist abgelaufen' }, { status: 400 });
-        }
-
         const body: SubmitPreferencesRequest = await request.json();
-
-        // Validate required fields
-        if (!body.user_role || !body.weekly_availability) {
-          return NextResponse.json(
-            { error: 'Pflichtfelder fehlen: user_role, weekly_availability' },
-            { status: 400 }
-          );
-        }
-
-        // Check if preference already exists
-        const [existingPreference] = await db
-          .select()
-          .from(userTrainingPreferences)
-          .where(
-            and(
-              eq(userTrainingPreferences.season_id, seasonId),
-              eq(userTrainingPreferences.user_id, auth.user?.id)
-            )
-          );
-
-        if (existingPreference) {
-          // Update existing preference
-          const [updated] = await db
-            .update(userTrainingPreferences)
-            .set({
-              user_role: body.user_role,
-              preferred_level: body.preferred_level || null,
-              preferred_age_group: body.preferred_age_group || null,
-              preferred_group_ids: body.preferred_group_ids || [],
-              weekly_availability: body.weekly_availability,
-              unavailable_dates: body.unavailable_dates || [],
-              max_sessions_per_week: body.max_sessions_per_week || null,
-              preferred_court_ids: body.preferred_court_ids || [],
-              can_teach_groups: body.can_teach_groups || [],
-              priority: body.priority || 5,
-              special_requests: body.special_requests || null,
-              notes: body.notes || null,
-              is_submitted: true,
-              submitted_at: new Date(),
-            })
-            .where(eq(userTrainingPreferences.id, existingPreference.id))
-            .returning();
-
-          return NextResponse.json({
+        const { preference, created } = await new SeasonPreferenceService(auth).submit(
+          seasonId,
+          body
+        );
+        return NextResponse.json(
+          {
             success: true,
-            preference: updated,
-            message: 'Präferenzen erfolgreich aktualisiert',
-          });
-        } else {
-          // Create new preference
-          const [newPreference] = await db
-            .insert(userTrainingPreferences)
-            .values({
-              season_id: seasonId,
-              user_id: auth.user?.id,
-              club_id: season.club_id,
-              user_role: body.user_role,
-              preferred_level: body.preferred_level || null,
-              preferred_age_group: body.preferred_age_group || null,
-              preferred_group_ids: body.preferred_group_ids || [],
-              weekly_availability: body.weekly_availability,
-              unavailable_dates: body.unavailable_dates || [],
-              max_sessions_per_week: body.max_sessions_per_week || null,
-              preferred_court_ids: body.preferred_court_ids || [],
-              can_teach_groups: body.can_teach_groups || [],
-              priority: body.priority || 5,
-              special_requests: body.special_requests || null,
-              notes: body.notes || null,
-              is_submitted: true,
-              submitted_at: new Date(),
-            })
-            .returning();
-
-          return NextResponse.json(
-            {
-              success: true,
-              preference: newPreference,
-              message: 'Präferenzen erfolgreich übermittelt',
-            },
-            { status: 201 }
-          );
-        }
+            preference,
+            message: created
+              ? 'Präferenzen erfolgreich übermittelt'
+              : 'Präferenzen erfolgreich aktualisiert',
+          },
+          { status: created ? 201 : 200 }
+        );
       } catch (error) {
-        log.error(`POST /api/seasons/[id]/preferences error:`, error);
-        return internalErrorResponse();
+        return fail(error);
       }
     });
   });

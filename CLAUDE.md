@@ -62,7 +62,8 @@ Grund: `docs/ARCHIV/2026-09-13-architektur-analyse-datenzugriff.md`. Rund die H�
 umging RLS und verließ sich auf Anwendungscode für die Mandantentrennung — zwei echte
 Datenlecks im Juli waren die Folge. Neue und migrierte Domänen halten sich an dieses Muster.
 Bereits migriert: Stundensätze (`app/api/hourly-rates/`), SEPA-Mandate
-(`app/api/sepa-mandates/`), Zahlungseinstellungen (`app/api/payment-settings/`) — je ein
+(`app/api/sepa-mandates/`), Zahlungseinstellungen (`app/api/payment-settings/`), Saison-Präferenzen
+(`app/api/seasons/[id]/preferences/`) — je ein
 Service unter `src/application/services/`, ein Repository unter
 `src/infrastructure/persistence/repositories/`:
 
