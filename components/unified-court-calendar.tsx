@@ -20,6 +20,7 @@ import {
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
 import { useActingAsMemberId } from '@/hooks/use-effective-member';
 import { useCourts } from '@/hooks/use-courts';
+import { BookingConfirmDialog } from '@/components/booking/booking-confirm-dialog';
 import { useSessions, type Session } from '@/hooks/use-sessions';
 import { MonthView } from '@/components/calendar/month-view';
 import { AgendaView } from '@/components/calendar/agenda-view';
@@ -195,8 +196,13 @@ export default function UnifiedCourtCalendar({
   const queryClient = useQueryClient();
 
   // ── Buchungs-Aktionen (Buchen, Stornieren, Direktbuchung, Monatsansicht) ──
-  const { handleBookSession, handleStatusChange, handleBookSlot, handleCancelBooking } =
-    useCourtBookingActions({ clubId, memberId, sessions, openingHours });
+  const {
+    handleBookSession,
+    handleStatusChange,
+    handleBookSlot,
+    handleCancelBooking,
+    bookingDialog,
+  } = useCourtBookingActions({ clubId, memberId, sessions, openingHours, courts });
 
   // ── DnD (Admin) ──
   const { activeId, draggedSession, sensors, handleDragStart, handleDragEnd } =
@@ -641,6 +647,7 @@ export default function UnifiedCourtCalendar({
       {blockDialogEl}
       {adHocDialogEl}
       {sessionCancelDialogEl}
+      <BookingConfirmDialog {...bookingDialog} clubId={clubId} memberId={memberId} />
     </>
   ) : (
     <>
@@ -648,6 +655,7 @@ export default function UnifiedCourtCalendar({
       {blockDialogEl}
       {adHocDialogEl}
       {sessionCancelDialogEl}
+      <BookingConfirmDialog {...bookingDialog} clubId={clubId} memberId={memberId} />
     </>
   );
 

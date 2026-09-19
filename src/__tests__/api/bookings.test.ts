@@ -45,10 +45,20 @@ function bookingRequest(body: unknown) {
   return makeApiRequest('http://localhost/api/bookings', { method: 'POST', json: body });
 }
 
+/** Nächster Sonntag, mindestens 3 Tage voraus — die Route lehnt Vergangenes ab, ein
+ *  festes Datum würde also irgendwann alle Tests dieser Datei kippen. */
+function upcomingSunday(): Date {
+  const d = new Date(Date.now() + 3 * 86_400_000);
+  d.setUTCDate(d.getUTCDate() + ((7 - d.getUTCDay()) % 7));
+  d.setUTCHours(10, 0, 0, 0);
+  return d;
+}
+const sundayStart = upcomingSunday();
+
 const validSession = {
   id: SESSION_ID,
-  timeslot_start: '2026-09-20T10:00:00.000Z', // Sonntag
-  timeslot_end: '2026-09-20T11:00:00.000Z',
+  timeslot_start: sundayStart.toISOString(), // Sonntag
+  timeslot_end: new Date(sundayStart.getTime() + 3_600_000).toISOString(),
   max_participants: 4,
   court_id: null,
   schedule_id: 'schedule-1',

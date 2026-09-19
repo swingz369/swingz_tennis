@@ -9,10 +9,11 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
 import { isDayClosed, CLOSED_DAY_ERROR } from '@/lib/booking/opening-hours';
+import { loadBookingRules, checkBookingRules } from '@/lib/booking/booking-rules';
 import { resolveEffectiveMemberId } from '@/lib/family/family-auth';
 import { berlinDateTime } from '@/lib/berlin-time';
 import { createLogger } from '@/lib/logger';
@@ -44,6 +45,12 @@ export async function POST(req: NextRequest) {
         { error: 'courtId, date, startTime, endTime und clubId sind erforderlich' },
         { status: 400 }
       );
+    }
+
+    // Der Verein kommt aus dem Body: ohne diese Prüfung buchte ein Mitglied von Verein A
+    // (Service-Client unten) Plätze in Verein B.
+    if (!verifyClubAccess(auth, clubId)) {
+      return forbiddenResponse('Kein Zugriff auf diesen Verein');
     }
 
     // memberId darf nur der eigene User sein — oder ein minderjähriges Kind
@@ -98,40 +105,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Check booking rules (max bookings per week + payment)
-    const { data: rules } = await serviceClient
-      .from('booking_rules')
-      .select('max_bookings_per_week, require_payment')
+    // Der Platz muss zu diesem Verein gehören.
+    const { data: court } = await serviceClient
+      .from('courts')
+      .select('id')
+      .eq('id', courtId)
       .eq('club_id', clubId)
-      .eq('applies_to_role', 'member')
       .maybeSingle();
-
-    const requiresPayment = rules?.require_payment === true;
-
-    if (rules?.max_bookings_per_week) {
-      const sessionDate = new Date(timeslotStart);
-      const weekStart = new Date(sessionDate);
-      weekStart.setDate(sessionDate.getDate() - ((sessionDate.getDay() + 6) % 7));
-      weekStart.setHours(0, 0, 0, 0);
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 7);
-
-      const { count: weekBookings } = await serviceClient
-        .from('bookings')
-        .select('id', { count: 'exact', head: true })
-        .eq('member_id', effectiveMemberId)
-        .eq('club_id', clubId)
-        .in('status', ['confirmed', 'pending'])
-        .gte('session_start_time', weekStart.toISOString())
-        .lt('session_start_time', weekEnd.toISOString());
-
-      if ((weekBookings ?? 0) >= rules.max_bookings_per_week) {
-        return NextResponse.json(
-          { error: `Maximum ${rules.max_bookings_per_week} Buchungen pro Woche erreicht` },
-          { status: 409 }
-        );
-      }
+    if (!court) {
+      return NextResponse.json({ error: 'Platz nicht gefunden' }, { status: 404 });
     }
+
+    // 2. Buchungsregeln des Vereins (Dauer, Vorlauf, Tages-/Wochenlimit, Prime-Time, …)
+    const rules = await loadBookingRules(serviceClient, clubId);
+    const check = await checkBookingRules({
+      db: serviceClient,
+      rules,
+      clubId,
+      memberId: effectiveMemberId,
+      start: timeslotStart,
+      end: timeslotEnd,
+      kind: 'court',
+    });
+    if (!check.ok) {
+      return NextResponse.json({ error: check.error }, { status: 409 });
+    }
+    const { requiresPayment, requiresApproval } = check;
 
     // 3. Calculate week number (ISO week)
     // Overlap is enforced by the sessions_no_overlap exclusion constraint in the DB
@@ -185,7 +184,7 @@ export async function POST(req: NextRequest) {
         start_time: timeslotStart.toISOString(),
         end_time: timeslotEnd.toISOString(),
         booking_type: 'court',
-        status: 'confirmed',
+        status: requiresApproval ? 'pending' : 'confirmed',
         payment_status: 'pending',
       })
       .select('id')
@@ -210,7 +209,7 @@ export async function POST(req: NextRequest) {
         bookingId: booking.id,
         sessionId: session.id,
         memberId: effectiveMemberId,
-        status: 'confirmed',
+        status: requiresApproval ? 'pending' : 'confirmed',
         payment_status: requiresPayment ? 'pending' : null,
         requiresPayment,
       },

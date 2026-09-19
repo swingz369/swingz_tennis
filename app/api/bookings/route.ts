@@ -11,6 +11,7 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createBookingSafe } from '@/lib/booking/safe-booking';
 import { isDayClosed, CLOSED_DAY_ERROR } from '@/lib/booking/opening-hours';
+import { loadBookingRules, checkBookingRules } from '@/lib/booking/booking-rules';
 import { resolveEffectiveMemberId } from '@/lib/family/family-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { PricingRuleService } from '@/application/services/pricing-rule.service';
@@ -76,39 +77,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: CLOSED_DAY_ERROR }, { status: 409 });
     }
 
-    // Check booking_rules — how many bookings this week + payment required?
-    const { data: rules } = await supabase
-      .from('booking_rules')
-      .select('max_bookings_per_week, cancellation_hours_before, require_payment')
-      .eq('club_id', clubId)
-      .eq('applies_to_role', 'member')
-      .maybeSingle();
-
+    // Buchungsregeln des Vereins (Mengenlimits gelten auch für Trainingsstunden)
+    const rules = await loadBookingRules(supabase, clubId);
     const requiresPayment = rules?.require_payment === true;
-
-    if (rules?.max_bookings_per_week) {
-      const sessionDate = new Date(session.timeslot_start);
-      const weekStart = new Date(sessionDate);
-      weekStart.setDate(sessionDate.getDate() - sessionDate.getDay());
-      weekStart.setHours(0, 0, 0, 0);
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 7);
-
-      const { count: weekBookings } = await supabase
-        .from('bookings')
-        .select('id', { count: 'exact', head: true })
-        .eq('member_id', userId)
-        .eq('club_id', clubId)
-        .in('status', ['confirmed', 'pending'])
-        .gte('session_start_time', weekStart.toISOString())
-        .lt('session_start_time', weekEnd.toISOString());
-
-      if ((weekBookings ?? 0) >= rules.max_bookings_per_week) {
-        return NextResponse.json(
-          { error: `Maximum ${rules.max_bookings_per_week} Buchungen pro Woche erreicht` },
-          { status: 409 }
-        );
-      }
+    const check = await checkBookingRules({
+      db: supabase,
+      rules,
+      clubId,
+      memberId: userId,
+      start: new Date(session.timeslot_start),
+      end: new Date(session.timeslot_end),
+      kind: 'session',
+    });
+    if (!check.ok) {
+      return NextResponse.json({ error: check.error }, { status: 409 });
     }
 
     // Atomic booking via DB RPC — prevents race conditions and double-bookings

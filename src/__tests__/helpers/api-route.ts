@@ -114,6 +114,10 @@ function buildChain(table: string) {
     state.filters[`${col}>=`] = val;
     return chain;
   };
+  chain.lt = (col: string, val: unknown) => {
+    state.filters[`${col}<`] = val;
+    return chain;
+  };
   chain.lte = (col: string, val: unknown) => {
     state.filters[`${col}<=`] = val;
     return chain;
