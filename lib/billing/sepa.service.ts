@@ -23,7 +23,7 @@ export class SepaService {
   }
 
   async createSepaMandate(data: CreateSepaMandate): Promise<SepaMandate> {
-    const mandateReference = `SWINGZ-${data.club_id.slice(0, 8)}-${Date.now()}`;
+    const mandateReference = `MANDAT-${data.club_id.slice(0, 8)}-${Date.now()}`;
     const creditorId = process.env.SEPA_CREDITOR_ID;
     if (!creditorId) {
       throw new Error('SEPA_CREDITOR_ID environment variable is required for mandate creation');
@@ -163,31 +163,18 @@ export class SepaService {
         amount: payment.amount,
         currency: payment.currency || 'EUR',
         paymentDate: new Date().toISOString().split('T')[0],
-        endToEndId: `SWINGZ-${payment.external_id || payment.id.slice(0, 8)}`,
+        endToEndId: `E2E-${payment.external_id || payment.id.slice(0, 8)}`,
         remittanceInformation: `Rechnung ${invoice.invoice_number}`,
       });
     }
 
-    const defaultConfig: SepaPain008Config = {
-      creditorName: process.env.SEPA_CREDITOR_NAME || 'SWINGZ Tennis Club',
-      creditorAccountIban: process.env.SEPA_CREDITOR_IBAN || '',
-      creditorAccountBic: process.env.SEPA_CREDITOR_BIC || undefined,
-      creditorId: process.env.SEPA_CREDITOR_ID || 'DE98ZZZ09999999999',
-      creditorAddress: {
-        street: process.env.SEPA_CREDITOR_STREET || undefined,
-        city: process.env.SEPA_CREDITOR_CITY || undefined,
-        postalCode: process.env.SEPA_CREDITOR_POSTAL_CODE || undefined,
-        country: process.env.SEPA_CREDITOR_COUNTRY || 'DE',
-      },
-      executionDate: undefined,
-      batchBooking: true,
-    };
-
-    const finalConfig = { ...defaultConfig, ...config };
-
-    if (!finalConfig.creditorAccountIban) {
-      throw new Error('SEPA_CREDITOR_IBAN environment variable is required');
+    // Gläubigerdaten liefert der Aufrufer aus dem Verein — keine Plattform-Defaults, sonst
+    // liefe eine Lastschrift auf das Konto der Plattform statt des Vereins.
+    if (!config?.creditorName || !config.creditorAccountIban || !config.creditorId) {
+      throw new Error('Gläubigerdaten des Vereins (Name, IBAN, Gläubiger-ID) fehlen');
     }
+    const finalConfig = { batchBooking: true, ...config } as SepaPain008Config;
+    for (const t of transactions) t.creditorId = finalConfig.creditorId;
 
     const xml = generatePain008Xml(transactions, finalConfig);
     const fileName = `SEPA-DD-${new Date().toISOString().split('T')[0].replace(/-/g, '')}.xml`;

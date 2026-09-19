@@ -1,3 +1,4 @@
+import { loadClubSender, escapeHtml } from '@/lib/email/club-sender';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
@@ -63,16 +64,17 @@ export async function POST(request: NextRequest) {
     }
 
     const resend = new Resend(env.RESEND_API_KEY);
-    const from = env.EMAIL_FROM || 'SwingZ <noreply@swingz.cloud>';
+    const sender = await loadClubSender(auth.supabase, auth.clubId);
 
     const { error: sendError } = await resend.emails.send({
-      from,
+      from: sender.from,
+      replyTo: sender.replyTo,
       to: recipient.email,
       subject,
       text: body,
       html: body
         .split('\n')
-        .map((line: string) => `<p>${line}</p>`)
+        .map((line: string) => `<p>${escapeHtml(line)}</p>`)
         .join(''),
     });
 

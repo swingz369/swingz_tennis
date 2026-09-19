@@ -1,3 +1,4 @@
+import { loadClubSender, escapeHtml } from '@/lib/email/club-sender';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
@@ -134,6 +135,7 @@ export async function POST(
       const resendApiKey = env.RESEND_API_KEY;
       if (resendApiKey) {
         const resend = new Resend(resendApiKey);
+        const sender = sessionClubId ? await loadClubSender(supabase, sessionClubId) : null;
 
         // Member-E-Mails laden
         const memberIds = bookingList.map((b) => b.member_id);
@@ -146,13 +148,14 @@ export async function POST(
           if (!member.email) continue;
           try {
             await resend.emails.send({
-              from: 'noreply@swingz.cloud',
+              from: sender?.from ?? 'noreply@swingz.cloud',
+              replyTo: sender?.replyTo,
               to: member.email,
               subject: 'Training abgesagt',
-              html: `<p>Hallo ${member.full_name ?? 'Mitglied'},</p>
-<p>${notificationMessage}</p>
+              html: `<p>Hallo ${escapeHtml(member.full_name ?? 'Mitglied')},</p>
+<p>${escapeHtml(notificationMessage)}</p>
 <p>Bei Fragen wende dich bitte an deinen Trainer oder den Club.</p>
-<p>Dein SwingZ-Team</p>`,
+<p>${escapeHtml(sender?.name ?? 'Dein Verein')}</p>`,
             });
             emailsSent++;
           } catch (emailErr) {

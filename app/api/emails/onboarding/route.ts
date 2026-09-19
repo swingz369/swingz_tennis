@@ -28,13 +28,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'E-Mail erforderlich' }, { status: 400 });
       }
 
-      // Fetch club name from system_settings (matching trial-training route pattern)
-      const { data: settingRows } = await auth.supabase
-        .from('system_settings')
-        .select('key, value')
-        .eq('club_id', clubId)
-        .in('key', ['club_name']);
-      const clubName = settingRows?.find((r) => r.key === 'club_name')?.value || 'SWINGZ';
+      const { data: clubRow } = await auth.supabase
+        .from('clubs')
+        .select('name')
+        .eq('id', clubId)
+        .maybeSingle();
+      const clubName = clubRow?.name || 'Dein Verein';
 
       const template = EmailService.generateMembershipApprovalEmail({
         recipientName: firstName || 'Mitglied',

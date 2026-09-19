@@ -9,6 +9,7 @@
  * schreiben die Kündigung als audit_log-Eintrag (mit details.cancellation_date
  * und details.cancellation_reason).
  */
+import { loadClubSender, escapeHtml } from '@/lib/email/club-sender';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
@@ -102,16 +103,21 @@ export async function POST(request: NextRequest, context: RouteContext) {
           const { Resend } = await import('resend');
           const resend = new Resend(resendKey);
           const dateStr = cancelDate.toLocaleDateString('de-DE');
+          const sender = await loadClubSender(
+            auth.supabase,
+            membership.club_id ?? auth.clubId ?? ''
+          );
           await resend.emails.send({
-            from: process.env.EMAIL_FROM ?? 'SwingZ <noreply@swingz.cloud>',
+            from: sender.from,
+            replyTo: sender.replyTo,
             to: user.email,
             subject: 'Kündigungsbestätigung – Vereinsmitgliedschaft',
             html: [
-              `<p>Hallo ${user.full_name ?? ''},</p>`,
+              `<p>Hallo ${escapeHtml(user.full_name ?? '')},</p>`,
               `<p>wir bestätigen den Eingang deiner Kündigung. Deine Mitgliedschaft endet zum <strong>${dateStr}</strong>.</p>`,
-              reason ? `<p>Grund: ${reason}</p>` : '',
+              reason ? `<p>Grund: ${escapeHtml(reason)}</p>` : '',
               `<p>Wir bedauern deinen Austritt und wünschen dir alles Gute.</p>`,
-              `<p>Dein SwingZ-Team</p>`,
+              `<p>${escapeHtml(sender.name)}</p>`,
             ].join(''),
           });
         } catch (mailErr) {

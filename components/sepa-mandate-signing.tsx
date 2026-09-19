@@ -1,4 +1,5 @@
 'use client';
+import { useUserClub } from '@/hooks/use-user-data';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
@@ -47,6 +48,8 @@ const INITIAL_FORM_DATA: SEPAMandateFormData = {
 };
 
 export default function SEPAMandateSigning() {
+  const { data: clubData } = useUserClub();
+  const clubName = clubData?.club?.name ?? 'deinem Verein';
   const [formData, setFormData] = useState<SEPAMandateFormData>(INITIAL_FORM_DATA);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
@@ -266,7 +269,7 @@ export default function SEPAMandateSigning() {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Mit diesem Mandat autorisierst du SwingZ Tennis Club, Zahlungen von deinem Konto mittels
+          Mit diesem Mandat autorisierst du {clubName}, Zahlungen von deinem Konto mittels
           SEPA-Lastschrift einzuziehen. Du kannst dieses Mandat jederzeit widerrufen.
         </AlertDescription>
       </Alert>
@@ -414,7 +417,7 @@ export default function SEPAMandateSigning() {
                     name="mandateReference"
                     value={formData.mandateReference}
                     onChange={handleChange}
-                    placeholder="SWINGZ-001234"
+                    placeholder="MANDAT-001234"
                     className={errors.mandateReference ? 'border-error-500' : ''}
                   />
                   {errors.mandateReference && (
@@ -454,9 +457,9 @@ export default function SEPAMandateSigning() {
                     Ich akzeptiere die Bedingungen des SEPA-Lastschriftmandats *
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Ich ermächtige SwingZ Tennis Club, Zahlungen von meinem Konto mittels
-                    SEPA-Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die von
-                    SwingZ Tennis Club auf mein Konto gezogenen Lastschriften einzulösen.
+                    Ich ermächtige {clubName}, Zahlungen von meinem Konto mittels SEPA-Lastschrift
+                    einzuziehen. Zugleich weise ich mein Kreditinstitut an, die von
+                    {clubName} auf mein Konto gezogenen Lastschriften einzulösen.
                   </p>
                 </div>
               </div>
@@ -505,10 +508,10 @@ export default function SEPAMandateSigning() {
             <div className="space-y-2 text-sm text-info-900">
               <p className="font-medium">Wichtige Informationen</p>
               <ul className="list-disc list-inside space-y-1 text-info-800">
-                <li>Dieses Mandat gilt für alle Zahlungen an SwingZ Tennis Club</li>
+                <li>Dieses Mandat gilt für alle Zahlungen an {clubName}</li>
                 <li>Du kannst dieses Mandat jederzeit schriftlich widerrufen</li>
                 <li>Die Gläubiger-Identifikationsnummer: DE98ZZZ00000000000</li>
-                <li>Bei Fragen kontaktiere uns unter info@swingz.cloud</li>
+                <li>Bei Fragen wende dich bitte an deinen Verein</li>
               </ul>
             </div>
           </div>

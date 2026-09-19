@@ -36,6 +36,18 @@ export class SepaMandateRepository {
     return data!;
   }
 
+  /** Gläubiger-ID, die der Verein in den Rechtlichen Angaben hinterlegt hat. */
+  async findClubCreditorId(clubId: string): Promise<string | null> {
+    const { data, error } = await this.db
+      .from('clubs')
+      .select('legal_info')
+      .eq('id', clubId)
+      .maybeSingle();
+    assertNoError(error, 'Laden der Gläubiger-ID fehlgeschlagen');
+    const id = (data?.legal_info as { glaeubiger_id?: string } | null)?.glaeubiger_id;
+    return id?.replace(/\s/g, '') || null;
+  }
+
   async findById(id: string): Promise<SepaMandate | null> {
     const { data, error } = await this.db.from('sepa_mandates').select().eq('id', id).maybeSingle();
     assertNoError(error, 'Lesen des SEPA-Mandats fehlgeschlagen');

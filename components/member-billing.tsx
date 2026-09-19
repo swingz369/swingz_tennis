@@ -568,10 +568,7 @@ export default function MemberBilling() {
               <strong>MwSt:</strong> 19% (gemäß § 19 UStG)
             </p>
             <p className="mt-4 text-muted-foreground">
-              Bei Fragen zu deinen Rechnungen kontaktiere bitte unsere Buchhaltung unter{' '}
-              <a href="mailto:billing@swingz.cloud" className="text-primary hover:underline">
-                billing@swingz.cloud
-              </a>
+              Bei Fragen zu deinen Rechnungen wende dich bitte an deinen Verein.
             </p>
           </div>
         </CardContent>

@@ -237,13 +237,12 @@ export async function PATCH(request: NextRequest) {
         // 5. Send onboarding email (best-effort)
         try {
           const regClubId = registration.club_id || auth.clubId || '';
-          const { data: settingRows } = await auth.supabase
-            .from('system_settings')
-            .select('key, value')
-            .eq('club_id', regClubId)
-            .in('key', ['club_name']);
-          const clubName =
-            settingRows?.find((r: { key: string }) => r.key === 'club_name')?.value || 'SWINGZ';
+          const { data: clubRow } = await auth.supabase
+            .from('clubs')
+            .select('name')
+            .eq('id', regClubId)
+            .maybeSingle();
+          const clubName = clubRow?.name || 'Dein Verein';
           const template = EmailService.generateMembershipApprovalEmail({
             recipientName: registration.first_name || 'Mitglied',
             recipientEmail: registration.email,

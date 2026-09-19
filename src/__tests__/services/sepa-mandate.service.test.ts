@@ -53,6 +53,7 @@ describe('SepaMandateService', () => {
   describe('createMandate', () => {
     beforeEach(() => {
       vi.spyOn(SepaMandateRepository.prototype, 'findActiveByMemberId').mockResolvedValue(null);
+      vi.spyOn(SepaMandateRepository.prototype, 'findClubCreditorId').mockResolvedValue(null);
       vi.spyOn(SepaMandateRepository.prototype, 'create').mockImplementation(async (input) =>
         makeMandate(input as Partial<SepaMandate>)
       );
@@ -82,6 +83,17 @@ describe('SepaMandateService', () => {
       await service.createMandate('member-1', validInput);
 
       expect(create).toHaveBeenCalledWith(expect.objectContaining({ club_id: 'club-42' }));
+    });
+
+    it('trägt die Gläubiger-ID des Vereins ins Mandat ein', async () => {
+      vi.spyOn(SepaMandateRepository.prototype, 'findClubCreditorId').mockResolvedValue(
+        'DE98ZZZ01234567890'
+      );
+      const create = vi.spyOn(SepaMandateRepository.prototype, 'create');
+      await new SepaMandateService(fakeAuth('club-42')).createMandate('member-1', validInput);
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({ creditor_id: 'DE98ZZZ01234567890' })
+      );
     });
 
     it('lässt club_id null, wenn das Mitglied keinem aktiven Verein zugeordnet ist', async () => {

@@ -5,6 +5,7 @@ import { Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
@@ -17,8 +18,11 @@ interface LegalInfo {
   kassenwart?: string;
   iban?: string;
   bic?: string;
+  glaeubiger_id?: string;
   bank?: string;
   steuernummer?: string;
+  rechnungstext?: string;
+  rechnungsfusszeile?: string;
 }
 
 export function LegalTab({ clubId }: { clubId: string }) {
@@ -112,6 +116,43 @@ export function LegalTab({ clubId }: { clubId: string }) {
           {field('Bank', 'bank', 'Sparkasse Köln')}
           {field('IBAN', 'iban', 'DE12 3456 7890 1234 5678 90')}
           {field('BIC', 'bic', 'COLSDE33')}
+          {field('SEPA-Gläubiger-ID', 'glaeubiger_id', 'DE98ZZZ09999999999')}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Rechnungen</CardTitle>
+          <CardDescription>
+            Logo und Akzentfarbe kommen aus dem Branding, Anschrift, Steuernummer und Bankverbindung
+            von dieser Seite. Die Texte hier erscheinen auf jeder Rechnung deines Vereins.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="rechnungstext">Text über den Positionen</Label>
+            <Textarea
+              id="rechnungstext"
+              value={info.rechnungstext ?? ''}
+              onChange={(e) => set('rechnungstext', e.target.value)}
+              placeholder="Sehr geehrte Damen und Herren, für die folgenden Leistungen berechnen wir:"
+              maxLength={500}
+              rows={3}
+              className="mt-1.5"
+            />
+          </div>
+          <div>
+            <Label htmlFor="rechnungsfusszeile">Fußzeile (bis zu 3 Zeilen)</Label>
+            <Textarea
+              id="rechnungsfusszeile"
+              value={info.rechnungsfusszeile ?? ''}
+              onChange={(e) => set('rechnungsfusszeile', e.target.value)}
+              placeholder="Vielen Dank für Ihre Mitgliedschaft im TC Musterstadt!"
+              maxLength={300}
+              rows={3}
+              className="mt-1.5"
+            />
+          </div>
         </CardContent>
       </Card>
 

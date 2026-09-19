@@ -27,12 +27,13 @@ export type UpdateSepaMandateInput = Partial<
   >
 >;
 
-const CREDITOR_ID = 'DE98ZZZ00000000000';
+/** Platzhalter, bis der Verein seine Gläubiger-ID hinterlegt hat (Einstellungen → Rechtliches). */
+const PLACEHOLDER_CREDITOR_ID = 'DE98ZZZ00000000000';
 
 function generateMandateReference(memberId: string): string {
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `SWINGZ-${memberId}-${timestamp}-${random}`.substring(0, 35);
+  return `MANDAT-${memberId}-${timestamp}-${random}`.substring(0, 35);
 }
 
 /**
@@ -77,9 +78,14 @@ export class SepaMandateService {
         city: data.city,
       },
       mandate_reference: data.mandateReference || generateMandateReference(memberId),
-      creditor_id: CREDITOR_ID,
+      creditor_id: await this.clubCreditorId(),
       signature_date: data.signatureDate,
     });
+  }
+
+  private async clubCreditorId(): Promise<string> {
+    if (!this.auth.clubId) return PLACEHOLDER_CREDITOR_ID;
+    return (await this.repo.findClubCreditorId(this.auth.clubId)) ?? PLACEHOLDER_CREDITOR_ID;
   }
 
   async getMandateById(mandateId: string): Promise<SepaMandate> {

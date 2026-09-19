@@ -10,6 +10,31 @@ export interface InvoicePDFData {
   memberName: string;
   memberAddress: string;
   memberEmail: string;
+  /** Vom Verein gestaltbare Teile — alles optional, ohne Angabe bleibt die Rechnung schlicht. */
+  branding?: InvoiceBranding;
+}
+
+/** Aus `clubs` geladen (lib/pdf/invoice-issuer.ts); Freitexte aus `clubs.legal_info`. */
+export interface InvoiceBranding {
+  /** Hex, z. B. `#1e3a5f` (clubs.primary_color) */
+  accentColor?: string | null;
+  logo?: { bytes: Uint8Array; type: 'png' | 'jpg' } | null;
+  steuernummer?: string;
+  registerzeile?: string;
+  bank?: string;
+  iban?: string;
+  bic?: string;
+  /** Text über den Positionen (`rechnungstext`) */
+  introText?: string;
+  /** Text in der Fußzeile (`rechnungsfusszeile`) */
+  footerText?: string;
+}
+
+function hexToRgb(hex: string | null | undefined) {
+  const m = /^#?([0-9a-f]{6})$/i.exec((hex ?? '').trim());
+  if (!m) return null;
+  const n = parseInt(m[1]!, 16);
+  return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
 
 // ─── Layout constants ───
@@ -57,6 +82,7 @@ interface DrawContext {
   page: PDFPage;
   font: PDFFont;
   boldFont: PDFFont;
+  accent: ReturnType<typeof rgb>;
   y: number;
 }
 
@@ -102,9 +128,9 @@ function drawLine(
 
 function drawSectionTitle(ctx: DrawContext, title: string) {
   ctx.y -= 8;
-  drawText(ctx, title, MARGIN, { size: 12, font: ctx.boldFont, color: COLORS.accent });
+  drawText(ctx, title, MARGIN, { size: 12, font: ctx.boldFont, color: ctx.accent });
   ctx.y -= 4;
-  drawLine(ctx, MARGIN, MARGIN + CONTENT_WIDTH, COLORS.accent, 1);
+  drawLine(ctx, MARGIN, MARGIN + CONTENT_WIDTH, ctx.accent, 1);
   ctx.y -= 14;
 }
 
@@ -135,19 +161,38 @@ export async function generateInvoicePDF(data: InvoicePDFData): Promise<Buffer> 
     memberName,
     memberAddress,
     memberEmail,
+    branding = {},
   } = data;
+  const accent = hexToRgb(branding.accentColor) ?? COLORS.accent;
 
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const boldFont = await doc.embedFont(StandardFonts.HelveticaBold);
 
   const page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-  const ctx: DrawContext = { page, font, boldFont, y: PAGE_HEIGHT - MARGIN };
+  const ctx: DrawContext = { page, font, boldFont, accent, y: PAGE_HEIGHT - MARGIN };
 
   // ─── Header ───
-  drawText(ctx, 'RECHNUNG', MARGIN, { size: 22, font: boldFont, color: COLORS.accent });
+  if (branding.logo) {
+    try {
+      const img =
+        branding.logo.type === 'png'
+          ? await doc.embedPng(branding.logo.bytes)
+          : await doc.embedJpg(branding.logo.bytes);
+      const scaled = img.scaleToFit(120, 50);
+      page.drawImage(img, {
+        x: PAGE_WIDTH - MARGIN - scaled.width,
+        y: PAGE_HEIGHT - MARGIN - scaled.height + 14,
+        width: scaled.width,
+        height: scaled.height,
+      });
+    } catch {
+      // kaputtes Logo darf die Rechnung nicht verhindern
+    }
+  }
+  drawText(ctx, 'RECHNUNG', MARGIN, { size: 22, font: boldFont, color: accent });
   ctx.y -= 18;
-  drawText(ctx, 'SWINGZ Tennis Club Management', MARGIN, { size: 9, color: COLORS.gray });
+  drawText(ctx, clubName, MARGIN, { size: 9, color: COLORS.gray });
   ctx.y -= 20;
 
   // Status badge
@@ -179,10 +224,12 @@ export async function generateInvoicePDF(data: InvoicePDFData): Promise<Buffer> 
     drawText(ctx, clubAddress, MARGIN, { size: 9 });
     ctx.y -= 14;
   }
-  drawRow(ctx, 'E-Mail:', clubEmail);
+  if (clubEmail) drawRow(ctx, 'E-Mail:', clubEmail);
   if (clubPhone) {
     drawRow(ctx, 'Telefon:', clubPhone);
   }
+  if (branding.steuernummer) drawRow(ctx, 'Steuernummer:', branding.steuernummer);
+  if (branding.registerzeile) drawRow(ctx, 'Vereinsregister:', branding.registerzeile);
   ctx.y -= 6;
 
   // ─── Rechnungsempfänger ───
@@ -195,6 +242,15 @@ export async function generateInvoicePDF(data: InvoicePDFData): Promise<Buffer> 
   }
   drawRow(ctx, 'E-Mail:', memberEmail);
   ctx.y -= 6;
+
+  if (branding.introText) {
+    for (const line of branding.introText.split('\n')) {
+      ensureSpace(ctx, 16);
+      drawText(ctx, line, MARGIN, { size: 9 });
+      ctx.y -= 12;
+    }
+    ctx.y -= 8;
+  }
 
   // ─── Rechnungspositionen ───
   drawSectionTitle(ctx, 'Rechnungspositionen');
@@ -257,6 +313,18 @@ export async function generateInvoicePDF(data: InvoicePDFData): Promise<Buffer> 
   ctx.y -= 8;
   drawTotalRow('Gesamtbetrag:', formatCurrency(invoice.amount, invoice.currency), true);
 
+  // ─── Bankverbindung ───
+  if (branding.iban) {
+    ctx.y -= 10;
+    ensureSpace(ctx, 70);
+    drawSectionTitle(ctx, 'Bankverbindung');
+    drawRow(ctx, 'Kontoinhaber:', clubName);
+    if (branding.bank) drawRow(ctx, 'Bank:', branding.bank);
+    drawRow(ctx, 'IBAN:', branding.iban);
+    if (branding.bic) drawRow(ctx, 'BIC:', branding.bic);
+    drawRow(ctx, 'Verwendungszweck:', invoice.invoice_number);
+  }
+
   // ─── Notes ───
   if (invoice.notes) {
     ctx.y -= 10;
@@ -275,14 +343,14 @@ export async function generateInvoicePDF(data: InvoicePDFData): Promise<Buffer> 
   ctx.y = MARGIN + 50;
   drawLine(ctx, MARGIN, MARGIN + CONTENT_WIDTH, COLORS.lightGray);
   ctx.y -= 14;
-  const footerText = `Vielen Dank für Ihren Beitrag zum SWINGZ Tennis Club!`;
-  const footerWidth = font.widthOfTextAtSize(footerText, 8);
-  drawText(ctx, footerText, MARGIN + (CONTENT_WIDTH - footerWidth) / 2, {
-    size: 8,
-    color: COLORS.gray,
-  });
-  ctx.y -= 12;
-  const contactText = `Bei Fragen: ${clubEmail}${clubPhone ? ` | ${clubPhone}` : ''}`;
+  for (const line of (branding.footerText || 'Vielen Dank für Ihren Beitrag!')
+    .split('\n')
+    .slice(0, 3)) {
+    const w = font.widthOfTextAtSize(line, 8);
+    drawText(ctx, line, MARGIN + (CONTENT_WIDTH - w) / 2, { size: 8, color: COLORS.gray });
+    ctx.y -= 12;
+  }
+  const contactText = `Bei Fragen: ${[clubEmail, clubPhone].filter(Boolean).join(' | ')}`;
   const contactWidth = font.widthOfTextAtSize(contactText, 8);
   drawText(ctx, contactText, MARGIN + (CONTENT_WIDTH - contactWidth) / 2, {
     size: 8,
@@ -301,46 +369,4 @@ export async function generateInvoicePDFBase64(data: InvoicePDFData): Promise<st
 
 export function getInvoiceFileName(invoiceNumber: string): string {
   return `Rechnung-${invoiceNumber}.pdf`;
-}
-
-export function getInvoiceEmailSubject(invoiceNumber: string, clubName: string): string {
-  return `Ihre Rechnung ${invoiceNumber} von ${clubName}`;
-}
-
-export function getInvoiceEmailBody(
-  memberName: string,
-  invoiceNumber: string,
-  totalAmount: number,
-  dueDate: string,
-  clubName: string
-): string {
-  const formattedAmount = new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(totalAmount);
-
-  const formattedDueDate = new Date(dueDate).toLocaleDateString('de-DE');
-
-  return `
-Hallo ${memberName},
-
-anbei erhalten Sie Ihre Rechnung ${invoiceNumber} von ${clubName}.
-
-Rechnungsdetails:
-- Rechnungsnummer: ${invoiceNumber}
-- Gesamtbetrag: ${formattedAmount}
-- Fälligkeitsdatum: ${formattedDueDate}
-
-Bitte überweisen Sie den Betrag bis zum ${formattedDueDate} auf folgendes Konto:
-
-Kontoinhaber: ${clubName}
-IBAN: [IBAN einfügen]
-BIC: [BIC einfügen]
-Verwendungszweck: ${invoiceNumber}
-
-Bei Fragen stehen wir Ihnen gerne zur Verfügung.
-
-Mit freundlichen Grüßen
-Ihr ${clubName} Team
-  `.trim();
 }

@@ -6,6 +6,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
+import { loadInvoiceIssuer } from '@/lib/pdf/invoice-issuer';
+import { clubSender, escapeHtml } from '@/lib/email/club-sender';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
@@ -37,24 +39,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
         return NextResponse.json({ error: 'Rechnung nicht gefunden' }, { status: 404 });
       }
 
-      // Fetch club info for PDF header — der Verein der Rechnung, nicht der aktive des Admins
-      const clubId = invoice.club_id;
-      let clubData: {
-        name?: string | null;
-        address?: string | null;
-        email?: string | null;
-        phone?: string | null;
-      } | null = null;
-      if (clubId) {
-        const { data } = await auth.supabase
-          .from('clubs')
-          .select('name, address, email, phone')
-          .eq('id', clubId)
-          .maybeSingle();
-        clubData = data;
+      // Rechnungssteller = der Verein der Rechnung, nicht der aktive des Admins
+      const issuer = await loadInvoiceIssuer(auth.supabase, invoice.club_id);
+      if (!issuer) {
+        return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
       }
 
-      // Fetch member info for email
       if (!invoice.member_id) {
         return NextResponse.json(
           { error: 'Rechnung hat kein Mitglied zugeordnet' },
@@ -76,10 +66,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       // Generate PDF
       const pdfBuffer = await generateInvoicePDF({
         invoice,
-        clubName: clubData?.name || 'SWINGZ Tennis Club',
-        clubAddress: clubData?.address || '',
-        clubEmail: clubData?.email || 'info@swingz.cloud',
-        clubPhone: clubData?.phone || '',
+        ...issuer,
         memberName: memberData?.full_name || 'Mitglied',
         memberAddress: '',
         memberEmail,
@@ -94,8 +81,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
 
       const resend = new Resend(env.RESEND_API_KEY);
-      const fromEmail = env.EMAIL_FROM || 'SWINGZ <noreply@swingz.cloud>';
-      const clubName = clubData?.name || 'SWINGZ Tennis Club';
+      const clubName = issuer.clubName;
+      const safeClub = escapeHtml(clubName);
+      const safeMember = escapeHtml(memberData?.full_name || 'Mitglied');
       const fileName = getInvoiceFileName(invoice.invoice_number);
 
       // Format amount for email
@@ -109,14 +97,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
         : 'auf Anfrage';
 
       const { error: emailError } = await resend.emails.send({
-        from: fromEmail,
+        ...clubSender(clubName, issuer.clubEmail),
         to: memberEmail,
         subject: `Ihre Rechnung ${invoice.invoice_number} von ${clubName}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #1a1a1a;">Rechnung ${invoice.invoice_number}</h2>
-            <p>Hallo ${memberData?.full_name || 'Mitglied'},</p>
-            <p>anbei erhalten Sie Ihre Rechnung von <strong>${clubName}</strong>.</p>
+            <p>Hallo ${safeMember},</p>
+            <p>anbei erhalten Sie Ihre Rechnung von <strong>${safeClub}</strong>.</p>
             <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin: 16px 0;">
               <p style="margin: 4px 0;"><strong>Rechnungsnummer:</strong> ${invoice.invoice_number}</p>
               <p style="margin: 4px 0;"><strong>Gesamtbetrag:</strong> ${formattedAmount}</p>
@@ -127,7 +115,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             <p style="color: #6b7280; font-size: 12px; margin-top: 24px;">
               Bei Fragen stehen wir Ihnen gerne zur Verfügung.<br/>
               Mit freundlichen Grüßen,<br/>
-              ${clubName}
+              ${safeClub}
             </p>
           </div>
         `,

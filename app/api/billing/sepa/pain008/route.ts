@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
+import { loadClubCreditor } from '@/lib/billing/club-creditor';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
@@ -76,42 +77,22 @@ export async function POST(_request: NextRequest) {
         }
       }
 
-      // Delegate SEPA XML generation to billing engine (handles mandate lookup internally)
+      // Gläubiger ist der Verein (IBAN + Gläubiger-ID aus den Vereinseinstellungen)
+      const creditor = await loadClubCreditor(auth.supabase, auth.clubId!);
+      if (!creditor) {
+        return NextResponse.json(
+          {
+            error:
+              'Für den Lastschrift-Export fehlen IBAN und Gläubiger-ID deines Vereins. Bitte unter Einstellungen → Rechtliches ergänzen.',
+          },
+          { status: 422 }
+        );
+      }
       const config: Partial<SepaPain008Config> = {
-        creditorName: process.env.SEPA_CREDITOR_NAME || 'SWINGZ Tennis Club',
-        creditorAccountIban: process.env.SEPA_CREDITOR_IBAN || '',
-        creditorId: process.env.SEPA_CREDITOR_ID || 'DE98ZZZ09999999999',
+        ...creditor,
         executionDate: executionDate || undefined,
         batchBooking: true,
       };
-
-      const bic = process.env.SEPA_CREDITOR_BIC;
-      if (bic) config.creditorAccountBic = bic;
-
-      const street = process.env.SEPA_CREDITOR_STREET;
-      const city = process.env.SEPA_CREDITOR_CITY;
-      const postalCode = process.env.SEPA_CREDITOR_POSTAL_CODE;
-      const country = process.env.SEPA_CREDITOR_COUNTRY || 'DE';
-
-      const addrStreet = street || undefined;
-      const addrCity = city || undefined;
-      const addrPostal = postalCode || undefined;
-      const addrCountry = country || undefined;
-      if (addrStreet || addrCity || addrPostal || addrCountry) {
-        config.creditorAddress = {
-          ...(addrStreet != null ? { street: addrStreet } : {}),
-          ...(addrCity != null ? { city: addrCity } : {}),
-          ...(addrPostal != null ? { postalCode: addrPostal } : {}),
-          ...(addrCountry != null ? { country: addrCountry } : {}),
-        };
-      }
-
-      if (!config.creditorAccountIban) {
-        return NextResponse.json(
-          { error: 'SEPA_CREDITOR_IBAN Umgebungsvariable ist erforderlich' },
-          { status: 500 }
-        );
-      }
 
       const { xml, fileName } = await billingEngine.generateSepaDirectDebit(paymentIds, config);
 

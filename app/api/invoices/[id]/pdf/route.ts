@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { loadInvoiceIssuer } from '@/lib/pdf/invoice-issuer';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
@@ -40,32 +41,25 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         );
       }
 
-      // Fetch club info for PDF header
-      const clubId = auth.clubId;
-      let clubData: {
-        name?: string | null;
-        address?: string | null;
-        email?: string | null;
-        phone?: string | null;
-      } | null = null;
-      if (clubId) {
-        const { data } = await auth.supabase
-          .from('clubs')
-          .select('name, address, email, phone')
-          .eq('id', clubId)
-          .maybeSingle();
-        clubData = data;
+      // Rechnungssteller und Empfänger kommen aus der Rechnung, nicht aus dem Betrachter
+      const issuer = await loadInvoiceIssuer(auth.supabase, invoice.club_id);
+      if (!issuer) {
+        return NextResponse.json({ error: 'Rechnung nicht gefunden' }, { status: 404 });
       }
+      const { data: member } = invoice.member_id
+        ? await auth.supabase
+            .from('users')
+            .select('full_name, email')
+            .eq('id', invoice.member_id)
+            .maybeSingle()
+        : { data: null };
 
       const pdfBuffer = await generateInvoicePDF({
         invoice,
-        clubName: clubData?.name || 'SWINGZ Tennis Club',
-        clubAddress: clubData?.address || '',
-        clubEmail: clubData?.email || 'info@swingz.cloud',
-        clubPhone: clubData?.phone || '',
-        memberName: auth.user.user_metadata?.full_name || 'Mitglied',
+        ...issuer,
+        memberName: member?.full_name || 'Mitglied',
         memberAddress: '',
-        memberEmail: auth.user.email || '',
+        memberEmail: member?.email || '',
       });
 
       return new NextResponse(pdfBuffer as unknown as BodyInit, {
