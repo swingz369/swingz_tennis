@@ -1,4 +1,5 @@
 'use client';
+import { KpiBand } from '@/components/ui/kpi-band';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
@@ -172,36 +173,20 @@ export default function AssignmentsClient({
   return (
     <div className="space-y-6">
       {/* Stats Summary */}
-      <div className="grid grid-cols-4 gap-3">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-foreground">{allAssignments.length}</p>
-            <p className="text-xs text-muted-foreground">Gesamt Zuweisungen</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-info-600">
-              {allAssignments.filter((a) => a.status === 'assigned').length}
-            </p>
-            <p className="text-xs text-muted-foreground">Ausstehend</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-success-600">
-              {allAssignments.filter((a) => a.status === 'completed').length}
-            </p>
-            <p className="text-xs text-muted-foreground">Erledigt</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-warning-600">{Object.keys(memberStats).length}</p>
-            <p className="text-xs text-muted-foreground">Aktive Mitglieder</p>
-          </CardContent>
-        </Card>
-      </div>
+      <KpiBand
+        items={[
+          { label: 'Gesamt Zuweisungen', value: allAssignments.length },
+          {
+            label: 'Ausstehend',
+            value: allAssignments.filter((a) => a.status === 'assigned').length,
+          },
+          {
+            label: 'Erledigt',
+            value: allAssignments.filter((a) => a.status === 'completed').length,
+          },
+          { label: 'Aktive Mitglieder', value: Object.keys(memberStats).length },
+        ]}
+      />
 
       {/* View Toggle + Search */}
       <div className="flex items-center justify-between gap-4">

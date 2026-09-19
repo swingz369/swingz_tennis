@@ -50,6 +50,19 @@ ratchet 'rohe <table> statt <Table>' 10 '<table' 'components/ui/table\.tsx'
 ratchet 'Pixel-Schriftgrößen text-[Npx]' 9 'text-\[[0-9]+px\]' 'components/ui/'
 ratchet 'CenteredModal außerhalb ui/' 29 '<CenteredModal' 'components/ui/'
 
+# Kennzahl-Kacheln: Dateien, die eine Zahl als text-2xl/3xl font-bold in eine Card setzen,
+# ohne KpiBand/StatCard. Dateiweise gezählt (ein Treffer je Datei), Kennzahlen gehören in KpiBand.
+KACHELN=$(grep -rlE 'className="[^"]*text-(2xl|3xl) font-bold' "${UI_SCOPE[@]}" --include='*.tsx' 2>/dev/null \
+  | grep -v 'components/ui/' | while read -r f; do
+      grep -q '<Card' "$f" && ! grep -qE 'KpiBand|StatCard' "$f" && echo "$f"
+    done)
+KACHELN_N=$(printf '%s' "$KACHELN" | grep -c . || true)
+if [ "$KACHELN_N" -gt 26 ]; then
+  echo "❌ Muster-Ratsche 'Kennzahl-Kachel statt KpiBand': $KACHELN_N Dateien, erlaubt sind 26 (docs/DESIGN.md § 6a)."
+  echo "$KACHELN" | head -10
+  FAIL=1
+fi
+
 if [ "$FAIL" -eq 0 ]; then
   echo "✅ Design-Tokens sauber — keine hartcodierten Palette-Klassen, Radius-Skala eingehalten."
 fi

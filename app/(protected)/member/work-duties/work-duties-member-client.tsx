@@ -1,4 +1,5 @@
 'use client';
+import { KpiBand } from '@/components/ui/kpi-band';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -195,30 +196,19 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-info-600">
-              {myDuties.filter((d) => getMyAssignmentStatus(d) === 'assigned').length}
-            </p>
-            <p className="text-xs text-muted-foreground">Anstehend</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-success-600">
-              {myDuties.filter((d) => getMyAssignmentStatus(d) === 'completed').length}
-            </p>
-            <p className="text-xs text-muted-foreground">Erledigt</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-warning-600">{availableDuties.length}</p>
-            <p className="text-xs text-muted-foreground">Freiwillige Plätze</p>
-          </CardContent>
-        </Card>
-      </div>
+      <KpiBand
+        items={[
+          {
+            label: 'Anstehend',
+            value: myDuties.filter((d) => getMyAssignmentStatus(d) === 'assigned').length,
+          },
+          {
+            label: 'Erledigt',
+            value: myDuties.filter((d) => getMyAssignmentStatus(d) === 'completed').length,
+          },
+          { label: 'Freiwillige Plätze', value: availableDuties.length },
+        ]}
+      />
 
       {/* Tab Switcher — shadcn Tabs statt Inline-Pills, identisch zu den
           Admin-Tab-Leisten (members, settings, documents). Der Inhalt unten

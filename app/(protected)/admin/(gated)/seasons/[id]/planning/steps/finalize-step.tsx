@@ -1,4 +1,5 @@
 'use client';
+import { KpiBand } from '@/components/ui/kpi-band';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useCallback, useEffect } from 'react';
@@ -17,9 +18,7 @@ import {
   Loader2,
   ClipboardCheck,
   Users,
-  Calendar,
   Clock,
-  Bell,
   FileText,
   Sparkles,
   Star,
@@ -192,37 +191,13 @@ export function FinalizeStep() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary" />
-                <p className="text-sm text-muted-foreground">Gruppen erstellt</p>
-              </div>
-              <p className="text-2xl font-bold mt-1">
-                {state.clusteringResult?.groups.length || 0}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-success-500" />
-                <p className="text-sm text-muted-foreground">Einheiten</p>
-              </div>
-              <p className="text-2xl font-bold mt-1">{state.publishedSessionIds.length}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-warning-500" />
-                <p className="text-sm text-muted-foreground">Benachrichtigungen</p>
-              </div>
-              <p className="text-2xl font-bold mt-1">{state.selectedMemberIds.length}</p>
-            </CardContent>
-          </Card>
-        </div>
+        <KpiBand
+          items={[
+            { label: 'Gruppen erstellt', value: state.clusteringResult?.groups.length || 0 },
+            { label: 'Einheiten', value: state.publishedSessionIds.length },
+            { label: 'Benachrichtigungen', value: state.selectedMemberIds.length },
+          ]}
+        />
 
         {/* Waitlist */}
         {(state.clusteringResult?.waitlistSummary.length || 0) > 0 && (

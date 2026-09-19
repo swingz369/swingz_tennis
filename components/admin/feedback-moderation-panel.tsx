@@ -1,5 +1,6 @@
 'use client';
 
+import { KpiBand } from '@/components/ui/kpi-band';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -206,32 +207,14 @@ export function FeedbackModerationPanel({ clubId: _clubId }: FeedbackModerationP
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card variant="bordered">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <div className="text-xs text-muted-foreground">Total Feedback</div>
-          </CardContent>
-        </Card>
-        <Card variant="bordered">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-success-600">{stats.visible}</div>
-            <div className="text-xs text-muted-foreground">Visible</div>
-          </CardContent>
-        </Card>
-        <Card variant="bordered">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-muted-foreground">{stats.hidden}</div>
-            <div className="text-xs text-muted-foreground">Hidden</div>
-          </CardContent>
-        </Card>
-        <Card variant="bordered">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-error-600">{stats.flagged}</div>
-            <div className="text-xs text-muted-foreground">Flagged</div>
-          </CardContent>
-        </Card>
-      </div>
+      <KpiBand
+        items={[
+          { label: 'Gesamt', value: stats.total },
+          { label: 'Sichtbar', value: stats.visible },
+          { label: 'Ausgeblendet', value: stats.hidden },
+          { label: 'Gemeldet', value: stats.flagged },
+        ]}
+      />
 
       {/* Filters and Bulk Actions */}
       <Card variant="bordered">

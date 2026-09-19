@@ -63,42 +63,46 @@ function Cell({ item }: { item: KpiBandItem }) {
   );
 }
 
+// Spaltenzahl je Anzahl der Werte, damit 3er- und 6er-Reihen ohne Leerzelle aufgehen.
+// Statische Klassen (Tailwind sieht keine zusammengesetzten Namen).
+const COLS: Record<number, string> = {
+  2: 'grid-cols-2',
+  3: 'grid-cols-2 md:grid-cols-3',
+  6: 'grid-cols-2 md:grid-cols-3',
+};
+
 export function KpiBand({ items }: { items: KpiBandItem[] }) {
   return (
     // Die 2-px-Oberkante ist im Light-Theme die Tinte selbst — ein schwarzer
     // Strich über den Zahlen, der das Band als Kopfzeile der Seite setzt. Im
     // Dark wäre dieselbe Regel eine fast weisse Linie, die heller leuchtet als
     // die Zahlen darunter; dort trägt sie deshalb die Akzentfarbe.
-    <dl className="grid grid-cols-2 lg:grid-cols-4 border-t-2 border-foreground dark:border-t-primary border-b border-border">
-      {items.map((item, idx) => {
-        const cellClass = cn(
-          'px-4 py-5 sm:px-6',
-          // Trennlinien nur zwischen den Zellen, nicht aussen. Auf Mobile
-          // steht das Band 2x2, deshalb die zweite Regel für die Zeilenkante.
-          'border-border',
-          idx % 2 === 0 && 'border-r lg:border-r',
-          idx % 2 === 1 && 'lg:border-r',
-          idx === items.length - 1 && 'lg:border-r-0',
-          idx < 2 && 'border-b lg:border-b-0'
-        );
+    // Innen: jede Zelle trägt rechte + untere Kante, der Container schneidet die
+    // äusseren ab (-mr-px/-mb-px + overflow-hidden) — funktioniert für jede
+    // Anzahl und Zeilenzahl, ohne Sonderfälle je Position.
+    <div className="overflow-hidden border-t-2 border-foreground dark:border-t-primary border-b border-border">
+      <dl className={cn('-mr-px -mb-px grid', COLS[items.length] ?? 'grid-cols-2 lg:grid-cols-4')}>
+        {items.map((item) => {
+          const cellClass = 'px-4 py-5 sm:px-6 border-r border-b border-border';
 
-        return item.href ? (
-          <Link
-            key={item.label}
-            href={item.href}
-            className={cn(
-              cellClass,
-              'block transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset'
-            )}
-          >
-            <Cell item={item} />
-          </Link>
-        ) : (
-          <div key={item.label} className={cellClass}>
-            <Cell item={item} />
-          </div>
-        );
-      })}
-    </dl>
+          return item.href ? (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={cn(
+                cellClass,
+                'block transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset'
+              )}
+            >
+              <Cell item={item} />
+            </Link>
+          ) : (
+            <div key={item.label} className={cellClass}>
+              <Cell item={item} />
+            </div>
+          );
+        })}
+      </dl>
+    </div>
   );
 }

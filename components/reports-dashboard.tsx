@@ -1,5 +1,6 @@
 'use client';
 
+import { KpiBand } from '@/components/ui/kpi-band';
 import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -97,20 +98,7 @@ export default function ReportsDashboard() {
         <PageHeader title="Reports & Exporte" description="Vereins-Kennzahlen und Datenexport" />
       </div>
 
-      {/* KPI Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {reportCards.map((c) => (
-          <Card key={c.label} className="border-0 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-muted-foreground">{c.label}</p>
-                <c.icon className={`h-4 w-4 ${c.color}`} />
-              </div>
-              <p className="text-xl font-bold tabular-nums">{c.value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <KpiBand items={reportCards.map((c) => ({ label: c.label, value: c.value }))} />
 
       {/* Export Actions */}
       <div>
