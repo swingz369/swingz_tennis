@@ -190,6 +190,9 @@ export function memberSidebarSections(hidden: Hidden, includeMemberOnly: boolean
         ...(!hidden.has('league_lineup')
           ? [{ name: 'Meine Mannschaften', href: '/member/leagues' }]
           : []),
+        ...(!hidden.has('league_lineup')
+          ? [{ name: 'Offizieller Spielplan', href: '/member/liga-offiziell' }]
+          : []),
         ...(!hidden.has('tournaments') ? [{ name: 'Turniere', href: '/member/tournaments' }] : []),
         ...(!hidden.has('gamification')
           ? [{ name: 'Erfolge & Ranglisten', href: '/gamification' }]

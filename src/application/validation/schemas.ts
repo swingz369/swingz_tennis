@@ -94,6 +94,30 @@ export const updateClubSchema = createClubSchema.partial().extend({
   tax_rate: z.coerce.number().int().min(0).max(19).optional(),
   default_payment_method: z.enum(['sepa', 'transfer', 'cash', 'stripe']).optional(),
   invoice_number_prefix: z.string().max(10).optional(),
+  // tennis.de-Mannschaftswidget. Leeres Feld ('') löscht den Wert.
+  tennisde_verband: z
+    .union([
+      z.literal(''),
+      z
+        .string()
+        .trim()
+        .toUpperCase()
+        .regex(/^[A-Z]{2,6}$/, 'Verbandskürzel: 2–6 Buchstaben, z. B. BTV'),
+    ])
+    .nullable()
+    .optional()
+    .transform((v) => (v === '' ? null : v)),
+  tennisde_verein_nr: z
+    .union([
+      z.literal(''),
+      z
+        .string()
+        .trim()
+        .regex(/^[0-9]{1,10}$/, 'Vereinsnummer: nur Ziffern'),
+    ])
+    .nullable()
+    .optional()
+    .transform((v) => (v === '' ? null : v)),
 });
 
 // ============================================

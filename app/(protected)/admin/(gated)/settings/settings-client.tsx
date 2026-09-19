@@ -145,6 +145,8 @@ type ClubSettings = {
   taxEnabled: boolean;
   default_payment_method?: 'sepa' | 'transfer' | 'cash' | 'stripe';
   invoice_number_prefix?: string;
+  tennisde_verband?: string;
+  tennisde_verein_nr?: string;
 };
 
 type SystemSettings = {
@@ -203,6 +205,8 @@ export function ClubSettingsContent() {
     taxEnabled: false,
     default_payment_method: 'transfer',
     invoice_number_prefix: '',
+    tennisde_verband: '',
+    tennisde_verein_nr: '',
   });
 
   useEffect(() => {
@@ -230,6 +234,8 @@ export function ClubSettingsContent() {
                 ? clubData.club.defaultPaymentMethod
                 : 'transfer',
               invoice_number_prefix: clubData.club.invoicePrefix ?? '',
+              tennisde_verband: clubData.club.tennisdeVerband ?? '',
+              tennisde_verein_nr: clubData.club.tennisdeVereinNr ?? '',
             }));
           }
         } else {
@@ -277,6 +283,8 @@ export function ClubSettingsContent() {
           tax_rate: clubSettings.taxEnabled ? clubSettings.tax_rate : 0,
           default_payment_method: clubSettings.default_payment_method,
           invoice_number_prefix: clubSettings.invoice_number_prefix,
+          tennisde_verband: clubSettings.tennisde_verband,
+          tennisde_verein_nr: clubSettings.tennisde_verein_nr,
         }),
       });
 
@@ -284,7 +292,9 @@ export function ClubSettingsContent() {
         toast.success('Vereinseinstellungen gespeichert');
       } else {
         const error = await res.json();
-        toast.error(`Fehler: ${error.error || 'Unbekannter Fehler'}`);
+        // Validierungsfehler kommen als { error: 'Validation failed', details: [{ field, message }] }
+        const detail = Array.isArray(error.details) ? error.details[0]?.message : undefined;
+        toast.error(`Fehler: ${detail || 'Speichern nicht möglich — bitte Eingaben prüfen'}`);
       }
     } catch (err) {
       log.error('Failed to save club settings', err instanceof Error ? err : undefined);
@@ -512,6 +522,47 @@ export function ClubSettingsContent() {
                   className="w-48"
                 />
                 <p className="text-sm text-muted-foreground mt-1">Ergibt z. B. RE-202608-00001</p>
+              </div>
+
+              <div>
+                <Label htmlFor="tennisde_verband">tennis.de: Verbandskürzel</Label>
+                <Input
+                  id="tennisde_verband"
+                  type="text"
+                  maxLength={6}
+                  value={clubSettings.tennisde_verband ?? ''}
+                  onChange={(e) =>
+                    setClubSettings({
+                      ...clubSettings,
+                      tennisde_verband: e.target.value.toUpperCase().slice(0, 6),
+                    })
+                  }
+                  placeholder="z.B. BTV"
+                  className="w-48"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="tennisde_verein_nr">tennis.de: Vereinsnummer</Label>
+                <Input
+                  id="tennisde_verein_nr"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={10}
+                  value={clubSettings.tennisde_verein_nr ?? ''}
+                  onChange={(e) =>
+                    setClubSettings({
+                      ...clubSettings,
+                      tennisde_verein_nr: e.target.value.replace(/\D/g, '').slice(0, 10),
+                    })
+                  }
+                  placeholder="z.B. 02351"
+                  className="w-48"
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Für die Anzeige von Mannschaften und Spielplan. Die Nummer steht in der
+                  tennis.de-Mannschaftssuche.
+                </p>
               </div>
             </div>
 

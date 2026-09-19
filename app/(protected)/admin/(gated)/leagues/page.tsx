@@ -11,6 +11,9 @@ export default function LeaguesPage() {
       <PageHeader
         title="Liga & Mannschaft"
         description="Mannschaftsaufstellung, Liga-Verwaltung und Spieltag-Planung"
+        actions={[
+          { label: 'Offizieller Spielplan', href: '/admin/leagues/offiziell', variant: 'outline' },
+        ]}
       />
       <LeaguesClient />
     </div>

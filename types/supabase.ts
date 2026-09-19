@@ -838,6 +838,8 @@ export type Database = {
           slug: string | null;
           status: string;
           tax_rate: number;
+          tennisde_verband: string | null;
+          tennisde_verein_nr: string | null;
           timezone: string | null;
           updated_at: string;
           website: string | null;
@@ -883,6 +885,8 @@ export type Database = {
           slug?: string | null;
           status?: string;
           tax_rate?: number;
+          tennisde_verband?: string | null;
+          tennisde_verein_nr?: string | null;
           timezone?: string | null;
           updated_at?: string;
           website?: string | null;
@@ -928,6 +932,8 @@ export type Database = {
           slug?: string | null;
           status?: string;
           tax_rate?: number;
+          tennisde_verband?: string | null;
+          tennisde_verein_nr?: string | null;
           timezone?: string | null;
           updated_at?: string;
           website?: string | null;
