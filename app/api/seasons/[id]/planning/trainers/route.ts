@@ -3,20 +3,10 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { ApiException, safeErrorMessage } from '@/lib/api-error';
 import { withApiAuth } from '@/lib/api-auth';
-import { authorizeSeasonAccess } from '@/lib/season-auth';
+import { SeasonPlanningService } from '@/application/services/season-planning.service';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
-import { db } from '@/src/infrastructure/persistence/db';
-import {
-  users,
-  trainers as trainersTable,
-  trainerClubs,
-  userClubMemberships,
-  userTrainingPreferences,
-  seasonPlanEntries,
-} from '@/src/infrastructure/persistence/schema';
-import { seasonPlanningConfigs } from '@/src/infrastructure/persistence/season-planning-schema';
-import { eq, and } from 'drizzle-orm';
 import type { TrainerAvailabilitySummary } from '@/lib/season-planning/types';
 import { createLogger } from '@/lib/logger';
 
@@ -33,76 +23,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
   return withApiAuth(request, async (auth) => {
     try {
       const { id: seasonId } = await context.params;
-      // Zentrale Prüfung statt inline dupliziertem Rollen- und Clubcheck,
-      // siehe lib/season-auth.ts. Verhalten identisch: Superadmin und Owner
-      // über den Fast-Path, sonst Mitgliedschaft im Club der Saison mit
-      // Rolle admin oder superadmin.
-      const access = await authorizeSeasonAccess(auth, seasonId, {
-        allowedRoles: ['admin', 'superadmin'],
-      });
-      if (!access.ok) return access.response;
-      const { season } = access;
-
-      // Get trainer preferences
-      const trainerPrefs = await db
-        .select({
-          pref: userTrainingPreferences,
-          trainer: trainersTable,
-          user_name: users.full_name,
-        })
-        .from(userTrainingPreferences)
-        .innerJoin(users, eq(userTrainingPreferences.user_id, users.id))
-        .innerJoin(trainersTable, eq(users.id, trainersTable.user_id))
-        .where(
-          and(
-            eq(userTrainingPreferences.season_id, seasonId),
-            eq(userTrainingPreferences.is_submitted, true),
-            eq(userTrainingPreferences.user_role, 'trainer')
-          )
-        );
-
-      // Get ALL active club trainers (to cover trainers without submitted preferences)
-      // Primary source: trainer_clubs join
-      let clubTrainers = await db
-        .select({ trainer: trainersTable })
-        .from(trainersTable)
-        .innerJoin(trainerClubs, eq(trainersTable.id, trainerClubs.trainer_id))
-        .where(and(eq(trainerClubs.club_id, season.club_id), eq(trainersTable.is_active, true)));
-
-      // Fallback: user_club_memberships with role='trainer' (for clubs that use
-      // memberships instead of trainer_clubs)
-      if (clubTrainers.length === 0) {
-        const membershipTrainers = await db
-          .select({ trainer: trainersTable })
-          .from(userClubMemberships)
-          .innerJoin(trainersTable, eq(userClubMemberships.user_id, trainersTable.user_id))
-          .where(
-            and(
-              eq(userClubMemberships.club_id, season.club_id),
-              eq(userClubMemberships.role, 'trainer'),
-              eq(userClubMemberships.is_active, true),
-              eq(trainersTable.is_active, true)
-            )
-          );
-        clubTrainers = membershipTrainers;
-      }
-
-      // Get existing plan entries for utilization calculation
-      const existingEntries = await db
-        .select()
-        .from(seasonPlanEntries)
-        .where(eq(seasonPlanEntries.season_id, seasonId));
-
-      // Get config
-      const [config] = await db
-        .select()
-        .from(seasonPlanningConfigs)
-        .where(
-          and(
-            eq(seasonPlanningConfigs.club_id, season.club_id),
-            eq(seasonPlanningConfigs.season_id, seasonId)
-          )
-        );
+      const {
+        trainerPrefs,
+        clubTrainers,
+        entries: existingEntries,
+        config,
+      } = await new SeasonPlanningService(auth).trainerOverviewData(seasonId);
 
       const maxUtilizationPct = config?.trainer_utilization_max_pct || 80;
       const burnoutWarnings: string[] = [];
@@ -160,7 +86,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       });
 
       // Add unsubmitted trainers from club
-      for (const { trainer } of clubTrainers) {
+      for (const trainer of clubTrainers) {
         if (processedTrainerIds.has(trainer.id)) continue;
         processedTrainerIds.add(trainer.id);
 
@@ -214,6 +140,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
       return NextResponse.json({ success: true, summary });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return NextResponse.json({ error: safeErrorMessage(error) }, { status: error.status });
+      }
       log.error('GET trainers error:', error);
       return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }

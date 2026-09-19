@@ -3,17 +3,10 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { ApiException, safeErrorMessage } from '@/lib/api-error';
 import { withApiAuth } from '@/lib/api-auth';
-import { authorizeSeasonAccess } from '@/lib/season-auth';
+import { SeasonPlanningService } from '@/application/services/season-planning.service';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
-import { db } from '@/src/infrastructure/persistence/db';
-import {
-  users,
-  userTrainingPreferences,
-  userClubMemberships,
-} from '@/src/infrastructure/persistence/schema';
-import { seasonStatistics } from '@/src/infrastructure/persistence/season-planning-schema';
-import { eq, and, count } from 'drizzle-orm';
 import type { PreferencesSummary } from '@/lib/season-planning/types';
 import type { SkillLevel } from '@/lib/types/season-planning';
 import { DAY_LABELS } from '@/lib/season-planning/schedule-constants';
@@ -32,60 +25,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
   return withApiAuth(request, async (auth) => {
     try {
       const { id: seasonId } = await context.params;
-      // Zentrale Prüfung statt inline dupliziertem Rollen- und Clubcheck,
-      // siehe lib/season-auth.ts. Verhalten identisch: Superadmin und Owner
-      // über den Fast-Path, sonst Mitgliedschaft im Club der Saison mit
-      // Rolle admin oder superadmin.
-      const access = await authorizeSeasonAccess(auth, seasonId, {
-        allowedRoles: ['admin', 'superadmin'],
-      });
-      if (!access.ok) return access.response;
-      const { season } = access;
-
-      // Get all preferences
-      const prefs = await db
-        .select({
-          pref: userTrainingPreferences,
-          user_name: users.full_name,
-          user_email: users.email,
-          skill_level: users.skill_level,
-          experience_months: users.experience_months,
-        })
-        .from(userTrainingPreferences)
-        .innerJoin(users, eq(userTrainingPreferences.user_id, users.id))
-        .where(
-          and(
-            eq(userTrainingPreferences.season_id, seasonId),
-            eq(userTrainingPreferences.user_role, 'member')
-          )
-        );
-
-      // Bezugsgröße sind die planungsrelevanten Mitglieder des Vereins, nicht die
-      // vorhandenen Präferenz-Datensätze: wer das Formular nie geöffnet hat, hat
-      // keine Zeile und fiel damit aus Zähler UND Nenner — die Quote konnte
-      // strukturell nie unter 100 % fallen und verschwieg genau die Mitglieder,
-      // wegen denen man sie liest.
-      const [eligible] = await db
-        .select({ value: count() })
-        .from(userClubMemberships)
-        .where(
-          and(
-            eq(userClubMemberships.club_id, season.club_id),
-            eq(userClubMemberships.role, 'member'),
-            eq(userClubMemberships.is_active, true),
-            eq(userClubMemberships.include_in_planning, true)
-          )
-        );
+      const { prefs, eligible, stats } = await new SeasonPlanningService(
+        auth
+      ).preferencesSummaryData(seasonId);
 
       const submittedPrefs = prefs.filter((p) => p.pref.is_submitted);
-      const totalMembers = Math.max(eligible?.value ?? 0, prefs.length);
+      const totalMembers = Math.max(eligible, prefs.length);
       const responseRate = totalMembers > 0 ? (submittedPrefs.length / totalMembers) * 100 : 0;
-
-      // Load slot failure rates
-      const stats = await db
-        .select()
-        .from(seasonStatistics)
-        .where(eq(seasonStatistics.club_id, season.club_id));
 
       const slotFailureWarnings: PreferencesSummary['slotFailureWarnings'] = [];
       for (const stat of stats) {
@@ -164,6 +110,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
       return NextResponse.json({ success: true, summary });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return NextResponse.json({ error: safeErrorMessage(error) }, { status: error.status });
+      }
       log.error('GET preferences-summary error:', error);
       return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }

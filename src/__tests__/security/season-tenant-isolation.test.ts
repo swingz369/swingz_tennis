@@ -62,6 +62,12 @@ describe('tenant isolation: app/api/seasons/[id]/**/route.ts', () => {
       // ADR-005: `SeasonPlanningConfigService` (config/route.ts re-exportiert planning/config).
       'planning/config/route.ts',
       'config/route.ts',
+      // ADR-005: `SeasonPlanningService` (Admin-Rolle im Verein der Saison, Daten per RLS).
+      'planning/inactive-weeks/route.ts',
+      'planning/waitlist/route.ts',
+      'planning/versions/route.ts',
+      'planning/preferences-summary/route.ts',
+      'planning/trainers/route.ts',
     ].map((p) => path.join(seasonsIdDir, p))
   );
 
