@@ -29,7 +29,11 @@ class Logger {
     // Output to appropriate console method on both server and client
     if (isServer) {
       const ts = new Date().toISOString();
-      const prefix = context ? JSON.stringify(context) : '';
+      const prefix = originalError
+        ? (originalError.stack ?? originalError.message)
+        : context
+          ? JSON.stringify(context)
+          : '';
       switch (level) {
         case LogLevel.ERROR:
         case LogLevel.FATAL:

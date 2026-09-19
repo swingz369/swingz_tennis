@@ -252,7 +252,9 @@ export async function POST(request: NextRequest) {
       role: record.role,
       is_active: true,
       status: 'active',
-      ...(normalizeDate(record.joinedAt) ? { joined_at: normalizeDate(record.joinedAt) } : {}),
+      // Immer setzen: PostgREST füllt beim Bulk-Insert fehlende Spalten einzelner
+      // Zeilen mit NULL auf, und joined_at ist NOT NULL.
+      joined_at: normalizeDate(record.joinedAt) ?? now,
     }));
 
     if (membershipRows.length > 0) {
