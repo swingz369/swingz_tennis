@@ -170,4 +170,12 @@ export class ConflictDetectionRepository {
       );
     }
   }
+
+  /** Entscheidung (gelöst/ignoriert) unter der stabilen Zeilen-ID anlegen oder überschreiben. */
+  async saveDecision(row: TablesInsert<'planning_conflicts'>): Promise<void> {
+    ok(
+      await this.db.from('planning_conflicts').upsert(row, { onConflict: 'id' }),
+      'Speichern der Konflikt-Entscheidung fehlgeschlagen'
+    );
+  }
 }

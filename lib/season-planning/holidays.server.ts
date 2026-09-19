@@ -14,9 +14,7 @@
  *
  * Nur serverseitig verwendbar (DB-Zugriff). `holidays.ts` bleibt bewusst rein.
  */
-import { db } from '@/src/infrastructure/persistence/db';
-import { schoolHolidays } from '@/src/infrastructure/persistence/schema';
-import { eq } from 'drizzle-orm';
+import { systemDb } from '@/infrastructure/db';
 import { BUNDESLAND_NAMES, type Holiday } from './holidays';
 import { createLogger } from '@/lib/logger';
 
@@ -35,14 +33,13 @@ export async function loadHolidaysForState(stateCode: string): Promise<Holiday[]
   }
 
   try {
-    const rows = await db
-      .select({
-        name: schoolHolidays.name,
-        start: schoolHolidays.start_date,
-        end: schoolHolidays.end_date,
-      })
-      .from(schoolHolidays)
-      .where(eq(schoolHolidays.bundesland, bundeslandName));
+    // Referenzdaten ohne Mandantenbezug, aufgerufen aus Planungs-Lib ohne Auth-Kontext.
+    const { data, error } = await systemDb('Schulferien: Referenzdaten ohne Mandantenbezug')
+      .from('school_holidays')
+      .select('name, start_date, end_date')
+      .eq('bundesland', bundeslandName);
+    if (error) throw new Error(error.message);
+    const rows = data ?? [];
 
     if (rows.length === 0) {
       log.warn('Keine Ferien in school_holidays hinterlegt — Planung ohne Ferienpause', {
@@ -51,7 +48,7 @@ export async function loadHolidaysForState(stateCode: string): Promise<Holiday[]
       });
     }
 
-    return rows.map((r) => ({ name: r.name, start: r.start, end: r.end }));
+    return rows.map((r) => ({ name: r.name, start: r.start_date, end: r.end_date }));
   } catch (err) {
     log.error(
       'Ferien konnten nicht geladen werden — Planung ohne Ferienpause',

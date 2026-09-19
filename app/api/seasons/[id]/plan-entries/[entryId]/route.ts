@@ -1,20 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { ApiException, internalErrorResponse, safeErrorMessage } from '@/lib/api-error';
+import { withApiAuth } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
-import { db } from '@/src/infrastructure/persistence/db';
-import {
-  seasonPlanEntries,
-  trainers,
-  courts,
-  groups,
-} from '@/src/infrastructure/persistence/schema';
-import { and, eq, sql } from 'drizzle-orm';
+import { SeasonPlanService } from '@/application/services/season-plan.service';
 import type { UpdatePlanEntryRequest } from '@/lib/types/season-planning';
 import { createLogger } from '@/lib/logger';
-import { promoteFromSeasonWaitlist } from '@/lib/season-planning/waitlist-promotion';
 
 const log = createLogger('api:seasons:[id]:plan-entries:[entryId]');
 
@@ -25,313 +17,87 @@ interface RouteContext {
   }>;
 }
 
-/**
- * GET /api/seasons/[id]/plan-entries/[entryId]
- * Get a single plan entry with full details
- */
+/** Fachliche Fehler im bisherigen Format `{ error: string }`. */
+function fail(error: unknown) {
+  if (error instanceof ApiException) {
+    return NextResponse.json({ error: safeErrorMessage(error) }, { status: error.status });
+  }
+  log.error('plan-entries/[entryId] error:', error instanceof Error ? error : undefined);
+  return internalErrorResponse();
+}
+
+/** GET /api/seasons/[id]/plan-entries/[entryId] — ein Plan-Eintrag mit Details */
 export async function GET(request: NextRequest, context: RouteContext) {
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
   return withApiAuth(request, async (auth) => {
-    const { id: seasonId, entryId } = await context.params;
     try {
-      // Fetch entry with details
-      const [result] = await db
-        .select({
-          entry: seasonPlanEntries,
-          trainer_name: trainers.name,
-          court_name: courts.name,
-          group_name: groups.name,
-        })
-        .from(seasonPlanEntries)
-        .leftJoin(trainers, eq(seasonPlanEntries.trainer_id, trainers.id))
-        .leftJoin(courts, eq(seasonPlanEntries.court_id, courts.id))
-        .leftJoin(groups, eq(seasonPlanEntries.group_id, groups.id))
-        .where(and(eq(seasonPlanEntries.id, entryId), eq(seasonPlanEntries.season_id, seasonId)));
-
-      if (!result) {
-        return NextResponse.json({ error: 'Plan-Eintrag nicht gefunden' }, { status: 404 });
-      }
-
-      // Check permissions
-      const isAdmin = await verifyRole(auth, 'admin');
-      const isSuperadmin = await verifyRole(auth, 'superadmin');
-
-      if (!isAdmin && !isSuperadmin) {
-        const hasClubAccess = auth.memberships.some((m) => m.club_id === result.entry.club_id);
-        if (!hasClubAccess) {
-          return forbiddenResponse('Kein Zugriff auf diesen Plan-Eintrag');
-        }
-      }
-
-      const entryWithDetails = {
-        ...result.entry,
-        trainer_name: result.trainer_name || 'Unknown',
-        court_name: result.court_name || null,
-        group_name: result.group_name || null,
-        participant_count: Array.isArray(result.entry.expected_participants)
-          ? result.entry.expected_participants.length
-          : 0,
-      };
-
+      const { id: seasonId, entryId } = await context.params;
+      const entry = await new SeasonPlanService(auth).get(seasonId, entryId);
       return NextResponse.json({
         success: true,
-        entry: entryWithDetails,
+        entry: {
+          ...entry,
+          trainer_name: entry.trainer_name || 'Unknown',
+          participant_count: Array.isArray(entry.expected_participants)
+            ? entry.expected_participants.length
+            : 0,
+        },
       });
     } catch (error) {
-      log.error(`GET /api/seasons/[id]/plan-entries/${entryId} error:`, error);
-      return internalErrorResponse();
+      return fail(error);
     }
   });
 }
 
-/**
- * PATCH /api/seasons/[id]/plan-entries/[entryId]
- * Update a plan entry
- */
+/** PATCH /api/seasons/[id]/plan-entries/[entryId] — Plan-Eintrag ändern (nur Admins) */
 export async function PATCH(request: NextRequest, context: RouteContext) {
   return withCSRFProtection(request, async () => {
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
-      const { id: seasonId, entryId } = await context.params;
       try {
-        // Only admins can update plan entries
-        const isAdmin = await verifyRole(auth, 'admin');
-        const isSuperadmin = await verifyRole(auth, 'superadmin');
-
-        if (!isAdmin && !isSuperadmin) {
-          return forbiddenResponse('Nur Admins können Plan-Einträge ändern');
-        }
-
-        // Fetch existing entry
-        const [existingEntry] = await db
-          .select()
-          .from(seasonPlanEntries)
-          .where(and(eq(seasonPlanEntries.id, entryId), eq(seasonPlanEntries.season_id, seasonId)));
-
-        if (!existingEntry) {
-          return NextResponse.json({ error: 'Plan-Eintrag nicht gefunden' }, { status: 404 });
-        }
-
-        // Verify access
-        if (!isSuperadmin) {
-          const hasClubAccess = auth.memberships.some(
-            (m) =>
-              m.club_id === existingEntry.club_id && (m.role === 'admin' || m.role === 'superadmin')
-          );
-          if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Plan-Eintrag');
-        }
-
+        const { id: seasonId, entryId } = await context.params;
         const body: UpdatePlanEntryRequest = await request.json();
-
-        // Build update object
-        const updateData: Partial<typeof seasonPlanEntries.$inferInsert> = {};
-
-        if (body.trainer_id !== undefined) updateData.trainer_id = body.trainer_id;
-        if (body.court_id !== undefined) updateData.court_id = body.court_id;
-        if (body.group_id !== undefined) updateData.group_id = body.group_id;
-        if (body.day_of_week !== undefined) {
-          if (body.day_of_week < 0 || body.day_of_week > 6) {
-            return NextResponse.json(
-              { error: 'day_of_week muss zwischen 0 und 6 liegen' },
-              { status: 400 }
-            );
-          }
-          updateData.day_of_week = body.day_of_week;
-        }
-        // Vereinsrealität: regulärer Trainingsbetrieb findet nicht sonntags statt.
-        const finalEntryType = body.entry_type ?? existingEntry.entry_type;
-        const finalDayForTypeCheck = updateData.day_of_week ?? existingEntry.day_of_week;
-        if (finalDayForTypeCheck === 6 && finalEntryType === 'training') {
+        const result = await new SeasonPlanService(auth).update(seasonId, entryId, body);
+        if ('conflicts' in result) {
           return NextResponse.json(
-            { error: 'Trainingsstunden können nicht auf einen Sonntag gelegt werden (nur Mo-Sa).' },
-            { status: 400 }
+            {
+              error: 'Terminkonflikt erkannt',
+              details: 'Trainer or court is already booked at this time',
+              conflicts: result.conflicts,
+            },
+            { status: 409 }
           );
         }
-        if (body.start_time !== undefined) updateData.start_time = body.start_time;
-        if (body.end_time !== undefined) updateData.end_time = body.end_time;
-        if (body.duration_minutes !== undefined)
-          updateData.duration_minutes = body.duration_minutes;
-        if (body.starts_from_week !== undefined)
-          updateData.starts_from_week = body.starts_from_week;
-        if (body.ends_at_week !== undefined) updateData.ends_at_week = body.ends_at_week;
-        if (body.entry_type !== undefined) updateData.entry_type = body.entry_type;
-        if (body.planning_source !== undefined) updateData.planning_source = body.planning_source;
-        if (body.max_participants !== undefined)
-          updateData.max_participants = body.max_participants;
-        if (body.expected_participants !== undefined)
-          updateData.expected_participants = body.expected_participants;
-        if (body.status !== undefined) updateData.status = body.status;
-        if (body.notes !== undefined) updateData.notes = body.notes;
-        if (body.admin_notes !== undefined) updateData.admin_notes = body.admin_notes;
-        if (body.substitute_trainer_id !== undefined)
-          updateData.substitute_trainer_id = body.substitute_trainer_id;
-        if (body.substitute_from_week !== undefined)
-          updateData.substitute_from_week = body.substitute_from_week;
-        if (body.substitute_to_week !== undefined)
-          updateData.substitute_to_week = body.substitute_to_week;
-
-        // Enthielt der Request nur unbekannte Felder, blieb updateData leer und
-        // Drizzle warf „No values to set" — ein 500er für einen Eingabefehler.
-        if (Object.keys(updateData).length === 0) {
-          return NextResponse.json(
-            { error: 'Keine bekannten Felder im Request — nichts zu ändern' },
-            { status: 400 }
-          );
-        }
-
-        // Validate time changes
-        const finalStartTime = updateData.start_time || existingEntry.start_time;
-        const finalEndTime = updateData.end_time || existingEntry.end_time;
-
-        if (finalStartTime >= finalEndTime) {
-          return NextResponse.json(
-            { error: 'start_time muss vor end_time liegen' },
-            { status: 400 }
-          );
-        }
-
-        // Check for conflicts if time/trainer/court changed
-        if (
-          body.day_of_week !== undefined ||
-          body.start_time !== undefined ||
-          body.end_time !== undefined ||
-          body.trainer_id !== undefined ||
-          body.court_id !== undefined
-        ) {
-          const finalDayOfWeek = updateData.day_of_week ?? existingEntry.day_of_week;
-          const finalTrainerId = updateData.trainer_id ?? existingEntry.trainer_id;
-          const finalCourtId = updateData.court_id ?? existingEntry.court_id;
-
-          const conflicts = await db
-            .select()
-            .from(seasonPlanEntries)
-            .where(
-              and(
-                eq(seasonPlanEntries.season_id, seasonId),
-                eq(seasonPlanEntries.day_of_week, finalDayOfWeek),
-                sql`${seasonPlanEntries.id} != ${entryId}`,
-                sql`(
-                  (${seasonPlanEntries.start_time} < ${finalEndTime} AND ${seasonPlanEntries.end_time} > ${finalStartTime})
-                  AND (
-                    ${seasonPlanEntries.trainer_id} = ${finalTrainerId}
-                    ${finalCourtId ? sql`OR ${seasonPlanEntries.court_id} = ${finalCourtId}` : sql``}
-                  )
-                )`
-              )
-            );
-
-          if (conflicts.length > 0) {
-            return NextResponse.json(
-              {
-                error: 'Terminkonflikt erkannt',
-                details: 'Trainer or court is already booked at this time',
-                conflicts: conflicts.map((c) => ({
-                  id: c.id,
-                  day_of_week: c.day_of_week,
-                  start_time: c.start_time,
-                  end_time: c.end_time,
-                })),
-              },
-              { status: 409 }
-            );
-          }
-        }
-
-        // Perform update
-        const [updatedEntry] = await db
-          .update(seasonPlanEntries)
-          .set(updateData)
-          .where(eq(seasonPlanEntries.id, entryId))
-          .returning();
-
-        // Wurde die Teilnehmerliste kleiner, ist ein Platz frei geworden — dann
-        // rückt die Saison-Warteliste automatisch nach. Ohne das bliebe der Platz
-        // leer, während jemand nachweislich darauf wartet.
-        let promoted: { memberId: string; position: number }[] = [];
-        const groupId = updatedEntry?.group_id ?? existingEntry.group_id;
-        if (body.expected_participants !== undefined && groupId) {
-          const before = ((existingEntry.expected_participants as string[] | null) ?? []).length;
-          const after = body.expected_participants.length;
-          if (after < before) {
-            promoted = await promoteFromSeasonWaitlist(seasonId, groupId);
-          }
-        }
-
         return NextResponse.json({
           success: true,
-          entry: updatedEntry,
-          promoted,
+          entry: result.entry,
+          promoted: result.promoted,
           message: 'Plan-Eintrag erfolgreich aktualisiert',
         });
       } catch (error) {
-        log.error(`PATCH /api/seasons/${seasonId}/plan-entries/${entryId} error:`, error);
-        return internalErrorResponse();
+        return fail(error);
       }
     });
   });
 }
 
-/**
- * DELETE /api/seasons/[id]/plan-entries/[entryId]
- * Delete a plan entry
- */
+/** DELETE /api/seasons/[id]/plan-entries/[entryId] — Plan-Eintrag löschen (nur Admins) */
 export async function DELETE(request: NextRequest, context: RouteContext) {
   return withCSRFProtection(request, async () => {
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
-      const { id: seasonId, entryId } = await context.params;
       try {
-        // Only admins can delete plan entries
-        const isAdmin = await verifyRole(auth, 'admin');
-        const isSuperadmin = await verifyRole(auth, 'superadmin');
-
-        if (!isAdmin && !isSuperadmin) {
-          return forbiddenResponse('Nur Admins können Plan-Einträge löschen');
-        }
-
-        // Fetch existing entry
-        const [existingEntry] = await db
-          .select()
-          .from(seasonPlanEntries)
-          .where(and(eq(seasonPlanEntries.id, entryId), eq(seasonPlanEntries.season_id, seasonId)));
-
-        if (!existingEntry) {
-          return NextResponse.json({ error: 'Plan-Eintrag nicht gefunden' }, { status: 404 });
-        }
-
-        // Verify access
-        if (!isSuperadmin) {
-          const hasClubAccess = auth.memberships.some(
-            (m) =>
-              m.club_id === existingEntry.club_id && (m.role === 'admin' || m.role === 'superadmin')
-          );
-          if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Plan-Eintrag');
-        }
-
-        // Cannot delete published entries
-        if (existingEntry.status === 'published' || existingEntry.status === 'active') {
-          return NextResponse.json(
-            { error: 'Veröffentlichte oder aktive Einträge können nicht gelöscht werden' },
-            { status: 400 }
-          );
-        }
-
-        // Delete entry
-        await db.delete(seasonPlanEntries).where(eq(seasonPlanEntries.id, entryId));
-
-        return NextResponse.json({
-          success: true,
-          message: 'Plan-Eintrag erfolgreich gelöscht',
-        });
+        const { id: seasonId, entryId } = await context.params;
+        await new SeasonPlanService(auth).remove(seasonId, entryId);
+        return NextResponse.json({ success: true, message: 'Plan-Eintrag erfolgreich gelöscht' });
       } catch (error) {
-        log.error(`DELETE /api/seasons/${seasonId}/plan-entries/${entryId} error:`, error);
-        return internalErrorResponse();
+        return fail(error);
       }
     });
   });

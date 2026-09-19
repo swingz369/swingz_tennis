@@ -4,7 +4,7 @@
  */
 import 'server-only';
 import type { AuthContext } from '@/lib/api-auth';
-import type { Tables, TablesInsert } from '@/types/supabase';
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/supabase';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('infrastructure:season-plan.repository');
@@ -16,6 +16,7 @@ export type PlanEntryWithNames = PlanEntry & {
   court_name: string | null;
   group_name: string | null;
 };
+export type WaitlistEntry = Tables<'season_waitlists'>;
 export type PlanEntryFilters = {
   trainerId?: string;
   courtId?: string;
@@ -77,12 +78,13 @@ export class SeasonPlanRepository {
     start: string,
     end: string,
     trainerId: string,
-    courtId: string | null
+    courtId: string | null,
+    excludeEntryId?: string
   ): Promise<PlanEntry[]> {
     const who = courtId
       ? `trainer_id.eq.${trainerId},court_id.eq.${courtId}`
       : `trainer_id.eq.${trainerId}`;
-    const { data, error } = await this.db
+    let q = this.db
       .from('season_plan_entries')
       .select()
       .eq('season_id', seasonId)
@@ -90,6 +92,8 @@ export class SeasonPlanRepository {
       .lt('start_time', end)
       .gt('end_time', start)
       .or(who);
+    if (excludeEntryId) q = q.neq('id', excludeEntryId);
+    const { data, error } = await q;
     assertNoError(error, 'Prüfen auf Terminkonflikte fehlgeschlagen');
     return data ?? [];
   }
@@ -102,6 +106,72 @@ export class SeasonPlanRepository {
       .single();
     assertNoError(error, 'Speichern des Planeintrags fehlgeschlagen');
     return data!;
+  }
+
+  async findEntry(seasonId: string, entryId: string): Promise<PlanEntryWithNames | null> {
+    const { data, error } = await this.db
+      .from('season_plan_entries')
+      .select(WITH_NAMES)
+      .eq('id', entryId)
+      .eq('season_id', seasonId)
+      .maybeSingle();
+    assertNoError(error, 'Lesen des Planeintrags fehlgeschlagen');
+    if (!data) return null;
+    const { trainers, courts, groups, ...entry } = data as unknown as Joined;
+    return {
+      ...entry,
+      trainer_name: trainers?.name ?? null,
+      court_name: courts?.name ?? null,
+      group_name: groups?.name ?? null,
+    };
+  }
+
+  async updateEntry(
+    entryId: string,
+    patch: TablesUpdate<'season_plan_entries'>
+  ): Promise<PlanEntry> {
+    const { data, error } = await this.db
+      .from('season_plan_entries')
+      .update(patch)
+      .eq('id', entryId)
+      .select()
+      .single();
+    assertNoError(error, 'Aktualisieren des Planeintrags fehlgeschlagen');
+    return data!;
+  }
+
+  async updateEntries(
+    entryIds: string[],
+    patch: TablesUpdate<'season_plan_entries'>
+  ): Promise<void> {
+    const { error } = await this.db.from('season_plan_entries').update(patch).in('id', entryIds);
+    assertNoError(error, 'Aktualisieren der Planeinträge fehlgeschlagen');
+  }
+
+  async deleteEntry(entryId: string): Promise<void> {
+    const { error } = await this.db.from('season_plan_entries').delete().eq('id', entryId);
+    assertNoError(error, 'Löschen des Planeintrags fehlgeschlagen');
+  }
+
+  /** Wartende einer Gruppe, nach Position (Nachrücken = von vorn). */
+  async listWaiting(seasonId: string, groupId: string): Promise<WaitlistEntry[]> {
+    const { data, error } = await this.db
+      .from('season_waitlists')
+      .select()
+      .eq('season_id', seasonId)
+      .eq('group_id', groupId)
+      .eq('status', 'waiting')
+      .order('position', { ascending: true });
+    assertNoError(error, 'Lesen der Warteliste fehlgeschlagen');
+    return data ?? [];
+  }
+
+  async markWaitlistAccepted(id: string): Promise<void> {
+    const { error } = await this.db
+      .from('season_waitlists')
+      .update({ status: 'accepted', accepted_at: new Date().toISOString() })
+      .eq('id', id);
+    assertNoError(error, 'Aktualisieren der Warteliste fehlgeschlagen');
   }
 
   async findTrainerIdByUser(userId: string): Promise<string | null> {

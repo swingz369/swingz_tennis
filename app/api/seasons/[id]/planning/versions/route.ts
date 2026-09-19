@@ -5,7 +5,7 @@ import { withApiAuth } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { SeasonPlanningService } from '@/application/services/season-planning.service';
-import { applySlotsToPlanEntries } from '@/lib/season-planning/apply-plan';
+import { SeasonPlanService } from '@/application/services/season-plan.service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:[id]:planning:versions');
@@ -71,9 +71,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       try {
         const { id: seasonId } = await context.params;
         const { versionId } = await request.json();
-        // Prüfung + Lesen über den Service (RLS); das Anwenden übernimmt weiter die Plan-Lib.
+        // Prüfung + Lesen über den Service (RLS), das Anwenden über den Saisonplan-Service.
         const slots = await new SeasonPlanningService(auth).versionSlots(seasonId, versionId);
-        const result = await applySlotsToPlanEntries(seasonId, slots);
+        const result = await new SeasonPlanService(auth).applySlots(seasonId, slots);
         return NextResponse.json({ success: true, slots, ...result });
       } catch (error) {
         return fail(error, 'Planstand konnte nicht wiederhergestellt werden');

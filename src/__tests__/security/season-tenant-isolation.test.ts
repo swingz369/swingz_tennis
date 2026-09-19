@@ -58,6 +58,7 @@ describe('tenant isolation: app/api/seasons/[id]/**/route.ts', () => {
       'preferences/[userId]/route.ts',
       // ADR-005: `SeasonPlanService` prüft die Rolle im Verein der Saison, RLS trennt die Vereine.
       'plan-entries/route.ts',
+      'plan-entries/[entryId]/route.ts',
       'plan-grid/route.ts',
       // ADR-005: `SeasonPlanningConfigService` (config/route.ts re-exportiert planning/config).
       'planning/config/route.ts',

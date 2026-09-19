@@ -9,7 +9,7 @@ import { withApiAuth } from '@/lib/api-auth';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
-import { applySlotsToPlanEntries } from '@/lib/season-planning/apply-plan';
+import { SeasonPlanService } from '@/application/services/season-plan.service';
 import type { ScheduleSlot } from '@/lib/season-planning/types';
 import { createLogger } from '@/lib/logger';
 
@@ -43,7 +43,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           return NextResponse.json({ error: 'Leerer Plan wird nicht übernommen' }, { status: 400 });
         }
 
-        const result = await applySlotsToPlanEntries(seasonId, slots);
+        const result = await new SeasonPlanService(auth).applySlots(seasonId, slots);
         return NextResponse.json({ success: true, ...result });
       } catch (error) {
         log.error('PUT plan error:', error instanceof Error ? error : undefined);
