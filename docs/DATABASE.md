@@ -215,8 +215,11 @@ Vereinsmitglied offen; jetzt nur `is_club_admin`, Lesen für Vereinsmitglieder.
 `session_access_via_schedule` (FOR ALL für jedes Vereinsmitglied) entfernt; Lesen für Mitglieder,
 Schreiben nur Trainer/Admin (`sessions_insert/_update`, `sessions_delete`).
 
+`schedules` (`20260919150000_schedules_write_admin_only.sql`): offene `FOR ALL`-Policies entfernt,
+`is_superadmin()` durch `is_club_admin`/`is_club_member` ersetzt; Schreiben nur Admin/Owner.
+
 Bekannte Altlast: weitere Policies nutzen noch das plattformweite `is_superadmin()` —
-`background_jobs`, `job_execution_log`, `clubs_insert`, `schedules`, `players`,
+`background_jobs`, `job_execution_log`, `clubs_insert`, `players`,
 `tournament_matches`/`tournament_registrations`, `school_holidays`. Bei Migration der jeweiligen
 Domäne auf `is_superadmin_of(club_id)` bzw. `is_club_member` umstellen.
 
