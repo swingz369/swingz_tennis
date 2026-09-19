@@ -69,7 +69,7 @@ export function SessionCancelDialog({
   return (
     <CenteredModal open={open} onClose={onClose}>
       <div className="space-y-1.5">
-        <h2 className="text-lg font-bold">Training absagen</h2>
+        <h2 className="text-lg font-semibold">Training absagen</h2>
         <p className="text-sm text-muted-foreground">{sessionLabel}</p>
       </div>
 

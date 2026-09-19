@@ -27,7 +27,7 @@ export default function TrainerProfileError({
         <div className="mx-auto h-14 w-14 rounded-xl bg-error-50 dark:bg-error-900/20 flex items-center justify-center">
           <XCircle className="h-7 w-7 text-error-400" />
         </div>
-        <h2 className="text-lg font-bold text-foreground dark:text-white">
+        <h2 className="text-lg font-semibold text-foreground">
           Profil konnte nicht geladen werden
         </h2>
         <p className="text-sm text-muted-foreground">

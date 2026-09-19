@@ -105,6 +105,7 @@ function DefaultErrorFallback({
   const [copied, setCopied] = React.useState(false);
 
   const handleGoHome = () => {
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- harter Reload gewollt: Fehlerzustand des React-Baums verwerfen
     window.location.href = '/dashboard';
   };
 
@@ -132,7 +133,7 @@ function DefaultErrorFallback({
           </div>
         </div>
 
-        <h2 className="mb-2 text-2xl font-bold">Etwas ist schiefgelaufen</h2>
+        <h2 className="mb-2 text-2xl font-semibold">Etwas ist schiefgelaufen</h2>
 
         <p className="mb-6 text-muted-foreground">
           Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut oder kehre zur

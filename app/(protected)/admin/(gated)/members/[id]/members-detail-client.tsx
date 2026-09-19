@@ -479,7 +479,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                 <User className="h-6 w-6 text-primary" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-xl md:text-2xl font-bold text-foreground dark:text-white truncate">
+                <h2 className="text-xl md:text-2xl font-semibold text-foreground truncate">
                   {member.full_name}
                 </h2>
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground truncate">
@@ -1178,7 +1178,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
       {/* ── Cancellation Dialog ──────────────────────────────────────── */}
       <CenteredModal open={cancelDialog} onClose={() => setCancelDialog(false)}>
         <div className="space-y-1.5">
-          <h2 className="text-lg font-bold">Mitgliedschaft kündigen</h2>
+          <h2 className="text-lg font-semibold">Mitgliedschaft kündigen</h2>
           <p className="text-sm text-muted-foreground">
             Kündige die Mitgliedschaft von <strong>{member.full_name}</strong> formell. Das Mitglied
             wird zum angegebenen Datum deaktiviert.
@@ -1229,7 +1229,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
       {/* ── Confirmation Dialog ──────────────────────────────────────── */}
       <CenteredModal open={!!confirmAction} onClose={() => setConfirmAction(null)}>
         <div className="space-y-1.5">
-          <h2 className="text-lg font-bold">
+          <h2 className="text-lg font-semibold">
             {confirmAction?.type === 'deactivate' && 'Mitglied deaktivieren?'}
             {confirmAction?.type === 'role' && 'Rolle auf Admin ändern?'}
           </h2>

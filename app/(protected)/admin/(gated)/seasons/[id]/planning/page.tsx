@@ -32,9 +32,7 @@ export default async function PlanningWizardPage({
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-foreground dark:text-white">
-            Saison nicht gefunden
-          </h2>
+          <h2 className="text-xl font-semibold text-foreground">Saison nicht gefunden</h2>
           <p className="text-sm text-muted-foreground mt-2">
             Die angeforderte Saison existiert nicht.
           </p>

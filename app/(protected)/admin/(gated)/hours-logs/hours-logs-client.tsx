@@ -522,7 +522,7 @@ export default function HoursLogsClient() {
       {/* Delete Confirmation Dialog */}
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4">
+          <div className="bg-background dark:bg-card rounded-xl shadow-lg p-6 w-full max-w-md mx-4 space-y-4">
             <h3 className="text-lg font-bold text-foreground dark:text-white">
               Stundennachweis löschen?
             </h3>
@@ -555,7 +555,7 @@ export default function HoursLogsClient() {
       {/* Reject Dialog */}
       {rejectId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4">
+          <div className="bg-background dark:bg-card rounded-xl shadow-lg p-6 w-full max-w-md mx-4 space-y-4">
             <h3 className="text-lg font-bold text-foreground dark:text-white">
               Stundennachweis ablehnen
             </h3>

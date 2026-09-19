@@ -1290,7 +1290,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       <CenteredModal open={showCTCreate} onClose={() => setShowCTCreate(false)}>
         <form onSubmit={handleCTCreate}>
           <div className="space-y-1.5">
-            <h2 className="text-lg font-bold">Neuen Platz-Typ anlegen</h2>
+            <h2 className="text-lg font-semibold">Neuen Platz-Typ anlegen</h2>
             <p className="text-sm text-muted-foreground">
               Definiere einen neuen Platz-Typ mit Belag und Preiseinstellungen.
             </p>
@@ -1311,7 +1311,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       <CenteredModal open={showCTEdit} onClose={() => setShowCTEdit(false)}>
         <form onSubmit={handleCTUpdate}>
           <div className="space-y-1.5">
-            <h2 className="text-lg font-bold">Platz-Typ bearbeiten</h2>
+            <h2 className="text-lg font-semibold">Platz-Typ bearbeiten</h2>
             <p className="text-sm text-muted-foreground">Ändere die Details des Platz-Typs.</p>
           </div>
           {renderCourtTypeFormFields()}

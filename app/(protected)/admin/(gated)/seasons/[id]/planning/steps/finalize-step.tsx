@@ -191,7 +191,9 @@ export function FinalizeStep() {
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success-100 mx-auto mb-4">
               <CheckCircle className="h-8 w-8 text-success-600" />
             </div>
-            <h2 className="text-xl font-bold text-success-800">Planung erfolgreich bestätigt!</h2>
+            <h2 className="text-xl font-semibold text-success-800">
+              Planung erfolgreich bestätigt!
+            </h2>
             <p className="text-sm text-success-700 mt-2 max-w-md mx-auto">
               Trainingsgruppen und Trainingseinheiten wurden erstellt und in die Profile der Trainer
               und Mitglieder übertragen. Alle Beteiligten werden automatisch benachrichtigt.

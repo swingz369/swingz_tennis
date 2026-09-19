@@ -50,6 +50,9 @@ ratchet 'rohe <table> statt <Table>' 0 '<table' 'components/ui/table\.tsx'
 ratchet 'Pixel-Schriftgrößen text-[Npx]' 9 'text-\[[0-9]+px\]' 'components/ui/'
 ratchet 'CenteredModal außerhalb ui/' 29 '<CenteredModal' 'components/ui/'
 
+ratchet 'Schwebende Flächen: shadow-lg statt shadow-xl/2xl' 0 '\bshadow-(xl|2xl)\b' 'components/ui/'
+ratchet 'h2 semibold statt bold (wie PageHeader)' 0 '<h2[^>]*font-bold' 'components/ui/'
+
 # Kennzahl-Kacheln: Dateien, die eine Zahl als text-2xl/3xl font-bold in eine Card setzen,
 # ohne KpiBand/StatCard. Dateiweise gezählt (ein Treffer je Datei), Kennzahlen gehören in KpiBand.
 KACHELN=$(grep -rlE 'className="[^"]*text-(2xl|3xl) font-bold' "${UI_SCOPE[@]}" --include='*.tsx' 2>/dev/null \

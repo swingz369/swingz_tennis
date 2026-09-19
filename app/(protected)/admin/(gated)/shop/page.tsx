@@ -943,7 +943,7 @@ export default function AdminShopPage() {
           {/* Delete confirmation */}
           {deleteId && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-              <Card className="max-w-md w-full mx-4 shadow-xl border-error-200 dark:border-error-800/50">
+              <Card className="max-w-md w-full mx-4 shadow-lg border-error-200 dark:border-error-800/50">
                 <CardHeader>
                   <CardTitle className="text-base font-semibold flex items-center gap-2 text-error-700 dark:text-error-400">
                     <Trash2 className="h-5 w-5" /> Produkt löschen

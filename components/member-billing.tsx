@@ -243,7 +243,7 @@ export default function MemberBilling() {
           <div className="h-16 w-16 rounded-xl bg-warning-100 dark:bg-warning-900/20 flex items-center justify-center mb-4">
             <AlertCircle className="h-8 w-8 text-warning-600 dark:text-warning-400" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Zugang eingeschränkt</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Zugang eingeschränkt</h2>
           <p className="text-muted-foreground max-w-md">
             Rechnungen und Zahlungen werden von deinen Eltern verwaltet. Bitte wende dich an deine
             Eltern oder Erziehungsberechtigten.

@@ -65,7 +65,7 @@ export function DraggableSessionCard({
         isCancelled
           ? 'bg-error-50 text-error-700 border-l-[3px] border-error-400 opacity-70'
           : isDragging
-            ? 'opacity-40 rotate-1 scale-105 shadow-xl bg-info-100'
+            ? 'opacity-40 rotate-1 scale-105 shadow-lg bg-info-100'
             : 'bg-info-50 text-info-800 hover:shadow-md border-l-[3px] border-info-500 cursor-grab active:cursor-grabbing'
       }`}
     >

@@ -208,7 +208,7 @@ export default function SuperadminOnboardingPage() {
               <Zap className="w-12 h-12 text-info-600 dark:text-info-400" />
             </div>
             <div className="space-y-3">
-              <h2 className="text-3xl font-bold text-foreground">
+              <h2 className="text-3xl font-semibold text-foreground">
                 Willkommen auf der SwingZ-Plattform!
               </h2>
               <p className="text-muted-foreground text-lg max-w-md mx-auto">
@@ -246,7 +246,7 @@ export default function SuperadminOnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Plattform-Tour</h2>
+              <h2 className="text-2xl font-semibold text-foreground">Plattform-Tour</h2>
               <p className="text-muted-foreground text-sm mt-1">
                 Hier ist, was du als Superadmin alles tun kannst:
               </p>
@@ -319,7 +319,7 @@ export default function SuperadminOnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Ersten Verein anlegen</h2>
+              <h2 className="text-2xl font-semibold text-foreground">Ersten Verein anlegen</h2>
               <p className="text-muted-foreground text-sm mt-1">
                 Erstelle deinen ersten Tennisverein – oder überspringe diesen Schritt.
               </p>
@@ -406,7 +406,7 @@ export default function SuperadminOnboardingPage() {
               <CheckCircle2 className="w-12 h-12 text-info-600 dark:text-info-400" />
             </div>
             <div className="space-y-3">
-              <h2 className="text-3xl font-bold text-foreground">
+              <h2 className="text-3xl font-semibold text-foreground">
                 Superadmin-Setup abgeschlossen!
               </h2>
               <p className="text-muted-foreground text-lg max-w-md mx-auto">

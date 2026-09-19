@@ -211,7 +211,7 @@ export default function SEPAMandateSigning() {
                 <CheckCircle className="h-16 w-16 text-success-600" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-success-900 mb-2">
+                <h2 className="text-2xl font-semibold text-success-900 mb-2">
                   SEPA-Mandat erfolgreich unterzeichnet
                 </h2>
                 <p className="text-success-700">

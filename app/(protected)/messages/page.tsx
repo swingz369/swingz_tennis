@@ -678,7 +678,7 @@ function MessageDetail({
           <TooltipContent>Zurück zur Übersicht</TooltipContent>
         </Tooltip>
         <div className="flex-1 min-w-0">
-          <h2 className="text-base font-bold text-foreground truncate">{message.subject}</h2>
+          <h2 className="text-base font-semibold text-foreground truncate">{message.subject}</h2>
           <p className="text-xs text-muted-foreground">
             {folder === 'sent' ? 'An' : 'Von'}: {person.full_name} ({person.email}){' · '}
             {format(new Date(message.created_at), 'dd. MMMM yyyy, HH:mm', { locale: de })}
@@ -907,7 +907,7 @@ function ComposeDialog({
   return (
     <CenteredModal open={open} onClose={onClose}>
       <div className="space-y-1.5">
-        <h2 className="text-lg font-bold flex items-center gap-2">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
           <PenSquare className="h-5 w-5" />
           Neue Nachricht
         </h2>

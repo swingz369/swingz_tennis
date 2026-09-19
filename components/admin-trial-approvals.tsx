@@ -655,7 +655,7 @@ export default function AdminTrialApprovals() {
           const trial = requests.find((r) => r.id === approveId);
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-              <div className="bg-background dark:bg-card rounded-xl shadow-2xl border border-border dark:border-white/10 w-full max-w-lg mx-4 overflow-hidden">
+              <div className="bg-background dark:bg-card rounded-xl shadow-lg border border-border dark:border-white/10 w-full max-w-lg mx-4 overflow-hidden">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-border dark:border-white/5 flex items-center justify-between">
                   <div>
@@ -788,7 +788,7 @@ export default function AdminTrialApprovals() {
           if (!trial) return null;
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-              <div className="bg-background dark:bg-card rounded-xl shadow-2xl border border-border dark:border-white/10 w-full max-w-md mx-4 overflow-hidden">
+              <div className="bg-background dark:bg-card rounded-xl shadow-lg border border-border dark:border-white/10 w-full max-w-md mx-4 overflow-hidden">
                 <div className="px-6 py-4 border-b border-border dark:border-white/5 flex items-center justify-between">
                   <div>
                     <h2 className="text-lg font-semibold text-primary">Zu Mitglied konvertieren</h2>

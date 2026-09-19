@@ -90,7 +90,7 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-bold text-primary">Audit-Logs</h2>
+        <h2 className="text-lg font-semibold text-primary">Audit-Logs</h2>
         <p className="text-sm text-muted-foreground">Sicherheitsrelevante Aktivitäten im Verein</p>
       </div>
 

@@ -295,7 +295,7 @@ export default function OpenMatches({ clubId, userId }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
+          <h2 className="text-2xl font-semibold flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" />
             Offene Spiele
           </h2>

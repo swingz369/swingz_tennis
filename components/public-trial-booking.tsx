@@ -159,7 +159,7 @@ export default function PublicTrialBooking({
           <div className="flex items-center justify-center">
             <CheckCircle className="h-16 w-16 text-success-500" />
           </div>
-          <h2 className="text-xl font-bold text-success-800 dark:text-success-300">
+          <h2 className="text-xl font-semibold text-success-800 dark:text-success-300">
             Probetraining angefragt!
           </h2>
           <p className="text-success-700 dark:text-success-400 max-w-md mx-auto">

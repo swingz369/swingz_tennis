@@ -558,7 +558,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <div>
-                <h2 className="text-xl md:text-2xl font-bold text-foreground dark:text-white truncate">
+                <h2 className="text-xl md:text-2xl font-semibold text-foreground truncate">
                   {trainer.firstName} {trainer.lastName}
                 </h2>
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground truncate">

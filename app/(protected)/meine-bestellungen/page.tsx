@@ -241,10 +241,10 @@ export default function MeineBestellungenPage() {
             tabIndex={0}
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-            <Card className="max-w-lg w-full shadow-2xl pointer-events-auto">
+            <Card className="max-w-lg w-full shadow-lg pointer-events-auto">
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-foreground dark:text-white">
+                  <h2 className="text-lg font-semibold text-foreground">
                     Bestellung #{selectedOrder.id.slice(0, 8)}
                   </h2>
                   <Button

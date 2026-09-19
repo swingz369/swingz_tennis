@@ -126,7 +126,7 @@ function GroupChangeDialog({
 
       <CenteredModal open={open} onClose={() => setOpen(false)}>
         <div className="space-y-1.5">
-          <h2 className="text-lg font-bold">Gruppenwechsel</h2>
+          <h2 className="text-lg font-semibold">Gruppenwechsel</h2>
           <p className="text-sm text-muted-foreground">
             Mitglied in eine andere Gruppe wechseln lassen
           </p>

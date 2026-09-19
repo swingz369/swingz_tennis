@@ -201,7 +201,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
             {/* Dropdown menu with enter animation */}
             <div
-              className={`absolute right-0 top-full mt-2 w-64 rounded-xl bg-background dark:bg-surface-dark py-2 shadow-2xl ring-1 ring-ring/60 dark:ring-white/10 z-50 transition-all duration-200 origin-top-right ${
+              className={`absolute right-0 top-full mt-2 w-64 rounded-xl bg-background dark:bg-surface-dark py-2 shadow-lg ring-1 ring-ring/60 dark:ring-white/10 z-50 transition-all duration-200 origin-top-right ${
                 userMenuOpen
                   ? 'opacity-100 scale-100 translate-y-0'
                   : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
