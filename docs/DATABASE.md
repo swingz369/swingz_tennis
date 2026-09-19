@@ -208,6 +208,9 @@ Behoben (19.09.2026, `20260919110000_seasons_select_superadmin_scoped.sql`): `se
 ebenso gibt `authorizeSeasonAccess` (`lib/season-auth.ts`) nur dem Owner Zugriff ohne Membership.
 Gleiches für `trainers_own` (`20260919120000_trainers_own_superadmin_scoped.sql`).
 
+`trainer_club` (`20260919130000_trainer_club_write_admin_only.sql`): Schreiben war für jedes aktive
+Vereinsmitglied offen; jetzt nur `is_club_admin`, Lesen für Vereinsmitglieder.
+
 Bekannte Altlast: weitere Policies nutzen noch das plattformweite `is_superadmin()` —
 `background_jobs`, `job_execution_log`, `clubs_insert`, `schedules`, `players`,
 `tournament_matches`/`tournament_registrations`, `school_holidays`. Bei Migration der jeweiligen

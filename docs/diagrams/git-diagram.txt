@@ -1,0 +1,136 @@
+flowchart TD
+
+subgraph group_member["Member Experience"]
+  node_member_portal["Member Portal<br/>[page.tsx]"]
+  node_booking_page["Booking Pages<br/>[page.tsx]"]
+  node_booking_api["Booking API<br/>[route.ts]"]
+  node_sessions_api["Sessions API<br/>[route.ts]"]
+  node_partner_api["Partner Finder<br/>[route.ts]"]
+  node_matches_api["Open Matches<br/>[route.ts]"]
+  node_messages_api["Messaging API<br/>[route.ts]"]
+end
+
+subgraph group_club["Club Operations"]
+  node_admin_console["Admin Console<br/>[page.tsx]"]
+  node_members_ui["Member Management<br/>[members-client.tsx]"]
+  node_courts_ui["Court Management"]
+  node_courts_api["Courts API<br/>[route.ts]"]
+  node_leagues_ui["League Management<br/>[leagues-client.tsx]"]
+  node_leagues_api["Leagues API<br/>[route.ts]"]
+  node_attendance_ui["Attendance History<br/>[page.tsx]"]
+  node_attendance_api["Attendance API<br/>[route.ts]"]
+  node_availability_ui["Availability Manager"]
+  node_availability_services["Availability Services"]
+  node_analytics_ui["Analytics Dashboard"]
+  node_analytics_api["Analytics API<br/>[route.ts]"]
+end
+
+subgraph group_planning["Sport Planning"]
+  node_planning_ui["Planning Wizard"]
+  node_planning_api["Planning API<br/>[route.ts]"]
+  node_planning_engine["Clustering Engine"]
+end
+
+subgraph group_finance["Finance Platform"]
+  node_billing_ui["Billing Console<br/>[billing-client.tsx]"]
+  node_billing_api["Billing API<br/>[route.ts]"]
+  node_billing_engine["Billing Engine<br/>[billing-engine.ts]"]
+  node_stripe_webhook["Stripe Webhook<br/>[route.ts]"]
+  node_shop_ui["Shop Pages<br/>[page.tsx]"]
+  node_shop_api["Shop API<br/>[route.ts]"]
+end
+
+node_member_actor(("Member"))
+node_admin_actor(("Club Admin"))
+node_trainer_actor(("Trainer"))
+node_stripe["Stripe"]
+node_supabase[("Supabase Database")]
+
+node_member_actor -->|"uses"| node_member_portal
+node_member_actor -->|"books sessions"| node_booking_page
+node_booking_page -->|"submits booking"| node_booking_api
+node_booking_api -->|"reads rules"| node_supabase
+node_booking_api -->|"writes booking"| node_supabase
+node_booking_api -.->|"updates points"| node_supabase
+node_member_actor -->|"lists sessions"| node_sessions_api
+node_sessions_api -->|"reads sessions"| node_supabase
+node_member_actor -->|"finds partners"| node_partner_api
+node_partner_api -->|"reads matches"| node_supabase
+node_member_actor -->|"joins matches"| node_matches_api
+node_matches_api -->|"reads matches"| node_supabase
+node_member_actor -->|"sends messages"| node_messages_api
+node_messages_api -->|"stores messages"| node_supabase
+node_messages_api -->|"creates notifications"| node_supabase
+node_admin_actor -->|"administers club"| node_admin_console
+node_admin_actor -->|"manages members"| node_members_ui
+node_admin_actor -->|"manages courts"| node_courts_ui
+node_courts_ui -->|"updates courts"| node_courts_api
+node_courts_api -->|"stores courts"| node_supabase
+node_admin_actor -->|"manages leagues"| node_leagues_ui
+node_leagues_ui -->|"updates leagues"| node_leagues_api
+node_leagues_api -->|"stores leagues"| node_supabase
+node_trainer_actor -->|"sets availability"| node_availability_ui
+node_availability_ui -->|"loads slots"| node_availability_services
+node_availability_ui -->|"saves slots"| node_availability_services
+node_admin_actor -->|"plans season"| node_planning_ui
+node_planning_ui -->|"submits plan"| node_planning_api
+node_planning_api -->|"runs clustering"| node_planning_engine
+node_planning_engine -->|"loads constraints"| node_supabase
+node_planning_engine -->|"stores assignments"| node_supabase
+node_admin_actor -->|"reviews attendance"| node_attendance_ui
+node_attendance_ui -->|"loads records"| node_attendance_api
+node_attendance_api -->|"reads attendance"| node_supabase
+node_admin_actor -->|"views analytics"| node_analytics_ui
+node_analytics_ui -->|"requests insights"| node_analytics_api
+node_analytics_api -->|"aggregates data"| node_supabase
+node_admin_actor -->|"manages billing"| node_billing_ui
+node_billing_ui -->|"requests invoices"| node_billing_api
+node_billing_api -->|"runs billing"| node_billing_engine
+node_stripe -.->|"sends events"| node_stripe_webhook
+node_stripe_webhook -->|"dispatches payments"| node_billing_engine
+node_stripe_webhook -->|"updates payments"| node_supabase
+node_member_actor -->|"shops"| node_shop_ui
+node_shop_ui -->|"checks out"| node_shop_api
+node_shop_api -->|"stores orders"| node_supabase
+
+click node_member_portal "https://github.com/swingz369/swingz_tennis/blob/main/app/(protected)/member/page.tsx"
+click node_booking_page "https://github.com/swingz369/swingz_tennis/blob/main/app/(protected)/dashboard/bookings/new/page.tsx"
+click node_booking_api "https://github.com/swingz369/swingz_tennis/blob/main/app/api/bookings/route.ts"
+click node_sessions_api "https://github.com/swingz369/swingz_tennis/blob/main/app/api/sessions/route.ts"
+click node_partner_api "https://github.com/swingz369/swingz_tennis/blob/main/app/api/partner-finder/route.ts"
+click node_matches_api "https://github.com/swingz369/swingz_tennis/blob/main/app/api/open-matches/route.ts"
+click node_messages_api "https://github.com/swingz369/swingz_tennis/blob/main/app/api/messages/route.ts"
+click node_admin_console "https://github.com/swingz369/swingz_tennis/blob/main/app/(protected)/admin/(gated)/page.tsx"
+click node_members_ui "https://github.com/swingz369/swingz_tennis/blob/main/app/(protected)/admin/(gated)/members/members-client.tsx"
+click node_courts_ui "https://github.com/swingz369/swingz_tennis/blob/main/app/(protected)/admin/(gated)/courts/courts-manage-client.tsx"
+click node_courts_api "https://github.com/swingz369/swingz_tennis/blob/main/app/api/courts/route.ts"
+click node_leagues_ui "https://github.com/swingz369/swingz_tennis/blob/main/app/(protected)/admin/(gated)/leagues/leagues-client.tsx"
+click node_leagues_api "https://github.com/swingz369/swingz_tennis/blob/main/app/api/leagues/route.ts"
+click node_attendance_ui "https://github.com/swingz369/swingz_tennis/blob/main/app/(protected)/attendance-history/page.tsx"
+click node_attendance_api "https://github.com/swingz369/swingz_tennis/blob/main/app/api/attendance-records/route.ts"
+click node_availability_ui "https://github.com/swingz369/swingz_tennis/blob/main/components/trainer-availability-manager.tsx"
+click node_availability_services "https://github.com/swingz369/swingz_tennis/tree/main/lib"
+click node_planning_ui "https://github.com/swingz369/swingz_tennis/blob/main/app/(protected)/admin/(gated)/seasons/%5Bid%5D/planning/planning-wizard-client.tsx"
+click node_planning_api "https://github.com/swingz369/swingz_tennis/blob/main/app/api/seasons/%5Bid%5D/planning/plan/route.ts"
+click node_planning_engine "https://github.com/swingz369/swingz_tennis/blob/main/lib/season-planning/clustering-engine.ts"
+click node_analytics_ui "https://github.com/swingz369/swingz_tennis/blob/main/app/(protected)/admin/(gated)/analytics/analytics-client.tsx"
+click node_analytics_api "https://github.com/swingz369/swingz_tennis/blob/main/app/api/analytics/route.ts"
+click node_billing_ui "https://github.com/swingz369/swingz_tennis/blob/main/app/(protected)/admin/(gated)/billing/billing-client.tsx"
+click node_billing_api "https://github.com/swingz369/swingz_tennis/blob/main/app/api/billing/invoices/route.ts"
+click node_billing_engine "https://github.com/swingz369/swingz_tennis/blob/main/lib/billing-engine.ts"
+click node_stripe_webhook "https://github.com/swingz369/swingz_tennis/blob/main/app/api/webhooks/stripe/route.ts"
+click node_shop_ui "https://github.com/swingz369/swingz_tennis/blob/main/app/(protected)/shop/page.tsx"
+click node_shop_api "https://github.com/swingz369/swingz_tennis/blob/main/app/api/shop/route.ts"
+
+classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
+class node_member_portal,node_booking_page,node_booking_api,node_sessions_api,node_partner_api,node_matches_api,node_messages_api toneBlue
+class node_admin_console,node_members_ui,node_courts_ui,node_courts_api,node_leagues_ui,node_leagues_api,node_attendance_ui,node_attendance_api,node_availability_ui,node_availability_services,node_analytics_ui,node_analytics_api,node_supabase toneAmber
+class node_planning_ui,node_planning_api,node_planning_engine toneMint
+class node_billing_ui,node_billing_api,node_billing_engine,node_stripe_webhook,node_shop_ui,node_shop_api toneRose
+class node_member_actor,node_admin_actor,node_trainer_actor,node_stripe toneIndigo
