@@ -107,11 +107,19 @@ describe('authorizeSeasonAccess — platform-staff bypass', () => {
     if (result.ok) expect(result.effectiveRole).toBe('owner');
   });
 
-  it('superadmin bypasses club-membership check', async () => {
+  it('superadmin is granted for an assigned club', async () => {
     mockSeasonRow({ id: SEASON_UUID, club_id: CLUB_A });
-    const auth = makeAuth('superadmin');
+    const auth = makeAuth('superadmin', [{ club_id: CLUB_A, role: 'superadmin' }]);
     const result = await authorizeSeasonAccess(auth, SEASON_UUID);
     expect(result.ok).toBe(true);
+  });
+
+  it('superadmin is denied for an unassigned club', async () => {
+    mockSeasonRow({ id: SEASON_UUID, club_id: CLUB_A });
+    const auth = makeAuth('superadmin', [{ club_id: CLUB_B, role: 'superadmin' }]);
+    const result = await authorizeSeasonAccess(auth, SEASON_UUID);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.response.status).toBe(403);
   });
 });
 

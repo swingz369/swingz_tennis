@@ -60,9 +60,9 @@ export type SeasonAccessRole = 'owner' | 'superadmin' | 'admin' | 'trainer' | 'm
 /**
  * Options for `authorizeSeasonAccess`.
  *
- * - `allowedRoles`: which roles can access this route. `'superadmin'` (and
- *   `'owner'`) bypass the club-membership check — they see ALL clubs via the
- *   cookie-less fast path. Default: `['admin']`.
+ * - `allowedRoles`: which roles can access this route. `'owner'`
+ *   bypasses the club-membership check; `'superadmin'` only for clubs it is
+ *   assigned to (membership role superadmin). Default: `['admin']`.
  *
  * - `requireClubMembership`: when true (default), non-superadmin callers MUST
  *   have a `user_club_memberships` row matching `season.club_id` AND the role
@@ -147,12 +147,10 @@ export async function authorizeSeasonAccess(
     };
   }
 
-  // 2. Superadmin/Owner fast path — bypass club-membership check. Verifies role
-  //    up front so a superadmin without `allowedRoles` membership semantics
-  //    still works (they're platform staff, not subject to per-club role rules).
-  const isPlatformStaff =
-    (await verifyRole(auth, 'superadmin')) || (await verifyRole(auth, 'owner'));
-  if (isPlatformStaff) {
+  // 2. Owner fast path — Plattformbetreiber sieht alle Vereine. Superadmins
+  //    NICHT: sie sind nur für ihre zugewiesenen Vereine zuständig (Membership
+  //    mit Rolle superadmin, siehe Schritt 3).
+  if (await verifyRole(auth, 'owner')) {
     return { ok: true, season, effectiveRole: auth.role };
   }
 
@@ -186,7 +184,7 @@ export async function authorizeSeasonAccess(
   // 4. Role whitelist check. Empty allowedRoles = no-one (apart from
   //    platform staff from step 2). Default ['admin'] blocks trainers and
   //    members as expected for admin-only routes.
-  if (!allowed.includes(clubRole)) {
+  if (clubRole !== 'superadmin' && !allowed.includes(clubRole)) {
     return {
       ok: false,
       response: forbiddenResponse(`Role '${clubRole}' is not authorized for this endpoint`),

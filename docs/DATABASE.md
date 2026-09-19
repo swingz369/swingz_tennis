@@ -203,8 +203,9 @@ Drizzle. Zwei Lücken in den Policies mussten dafür geschlossen werden:
   ohne Vereinszugehörigkeit war möglich. `Users can insert own preferences while open` verlangt
   jetzt `is_club_member(club_id)` und `seasons.club_id = club_id`.
 
-Zu wissen: `seasons_select` enthält `is_superadmin()` — ein Superadmin sieht per RLS auch Saisons
-von Vereinen, die ihm nicht zugewiesen sind. Der Service prüft deshalb zusätzlich die Mitgliedschaft.
+Behoben (19.09.2026, `20260919110000_seasons_select_superadmin_scoped.sql`): `seasons_select` enthielt
+`is_superadmin()` — ein Superadmin sah per RLS Saisons aller Vereine. Jetzt nur `is_club_member(club_id)`;
+ebenso gibt `authorizeSeasonAccess` (`lib/season-auth.ts`) nur dem Owner Zugriff ohne Membership.
 
 ## Datenzugriffsmuster (ADR-005) — Diagramm
 
