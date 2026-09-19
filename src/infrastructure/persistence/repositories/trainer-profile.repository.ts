@@ -19,7 +19,11 @@
 import 'server-only';
 import type { AuthContext } from '@/lib/api-auth';
 import type { Tables, TablesInsert } from '@/types/supabase';
-import type { TrainerProfile, TrainerQualification } from '@/domain/entities/trainer.entity';
+import type {
+  TrainerProfile,
+  TrainerQualification,
+  TrainerSpecialization,
+} from '@/domain/entities/trainer.entity';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('infrastructure:trainer-profile.repository');
@@ -82,6 +86,36 @@ export function normalizeQualifications(raw: unknown): TrainerQualification[] {
 }
 
 /**
+ * Spezialisierungen aus der JSONB-Spalte in die Entity-Form bringen — gleiche
+ * Altlast wie bei den Qualifikationen: die Spalte enthält Objekt-Arrays,
+ * String-Arrays (Seed: `["senior"]`) oder einen JSON-String. In Produktion
+ * war es kein Array, `.slice().map()` in der Trainer-Liste warf und riss die
+ * ganze Seite mit.
+ */
+export function normalizeSpecializations(raw: unknown): TrainerSpecialization[] {
+  let value: unknown = raw;
+  if (typeof raw === 'string') {
+    try {
+      value = JSON.parse(raw);
+    } catch {
+      value = raw.trim() ? [raw] : [];
+    }
+  }
+  if (!Array.isArray(value)) return [];
+  return value.map((entry, i) => {
+    if (typeof entry === 'string') {
+      return { id: `legacy-${i}-${entry}`, name: entry, level: 'intermediate' };
+    }
+    const sp = (entry ?? {}) as Partial<TrainerSpecialization>;
+    return {
+      id: sp.id ?? `legacy-${i}-${sp.name ?? ''}`,
+      name: sp.name ?? '',
+      level: sp.level ?? 'intermediate',
+    };
+  });
+}
+
+/**
  * NaN-Guard für numerische Spalten. PostgREST liefert `numeric`-Spalten als
  * String; fehlerhafte Legacy-Werte (Anführungszeichen, Textreste) lassen
  * parseFloat NaN zurückgeben, das die UI sonst als "NaN/h" gerendert hätte.
@@ -108,7 +142,7 @@ function mapToEntity(row: Row): TrainerProfile {
     bio: row.bio ?? undefined,
     profileImageUrl: row.profile_image_url ?? undefined,
     qualifications: normalizeQualifications(row.qualifications),
-    specializations: (row.specializations as unknown as TrainerProfile['specializations']) || [],
+    specializations: normalizeSpecializations(row.specializations),
     experience: (row.experience as TrainerProfile['experience']) || {
       years: 0,
       previousClubs: [],
