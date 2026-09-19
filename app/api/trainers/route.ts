@@ -16,6 +16,8 @@ export async function GET(request: NextRequest) {
     if (!hasPermission) return forbiddenResponse('Anmeldung erforderlich');
 
     const { clubId } = auth;
+    // Kontaktdaten der Trainer sind nur für Trainer/Admins bestimmt.
+    const showEmail = await verifyRole(auth, 'trainer');
 
     if (!clubId) {
       return NextResponse.json({ trainers: [] });
@@ -70,7 +72,7 @@ export async function GET(request: NextRequest) {
       return {
         id: recordIdByUser.get(m.user_id) ?? m.user_id,
         full_name: u?.full_name ?? 'Trainer',
-        email: u?.email ?? '',
+        email: showEmail ? (u?.email ?? '') : '',
         specialties: profile.specialties ?? [],
         bio: profile.bio ?? null,
       };

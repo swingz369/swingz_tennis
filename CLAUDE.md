@@ -130,7 +130,7 @@ Höchste Rolle gewinnt (in dieser Reihenfolge):
 
 1. `owner` → `/owner`
 2. `superadmin` → `/superadmin`
-3. `admin` → `/admin/members`
+3. `admin` → `/admin`
 4. `trainer` → `/trainer`
 5. Sonst → `/member`
 

@@ -82,8 +82,14 @@ export async function GET(request: NextRequest) {
           .maybeSingle()
       : { data: null };
 
+    // Trainer-E-Mails nur für Trainer/Admins.
+    const showEmail = await verifyRole(auth, 'trainer');
+    const slots = (data ?? []).map((s: any) =>
+      showEmail || !s.trainers ? s : { ...s, trainers: { ...s.trainers, email: null } }
+    );
+
     return NextResponse.json({
-      slots: data ?? [],
+      slots,
       maxHoursPerWeek: trainerRecord?.max_hours_per_week ?? null,
     });
   });
