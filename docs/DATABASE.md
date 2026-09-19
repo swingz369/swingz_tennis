@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 19. September 2026 (Policies auf `user_training_preferences` für Saison-Präferenzen)
+> Zuletzt verifiziert: 19. September 2026 (`users_select_club_admin`, `save_season_clustering`, lokales Migrations-Tracking)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -94,7 +94,10 @@ Testläufen seit dem DB-Reset am 13.08.2026 und werden von
 Zeitstempel, damit die Bereinigung vor dem `NOT NULL` läuft).
 
 `supabase_migrations.schema_migrations` (die CLI-Tabelle, 8 Zeilen) bleibt liegen
-und hat keine Bedeutung mehr. Der Abschnitt darunter beschreibt, wie es dazu kam.
+und hat keine Bedeutung mehr. **Gilt für Produktion.** Auf der lokalen Entwicklungs-DB ist
+`public.schema_migrations` leer (der Stack kommt vom Supabase-CLI, dessen Tabelle endet bei
+`20260914120000`, spätere Migrationen wurden von Hand eingespielt) — `db:status`/`db:migrate` sind
+dort nicht verlässlich; Rezept in [`ENVIRONMENTS.md`](ENVIRONMENTS.md) § 5a. Der Abschnitt darunter beschreibt, wie es dazu kam.
 
 ## `clubs` UPDATE — Owner ergänzt (Stand 16.08.2026, angewendet)
 
@@ -222,6 +225,25 @@ Schreiben nur Trainer/Admin (`sessions_insert/_update`, `sessions_delete`).
 Saisonplans in einer Datenbank-Transaktion (Sessions, Buchungen, Plan-/Saison-Status, offene
 Konflikte, Protokoll). `SECURITY INVOKER` — RLS des Aufrufers gilt, Owner nutzen den Service-Client.
 Die App berechnet die Zeilen (`lib/season-planning/publish-plan.ts`), die Funktion schreibt sie.
+
+`users` (`20260919170000_users_select_club_admin.sql`): neue Policy `users_select_club_admin` (SELECT) —
+Vereins-Admins lesen die Profile aller Personen ihres Vereins, auch bei inaktiver Mitgliedschaft
+oder wenn die Person nur über `trainer_club` verknüpft ist. Vorher galt nur
+`shares_active_club_with` (beide Seiten aktiv); die Saisonplanung verlor darüber stillschweigend
+Trainer und Mitglieder aus ihren Joins. OR-verknüpft mit den bestehenden Policies.
+
+`save_season_clustering` (`20260919180000_save_season_clustering_function.sql`): Speichern eines
+Clustering-/Auto-Planungslaufs in einer Transaktion (künftige Einheiten samt Buchungen verwerfen,
+Planeinträge und Wartelisten ersetzen, Gruppen anlegen/umbenennen, Konflikte, Verlauf,
+Saison-Status). `SECURITY INVOKER`; Aufrufer: `SeasonClusteringRepository.saveClustering`
+(Clustering-Engine und `AutoPlanningService`). Neue Gruppen erhalten ihre ID erst hier und werden
+über einen Schlüssel referenziert; die Funktion gibt `{ groups: { schluessel: id } }` zurück.
+Konflikttyp und Schweregrad müssen den CHECK-Constraints von `planning_conflicts` entsprechen
+(`critical/warning/info`, feste Typliste) — der Auto-Planer mappt seine Algorithmus-Namen vor dem Speichern
+(`lib/services/auto-planning.service.ts`).
+
+PostgREST kappt Antworten still bei 1000 Zeilen. Repositories lesen wachsende Listen deshalb
+seitenweise (`repositories/paged.ts`, `fetchAll`/`fetchAllIn`, stabile Sortierung nach `id`).
 
 Bekannte Altlast: weitere Policies nutzen noch das plattformweite `is_superadmin()` —
 `background_jobs`, `job_execution_log`, `clubs_insert`, `players`,

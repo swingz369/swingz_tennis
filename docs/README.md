@@ -16,7 +16,7 @@ SwingZ ist eine Management-Lösung für Tennisvereine: Mitglieder, Buchungen, Tr
 | [`CLAUDE.md`](../CLAUDE.md)                                      | Architektur, Rollen, Konventionen, DO-NOT-Liste — Pflichtlektüre vor Code-Änderungen                                                                                                                                                                            |
 | [`BUSINESS_RULES.md`](BUSINESS_RULES.md)                         | Verbindliche Produkt- und Rollenregeln                                                                                                                                                                                                                          |
 | [`DATABASE.md`](DATABASE.md)                                     | DB-/RLS-Ist-Zustand, Migrations-Realität, bekannte Altlasten                                                                                                                                                                                                    |
-| [`ENVIRONMENTS.md`](ENVIRONMENTS.md)                             | Umgebungen & Datenbanken: lokal vs. Produktion, Env-Dateien, Migrations-/Deploy-Weg, Backups                                                                                                                                                                    |
+| [`ENVIRONMENTS.md`](ENVIRONMENTS.md)                             | Umgebungen & Datenbanken: lokal vs. Produktion, Env-Dateien, **Weg einer Änderung (Commit → Merge → Migration → Deploy)**, lokale Migrationen, Tests, Dev-Server, Backups                                                                                       |
 | [`SERVICES.md`](SERVICES.md)                                     | Alle Adressen und Dienste (lokal, Produktion, Drittanbieter) und wo die Zugangsdaten liegen                                                                                                                                                                     |
 | [`OPEN_ITEMS.md`](OPEN_ITEMS.md)                                 | **Konsolidierte offene Punkte & nächste Schritte** (P0–P3 + Roadmap) — hier zuerst lesen                                                                                                                                                                        |
 | [`PRODUKTIONSREIFE.md`](PRODUKTIONSREIFE.md)                     | **Der Plan**: Phasen, Reihenfolge, Gates und Abnahmekriterien bis zur Verkaufsreife                                                                                                                                                                             |
@@ -71,7 +71,7 @@ Architektur: Next.js App Router + Clean-Architecture-Layering (`src/domain`, `sr
 git clone <repo-url> swingz && cd swingz
 npm install
 cp .env.example .env.local   # ausfüllen: Supabase, Stripe, Resend — siehe .env.example
-npm run db:migrate           # oder: npm run db:push (nur Entwicklung)
+npm run db:migrate:prod      # nur Produktion — lokale Migrationen: ENVIRONMENTS.md § 5a
 npm run dev                  # http://localhost:3000
 ```
 
@@ -109,7 +109,7 @@ Quelle: `scripts/docs-autogen.ts`, liest `src/infrastructure/persistence/schema.
 
 ## Deploy
 
-Vercel, automatisch bei Push zu `main`. Environment Variables siehe `.env.example`.
+Push nach `main` → CI → `deploy.yml` (Migrationen falls `AUTO_MIGRATE`, `vercel deploy --prod` per CLI, Health-Check). Kein Vercel-Git-Deploy. Der vollständige Ablauf — Commit, Merge, Migrationen (lokal und Produktion), Tests je Änderungsart, Dev-Server-Regeln — steht in [`ENVIRONMENTS.md`](ENVIRONMENTS.md) § 5. Environment Variables siehe `.env.example`.
 
 ---
 

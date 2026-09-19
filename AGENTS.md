@@ -127,6 +127,8 @@ npm run seed:reset    # komplett platt + alles neu (löscht auch die Nutzer-Lane
 
 ## Auslieferung
 
+> Den konkreten Ablauf (Commit-Hook, Merge, Migrationen lokal und Produktion, Tests je Änderungsart, Dev-Server) beschreibt [`docs/ENVIRONMENTS.md`](docs/ENVIRONMENTS.md) § 5. Diese Datei hält nur die Regeln und ihre Begründung.
+
 Grund für diese Regel: Am 18.08.2026 lag der Arbeitsstand 50 Commits und 69
 geänderte Dateien vor `main`. Vercel deployt aus `main` — es lief in Produktion
 also nichts davon, darunter ein Sicherheitsfix und der Überwachungs-Workflow.

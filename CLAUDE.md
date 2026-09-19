@@ -82,10 +82,11 @@ Route (Auth + Zod) → Service (Fachlogik) → Repository (einziger DB-Zugriff) 
 - Fachliche Fehler (404, 409, …) wirft der Service als `ApiException`; die Route gibt
   `safeErrorMessage(error)` zurück, **nie** `error.message` roh (geprüft von
   `no-raw-db-errors.test.ts`).
-- Bekannte Grenzen des Saison-Repositorys: PostgREST liefert max. 1000 Zeilen je Abfrage;
-  `saveToDatabase` der Clustering-Engine ist nicht atomar (mehrere Einzelschritte, Ziel: RPC
-  nach dem Muster `publish_season_plan`); Trainer/Mitglieder ohne aktive Vereins-Mitgliedschaft
-  sind für Admins per RLS (`shares_active_club_with`) nicht lesbar und fallen aus Inner-Joins.
+- Listen, die wachsen können, liest ein Repository mit `fetchAll`/`fetchAllIn` aus
+  `src/infrastructure/persistence/repositories/paged.ts` (PostgREST kappt still bei 1000 Zeilen;
+  Abfrage braucht `.order('id')` als letztes Kriterium). Mehrere Schreibschritte, die zusammengehören,
+  laufen als DB-Funktion in einer Transaktion (`publish_season_plan`, `save_season_clustering`) —
+  nie als Folge einzelner Supabase-Aufrufe.
 - Ältere Domänen laufen noch über Drizzle (`src/infrastructure/persistence/db.ts`, Port 6543
   ohne TLS) oder direkten Service-Client-Zugriff in der Route — Migration Domäne für Domäne
   (Plan: Archiv-Analyse § 6).
@@ -265,11 +266,10 @@ Component-Tests verwenden `TestProviders` aus `src/__tests__/test-utils.tsx`.
 
 Entwicklung läuft gegen den **lokalen** Supabase-Stack (`supabase start`), nicht gegen
 Produktion. Aufteilung, Env-Dateien, Migrations- und Deploy-Weg, Backups:
-**`docs/ENVIRONMENTS.md`** (Begründung: `docs/decisions/adr-003-datenbank-umgebungen.md`).
+**`docs/ENVIRONMENTS.md`** — dort § 5 auch der komplette Weg Commit → Merge → Migration → Deploy, § 5a lokale Migrationen (`db:migrate` geht lokal nicht), § 5b Tests, § 5c Dev-Server (Begründung: `docs/decisions/adr-003-datenbank-umgebungen.md`).
 
 ```bash
-npm run db:status         # offene Migrationen — lokal
-npm run db:migrate        # anwenden — lokal
+npm run db:status:prod    # offene Migrationen — Produktion (lokal NICHT verlässlich!)
 npm run db:migrate:prod   # anwenden — Produktion (liest .env.prod.local, nach Merge auf main)
 ```
 

@@ -1,6 +1,6 @@
 # Umgebungen & Datenbanken
 
-> Zuletzt verifiziert: 4. September 2026 (Backup-Pfad auf Dev-Maschine korrigiert)
+> Zuletzt verifiziert: 19. September 2026 (Auslieferungsweg über `deploy.yml`, lokale Migrations-Realität, Test-/Dev-Server-Rezepte)
 > Warum es genau so aufgeteilt ist (und nicht mit Staging von Anfang an): [`decisions/adr-003-datenbank-umgebungen.md`](decisions/adr-003-datenbank-umgebungen.md)
 
 Dieses Dokument beschreibt, welche Datenbank wofür da ist, wer darauf schreiben darf und wie eine Änderung von der Entwicklung nach Produktion kommt. Es ist ein **lebendes Dokument** — wer die Aufteilung ändert, ändert diese Datei mit.
@@ -39,7 +39,7 @@ Die Trennung ersetzt das bisherige Lane-Konzept nicht, sondern trägt es: `user`
 
 | Datei             | Zeigt auf      | Genutzt von                                                 | In Git |
 | ----------------- | -------------- | ----------------------------------------------------------- | ------ |
-| `.env.local`      | lokaler Stack  | `npm run dev`, Tests, Seed, `npm run db:migrate`            | nein   |
+| `.env.local`      | lokaler Stack  | `npm run dev`, Tests, Seed (Migrationen: siehe § 5a)        | nein   |
 | `.env.prod.local` | VPS-Produktion | **nur** `npm run db:*:prod` und `scripts/restore-backup.ts` | nein   |
 | `.env.example`    | —              | Vorlage, dokumentiert alle Variablen                        | ja     |
 | Vercel Env Vars   | VPS-Produktion | die deployte App                                            | —      |
@@ -93,43 +93,87 @@ E-Mails laufen lokal in Inbucket (http://127.0.0.1:54324), gehen also nicht raus
 
 ## 5. Der Weg einer Änderung
 
+Stand Entwicklungsphase (19.09.2026): Push nach `main` liefert automatisch aus. Der Weg ist bewusst kurz — Absicherung leisten CI, Pre-Commit-Hook und der Health-Check nach dem Deploy.
+
 ```
-lokal entwickeln  →  PR (CI prüft)  →  merge nach main  →  Migration auf Prod  →  Vercel-Deploy
+lokal entwickeln → prüfen (§ 5b) → Commit (Hook) → merge/push nach main → ci → deploy.yml → Health-Check
 ```
 
-1. **Lokal.** Schema-Änderung als neue Datei in `supabase/migrations/` (Regeln: [`AGENTS.md`](../AGENTS.md) § Migrationen). Prüfen mit `supabase db reset` — läuft die Migration auf einer leeren DB durch?
-2. **PR.** CI prüft Typecheck, Unit-Tests und — bei Änderungen an `supabase/migrations/` — ob alle Migrationen gegen eine leere Datenbank durchlaufen (Job `Migrationen gegen leere DB`).
-3. **Merge nach main.**
-4. **Migration auf Produktion, vor dem Deploy:**
+1. **Branch.** Ein Branch, ein Vorhaben; kein Arbeitsstand älter als eine Woche außerhalb von `main` (Begründung: [`AGENTS.md`](../AGENTS.md) § Auslieferung — am 18.08.2026 lagen 50 Commits vor `main`, in Produktion lief nichts davon).
+2. **Lokal prüfen** — je nach Änderungsart siehe § 5b. Immer: `npx tsc --noEmit`, `npx vitest run`.
+3. **Commit.** Der `pre-commit`-Hook (`.husky/pre-commit`) läuft `lint-staged` (eslint + prettier), bei `.md`-Änderungen `npm run docs:check`, `dependency-cruiser` (Architektur-Regeln, Warnungen sind Baseline) und prüft die Git-Identität (Vercel blockt fremde Autoren, Details [`CONTRIBUTING.md`](CONTRIBUTING.md)). Nie mit `--no-verify` umgehen. Commit-Nachricht im Conventional-Commits-Format; KI-Sessions hängen die vom Harness vorgegebene `Co-Authored-By`-Zeile an.
+4. **Auslieferung.** Per PR nach `main` oder direkt `pnpm ship` (= `git push origin HEAD:main`). Dann laufen automatisch:
+   - **`ci.yml`:** Typecheck, Lint, Design-Token-Guardrail, Unit-Tests, Dependency-Audit; bei PRs zusätzlich „Migrationen gegen leere DB“ (`supabase db reset`).
+   - **`deploy.yml`** (startet nach grüner CI auf `main`, oder manuell per `workflow_dispatch`): 1. Migrationen auf Produktion — **nur** wenn die Repo-Variable `AUTO_MIGRATE=true` gesetzt ist; 2. `vercel deploy --prod` per CLI; 3. Health-Check auf `https://swingz.vercel.app/api/health` (bricht rot ab, wenn nicht grün).
+   - Die Reihenfolge Migration → Deploy ist fest eingebaut. Daraus folgt: Migrationen müssen **additiv** sein (Spalte hinzufügen, nicht umbenennen) — zwischen beiden Schritten läuft der alte Code auf dem neuen Schema. Eine Umbenennung wird zu zwei Releases.
+5. **Nach dem Merge prüfen, nicht hoffen** ([`AGENTS.md`](../AGENTS.md) § Auslieferung, Regel 3): `gh run list --workflow deploy --limit 3` (grün?), `curl -s https://swingz.vercel.app/api/health`, und einmal nachsehen, dass `monitor.yml` läuft (`schedule` läuft nur auf `main`).
+6. **Migrationen von Hand** (wenn `AUTO_MIGRATE` aus ist — der Zustand nach dem Launch):
 
    ```bash
    npm run db:status:prod     # was ist offen
    npm run db:dry:prod        # Trockenlauf mit Rollback — muss sauber sein
-   npm run db:migrate:prod    # anwenden
+   npm run db:migrate:prod    # anwenden, VOR dem Deploy
    ```
 
    Jeder dieser Befehle gibt zuerst das Ziel aus (`→ supabase.swingz.cloud:6543 (.env.prod.local)`). Steht dort etwas anderes als erwartet: abbrechen.
 
-5. **Deploy.** Vercel baut auf `main` automatisch.
+**Vor dem Launch zurückdrehen** (Liste: [`OPEN_ITEMS.md`](OPEN_ITEMS.md) § Vor dem Launch): `AUTO_MIGRATE` löschen, Pull Requests mit Freigabe wieder Pflicht, `SUBSCRIPTION_ENFORCEMENT` entfernen.
 
-**Reihenfolge ist nicht verhandelbar:** erst Migration, dann Deploy. Daraus folgt, dass Migrationen **additiv** sein müssen (Spalte hinzufügen, nicht umbenennen) — zwischen Schritt 4 und 5 läuft der alte Code auf dem neuen Schema. Eine Umbenennung wird zu zwei Releases: neue Spalte anlegen + doppelt schreiben, später alte Spalte entfernen.
+### 5a. Migrationen lokal anwenden — `npm run db:migrate` geht hier nicht
+
+`npm run db:migrate` / `db:status` / `db:dry` sind für **Produktion** verlässlich (`:prod`-Varianten). Auf der lokalen DB sind sie es nicht: Der lokale Stack wird vom Supabase-CLI aufgebaut (Tracking in `supabase_migrations.schema_migrations`, endet bei `20260914120000`), die eigene Tabelle `public.schema_migrations` bleibt leer. Folge: `db:status` meldet alles als offen, `db:migrate` bricht an der Baseline mit `type "…" already exists` ab. Neuere lokale Migrationen wurden von Hand eingespielt. **Nicht** `npm run db:baseline` lokal ausführen — es würde auch nie angewendete Dateien als angewendet markieren.
+
+Eine neue Migration lokal anwenden:
+
+```bash
+psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -1 \
+  -f supabase/migrations/<datei>.sql          # -1 = eine Transaktion, bei Fehler nichts halb angewendet
+psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -c "NOTIFY pgrst, 'reload schema'"
+```
+
+Danach:
+
+- **Typen:** `types/supabase.ts` aktualisieren (`npm run gen:types`; geht das nicht, von Hand in derselben Form ergänzen — Tabellen/Funktionen alphabetisch). Ohne den Eintrag scheitert `tsc` am neuen RPC-Aufruf.
+- **Doku:** `docs/DATABASE.md` im selben Zug pflegen, sobald Policies, Helper-Funktionen oder das Rollenmodell betroffen sind ([`AGENTS.md`](../AGENTS.md) § Migrationen, Regel 2).
+- **Saubere Gegenprobe** (läuft die Migration auf einer leeren DB?): `supabase db reset` — löscht **alle** lokalen Daten inklusive der Nutzer-Lane. Nur nach Rückfrage beim Menschen; danach ist `npm run seed:reset` nötig (ebenfalls destruktiv). CI führt dieselbe Prüfung bei jedem PR aus.
+- **Live-Zustand vor dem Schreiben prüfen** (`pg_policies`, `pg_proc`): [`DATABASE.md`](DATABASE.md) § Wie man den echten Live-Zustand prüft.
+- Neue Tabellen zusätzlich in `BACKUP_TABLES` eintragen ([`RUNBOOK-BACKUP-ROLLBACK.md`](RUNBOOK-BACKUP-ROLLBACK.md)).
+
+### 5b. Was wann geprüft wird
+
+| Änderung                                       | Vor dem Commit                                                                                                |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| jede                                           | `npx tsc --noEmit`, `npx vitest run`                                                                          |
+| `.md`-Dateien                                  | `npm run docs:check` (läuft auch im Hook)                                                                     |
+| API-Routen / RLS / Datenzugriff (ADR-005)      | zusätzlich `npm run test:tenant` (unten)                                                                      |
+| Migration                                      | § 5a, dazu bei Policies `docs/DATABASE.md`                                                                    |
+| Repository/Engine gegen echte RLS, ohne Server | temporärer Vitest mit `supabase-js`-Login als Sandbox-Admin (Passwort: `TEST-CREDENTIALS.md`); danach löschen |
+
+**`test:tenant`** (Alpha-Admin ruft alle GET-Routen mit Gamma-IDs auf; `KNOWN_LEAKS` bleibt leer). Braucht einen Dev-Server mit abgeschaltetem Rate-Limit, dauert etwa 10 Minuten:
+
+```bash
+DISABLE_RATE_LIMITING=true npx next dev --turbopack        # Server starten, bis "Ready"
+RUN_BROWSER_E2E=true npx vitest run tests/browser/tenant-isolation-http.test.ts \
+  --reporter=json --outputFile=/tmp/tenant.json             # Ergebnis steht im JSON
+```
+
+Die Konsolenausgabe des Tests wird von der Test-Setup-Datei unterdrückt und die Zusammenfassung fehlt im Terminal — das Ergebnis liest man aus dem JSON (`numFailedTests`, `success`). Anschließend den Dev-Server beenden.
+
+### 5c. Dev-Server und Speicher
+
+Die Dev-Maschine hat wenig RAM: Dev-Server **nur starten, wenn er gebraucht wird, und danach beenden**. Zwei Fallen:
+
+- Auf der Maschine kann ein Wrapper `while true; do npm run dev; sleep 2; done` laufen (Elternprozess systemd `--user`), der den Server nach jedem Beenden neu startet. Erst den Wrapper beenden, dann den Server.
+- Nie `pkill -f <muster>`, wenn das Muster im eigenen Kommandotext vorkommt — es trifft die eigene Shell (Exit 144). Stattdessen: `ps -eo pid,args | awk '/[n]ext dev/ {print $1}' | xargs -r kill`.
 
 ---
 
 ## 6. Vercel-Deployments
 
-- **Production** (Branch `main`) → Produktions-DB. Wie bisher.
-- **Preview** (jeder andere Branch) → **abgeschaltet**, solange es keine Staging-DB gibt. Sonst schreibt jeder Feature-Branch in Produktion, was genau das Problem ist, das diese Aufteilung löst.
-
-  Abgeschaltet wird das im Repo statt im Dashboard — eine Zeile in `vercel.json`, damit die Einstellung im Review sichtbar ist und nicht still von jemandem zurückgeklickt wird:
-
-  ```json
-  "ignoreCommand": "test \"$VERCEL_ENV\" != \"production\""
-  ```
-
-  Exit 0 = Build überspringen. Für Previews trifft die Bedingung zu (Build entfällt), für Production nicht (Build läuft). Wenn Staging kommt: Zeile entfernen und Preview-Env-Vars auf die Staging-DB zeigen lassen.
-
+- **Production** (Branch `main`) → Produktions-DB, ausgeliefert von `deploy.yml` per **Vercel-CLI mit Token**. Der Vercel-Git-Deploy ist seit 16.08.2026 auf `BLOCKED` (Hobby-Plan, privates Repo, Commit-Autor ≠ Kontoinhaber, siehe [`CONTRIBUTING.md`](CONTRIBUTING.md)); CLI-Deploys sind davon nicht betroffen. Voraussetzungen: Secrets `VERCEL_TOKEN`, `DATABASE_URL_PROD`, Repo-Variable `AUTO_MIGRATE`.
+- **Preview** (jeder andere Branch) → **abgeschaltet**, solange es keine Staging-DB gibt. Sonst schreibt jeder Feature-Branch in Produktion. Abgeschaltet wird das im Repo (`vercel.json` → `ignoreCommand`), nicht im Dashboard, damit die Einstellung im Review sichtbar ist. Wenn Staging kommt: Zeile entfernen und Preview-Env-Vars auf die Staging-DB zeigen lassen.
 - Ein Feature vor dem Merge ansehen: lokal per `npm run dev`.
+- **Rollback:** Migrationen sind Forward-Only — eine fehlerhafte Migration wird durch eine neue, korrigierende Migration behoben, im Notfall per Restore ([`RUNBOOK-BACKUP-ROLLBACK.md`](RUNBOOK-BACKUP-ROLLBACK.md) § 4). Ein fehlerhafter App-Stand wird durch einen Revert-Commit nach `main` behoben; `deploy.yml` liefert ihn wie jeden anderen Stand aus.
 
 ---
 
