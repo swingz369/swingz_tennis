@@ -92,7 +92,6 @@ rm -rf .next/cache
     { "path": "/api/cron/notification-dispatch", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/overdue-invoices", "schedule": "0 8 * * *" },
     { "path": "/api/cron/dunning-sync", "schedule": "0 9 * * *" },
-    { "path": "/api/cron/nuliga-sync", "schedule": "0 12 * * 0" },
     { "path": "/api/cron/season-reminders", "schedule": "0 11 * * 1" }
   ]
 }

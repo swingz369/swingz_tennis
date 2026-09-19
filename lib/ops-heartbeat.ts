@@ -25,7 +25,6 @@ export const MONITORED_JOBS: Record<string, { maxAgeHours: number; label: string
   'vps-backup': { maxAgeHours: 36, label: 'VPS-Backup' },
   'cron-backup': { maxAgeHours: 36, label: 'Datenbank-Backup' },
   'cron-billing-overdue': { maxAgeHours: 36, label: 'Mahnlauf' },
-  'cron-nuliga-sync': { maxAgeHours: 36, label: 'nuLiga-Abgleich' },
   'cron-booking-reminders': { maxAgeHours: 36, label: 'Buchungserinnerungen' },
   'cron-reactivation': { maxAgeHours: 36, label: 'Reaktivierung' },
   // Läuft nur sonntags — eine ausgefallene Woche darf nicht sofort Alarm geben.

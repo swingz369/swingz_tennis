@@ -7,7 +7,7 @@
  * in the last 14 days, sends them a reactivation push notification, and marks the
  * membership so we don't spam them.
  *
- * Auth: Bearer ${CRON_SECRET} (same pattern as billing-overdue, nuliga-sync).
+ * Auth: Bearer ${CRON_SECRET} (same pattern as billing-overdue).
  * Monitoring: Sentry cron check-in with monitorSlug 'reactivation'.
  *
  * Idempotency: ReactivationService.runReactivation checks last_reactivation_sent_at

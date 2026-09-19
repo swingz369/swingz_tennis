@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 18. September 2026 (Abgleich gegen Code und Produktion: E-Mail, rohe DB-Fehler, CI-Mocks, P3-Punkte erledigt; nuLiga-Rechtsklärung als Launch-Punkt ergänzt); davor 17. September 2026 (Auslieferung von 33 Commits nach main, 8 Migrationen
+> Zuletzt verifiziert: 20. September 2026 (nuLiga-Scraper entfernt, Widget statt Abruf; davor 18. September 2026: Abgleich gegen Code und Produktion: E-Mail, rohe DB-Fehler, CI-Mocks, P3-Punkte erledigt; nuLiga-Rechtsklärung als Launch-Punkt ergänzt); davor 17. September 2026 (Auslieferung von 33 Commits nach main, 8 Migrationen
 > auf Produktion angewendet, Deploy-Kette geprüft — drei neue Befunde unten); davor 16. September
 > 2026 (ADR-005-Migrationsfortschritt am Code geprüft); 30. August 2026 (Bezahlschranke
 > abgeschaltet — siehe unten)
@@ -25,15 +25,16 @@ Quellen: die vier Archiv-Snapshots vom 13.08.2026 (`docs/ARCHIV/2026-08-13-*`),
 
 ## Vor dem Launch — zwingend zurückdrehen
 
-### nuLiga: Erlaubnis des Betreibers klären
+### nuLiga: Scraper entfernt, Widget statt Abruf (20.09.2026)
 
-SwingZ liest nuLiga-Seiten der Verbände per Scraping aus (`lib/services/nuliga-scraper.ts`).
-„Öffentlich einsehbar" heißt nicht „frei verwendbar": Datenbankherstellerrecht (§ 87b UrhG) und
-mögliche Nutzungsbedingungen der Verbände/des nuLiga-Betreibers sind ungeklärt. Vor dem Launch
-schriftlich anfragen (Erlaubnis oder offizielle Schnittstelle) und die Meldeliste (Namen, LK,
-DTB-ID, besonders bei Jugendlichen) in Datenschutzerklärung und Verzeichnis der
-Verarbeitungstätigkeiten aufnehmen. Gespeichert werden nur Daten der **eigenen** Mannschaft;
-Tabelle und Ergebnisse enthalten keine Personen. Kein Ersatz für Rechtsberatung.
+Die AGB von tennis.de untersagen Scraping und gewerbliche Weiterverwendung. Der Scraper
+(`lib/services/nuliga-scraper.ts`), der Sync, der Cron und die Import-Oberfläche sind gelöscht.
+Ersatz: das von tennis.de zum Einbetten freigegebene Mannschaftswidget
+(`components/tennisde-widget.tsx`; Verband + Vereinsnummer unter Einstellungen → Verein) und der
+manuelle CSV-Import. Offen vor dem Launch: beim tennis.de Service-Center klären, ob das Widget in
+einer SaaS (statt auf der Vereinshomepage) erlaubt ist und wie es mit dem eingeblendeten
+PREMIUM-Werbebanner steht. `league_players` hat derzeit keine Befüllung mehr (Kader, „Meine
+Mannschaften"-Zuordnung): Entscheidung nötig, ob es manuell gepflegt wird oder entfällt.
 
 ### Automatische Auslieferung und Auto-Migration
 

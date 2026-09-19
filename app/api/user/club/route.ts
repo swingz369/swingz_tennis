@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest) {
     const { data: clubRows, error: clubError } = await auth.supabase
       .from('clubs')
       .select(
-        'id, name, max_members, status, bundesland, billing_unit_minutes, tax_rate, default_payment_method, invoice_number_prefix, opening_hours'
+        'id, name, max_members, status, bundesland, billing_unit_minutes, tax_rate, default_payment_method, invoice_number_prefix, opening_hours, tennisde_verband, tennisde_verein_nr'
       )
       .eq('id', targetClubId)
       .limit(1);
@@ -47,6 +47,8 @@ export async function GET(_req: NextRequest) {
       default_payment_method: string | null;
       invoice_number_prefix: string | null;
       opening_hours: unknown;
+      tennisde_verband: string | null;
+      tennisde_verein_nr: string | null;
     };
     return NextResponse.json({
       clubId: targetClubId,
@@ -61,6 +63,8 @@ export async function GET(_req: NextRequest) {
         defaultPaymentMethod: club.default_payment_method ?? 'transfer',
         invoicePrefix: club.invoice_number_prefix ?? '',
         openingHours: club.opening_hours ?? null,
+        tennisdeVerband: club.tennisde_verband ?? '',
+        tennisdeVereinNr: club.tennisde_verein_nr ?? '',
       },
     });
   });

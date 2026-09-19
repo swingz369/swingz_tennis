@@ -1,10 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
@@ -13,48 +11,14 @@ import type { LeaguePlayer, Member } from './types';
 export function RosterTab({
   leagueId,
   players,
-  nuligaRosterUrl,
   members,
   onChanged,
 }: {
   leagueId: string;
   players: LeaguePlayer[];
-  nuligaRosterUrl: string | null;
   members: Member[];
   onChanged: () => void;
 }) {
-  const [rosterUrl, setRosterUrl] = useState('');
-  const [rosterSyncing, setRosterSyncing] = useState(false);
-
-  useEffect(() => {
-    if (nuligaRosterUrl) setRosterUrl(nuligaRosterUrl);
-  }, [nuligaRosterUrl]);
-
-  const handleRosterSync = async () => {
-    if (!rosterUrl.trim()) {
-      toast.error('Bitte URL der Mannschaftsmeldung eingeben');
-      return;
-    }
-    setRosterSyncing(true);
-    try {
-      const res = await apiFetch(`/api/leagues/${leagueId}/roster`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nuliga_roster_url: rosterUrl }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Abruf fehlgeschlagen');
-      toast.success(
-        `${data.imported} Spieler übernommen, ${data.linked} davon einem Mitglied zugeordnet`
-      );
-      onChanged();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Fehler beim Abruf der Meldeliste');
-    } finally {
-      setRosterSyncing(false);
-    }
-  };
-
   const suggestedName = (p: LeaguePlayer) =>
     p.suggested_member_id ? members.find((m) => m.id === p.suggested_member_id)?.name : undefined;
 
@@ -85,35 +49,9 @@ export function RosterTab({
         )}
       </div>
 
-      <Card>
-        <CardContent className="p-4 space-y-2">
-          <label htmlFor="ld-roster-url" className="text-xs font-medium">
-            URL der Mannschaftsseite
-          </label>
-          <div className="flex gap-2">
-            <Input
-              id="ld-roster-url"
-              value={rosterUrl}
-              onChange={(e) => setRosterUrl(e.target.value)}
-              placeholder="https://htv.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/teamPortrait?teamtable=..."
-              className="tabular-nums text-xs"
-            />
-            <Button size="sm" onClick={handleRosterSync} disabled={rosterSyncing}>
-              {rosterSyncing ? 'Lade…' : 'Abrufen'}
-            </Button>
-          </div>
-          <p className="text-2xs text-muted-foreground">
-            Übernimmt Meldeposition, LK und Namen der eigenen Mannschaft und verknüpft sie über die
-            DTB-ID mit den Mitgliedern. Leer lassen nutzt die oben hinterlegte Liga-URL. Spieler
-            anderer Vereine werden nicht gespeichert — deren Aufstellungen stehen im verlinkten
-            Spielbericht.
-          </p>
-        </CardContent>
-      </Card>
-
       {(players?.length ?? 0) === 0 ? (
         <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">
-          Noch kein Kader übernommen.
+          Noch kein Kader hinterlegt.
         </div>
       ) : (
         <div className="space-y-1.5">

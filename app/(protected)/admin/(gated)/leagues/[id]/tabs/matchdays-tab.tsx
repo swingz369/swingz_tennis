@@ -11,14 +11,8 @@ import {
   Edit2,
   Trash2,
   ExternalLink,
-  RefreshCw,
-  History,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
   Lock,
   LockOpen,
-  X,
   Upload,
   CheckCircle2,
 } from 'lucide-react';
@@ -27,11 +21,9 @@ import type { MatchdaysActions } from './use-matchdays';
 
 export function MatchdaysTab({
   matchDays,
-  lastSyncedAt,
   actions,
 }: {
   matchDays: MatchDay[];
-  lastSyncedAt: string | null;
   actions: MatchdaysActions;
 }) {
   const {
@@ -40,17 +32,6 @@ export function MatchdaysTab({
     newMatchDay,
     setNewMatchDay,
     handleCreateMatchDay,
-    nuligaUrl,
-    setNuligaUrl,
-    showNuligaConfig,
-    setShowNuligaConfig,
-    syncing,
-    syncResult,
-    handleNuligaSync,
-    showSyncHistory,
-    setShowSyncHistory,
-    syncHistory,
-    loadingHistory,
     showImport,
     setShowImport,
     importCsv,
@@ -293,160 +274,6 @@ export function MatchdaysTab({
             </Card>
           ))}
         </div>
-      )}
-
-      {/* nuLiga Sync Panel */}
-      {showNuligaConfig && (
-        <Card className="border-2 border-info-200 bg-info-50/50">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <RefreshCw className="h-4 w-4" />
-              nuLiga Synchronisation
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Verbinde diese Liga mit einer nuLiga Seite, um Tabellen und Ergebnisse automatisch zu
-              synchronisieren.
-            </p>
-            <div>
-              <label htmlFor="nuliga-url" className="text-xs font-medium">
-                nuLiga URL
-              </label>
-              <Input
-                id="nuliga-url"
-                value={nuligaUrl}
-                onChange={(e) => setNuligaUrl(e.target.value)}
-                placeholder="https://htv.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/groupPage?championship=...&group=..."
-                className="mt-1 tabular-nums text-xs"
-              />
-              <p className="text-2xs text-muted-foreground mt-1">
-                URL muss von *.liga.nu stammen (z.B. htv.liga.nu, btv.liga.nu)
-              </p>
-            </div>
-            {lastSyncedAt && (
-              <p className="text-xs text-muted-foreground">
-                Letzter Sync: {new Date(lastSyncedAt).toLocaleString('de-DE')}
-              </p>
-            )}
-            {syncResult && (
-              <div className="text-xs bg-success-50 border border-success-200 rounded p-2 space-y-1">
-                <p className="font-medium text-success-700">Sync-Ergebnis:</p>
-                <p>
-                  {String(syncResult.standings)} Teams, {String(syncResult.matches)} Spieltage
-                  geladen
-                </p>
-                <p>
-                  {String(
-                    (syncResult.teamsCreated as number) + (syncResult.teamsUpdated as number)
-                  )}{' '}
-                  Teams aktualisiert,{' '}
-                  {String(
-                    (syncResult.matchesCreated as number) + (syncResult.matchesUpdated as number)
-                  )}{' '}
-                  Spieltage aktualisiert
-                </p>
-              </div>
-            )}
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" size="sm" onClick={() => setShowNuligaConfig(false)}>
-                Schließen
-              </Button>
-              <Button size="sm" onClick={handleNuligaSync} disabled={syncing || !nuligaUrl.trim()}>
-                {syncing ? (
-                  <>
-                    <RefreshCw className="h-3.5 w-3.5 mr-1 animate-spin" /> Synchronisiere...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-3.5 w-3.5 mr-1" /> Synchronisieren
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Sync History Panel */}
-      {showSyncHistory && (
-        <Card className="border border-border">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <History className="h-4 w-4" />
-                Sync-Historie
-              </CardTitle>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowSyncHistory(false)}
-                    aria-label="Schließen"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Schließen</TooltipContent>
-              </Tooltip>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loadingHistory ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">Laden</p>
-            ) : syncHistory.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                Noch keine Sync-Einträge vorhanden
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {syncHistory.map((entry) => (
-                  <div
-                    key={entry.id as string}
-                    className="flex items-start gap-3 p-3 rounded-xl bg-muted/40 text-sm"
-                  >
-                    <div className="mt-0.5">
-                      {(entry.status as string) === 'success' ? (
-                        <CheckCircle className="h-4 w-4 text-success-500" />
-                      ) : (entry.status as string) === 'partial' ? (
-                        <AlertTriangle className="h-4 w-4 text-warning-500" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-error-500" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium">
-                          {(entry.trigger as string) === 'cron' ? 'Automatisch' : 'Manuell'}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(entry.created_at as string).toLocaleString('de-DE')}
-                        </span>
-                      </div>
-                      {(entry.status as string) === 'success' && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {String(
-                            (entry.teams_created as number) + (entry.teams_updated as number)
-                          )}{' '}
-                          Teams,{' '}
-                          {String(
-                            (entry.matches_created as number) + (entry.matches_updated as number)
-                          )}{' '}
-                          Spieltage aktualisiert
-                          {entry.duration_ms != null && ` · ${String(entry.duration_ms)}ms`}
-                        </p>
-                      )}
-                      {(entry.status as string) === 'failed' && !!entry.error_message && (
-                        <p className="text-xs text-error-500 mt-1">{String(entry.error_message)}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       )}
 
       {/* CSV Import Panel */}

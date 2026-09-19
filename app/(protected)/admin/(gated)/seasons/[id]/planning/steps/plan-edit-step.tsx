@@ -6,7 +6,6 @@ import ScheduleGrid from '@/lib/season-planning/schedule-grid';
 import GroupListView from '@/lib/season-planning/group-list-view';
 import { useSchedulePlan } from '@/lib/season-planning/use-schedule-plan';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { PremiumUpsellTrigger } from '@/components/season-planning/premium-upsell-trigger';
 import { useWizard } from '@/lib/season-planning/wizard-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -849,10 +848,6 @@ export function PlanEditStep() {
         loading={isGenerating}
         onConfirm={runGenerate}
       />
-
-      {/* 1.2.2 Premium Upsell — fires once after first lock-step, Starter-tier only.
-          Self-contained: returns null until conditions are met. */}
-      <PremiumUpsellTrigger seasonId={state.seasonId} maxReachedStep={state.maxReachedStep} />
     </div>
   );
 }

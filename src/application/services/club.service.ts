@@ -58,6 +58,10 @@ export class ClubService {
       ...(input.invoice_number_prefix !== undefined && {
         invoice_number_prefix: input.invoice_number_prefix,
       }),
+      ...(input.tennisde_verband !== undefined && { tennisde_verband: input.tennisde_verband }),
+      ...(input.tennisde_verein_nr !== undefined && {
+        tennisde_verein_nr: input.tennisde_verein_nr,
+      }),
       // city/description/logo_url dürfen explizit null sein (Owner leert das Feld)
       ...(input.city !== undefined && { city: input.city }),
       ...(input.description !== undefined && { description: input.description }),

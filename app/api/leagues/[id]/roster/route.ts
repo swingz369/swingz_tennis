@@ -1,35 +1,18 @@
 /**
  * app/api/leagues/[id]/roster/route.ts
  *
- * GET  — Kader (Meldeliste) der Liga
- * POST — Kader aus dem nuLiga-Mannschaftsportrait übernehmen
- *
- * Es wird ausschließlich die Meldeliste der EIGENEN Mannschaft importiert; die
- * Portrait-Seite enthält keine fremden Spielernamen. Für gegnerische
- * Aufstellungen steht nur der Link in `match_days.nuliga_report_url`.
- *
- * Beim vollen Sync (`/sync`) läuft derselbe Import mit — diese Route ist der
- * Weg, den Kader einzeln nachzuziehen, ohne Tabelle und Spielplan anzufassen.
+ * GET   — Kader (Meldeliste) der Liga
+ * PATCH — Kaderzeile einem Vereinsmitglied zuordnen
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, verifyOffice, forbiddenResponse } from '@/lib/api-auth';
-import { createLogger } from '@/lib/logger';
-import {
-  fetchNuligaTeamPortrait,
-  fetchNuligaClubTeams,
-  isNuligaTeamPortraitUrl,
-  isValidNuligaUrl,
-} from '@/lib/services/nuliga-scraper';
 import { createServiceClient } from '@/lib/supabase/service';
 import {
-  upsertRoster,
   loadMemberCandidates,
   suggestByName,
   persistDtbId,
-} from '@/lib/services/nuliga-sync';
-
-const log = createLogger('api:leagues:roster');
+} from '@/lib/services/league-member-matching';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
@@ -127,146 +110,5 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // Vereinszugehörigkeit des Mitglieds ist oben geprüft.
     if (memberId) await persistDtbId(createServiceClient(), memberId, data[0].dtb_id);
     return NextResponse.json({ success: true });
-  });
-}
-
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  return withApiAuth(request, async (auth) => {
-    const canEdit =
-      (await verifyRole(auth, 'admin')) || (await verifyOffice(auth, 'mannschaftsfuehrer'));
-    if (!canEdit) return forbiddenResponse('Admin- oder Mannschaftsführer-Zugang erforderlich');
-    if (!auth.clubId) return forbiddenResponse('Vereinskontext erforderlich');
-    const clubId = auth.clubId;
-
-    const { id } = await params;
-
-    const { data: league } = await auth.supabase
-      .from('leagues')
-      .select('id, name, club_id, nuliga_url, nuliga_roster_url')
-      .eq('id', id)
-      .eq('club_id', clubId)
-      .maybeSingle();
-    if (!league) return NextResponse.json({ error: 'Liga nicht gefunden' }, { status: 404 });
-
-    // Die Kader-URL kommt ausschließlich aus der Liga, nie aus dem Request.
-    // Vorher ließ sich hier eine beliebige `nuliga_roster_url` mitschicken —
-    // damit konnte ein Verein die Meldeliste einer FREMDEN Mannschaft laden
-    // und deren Klarnamen samt LK in die eigene Datenbank schreiben.
-    const rosterUrl: string | null = league.nuliga_roster_url || league.nuliga_url;
-
-    if (!rosterUrl) {
-      return NextResponse.json(
-        {
-          error:
-            'Keine nuLiga-URL hinterlegt. Bitte die Mannschaft über „Mannschaften aus nuLiga holen" anlegen.',
-        },
-        { status: 400 }
-      );
-    }
-    if (!isValidNuligaUrl(rosterUrl)) {
-      return NextResponse.json(
-        { error: 'Ungültige nuLiga-URL. Die URL muss von *.liga.nu stammen.' },
-        { status: 400 }
-      );
-    }
-    if (!isNuligaTeamPortraitUrl(rosterUrl)) {
-      return NextResponse.json(
-        {
-          error:
-            'Diese URL ist keine Mannschaftsseite. Die Meldeliste steht auf dem Mannschaftsportrait (…/wa/teamPortrait?…), nicht auf der Gruppenseite.',
-        },
-        { status: 400 }
-      );
-    }
-
-    // Datenschutz-Grenze: Das Portrait muss auf der nuLiga-Vereinsseite DIESES
-    // Vereins stehen. Tabelle und Spielplan fremder Mannschaften bleiben
-    // sichtbar (dort stehen nur Mannschaftsnamen) — Personendaten importieren
-    // wir ausschließlich für die eigenen Mannschaften.
-    const { data: ownClub } = await auth.supabase
-      .from('clubs')
-      .select('nuliga_club_url')
-      .eq('id', clubId)
-      .maybeSingle();
-
-    if (ownClub?.nuliga_club_url) {
-      try {
-        const discovered = await fetchNuligaClubTeams(ownClub.nuliga_club_url);
-        const ownPortraits = new Set(
-          discovered.teams.map((t) => t.portraitUrl).filter((u): u is string => !!u)
-        );
-        if (!ownPortraits.has(rosterUrl)) {
-          log.warn('Kader-Import abgelehnt — Mannschaft gehört nicht zum Verein', {
-            leagueId: id,
-            clubId,
-          });
-          return NextResponse.json(
-            {
-              error:
-                'Diese Mannschaft steht nicht auf der nuLiga-Vereinsseite dieses Vereins. Meldelisten werden nur für eigene Mannschaften übernommen.',
-            },
-            { status: 403 }
-          );
-        }
-      } catch (err) {
-        // Portal nicht erreichbar: Wir lehnen ab statt durchzuwinken — eine
-        // Prüfung, die bei Störung automatisch „ja" sagt, ist keine Prüfung.
-        log.error('Vereinsseite für die Kader-Prüfung nicht erreichbar', {
-          leagueId: id,
-          error: err instanceof Error ? err.message : 'unbekannt',
-        });
-        return NextResponse.json(
-          { error: 'nuLiga-Vereinsseite nicht erreichbar — Kader-Import vorerst nicht möglich.' },
-          { status: 502 }
-        );
-      }
-    }
-
-    let portrait;
-    try {
-      portrait = await fetchNuligaTeamPortrait(rosterUrl);
-    } catch (err) {
-      log.error('Meldeliste konnte nicht geladen werden', {
-        leagueId: id,
-        error: err instanceof Error ? err.message : 'Unbekannter Fehler',
-      });
-      return NextResponse.json({ error: 'Fehler beim Abrufen der Meldeliste' }, { status: 502 });
-    }
-
-    if (portrait.players.length === 0) {
-      return NextResponse.json(
-        { error: 'Auf der Seite wurde keine Meldeliste gefunden. Stimmt die URL?' },
-        { status: 422 }
-      );
-    }
-
-    let stats;
-    try {
-      stats = await upsertRoster(
-        auth.supabase,
-        { id: league.id, club_id: clubId, name: league.name },
-        portrait.players,
-        rosterUrl
-      );
-    } catch (err) {
-      log.error('Kader konnte nicht gespeichert werden', {
-        leagueId: id,
-        error: err instanceof Error ? err.message : 'unbekannt',
-      });
-      return NextResponse.json({ error: 'Kader konnte nicht gespeichert werden' }, { status: 500 });
-    }
-
-    // URL merken, damit der nächste Abruf ohne Eingabe läuft.
-    if (!league.nuliga_roster_url) {
-      await auth.supabase.from('leagues').update({ nuliga_roster_url: rosterUrl }).eq('id', id);
-    }
-
-    return NextResponse.json({
-      success: true,
-      teamName: portrait.teamName,
-      imported: stats.imported,
-      linked: stats.linked,
-      unlinked: stats.imported - stats.linked,
-    });
   });
 }

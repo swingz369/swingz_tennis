@@ -144,12 +144,20 @@ const nextConfig = {
                 'wss://*.supabase.co wss://*.swingz.cloud https://api.github.com https://*.sentry.io',
                 ...localSupabase,
               ].join(' '),
+              // tennis.de-Mannschaftswidget (components/tennisde-widget.tsx)
+              'frame-src https://services.tennis.de',
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
             ].join('; '),
           },
         ],
+      },
+      // Seiten mit tennis.de-Widget: ein Cross-Origin-iFrame ohne eigene COEP-Header würde unter
+      // `credentialless` blockiert. Die Seiten binden keine SharedArrayBuffer-Features ein — COEP entfällt dort.
+      {
+        source: '/:area(member|admin)/:path(liga-offiziell|leagues/offiziell)',
+        headers: [{ key: 'Cross-Origin-Embedder-Policy', value: 'unsafe-none' }],
       },
       // Service Worker header (must be served as application/javascript)
       {

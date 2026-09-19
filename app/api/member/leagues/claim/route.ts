@@ -21,7 +21,7 @@ import {
   suggestByName,
   persistDtbId,
   normalizeTeamName,
-} from '@/lib/services/nuliga-sync';
+} from '@/lib/services/league-member-matching';
 
 const log = createLogger('api:member:leagues:claim');
 

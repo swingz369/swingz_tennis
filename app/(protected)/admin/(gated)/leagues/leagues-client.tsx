@@ -17,25 +17,11 @@ import {
   Download,
   FileSpreadsheet,
   Trash2,
-  Search,
-  Loader2,
-  CheckCircle2,
-  Link2,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-
-interface NuligaTeam {
-  teamName: string;
-  leagueName: string | null;
-  championship: string | null;
-  seasonYear: number | null;
-  portraitUrl: string | null;
-  groupUrl: string | null;
-  alreadyImported?: boolean;
-}
 
 interface Team {
   id: string;
@@ -77,82 +63,7 @@ export default function LeaguesClient() {
     division: '',
     sport: 'tennis',
     age_group: '',
-    nuliga_url: '',
-    own_team_name: '',
   });
-
-  // ── nuLiga-Mannschaftsübernahme ──
-  // Ersetzt das Abtippen von Gruppen-URLs und Mannschaftsnamen: einmal die
-  // Vereinsseite hinterlegen, danach kommen alle Mannschaften mit Liga,
-  // Spielplan und Meldeliste aus der Quelle.
-  const [discoverOpen, setDiscoverOpen] = useState(false);
-  const [discovering, setDiscovering] = useState(false);
-  const [clubUrl, setClubUrl] = useState('');
-  const [clubSearch, setClubSearch] = useState('');
-  const [clubHits, setClubHits] = useState<
-    Array<{ name: string; city: string | null; clubNumber: string; teamsUrl: string }>
-  >([]);
-  const [discovered, setDiscovered] = useState<NuligaTeam[] | null>(null);
-  const [picked, setPicked] = useState<Set<string>>(new Set());
-  const [importing, setImporting] = useState(false);
-
-  const discover = useCallback(async (url?: string) => {
-    setDiscovering(true);
-    setClubHits([]);
-    try {
-      const res = await apiFetch('/api/admin/nuliga/discover', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(url ? { url } : {}),
-      });
-      const data = await res.json().catch(() => ({}));
-      // 400 ohne hinterlegte Vereinsseite ist kein Fehler, sondern der
-      // Normalfall beim ersten Mal — dann zeigt das Panel die Suchmaske,
-      // statt einen roten Toast zu werfen.
-      if (res.status === 400 && !url) {
-        setDiscovered(null);
-        return;
-      }
-      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Abruf fehlgeschlagen');
-      setDiscovered(data.teams ?? []);
-      // Vorauswahl: alles, was noch nicht angelegt ist — der Regelfall ist
-      // „alle eigenen Mannschaften übernehmen".
-      // Auswahlschlüssel: Portrait, sonst Gruppenseite. Zeilen ohne Portrait
-      // (z. B. Spielgemeinschaften) waren sonst dauerhaft nicht anklickbar.
-      setPicked(
-        new Set(
-          (data.teams ?? [])
-            .filter((t: NuligaTeam) => (t.portraitUrl ?? t.groupUrl) && !t.alreadyImported)
-            .map((t: NuligaTeam) => (t.portraitUrl ?? t.groupUrl) as string)
-        )
-      );
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Abruf fehlgeschlagen');
-    } finally {
-      setDiscovering(false);
-    }
-  }, []);
-
-  const searchClub = useCallback(async () => {
-    if (!clubSearch.trim()) return;
-    setDiscovering(true);
-    setDiscovered(null);
-    try {
-      const res = await apiFetch('/api/admin/nuliga/discover', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ search: clubSearch.trim() }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Suche fehlgeschlagen');
-      setClubHits(data.clubs ?? []);
-      if ((data.clubs ?? []).length === 0) toast.info('Kein Verein gefunden');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Suche fehlgeschlagen');
-    } finally {
-      setDiscovering(false);
-    }
-  }, [clubSearch]);
 
   const fetchLeagues = useCallback(async () => {
     setLoading(true);
@@ -168,59 +79,6 @@ export default function LeaguesClient() {
       setLoading(false);
     }
   }, []);
-
-  const importPicked = useCallback(async () => {
-    if (picked.size === 0) return;
-    setImporting(true);
-    try {
-      const res = await apiFetch('/api/leagues/import-nuliga', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ portraitUrls: Array.from(picked) }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(extractErrorMessage(data) || 'Übernahme fehlgeschlagen');
-      toast.success(
-        `${data.created} Mannschaft(en) übernommen${data.skipped ? `, ${data.skipped} bereits vorhanden` : ''}`
-      );
-      setDiscoverOpen(false);
-      setDiscovered(null);
-      setPicked(new Set());
-      fetchLeagues();
-
-      // Erst-Sync sofort: Sonst bleiben die Ligen bis zum nächsten Cron leer und
-      // der Import wirkt wie "geht nicht". Nacheinander (nicht parallel), damit
-      // nuLiga höflich abgefragt wird und kein Function-Timeout droht.
-      const created: { id: string }[] = data.leagues ?? [];
-      let failed = 0;
-      for (const [i, l] of created.entries()) {
-        toast.loading(`Erste Synchronisierung ${i + 1}/${created.length}`, {
-          id: 'nuliga-first-sync',
-        });
-        const syncRes = await apiFetch(`/api/leagues/${l.id}/sync`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: '{}',
-        }).catch(() => null);
-        if (!syncRes?.ok) failed++;
-      }
-      if (created.length > 0) {
-        toast.dismiss('nuliga-first-sync');
-        if (failed > 0) {
-          toast.error(
-            `${failed} Mannschaft(en) konnten nicht synchronisiert werden — später erneut versuchen`
-          );
-        } else {
-          toast.success('Spielplan, Tabelle und Kader sind übernommen');
-        }
-        fetchLeagues();
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Übernahme fehlgeschlagen');
-    } finally {
-      setImporting(false);
-    }
-  }, [picked, fetchLeagues]);
 
   useEffect(() => {
     fetchLeagues();
@@ -268,8 +126,6 @@ export default function LeaguesClient() {
         division: '',
         sport: 'tennis',
         age_group: '',
-        nuliga_url: '',
-        own_team_name: '',
       });
       fetchLeagues();
     } catch {
@@ -293,193 +149,11 @@ export default function LeaguesClient() {
           <p className="text-xs text-muted-foreground">{leagues.length} Liga(s) verwaltet</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setDiscoverOpen(true);
-              if (!discovered) discover();
-            }}
-            className="gap-1.5"
-          >
-            <Download className="h-4 w-4" /> Aus nuLiga holen
-          </Button>
           <Button size="sm" onClick={() => setShowNew(true)} className="gap-1.5">
             <Plus className="h-4 w-4" /> Neue Liga
           </Button>
         </div>
       </div>
-
-      {/* ── nuLiga-Übernahme ──
-          Der Admin wählt Mannschaften aus, statt URLs zu kopieren. Name, Liga,
-          Saison, Spielplan und Meldeliste kommen aus der Vereinsseite. */}
-      {discoverOpen && (
-        <Card>
-          <CardHeader className="border-b border-border dark:border-white/10">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Flag className="h-4 w-4" /> Mannschaften aus nuLiga übernehmen
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-4">
-            {discovering ? (
-              <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> nuLiga wird abgefragt…
-              </div>
-            ) : discovered ? (
-              <>
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs text-muted-foreground">
-                    {discovered.length} Mannschaft(en) gefunden — Auswahl übernehmen. Für die
-                    ausgewählten Mannschaften werden Spielplan, Tabelle und die eigene Meldeliste
-                    automatisch verknüpft.
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="shrink-0 text-xs"
-                    onClick={() => {
-                      setDiscovered(null);
-                      setClubHits([]);
-                    }}
-                  >
-                    Anderer Verein
-                  </Button>
-                </div>
-
-                <div className="max-h-80 overflow-y-auto rounded-xl border border-border divide-y divide-border/60">
-                  {discovered.map((team) => {
-                    const url = team.portraitUrl ?? team.groupUrl;
-                    const disabled = !url || team.alreadyImported;
-                    return (
-                      <label
-                        key={`${team.teamName}-${team.leagueName ?? ''}`}
-                        className={`flex items-center gap-3 px-3 py-2 text-sm ${
-                          disabled ? 'opacity-60' : 'cursor-pointer hover:bg-muted/50'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 shrink-0"
-                          disabled={disabled}
-                          checked={!!url && picked.has(url)}
-                          onChange={(e) => {
-                            if (!url) return;
-                            setPicked((prev) => {
-                              const next = new Set(prev);
-                              if (e.target.checked) next.add(url);
-                              else next.delete(url);
-                              return next;
-                            });
-                          }}
-                        />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate font-medium">{team.teamName}</span>
-                          <span className="block truncate text-xs text-muted-foreground">
-                            {team.leagueName ?? 'Liga unbekannt'}
-                            {team.championship ? ` · ${team.championship}` : ''}
-                          </span>
-                        </span>
-                        {team.alreadyImported && (
-                          <Badge variant="secondary" className="shrink-0 gap-1 text-2xs">
-                            <CheckCircle2 className="h-3 w-3" /> vorhanden
-                          </Badge>
-                        )}
-                      </label>
-                    );
-                  })}
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setDiscoverOpen(false)}>
-                    Abbrechen
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={importPicked}
-                    disabled={picked.size === 0 || importing}
-                  >
-                    {importing && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-                    {picked.size} Mannschaft(en) übernehmen
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <label htmlFor="nuliga-search" className="text-xs font-medium">
-                    Verein bei nuLiga suchen
-                  </label>
-                  <div className="mt-1 flex gap-2">
-                    <Input
-                      id="nuliga-search"
-                      value={clubSearch}
-                      onChange={(e) => setClubSearch(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && searchClub()}
-                      placeholder="z.B. TC Rheinland"
-                    />
-                    <Button size="sm" variant="outline" onClick={searchClub} className="shrink-0">
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {clubHits.length > 0 && (
-                  <div className="rounded-xl border border-border divide-y divide-border/60">
-                    {clubHits.map((hit) => (
-                      <button
-                        key={hit.clubNumber}
-                        onClick={() => discover(hit.teamsUrl)}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted/50"
-                      >
-                        <span className="min-w-0 flex-1 truncate">{hit.name}</span>
-                        {hit.city && (
-                          <span className="shrink-0 text-xs text-muted-foreground">{hit.city}</span>
-                        )}
-                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <div>
-                  <label htmlFor="nuliga-club-url" className="text-xs font-medium">
-                    …oder Vereinsseite direkt verlinken
-                  </label>
-                  <div className="mt-1 flex gap-2">
-                    <Input
-                      id="nuliga-club-url"
-                      value={clubUrl}
-                      onChange={(e) => setClubUrl(e.target.value)}
-                      placeholder="https://xyz.liga.nu/…/clubTeams?club=12345"
-                      className="tabular-nums text-xs"
-                    />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="shrink-0"
-                      onClick={() => discover(clubUrl.trim() || undefined)}
-                      disabled={!clubUrl.trim()}
-                    >
-                      <Link2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <p className="mt-1 text-2xs text-muted-foreground">
-                    Die Vereinsseite wird gespeichert — beim nächsten Mal genügt ein Klick auf „Aus
-                    nuLiga holen". Meldelisten mit Spielernamen werden ausschließlich für die
-                    Mannschaften dieses Vereins übernommen.
-                  </p>
-                </div>
-
-                <div className="flex justify-end">
-                  <Button variant="outline" size="sm" onClick={() => setDiscoverOpen(false)}>
-                    Schließen
-                  </Button>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       {/* League Cards */}
       {leagues.length === 0 ? (
@@ -708,41 +382,6 @@ export default function LeaguesClient() {
                   className="mt-1"
                 />
               </div>
-            </div>
-            <div>
-              <label htmlFor="lg-nuliga-url" className="text-xs font-medium">
-                nuLiga URL <span className="text-muted-foreground">(optional)</span>
-              </label>
-              <Input
-                id="lg-nuliga-url"
-                value={newLeague.nuliga_url}
-                onChange={(e) => setNewLeague({ ...newLeague, nuliga_url: e.target.value })}
-                placeholder="https://xyz.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/teamPortrait?...&team=..."
-                className="mt-1 tabular-nums text-xs"
-              />
-              <p className="text-2xs text-muted-foreground mt-1">
-                Am besten die <strong>Mannschaftsseite</strong> („Mannschaftsportrait") eintragen —
-                daraus kommen Spieltermine, Kader mit LK und die Tabelle auf einmal. Eine
-                Gruppenseite funktioniert auch, dann braucht es zusätzlich den eigenen
-                Mannschaftsnamen.
-              </p>
-            </div>
-            <div>
-              <label htmlFor="lg-own-team" className="text-xs font-medium">
-                Eigene Mannschaft{' '}
-                <span className="text-muted-foreground">(nur bei Gruppenseiten-URL)</span>
-              </label>
-              <Input
-                id="lg-own-team"
-                value={newLeague.own_team_name}
-                onChange={(e) => setNewLeague({ ...newLeague, own_team_name: e.target.value })}
-                placeholder="z.B. TC Rheinland II"
-                className="mt-1"
-              />
-              <p className="text-2xs text-muted-foreground mt-1">
-                Name exakt wie in der nuLiga-Tabelle. Bei einer Mannschaftsseite überflüssig — die
-                Seite nennt die eigene Mannschaft selbst.
-              </p>
             </div>
             <div className="flex gap-2 justify-end">
               <Button variant="outline" size="sm" onClick={() => setShowNew(false)}>

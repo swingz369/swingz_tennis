@@ -33,7 +33,6 @@
 | `notification-dispatch` | `*/5 * * * *`               | `/api/cron/notification-dispatch` | E-Mail/Push für offene Notifications                      |
 | `overdue-invoices`      | `0 8 * * *`                 | `/api/cron/overdue-invoices`      | Mahnstufen setzen                                         |
 | `dunning-sync`          | `0 9 * * *`                 | `/api/cron/dunning-sync`          | Dunning-Records synchronisieren                           |
-| `nuliga-sync`           | `0 6 * * *` (täglich 06:00) | `/api/cron/nuliga-sync`           | Liga-Sync aller Ligen mit `nuliga_url`                    |
 | `season-reminders`      | `0 11 * * 1`                | `/api/cron/season-reminders`      | Saison-Planungs-Erinnerungen                              |
 | `cleanup-sessions`      | `0 3 * * 0`                 | `/api/cron/cleanup-sessions`      | Alte Sessions archivieren                                 |
 | `reactivation-tracking` | `0 4 * * 1`                 | `/api/cron/reactivation-tracking` | Inaktive Members markieren                                |
@@ -143,7 +142,6 @@ Jeder Job MUSS idempotent sein — bei 2× Lauf darf er nicht zu doppelten Daten
 | `notification-dispatch` | `WHERE dispatched_at IS NULL`                                            |
 | `dunning-sync`          | UPSERT mit `dunning_id` PK                                               |
 | `overdue-invoices`      | Vergleich mit `invoices.last_status`                                     |
-| `nuliga-sync`           | Teams per Namensvergleich, Spieltage per `(Gegner, Heim/Auswärts)`       |
 | `backup`                | Datum-basiertes Output-Verzeichnis → überschreibt gleich-altriges Backup |
 
 ## 🧪 Test-Pattern
