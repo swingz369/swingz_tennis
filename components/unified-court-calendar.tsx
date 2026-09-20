@@ -191,8 +191,14 @@ export default function UnifiedCourtCalendar({
   // ── Court selection: derive effective court ID ──
   // If courts loaded but selected court no longer exists, fall back to card view
   const selectedCourt = selectedCourtId ? courts.find((c) => c.id === selectedCourtId) : null;
+  // Admin/Trainer filtern über die Platz-Chips. Die Platzwahl der Agenda-Ansicht
+  // (selectedCourtId) darf Woche/Tag nicht auf einen Platz festnageln — sonst
+  // zeigt die Wochenansicht nur Platz 1 und die Chips fehlen.
+  const canFilterCourts = isAdmin || isTrainer;
   const effectiveCourtId =
-    selectedCourtId && courts.length > 0 && !selectedCourt ? null : selectedCourtId;
+    canFilterCourts || (selectedCourtId && courts.length > 0 && !selectedCourt)
+      ? null
+      : selectedCourtId;
 
   const queryClient = useQueryClient();
 
@@ -412,7 +418,6 @@ export default function UnifiedCourtCalendar({
 
   // ── Court filtering: single-court mode for members ──
   // Admin/Trainer: Mehrfachfilter (Chips); Mitglieder: ein Platz (Kartenansicht)
-  const canFilterCourts = isAdmin || isTrainer;
   const displayCourts = effectiveCourtId
     ? courts.filter((c) => c.id === effectiveCourtId)
     : canFilterCourts
@@ -554,9 +559,9 @@ export default function UnifiedCourtCalendar({
       )}
 
       <CourtCalendarHeader
-        title={selectedCourt ? selectedCourt.name : 'Platzkalender'}
+        title={effectiveCourtId && selectedCourt ? selectedCourt.name : 'Platzkalender'}
         subtitle={
-          selectedCourt
+          effectiveCourtId && selectedCourt
             ? `${getSurfaceLabel(selectedCourt.surface)}${selectedCourt.hasIndoor ? ' · Indoor' : ''} · ${viewMode === 'weekly' ? 'Wochenansicht' : 'Tagesansicht'}`
             : viewMode === 'weekly'
               ? 'Wochenansicht der Platzverfügbarkeit'
