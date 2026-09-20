@@ -4222,6 +4222,7 @@ export type Database = {
           name: string;
           start_date: string;
           year: number;
+          kind: string;
         };
         Insert: {
           bundesland: string;
@@ -4230,6 +4231,7 @@ export type Database = {
           name: string;
           start_date: string;
           year: number;
+          kind?: string;
         };
         Update: {
           bundesland?: string;
@@ -4238,6 +4240,7 @@ export type Database = {
           name?: string;
           start_date?: string;
           year?: number;
+          kind?: string;
         };
         Relationships: [];
       };

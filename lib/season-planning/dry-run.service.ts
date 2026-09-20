@@ -34,7 +34,7 @@ import type { SeasonBillingPreview } from '@/application/services/season-billing
 import type { AuthContext } from '@/lib/api-auth';
 
 import { createLogger } from '@/lib/logger';
-import { loadHolidaysForState } from './holidays.server';
+import { loadHolidaysForState, loadPublicHolidaysForState } from './holidays.server';
 
 const log = createLogger('season-planning:dry-run.service');
 
@@ -738,7 +738,11 @@ export async function runSeasonDryRun(
       bundesland = await repo.clubBundesland(season.club_id);
       if (bundesland) {
         const code = resolveBundeslandCode(bundesland);
-        holidays = await loadHolidaysForState(code);
+        // Tagesgenau ausgewertet — Feiertage entfallen einzeln, Ferien blockweise.
+        holidays = [
+          ...(await loadHolidaysForState(code)),
+          ...(await loadPublicHolidaysForState(code)),
+        ];
       }
     } catch (err) {
       // Non-fatal — continue without holiday filter

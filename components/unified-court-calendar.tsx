@@ -51,6 +51,7 @@ import { useBlockCourtDialog } from '@/hooks/use-block-court-dialog';
 import { useAdHocSessionDialog } from '@/hooks/use-ad-hoc-session-dialog';
 import { useSessionCancelDialog } from '@/hooks/use-session-cancel-dialog';
 import { useCourtWeatherAndClosures } from '@/hooks/use-court-weather-and-closures';
+import { useHolidays } from '@/hooks/use-holidays';
 import { useCalendarState, type ViewMode } from '@/hooks/use-calendar-state';
 import { useActiveSeasonId } from '@/hooks/use-active-season-id';
 import { useTrainerRecordId } from '@/hooks/use-trainer-record-id';
@@ -127,6 +128,8 @@ export default function UnifiedCourtCalendar({
     clubId,
     isAdmin
   );
+
+  const dayOffFor = useHolidays(clubId);
 
   // ── Ansicht/Datum/Platz + URL-Synchronisation (Phase 1) ──
   const {
@@ -374,6 +377,7 @@ export default function UnifiedCourtCalendar({
           onToday={goToToday}
           memberId={memberId}
           clubId={clubId}
+          dayOffFor={dayOffFor}
           canManageStatus={isAdmin || isTrainer}
           onBookSession={handleBookSession}
           onCancelBooking={handleCancelBooking}
@@ -394,6 +398,7 @@ export default function UnifiedCourtCalendar({
     <WeekView
       isMobile={isMobile}
       weekDays={weekDays}
+      dayOffFor={dayOffFor}
       weekStart={weekStart}
       weekEnd={weekEnd}
       currentWeek={currentWeek}

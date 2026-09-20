@@ -2702,6 +2702,8 @@ export const schoolHolidays = pgTable('school_holidays', {
   start_date: date('start_date').notNull(),
   end_date: date('end_date').notNull(),
   year: integer('year').notNull(),
+  // 'school' = Ferienblock (wochenweise Pause), 'public' = gesetzlicher Feiertag (tagesgenau)
+  kind: text('kind').notNull().default('school'),
 });
 
 export const seasonBillingConfigs = pgTable('season_billing_configs', {

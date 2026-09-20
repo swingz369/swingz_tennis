@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon, MapPin } from 'lucide-react';
 import { getSurfaceLabel } from '@/lib/court-calendar-utils';
 import { CalendarShell } from '@/components/calendar/CalendarShell';
+import type { DayOff } from '@/hooks/use-holidays';
 
 /** Thin wrapper around CalendarShell for the court/booking calendar. */
 export function CourtCalendarHeader({
@@ -69,7 +70,13 @@ export function CourtCalendarGrid({ children }: { children: React.ReactNode }) {
  * Header row showing day-of-week abbreviations and dates.
  * Today column gets a distinct highlight.
  */
-export function WeekDaysHeaderRow({ weekDays }: { weekDays: Date[] }) {
+export function WeekDaysHeaderRow({
+  weekDays,
+  dayOffFor,
+}: {
+  weekDays: Date[];
+  dayOffFor?: (date: Date) => DayOff | null;
+}) {
   return (
     <div className="grid grid-cols-[180px_repeat(7,1fr)] bg-muted/50">
       <div className="p-3 flex items-center justify-center border-b border-r border-border/40">
@@ -77,12 +84,13 @@ export function WeekDaysHeaderRow({ weekDays }: { weekDays: Date[] }) {
       </div>
       {weekDays.map((day) => {
         const today = isToday(day);
+        const dayOff = dayOffFor?.(day);
         return (
           <div
             key={day.toISOString()}
             className={`p-3 text-center border-b border-border/40 last:border-r-0 transition-colors ${
               today ? 'bg-primary/5 border-b-primary/30' : 'hover:bg-muted/30'
-            }`}
+            } ${dayOff ? 'bg-warning-50 dark:bg-warning-900/20' : ''}`}
           >
             <div
               className={`text-xs font-bold ${today ? 'text-primary' : 'text-muted-foreground'}`}
@@ -98,6 +106,11 @@ export function WeekDaysHeaderRow({ weekDays }: { weekDays: Date[] }) {
             >
               {format(day, 'd')}
             </div>
+            {dayOff && (
+              <div className="mt-1 text-2xs font-semibold text-warning-800 dark:text-warning-200 leading-tight">
+                {dayOff.name}
+              </div>
+            )}
           </div>
         );
       })}

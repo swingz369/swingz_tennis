@@ -18,6 +18,7 @@ describe('WeekView keyboard navigation', () => {
   const baseProps = {
     isMobile: false,
     weekDays,
+    dayOffFor: () => null,
     weekStart,
     weekEnd: weekDays[6],
     currentWeek: weekStart,

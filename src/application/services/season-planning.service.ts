@@ -3,7 +3,10 @@ import { ApiException } from '@/lib/api-error';
 import { formatDateTime } from '@/lib/format';
 import { buildPublishPlan } from '@/lib/season-planning/publish-plan';
 import { resolveBundeslandCode, type Holiday } from '@/lib/season-planning/holidays';
-import { loadHolidaysForState } from '@/lib/season-planning/holidays.server';
+import {
+  loadHolidaysForState,
+  loadPublicHolidaysForState,
+} from '@/lib/season-planning/holidays.server';
 import type { ConflictDetectionResult } from '@/lib/season-planning/types';
 import { createLogger } from '@/lib/logger';
 import type { ScheduleSlot } from '@/lib/season-planning/types';
@@ -311,7 +314,13 @@ export class SeasonPlanningService {
     let holidays: Holiday[] = [];
     try {
       const bundesland = await this.repo.clubBundesland(season.club_id);
-      if (bundesland) holidays = await loadHolidaysForState(resolveBundeslandCode(bundesland));
+      if (bundesland) {
+        const code = resolveBundeslandCode(bundesland);
+        holidays = [
+          ...(await loadHolidaysForState(code)),
+          ...(await loadPublicHolidaysForState(code)),
+        ];
+      }
     } catch (err) {
       log.warn(
         'Failed to load holidays, proceeding without',

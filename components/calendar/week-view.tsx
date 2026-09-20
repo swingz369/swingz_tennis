@@ -21,6 +21,7 @@ import { de } from '@/lib/locale';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Lock, PartyPopper, Unlock, User, Wrench } from 'lucide-react';
 import type { Session } from '@/hooks/use-sessions';
+import type { DayOff } from '@/hooks/use-holidays';
 import type { PlanEntry } from '@/components/calendar/types';
 import {
   CALENDAR_TIME_SLOTS as TIME_SLOTS,
@@ -50,6 +51,7 @@ function weekSlotId(courtId: string, day: Date, timeSlot: string): string {
 export interface WeekViewProps {
   isMobile: boolean;
   weekDays: Date[];
+  dayOffFor: (date: Date) => DayOff | null;
   weekStart: Date;
   weekEnd: Date;
   currentWeek: Date;
@@ -79,6 +81,7 @@ export interface WeekViewProps {
 export function WeekView({
   isMobile,
   weekDays,
+  dayOffFor,
   weekStart,
   weekEnd,
   currentWeek,
@@ -152,6 +155,7 @@ export function WeekView({
           {weekDays.map((day) => {
             const today = isSameDay(day, new Date());
             const selected = isSameDay(day, mobileSelectedDay);
+            const dayOff = dayOffFor(day);
             return (
               <button
                 key={day.toISOString()}
@@ -166,6 +170,12 @@ export function WeekView({
               >
                 <span className="text-2xs opacity-80">{format(day, 'EEE', { locale: de })}</span>
                 <span className="text-base font-bold mt-0.5 tabular-nums">{format(day, 'd')}</span>
+                {dayOff && (
+                  <span
+                    className="mt-0.5 size-1.5 rounded-full bg-warning-500"
+                    title={dayOff.name}
+                  />
+                )}
               </button>
             );
           })}
@@ -208,7 +218,7 @@ export function WeekView({
 
   return (
     <CourtCalendarGrid>
-      <WeekDaysHeaderRow weekDays={weekDays} />
+      <WeekDaysHeaderRow weekDays={weekDays} dayOffFor={dayOffFor} />
 
       {displayCourts.map((court) => (
         <div key={court.id} className="border-b border-border/40 last:border-b-0">
@@ -221,7 +231,11 @@ export function WeekView({
                 <div
                   key={day.toISOString()}
                   className={`p-1.5 min-h-[420px] border-r border-border/20 last:border-r-0 ${
-                    isSameDay(day, new Date()) ? 'bg-primary/[0.03]' : 'bg-background'
+                    dayOffFor(day)
+                      ? 'bg-warning-50/50 dark:bg-warning-900/10'
+                      : isSameDay(day, new Date())
+                        ? 'bg-primary/[0.03]'
+                        : 'bg-background'
                   }`}
                 >
                   {/* Time slots */}

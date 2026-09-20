@@ -33,6 +33,7 @@ import FeedbackModal from '@/components/feedback/feedback-modal';
 import { exportBookingsCSV } from '@/lib/csv-export';
 import { toast } from 'sonner';
 import type { Session } from '@/hooks/use-sessions';
+import type { DayOff } from '@/hooks/use-holidays';
 
 function getBookingStatusLabel(status: string): string {
   switch (status) {
@@ -58,6 +59,7 @@ export interface MonthViewProps {
   onToday: () => void;
   memberId: string | null;
   clubId: string | null;
+  dayOffFor: (date: Date) => DayOff | null;
   canManageStatus: boolean;
   onBookSession: (sessionId: string) => void;
   onCancelBooking: (sessionId: string, bookingId: string) => void;
@@ -76,6 +78,7 @@ export function MonthView({
   onToday,
   memberId,
   clubId,
+  dayOffFor,
   canManageStatus,
   onBookSession,
   onCancelBooking,
@@ -179,14 +182,20 @@ export function MonthView({
               {calendarDays.map((day, idx) => {
                 const daySessions = getSessionsForDay(day);
                 const isCurrentMonth = isSameMonth(day, currentMonth);
+                const dayOff = dayOffFor(day);
 
                 return (
                   <div
                     key={idx}
-                    className={`min-h-[5rem] md:min-h-[6.25rem] bg-background dark:bg-card p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
+                    className={`min-h-[5rem] md:min-h-[6.25rem] ${dayOff ? 'bg-warning-50 dark:bg-warning-900/20' : 'bg-background dark:bg-card'} p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
                   >
                     <div className="text-xs font-medium text-muted-foreground dark:text-muted-foreground mb-1">
                       {format(day, 'd')}
+                      {dayOff && (
+                        <span className="ml-1 font-semibold text-warning-800 dark:text-warning-200">
+                          {dayOff.name}
+                        </span>
+                      )}
                     </div>
                     <div className="space-y-1">
                       {daySessions.map((session) => (
