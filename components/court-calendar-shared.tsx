@@ -90,7 +90,7 @@ export function WeekDaysHeaderRow({
             key={day.toISOString()}
             className={`p-3 text-center border-b border-border/40 last:border-r-0 transition-colors ${
               today ? 'bg-primary/5 border-b-primary/30' : 'hover:bg-muted/30'
-            } ${dayOff ? 'bg-warning-50 dark:bg-warning-900/20' : ''}`}
+            } ${dayOff ? 'bg-warning-50' : ''}`}
           >
             <div
               className={`text-xs font-bold ${today ? 'text-primary' : 'text-muted-foreground'}`}
@@ -107,7 +107,7 @@ export function WeekDaysHeaderRow({
               {format(day, 'd')}
             </div>
             {dayOff && (
-              <div className="mt-1 text-2xs font-semibold text-warning-800 dark:text-warning-200 leading-tight">
+              <div className="mt-1 text-2xs font-semibold text-warning-800 leading-tight">
                 {dayOff.name}
               </div>
             )}

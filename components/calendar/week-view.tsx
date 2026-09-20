@@ -232,7 +232,7 @@ export function WeekView({
                   key={day.toISOString()}
                   className={`p-1.5 min-h-[420px] border-r border-border/20 last:border-r-0 ${
                     dayOffFor(day)
-                      ? 'bg-warning-50/50 dark:bg-warning-900/10'
+                      ? 'bg-warning-50/50'
                       : isSameDay(day, new Date())
                         ? 'bg-primary/[0.03]'
                         : 'bg-background'
