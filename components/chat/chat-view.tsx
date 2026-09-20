@@ -568,7 +568,7 @@ export function ChatView({
                         ) : (
                           <div
                             className={cn(
-                              'max-w-[75%] whitespace-pre-wrap break-words rounded-2xl px-3 py-1.5 text-sm',
+                              'max-w-[75%] whitespace-pre-wrap break-words rounded-xl px-3 py-1.5 text-sm',
                               m.deleted_at
                                 ? 'border border-dashed border-border italic text-muted-foreground'
                                 : mine
@@ -579,7 +579,7 @@ export function ChatView({
                             {m.deleted_at ? 'Nachricht gelöscht' : m.body}
                             <span
                               className={cn(
-                                'ml-2 select-none text-[10px]',
+                                'ml-2 select-none text-xs',
                                 mine && !m.deleted_at
                                   ? 'text-primary-foreground/70'
                                   : 'text-muted-foreground'
