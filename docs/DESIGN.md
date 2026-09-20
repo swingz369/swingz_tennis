@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 19.09.2026 (§6a: redundante `dark:`-Paare bei Statusfarben entfernt (545 Stellen, 70 Dateien) + Ratsche; §6a: Schatten- und Überschriftenregel (shadow-lg für schwebende Flächen, h2 semibold) samt Ratschen; §6a: rohe `<table>` auf 0, Leerzustand-Ratsche (`ListState` in Karten/Tabellen, `EmptyState` mit Aktion); §6a: `KpiBand` allgemein für 2–6 Werte, Kennzahl-Ratsche, Dashboard-Stand korrigiert; §6a: `useConfirmDialog()` ersetzt `window.confirm()`, Dialog/CenteredModal teilen Überlagerung und Schatten; §6 Seitenkopf-Regel erweitert: `PageHeader` mit `back`/`badge`/freien `actions`, Detailseiten-Ausnahmen entfallen; §6a Baukasten + Muster-Ratsche in `check:design` ergänzt; davor 18.09.2026: §4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2; §6 Phase 4.4 ergänzt: loading/error/not-found vererben im App Router, keine echte Lücke; §6 Phase 4.5 ergänzt: „Laden" ohne Auslassungspunkte vereinheitlicht; §8 Icon-Button-Regel für Phase 5.1 ergänzt: aria-label + Tooltip pflicht, globale TooltipProvider, Test-Query per Rolle statt title; §8 Kalender-Tastaturbedienung für Phase 5.2 ergänzt: Pfeiltasten-Fokusnavigation per Zell-ID, Tastatur-Drag-Bug behoben — eigener onKeyDown überschrieb dnd-kits Aktivierungs-Listener; §8 Phase 5.3 geprüft: globale :focus-visible-Regel deckt bereits alle Elemente inkl. Kalenderzellen ab; §8 Phase 5.4 geprüft: Leerzustände haben durchweg schon einen Weg nach vorn oder sind zu Recht ohne Aktion; §8 Phase 5.5 ergänzt: Spaltenaktion im Saisonkalender — Woche für alle Gruppen aussetzen/aktivieren per Bulk-PATCH je Gruppe; §8 Phase 6 ergänzt: league-detail-client.tsx in Tab-Dateien + Hook zerlegt, 1772 → 450 Zeilen)
+> Zuletzt verifiziert: 20.09.2026 (§6a: `CenteredModal` auf Radix, Trainerliste im Listenmuster, Flächen-Spinner → `Skeleton` samt Ratsche; Restpunkte des UI-Einheitlichkeits-Laufs abgeschlossen — `text-[Npx]` auf 0, Leerzustand-Ratsche 17 → 3, `CenteredModal`-Grenze 29 → 28, Ausnahmen und offene Punkte benannt; Kalender-Bedienung dokumentiert; davor 19.09.2026: §6a: redundante `dark:`-Paare bei Statusfarben entfernt (545 Stellen, 70 Dateien) + Ratsche; §6a: Schatten- und Überschriftenregel (shadow-lg für schwebende Flächen, h2 semibold) samt Ratschen; §6a: rohe `<table>` auf 0, Leerzustand-Ratsche (`ListState` in Karten/Tabellen, `EmptyState` mit Aktion); §6a: `KpiBand` allgemein für 2–6 Werte, Kennzahl-Ratsche, Dashboard-Stand korrigiert; §6a: `useConfirmDialog()` ersetzt `window.confirm()`, Dialog/CenteredModal teilen Überlagerung und Schatten; §6 Seitenkopf-Regel erweitert: `PageHeader` mit `back`/`badge`/freien `actions`, Detailseiten-Ausnahmen entfallen; §6a Baukasten + Muster-Ratsche in `check:design` ergänzt; davor 18.09.2026: §4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2; §6 Phase 4.4 ergänzt: loading/error/not-found vererben im App Router, keine echte Lücke; §6 Phase 4.5 ergänzt: „Laden" ohne Auslassungspunkte vereinheitlicht; §8 Icon-Button-Regel für Phase 5.1 ergänzt: aria-label + Tooltip pflicht, globale TooltipProvider, Test-Query per Rolle statt title; §8 Kalender-Tastaturbedienung für Phase 5.2 ergänzt: Pfeiltasten-Fokusnavigation per Zell-ID, Tastatur-Drag-Bug behoben — eigener onKeyDown überschrieb dnd-kits Aktivierungs-Listener; §8 Phase 5.3 geprüft: globale :focus-visible-Regel deckt bereits alle Elemente inkl. Kalenderzellen ab; §8 Phase 5.4 geprüft: Leerzustände haben durchweg schon einen Weg nach vorn oder sind zu Recht ohne Aktion; §8 Phase 5.5 ergänzt: Spaltenaktion im Saisonkalender — Woche für alle Gruppen aussetzen/aktivieren per Bulk-PATCH je Gruppe; §8 Phase 6 ergänzt: league-detail-client.tsx in Tab-Dateien + Hook zerlegt, 1772 → 450 Zeilen)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -250,15 +250,43 @@ Commit. Plan und Begründung: `ARCHIV/2026-09-19-ui-einheitlichkeit-analyse-und-
 
 **Dashboards (Stand 19.09.2026):** Owner, Superadmin, Admin, Trainer und Mitglied bauen bereits gleich — `PageHeader` → `KpiBand` → Schnellaktionen/Karten. Die Analyse hatte das zu pessimistisch gezählt; der Aufbau ist nicht das Problem, sondern nur die Handbau-Kacheln auf den übrigen Seiten.
 
-| Muster          | Komponente                                                                            | Nicht mehr                    | Ratsche   |
-| --------------- | ------------------------------------------------------------------------------------- | ----------------------------- | --------- |
-| Seitentitel     | `PageHeader` (+ `back`, `badge`, `actions`)                                           | eigenes `<h1>`                | ✅ 0      |
-| Bestätigung     | `ConfirmDialog`, im Handler per `useConfirmDialog()`                                  | `window.confirm()`            | ✅ 0      |
-| Liste / Tabelle | `Table` + `PaginationNav`                                                             | rohe `<table>`                | ✅ 0      |
-| Schriftgröße    | Typo-Skala § 4.2                                                                      | `text-[Npx]`                  | ✅        |
-| Dialog          | shadcn `Dialog`; `CenteredModal` nur Bestand (gleiche Überlagerung/Schatten, Ratsche) | neue `CenteredModal`-Nutzer   | ✅ Grenze |
-| Kennzahlen      | `KpiBand` (Reihe, 2–6 Werte) / `StatCard` (einzeln)                                   | Zahl als `text-3xl` in `Card` | ✅ Grenze |
-| Leerzustand     | `EmptyState` (ganze Fläche, mit Aktion) / `ListState` (innerhalb Karte/Tabelle)       | loser „Keine …"-Text          | ✅ Grenze |
+| Muster          | Komponente                                                                            | Nicht mehr                    | Ratsche      |
+| --------------- | ------------------------------------------------------------------------------------- | ----------------------------- | ------------ |
+| Seitentitel     | `PageHeader` (+ `back`, `badge`, `actions`)                                           | eigenes `<h1>`                | ✅ 0         |
+| Bestätigung     | `ConfirmDialog`, im Handler per `useConfirmDialog()`                                  | `window.confirm()`            | ✅ 0         |
+| Liste / Tabelle | `Table` + `PaginationNav`                                                             | rohe `<table>`                | ✅ 0         |
+| Schriftgröße    | Typo-Skala § 4.2                                                                      | `text-[Npx]`                  | ✅ 0         |
+| Dialog          | shadcn `Dialog`; `CenteredModal` nur Bestand (gleiche Überlagerung/Schatten, Ratsche) | neue `CenteredModal`-Nutzer   | ✅ Grenze 28 |
+| Kennzahlen      | `KpiBand` (Reihe, 2–6 Werte) / `StatCard` (einzeln)                                   | Zahl als `text-3xl` in `Card` | ✅ Grenze    |
+| Leerzustand     | `EmptyState` (ganze Fläche, mit Aktion) / `ListState` (innerhalb Karte/Tabelle)       | loser „Keine …"-Text          | ✅ Grenze 3  |
+
+**Bewusste Ausnahmen der Ratschen (Stand 20.09.2026):**
+
+- `<h1>` außerhalb `PageHeader`: Bestätigungsseiten (`payment-success`, `shop/success`), Fehlerseite
+  (`error.tsx`), `select-admin-club` (Vollbild, dunkel), `subscription-dunning-block`
+  (Bezahlschranke), `member-profile` (Personenname als Titel).
+- Leerzustand-Ratsche (Grenze 3): `select-admin-club` (Vollbild, dunkel), `admin/analytics`
+  (zwei Fehlertexte „Keine Club-Daten", kein Leerzustand), `perf-history-client` (Diagramm-Platzhalter).
+- Dashboards: Kopf → `KpiBand` → Inhalt → Schnellzugriff ist überall gleich. Abweichungen sind gewollt:
+  Mitglieder haben den Schnellzugriff **vor** den Karten (keine Sidebar, er ist ihre Navigation);
+  Owner hat keinen `QuickActions`-Block, sondern Link-Kacheln zu den Plattformbereichen.
+
+**Dialoge (20.09.2026):** `CenteredModal` ist keine Eigenbau-Überlagerung mehr, sondern eine Hülle
+mit der alten Props-Schnittstelle über Radix (`@radix-ui/react-dialog`) — Fokusfalle, Escape,
+Scroll-Sperre und Fokus-Rückgabe kommen von dort, wie bei shadcn `Dialog`. Die 28 Bestandsstellen
+bleiben (Ratsche, nur sinkend); neue Stellen nehmen direkt `Dialog`.
+
+**Listenmuster (20.09.2026):** Filterleiste = Suchfeld (Icon links, `flex-1`) + `Select` je 160 px,
+`gap-3 md:gap-4`, mobil untereinander; danach `Table`, `PaginationNav`, bei null Treffern
+`NoSearchResultsEmptyState`. Referenz `members-client.tsx`; die Trainerliste folgt ihr jetzt.
+
+**Laden:** Flächen (Seite, Karte, Tab) zeigen `Skeleton`, nie einen großen Spinner; `Loader2` nur
+klein in Schaltflächen oder Inline-Text. Ratsche „Flächen-Spinner" (Grenze 7: Inline-Spinner mit
+`mr-2` und drei Stellen in Planungsschritt/Saisonkalender-Tab).
+
+**Kalender (`components/calendar/*`, 20.09.2026):** Kopfzeile schlank; Tag-Ansicht mit
+Unterumschalter; Wochenansicht kompakt; Platz-Filter als Chips mit Belegungs-Übersicht und
+fixierter Platz-Kopfzeile; die Platzwahl der Agenda begrenzt Woche/Tag nicht mehr auf einen Platz.
 
 **Breadcrumb-Regel (Sanierungsplan Phase 4.3, 18.09.2026):** Jede Seite, deren Route tiefer als
 zwei Ebenen liegt (z. B. `admin/seasons/[id]/preferences/new`), bekommt `Breadcrumb` aus

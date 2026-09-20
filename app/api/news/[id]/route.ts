@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { errorResponse, internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
+import type { TablesUpdate } from '@/types/supabase';
 
 // GET /api/news/[id] — returns a single news item
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -31,10 +32,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
-    const body = await req.json();
+    // Nur Inhaltsfelder; club_id/author_id/Zähler sind nicht änderbar.
+    const raw = await req.json();
+    const patch = Object.fromEntries(
+      ['title', 'content', 'excerpt', 'is_pinned', 'audience']
+        .filter((k) => k in raw)
+        .map((k) => [k, raw[k]])
+    ) as TablesUpdate<'news_posts'>;
     const { data, error } = await auth.supabase
       .from('news_posts')
-      .update(body)
+      .update(patch)
       .eq('id', id)
       .select()
       .single();

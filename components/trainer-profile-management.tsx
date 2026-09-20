@@ -3,11 +3,13 @@ import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { NoTrainersBrandedEmptyState } from '@/components/ui/empty-state';
+import {
+  NoTrainersBrandedEmptyState,
+  NoSearchResultsEmptyState,
+} from '@/components/ui/empty-state';
 import { QuickEmailDialog } from '@/components/admin/quick-email-dialog';
 import {
   Table,
@@ -29,19 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  User,
-  Award,
-  Plus,
-  Search,
-  GraduationCap,
-  Euro,
-  Eye,
-  X,
-  UserCheck,
-  UserX,
-  Loader2,
-} from 'lucide-react';
+import { User, Award, Plus, Search, Euro, Eye, X, UserCheck, UserX, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { showInviteResult } from '@/lib/invite-feedback';
 import { apiFetch } from '@/lib/api-fetch';
@@ -370,43 +360,34 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
       />
 
       {/* ── Filters ────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row items-center gap-4">
-        <Input
-          variant="search"
-          leftIcon={<Search className="h-5 w-5" />}
-          placeholder="Nach Name oder E-Mail suchen..."
-          value={searchQuery}
-          onChange={(e) => setSearchAndClear(e.target.value)}
-          className="max-w-md"
-        />
-        <div className="w-full sm:w-48">
-          <Select value={statusFilter} onValueChange={setStatusFilterAndClear}>
-            <SelectTrigger>
-              <SelectValue placeholder="Alle Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Status</SelectItem>
-              <SelectItem value="active">Aktiv</SelectItem>
-              <SelectItem value="inactive">Inaktiv</SelectItem>
-              <SelectItem value="on_leave">Urlaub</SelectItem>
-              <SelectItem value="terminated">Beendet</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Nach Name oder E-Mail suchen..."
+            value={searchQuery}
+            onChange={(e) => setSearchAndClear(e.target.value)}
+            className="pl-10"
+          />
         </div>
+        <Select value={statusFilter} onValueChange={setStatusFilterAndClear}>
+          <SelectTrigger className="w-full sm:w-[160px]">
+            <SelectValue placeholder="Alle Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Status</SelectItem>
+            <SelectItem value="active">Aktiv</SelectItem>
+            <SelectItem value="inactive">Inaktiv</SelectItem>
+            <SelectItem value="on_leave">Urlaub</SelectItem>
+            <SelectItem value="terminated">Beendet</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* ── Empty State ────────────────────────────────────────────────────── */}
       {filteredTrainers.length === 0 ? (
         searchQuery || statusFilter !== 'all' ? (
-          <Card variant="flat" className="p-12 text-center">
-            <div className="flex h-20 w-20 mx-auto items-center justify-center rounded-xl bg-primary/10 mb-6">
-              <GraduationCap className="h-10 w-10 text-primary" />
-            </div>
-            <h3 className="text-2xl font-bold text-primary">Keine Treffer</h3>
-            <p className="text-muted-foreground dark:text-muted-foreground mt-2 max-w-sm mx-auto">
-              Passe deine Filterkriterien an, um Ergebnisse zu sehen.
-            </p>
-          </Card>
+          <NoSearchResultsEmptyState searchTerm={searchQuery || undefined} />
         ) : (
           <NoTrainersBrandedEmptyState onInvite={() => setShowInviteForm(true)} />
         )

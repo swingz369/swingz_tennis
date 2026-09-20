@@ -427,10 +427,14 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 | GET/PATCH/DELETE | `/api/user/notifications/[id]`          |
 | GET              | `/api/user/notifications/count`         |
 | POST             | `/api/user/notifications/mark-all-read` |
-| GET/POST         | `/api/messages`                         |
-| POST             | `/api/messages/[id]/read`               |
+| GET/POST         | `/api/chat/conversations`               |
+| PATCH/DELETE     | `/api/chat/conversations/[id]`          |
+| GET/POST         | `/api/chat/conversations/[id]/messages` |
+| PATCH/DELETE     | `/api/chat/messages/[id]`               |
+| GET              | `/api/chat/unread`                      |
 | GET/POST         | `/api/news`                             |
 | GET/PATCH/DELETE | `/api/news/[id]`                        |
+| POST             | `/api/news/read`                        |
 | POST             | `/api/email-campaigns`                  |
 | POST             | `/api/emails/onboarding`                |
 

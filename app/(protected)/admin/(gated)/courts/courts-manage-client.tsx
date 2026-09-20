@@ -1,4 +1,5 @@
 'use client';
+import { Skeleton } from '@/components/ui/skeleton';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -43,7 +44,6 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
-  Loader2,
   Users,
   Sun,
   DollarSign,
@@ -1171,7 +1171,11 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
 
               {courtTypesLoading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-brand-light" />
+                  <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+                    <Skeleton className="h-14 w-full" />
+                    <Skeleton className="h-14 w-full" />
+                    <Skeleton className="h-14 w-full" />
+                  </div>
                 </div>
               ) : courtTypesList.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-8">

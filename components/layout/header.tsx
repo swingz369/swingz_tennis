@@ -134,7 +134,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               <Trophy className="h-4 w-4 text-primary" aria-hidden="true" />
             )}
           </span>
-          <span className="text-[15px] font-bold tracking-[-0.02em]">SwingZ</span>
+          <span className="text-base font-bold tracking-[-0.02em]">SwingZ</span>
         </Link>
 
         {/* Right actions — Utility-Cluster (Suche / Theme / Notifications / User / Mobile).

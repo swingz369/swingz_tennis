@@ -1,12 +1,13 @@
 'use client';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { KpiBand } from '@/components/ui/kpi-band';
 import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { IconBox } from '@/components/ui/icon-box';
-import { Loader2, CheckCircle, XCircle, Filter } from 'lucide-react';
+import { CheckCircle, XCircle, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import { buildPaginationMeta } from '@/lib/pagination';
@@ -126,7 +127,11 @@ export default function AttendanceHistory() {
       {/* Records list */}
       {loading ? (
         <div className="flex items-center justify-center min-h-[30vh]">
-          <Loader2 className="h-6 w-6 animate-spin text-brand-light" />
+          <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
         </div>
       ) : error ? (
         <Card>

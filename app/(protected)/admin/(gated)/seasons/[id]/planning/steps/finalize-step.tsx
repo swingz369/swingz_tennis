@@ -373,7 +373,7 @@ export function FinalizeStep() {
                       nichts zu tun und liegen jetzt bei den
                       Saison-Einstellungen. */}
                   {!billingPreview.config && (
-                    <div className="flex flex-wrap items-center gap-2 rounded-xl bg-warning-50 px-3 py-2 text-xs text-warning-800 dark:bg-warning-900/20 dark:text-warning-200">
+                    <div className="flex flex-wrap items-center gap-2 rounded-xl bg-warning-50 px-3 py-2 text-xs text-warning-800">
                       <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                       <span>
                         Für diese Saison ist keine Abrechnung hinterlegt — die Vorschau rechnet mit

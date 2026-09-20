@@ -1,12 +1,13 @@
 'use client';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, CheckCircle2, ArrowRight, ShoppingBag, Package, Home } from 'lucide-react';
+import { CheckCircle2, ArrowRight, ShoppingBag, Package, Home } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 
 interface OrderItem {
@@ -50,7 +51,11 @@ function SuccessContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-light" />
+        <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+        </div>
       </div>
     );
   }
@@ -163,7 +168,11 @@ export default function ShopSuccessPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-light" />
+          <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
         </div>
       }
     >

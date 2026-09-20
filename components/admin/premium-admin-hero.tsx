@@ -73,7 +73,7 @@ export function PremiumAdminHero({
       {/* Date + Role pill — Datum in Mono, damit es als Datenzeile liest und
           nicht als zweite Überschrift mit der Begrüßung konkurriert. */}
       <div className="flex items-center gap-2 mb-2">
-        <p className="tabular-nums text-[11px] font-medium uppercase tracking-[0.13em] text-muted-foreground">
+        <p className="tabular-nums text-2xs font-medium uppercase tracking-[0.13em] text-muted-foreground">
           {todayLabel}
         </p>
         <span

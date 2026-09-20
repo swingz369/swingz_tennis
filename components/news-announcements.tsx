@@ -1,4 +1,5 @@
 'use client';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
@@ -39,7 +40,19 @@ export interface NewsItem {
   tags?: string[];
   expiresAt?: string;
   isPinned?: boolean;
+  audience?: 'all' | 'trainers' | 'members';
+  /** Noch nicht gelesen (vor dem automatischen Markieren beim Laden). */
+  isRead?: boolean;
+  /** Nur für die Verwaltung: Lesequote. */
+  readCount?: number | null;
+  audienceCount?: number | null;
 }
+
+const AUDIENCE_LABEL = {
+  all: 'Alle Mitglieder',
+  trainers: 'Trainer und Verwaltung',
+  members: 'Mitglieder',
+} as const;
 
 interface NewsAnnouncementsProps {
   /** Whether the current user may create/delete news (admin/superadmin) */
@@ -70,6 +83,8 @@ export default function NewsAnnouncements({
     priority: 'medium' as NewsItem['priority'],
     isPinned: false,
     expiresAt: '',
+    audience: 'all' as NonNullable<NewsItem['audience']>,
+    notify: false,
   });
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -89,8 +104,20 @@ export default function NewsAnnouncements({
           tags: n.tags || [],
           expiresAt: n.expires_at || undefined,
           isPinned: n.is_pinned || false,
+          audience: n.audience || 'all',
+          isRead: n.is_read !== false,
+          readCount: n.read_count ?? null,
+          audienceCount: n.audience_count ?? null,
         }));
         setNews(mapped);
+        // Das Öffnen des Feeds gilt als Lesen; die „Neu“-Markierung bleibt bis zum nächsten Laden.
+        const unread = mapped.filter((n) => !n.isRead).map((n) => n.id);
+        if (unread.length > 0) {
+          apiFetch('/api/news/read', {
+            method: 'POST',
+            body: JSON.stringify({ ids: unread.slice(0, 100) }),
+          }).catch(() => undefined);
+        }
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name !== 'AbortError') {
@@ -121,6 +148,8 @@ export default function NewsAnnouncements({
       priority: 'medium',
       isPinned: false,
       expiresAt: '',
+      audience: 'all',
+      notify: false,
     });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -138,6 +167,8 @@ export default function NewsAnnouncements({
         type: form.type,
         priority: form.priority,
         is_pinned: form.isPinned,
+        audience: form.audience,
+        notify: form.notify,
       };
       if (form.expiresAt) {
         payload.expires_at = new Date(form.expiresAt).toISOString();
@@ -321,7 +352,11 @@ export default function NewsAnnouncements({
           <Card>
             <CardContent className="py-12">
               <div className="flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+                  <Skeleton className="h-14 w-full" />
+                  <Skeleton className="h-14 w-full" />
+                  <Skeleton className="h-14 w-full" />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -359,6 +394,16 @@ export default function NewsAnnouncements({
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          {item.isRead === false && (
+                            <Badge className="text-xs bg-primary text-primary-foreground">
+                              Neu
+                            </Badge>
+                          )}
+                          {item.audience && item.audience !== 'all' && (
+                            <Badge variant="outline" className="text-xs">
+                              {AUDIENCE_LABEL[item.audience]}
+                            </Badge>
+                          )}
                           {item.isPinned && (
                             <Badge variant="default" className="text-xs gap-1">
                               <Pin className="h-3 w-3" />
@@ -381,6 +426,19 @@ export default function NewsAnnouncements({
                           )}
                         </div>
                         <CardTitle className="text-xl">{item.title}</CardTitle>
+                        {canManage && item.audienceCount != null && (
+                          <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full bg-primary"
+                                style={{
+                                  width: `${item.audienceCount ? Math.min(100, ((item.readCount ?? 0) / item.audienceCount) * 100) : 0}%`,
+                                }}
+                              />
+                            </div>
+                            {item.readCount ?? 0} von {item.audienceCount} gelesen
+                          </div>
+                        )}
                       </div>
                     </div>
                     {canManage && (
@@ -551,6 +609,36 @@ export default function NewsAnnouncements({
                 onChange={(e) => setForm((f) => ({ ...f, expiresAt: e.target.value }))}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="news-audience">Zielgruppe</Label>
+              <Select
+                value={form.audience}
+                onValueChange={(v) => setForm((f) => ({ ...f, audience: v as typeof f.audience }))}
+              >
+                <SelectTrigger id="news-audience">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(AUDIENCE_LABEL) as (keyof typeof AUDIENCE_LABEL)[]).map((k) => (
+                    <SelectItem key={k} value={k}>
+                      {AUDIENCE_LABEL[k]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={form.notify}
+                onChange={(e) => setForm((f) => ({ ...f, notify: e.target.checked }))}
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+              />
+              <Bell className="h-4 w-4 text-muted-foreground" />
+              <span>Zielgruppe per Glocke benachrichtigen</span>
+            </label>
 
             <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
               <input

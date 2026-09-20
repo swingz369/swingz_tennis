@@ -63,7 +63,7 @@ umging RLS und verließ sich auf Anwendungscode für die Mandantentrennung — z
 Datenlecks im Juli waren die Folge. Neue und migrierte Domänen halten sich an dieses Muster.
 Bereits migriert: Stundensätze (`app/api/hourly-rates/`), SEPA-Mandate
 (`app/api/sepa-mandates/`), Zahlungseinstellungen (`app/api/payment-settings/`), Saison-Präferenzen
-(`app/api/seasons/[id]/preferences/`), Saisonplan (`plan-entries/` inkl. `[entryId]` und Nachrücken von der Warteliste, `plan-grid/`, `planning/*` ebenda inkl. `dry-run`/`cluster` und `auto-plan/` — Clustering-Engine und Auto-Planer laufen über `season-clustering.repository.ts`, `authorizeSeasonAccess` liest die Saison per RLS; Wizard-Raster zurückschreiben über `SeasonPlanService.applySlots`; Veröffentlichen atomar per DB-Funktion `publish_season_plan`) — je ein
+(`app/api/seasons/[id]/preferences/`), Saisonplan (`plan-entries/` inkl. `[entryId]` und Nachrücken von der Warteliste, `plan-grid/`, `planning/*` ebenda inkl. `dry-run`/`cluster` und `auto-plan/` — Clustering-Engine und Auto-Planer laufen über `season-clustering.repository.ts`, `authorizeSeasonAccess` liest die Saison per RLS; Wizard-Raster zurückschreiben über `SeasonPlanService.applySlots`; Veröffentlichen atomar per DB-Funktion `publish_season_plan`), Chat (`app/api/chat/`, `chat.service.ts`, Realtime per Broadcast statt Postgres Changes) — je ein
 Service unter `src/application/services/`, ein Repository unter
 `src/infrastructure/persistence/repositories/`:
 

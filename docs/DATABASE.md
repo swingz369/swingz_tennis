@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 20. September 2026 (Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
+> Zuletzt verifiziert: 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -611,3 +611,15 @@ Die mit „noch manuell" markierten Fristen haben keinen automatischen Job. Das
 ist bewusst so festgehalten und nicht überspielt: eine Frist, die nirgends
 läuft, ist eine Absichtserklärung. Der nächste Schritt wäre, sie an
 `/api/cron/prune-audit-logs` anzuhängen.
+
+## Chat (seit `20260920150000_chat_conversations.sql`)
+
+- Tabellen `conversations` (direct/group), `conversation_participants` (Lesemarke `last_read_at`, `muted`), `conversation_messages`. Ersetzt `messages` (eine Zeile je Empfänger).
+- RLS über `is_conversation_participant(id)`. Anlegen nur per RPC `start_direct_conversation` / `create_group_conversation` (prüfen Vereinszugehörigkeit; Gruppen nur Trainer/Admin/Superadmin, max. 500). Spaltenrechte: Teilnehmer ändern nur `last_read_at`/`muted`, Absender nur `body`/`edited_at`/`deleted_at`.
+- Ungelesen = `created_at > last_read_at`, kein `is_read` je Zeile: `list_my_conversations()`, `chat_unread_total()`.
+- Echtzeit: Trigger `chat_after_message` sendet per `realtime.send` an privaten Kanal `chat:<user_id>`; Policy `chat_broadcast_receive` auf `realtime.messages`.
+
+## Ankündigungen (`20260920160000_news_audience_reads.sql`)
+
+- `news_posts.audience` (`all` | `trainers` | `members`): Trainer = Trainer + Verwaltung, Mitglieder = Rolle `member`. Sichtbarkeit per RLS-Policy `news_posts_member_select` über `news_audience_matches()`; sie ersetzt `club_members_see_published_news` und `members_can_view_published_news`.
+- `news_post_reads`: Lesebestätigung je Nutzer (nur eigene Zeilen les-/schreibbar, nur für sichtbare Beiträge). Die Lesequote liefert `news_read_stats(club_id)` — ausschließlich für die Vereinsverwaltung.
