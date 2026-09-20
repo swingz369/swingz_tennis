@@ -153,11 +153,11 @@ export function DayView({
       )}
 
       {/* Time-axis grid */}
-      <div className="overflow-x-auto">
+      <div className="overflow-auto max-h-[70vh]">
         <div style={{ minWidth: gridMinW }}>
           {/* Court headers */}
           <div
-            className="grid border-b border-border/40"
+            className="grid border-b border-border/40 sticky top-0 z-30 bg-card"
             style={{
               gridTemplateColumns: `${timeColW} repeat(${displayCourts.length}, ${courtColMin})`,
             }}

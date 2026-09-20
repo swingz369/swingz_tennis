@@ -10,13 +10,6 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import CourtBookingsList from '@/components/court-bookings-list';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
 import { useActingAsMemberId } from '@/hooks/use-effective-member';
 import { useCourts } from '@/hooks/use-courts';
@@ -65,6 +58,8 @@ import { getSurfaceLabel, getCalendarLegendItems } from '@/lib/court-calendar-ut
 import { CourtCalendarHeader, CourtCalendarLegend } from '@/components/court-calendar-shared';
 import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { apiFetch } from '@/lib/api-fetch';
+import { OccupancyMatrixView } from '@/components/calendar/occupancy-matrix-view';
+import { CourtFilterChips, resolveVisibleCourts } from '@/components/calendar/court-filter-chips';
 import { BlockCourtDialog } from '@/components/block-court-dialog';
 import { AdHocSessionDialog } from '@/components/ad-hoc-session-dialog';
 
@@ -142,6 +137,8 @@ export default function UnifiedCourtCalendar({
     mobileSelectedDay,
     setMobileSelectedDay,
     selectedCourtId,
+    visibleCourtIds,
+    setVisibleCourtIds,
     setSelectedCourtId,
     weekStart,
     weekEnd,
@@ -358,6 +355,28 @@ export default function UnifiedCourtCalendar({
     return renderAgendaView();
   }
 
+  if (viewMode === 'matrix') {
+    return (
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="flex flex-wrap items-center gap-2">
+          {viewToggleEl}
+          {roleActionButtonsEl}
+        </div>
+        <OccupancyMatrixView
+          date={selectedDate}
+          courts={courts}
+          sessions={visibleSessions}
+          closures={courtClosures}
+          openingHours={openingHours}
+          getPlanEntriesForCourtAndDay={getPlanEntriesForNextFree}
+          goToPrevious={goToPrevious}
+          goToNext={goToNext}
+          onBook={handleBookSlot}
+        />
+      </div>
+    );
+  }
+
   /* ═══════════════════════════════════════════════════
      RENDER: Month View (Phase 2.1 — übernommen aus /bookings)
      ═══════════════════════════════════════════════════ */
@@ -392,7 +411,13 @@ export default function UnifiedCourtCalendar({
      ═══════════════════════════════════════════════════ */
 
   // ── Court filtering: single-court mode for members ──
-  const displayCourts = effectiveCourtId ? courts.filter((c) => c.id === effectiveCourtId) : courts;
+  // Admin/Trainer: Mehrfachfilter (Chips); Mitglieder: ein Platz (Kartenansicht)
+  const canFilterCourts = isAdmin || isTrainer;
+  const displayCourts = effectiveCourtId
+    ? courts.filter((c) => c.id === effectiveCourtId)
+    : canFilterCourts
+      ? resolveVisibleCourts(courts, visibleCourtIds)
+      : courts;
 
   const weeklyView = (
     <WeekView
@@ -545,32 +570,16 @@ export default function UnifiedCourtCalendar({
         onGoNext={goToNext}
         onGoToday={goToToday}
       >
-        {/* Platz-Filter (Admin/Trainer) — bei vielen Plätzen auf einen einschränken */}
-        {(isAdmin || isTrainer) && courts.length > 1 && (
-          <Select
-            value={selectedCourtId ?? 'all'}
-            onValueChange={(v) => setSelectedCourtId(v === 'all' ? null : v)}
-          >
-            <SelectTrigger className="h-8 w-[160px] text-sm">
-              <SelectValue placeholder="Alle Plätze" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Plätze</SelectItem>
-              {courts.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-
         {/* View toggle */}
         {viewToggleEl}
 
         {/* Export + Rollen-Aktionen */}
         {roleActionButtonsEl}
       </CourtCalendarHeader>
+
+      {canFilterCourts && courts.length > 1 && viewMode !== 'list' && !effectiveCourtId && (
+        <CourtFilterChips courts={courts} visible={displayCourts} onChange={setVisibleCourtIds} />
+      )}
 
       {/* Weather banner (admin only) */}
       {isAdmin && weatherData && <WeatherBanner weatherData={weatherData} />}

@@ -50,6 +50,15 @@ export function CalendarViewToggle({
         <CalendarIcon className="h-4 w-4 mr-1.5" />
         Monat
       </Button>
+      <Button
+        variant={viewMode === 'matrix' ? 'default' : 'ghost'}
+        size="sm"
+        className="rounded-none border-r border-border"
+        onClick={() => setViewMode('matrix')}
+      >
+        <CalendarIcon className="h-4 w-4 mr-1.5" />
+        Übersicht
+      </Button>
       {(isAdmin || isTrainer) && (
         <Button
           variant={viewMode === 'daily' ? 'default' : 'ghost'}

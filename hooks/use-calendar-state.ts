@@ -15,9 +15,9 @@ import {
   subDays,
 } from 'date-fns';
 
-export type ViewMode = 'agenda' | 'weekly' | 'daily' | 'list' | 'month';
+export type ViewMode = 'agenda' | 'weekly' | 'daily' | 'list' | 'month' | 'matrix';
 
-const VIEW_MODES: ViewMode[] = ['agenda', 'weekly', 'daily', 'list', 'month'];
+const VIEW_MODES: ViewMode[] = ['agenda', 'weekly', 'daily', 'list', 'month', 'matrix'];
 
 export function isViewMode(value: string | null): value is ViewMode {
   return !!value && (VIEW_MODES as string[]).includes(value);
@@ -67,6 +67,11 @@ export function useCalendarState({
     searchParams.get('calCourt')
   );
 
+  // Mehrfach-Platzfilter (Admin/Trainer); null = Standard (alle bzw. die ersten 4)
+  const [visibleCourtIds, setVisibleCourtIds] = useState<string[] | null>(
+    searchParams.get('calCourts')?.split(',').filter(Boolean) ?? null
+  );
+
   // Rollen-Vorgabe (Mitglied → agenda, Trainer/Admin → weekly) nachziehen, sobald
   // die Rollen geladen sind — nur wenn weder die URL noch der Aufrufer
   // (`defaultView`-Prop) schon etwas vorgegeben haben.
@@ -86,12 +91,14 @@ export function useCalendarState({
     params.set('calDate', format(viewMode === 'weekly' ? currentWeek : selectedDate, 'yyyy-MM-dd'));
     if (selectedCourtId) params.set('calCourt', selectedCourtId);
     else params.delete('calCourt');
+    if (visibleCourtIds) params.set('calCourts', visibleCourtIds.join(','));
+    else params.delete('calCourts');
     const next = `${pathname}?${params.toString()}`;
     if (next !== `${pathname}?${searchParams.toString()}`) {
       router.replace(next, { scroll: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewMode, currentWeek, selectedDate, selectedCourtId, pathname]);
+  }, [viewMode, currentWeek, selectedDate, selectedCourtId, visibleCourtIds, pathname]);
 
   // ── Sync mobile selected day when week changes ──
   useEffect(() => {
@@ -140,6 +147,8 @@ export function useCalendarState({
     setMobileSelectedDay,
     selectedCourtId,
     setSelectedCourtId,
+    visibleCourtIds,
+    setVisibleCourtIds,
     weekStart,
     weekEnd,
     weekDays,
