@@ -165,9 +165,9 @@ export function NotificationBell({ userId }: NotificationBellProps) {
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <Tooltip>
-          <TooltipTrigger asChild>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
@@ -185,14 +185,12 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                 </span>
               )}
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {unreadCount > 0
-              ? `${unreadCount} ungelesene Benachrichtigungen`
-              : 'Benachrichtigungen'}
-          </TooltipContent>
-        </Tooltip>
-      </DropdownMenuTrigger>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          {unreadCount > 0 ? `${unreadCount} ungelesene Benachrichtigungen` : 'Benachrichtigungen'}
+        </TooltipContent>
+      </Tooltip>
 
       <DropdownMenuContent align="end" className="w-80">
         <div className="px-3 py-2">

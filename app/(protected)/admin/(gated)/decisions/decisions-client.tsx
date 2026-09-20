@@ -427,9 +427,9 @@ function DecisionRow({
           </div>
 
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Tooltip>
-                <TooltipTrigger asChild>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -438,10 +438,10 @@ function DecisionRow({
                   >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent>Weitere Optionen</TooltipContent>
-              </Tooltip>
-            </DropdownMenuTrigger>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Weitere Optionen</TooltipContent>
+            </Tooltip>
             <DropdownMenuContent align="end">
               {decision.status === 'draft' && (
                 <DropdownMenuItem onClick={() => onUpdateStatus(decision.id, 'scheduled')}>
