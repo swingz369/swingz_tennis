@@ -34,9 +34,9 @@ function parseDateParam(value: string | null): Date | null {
  * (Phase 1: eine geteilte Kalender-URL zeigt beim Empfänger dieselbe
  * Ansicht — die URL gewinnt immer gegenüber `defaultView`).
  *
- * Eigene Parameter-Namen (`calView` statt `view`): `places-hub-tabs.tsx`
- * bettet den Kalender in einen Tab ein, der bereits `?view=calendar|manage`
- * für die Tab-Auswahl benutzt — ein gemeinsamer Name würde sich überschreiben.
+ * Eigene Parameter-Namen (`calView` statt `view`): `courts-hub-tabs.tsx`
+ * bettet den Kalender in einen Tab ein, der `?tab=` für die Tab-Auswahl
+ * benutzt — generische Namen würden sich gegenseitig überschreiben.
  */
 export function useCalendarState({
   defaultView,

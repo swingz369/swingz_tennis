@@ -896,9 +896,9 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                           </CardTitle>
                         </div>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <DropdownMenuTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -907,10 +907,10 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Weitere Aktionen</TooltipContent>
-                            </Tooltip>
-                          </DropdownMenuTrigger>
+                              </DropdownMenuTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent>Weitere Aktionen</TooltipContent>
+                          </Tooltip>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => handleEdit(court)}>
                               <Edit className="h-4 w-4 mr-2" />
@@ -1086,9 +1086,9 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <DropdownMenuTrigger asChild>
                                     <Button
                                       variant="ghost"
                                       size="icon"
@@ -1096,10 +1096,10 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                                     >
                                       <MoreHorizontal className="h-4 w-4" />
                                     </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Weitere Aktionen</TooltipContent>
-                                </Tooltip>
-                              </DropdownMenuTrigger>
+                                  </DropdownMenuTrigger>
+                                </TooltipTrigger>
+                                <TooltipContent>Weitere Aktionen</TooltipContent>
+                              </Tooltip>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => handleEdit(court)}>
                                   <Edit className="h-4 w-4 mr-2" />
@@ -1198,9 +1198,9 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                             )}
                           </div>
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <DropdownMenuTrigger asChild>
                                   <Button
                                     variant="ghost"
                                     size="icon"
@@ -1209,10 +1209,10 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                                   >
                                     <MoreHorizontal className="h-4 w-4" />
                                   </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Weitere Aktionen</TooltipContent>
-                              </Tooltip>
-                            </DropdownMenuTrigger>
+                                </DropdownMenuTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent>Weitere Aktionen</TooltipContent>
+                            </Tooltip>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => handleCTEdit(type)}>
                                 <Edit className="h-4 w-4 mr-2" />

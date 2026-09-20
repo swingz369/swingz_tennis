@@ -78,6 +78,9 @@ export interface WeekViewProps {
   handleOpenCancelSession: (session: Session) => void;
 }
 
+/** Höhe einer freien Stunde im Wochenraster (px) — Belegungen wachsen um ihre Stundenzahl. */
+const SLOT_H = 26;
+
 export function WeekView({
   isMobile,
   weekDays,
@@ -226,11 +229,35 @@ export function WeekView({
             <CourtRowHeader court={court} />
             {weekDays.map((day, dayIdx) => {
               const planEntriesForDay = getPlanEntriesForCourtAndDay(court.id, dateFnsGetDay(day));
+              const planForCourt = planEntriesForDay.filter(
+                (e): e is PlanEntry & { court_id: string } => e.court_id !== null
+              );
+              const slotInfos = TIME_SLOTS.map((ts) =>
+                getSlotStatus(
+                  court.id,
+                  day,
+                  ts,
+                  visibleSessions,
+                  planForCourt,
+                  courtClosures,
+                  openingHours
+                )
+              );
+              const busyKey = (i: number) => {
+                const x = slotInfos[i];
+                if (x.status === 'available') return null;
+                return (
+                  x.session?.id ??
+                  x.closure?.id ??
+                  x.planEntry?.id ??
+                  (x.closedDay ? 'closed' : null)
+                );
+              };
 
               return (
                 <div
                   key={day.toISOString()}
-                  className={`p-1.5 min-h-[420px] border-r border-border/20 last:border-r-0 ${
+                  className={`p-1.5 border-r border-border/20 last:border-r-0 ${
                     dayOffFor(day)
                       ? 'bg-warning-50/50'
                       : isSameDay(day, new Date())
@@ -241,24 +268,26 @@ export function WeekView({
                   {/* Time slots */}
                   <div className="space-y-0.5">
                     {TIME_SLOTS.map((timeSlot, timeIdx) => {
-                      const { status, session, closure, planEntry, closedDay } = getSlotStatus(
-                        court.id,
-                        day,
-                        timeSlot,
-                        visibleSessions,
-                        planEntriesForDay.filter(
-                          (e): e is PlanEntry & { court_id: string } => e.court_id !== null
-                        ),
-                        courtClosures,
-                        openingHours
-                      );
+                      const { status, session, closure, planEntry, closedDay } = slotInfos[timeIdx];
+                      // Mehrstündige Belegung (Session, Sperre, Plan-Eintrag) als EIN Block statt
+                      // einer Karte je Stunde — freie Stunden bleiben einzeln klickbar, aber flach.
+                      const key = busyKey(timeIdx);
+                      if (key && timeIdx > 0 && busyKey(timeIdx - 1) === key) return null;
+                      let run = 1;
+                      while (
+                        key &&
+                        timeIdx + run < TIME_SLOTS.length &&
+                        busyKey(timeIdx + run) === key
+                      )
+                        run++;
                       const dropTargetId = `${court.id}::${day.toISOString()}::${timeSlot}`;
 
                       return (
                         <DroppableSlot key={timeSlot} id={dropTargetId} isAdmin={isAdmin}>
                           <div
                             id={weekSlotId(court.id, day, timeSlot)}
-                            className={`group min-h-[44px] rounded-xl text-2xs flex items-center transition-all duration-150 ${
+                            style={{ minHeight: run * SLOT_H + (run - 1) * 2 }}
+                            className={`group rounded-xl text-2xs flex items-center transition-all duration-150 ${
                               status === 'blocked' && isAdmin && !closedDay
                                 ? SLOT_STATUS_STYLES_ADMIN_BLOCKED
                                 : SLOT_STATUS_STYLES[status]

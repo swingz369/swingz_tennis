@@ -3,7 +3,7 @@ import { requireAdminClub } from '@/lib/admin-context';
 import { createServiceClient } from '@/lib/supabase/service';
 import { PageHeader } from '@/components/ui/page-header';
 import { createLogger } from '@/lib/logger';
-import { PlacesHubTabs } from './places-hub-tabs';
+import { CourtsHubTabs } from './courts-hub-tabs';
 import type { Court } from '@/lib/types/court-booking';
 
 const log = createLogger('admin:courts:page');
@@ -52,7 +52,7 @@ export default async function AdminCourtsPage() {
         title="Plätze"
         description="Kalender, Plätze, Wartung und Platzsperren an einem Ort"
       />
-      <PlacesHubTabs
+      <CourtsHubTabs
         clubId={clubId}
         initialCourts={(courts ?? []) as Court[]}
         courtTypes={(courtTypes ?? []).map((t) => ({

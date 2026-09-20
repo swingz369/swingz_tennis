@@ -124,6 +124,7 @@ export function AgendaView({
         subtitle={`${format(selectedDate, 'EEEE, dd. MMMM yyyy', { locale: de })}${activeCourt ? ' · ' + activeCourt.name : ''}`}
         weekStart={weekStart}
         weekEnd={weekEnd}
+        day={selectedDate}
         onGoPrevious={goToPrevious}
         onGoNext={goToNext}
         onGoToday={goToToday}

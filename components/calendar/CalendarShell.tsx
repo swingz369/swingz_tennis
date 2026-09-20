@@ -1,10 +1,16 @@
 'use client';
 
 import { PageHeader } from '@/components/ui/page-header';
-import React from 'react';
+import React, { createContext, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
+/**
+ * Blendet Titel + Untertitel der Kalender-Köpfe aus, wenn die umgebende Seite
+ * schon eine Überschrift trägt (z. B. der Plätze-Hub im Admin-Bereich).
+ */
+export const HideCalendarHeadingContext = createContext(false);
 
 export interface CalendarShellNav {
   label: string;
@@ -27,9 +33,10 @@ export function CalendarShell({
   controls?: React.ReactNode;
   children?: React.ReactNode;
 }) {
+  const hideHeading = useContext(HideCalendarHeadingContext);
   return (
     <div className="space-y-4">
-      <PageHeader title={title} description={subtitle} />
+      {!hideHeading && <PageHeader title={title} description={subtitle} />}
 
       {(nav || controls) && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-sm px-3 py-2">

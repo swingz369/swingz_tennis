@@ -566,6 +566,7 @@ export default function UnifiedCourtCalendar({
         }
         weekStart={weekStart}
         weekEnd={weekEnd}
+        day={viewMode === 'daily' ? selectedDate : undefined}
         onGoPrevious={goToPrevious}
         onGoNext={goToNext}
         onGoToday={goToToday}
@@ -577,7 +578,7 @@ export default function UnifiedCourtCalendar({
         {roleActionButtonsEl}
       </CourtCalendarHeader>
 
-      {canFilterCourts && courts.length > 1 && viewMode !== 'list' && !effectiveCourtId && (
+      {canFilterCourts && courts.length > 3 && viewMode !== 'list' && !effectiveCourtId && (
         <CourtFilterChips courts={courts} visible={displayCourts} onChange={setVisibleCourtIds} />
       )}
 

@@ -15,6 +15,7 @@ export function CourtCalendarHeader({
   subtitle,
   weekStart,
   weekEnd,
+  day,
   onGoPrevious,
   onGoNext,
   onGoToday,
@@ -25,13 +26,17 @@ export function CourtCalendarHeader({
   subtitle: string;
   weekStart: Date;
   weekEnd: Date;
+  /** Tagesansicht: zeigt dieses Datum statt der Kalenderwoche */
+  day?: Date;
   onGoPrevious: () => void;
   onGoNext: () => void;
   onGoToday: () => void;
   onGoDaily?: () => void;
   children?: React.ReactNode;
 }) {
-  const navLabel = `${format(weekStart, 'dd.MM', { locale: de })} – ${format(weekEnd, 'dd.MM.yyyy', { locale: de })}`;
+  const navLabel = day
+    ? format(day, 'EEE, dd.MM.yyyy', { locale: de })
+    : `${format(weekStart, 'dd.MM', { locale: de })} – ${format(weekEnd, 'dd.MM.yyyy', { locale: de })}`;
 
   return (
     <CalendarShell
