@@ -488,7 +488,7 @@ function ActionBadge({ action }: { action: string }) {
 
   return (
     <span
-      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-mono border ${className}`}
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-2xs font-mono border ${className}`}
     >
       {action}
     </span>

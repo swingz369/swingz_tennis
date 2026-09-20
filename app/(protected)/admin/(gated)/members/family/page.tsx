@@ -1,6 +1,7 @@
 'use client';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
+import { EmptyState } from '@/components/ui/empty-state';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -188,16 +189,11 @@ export default function AdminFamilyPage() {
           <Skeleton className="h-32 w-full" />
         </div>
       ) : groups.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
-            <p>Keine Familiengruppen vorhanden</p>
-            <Button size="sm" className="mt-4 gap-1.5" onClick={() => openDialog(null)}>
-              <Plus className="h-4 w-4" />
-              Erste Familiengruppe anlegen
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Users}
+          title="Keine Familiengruppen vorhanden"
+          action={{ label: 'Erste Familiengruppe anlegen', onClick: () => openDialog(null) }}
+        />
       ) : (
         <div className="space-y-4">
           {groups.map((group) => (

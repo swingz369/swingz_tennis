@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 20. September 2026 (nuLiga-Scraper entfernt, Widget statt Abruf; davor 18. September 2026: Abgleich gegen Code und Produktion: E-Mail, rohe DB-Fehler, CI-Mocks, P3-Punkte erledigt; nuLiga-Rechtsklärung als Launch-Punkt ergänzt); davor 17. September 2026 (Auslieferung von 33 Commits nach main, 8 Migrationen
+> Zuletzt verifiziert: 20. September 2026 (UI-Einheitlichkeit abgeschlossen; nuLiga-Scraper entfernt, Widget statt Abruf; davor 18. September 2026: Abgleich gegen Code und Produktion: E-Mail, rohe DB-Fehler, CI-Mocks, P3-Punkte erledigt; nuLiga-Rechtsklärung als Launch-Punkt ergänzt); davor 17. September 2026 (Auslieferung von 33 Commits nach main, 8 Migrationen
 > auf Produktion angewendet, Deploy-Kette geprüft — drei neue Befunde unten); davor 16. September
 > 2026 (ADR-005-Migrationsfortschritt am Code geprüft); 30. August 2026 (Bezahlschranke
 > abgeschaltet — siehe unten)
@@ -293,6 +293,11 @@ arch:check` läuft mit `--ignore-known` dagegen und meldet "grün", obwohl der r
 
 ## P2 — Politur & Ehrlichkeit der Oberfläche
 
+- **UI-Einheitlichkeit** ✅ **Erledigt 20.09.2026** — Phasen 0–6 gemergt, Restpunkte umgesetzt
+  (`CenteredModal` läuft auf Radix, Trainerliste im Listenmuster, Flächen-Spinner → `Skeleton`,
+  `check:design` grün). Bewusst offen: die 28 `CenteredModal`-Bestandsstellen werden nur beim
+  Anfassen auf `Dialog` gezogen (Ratsche sinkt); Owner-Dashboard ohne `QuickActions`. Regel und
+  Ausnahmen: `docs/DESIGN.md` § 6a.
 - **Denglisch „Season"** (18.09.2026: drei Fehlertexte auf „Saison" gezogen; Rest ungeprüft) in sichtbaren Texten der Saison-Unterseiten (`seasons/[id]/page.tsx`,
   `seasons/[id]/edit/…`, `seasons/[id]/planning/steps/*`, `seasons/loading.tsx`). UI-Text von
   Code-Bezeichnern trennen — keine pauschale Ersetzung.

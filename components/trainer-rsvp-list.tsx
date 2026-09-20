@@ -1,10 +1,11 @@
 'use client';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Check, X, Loader2, UserCheck } from 'lucide-react';
+import { Users, Check, X, UserCheck } from 'lucide-react';
 import { useSessionRsvps } from '@/hooks/use-rsvp';
 import { toast } from 'sonner';
 import { asUtcIso, formatTime as formatTimeBerlin, formatWeekdayDate } from '@/lib/format';
@@ -142,7 +143,11 @@ export function TrainerRsvpList({
             {/* RSVP Summary */}
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+                  <Skeleton className="h-14 w-full" />
+                  <Skeleton className="h-14 w-full" />
+                  <Skeleton className="h-14 w-full" />
+                </div>
               </div>
             ) : (
               <>

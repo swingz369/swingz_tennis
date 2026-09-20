@@ -304,7 +304,7 @@ export default async function MemberPage() {
                       ? 'Heute'
                       : formatDate(nextSession.timeslot_start)}
                   </p>
-                  <p className="mt-1 text-[26px] font-semibold leading-none tracking-[-0.03em] text-foreground dark:text-white tabular-nums">
+                  <p className="mt-1 text-2xl font-semibold leading-none tracking-[-0.03em] text-foreground dark:text-white tabular-nums">
                     {formatTime(nextSession.timeslot_start)}
                     <span className="text-muted-foreground">
                       –{formatTime(nextSession.timeslot_end)}

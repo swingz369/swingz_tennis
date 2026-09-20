@@ -1,6 +1,7 @@
 'use client';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
+import { EmptyState } from '@/components/ui/empty-state';
 import { useState, useEffect, useCallback } from 'react';
 import { Card as MatchCard, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -197,14 +198,11 @@ export function PartnerFinderPanel({ showAdminBadge }: PartnerFinderPanelProps =
 
       {/* Empty state */}
       {data && data.matches.length === 0 && !loading && (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground border-2 border-dashed border-border rounded-xl">
-          <Users className="h-12 w-12 mb-3 text-muted-foreground/50" />
-          <p className="text-sm font-medium">Keine passenden Partner gefunden</p>
-          <p className="text-xs mt-1">
-            Es wurden {data.totalMembers} Mitglieder im Verein analysiert.
-          </p>
-          <p className="text-xs">Versuche es später erneut, wenn mehr Mitglieder aktiv sind.</p>
-        </div>
+        <EmptyState
+          icon={Users}
+          title="Keine passenden Partner gefunden"
+          description={`Es wurden ${data.totalMembers} Mitglieder im Verein analysiert. Versuche es später erneut, wenn mehr Mitglieder aktiv sind.`}
+        />
       )}
 
       {/* Has data */}

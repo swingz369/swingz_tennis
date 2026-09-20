@@ -645,7 +645,7 @@ export default async function AdminPage() {
       className="group flex items-center gap-3 rounded-xl border border-border bg-background px-3 py-2.5 transition-colors hover:border-ring/40 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <IconBox icon={action.icon} size="xs" className="shrink-0" />
-      <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{action.label}</span>
+      <span className="min-w-0 flex-1 truncate text-sm font-semibold">{action.label}</span>
       {action.badge && (
         <span className="shrink-0 rounded px-1.5 tabular-nums text-2xs font-semibold text-destructive">
           {action.badge}

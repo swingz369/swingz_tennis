@@ -1,5 +1,6 @@
 'use client';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -287,7 +288,11 @@ export default function OnboardingPage() {
               />
             ) : (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+                  <Skeleton className="h-14 w-full" />
+                  <Skeleton className="h-14 w-full" />
+                  <Skeleton className="h-14 w-full" />
+                </div>
               </div>
             )}
           </div>

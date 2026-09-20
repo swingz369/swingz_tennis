@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FeedbackModerationPanel } from '@/components/admin/feedback-moderation-panel';
 import { AuditLogViewer } from '@/components/admin/audit-log-viewer';
@@ -222,18 +223,11 @@ export function AdminPanelV2Client({
         </div>
 
         {clubs.length === 0 && (
-          <Card>
-            <CardContent className="p-8 text-center text-muted-foreground">
-              <Building2 className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-              <p className="font-medium">Keine Vereine gefunden</p>
-              <p className="text-sm mt-1">
-                Erstelle einen neuen Verein unter{' '}
-                <Link href="/superadmin/clubs" className="text-info-600 hover:underline">
-                  Club-Verwaltung
-                </Link>
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Building2}
+            title="Keine Vereine gefunden"
+            description="Lege einen neuen Verein in der Club-Verwaltung an."
+          />
         )}
       </div>
 

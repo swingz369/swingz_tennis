@@ -30,14 +30,13 @@ describe('AttendanceHistory', () => {
   });
 
   // ── Loading state ────────────────────────────────────────────────────
-  it('shows loading spinner initially', () => {
+  it('shows loading skeleton initially', () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockReturnValue(
       new Promise(() => {}) // never resolves
     );
     render(<AttendanceHistory />);
 
-    // Loader2 is an animated SVG spinner
-    expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Wird geladen' })).toBeInTheDocument();
   });
 
   // ── Data rendering ───────────────────────────────────────────────────

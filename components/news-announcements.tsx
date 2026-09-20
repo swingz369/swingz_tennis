@@ -1,4 +1,5 @@
 'use client';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
@@ -321,7 +322,11 @@ export default function NewsAnnouncements({
           <Card>
             <CardContent className="py-12">
               <div className="flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+                  <Skeleton className="h-14 w-full" />
+                  <Skeleton className="h-14 w-full" />
+                  <Skeleton className="h-14 w-full" />
+                </div>
               </div>
             </CardContent>
           </Card>

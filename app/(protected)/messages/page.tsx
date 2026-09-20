@@ -1,4 +1,5 @@
 'use client';
+import { Skeleton } from '@/components/ui/skeleton';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
@@ -105,7 +106,11 @@ export default function MessagesPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
         </div>
       }
     >
@@ -433,7 +438,11 @@ function MessagesContent() {
       <div className="space-y-6">
         {pageHeader}
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
         </div>
       </div>
     );
@@ -466,7 +475,11 @@ function MessagesContent() {
             <EmailCampaignsClient clubId={clubId} showHeader={false} />
           ) : (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+              </div>
             </div>
           )}
         </TabsContent>
@@ -497,7 +510,11 @@ function MessageList({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+        </div>
       </div>
     );
   }

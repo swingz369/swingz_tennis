@@ -141,7 +141,7 @@ export function SeasonProgressCard({ season }: { season: SeasonProgress }) {
               style={{ width: `${pct}%` }}
             />
           </div>
-          <p className="relative mt-2 tabular-nums text-[11px] text-white/60">
+          <p className="relative mt-2 tabular-nums text-2xs text-white/60">
             {pct} %{deadline && ` · ${deadline}`}
           </p>
         </>
@@ -164,7 +164,7 @@ export function SeasonProgressCard({ season }: { season: SeasonProgress }) {
               style={{ width: `${weeks.pct}%` }}
             />
           </div>
-          <p className="relative mt-2 tabular-nums text-[11px] text-white/60">
+          <p className="relative mt-2 tabular-nums text-2xs text-white/60">
             {weeks.pct} % · {weeks.label}
           </p>
         </>

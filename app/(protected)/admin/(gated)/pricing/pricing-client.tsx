@@ -1,4 +1,5 @@
 'use client';
+import { Skeleton } from '@/components/ui/skeleton';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -28,7 +29,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
-import { Plus, Edit, Trash2, Clock, Calendar, DollarSign, Loader2, Sun } from 'lucide-react';
+import { Plus, Edit, Trash2, Clock, Calendar, DollarSign, Sun } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Types
@@ -633,7 +634,11 @@ export function PricingClient({ clubId }: PricingClientProps) {
       {/* Loading */}
       {loading && (
         <div className="flex justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-light" />
+          <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
         </div>
       )}
 

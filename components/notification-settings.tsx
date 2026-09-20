@@ -1,5 +1,6 @@
 'use client';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +24,6 @@ import {
   XCircle,
   Settings,
   Trash2,
-  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
@@ -346,7 +346,11 @@ export default function NotificationSettings() {
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+              </div>
             </div>
           ) : notifications.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">

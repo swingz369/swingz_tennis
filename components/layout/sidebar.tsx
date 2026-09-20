@@ -546,7 +546,7 @@ export function Sidebar({
         >
           <span className="absolute inset-[3px] rounded-full border border-y-transparent border-background" />
         </span>
-        <span className="text-[17px] font-bold tracking-[-0.025em] text-foreground">SwingZ</span>
+        <span className="text-lg font-bold tracking-[-0.025em] text-foreground">SwingZ</span>
       </div>
 
       {/* Kompaktere Navigation: 12 px oben statt 16, Gruppen dichter. Die

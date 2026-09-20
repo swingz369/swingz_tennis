@@ -1,11 +1,11 @@
 'use client';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { ListState } from '@/components/ui/list-state';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
-  Loader2,
   Clock,
   ShieldAlert,
   UserCheck,
@@ -96,7 +96,11 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[30vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-light" />
+          <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
         </div>
       ) : logs.length === 0 ? (
         <ListState empty emptyTitle="Keine Audit-Logs vorhanden" />

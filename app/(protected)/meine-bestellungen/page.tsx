@@ -1,20 +1,11 @@
 'use client';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Loader2,
-  Package,
-  Clock,
-  CheckCircle2,
-  Truck,
-  XCircle,
-  ShoppingBag,
-  Eye,
-  X,
-} from 'lucide-react';
+import { Package, Clock, CheckCircle2, Truck, XCircle, ShoppingBag, Eye, X } from 'lucide-react';
 import { IconBox } from '@/components/ui/icon-box';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
@@ -128,7 +119,11 @@ export default function MeineBestellungenPage() {
       {/* Orders list */}
       {loading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-light" />
+          <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+          </div>
         </div>
       ) : orders.length === 0 ? (
         <Card>

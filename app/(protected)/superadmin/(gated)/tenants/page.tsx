@@ -1,11 +1,12 @@
 'use client';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { ListState } from '@/components/ui/list-state';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Users, Calendar, DollarSign, ArrowRight, Loader2 } from 'lucide-react';
+import { Building2, Users, Calendar, DollarSign, ArrowRight } from 'lucide-react';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
@@ -111,7 +112,11 @@ export default function SuperadminTenantsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-light" />
+        <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+        </div>
       </div>
     );
   }

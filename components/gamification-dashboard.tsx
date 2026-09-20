@@ -1,10 +1,11 @@
 'use client';
 
+import { Skeleton } from '@/components/ui/skeleton';
 import { KpiBand } from '@/components/ui/kpi-band';
 import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Trophy, Star, Medal, Flame } from 'lucide-react';
+import { Trophy, Star, Medal, Flame } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { createLogger } from '@/lib/logger';
 
@@ -65,7 +66,11 @@ export default function GamificationDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[40vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-light" />
+        <div className="w-full space-y-3" role="status" aria-label="Wird geladen">
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+        </div>
       </div>
     );
   }

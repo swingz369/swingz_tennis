@@ -47,8 +47,10 @@ ratchet() { # name max pattern [exclude-regex]
 ratchet 'h1 außerhalb PageHeader' 0 '<h1' 'components/ui/page-header|payment-success|shop/success|select-admin-club|/error\.tsx|subscription-dunning-block|components/member-profile\.tsx'
 ratchet 'window.confirm statt ConfirmDialog' 0 '(^|[^A-Za-z.])(window\.)?confirm\(' 'onConfirm|handleConfirm|await confirm\('
 ratchet 'rohe <table> statt <Table>' 0 '<table' 'components/ui/table\.tsx'
-ratchet 'Pixel-Schriftgrößen text-[Npx]' 9 'text-\[[0-9]+px\]' 'components/ui/'
-ratchet 'CenteredModal außerhalb ui/' 29 '<CenteredModal' 'components/ui/'
+ratchet 'Pixel-Schriftgrößen text-[Npx]' 0 'text-\[[0-9]+px\]' 'components/ui/'
+ratchet 'CenteredModal außerhalb ui/' 28 '<CenteredModal' 'components/ui/'
+# Flächen-Spinner (h-6/h-8) sind Skeleton-Sache; Spinner nur klein in Schaltflächen/Inline-Text.
+ratchet 'Flächen-Spinner statt Skeleton' 7 '<Loader2 className="h-[68] w-[68] animate-spin' 'components/ui/'
 
 ratchet 'Schwebende Flächen: shadow-lg statt shadow-xl/2xl' 0 '\bshadow-(xl|2xl)\b' 'components/ui/'
 ratchet 'h2 semibold statt bold (wie PageHeader)' 0 '<h2[^>]*font-bold' 'components/ui/'
@@ -76,8 +78,8 @@ LEER=$(grep -rlE '>\s*Keine [^<]*(gefunden|vorhanden)' "${UI_SCOPE[@]}" --includ
       grep -qE 'EmptyState|ListState' "$f" || echo "$f"
     done)
 LEER_N=$(printf '%s' "$LEER" | grep -c . || true)
-if [ "$LEER_N" -gt 17 ]; then
-  echo "❌ Muster-Ratsche 'loser Leerzustand statt EmptyState/ListState': $LEER_N Dateien, erlaubt sind 17 (docs/DESIGN.md § 6a)."
+if [ "$LEER_N" -gt 3 ]; then
+  echo "❌ Muster-Ratsche 'loser Leerzustand statt EmptyState/ListState': $LEER_N Dateien, erlaubt sind 3 (docs/DESIGN.md § 6a)."
   echo "$LEER" | head -10
   FAIL=1
 fi
