@@ -984,6 +984,130 @@ export type Database = {
         };
         Relationships: [];
       };
+      conversation_messages: {
+        Row: {
+          body: string;
+          conversation_id: string;
+          created_at: string;
+          deleted_at: string | null;
+          edited_at: string | null;
+          id: string;
+          reply_to_id: string | null;
+          sender_id: string;
+        };
+        Insert: {
+          body: string;
+          conversation_id: string;
+          created_at?: string;
+          deleted_at?: string | null;
+          edited_at?: string | null;
+          id?: string;
+          reply_to_id?: string | null;
+          sender_id: string;
+        };
+        Update: {
+          body?: string;
+          conversation_id?: string;
+          created_at?: string;
+          deleted_at?: string | null;
+          edited_at?: string | null;
+          id?: string;
+          reply_to_id?: string | null;
+          sender_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'conversation_messages_conversation_id_fkey';
+            columns: ['conversation_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'conversation_messages_reply_to_id_fkey';
+            columns: ['reply_to_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversation_messages';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      conversation_participants: {
+        Row: {
+          conversation_id: string;
+          joined_at: string;
+          last_read_at: string;
+          muted: boolean;
+          user_id: string;
+        };
+        Insert: {
+          conversation_id: string;
+          joined_at?: string;
+          last_read_at?: string;
+          muted?: boolean;
+          user_id: string;
+        };
+        Update: {
+          conversation_id?: string;
+          joined_at?: string;
+          last_read_at?: string;
+          muted?: boolean;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'conversation_participants_conversation_id_fkey';
+            columns: ['conversation_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      conversations: {
+        Row: {
+          club_id: string;
+          created_at: string;
+          created_by: string;
+          direct_key: string | null;
+          id: string;
+          kind: string;
+          last_message_at: string;
+          last_message_preview: string | null;
+          title: string | null;
+        };
+        Insert: {
+          club_id: string;
+          created_at?: string;
+          created_by: string;
+          direct_key?: string | null;
+          id?: string;
+          kind: string;
+          last_message_at?: string;
+          last_message_preview?: string | null;
+          title?: string | null;
+        };
+        Update: {
+          club_id?: string;
+          created_at?: string;
+          created_by?: string;
+          direct_key?: string | null;
+          id?: string;
+          kind?: string;
+          last_message_at?: string;
+          last_message_preview?: string | null;
+          title?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'conversations_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       coupons: {
         Row: {
           club_id: string | null;
@@ -2983,89 +3107,6 @@ export type Database = {
           },
         ];
       };
-      messages: {
-        Row: {
-          archived_at: string | null;
-          broadcast_type: string | null;
-          club_id: string | null;
-          content: string;
-          created_at: string;
-          deleted_at: string | null;
-          id: string;
-          is_read: boolean;
-          read_at: string | null;
-          receiver_id: string;
-          replied_to_id: string | null;
-          sender_deleted_at: string | null;
-          sender_id: string;
-          subject: string;
-          updated_at: string;
-        };
-        Insert: {
-          archived_at?: string | null;
-          broadcast_type?: string | null;
-          club_id?: string | null;
-          content: string;
-          created_at?: string;
-          deleted_at?: string | null;
-          id?: string;
-          is_read?: boolean;
-          read_at?: string | null;
-          receiver_id: string;
-          replied_to_id?: string | null;
-          sender_deleted_at?: string | null;
-          sender_id: string;
-          subject: string;
-          updated_at?: string;
-        };
-        Update: {
-          archived_at?: string | null;
-          broadcast_type?: string | null;
-          club_id?: string | null;
-          content?: string;
-          created_at?: string;
-          deleted_at?: string | null;
-          id?: string;
-          is_read?: boolean;
-          read_at?: string | null;
-          receiver_id?: string;
-          replied_to_id?: string | null;
-          sender_deleted_at?: string | null;
-          sender_id?: string;
-          subject?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'messages_club_id_fkey';
-            columns: ['club_id'];
-            isOneToOne: false;
-            referencedRelation: 'clubs';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'messages_receiver_id_fkey';
-            columns: ['receiver_id'];
-            isOneToOne: false;
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'messages_replied_to_id_fkey';
-            columns: ['replied_to_id'];
-            isOneToOne: false;
-            referencedRelation: 'messages';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'messages_sender_id_fkey';
-            columns: ['sender_id'];
-            isOneToOne: false;
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       news_comments: {
         Row: {
           content: string;
@@ -4219,28 +4260,28 @@ export type Database = {
           bundesland: string;
           end_date: string;
           id: string;
+          kind: string;
           name: string;
           start_date: string;
           year: number;
-          kind: string;
         };
         Insert: {
           bundesland: string;
           end_date: string;
           id?: string;
+          kind?: string;
           name: string;
           start_date: string;
           year: number;
-          kind?: string;
         };
         Update: {
           bundesland?: string;
           end_date?: string;
           id?: string;
+          kind?: string;
           name?: string;
           start_date?: string;
           year?: number;
-          kind?: string;
         };
         Relationships: [];
       };
@@ -7424,6 +7465,7 @@ export type Database = {
         Args: { season_end: string; season_start: string };
         Returns: number;
       };
+      chat_unread_total: { Args: never; Returns: number };
       check_and_record_stripe_event: {
         Args: { p_event_id: string; p_event_type: string };
         Returns: boolean;
@@ -7466,6 +7508,15 @@ export type Database = {
           p_member_id: string;
           p_schedule_id: string;
           p_session_id: string;
+        };
+        Returns: string;
+      };
+      create_group_conversation: {
+        Args: {
+          p_audience?: string;
+          p_club_id: string;
+          p_title: string;
+          p_user_ids?: string[];
         };
         Returns: string;
       };
@@ -7734,15 +7785,37 @@ export type Database = {
         Args: { p_post_id: string };
         Returns: undefined;
       };
+      is_admin_of_user: { Args: { target_user_id: string }; Returns: boolean };
       is_club_admin: { Args: { p_club_id: string }; Returns: boolean };
       is_club_member: { Args: { p_club_id: string }; Returns: boolean };
       is_club_trainer: { Args: { p_club_id: string }; Returns: boolean };
+      is_conversation_participant: {
+        Args: { p_conv: string };
+        Returns: boolean;
+      };
       is_owner: { Args: never; Returns: boolean };
+      is_staff_of_user: { Args: { target_user_id: string }; Returns: boolean };
       is_superadmin: { Args: never; Returns: boolean };
       is_superadmin_of: { Args: { p_club_id: string }; Returns: boolean };
       is_trainer_available: {
         Args: { p_club_id: string; p_datetime: string; p_user_id: string };
         Returns: boolean;
+      };
+      list_my_conversations: {
+        Args: { p_club_id?: string };
+        Returns: {
+          club_id: string;
+          id: string;
+          kind: string;
+          last_message_at: string;
+          last_message_preview: string;
+          last_read_at: string;
+          muted: boolean;
+          participant_count: number;
+          participants: Json;
+          title: string;
+          unread_count: number;
+        }[];
       };
       mark_overdue_invoices: {
         Args: never;
@@ -7795,6 +7868,10 @@ export type Database = {
       soft_delete_club: {
         Args: { p_club_id: string; p_reason?: string };
         Returns: number;
+      };
+      start_direct_conversation: {
+        Args: { p_club_id: string; p_other: string };
+        Returns: string;
       };
       start_job: { Args: { p_job_id: string }; Returns: boolean };
       timeslots_overlap: {

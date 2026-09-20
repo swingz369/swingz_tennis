@@ -15,6 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { useNotificationsRealtime } from '@/hooks/use-notifications-realtime';
+import { useChatRealtime } from '@/hooks/use-chat-realtime';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 /**
@@ -73,7 +74,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
     try {
       const [notifRes, msgRes] = await Promise.all([
         apiFetch('/api/user/notifications/count'),
-        apiFetch('/api/messages?folder=inbox&countOnly=true'),
+        apiFetch('/api/chat/unread'),
       ]);
       let total = 0;
       if (notifRes.ok) {
@@ -82,7 +83,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
       }
       if (msgRes.ok) {
         const data = await msgRes.json();
-        total += data?.unreadCount ?? 0;
+        total += data?.count ?? 0;
       }
       setUnreadCount(total);
     } catch {
@@ -96,6 +97,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   }, [fetchCount]);
 
   useNotificationsRealtime(userId, fetchCount);
+  useChatRealtime(userId, fetchCount);
 
   // Fetch notifications + messages when dropdown opens
   const fetchAlerts = useCallback(async () => {
@@ -104,7 +106,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
     try {
       const [notifRes, msgRes] = await Promise.all([
         apiFetch('/api/user/notifications?limit=5'),
-        apiFetch('/api/messages?folder=inbox'),
+        apiFetch('/api/chat/conversations'),
       ]);
 
       const items: Notification[] = [];
@@ -129,22 +131,23 @@ export function NotificationBell({ userId }: NotificationBellProps) {
         }
       }
 
-      // Also fetch inbox messages and merge them in
+      // Ungelesene Chats als eigene Einträge
       if (msgRes.ok) {
         const data = await msgRes.json();
-        const messages: unknown[] = data.messages ?? [];
-        for (const m of messages) {
-          const msg = m as Record<string, unknown>;
-          const sender = msg.sender as Record<string, unknown> | undefined;
-          const senderName = (sender?.full_name as string) || 'Unbekannt';
+        for (const c of (data.conversations ?? []) as Record<string, any>[]) {
+          if (!c.unread_count || c.muted) continue;
+          const other = (c.participants ?? []).find(
+            (p: { user_id: string }) => p.user_id !== userId
+          );
+          const name = c.kind === 'group' ? c.title : (other?.name ?? 'Unbekannt');
           items.push({
-            id: `msg-${String(msg.id)}`,
-            title: `Nachricht von ${senderName}`,
-            message: String(msg.subject ?? msg.content ?? ''),
+            id: `chat-${c.id}`,
+            title: c.kind === 'group' ? String(name) : `Nachricht von ${name}`,
+            message: c.last_message_preview ?? undefined,
             type: 'message',
-            is_read: Boolean(msg.is_read),
-            created_at: String(msg.created_at ?? ''),
-            link: '/messages',
+            is_read: false,
+            created_at: String(c.last_message_at ?? ''),
+            link: `/messages?c=${c.id}`,
           });
         }
       }
@@ -266,22 +269,16 @@ export function NotificationBell({ userId }: NotificationBellProps) {
             <button
               onClick={async () => {
                 try {
-                  // Mark both notifications AND messages as read (independently)
-                  const [notifRes, msgRes] = await Promise.all([
-                    apiFetch('/api/user/notifications/mark-all-read', { method: 'POST' }),
-                    apiFetch('/api/messages/mark-all-read', { method: 'POST' }),
-                  ]);
-                  const notifOk = notifRes.ok;
-                  const msgOk = msgRes.ok;
-                  if (notifOk || msgOk) {
-                    setUnreadCount(0);
+                  // Chats zählen ihren Ungelesen-Stand selbst; hier nur Benachrichtigungen.
+                  const notifRes = await apiFetch('/api/user/notifications/mark-all-read', {
+                    method: 'POST',
+                  });
+                  if (notifRes.ok) {
                     setNotifications((prev) =>
-                      prev.map((n) => {
-                        if (n.type === 'message') return msgOk ? { ...n, is_read: true } : n;
-                        return notifOk ? { ...n, is_read: true } : n;
-                      })
+                      prev.map((n) => (n.type === 'message' ? n : { ...n, is_read: true }))
                     );
-                    toast.success('Alle Benachrichtigungen und Nachrichten als gelesen markiert');
+                    fetchCount();
+                    toast.success('Alle Benachrichtigungen als gelesen markiert');
                   }
                 } catch {
                   /* non-critical */

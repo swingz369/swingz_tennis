@@ -2543,21 +2543,6 @@ export const memberBalanceEntries = pgTable('member_balance_entries', {
   created_at: timestamp('created_at').notNull().defaultNow(),
 });
 
-export const messages = pgTable('messages', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  sender_id: uuid('sender_id').notNull(),
-  receiver_id: uuid('receiver_id').notNull(),
-  club_id: uuid('club_id'),
-  subject: text('subject').notNull(),
-  content: text('content').notNull(),
-  is_read: boolean('is_read').notNull(),
-  read_at: text('read_at'),
-  replied_to_id: uuid('replied_to_id'),
-  broadcast_type: text('broadcast_type'),
-  created_at: timestamp('created_at').notNull().defaultNow(),
-  updated_at: timestamp('updated_at').notNull().defaultNow(),
-});
-
 export const newsComments = pgTable('news_comments', {
   id: uuid('id').primaryKey().defaultRandom(),
   post_id: uuid('post_id').notNull(),
