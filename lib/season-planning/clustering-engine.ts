@@ -501,7 +501,7 @@ export class SeasonClusteringEngine {
           unassigned: unassigned.map((m) => ({
             memberId: m.id,
             memberName: m.name,
-            reason: m._unassignedReason || this.kapazitaetsHinweis(),
+            reason: m._unassignedReason || this.kapazitaetsHinweis(m, assignments, members),
           })),
           waitlistSummary: waitlistResult.summary,
           metrics,
@@ -1005,17 +1005,45 @@ export class SeasonClusteringEngine {
    * Begründung für Mitglieder, die ohne Gruppe bleiben, wenn die Engine keinen
    * spezifischen Grund gesetzt hat.
    *
-   * Vorher stand hier "Keine passende Gruppe gefunden". Das liest sich wie ein
-   * Zuordnungsfehler und hat die Fehlersuche in die Irre geführt — tatsächlich
-   * ist es fast immer die Platzkapazität. In einer Wintersaison plant die Engine
-   * ausschliesslich auf Hallenplätzen; bei TC Rheinland sind das 2 von 6.
+   * Vorher stand hier pauschal "Keine freie Kapazität … ausgelastet" — ohne dass
+   * je Kapazität gemessen wurde. Bei schmalen Zeitfenstern und hohem Niveau
+   * (z. B. Sandbox Alpha, Sommer 2028) passt schlicht keine Gruppe, obwohl Plätze
+   * und Trainer frei sind. Deshalb wird hier der tatsächliche Engpass benannt.
    */
-  private kapazitaetsHinweis(): string {
-    const plaetze = this._cachedCourts?.length ?? 0;
-    const trainer = this._cachedTrainers?.length ?? 0;
-    const platzWort = plaetze === 1 ? '1 nutzbarer Platz' : `${plaetze} nutzbare Plätze`;
+  private kapazitaetsHinweis(
+    member: MemberWithDetails,
+    assignments: GroupAssignment[],
+    allMembers: MemberWithDetails[]
+  ): string {
+    // Der Fallback greift, wenn kein konkreter Grund mehr vorliegt (Backtracking
+    // löscht ihn). Statt pauschal "ausgelastet" zu behaupten, wird geprüft, woran
+    // es tatsächlich scheitert: Niveau/Alter der vorhandenen Gruppen oder Zeitfenster.
+    const byId = new Map(allMembers.map((m) => [m.id, m]));
+    const level = member.promotedLevel || member.skillLevel;
+    const ageGroup = member.isMinor ? 'kids' : 'adult';
+
+    const passendesNiveau = assignments.filter((a) =>
+      a.memberIds.some((id) => {
+        const o = byId.get(id);
+        if (!o || o.isMinor !== member.isMinor) return false;
+        const oLevel = o.promotedLevel || o.skillLevel;
+        return Math.abs(LEVEL_RANK[oLevel] - LEVEL_RANK[level]) <= this.config.maxNiveauLevelSteps;
+      })
+    );
+    if (passendesNiveau.length === 0) {
+      return `Keine Gruppe im Niveau „${level}" (${ageGroup === 'kids' ? 'Kinder' : 'Erwachsene'}) im Plan — neue Gruppe nötig`;
+    }
+
+    const zuZeiten = passendesNiveau.filter((a) =>
+      (member.availability[DAY_NAMES[a.dayOfWeek]] || []).some(
+        (w) => w.start <= a.startTime && w.end >= a.endTime
+      )
+    );
+    if (zuZeiten.length === 0) {
+      return `Keine Gruppe im Niveau „${level}" liegt in den angegebenen Zeitfenstern — Zeiten erweitern oder neue Gruppe anlegen`;
+    }
     const winter = this._istWinter ? ' (Wintersaison: nur Hallenplätze)' : '';
-    return `Keine freie Kapazität — ${platzWort}${winter} und ${trainer} Trainer sind ausgelastet`;
+    return `Alle ${zuZeiten.length} passenden Gruppen (Niveau + Zeit) sind voll${winter} — Gruppe erweitern oder zweite Gruppe anlegen`;
   }
 
   /**
@@ -1448,6 +1476,36 @@ export class SeasonClusteringEngine {
             `Keine passende Gruppe mit Kapazität + Slot-Verfügbarkeit (${memberAgeGroup}, ${effectiveLevel})`;
         }
       }
+    }
+
+    // RESCUE: Wer in keine bestehende Gruppe passt, bekommt eine neue — solange Platz und
+    // Trainer frei sind. Vorher blieben Mitglieder mit schmalen Zeitfenstern trotz freier
+    // Kapazität "nicht zugewiesen". Höchstens 3 Runden, endet bei null Fortschritt.
+    for (let round = 0; round < 3; round++) {
+      const left = sortedMembers.filter((m) => !assignedMemberIds.has(m.id));
+      if (left.length === 0) break;
+      const before = assignedMemberIds.size;
+      for (const [age, cohort] of [
+        ['kids', left.filter((m) => m.isMinor)],
+        ['adult', left.filter((m) => !m.isMinor)],
+      ] as const) {
+        if (cohort.length === 0) continue;
+        _groupIndex = await this.assignMembersToGroups(
+          cohort,
+          age,
+          trainers,
+          courts,
+          candidateGroups,
+          slotFailureRates,
+          timeSlots,
+          trainerSessionCount,
+          courtTimeSlotUsage,
+          assignments,
+          assignedMemberIds,
+          _groupIndex
+        );
+      }
+      if (assignedMemberIds.size === before) break;
     }
 
     const unassigned = sortedMembers.filter((m) => !assignedMemberIds.has(m.id));
@@ -1984,7 +2042,11 @@ export class SeasonClusteringEngine {
     }
     const numGroups = slices.length;
 
-    for (const slice of slices) {
+    // Arbeitsschlange statt fester Liste: findet ein Slice keinen gemeinsamen Zeitslot,
+    // wird er halbiert und die Hälften werden einzeln versucht (siehe `!bestSlot`).
+    const queue = [...slices];
+    while (queue.length > 0) {
+      const slice = queue.shift()!;
       // Filter out avoid-member conflicts from this slice
       const filteredSlice = slice.filter((m) => {
         const enemies = avoidMap.get(m.id);
@@ -2045,6 +2107,17 @@ export class SeasonClusteringEngine {
       );
 
       if (!bestSlot) {
+        // Schmale Zeitfenster: Für alle zusammen gibt es keinen Termin, für Teilgruppen
+        // meist schon. Nach Verfügbarkeit sortiert halbieren, damit Ähnliche zusammenbleiben.
+        // Terminiert, weil jede Hälfte kleiner ist als der Slice.
+        if (filteredSlice.length >= 2) {
+          const bySchedule = [...filteredSlice].sort(
+            (a, b) => this.availabilityBitmask(a) - this.availabilityBitmask(b)
+          );
+          const mid = Math.ceil(bySchedule.length / 2);
+          queue.unshift(bySchedule.slice(0, mid), bySchedule.slice(mid));
+          continue;
+        }
         for (const m of filteredSlice) {
           if (!assignedMemberIds.has(m.id))
             m._unassignedReason = `Kein verfügbarer Zeitslot mit Trainer (${ageGroup})`;

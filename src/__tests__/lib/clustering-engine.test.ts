@@ -1205,3 +1205,41 @@ describe('applyWaitlistLogic — nicht eingeplante Mitglieder', () => {
     expect(waitlisted).toHaveLength(0);
   });
 });
+
+describe('greedyCluster — schmale Zeitfenster', () => {
+  const window = (day: 'tuesday' | 'thursday') => ({
+    monday: [],
+    tuesday: [],
+    wednesday: [],
+    thursday: [],
+    friday: [],
+    saturday: [],
+    sunday: [],
+    [day]: [{ start: '18:00', end: '21:00' }],
+  });
+
+  it('bildet Teilgruppen, wenn ein Niveau-Slice keinen gemeinsamen Termin hat', async () => {
+    const engine = new SeasonClusteringEngine('s1', 'c1', { groupMinSize: 1 }) as any;
+    // Gleiches Niveau, aber Di- vs. Do-Fenster: gemeinsam nicht planbar, einzeln schon.
+    const members = [
+      makeMember({ id: 'm1', name: 'Di', skillLevel: 'advanced', availability: window('tuesday') }),
+      makeMember({
+        id: 'm2',
+        name: 'Do',
+        skillLevel: 'advanced',
+        availability: window('thursday'),
+      }),
+    ];
+    const { assignments, unassigned } = await engine.greedyCluster(
+      members,
+      [makeTrainer({ id: 't1' })],
+      [makeCourt({ id: 'c1' })],
+      new Map(),
+      {},
+      [{ start: '18:00', end: '19:30' }]
+    );
+
+    expect(unassigned).toHaveLength(0);
+    expect(assignments).toHaveLength(2);
+  });
+});
