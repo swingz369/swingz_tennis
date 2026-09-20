@@ -31,10 +31,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
-    const body = await req.json();
+    // Nur Inhaltsfelder; club_id/author_id/Zähler sind nicht änderbar.
+    const raw = await req.json();
+    const patch = Object.fromEntries(
+      ['title', 'content', 'excerpt', 'is_pinned', 'audience']
+        .filter((k) => k in raw)
+        .map((k) => [k, raw[k]])
+    );
     const { data, error } = await auth.supabase
       .from('news_posts')
-      .update(body)
+      .update(patch)
       .eq('id', id)
       .select()
       .single();

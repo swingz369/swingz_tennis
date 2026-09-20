@@ -3162,8 +3162,35 @@ export type Database = {
           },
         ];
       };
+      news_post_reads: {
+        Row: {
+          post_id: string;
+          read_at: string;
+          user_id: string;
+        };
+        Insert: {
+          post_id: string;
+          read_at?: string;
+          user_id: string;
+        };
+        Update: {
+          post_id?: string;
+          read_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'news_post_reads_post_id_fkey';
+            columns: ['post_id'];
+            isOneToOne: false;
+            referencedRelation: 'news_posts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       news_posts: {
         Row: {
+          audience: string;
           author_id: string | null;
           category: string | null;
           club_id: string;
@@ -3183,6 +3210,7 @@ export type Database = {
           view_count: number | null;
         };
         Insert: {
+          audience?: string;
           author_id?: string | null;
           category?: string | null;
           club_id: string;
@@ -3202,6 +3230,7 @@ export type Database = {
           view_count?: number | null;
         };
         Update: {
+          audience?: string;
           author_id?: string | null;
           category?: string | null;
           club_id?: string;
@@ -7822,6 +7851,18 @@ export type Database = {
         Returns: {
           club_id: string;
           invoice_count: number;
+        }[];
+      };
+      news_audience_matches: {
+        Args: { p_audience: string; p_club_id: string };
+        Returns: boolean;
+      };
+      news_read_stats: {
+        Args: { p_club_id: string };
+        Returns: {
+          audience_count: number;
+          post_id: string;
+          read_count: number;
         }[];
       };
       prune_audit_logs: {

@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useSearchParams } from 'next/navigation';
 import { Mail, MessageSquare, Newspaper, PenSquare } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/ui/page-header';
@@ -40,7 +41,10 @@ export default function MessagesPage() {
 }
 
 function MessagesContent() {
-  const [section, setSection] = useState<'chats' | 'news'>('chats');
+  const searchParams = useSearchParams();
+  const [section, setSection] = useState<'chats' | 'news'>(
+    searchParams.get('section') === 'news' ? 'news' : 'chats'
+  );
   const [newChatOpen, setNewChatOpen] = useState(false);
   const [userId, setUserId] = useState<string | undefined>();
 

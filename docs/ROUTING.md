@@ -434,6 +434,7 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 | GET              | `/api/chat/unread`                      |
 | GET/POST         | `/api/news`                             |
 | GET/PATCH/DELETE | `/api/news/[id]`                        |
+| POST             | `/api/news/read`                        |
 | POST             | `/api/email-campaigns`                  |
 | POST             | `/api/emails/onboarding`                |
 
