@@ -22,7 +22,6 @@ import {
   Trash2,
   Zap,
   Bell,
-  LayoutGrid,
   MoreVertical,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -49,9 +48,9 @@ import {
   SEASON_WORKFLOW_PHASES,
 } from '@/lib/season-planning/status-labels';
 import { SeasonPlanningTabs } from '@/components/admin/season-planning-tabs';
-import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { apiFetch } from '@/lib/api-fetch';
 import { SeasonCalendarTab } from '@/components/admin/season-calendar-tab';
+import { StatCard } from '@/components/ui/stat-card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TrainingGroup {
@@ -538,19 +537,35 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   const workflowPhase = seasonWorkflowPhase(season.planning_status);
   const nextStepHint = [
     'Nächster Schritt: Präferenzen öffnen — Mitglieder werden per E-Mail gebeten, ihre Wunschzeiten abzugeben.',
-    `${season.submitted_preferences} von ${season.total_preferences} Mitgliedern haben Präferenzen abgegeben. Nächster Schritt: Ausstehende erinnern oder die Planung starten.`,
+    // Der Stand (x von y) steht in der Kennzahlen-Karte darunter, der Hinweis
+    // sagt nur noch, was zu tun ist.
+    'Nächster Schritt: Ausstehende erinnern oder die Planung starten.',
     'Nächster Schritt: Plan im Wizard prüfen und veröffentlichen.',
-    'Die Saison ist veröffentlicht — Trainingsplan, Konflikte und Gruppenwechsel findest du in den Tabs unten.',
+    'Die Saison ist veröffentlicht — Trainingsplan und Konflikte erreichst du über die Kennzahlen, Gruppenwechsel über den Tab unten.',
   ][workflowPhase];
   const canQuickStart =
     ['draft', 'collecting_preferences', 'manual_review'].includes(season.planning_status ?? '') &&
     season.submitted_preferences > 0;
 
+  // Primäraktion aus derselben Workflow-Phase wie `nextStepHint`: solange noch
+  // keine Präferenzen eingesammelt werden, ist das Öffnen der Präferenzen der
+  // nächste Schritt — danach immer der Wizard, denn dort wird geprüft UND
+  // veröffentlicht (Schritt „Abschließen"). Veröffentlichen bleibt bewusst im
+  // Menü: aus der Übersicht heraus wäre es ein Klick an der Konfliktprüfung
+  // vorbei.
+  const isPublishedStatus = workflowPhase === 3;
+  const wizardHref = `/admin/seasons/${id}/planning`;
+  const wizardLabel = [
+    'Wizard öffnen',
+    'Planung starten',
+    'Planung prüfen',
+    'Saisonplanung ansehen',
+  ][workflowPhase];
+  const primaryIsPreferences = workflowPhase === 0 && canOpenPreferences;
+
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[{ label: 'Saisonplanung', href: '/admin/seasons' }, { label: season.name }]}
-      />
+      {/* Kein Breadcrumb: Tab-Leiste plus Zurück-Link im PageHeader reichen. */}
       <SeasonPlanningTabs seasonId={id} />
       <ConfirmDialog
         open={publishConfirmOpen}
@@ -609,59 +624,72 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            {canQuickStart && (
-              <Button
-                variant="default"
-                onClick={handleQuickStart}
-                disabled={quickStarting}
-                title="Erstellt sofort einen automatischen Plan mit den Standard-Einstellungen und öffnet ihn zur Prüfung im Wizard — ohne die Konfiguration vorher zu zeigen."
-              >
-                {quickStarting ? (
-                  <Clock className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Zap className="mr-2 h-4 w-4" />
-                )}
-                Schnellstart
-              </Button>
-            )}
-            <Link href={`/admin/seasons/${id}/planning`}>
-              <Button variant={canQuickStart ? 'outline' : 'default'}>
-                <Play className="mr-2 h-4 w-4" />
-                {['published', 'active', 'completed', 'archived'].includes(
-                  season.planning_status ?? ''
-                )
-                  ? 'Saisonplanung ansehen'
-                  : season.planning_status === 'draft'
-                    ? 'Wizard öffnen'
-                    : 'Planung fortsetzen'}
-              </Button>
-            </Link>
-            {canOpenPreferences && (
+            {/* Genau eine gefüllte Aktion — die, die laut Workflow-Phase als
+                Nächstes dran ist (derselbe Zustand, der `nextStepHint`
+                steuert). Vorher konkurrierten bis zu vier gleich aussehende
+                Buttons um dieselbe Aufmerksamkeit, ohne dass einer sagte,
+                welcher der richtige ist. Alles andere bleibt über „Weitere
+                Aktionen" einen Klick entfernt. */}
+            {primaryIsPreferences ? (
               <Button onClick={handleOpenPreferences}>
                 <Users className="mr-2 h-4 w-4" />
                 Präferenzen öffnen
               </Button>
-            )}
-
-            {canPublish && (
-              <Button onClick={handlePublish} variant={isRepublish ? 'outline' : 'default'}>
-                <FileText className="mr-2 h-4 w-4" />
-                {isRepublish ? 'Erneut veröffentlichen' : 'Veröffentlichen'}
-              </Button>
+            ) : (
+              <Link href={wizardHref}>
+                <Button>
+                  <Play className="mr-2 h-4 w-4" />
+                  {wizardLabel}
+                </Button>
+              </Link>
             )}
 
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon" aria-label="Weitere Aktionen">
                       <MoreVertical className="h-4 w-4" />
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Weitere Aktionen</TooltipContent>
-                </Tooltip>
-              </DropdownMenuTrigger>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>Weitere Aktionen</TooltipContent>
+              </Tooltip>
               <DropdownMenuContent align="end">
+                {primaryIsPreferences && (
+                  <DropdownMenuItem asChild>
+                    <Link href={wizardHref}>
+                      <Play className="mr-2 h-4 w-4" />
+                      {wizardLabel}
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                {canOpenPreferences && !primaryIsPreferences && (
+                  <DropdownMenuItem onClick={handleOpenPreferences}>
+                    <Users className="mr-2 h-4 w-4" />
+                    Präferenzen öffnen
+                  </DropdownMenuItem>
+                )}
+                {canQuickStart && (
+                  <DropdownMenuItem
+                    onClick={handleQuickStart}
+                    disabled={quickStarting}
+                    title="Erstellt sofort einen automatischen Plan mit den Standard-Einstellungen und öffnet ihn zur Prüfung im Wizard — ohne die Konfiguration vorher zu zeigen."
+                  >
+                    {quickStarting ? (
+                      <Clock className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Zap className="mr-2 h-4 w-4" />
+                    )}
+                    Schnellstart
+                  </DropdownMenuItem>
+                )}
+                {canPublish && (
+                  <DropdownMenuItem onClick={handlePublish}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    {isRepublish ? 'Erneut veröffentlichen' : 'Veröffentlichen'}
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={() => setDeleteConfirmOpen(true)}
                   disabled={deleting}
@@ -720,63 +748,45 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
         </CardContent>
       </Card>
 
-      {/* Stats Overview */}
+      {/* Kennzahlen — zugleich der Weg dorthin. Vorher standen dieselben Zahlen
+          dreimal auf der Seite (hier, im Hinweistext, in den Tab-Beschriftungen),
+          und wer sie ansehen wollte, klickte erst auf einen Tab, der nur einen
+          Button enthielt, der dann woanders hinführte. Jetzt ist die Zahl der
+          Link. Gleiche Komponente wie in der Saisonliste. */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Präferenzen</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{season.submitted_preferences}</div>
-            <p className="text-xs text-muted-foreground">
-              von {season.total_preferences} Mitgliedern eingereicht
-            </p>
-            <div className="mt-2 h-2 w-full rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary"
-                style={{
-                  width: `${season.total_preferences > 0 ? (season.submitted_preferences / season.total_preferences) * 100 : 0}%`,
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Trainer</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{season.trainers_count}</div>
-            <p className="text-xs text-muted-foreground">Trainer verfügbar</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Geplante Einheiten</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{season.planned_entries}</div>
-            <p className="text-xs text-muted-foreground">Training-Sessions</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Konflikte</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{season.open_conflicts}</div>
-            <p className="text-xs text-muted-foreground">
-              {season.open_conflicts > 0 ? 'Zu lösen' : 'Keine Konflikte'}
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={Users}
+          label="Präferenzen"
+          value={`${season.submitted_preferences} / ${season.total_preferences}`}
+          sub="Mitglieder eingereicht"
+          color="blue"
+          href={`/admin/seasons/${id}/preferences`}
+        />
+        <StatCard
+          icon={Users}
+          label="Trainer"
+          value={season.trainers_count}
+          sub="verfügbar"
+          color="brand"
+        />
+        <StatCard
+          icon={TrendingUp}
+          label="Geplante Einheiten"
+          value={season.planned_entries}
+          sub={isPublishedStatus ? 'Wochenplan öffnen' : 'Im Wizard planen'}
+          color="green"
+          href={isPublishedStatus ? '/scheduler' : `/admin/seasons/${id}/planning?step=3`}
+        />
+        <StatCard
+          icon={AlertCircle}
+          label="Konflikte"
+          value={season.open_conflicts}
+          sub={season.open_conflicts > 0 ? 'Zu lösen' : 'Keine Konflikte'}
+          color={season.open_conflicts > 0 ? 'orange' : 'green'}
+          // Ohne Konflikte führt die Karte nirgendwohin — eine Liste mit null
+          // Einträgen ist kein Ziel.
+          href={season.open_conflicts > 0 ? `/admin/seasons/${id}/conflicts` : undefined}
+        />
       </div>
 
       {/* Tabs — only show planning-related tabs after the plan is published */}
@@ -787,27 +797,25 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
 /* Extracted tabs component so the IIFE is not needed */
 
-const SEASON_TAB_VALUES = [
-  'overview',
-  'preferences',
-  'plan',
-  'conflicts',
-  'group-change',
-  'calendar',
-] as const;
+/**
+ * Nur noch Tabs, die auch Inhalt haben. „Präferenzen", „Plan" und „Konflikte"
+ * enthielten je genau einen Button, der die Seite wieder verliess — der Tab war
+ * eine Zwischenstation ohne eigenen Inhalt. Diese drei Ziele hängen jetzt an den
+ * Kennzahlen-Karten oben, die dieselben Zahlen ohnehin schon anzeigten.
+ * Altlinks auf die entfernten Tabs landen auf „Übersicht".
+ */
+const SEASON_TAB_VALUES = ['overview', 'group-change', 'calendar'] as const;
 
 function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: string }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const isPublished = ['published', 'active', 'completed', 'archived'].includes(
     season.planning_status ?? ''
   );
   const requestedTab = searchParams.get('tab');
-  const publishedOnlyTabs = ['preferences', 'plan', 'conflicts', 'group-change'];
   const initialTab =
     requestedTab &&
     (SEASON_TAB_VALUES as readonly string[]).includes(requestedTab) &&
-    (isPublished || !publishedOnlyTabs.includes(requestedTab))
+    (isPublished || requestedTab !== 'group-change')
       ? requestedTab
       : 'overview';
 
@@ -815,16 +823,7 @@ function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: s
     <Tabs defaultValue={initialTab} className="space-y-4">
       <TabsList>
         <TabsTrigger value="overview">Übersicht</TabsTrigger>
-        {isPublished && (
-          <>
-            <TabsTrigger value="preferences">
-              Präferenzen ({season.submitted_preferences})
-            </TabsTrigger>
-            <TabsTrigger value="plan">Plan ({season.planned_entries})</TabsTrigger>
-            <TabsTrigger value="conflicts">Konflikte ({season.open_conflicts})</TabsTrigger>
-            <TabsTrigger value="group-change">Gruppenwechsel</TabsTrigger>
-          </>
-        )}
+        {isPublished && <TabsTrigger value="group-change">Gruppenwechsel</TabsTrigger>}
         <TabsTrigger value="calendar">Saisonkalender</TabsTrigger>
       </TabsList>
 
@@ -875,82 +874,6 @@ function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: s
           </CardContent>
         </Card>
       </TabsContent>
-
-      {isPublished && (
-        <TabsContent value="preferences">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Präferenzen</CardTitle>
-              <CardDescription>
-                Übersicht aller eingereichten Verfügbarkeiten und Präferenzen
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={() => router.push(`/admin/seasons/${seasonId}/preferences`)}>
-                Alle Präferenzen anzeigen
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      )}
-
-      <TabsContent value="plan">
-        {isPublished ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Trainingsplan</CardTitle>
-              <CardDescription>Geplante Trainingseinheiten für diese Saison</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button onClick={() => router.push('/scheduler')}>
-                <LayoutGrid className="mr-2 h-4 w-4" />
-                Wochenplan öffnen
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Gemeinsame Wochenplan-Ansicht — dort auch direkt bearbeitbar
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Play className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
-              <p className="font-medium text-muted-foreground">Noch keine Planung veröffentlicht</p>
-              <p className="text-sm text-muted-foreground mt-1 mb-4">
-                Starte den Wizard, um eine Planung zu erstellen und zu veröffentlichen.
-              </p>
-              <Button onClick={() => router.push(`/admin/seasons/${seasonId}/planning?step=3`)}>
-                <Play className="mr-2 h-4 w-4" />
-                Zum Planungs-Wizard
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </TabsContent>
-
-      {isPublished && (
-        <TabsContent value="conflicts">
-          <Card>
-            <CardHeader>
-              <CardTitle>Planungskonflikte</CardTitle>
-              <CardDescription>Erkannte Konflikte in der Planung</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {season.open_conflicts === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <CheckCircle className="h-12 w-12 text-success-500" />
-                  <p className="mt-4 text-lg font-medium">Keine Konflikte</p>
-                  <p className="text-sm text-muted-foreground">Die Planung ist konfliktfrei</p>
-                </div>
-              ) : (
-                <Button onClick={() => router.push(`/admin/seasons/${seasonId}/conflicts`)}>
-                  Konflikte anzeigen ({season.open_conflicts})
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      )}
 
       {isPublished && (
         <TabsContent value="group-change">

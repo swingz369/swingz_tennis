@@ -747,13 +747,12 @@ export function PlanEditStep() {
         )}
       </div>
 
-      {/* Schedule Grid with dnd-kit */}
+      {/* Derselbe Plan, zwei Aufgaben: im Raster verschiebt man Tag und
+          Uhrzeit per Drag & Drop, in der Gruppenliste die Mitglieder. Sie
+          stehen direkt untereinander — die Planstände lagen vorher dazwischen
+          und haben das Lesen des Plans zweimal unterbrochen. */}
       <ScheduleGrid plan={plan} onSlotMove={handleSlotMove} onSlotUpdate={handleSlotUpdate} />
 
-      {/* Gespeicherte Planstände */}
-      <PlanVersionsPanel seasonId={state.seasonId} plan={plan} onRestore={setPlan} />
-
-      {/* Group List View */}
       <GroupListView
         plan={plan}
         expandedSlot={expandedSlot}
@@ -762,6 +761,10 @@ export function PlanEditStep() {
         onToggleExpand={(id) => setExpandedSlot(id)}
         onMoveMember={handleMoveMember}
       />
+
+      {/* Planstände — Aktion über den ganzen Plan, deshalb hinter beiden
+          Ansichten statt zwischen ihnen. */}
+      <PlanVersionsPanel seasonId={state.seasonId} plan={plan} onRestore={setPlan} />
 
       {/* Waitlist Summary */}
       {state.clusteringResult && state.clusteringResult.waitlistSummary.length > 0 && (

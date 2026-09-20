@@ -15,7 +15,7 @@ import {
 } from '@dnd-kit/core';
 import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { DAYS, HOURS } from './schedule-constants';
+import { DAYS, HOURS, START_TIMES } from './schedule-constants';
 import type { ScheduleSlot } from './types';
 import { GripVertical, Users, Clock, MapPin, User, X, Pencil } from 'lucide-react';
 import { CalendarShell } from '@/components/calendar/CalendarShell';
@@ -26,6 +26,103 @@ interface ScheduleGridProps {
   plan: ScheduleSlot[];
   onSlotMove: (slotId: string, newDay: number, newStartTime: string) => void;
   onSlotUpdate?: (slot: ScheduleSlot) => void;
+}
+
+/**
+ * Höhe einer Stundenzeile und Höhe der Kopfzeile (`h-9`) in Pixeln.
+ *
+ * Die Termine werden nicht in ihre Stundenzelle gelegt, sondern über die
+ * ganze Tagesspalte — nur so kann ein 90- oder 120-Minuten-Training die
+ * Zeilengrenze überschreiten, ohne dass die Zelle darunter es für freie Zeit
+ * hält. Aus beiden Konstanten folgt die Pixelposition jedes Termins.
+ */
+const ROW_HEIGHT_PX = 56;
+const HEADER_HEIGHT_PX = 36;
+/** Erste Rasterzeile (HOURS[0] = "08:00") in Minuten. */
+const GRID_START_MIN = 8 * 60;
+/** Breite der Zeitspalte, identisch mit `gridTemplateColumns`. */
+const TIME_COL_PX = 56;
+
+export interface PositionedSlot {
+  slot: ScheduleSlot;
+  /** Spalte innerhalb der überlappenden Gruppe, 0-basiert. */
+  lane: number;
+  /** Anzahl Spalten, die sich diese überlappende Gruppe teilt. */
+  lanes: number;
+}
+
+/**
+ * Ordnet die Termine eines Tages nebeneinander an, wenn sie sich zeitlich
+ * überschneiden.
+ *
+ * Vorher teilten sich nur Termine derselben *Stundenzelle* die Breite. Bei
+ * 60-Minuten-Einheiten fiel das nicht auf; sobald ein Training 90 oder 120
+ * Minuten dauert, überlappt es aber Termine aus den folgenden Zeilen, und
+ * zwei Blöcke lagen unbemerkt übereinander — der hintere war schlicht
+ * unsichtbar. Maßgeblich ist deshalb das Zeitintervall, nicht die Zeile.
+ *
+ * Verfahren: nach Beginn sortieren, zusammenhängend überlappende Termine zu
+ * einem Bündel sammeln und innerhalb des Bündels jedem Termin die erste
+ * Spalte geben, in der er nicht mit dem Vorgänger kollidiert.
+ */
+export function layoutDayColumn(slots: ScheduleSlot[]): PositionedSlot[] {
+  const ranged = slots
+    .map((slot) => {
+      const start = toMinutes(slot.startTime);
+      return { slot, start, end: start + slotDurationMin(slot), lane: 0 };
+    })
+    .sort((a, b) => a.start - b.start || b.end - a.end);
+
+  const positioned: PositionedSlot[] = [];
+  let bundle: typeof ranged = [];
+  let laneEnds: number[] = [];
+
+  const flush = () => {
+    for (const item of bundle) {
+      positioned.push({ slot: item.slot, lane: item.lane, lanes: laneEnds.length });
+    }
+    bundle = [];
+    laneEnds = [];
+  };
+
+  for (const item of ranged) {
+    // Ein neues Bündel beginnt, sobald der Termin keinen der laufenden mehr
+    // schneidet — dann darf er wieder die volle Breite bekommen.
+    if (laneEnds.length > 0 && item.start >= Math.max(...laneEnds)) flush();
+
+    const free = laneEnds.findIndex((end) => end <= item.start);
+    item.lane = free === -1 ? laneEnds.length : free;
+    laneEnds[item.lane] = item.end;
+    bundle.push(item);
+  }
+  flush();
+
+  return positioned;
+}
+
+/** Dauer in Minuten, mit Mindestmaß damit ein Termin greifbar bleibt. */
+function slotDurationMin(slot: ScheduleSlot): number {
+  return Math.max(slot.durationMin || 60, 25);
+}
+
+/** "15:30" → 930. */
+function toMinutes(time: string): number {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + m;
+}
+
+/**
+ * Neue Startzeit nach dem Ablegen in einer Stundenzeile: Stunde vom Ziel,
+ * Minuten vom Termin.
+ *
+ * Ablegeziel ist immer eine volle Stunde, weil das Raster stundenweise
+ * gegliedert ist. Würde daraus stur eine volle Startzeit, verstellte
+ * „Gruppe auf einen anderen Tag schieben" nebenbei die Uhrzeit — ein
+ * Training um 15:30 wäre nach dem Verschieben um 15:00 gewesen, ohne dass
+ * es jemand so wollte. Die Uhrzeit ändert man im Bearbeiten-Fenster.
+ */
+export function movedStartTime(slotStartTime: string, targetHour: string): string {
+  return `${targetHour.slice(0, 2)}:${slotStartTime.slice(3, 5)}`;
 }
 
 /* ─────────────────── Draggable Slot Card ─────────────────── */
@@ -52,6 +149,7 @@ function DraggableSlotCard({
       {...(isOverlay ? {} : { ...attributes, ...listeners })}
       className={`group relative rounded-xl px-2.5 py-1.5 cursor-grab active:cursor-grabbing select-none
         transition-all duration-200 ease-out
+        ${isOverlay ? '' : 'h-full overflow-hidden'}
         ${
           isOverlay
             ? 'shadow-2xl scale-105 rotate-1 ring-2 ring-white/50'
@@ -115,21 +213,21 @@ function DraggableSlotCard({
 
 function DroppableCell({
   cellId,
-  slots,
-  onEdit,
+  occupied,
 }: {
   cellId: string;
-  slots: ScheduleSlot[];
-  onEdit: (slot: ScheduleSlot) => void;
+  /** Liegt in dieser Stunde ein Training? Nur für die Flächenfarbe. */
+  occupied: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: cellId });
 
-  const hasSlots = slots.length > 0;
+  const hasSlots = occupied;
 
   return (
     <div
       ref={setNodeRef}
-      className={`relative min-h-[56px] border-b border-r p-1 transition-all duration-150
+      style={{ height: ROW_HEIGHT_PX }}
+      className={`relative border-b border-r transition-colors duration-150
         ${
           isOver
             ? 'bg-primary/10 ring-2 ring-inset ring-primary/30'
@@ -140,19 +238,63 @@ function DroppableCell({
         border-border
       `}
     >
+      {/* Halbstunden-Markierung. Ohne sie bliebe die Position eines Termins
+          eine Schätzung: die Zeitspalte beschriftet nur volle Stunden, und ob
+          ein Block bei 15:00 oder 15:20 ansetzt, sieht man sonst nicht. Eine
+          Linie pro Zeile genügt dafür — eine Minutenskala kostet vierfache
+          Zeilenzahl für denselben Zweck. */}
+      <div className="pointer-events-none absolute inset-x-0 top-1/2 border-t border-dashed border-border/60" />
+
       {/* Empty cell drop hint */}
       {isOver && !hasSlots && (
         <div className="absolute inset-1 rounded-md border-2 border-dashed border-primary/30 flex items-center justify-center">
           <span className="text-2xs text-primary/50 font-medium">Ablegen</span>
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Slots in this cell */}
-      <div className="flex flex-col gap-0.5">
-        {slots.map((slot) => (
-          <DraggableSlotCard key={slot.id} slot={slot} onEdit={onEdit} />
-        ))}
-      </div>
+/**
+ * Die Termine eines Tages, über die ganze Spalte gelegt.
+ *
+ * Liegt als eigene Ebene über den Ablegezellen: `pointer-events-none` auf der
+ * Ebene, `auto` auf den Karten — so bleiben die Zellen darunter Ablegeziel und
+ * die Karten greifbar.
+ */
+function DayColumnSlots({
+  day,
+  slots,
+  onEdit,
+}: {
+  day: number;
+  slots: ScheduleSlot[];
+  onEdit: (slot: ScheduleSlot) => void;
+}) {
+  return (
+    <div
+      className="pointer-events-none absolute"
+      style={{
+        top: HEADER_HEIGHT_PX,
+        bottom: 0,
+        left: `calc(${TIME_COL_PX}px + ${day} * (100% - ${TIME_COL_PX}px) / 6)`,
+        width: `calc((100% - ${TIME_COL_PX}px) / 6)`,
+      }}
+    >
+      {layoutDayColumn(slots).map(({ slot, lane, lanes }) => (
+        <div
+          key={slot.id}
+          className="pointer-events-auto absolute px-0.5"
+          style={{
+            top: (toMinutes(slot.startTime) - GRID_START_MIN) * (ROW_HEIGHT_PX / 60),
+            height: slotDurationMin(slot) * (ROW_HEIGHT_PX / 60),
+            left: `${(lane * 100) / lanes}%`,
+            width: `${100 / lanes}%`,
+          }}
+        >
+          <DraggableSlotCard slot={slot} onEdit={onEdit} />
+        </div>
+      ))}
     </div>
   );
 }
@@ -267,7 +409,11 @@ function SlotEditModal({
               className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm
                 focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
             >
-              {HOURS.map((h) => (
+              {/* Viertelstunden, nicht nur volle Stunden: sonst liessen sich
+                  die vom Clustering erzeugten Starts um halb im Fenster gar
+                  nicht abbilden — beim Öffnen wäre die Auswahl auf einen
+                  fremden Wert gesprungen. */}
+              {START_TIMES.map((h) => (
                 <option key={h} value={h}>
                   {h}
                 </option>
@@ -399,9 +545,11 @@ export default function ScheduleGrid({ plan, onSlotMove, onSlotUpdate }: Schedul
       const newDay = parseInt(overId.slice(firstDash + 1, secondDash), 10);
       const newHour = overId.slice(secondDash + 1);
 
-      if (newDay === slot.dayOfWeek && newHour === slot.startTime) return;
+      const newStartTime = movedStartTime(slot.startTime, newHour);
 
-      onSlotMove(slot.id, newDay, newHour);
+      if (newDay === slot.dayOfWeek && newStartTime === slot.startTime) return;
+
+      onSlotMove(slot.id, newDay, newStartTime);
     },
     [onSlotMove]
   );
@@ -413,14 +561,28 @@ export default function ScheduleGrid({ plan, onSlotMove, onSlotUpdate }: Schedul
     [onSlotUpdate]
   );
 
-  // Build a map: cellKey -> ScheduleSlot[]
-  const cellMap = new Map<string, ScheduleSlot[]>();
+  // Termine je Tag — die Spalte ist die Einheit, nicht die Stundenzelle.
+  const slotsByDay = new Map<number, ScheduleSlot[]>();
   for (const slot of plan) {
-    const key = `${slot.dayOfWeek}-${slot.startTime}`;
-    const arr = cellMap.get(key) ?? [];
+    const arr = slotsByDay.get(slot.dayOfWeek) ?? [];
     arr.push(slot);
-    cellMap.set(key, arr);
+    slotsByDay.set(slot.dayOfWeek, arr);
   }
+
+  /**
+   * Belegt eine Stundenzeile? Gefragt ist die Überschneidung mit dem
+   * Zeitraum des Termins, nicht dessen Startstunde: die zweite Hälfte eines
+   * 90-Minuten-Trainings gehört zur Stunde danach, und die galt vorher als
+   * freie Fläche.
+   */
+  const isOccupied = (day: number, hour: string) => {
+    const from = toMinutes(hour);
+    const to = from + 60;
+    return (slotsByDay.get(day) ?? []).some((s) => {
+      const start = toMinutes(s.startTime);
+      return start < to && start + slotDurationMin(s) > from;
+    });
+  };
 
   return (
     <>
@@ -442,51 +604,62 @@ export default function ScheduleGrid({ plan, onSlotMove, onSlotUpdate }: Schedul
         >
           {/* Grid — Mo-Sa only — Sonntag ist kein Trainingstag (Vereinsrealität) */}
           <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm overflow-x-auto">
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '56px repeat(6, 1fr)',
-                minWidth: '700px',
-              }}
-            >
-              {/* Day headers */}
-              <div className="h-9 border-b border-r border-border bg-muted/30" />
-              {DAYS.slice(0, 6).map((d) => (
+            {/* Zwei Ebenen: das Raster aus Ablegezellen, darüber je Tag die
+                Termine. Getrennt, weil ein Termin länger als eine Stunde sein
+                darf — als Kind seiner Stundenzelle könnte er die Zeile nicht
+                überschreiten, ohne dass die Zelle darunter ihn übersieht. */}
+            <div className="relative" style={{ minWidth: '700px' }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: `${TIME_COL_PX}px repeat(6, 1fr)`,
+                }}
+              >
+                {/* Day headers */}
                 <div
-                  key={d}
-                  className="h-9 border-b border-r border-border bg-muted/30 flex items-center justify-center text-xs font-semibold text-muted-foreground"
-                >
-                  {d}
-                </div>
-              ))}
+                  style={{ height: HEADER_HEIGHT_PX }}
+                  className="border-b border-r border-border bg-muted/30"
+                />
+                {DAYS.slice(0, 6).map((d) => (
+                  <div
+                    key={d}
+                    style={{ height: HEADER_HEIGHT_PX }}
+                    className="border-b border-r border-border bg-muted/30 flex items-center justify-center text-xs font-semibold text-muted-foreground"
+                  >
+                    {d}
+                  </div>
+                ))}
 
-              {/* Time rows */}
-              {HOURS.map((hour, hi) => {
-                const nextHour = HOURS[hi + 1] ?? '22:00';
-                return (
+                {/* Time rows */}
+                {HOURS.map((hour) => (
                   <React.Fragment key={`row-${hour}`}>
                     {/* Time label */}
-                    <div className="min-h-[56px] border-b border-r border-border flex items-start justify-end pr-1.5 pt-1.5 bg-muted/20">
+                    <div
+                      style={{ height: ROW_HEIGHT_PX }}
+                      className="border-b border-r border-border flex items-start justify-end pr-1.5 pt-1.5 bg-muted/20"
+                    >
                       <span className="text-[11px] text-muted-foreground tabular-nums">{hour}</span>
                     </div>
                     {/* Day cells — index matches DayOfWeek convention (0=Mo..5=Sa) */}
-                    {[0, 1, 2, 3, 4, 5].map((day) => {
-                      const cellId = `cell-${day}-${hour}`;
-                      const slotsInCell = (cellMap.get(`${day}-${hour}`) ?? []).filter(
-                        (s) => s.startTime >= hour && s.startTime < nextHour
-                      );
-                      return (
-                        <DroppableCell
-                          key={cellId}
-                          cellId={cellId}
-                          slots={slotsInCell}
-                          onEdit={setEditingSlot}
-                        />
-                      );
-                    })}
+                    {[0, 1, 2, 3, 4, 5].map((day) => (
+                      <DroppableCell
+                        key={`cell-${day}-${hour}`}
+                        cellId={`cell-${day}-${hour}`}
+                        occupied={isOccupied(day, hour)}
+                      />
+                    ))}
                   </React.Fragment>
-                );
-              })}
+                ))}
+              </div>
+
+              {[0, 1, 2, 3, 4, 5].map((day) => (
+                <DayColumnSlots
+                  key={`slots-${day}`}
+                  day={day}
+                  slots={slotsByDay.get(day) ?? []}
+                  onEdit={setEditingSlot}
+                />
+              ))}
             </div>
           </div>
         </CalendarShell>

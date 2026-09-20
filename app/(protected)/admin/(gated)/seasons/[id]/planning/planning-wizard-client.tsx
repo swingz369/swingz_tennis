@@ -201,13 +201,8 @@ function WizardContent({
         })}
       </nav>
 
-      {/* Step Progress Bar */}
-      <div className="h-1.5 w-full rounded-full bg-muted dark:bg-muted overflow-hidden">
-        <div
-          className="h-full rounded-full bg-primary transition-all duration-500"
-          style={{ width: `${(currentStep / 4) * 100}%` }}
-        />
-      </div>
+      {/* Kein zusätzlicher Fortschrittsbalken: die Schrittleiste darüber zeigt
+          die Position bereits — zwei Anzeigen für denselben Zustand. */}
 
       {/* Error Display */}
       {error && (

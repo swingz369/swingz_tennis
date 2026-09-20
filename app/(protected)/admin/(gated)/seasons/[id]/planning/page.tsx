@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { PlanningWizardClient } from './planning-wizard-client';
 import { SeasonPlanningTabs } from '@/components/admin/season-planning-tabs';
-import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,14 +62,9 @@ export default async function PlanningWizardPage({
 
   return (
     <>
-      <Breadcrumb
-        items={[
-          { label: 'Saisonplanung', href: '/admin/seasons' },
-          { label: season.name, href: `/admin/seasons/${seasonId}` },
-          { label: 'Planungs-Wizard' },
-        ]}
-        className="mb-4"
-      />
+      {/* Kein Breadcrumb: die Tab-Leiste führt innerhalb der Saison, der
+          Zurück-Link im PageHeader zur Saisonübersicht. Drei Wege zurück
+          übereinander waren zwei zu viel. */}
       <SeasonPlanningTabs seasonId={seasonId} />
       <PlanningWizardClient
         seasonId={seasonId}

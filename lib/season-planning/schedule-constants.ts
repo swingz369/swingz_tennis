@@ -39,6 +39,22 @@ export const HOURS = Array.from(
   (_, i) => `${(i + 8).toString().padStart(2, '0')}:00`
 );
 
+/**
+ * Wählbare Startzeiten im Viertelstunden-Takt (08:00–21:45).
+ *
+ * `HOURS` sind die Zeilen des Rasters, nicht die erlaubten Startzeiten. Wer
+ * beide gleichsetzt, baut eine Oberfläche, die Termine anzeigen kann, die sich
+ * in ihr nicht einstellen lassen: die Clustering-Engine erzeugt bei 90-Minuten-
+ * Einheiten reihenweise Starts um halb, das Bearbeiten-Fenster bot aber nur
+ * volle Stunden an.
+ */
+export const START_TIMES = Array.from({ length: 14 * 4 }, (_, i) => {
+  const minutesFromEight = i * 15;
+  const h = 8 + Math.floor(minutesFromEight / 60);
+  const m = minutesFromEight % 60;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+});
+
 export const MAX_ADULTS = 3;
 export const MAX_KIDS = 6;
 export const SLOT_DURATION = 90; // minutes — default, override with seasonPlanningConfigs.slot_duration_minutes

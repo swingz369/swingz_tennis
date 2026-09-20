@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
 import { SeasonPlanningTabs } from '@/components/admin/season-planning-tabs';
-import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { SeasonBillingSettings } from '@/components/admin/season-billing-settings';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Season {
@@ -157,13 +157,7 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
 
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          { label: 'Saisonplanung', href: '/admin/seasons' },
-          { label: season.name, href: `/admin/seasons/${id}` },
-          { label: 'Bearbeiten' },
-        ]}
-      />
+      {/* Kein Breadcrumb: Tab-Leiste plus Zurück-Pfeil reichen. */}
       <SeasonPlanningTabs seasonId={id} />
       <div className="flex items-center gap-4">
         <Tooltip>
@@ -366,6 +360,11 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
           </CardContent>
         </Card>
       </form>
+
+      {/* Abrechnung — eigenes Formular mit eigenem Speichern-Knopf, da sie
+          über `/api/seasons/:id/billing` läuft, nicht über die Saison-Felder
+          darüber. Stand früher im Planungs-Wizard, Schritt 1. */}
+      <SeasonBillingSettings seasonId={id} />
 
       {!isDraft && (
         <Card className="border-warning-200 bg-warning-50">

@@ -164,7 +164,9 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      router.push(`/admin/seasons/${season.id}?tab=conflicts`);
+                      // Direkt zur Konfliktliste statt über den Umweg eines
+                      // Tabs, der nur einen Button dorthin enthielt.
+                      router.push(`/admin/seasons/${season.id}/conflicts`);
                     }}
                     className="flex w-full items-center gap-2 rounded-xl bg-destructive/10 p-2 text-sm text-left hover:bg-destructive/20 transition-colors"
                   >
