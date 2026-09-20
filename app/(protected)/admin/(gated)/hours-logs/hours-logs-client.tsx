@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
-import { useState, useEffect, useCallback } from 'react';
+import { Fragment, useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -395,11 +395,8 @@ export default function HoursLogsClient() {
                 </TableHeader>
                 <TableBody className="divide-y divide-border dark:divide-white/10">
                   {logs.map((log) => (
-                    <>
-                      <TableRow
-                        key={log.id}
-                        className="hover:bg-muted dark:hover:bg-background/5 transition-colors"
-                      >
+                    <Fragment key={log.id}>
+                      <TableRow className="hover:bg-muted dark:hover:bg-background/5 transition-colors">
                         <TableCell className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary text-xs font-semibold shrink-0">
@@ -487,7 +484,7 @@ export default function HoursLogsClient() {
                           </TableCell>
                         </TableRow>
                       )}
-                    </>
+                    </Fragment>
                   ))}
                 </TableBody>
               </Table>
