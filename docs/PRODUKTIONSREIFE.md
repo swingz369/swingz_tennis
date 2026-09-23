@@ -1,6 +1,6 @@
 # Weg zur Produktionsreife
 
-> Zuletzt verifiziert: 18. August 2026 (Anhang D: offene Punkte für die nächste Sitzung)
+> Zuletzt verifiziert: 24. September 2026 (Umsetzungsplan aus den Prüfungen vom 23. September ergänzt; ältere Messwerte bleiben historische Stände)
 >
 > Lebendes Dokument. **Der Plan** — was in welcher Reihenfolge passieren muss, damit SwingZ ein
 > Produkt ist, das ein Verein kauft, benutzt und behält.
@@ -9,6 +9,42 @@
 > Einzelbefunde (P0–P3). Hier steht die **Reihenfolge, die Begründung und das Abnahmekriterium**.
 > Einzelbefunde werden hier per Verweis referenziert, nicht abgeschrieben. Wer einen Punkt
 > erledigt, streicht ihn in `OPEN_ITEMS.md` und hakt hier das Phasen-Gate ab.
+
+---
+
+## Aktueller Umsetzungsplan (Prüfungen vom 23.09.2026)
+
+Grundlage: [Rollen-/API-Prüfung](ARCHIV/2026-09-23-rollen-seiten-api-pruefung.md),
+[Bestandsanalyse](ARCHIV/2026-09-23-verkaufsreife-bestandsanalyse.md) und
+[Zugangsprüfung](ARCHIV/2026-09-23-verkaufsreife-zugangspruefung.md).
+Der Branch enthält weitere, bereits vor dieser Bearbeitung vorhandene Test-/CI-Änderungen;
+deren Auslieferung ist nicht durch diesen Plan belegt.
+
+| Reihenfolge | Umsetzung                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Abnahme / notwendige Entscheidung                                                                                                                                                                                                   |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1           | Bestätigte Fehler in Mitgliederexport, Abonnement-GET, Rechnungsdialog und lokaler Gruppenliste beheben; alle drei Analytics-Exporte auf verwaltete Vereine begrenzen.                                                                                                                                                                                                                                                                                                             | Agent-Admin: CSV und GET 200, Rechnungsempfänger sichtbar; Agent-Alpha: Gruppen-GET 200. Superadmin kann fremden Vereins-Export nicht abrufen.                                                                                      |
+| 2           | Stripe-Webhook gegen fehlgeschlagene Reservierung, Handler-Fehler und doppelte Zustellung absichern. Live-Grants der `SECURITY DEFINER`-Funktion prüfen und auf `service_role` begrenzen.                                                                                                                                                                                                                                                                                          | Signierte Testereignisse: Fehler wird erneut verarbeitet, doppelte Zustellung bucht nur einmal; `anon`/`authenticated` können RPC nicht ausführen. Eine Freigabe der Reservierung allein genügt bei teilverarbeiteten Events nicht. |
+| 3           | Mandantentrennung und Transport prüfen: Live-Policies/Funktionsrechte lesen, offene Migrationen mit Tracking abgleichen, Legacy-Drizzle-Pfade und TLS-Verbindung prüfen.                                                                                                                                                                                                                                                                                                           | Zwei Agent-Vereine: REST/RPC/API ohne fremde Daten; Produktions-DB-Verbindung verlangt verifiziertes TLS; `supabase db reset` grün. Keine Migration allein aus Dateinamen ableiten.                                                 |
+| 4           | Zahlungs- und Abrechnungsdaten berichtigen: fiktiven Umsatzexport entfernen oder durch echte Zahlungen ersetzen; Vereins-Gesamtexport und Restore/Heartbeat prüfen.                                                                                                                                                                                                                                                                                                                | Export stimmt mit bezahlten Rechnungen überein; vollständiger Ausstieg ist probeweise lesbar; aktuelles Restore-Protokoll und kritische Cron-Läufe liegen vor.                                                                      |
+| 5           | Kaufmodell und öffentliche Aussagen konsistent umsetzen. **Entschieden:** Einmalkauf pro Tennisschule mit mehreren Vereinen; nach Kündigung der Betriebspauschale endet der Nutzungszugang, der Export bleibt erreichbar; bestehende Abos werden umgestellt und der volle Einmalkaufpreis wird fällig, ohne Anrechnung bisheriger Abozahlungen. **Offen:** Preise, Umfang, Zeitpunkt/Einwilligung der Bestandskunden-Umstellung, Rückerstattung, Support und juristische Freigabe. | Erst nach Entscheidung: Checkout, getrennte Kauf- und Betriebsberechtigung, API-Gate, Website, AGB und Rechnung in einem vollständigen Testkauf prüfen. Keine Preisannahmen im Code treffen.                                        |
+| 6           | F1–F5 mit Agent-Konten und einem fremden Testnutzer abnehmen.                                                                                                                                                                                                                                                                                                                                                                                                                      | Je Rolle eine echte Kernaufgabe auf Mobilgerät; Kauf bis Kündigung und Webhook-Retry; Deploy-Commit, Monitor und Restore nachweisen.                                                                                                |
+
+**Freigabestatus:** Die fünf Agent-Logins und breite Seiten-Smoke-Tests sind belegt; F2–F5
+sind dadurch nicht erfüllt. Die Verkaufsfreigabe bleibt gesperrt, bis die obigen Abnahmen
+und Betreiberentscheidungen vorliegen.
+
+Die öffentliche Supportseite nennt seit 24.09.2026 keine unbelegte 24-Stunden-Antwort,
+Enterprise-SLA, Live-Chat-Support oder Platzhalter-Telefonnummer mehr. Verbindliche
+Supportzeiten bleiben Teil der offenen Leistungsentscheidung in Schritt 5.
+
+**Lokaler Zwischenstand 24.09.2026:** Typecheck und gezielte Tests sind grün. Mit Agent-Admin
+liefern Mitglieder-CSV, Abonnement-GET und Abrechnungsseite HTTP 200; der korrigierte Join liest
+als Agent-Admin 26 aktive Mitglieder/Trainer für den Rechnungsdialog. Gruppenliste Alpha 200,
+Gruppenliste Gamma und alle drei Analytics-Exporte für Gamma 403. Die sechs fehlerhaften
+`member_ids={}`-Zeilen in Agent-Alpha wurden gezielt zu `[]` korrigiert. Die Stripe-RPC-Rechte
+wurden live gelesen, die Korrektur ist als Migration vorbereitet, aber nicht ausgeliefert.
+Der Buchungserinnerungs-Cron verwendet jetzt für den signierten Systemlauf den Service-Client;
+ein neuer Produktions-Heartbeat muss nach dem Deploy nachgewiesen werden.
 
 ---
 

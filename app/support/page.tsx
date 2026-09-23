@@ -7,8 +7,6 @@ import {
   LifeBuoy,
   Mail,
   MessageCircle,
-  Phone,
-  Clock,
   FileText,
   ArrowRight,
   BookOpen,
@@ -45,7 +43,7 @@ const FAQ = [
   },
   {
     q: 'Wie kontaktiere ich den Support?',
-    a: 'Du erreichst unser Support-Team per E-Mail unter support@swingz.cloud oder über das Kontaktformular. Wir antworten innerhalb von 24 Stunden an Werktagen.',
+    a: 'Du erreichst uns per E-Mail unter support@swingz.cloud oder über das Kontaktformular.',
     href: '/contact',
     cta: 'Kontakt aufnehmen',
   },
@@ -56,28 +54,19 @@ const CHANNELS = [
     icon: <Mail className="h-6 w-6" />,
     title: 'E-Mail',
     description: 'support@swingz.cloud',
-    note: 'Antwort innerhalb von 24h (Werktage)',
+    note: 'Schreib uns dein Anliegen',
     href: 'mailto:support@swingz.cloud',
     color: 'text-brand-primary',
     bg: 'bg-brand-primary/10',
   },
   {
     icon: <MessageCircle className="h-6 w-6" />,
-    title: 'Live-Chat',
-    description: 'Im Dashboard verfügbar',
-    note: 'Mo-Fr 9:00-17:00 Uhr',
-    href: '/login',
+    title: 'Kontaktformular',
+    description: 'Nachricht senden',
+    note: 'Beschreib uns dein Anliegen',
+    href: '/contact',
     color: 'text-brand-accent',
     bg: 'bg-brand-accent/10',
-  },
-  {
-    icon: <Phone className="h-6 w-6" />,
-    title: 'Telefon',
-    description: '+49 123 4567890',
-    note: 'Für Enterprise-Kunden',
-    href: 'tel:+491234567890',
-    color: 'text-info-600',
-    bg: 'bg-info-50',
   },
 ];
 
@@ -134,7 +123,7 @@ export default function SupportPage() {
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl font-bold text-foreground mb-8 text-center">Kontaktkanäle</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {CHANNELS.map((channel) => (
               <Link key={channel.title} href={channel.href} className="block group">
                 <Card variant="bordered" className="p-6 h-full hover:shadow-md transition-shadow">
@@ -146,13 +135,10 @@ export default function SupportPage() {
                   <h3 className="font-semibold text-foreground mb-1">{channel.title}</h3>
                   <p className={`font-medium ${channel.color} mb-2`}>{channel.description}</p>
                   <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5" />
                     {channel.note}
                   </p>
                   <div className="mt-4 flex items-center text-sm text-brand-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                    {channel.title === 'E-Mail' || channel.title === 'Telefon'
-                      ? 'Öffnen'
-                      : 'Zum Login'}
+                    {channel.title === 'E-Mail' ? 'E-Mail schreiben' : 'Formular öffnen'}
                     <ArrowRight className="h-3.5 w-3.5 ml-1 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </Card>
@@ -232,17 +218,16 @@ export default function SupportPage() {
                 <Sparkles className="h-5 w-5" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold mb-2">Premium-Support für Enterprise</h3>
+                <h3 className="text-xl font-bold mb-2">Fragen zu SwingZ?</h3>
                 <p className="text-white/80 mb-4">
-                  Enterprise-Kunden erhalten priorisierten Support, dedizierte Ansprechpartner und
-                  SLA-Garantien.
+                  Schreib uns, welche Unterstützung dein Verein oder deine Tennisschule braucht.
                 </p>
                 <Link href="/contact">
                   <Button
                     variant="secondary"
                     className="bg-background text-brand-primary hover:bg-background/90"
                   >
-                    Enterprise-Kontakt
+                    Kontakt aufnehmen
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>

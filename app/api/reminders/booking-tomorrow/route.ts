@@ -17,6 +17,7 @@ import { pushNotificationService } from '@/lib/push-notification.service';
 import { sendRemindersSchema } from '@/application/validation/schemas/reminders.schema';
 import { createLogger } from '@/lib/logger';
 import { recordHeartbeat } from '@/lib/ops-heartbeat';
+import { createServiceClient } from '@/lib/supabase/service';
 import { env } from '@/lib/env';
 
 const log = createLogger('api:reminders:booking-tomorrow');
@@ -24,12 +25,16 @@ const log = createLogger('api:reminders:booking-tomorrow');
 export const dynamic = 'force-dynamic';
 
 class TempSessionRepository implements ISessionRepository {
+  constructor(private readonly cron: boolean) {}
+
   async findSessionsForDateRange(startDate: Date, endDate: Date): Promise<Session[]> {
     const { createClient } = await import('@/infrastructure/external/supabase/server');
-    const supabase = await createClient();
+    // Vercel-Cron hat keine Nutzer-Session. Der normale Client sieht wegen
+    // RLS keine Vereins-Termine; der signierte Cron liest systemweit.
+    const supabase = this.cron ? createServiceClient() : await createClient();
     const { data, error } = await supabase
       .from('sessions')
-      .select('*, trainers(*), courts(*), clubs(*)')
+      .select('*, trainers(name, email), courts(name), schedules(clubs(name))')
       .gte('timeslot_start', startDate.toISOString())
       .lte('timeslot_end', endDate.toISOString());
     if (error) {
@@ -40,8 +45,7 @@ class TempSessionRepository implements ISessionRepository {
         { name: string; email?: string } | undefined;
       const court = (Array.isArray(session.courts) ? session.courts[0] : session.courts) as
         { name: string } | undefined;
-      const club = (Array.isArray(session.clubs) ? session.clubs[0] : session.clubs) as
-        { name: string } | undefined;
+      const club = session.schedules?.clubs as { name: string } | null | undefined;
       return {
         id: session.id,
         timeslot_start: session.timeslot_start,
@@ -57,9 +61,11 @@ class TempSessionRepository implements ISessionRepository {
 }
 
 class TempBookingRepository implements IBookingRepository {
+  constructor(private readonly cron: boolean) {}
+
   async findConfirmedBookingsForSessions(sessionIds: string[]): Promise<Booking[]> {
     const { createClient } = await import('@/infrastructure/external/supabase/server');
-    const supabase = await createClient();
+    const supabase = this.cron ? createServiceClient() : await createClient();
     const { data, error } = await supabase
       .from('bookings')
       .select('id, member_id, session_id, status')
@@ -78,9 +84,11 @@ class TempBookingRepository implements IBookingRepository {
 }
 
 class TempMemberRepository implements IMemberRepository {
+  constructor(private readonly cron: boolean) {}
+
   async findMemberById(memberId: string): Promise<{ email: string; full_name: string } | null> {
     const { createClient } = await import('@/infrastructure/external/supabase/server');
-    const supabase = await createClient();
+    const supabase = this.cron ? createServiceClient() : await createClient();
     const { data, error } = await supabase
       .from('users')
       .select('email, full_name')
@@ -102,13 +110,13 @@ class TempMemberRepository implements IMemberRepository {
  * dryRun=true verschickt nichts und schreibt kein Heartbeat — ein Trockenlauf
  * zählt nicht als gelaufener Job (Kommentar unten).
  */
-async function runReminders(dryRun: boolean) {
+async function runReminders(dryRun: boolean, cron = false) {
   const reminderService = new ReminderService(
     new EmailService(),
     new AuditServiceImpl(),
-    new TempSessionRepository(),
-    new TempBookingRepository(),
-    new TempMemberRepository()
+    new TempSessionRepository(cron),
+    new TempBookingRepository(cron),
+    new TempMemberRepository(cron)
   );
 
   const results = await reminderService.sendTomorrowReminders({ dryRun });
@@ -169,7 +177,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { total, sent, failed, results } = await runReminders(false);
+    const { total, sent, failed, results } = await runReminders(false, true);
     return NextResponse.json({
       success: true,
       dryRun: false,

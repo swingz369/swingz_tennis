@@ -30,6 +30,7 @@ function getResend() {
 }
 
 export async function POST(_request: NextRequest) {
+  let reservedEventId: string | null = null;
   try {
     const body = await _request.text();
     const signature = _request.headers.get('stripe-signature');
@@ -44,17 +45,22 @@ export async function POST(_request: NextRequest) {
     const supabase = createServiceClient();
     try {
       // Cast needed until stripe_events table is in generated Supabase types
-      const { data: isNew } = await supabase
+      const { data: isNew, error: reservationError } = await supabase
         .rpc('check_and_record_stripe_event', {
           p_event_id: event.id,
           p_event_type: event.type,
         })
         .maybeSingle();
 
+      if (reservationError || typeof isNew !== 'boolean') {
+        throw reservationError ?? new Error('Ungültige Antwort der Stripe-Event-Reservierung');
+      }
+
       if (isNew === false) {
         log.info('Event already processed — skipping', { eventId: event.id });
         return NextResponse.json({ received: true, deduplicated: true });
       }
+      reservedEventId = event.id;
     } catch (idempotencyError) {
       // Payment events must not be processed without the atomic deduplication guard.
       log.error(
@@ -151,6 +157,24 @@ export async function POST(_request: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (error) {
     log.error('Error handling Stripe webhook', error instanceof Error ? error : undefined);
+    // Die Reservierung liegt vor den fachlichen Schreibvorgängen. Bei einem
+    // Fehler muss Stripe dieselbe Event-ID erneut zustellen können.
+    if (reservedEventId) {
+      try {
+        const { error: releaseError } = await createServiceClient()
+          .from('stripe_events')
+          .delete()
+          .eq('stripe_event_id', reservedEventId);
+        if (releaseError) {
+          log.error('Stripe-Event-Reservierung konnte nicht freigegeben werden', releaseError);
+        }
+      } catch (releaseError) {
+        log.error(
+          'Stripe-Event-Reservierung konnte nicht freigegeben werden',
+          releaseError instanceof Error ? releaseError : undefined
+        );
+      }
+    }
     return internalErrorResponse();
   }
 }
@@ -167,19 +191,28 @@ function isAsyncPaymentMethod(session: Stripe.Checkout.Session): boolean {
 async function handleInvoicePayment(session: Stripe.Checkout.Session, invoiceId: string) {
   const invoice = await billingEngine.getInvoiceById(invoiceId);
   if (!invoice) {
-    log.error(`Invoice ${invoiceId} not found`);
-    return;
+    throw new Error(`Rechnung ${invoiceId} nicht gefunden`);
   }
 
   const supabase = createServiceClient();
-  const { data: existingPayment } = await supabase
+  const { data: existingPayment, error: existingPaymentError } = await supabase
     .from('payments')
-    .select('id')
+    .select('id, status')
     .eq('external_id', session.payment_intent as string)
     .maybeSingle();
 
+  if (existingPaymentError) {
+    throw new Error(
+      `Vorhandene Zahlung konnte nicht gelesen werden: ${existingPaymentError.message}`
+    );
+  }
+
   if (existingPayment) {
-    log.info('Payment for session already processed — skipping', { sessionId: session.id });
+    const targetStatus = isAsyncPaymentMethod(session) ? 'pending' : 'completed';
+    if (existingPayment.status !== targetStatus && existingPayment.status !== 'completed') {
+      await billingEngine.updatePaymentStatus(existingPayment.id, targetStatus);
+    }
+    log.info('Payment for session already exists', { sessionId: session.id });
     return;
   }
 
@@ -236,8 +269,7 @@ async function handleBookingPayment(session: Stripe.Checkout.Session, bookingId:
     .maybeSingle();
 
   if (!booking) {
-    log.error(`Booking ${bookingId} not found`);
-    return;
+    throw new Error(`Buchung ${bookingId} nicht gefunden`);
   }
 
   if (booking.payment_status === 'paid') {
@@ -256,8 +288,7 @@ async function handleBookingPayment(session: Stripe.Checkout.Session, bookingId:
     .eq('id', bookingId);
 
   if (bookingError) {
-    log.error('Failed to update booking', bookingError instanceof Error ? bookingError : undefined);
-    return;
+    throw new Error(`Buchungszahlung konnte nicht gespeichert werden: ${bookingError.message}`);
   }
 
   // Only send success notification for sync methods (card).
@@ -322,8 +353,7 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, orderId:
     .maybeSingle();
 
   if (!order) {
-    log.error(`Shop order ${orderId} not found`);
-    return;
+    throw new Error(`Shop-Bestellung ${orderId} nicht gefunden`);
   }
 
   if (order.payment_status === 'paid') {
@@ -344,11 +374,7 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, orderId:
     .eq('id', orderId);
 
   if (updateError) {
-    log.error(
-      'Failed to update shop order',
-      updateError instanceof Error ? updateError : undefined
-    );
-    return;
+    throw new Error(`Shop-Zahlung konnte nicht gespeichert werden: ${updateError.message}`);
   }
 
   // Only reduce stock for sync methods (card). For SEPA/async, stock is
@@ -391,11 +417,13 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
   const supabase = createServiceClient();
 
   // Find the payment record created by checkout.session.completed
-  const { data: payment } = await supabase
+  const { data: payment, error: paymentError } = await supabase
     .from('payments')
     .select('id, status')
     .eq('external_id', paymentIntent.id)
     .maybeSingle();
+
+  if (paymentError) throw new Error(`Zahlung konnte nicht gelesen werden: ${paymentError.message}`);
 
   if (!payment) {
     log.info('No payment record for PI — likely already handled', {
@@ -404,14 +432,11 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     return;
   }
 
-  if (payment.status === 'completed') {
-    // Already completed (card/sofort) — nothing to do
-    return;
+  if (payment.status !== 'completed') {
+    // SEPA or other async method: promote to completed
+    await billingEngine.updatePaymentStatus(payment.id, 'completed');
+    log.info('Payment promoted to completed (SEPA async)', { paymentId: payment.id });
   }
-
-  // SEPA or other async method: promote to completed
-  await billingEngine.updatePaymentStatus(payment.id, 'completed');
-  log.info('Payment promoted to completed (SEPA async)', { paymentId: payment.id });
 
   // Also update associated booking/shop order if still pending
   const stripeClient = getStripeClient();
@@ -433,10 +458,12 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
       .maybeSingle();
 
     if (booking && booking.payment_status !== 'paid') {
-      await supabase
+      const { error: bookingError } = await supabase
         .from('bookings')
         .update({ status: 'confirmed', payment_status: 'paid' })
         .eq('id', bookingId);
+      if (bookingError)
+        throw new Error(`Buchungsstatus konnte nicht gespeichert werden: ${bookingError.message}`);
 
       // Notify member that SEPA payment cleared
       const { userId, clubId } = session.metadata;
@@ -462,10 +489,12 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
       .maybeSingle();
 
     if (order && order.payment_status !== 'paid') {
-      await supabase
+      const { error: orderError } = await supabase
         .from('shop_orders')
         .update({ status: 'pending', payment_status: 'paid' })
         .eq('id', orderId);
+      if (orderError)
+        throw new Error(`Bestellstatus konnte nicht gespeichert werden: ${orderError.message}`);
     }
   }
 }
@@ -515,8 +544,7 @@ async function handleSaasSubscription(
   }
 
   if (!tier) {
-    log.error('SaaS subscription: could not resolve plan tier', { userId });
-    return;
+    throw new Error(`Abo-Tarif für Nutzer ${userId} nicht ermittelbar`);
   }
 
   const { error } = await supabase
@@ -625,7 +653,7 @@ async function handleSaasInvoicePaymentFailed(invoice: Stripe.Invoice) {
 async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
   const supabase = createServiceClient();
   const customerId = sub.customer as string;
-  await supabase
+  const { error } = await supabase
     .from('users')
     .update({
       subscription_tier: 'free',
@@ -633,6 +661,7 @@ async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
       stripe_subscription_id: null,
     })
     .eq('stripe_customer_id', customerId);
+  if (error) throw new Error(`Abo-Kündigung konnte nicht gespeichert werden: ${error.message}`);
   log.info('SaaS subscription deleted → reset to free', { customerId });
 }
 
@@ -647,9 +676,17 @@ async function handleBookingPaymentFailed(paymentIntentId: string) {
     });
     const bookingId = sessions.data[0]?.metadata?.bookingId;
     if (bookingId) {
-      await supabase.from('bookings').update({ payment_status: 'failed' }).eq('id', bookingId);
+      const { error } = await supabase
+        .from('bookings')
+        .update({ payment_status: 'failed' })
+        .eq('id', bookingId);
+      if (error)
+        throw new Error(
+          `Fehlzahlung der Buchung konnte nicht gespeichert werden: ${error.message}`
+        );
     }
   } catch (err) {
     log.error('handleBookingPaymentFailed error', err instanceof Error ? err : undefined);
+    throw err;
   }
 }

@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { AnalyticsService } from '@/application/services/analytics.service';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { toCsv, csvHeaders } from '@/lib/csv';
 
@@ -25,7 +25,7 @@ export async function GET(_request: NextRequest) {
     if (!clubId) {
       return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
     }
-    if (requested && requested !== auth.clubId && !(await verifyRole(auth, 'superadmin'))) {
+    if (!verifyClubAccess(auth, clubId)) {
       return forbiddenResponse('Kein Zugriff auf diesen Verein');
     }
 

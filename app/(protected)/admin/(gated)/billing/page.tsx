@@ -55,13 +55,13 @@ export default async function BillingPage({
   );
 
   // --- Fetch members (members + trainers) ---
-  const { data: clubMemberships } = await supabase
+  const { data: clubMemberships, error: clubMembershipsError } = await supabase
     .from('user_club_memberships')
     .select(
       `
         user_id,
         role,
-        users (
+        users!user_club_memberships_user_id_fkey (
           id,
           email,
           full_name
@@ -71,6 +71,10 @@ export default async function BillingPage({
     .eq('club_id', clubId)
     .eq('is_active', true)
     .in('role', ['member', 'trainer']);
+
+  if (clubMembershipsError) {
+    log.error('Mitglieder für Abrechnung nicht lesbar', clubMembershipsError);
+  }
 
   // Build members list
   const members = (clubMemberships || [])
@@ -144,6 +148,14 @@ export default async function BillingPage({
         title="Abrechnung"
         description="Rechnungen, Gebührenkategorien und Exporte verwalten"
       />
+      {clubMembershipsError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive"
+        >
+          Die Mitgliederauswahl konnte nicht geladen werden. Bitte lade die Seite erneut.
+        </div>
+      )}
       <BillingCategoriesTabs
         initialCategories={feeCategories}
         clubId={clubId}

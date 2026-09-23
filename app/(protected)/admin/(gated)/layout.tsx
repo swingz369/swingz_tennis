@@ -70,10 +70,6 @@ export default async function AdminGatedLayout({ children }: { children: React.R
   // Plattform-Personal (owner/superadmin) zahlt hier nichts: der Superadmin
   // hat sein eigenes Abo im Superadmin-Bereich.
   //
-  // ponytail: Sperre auf Seitenebene, nicht in der API. Ein Admin, der die
-  // Routen direkt anspricht, kommt weiterhin durch. Wenn das relevant wird,
-  // gehört die Prüfung zusätzlich in lib/api-auth.ts — dann aber mit einer
-  // Ausnahmeliste für die Onboarding-Routen, sonst kommt niemand zum Checkout.
   if (!isPlatformStaff && subscription === 'none') {
     return <SubscriptionRequiredBlock />;
   }

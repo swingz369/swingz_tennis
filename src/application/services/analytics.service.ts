@@ -20,11 +20,10 @@ export interface RevenueData {
   payments: Array<{
     id: string;
     memberId: string;
-    memberName: string;
     amount: number;
     date: string;
     time: string;
-    method: 'credit_card' | 'debit' | 'cash' | 'bank_transfer';
+    method: string;
     status: 'paid';
   }>;
   monthlyBreakdown: Array<{ month: string; revenue: number }>;
@@ -68,33 +67,17 @@ export class AnalyticsService {
     }));
   }
 
-  // ponytail: Pauschalpreis 15 €, Zahlungsmethode zufällig, Mitgliedsname "Member N" — übernommen
-  // aus dem alten Use-Case (Platzhalter, keine echten Zahlungsdaten). Echte Umsätze aus `invoices`.
   async revenue(clubId: string): Promise<RevenueData> {
-    const now = new Date();
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(now.getMonth() - 6);
-
-    const relevant = (await this.analytics.findBookingsWithSession(clubId)).filter(
-      (b) =>
-        b.status === 'confirmed' &&
-        b.session &&
-        b.session.start >= sixMonthsAgo &&
-        b.session.start <= now
-    );
-
-    const pricePerBooking = 15;
-    const methods = ['credit_card', 'debit', 'cash', 'bank_transfer'] as const;
-    const payments = relevant.map((b, idx) => {
-      const start = b.session!.start;
+    const paid = await this.analytics.findPaidPayments(clubId);
+    const payments = paid.map((p) => {
+      const date = new Date(p.paidAt);
       return {
-        id: `pay-${b.id}`,
-        memberId: b.memberId,
-        memberName: `Member ${idx + 1}`,
-        amount: pricePerBooking,
-        date: start.toISOString().split('T')[0],
-        time: start.toTimeString().slice(0, 5),
-        method: methods[Math.floor(Math.random() * methods.length)],
+        id: p.id,
+        memberId: p.memberId ?? '',
+        amount: p.amount,
+        date: date.toISOString().split('T')[0],
+        time: date.toISOString().slice(11, 16),
+        method: p.method,
         status: 'paid' as const,
       };
     });
@@ -106,7 +89,7 @@ export class AnalyticsService {
     }
 
     return {
-      totalRevenue: payments.length * pricePerBooking,
+      totalRevenue: payments.reduce((sum, payment) => sum + payment.amount, 0),
       payments,
       monthlyBreakdown: [...monthly.entries()]
         .sort((a, b) => a[0].localeCompare(b[0]))

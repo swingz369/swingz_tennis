@@ -24,17 +24,18 @@ vi.hoisted(() => {
 import { makeApiRequest } from '../helpers/api-route';
 
 type TableHandler = (state: {
-  op: 'select' | 'insert' | 'update';
+  op: 'select' | 'insert' | 'update' | 'delete';
   filters: Record<string, unknown>;
   payload?: unknown;
 }) => { data: unknown; error: unknown };
 
 let tableHandlers: Record<string, TableHandler> = {};
 let rpcIsNew = true;
+let rpcError: Error | null = null;
 
 function buildChain(table: string) {
   const state: {
-    op: 'select' | 'insert' | 'update';
+    op: 'select' | 'insert' | 'update' | 'delete';
     filters: Record<string, unknown>;
     payload?: unknown;
   } = {
@@ -56,6 +57,10 @@ function buildChain(table: string) {
   chain.update = (payload: unknown) => {
     state.op = 'update';
     state.payload = payload;
+    return chain;
+  };
+  chain.delete = () => {
+    state.op = 'delete';
     return chain;
   };
   chain.eq = (col: string, val: unknown) => {
@@ -85,7 +90,7 @@ vi.doMock('@/lib/supabase/service', () => ({
   createServiceClient: () => ({
     from: (table: string) => buildChain(table),
     rpc: () => ({
-      maybeSingle: async () => ({ data: rpcIsNew, error: null }),
+      maybeSingle: async () => ({ data: rpcIsNew, error: rpcError }),
     }),
   }),
 }));
@@ -116,6 +121,7 @@ describe('POST /api/webhooks/stripe', () => {
   beforeEach(() => {
     tableHandlers = {};
     rpcIsNew = true;
+    rpcError = null;
     currentEvent = null;
     billingEngineMock.updatePaymentStatus.mockClear();
   });
@@ -132,6 +138,62 @@ describe('POST /api/webhooks/stripe', () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toMatchObject({ received: true, deduplicated: true });
+  });
+
+  it('bricht bei einem Fehler der Event-Reservierung mit 503 ab', async () => {
+    rpcError = new Error('DB nicht erreichbar');
+    currentEvent = { id: 'evt_rpc_error', type: 'some.unhandled.event', data: { object: {} } };
+    const res = await POST(webhookRequest(currentEvent));
+    expect(res.status).toBe(503);
+  });
+
+  it('gibt die Event-Reservierung nach einem Handler-Fehler für den Retry frei', async () => {
+    let releasedId: unknown = null;
+    tableHandlers.stripe_events = (state) => {
+      if (state.op === 'delete') releasedId = state.filters.stripe_event_id;
+      return { data: null, error: null };
+    };
+    billingEngineMock.updatePaymentStatus.mockRejectedValueOnce(
+      new Error('Zahlung vorübergehend nicht schreibbar')
+    );
+    tableHandlers.payments = () => ({ data: { id: 'payment-1' }, error: null });
+    currentEvent = {
+      id: 'evt_retry',
+      type: 'charge.refunded',
+      data: { object: { id: 'ch_retry', payment_intent: 'pi_retry' } },
+    };
+    const res = await POST(webhookRequest(currentEvent));
+    expect(res.status).toBe(500);
+    expect(releasedId).toBe('evt_retry');
+  });
+
+  it('schließt eine beim ersten Versuch nur angelegte Rechnungszahlung beim Retry ab', async () => {
+    billingEngineMock.getInvoiceById.mockResolvedValueOnce({
+      id: 'invoice-1',
+      member_id: null,
+    } as never);
+    tableHandlers.payments = () => ({
+      data: { id: 'payment-existing', status: 'pending' },
+      error: null,
+    });
+    currentEvent = {
+      id: 'evt_invoice_retry',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_retry',
+          payment_intent: 'pi_retry',
+          metadata: { invoiceId: 'invoice-1' },
+          payment_method_types: ['card'],
+        },
+      },
+    };
+    const res = await POST(webhookRequest(currentEvent));
+    expect(res.status).toBe(200);
+    expect(billingEngineMock.updatePaymentStatus).toHaveBeenCalledWith(
+      'payment-existing',
+      'completed'
+    );
   });
 
   it('aktiviert ein SaaS-Abo bei checkout.session.completed mit saasSubscription-Metadata', async () => {
@@ -223,6 +285,29 @@ describe('POST /api/webhooks/stripe', () => {
     const res = await POST(webhookRequest(currentEvent));
     expect(res.status).toBe(200);
     expect(billingEngineMock.updatePaymentStatus).toHaveBeenCalledWith('payment-1', 'refunded');
+  });
+
+  it('holt den Buchungsstatus beim Retry auch nach bereits abgeschlossener Zahlung nach', async () => {
+    let bookingUpdate: unknown = null;
+    tableHandlers.payments = () => ({
+      data: { id: 'payment-1', status: 'completed' },
+      error: null,
+    });
+    tableHandlers.bookings = (state) => {
+      if (state.op === 'update') bookingUpdate = state.payload;
+      return { data: state.op === 'select' ? { payment_status: 'pending' } : null, error: null };
+    };
+    fakeStripeClient.checkout.sessions.list.mockResolvedValueOnce({
+      data: [{ metadata: { bookingId: 'booking-1' } }],
+    } as never);
+    currentEvent = {
+      id: 'evt_async_retry',
+      type: 'payment_intent.succeeded',
+      data: { object: { id: 'pi_async_retry' } },
+    };
+    const res = await POST(webhookRequest(currentEvent));
+    expect(res.status).toBe(200);
+    expect(bookingUpdate).toMatchObject({ status: 'confirmed', payment_status: 'paid' });
   });
 
   it('beantwortet einen unbekannten Event-Typ ohne Fehler (default-Branch)', async () => {

@@ -35,7 +35,7 @@ export async function GET(_request: NextRequest) {
         .from('user_club_memberships')
         .select(
           `
-          users (
+          users!user_club_memberships_user_id_fkey (
             id,
             email,
             full_name,

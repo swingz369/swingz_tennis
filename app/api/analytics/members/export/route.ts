@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { logPiiRead } from '@/lib/db/audit-logger';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     if (!clubId) {
       return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
     }
-    if (requested && requested !== auth.clubId && !(await verifyRole(auth, 'superadmin'))) {
+    if (!verifyClubAccess(auth, clubId)) {
       return forbiddenResponse('Kein Zugriff auf diesen Verein');
     }
 
@@ -50,7 +50,9 @@ export async function GET(request: NextRequest) {
       const sb = createServiceClient();
       const { data, error } = await sb
         .from('user_club_memberships')
-        .select('member_number, role, is_active, joined_at, users(full_name, email, phone)')
+        .select(
+          'member_number, role, is_active, joined_at, users!user_club_memberships_user_id_fkey(full_name, email, phone)'
+        )
         .eq('club_id', clubId)
         .order('member_number', { ascending: true });
 

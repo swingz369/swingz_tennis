@@ -22,7 +22,7 @@ const SESSION = {
   court_id: 'court-001',
   trainers: [{ name: 'Coach Müller', email: 'coach@test.com' }],
   courts: [{ name: 'Platz 1' }],
-  clubs: [{ name: 'TC Test' }],
+  schedules: { clubs: { name: 'TC Test' } },
 };
 
 const BOOKING = {
@@ -40,6 +40,8 @@ const MEMBER = { id: 'member-001', email: 'max@test.com', full_name: 'Max Muster
 
 let mockVerifyRole: any;
 const mockSupabase = { from: vi.fn() };
+const mockServiceSupabase = { from: vi.fn() };
+const mockHeartbeat = vi.fn().mockResolvedValue(undefined);
 
 const mockAuthCtx = {
   user: { id: USER_ID, email: 'admin@test.com' },
@@ -58,6 +60,13 @@ const mockPushSend = vi.fn().mockResolvedValue({ success: true, sent: 1, failed:
 vi.mock('@/infrastructure/external/supabase/server', () => ({
   createClient: vi.fn().mockResolvedValue(mockSupabase),
 }));
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceClient: vi.fn(() => mockServiceSupabase),
+}));
+vi.mock('@/lib/ops-heartbeat', () => ({
+  recordHeartbeat: (...args: unknown[]) => mockHeartbeat(...args),
+}));
+vi.mock('@/lib/env', () => ({ env: { CRON_SECRET: 'cron-test-secret' } }));
 
 // Hinweis: Der 401-Pfad (nicht eingeloggt) lebt in withApiAuth selbst und ist
 // auf Route-Ebene bewusst nicht abgedeckt — wie in clubs.test.ts. Hier wird
@@ -139,10 +148,12 @@ function buildRequest(body: unknown = {}) {
 
 describe('POST /api/reminders/booking-tomorrow', () => {
   let POST: (req: NextRequest) => Promise<Response>;
+  let GET: (req: NextRequest) => Promise<Response>;
 
   beforeAll(async () => {
     const mod = await import('@/app/api/reminders/booking-tomorrow/route');
     POST = mod.POST;
+    GET = mod.GET;
   });
 
   beforeEach(() => {
@@ -159,6 +170,17 @@ describe('POST /api/reminders/booking-tomorrow', () => {
       if (table === 'users') return makeChain({ data: MEMBER });
       return makeChain({});
     });
+    mockServiceSupabase.from.mockImplementation((table: string) => mockSupabase.from(table));
+  });
+
+  it('liest im signierten Cron-Lauf mit Service-Rechten und schreibt den Heartbeat', async () => {
+    const req = new NextRequest('http://localhost/api/reminders/booking-tomorrow', {
+      headers: { authorization: 'Bearer cron-test-secret' },
+    });
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    expect(mockServiceSupabase.from).toHaveBeenCalledWith('sessions');
+    expect(mockHeartbeat).toHaveBeenCalledWith('cron-booking-reminders');
   });
 
   // ── Auth & Rate Limit ──────────────────────────────────

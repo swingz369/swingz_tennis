@@ -42,7 +42,7 @@ import type { Database } from '@/types/supabase';
 import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
 import { hasRole, getHighestRole } from '@/lib/auth-common';
 import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
-import { isSubscriptionPastDue } from '@/lib/subscription-gate';
+import { getSubscriptionState } from '@/lib/subscription-gate';
 import { errorResponse, internalErrorResponse, ApiException } from '@/lib/api-error';
 import { createLogger } from '@/lib/logger';
 
@@ -285,6 +285,33 @@ export function forbiddenResponse(message = 'Zugriff verweigert'): NextResponse 
 
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
+// Ein Neukunde muss den Wizard und Checkout erreichen können; bestehende
+// Kunden behalten bei gesperrtem Zugang ihren Export- und Zahlungsweg.
+function allowedWithoutSubscription(pathname: string, method: string): boolean {
+  if (pathname === '/api/stripe/subscribe' && method === 'POST') return true;
+  if (pathname === '/api/stripe/portal' && method === 'GET') return true;
+  if (pathname === '/api/me' && method === 'GET') return true;
+  if (pathname === '/api/clubs' && ['GET', 'POST'].includes(method)) return true;
+  if (pathname === '/api/users/superadmin-setup' && method === 'POST') return true;
+  if (pathname === '/api/admin/switch-club' && method === 'POST') return true;
+  if (/^\/api\/clubs\/[^/]+$/.test(pathname) && method === 'GET') return true;
+  if (/^\/api\/clubs\/[^/]+\/setup$/.test(pathname) && ['GET', 'POST', 'PATCH'].includes(method))
+    return true;
+  if (/^\/api\/clubs\/[^/]+\/onboarding-settings$/.test(pathname) && method === 'GET') return true;
+  if (
+    method === 'GET' &&
+    [
+      '/api/user/export',
+      '/api/analytics/members/export',
+      '/api/analytics/bookings/export',
+      '/api/analytics/revenue/export',
+      '/api/billing/export/datev',
+    ].includes(pathname)
+  )
+    return true;
+  return false;
+}
+
 export interface WithAuthOptions {
   /**
    * Skip the subscription-past-due write gate for this route. Only set this
@@ -321,22 +348,22 @@ export async function withAuth(
   try {
     const auth = await requireAuth(request);
 
-    // Dunning gate: an admin/superadmin whose OWN SaaS subscription is
-    // past_due/unpaid may keep reading (GET), but not writing, until they fix
-    // payment. Never applies to owner (platform staff, not a paying
-    // customer) or trainer/member (not individually billed — see
-    // lib/plans.ts). Centralized here so every one of the ~300 API routes
-    // gets it automatically instead of each route checking it itself.
-    if (
-      WRITE_METHODS.has(request.method) &&
-      !options.allowWhilePastDue &&
-      (auth.role === 'admin' || auth.role === 'superadmin') &&
-      (await isSubscriptionPastDue(auth.supabase, auth.user.id))
-    ) {
-      return errorResponse(
-        'PAYMENT_REQUIRED',
-        'Zahlung ausstehend. Bitte aktualisiere deine Zahlungsmethode im Kundenportal, um fortzufahren.'
-      );
+    if (auth.role === 'admin' || auth.role === 'superadmin') {
+      const subscription = await getSubscriptionState(auth.supabase, auth.user.id);
+      const pathname = request.nextUrl.pathname;
+      if (subscription === 'none' && !allowedWithoutSubscription(pathname, request.method)) {
+        return errorResponse('PAYMENT_REQUIRED', 'Bitte schließe zuerst ein Abonnement ab.');
+      }
+      if (
+        subscription === 'past_due' &&
+        WRITE_METHODS.has(request.method) &&
+        !options.allowWhilePastDue
+      ) {
+        return errorResponse(
+          'PAYMENT_REQUIRED',
+          'Zahlung ausstehend. Bitte aktualisiere deine Zahlungsmethode im Kundenportal, um fortzufahren.'
+        );
+      }
     }
 
     let parsedBody: unknown;

@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const mock = vi.hoisted(() => ({
   role: 'admin' as 'owner' | 'superadmin' | 'admin' | 'trainer' | 'member',
   subscriptionStatus: 'active' as string | null,
+  subscriptionTier: 'solo_s' as string,
 }));
 
 vi.mock('@supabase/ssr', () => ({
@@ -32,7 +33,13 @@ vi.mock('@supabase/ssr', () => ({
       chain.order = vi.fn(() => chain);
       chain.maybeSingle = vi.fn(async () => {
         if (table === 'users') {
-          return { data: { subscription_status: mock.subscriptionStatus }, error: null };
+          return {
+            data: {
+              subscription_status: mock.subscriptionStatus,
+              subscription_tier: mock.subscriptionTier,
+            },
+            error: null,
+          };
         }
         return { data: null, error: null };
       });
@@ -72,14 +79,15 @@ afterEach(() => {
   else process.env.SUBSCRIPTION_ENFORCEMENT = enforcementVorher;
 });
 
-function makeRequest(method: string) {
-  return new NextRequest('http://localhost/api/test', { method });
+function makeRequest(method: string, path = '/api/test') {
+  return new NextRequest(`http://localhost${path}`, { method });
 }
 
 describe('withAuth: subscription dunning gate', () => {
   beforeEach(() => {
     mock.role = 'admin';
     mock.subscriptionStatus = 'active';
+    mock.subscriptionTier = 'solo_s';
   });
 
   it('allows GET even when the admin subscription is past_due', async () => {
@@ -140,5 +148,31 @@ describe('withAuth: subscription dunning gate', () => {
       allowWhilePastDue: true,
     });
     expect(res.status).toBe(200);
+  });
+
+  it('sperrt Lesen und Schreiben geschützter APIs ohne Abo', async () => {
+    mock.subscriptionStatus = null;
+    mock.subscriptionTier = 'free';
+    for (const method of ['GET', 'POST']) {
+      const res = await withAuth(makeRequest(method, '/api/groups'), async () =>
+        NextResponse.json({ ok: true })
+      );
+      expect(res.status).toBe(402);
+    }
+  });
+
+  it('lässt Checkout und Datenexport ohne Abo erreichbar', async () => {
+    mock.subscriptionStatus = null;
+    mock.subscriptionTier = 'free';
+    for (const [method, path] of [
+      ['POST', '/api/stripe/subscribe'],
+      ['GET', '/api/user/export'],
+      ['POST', '/api/clubs/club-1/setup'],
+    ]) {
+      const res = await withAuth(makeRequest(method, path), async () =>
+        NextResponse.json({ ok: true })
+      );
+      expect(res.status).toBe(200);
+    }
   });
 });

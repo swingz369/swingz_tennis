@@ -33,17 +33,26 @@ describe('AnalyticsService', () => {
     expect(b).toMatchObject({ courtName: 'TBD', date: '', duration: 0 });
   });
 
-  it('zählt nur bestätigte Buchungen der letzten 6 Monate', async () => {
-    vi.spyOn(AnalyticsRepository.prototype, 'findBookingsWithSession').mockResolvedValue([
-      booking('ok', 'confirmed', daysAgo(2)),
-      booking('alt', 'confirmed', daysAgo(400)),
-      booking('zukunft', 'confirmed', daysAgo(-5)),
-      booking('storniert', 'cancelled', daysAgo(2)),
-      booking('ohne', 'confirmed', null),
+  it('summiert ausschließlich echte abgeschlossene Zahlungen', async () => {
+    vi.spyOn(AnalyticsRepository.prototype, 'findPaidPayments').mockResolvedValue([
+      {
+        id: 'pay-1',
+        memberId: 'member-1',
+        amount: 23.5,
+        paidAt: '2026-09-20T10:00:00Z',
+        method: 'stripe',
+      },
+      {
+        id: 'pay-2',
+        memberId: 'member-2',
+        amount: 10,
+        paidAt: '2026-09-21T11:00:00Z',
+        method: 'cash',
+      },
     ]);
     const r = await new AnalyticsService(fakeAuth()).revenue('club-1');
-    expect(r.payments.map((p) => p.id)).toEqual(['pay-ok']);
-    expect(r.totalRevenue).toBe(15);
-    expect(r.monthlyBreakdown).toHaveLength(1);
+    expect(r.payments.map((p) => p.id)).toEqual(['pay-1', 'pay-2']);
+    expect(r.totalRevenue).toBe(33.5);
+    expect(r.monthlyBreakdown).toEqual([{ month: '2026-09', revenue: 33.5 }]);
   });
 });

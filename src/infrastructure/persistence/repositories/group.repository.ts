@@ -29,9 +29,13 @@ function assertNoError(error: { message: string } | null, action: string): void 
 }
 
 function mapToDomain(row: GroupRow): Group {
-  const memberIds: MemberId[] = ((row.member_ids as string[] | null) ?? []).map((id) =>
-    MemberId.fromString(id)
-  );
+  const rawMemberIds = row.member_ids;
+  if (rawMemberIds != null && !Array.isArray(rawMemberIds)) {
+    log.error('Ungültige member_ids in Gruppe', new Error(`Gruppe ${row.id}: Array erwartet`));
+  }
+  const memberIds: MemberId[] = (Array.isArray(rawMemberIds) ? rawMemberIds : [])
+    .filter((id): id is string => typeof id === 'string')
+    .map((id) => MemberId.fromString(id));
   return GroupEntity.reconstitute(
     GroupId.fromString(row.id),
     ClubId.fromString(row.club_id),

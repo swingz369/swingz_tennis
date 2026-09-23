@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
+> Zuletzt verifiziert: 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -290,6 +290,15 @@ oder mit `true` bricht) und `src/__tests__/security/service-client-club-scope.te
 
 ## SECURITY DEFINER-Funktionen ohne eigenen Autorisierungs-Check (Fund 14.09.2026)
 
+**Stripe-Event-RPC, Stand 24.09.2026:** Die Live-Abfrage auf dem Produktions-VPS bestätigt,
+dass `anon`, `authenticated` und `service_role` die Funktion
+`check_and_record_stripe_event(text,text)` ausführen dürfen. Sie läuft als `SECURITY DEFINER`
+und schreibt in `stripe_events`; die Tabellen-Policy erlaubt nur `service_role`, schützt aber
+nicht vor dem direkten Funktionsaufruf. Die neue Migration
+`20260924100000_stripe_event_rpc_service_role_only.sql` entzieht `PUBLIC`, `anon` und
+`authenticated` das Ausführungsrecht. **Noch nicht auf Produktion angewendet.** Nach Anwendung
+mit `has_function_privilege` für alle drei Rollen und einem signierten Webhook prüfen.
+
 `is_club_admin`/`is_club_trainer`/`is_club_member` schützen nur, was über RLS läuft. Eine
 SECURITY DEFINER-Funktion umgeht RLS per Definition — sie muss ihre eigene Prüfung mitbringen,
 sonst ist jede an `authenticated` gegrantete SECURITY DEFINER-Funktion ein offener
@@ -364,10 +373,10 @@ Inhalt und Befund:
 - **Das eigentliche Risiko dahinter:** `DATABASE_URL` verbindet als `postgres` (BYPASSRLS). Die 26 API-Routes, die Drizzle statt Supabase-REST nutzen, umgehen RLS damit vollständig — dort schützt allein der Anwendungscode. Fix = dedizierte App-Rolle ohne BYPASSRLS + neue `DATABASE_URL`. Infra-Änderung, keine Migration.
 - **Sechs INSERT-Policies mit `WITH CHECK (true)` ohne `TO`** (gelten also für PUBLIC inkl. `anon`, und `anon` hat auf allen sechs das INSERT-Grant): `email_queue`, `nuliga_sync_log`, `newsletter_send_logs`, `rate_history`, `gamification_badges`, `registration_requests`. Vier der Namen sagen selbst „System"/„service role" — gemeint war `service_role`, gewirkt hat jeder. **`email_queue` ist der gravierendste Fall**: anonyme Zeilen in der Versand-Warteschlange bedeuten Mailversand über `noreply@swingz.cloud`, also Spam-/Phishing-Relay auf Kosten der Domain-Reputation. Gedroppt werden die vier reinen Service-Fälle; `gamification_badges` wird auf `TO authenticated` beschnitten (Schreibpfad läuft über `withApiAuth`); `registration_requests` bleibt bewusst offen (öffentlicher Registrierungspfad).
 
-Weitere Befunde desselben Audits, **noch offen**:
+Weitere Befunde desselben Audits; Live-Abgleich vom 24.09.2026 darunter:
 
-- **`season_planning_configs` und `season_statistics`**: RLS an, aber **0 Policies** — nur über den Service-Client erreichbar.
-- **`20260812020000_scope_remaining_superadmin_policies.sql` — Datei liegt, noch NICHT angewendet** (Tool-Blockade in der Session, nicht DB-seitig). Behandelt die letzten drei echten Kandidaten mit unscoped `is_superadmin()`: `audit_logs` SELECT (zwei Policies zu einer auf `is_club_admin(club_id)` zusammengeführt), `trainers` ALL (ersetzt durch SELECT/UPDATE/DELETE club-scoped über `trainer_club`; kein INSERT-Pendant, weil Trainer per Service-Client angelegt werden) und `users` UPDATE (club-scoped über `user_club_memberships`). Trockenlauf mit `ROLLBACK` bestätigt: `audit_logs` 2 → 1 sichtbare Zeile für Admin und Superadmin (die zweite gehörte einem anderen Verein — beabsichtigte Verschärfung), `trainers` für Admin 0 → 12 (Admins hatten auf `trainers` bisher überhaupt keine RLS-Policy, nur `trainers_own` und den Superadmin-Bypass), alles andere unverändert.
+- **`season_planning_configs` und `season_statistics`** hatten damals 0 Policies; live am 24.09.2026 haben beide Policies. Unter Public-Tabellen mit aktivem RLS ist nur `ops_heartbeats` ohne Policy (beabsichtigter Service-Zugriff; siehe unten).
+- **`20260812020000_scope_remaining_superadmin_policies.sql`** war beim damaligen Audit noch nicht angewendet. Live am 24.09.2026 nutzt keine Policy auf `audit_logs`, `trainers` oder `users` in ihrer `USING`-Klausel mehr `is_superadmin()` ohne Vereinsbezug. Ob die Datei oder ein anderer Fix den Zustand hergestellt hat, ist wegen des unvollständigen Trackings offen; nicht blind nachziehen.
 - **Verbleibende unscoped `is_superadmin()`-Policies nach diesem Durchgang, alle bewusst so**: `background_jobs`, `base_interest_rates`, `school_holidays` (plattformweite Konzepte ohne Vereinsbezug). Die Abrechnungstabellen sind seit 15.08.2026 club-scoped (siehe unten).
 - **Der Pooler auf `supabase.swingz.cloud:6543` akzeptiert Klartext-Verbindungen** (Verbindung mit `ssl: false` erfolgreich, mit TLS „wrong version number"). DB-Credentials und Nutzdaten gehen unverschlüsselt über die Leitung. VPS-Thema, keine Migration.
 

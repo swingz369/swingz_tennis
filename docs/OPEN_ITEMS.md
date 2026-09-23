@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 20. September 2026 (UI-Einheitlichkeit abgeschlossen; nuLiga-Scraper entfernt, Widget statt Abruf; davor 18. September 2026: Abgleich gegen Code und Produktion: E-Mail, rohe DB-Fehler, CI-Mocks, P3-Punkte erledigt; nuLiga-Rechtsklärung als Launch-Punkt ergänzt); davor 17. September 2026 (Auslieferung von 33 Commits nach main, 8 Migrationen
+> Zuletzt verifiziert: 24. September 2026 (Befunde der Prüfungen vom 23.09. und Umsetzungsstand ergänzt); davor 20. September 2026 (UI-Einheitlichkeit abgeschlossen; nuLiga-Scraper entfernt, Widget statt Abruf; davor 18. September 2026: Abgleich gegen Code und Produktion: E-Mail, rohe DB-Fehler, CI-Mocks, P3-Punkte erledigt; nuLiga-Rechtsklärung als Launch-Punkt ergänzt); davor 17. September 2026 (Auslieferung von 33 Commits nach main, 8 Migrationen
 > auf Produktion angewendet, Deploy-Kette geprüft — drei neue Befunde unten); davor 16. September
 > 2026 (ADR-005-Migrationsfortschritt am Code geprüft); 30. August 2026 (Bezahlschranke
 > abgeschaltet — siehe unten)
@@ -86,6 +86,23 @@ Code: `lib/subscription-gate.ts` (`isSubscriptionEnforced`), `lib/env.ts`,
 ---
 
 ## P0 — Blocker
+
+### Befunde der Prüfungen vom 23.09.2026
+
+- **Stripe-Webhook: Retry nur teilweise abgesichert (P0).** Code fängt seit 24.09. RPC-Fehler
+  ab und gibt die Event-Reservierung nach Handler-Fehler frei. Teilweise erfolgte fachliche
+  Schreibvorgänge können beim Retry weiterhin doppelt wirken. → Handler je Event fachlich
+  idempotent machen und mit signierten Testereignissen samt Fehler nach dem ersten Schreibschritt
+  abnehmen. Siehe [`PRODUKTIONSREIFE.md`](PRODUKTIONSREIFE.md) § aktueller Umsetzungsplan.
+- **Stripe-RPC-Funktionsrechte in Produktion bestätigt (P0), Migration ausstehend.** Live gewährt
+  `anon` und `authenticated` `EXECUTE` auf `check_and_record_stripe_event(text,text)`.
+  `20260924100000_stripe_event_rpc_service_role_only.sql` entzieht es; lokaler Rollback-Test
+  ergab `f|f|t` für anon/authenticated/service_role. Vor dem Deploy auf leerer DB testen,
+  danach Live-Rechte und signierten Webhook prüfen.
+- **Abo-Gate (P0): Code-Sperre seit 24.09. für `none` ergänzt, Live-Abnahme offen.**
+  Geschützte APIs liefern bei aktivierter Durchsetzung 402; Onboarding, Checkout, Portal und
+  Exporte haben Ausnahmen. `SUBSCRIPTION_ENFORCEMENT=off` bleibt bis zum Launch gesetzt.
+  Direkte API-Tests mit Agent-Admin ohne Abo und Tennisschule stehen aus.
 
 ### ✅ Erledigt 17.09.2026 — GitHub Actions war für das Repository abgeschaltet
 
@@ -183,18 +200,20 @@ Der Pooler `supabase.swingz.cloud:6543` akzeptiert Klartext (mit TLS „wrong ve
 Credentials und Nutzdaten gehen unverschlüsselt über die Leitung. VPS-Thema.
 → Quelle: `docs/DATABASE.md`, `docs/tickets/roadmap/TICKET-pooler-tls-und-drizzle-service-pfad.md`.
 
-### Migration liegt, ist aber nie angewendet (RLS-Scoping)
+### ✅ Live-Zielzustand für drei Superadmin-Policies am 24.09.2026 geprüft
 
-`20260812020000_scope_remaining_superadmin_policies.sql` — angelegt, **nicht** angewendet.
-Behandelt die letzten unscoped `is_superadmin()`-Policies auf `audit_logs`, `trainers`, `users`.
-→ **Fix:** per `docker exec supabase-db psql` anwenden (Trockenlauf mit `ROLLBACK` lief bereits).
-→ Quelle: `docs/DATABASE.md`.
+Auf `audit_logs`, `trainers` und `users` gibt es live keine Policy mehr, deren `USING`-Klausel
+`is_superadmin()` ohne Vereinsbezug verwendet. Ob die alte Datei
+`20260812020000_scope_remaining_superadmin_policies.sql` je angewendet wurde, bleibt wegen
+unvollständigem Migrationstracking ungeklärt. Sie wird **nicht** allein anhand ihres Dateinamens
+nachträglich ausgeführt; zuerst ist ein Live-Schema-Abgleich nötig.
 
 ### Tabellen mit RLS aber ohne Policies
 
-`season_planning_configs` und `season_statistics`: RLS an, **0 Policies** — nur über den
-Service-Client erreichbar. → **Fix:** Policies definieren oder bewusst dokumentieren.
-→ Quelle: `docs/DATABASE.md`.
+Die alte Angabe zu `season_planning_configs` und `season_statistics` ist am 24.09.2026 live
+überholt: Beide haben Policies. Unter den Public-Tabellen mit aktivem RLS hat nur
+`ops_heartbeats` keine Policy; prüfen, ob der ausschließliche Service-Client-Zugriff hier
+beabsichtigt ist. → Quelle: Live-Abfrage gegen `pg_class`/`pg_policies`.
 
 ---
 
@@ -205,11 +224,14 @@ Service-Client erreichbar. → **Fix:** Policies definieren oder bewusst dokumen
   GitHub-Workflow. Der Nurture-Flow des Probetrainings verschickt damit weder die Erinnerung nach
   2 Tagen noch den letzten Anstoß nach 7 Tagen. → **Entscheiden:** einplanen oder Route löschen.
   → Quelle: Befund 17.09.2026 beim Modul-Diagramm (`docs/diagrams/swingz-overview.html`).
-- **`cron-booking-reminders` hat nie einen Heartbeat geschrieben.** `/api/health` meldet für
-  diesen Job dauerhaft `"status": "unbekannt"`, während alle anderen Jobs Altersangaben liefern.
-  Die Route `/api/reminders/booking-tomorrow` steht in `vercel.json` (18:00). → **Prüfen**, ob der
-  Job scheitert, bevor `recordHeartbeat()` greift.
-  → Quelle: `/api/health` in Produktion, 17.09.2026.
+- **`cron-booking-reminders`: Code-Ursache am 24.09.2026 behoben, Produktion offen.** Der
+  signierte Cron hatte keine Nutzer-Session, seine Repository-Abfragen liefen aber mit
+  Nutzer-Client gegen RLS; die Live-Policy für `sessions` verlangt eine Vereinsmitgliedschaft.
+  Zusätzlich war der PostgREST-Join `sessions → clubs` ungültig (`PGRST200`), da er über
+  `schedules` laufen muss. Beide Code-Ursachen sind korrigiert; der manuelle Admin-Lauf bleibt
+  im Nutzerkontext.
+  → Nach Deploy signierten Lauf und Heartbeat in `/api/health` prüfen. Der bisherige Live-Status
+  war `"unbekannt"`.
 - **✅ Erledigt 17.09.2026** — Repository war umgezogen (`swingz369/swingz` →
   `swingz369/swingz_tennis`), `git remote` und `docs/SERVICES.md` zeigten noch auf den alten
   Namen. Beides nachgezogen.
@@ -217,10 +239,11 @@ Service-Client erreichbar. → **Fix:** Policies definieren oder bewusst dokumen
   Preisregeln, Auswertungen (`analytics/*`) und `clubs/[id]` laufen über je einen Service; die
   Drizzle-Repositories für Buchungen, Termine und Vereine sind entfernt. `bookings`,
   `stripe/checkout` und `schedule` greifen nicht mehr auf Repositories zu.
-- **Umsatz-Export (`/api/analytics/revenue/export`) liefert Platzhalterdaten.** Pauschal 15 €
-  je bestätigter Buchung, Zahlungsmethode **zufällig**, Mitgliedsname „Member N“ — stammt aus dem
-  alten Use-Case und wurde 1:1 übernommen. → **Entscheiden:** auf `invoices` umstellen oder den
-  Export entfernen, bevor ein Verein ihn für die Buchhaltung nutzt.
+- **Umsatz-Export (`/api/analytics/revenue/export`): Code am 24.09.2026 korrigiert, Live-Abnahme offen.**
+  Der CSV-Export liest jetzt ausschließlich abgeschlossene `payments` samt zugehöriger Vereinsrechnung;
+  Pauschalbetrag, erfundener Name und Zufallsmethode sind entfernt. Das bisher als PDF deklarierte
+  HTML wird abgewiesen. → Mit Agent-Rechnung und Testzahlung gegenprüfen, dann erst als
+  für die Buchhaltung abgenommen markieren.
 - **Insights (`/api/analytics/insights`) sind Attrappe.** `lastVisit` wird nie befüllt, damit gilt
   jedes Mitglied als „hohes Abwanderungsrisiko“.
 - **RLS auf `bookings` zu weit.** Policy `booking_access` (ALL) lässt jedes Vereinsmitglied alle

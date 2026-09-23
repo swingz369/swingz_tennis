@@ -79,10 +79,9 @@ export async function getSubscriptionState(
 }
 
 /**
- * Nur der Mahnfall. Getrennt von `getSubscriptionState`, weil die
- * API-Schicht Schreibzugriffe bei ausstehender Zahlung sperrt, ein Konto
- * ohne Abo aber weiterhin den Onboarding-Wizard bedienen können muss —
- * sonst kommt ein Neukunde nie bis zum Checkout.
+ * Nur der Mahnfall für Aufrufer, die ausdrücklich diesen Zustand benötigen.
+ * Die zentrale API-Sperre verwendet `getSubscriptionState` und lässt für
+ * Neukunden nur Onboarding, Checkout und Datenexport zu.
  */
 export async function isSubscriptionPastDue(
   supabase: SupabaseClient,
