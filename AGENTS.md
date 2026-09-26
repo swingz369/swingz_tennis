@@ -39,7 +39,7 @@ Eine ADR schreibt, wer eine Entscheidung trifft, die spätere Arbeit einschränk
 
 ### 3a. Die Regeln werden geprüft, nicht geglaubt
 
-`npm run docs:check` prüft die Regeln 1–4 maschinell (Dubletten-Namen, fehlende Index-Einträge, tote Links, ADR-Schema, Archiv-Datumspräfix) und läuft im `pre-commit`-Hook, sobald `.md`-Dateien im Commit sind.
+`pnpm docs:check` prüft die Regeln 1–4 maschinell (Dubletten-Namen, fehlende Index-Einträge, tote Links, ADR-Schema, Archiv-Datumspräfix) und läuft im `pre-commit`-Hook, sobald `.md`-Dateien im Commit sind.
 
 Grund: Die Regeln standen monatelang genau so hier und wurden trotzdem dreimal gebrochen — zuletzt entstand `docs/TESTZUGAENGE.md` neben dem bereits existierenden `docs/TEST-CREDENTIALS.md`. Prosa ohne Prüfung ist keine Regel, sondern eine Bitte. Wer eine Regel ergänzt, ergänzt den Check in `scripts/check-docs.ts` mit — sonst verfällt sie wie die vorherigen.
 
@@ -113,17 +113,17 @@ Wer als Agent Daten anlegen, ändern oder löschen will, tut das in **Claude San
 `scripts/seed-testdata.ts` ist die einzige Quelle für Testdaten. Neue Testdaten kommen als Änderung an dessen `CLUBS`-Konstante dazu — **kein zweites Seed-Skript daneben** (siehe die Doku-Regeln oben, gleiches Muster, gleicher Grund).
 
 ```bash
-npm run seed          # Ist-Zustand, ändert nichts
-npm run seed:docs     # Zugangsdaten-Doku aus dem Ist-Zustand neu schreiben
-npm run seed:agent    # nur die Agent-Lane neu — Nutzer-Vereine bleiben unberührt
-npm run seed:reset    # komplett platt + alles neu (löscht auch die Nutzer-Lane!)
+pnpm seed          # Ist-Zustand, ändert nichts
+pnpm seed:docs     # Zugangsdaten-Doku aus dem Ist-Zustand neu schreiben
+pnpm seed:agent    # nur die Agent-Lane neu — Nutzer-Vereine bleiben unberührt
+pnpm seed:reset    # komplett platt + alles neu (löscht auch die Nutzer-Lane!)
 ```
 
-`npm run seed:reset` ist destruktiv für **beide** Lanes und wird ohne Rückfrage des Menschen nicht ausgeführt. Für Agenten-Arbeit reicht `npm run seed:agent`.
+`pnpm seed:reset` ist destruktiv für **beide** Lanes und wird ohne Rückfrage des Menschen nicht ausgeführt. Für Agenten-Arbeit reicht `pnpm seed:agent`.
 
 ### 3. Zugangsdaten sind generiert, nicht gepflegt
 
-`docs/TEST-CREDENTIALS.md` schreibt das Seed-Skript bei jedem Vollauf neu und ist per `.gitignore` ausgeschlossen (Klartext-Passwörter). Es ist damit ein generiertes Artefakt im Sinne der Regel oben — nicht von Hand editieren, nicht als lebendes Dokument pflegen. Wer Accounts wissen will, liest die Datei oder führt `npm run seed` aus.
+`docs/TEST-CREDENTIALS.md` schreibt das Seed-Skript bei jedem Vollauf neu und ist per `.gitignore` ausgeschlossen (Klartext-Passwörter). Es ist damit ein generiertes Artefakt im Sinne der Regel oben — nicht von Hand editieren, nicht als lebendes Dokument pflegen. Wer Accounts wissen will, liest die Datei oder führt `pnpm seed` aus.
 
 ## Auslieferung
 

@@ -3,7 +3,7 @@
 @AGENTS.md
 
 > Automatisch bei jedem Session-Start geladen. Nur Dinge die NICHT aus dem Code offensichtlich sind.
-> Zuletzt verifiziert: 13. September 2026 (Rollen-Hierarchie und Tarife gegen Code geprüft;
+> Zuletzt verifiziert: 26. September 2026 (Code-Stand-Zahlen, pnpm statt npm; zuvor 13.09.: Rollen-Hierarchie und Tarife gegen Code geprüft;
 > Datenzugriffsmuster ADR-005 ergänzt)
 > Doku-Governance-Regeln (welche Datei wohin, wann updaten statt neu anlegen): siehe `AGENTS.md`.
 
@@ -15,7 +15,7 @@
 
 - Alle **UI-Texte auf Deutsch**. i18n-Infrastruktur (next-intl) vorhanden aber noch inaktiv.
 - Produktionsbetrieb: https://swingz.vercel.app
-- Code-Stand: ~255 API-Routes, 99 Pages, 120 Components, 102 DB-Migrationen
+- Code-Stand (26.09.2026): ~320 API-Routes, ~125 Pages, 35 Migrationsdateien inkl. Baseline (siehe AGENTS.md § Migrationen)
 
 ---
 
@@ -25,7 +25,7 @@
 app/                    # Next.js 16 App Router
   (protected)/          # owner/, superadmin/, admin/, trainer/, member/
   (public)/             # trial-training/ (kein Login nötig)
-  api/                  # API Routes (255)
+  api/                  # API Routes (~320)
   landing/              # Marketing Landing Page
 components/             # React Components (shared + layout)
 lib/                    # Utilities, Services, Helpers
@@ -251,7 +251,7 @@ In `notifications`-Tabelle via Service-Client einfügen.
 npx tsc --noEmit          # Vor jedem Commit — muss 0 Errors geben
 npx vitest run            # Unit Tests
 npx playwright test       # E2E Tests
-npm run test:tenant       # Mandanten-Isolation: Alpha-Admin ruft alle GET-Routen mit Gamma-IDs auf
+pnpm test:tenant       # Mandanten-Isolation: Alpha-Admin ruft alle GET-Routen mit Gamma-IDs auf
                           # (braucht Dev-Server mit DISABLE_RATE_LIMITING=true + lokale DB)
 ```
 
@@ -269,8 +269,8 @@ Produktion. Aufteilung, Env-Dateien, Migrations- und Deploy-Weg, Backups:
 **`docs/ENVIRONMENTS.md`** — dort § 5 auch der komplette Weg Commit → Merge → Migration → Deploy, § 5a lokale Migrationen (`db:migrate` geht lokal nicht), § 5b Tests, § 5c Dev-Server (Begründung: `docs/decisions/adr-003-datenbank-umgebungen.md`).
 
 ```bash
-npm run db:status:prod    # offene Migrationen — Produktion (lokal NICHT verlässlich!)
-npm run db:migrate:prod   # anwenden — Produktion (liest .env.prod.local, nach Merge auf main)
+pnpm db:status:prod    # offene Migrationen — Produktion (lokal NICHT verlässlich!)
+pnpm db:migrate:prod   # anwenden — Produktion (liest .env.prod.local, nach Merge auf main)
 ```
 
 Seed-Skripte brechen ab, wenn `DATABASE_URL` nicht auf localhost zeigt.
@@ -315,10 +315,10 @@ Alle Zugangsdaten: **`docs/TEST-CREDENTIALS.md`** — wird vom Seed generiert, n
 Agent-Lane, weil E2E-Tests schreiben.
 
 ```bash
-npm run seed              # Ist-Zustand zeigen, nichts ändern
-npm run seed:docs         # Zugangsdaten-Doku neu schreiben (ändert keine Daten)
-npm run seed:agent        # nur die Claude-Sandboxen neu aufbauen
-npm run seed:reset        # DB komplett platt + alle 7 Vereine neu
+pnpm seed              # Ist-Zustand zeigen, nichts ändern
+pnpm seed:docs         # Zugangsdaten-Doku neu schreiben (ändert keine Daten)
+pnpm seed:agent        # nur die Claude-Sandboxen neu aufbauen
+pnpm seed:reset        # DB komplett platt + alle 7 Vereine neu
 ```
 
 ---
