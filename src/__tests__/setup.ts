@@ -7,6 +7,10 @@ import path from 'path';
 // Load .env.local for test environment (vitest only auto-loads .env)
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
+// Routen-Tests prüfen Fachlogik, nicht die Abo-Schranke. Ohne .env.local (CI)
+// würde jede geschützte Route 402 liefern. Die Gate-Suites setzen den Wert selbst.
+process.env.SUBSCRIPTION_ENFORCEMENT ??= 'off';
+
 afterEach(() => {
   cleanup();
 });
