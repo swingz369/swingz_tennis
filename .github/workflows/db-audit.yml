@@ -141,7 +141,7 @@ jobs:
 
       - name: Upload transcripts as Artifacts (retention 14 days)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: db-audit-transcript-${{ github.run_id }}
           path: |
