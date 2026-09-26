@@ -73,7 +73,8 @@ export async function POST(_request: NextRequest) {
     log.info('Received Stripe event', { type: event.type, eventId: event.id });
 
     switch (event.type) {
-      case 'checkout.session.completed': {
+      case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object as Stripe.Checkout.Session;
         const { invoiceId, bookingId, orderId, orderType, saasSubscription, adminUserId, plan } =
           session.metadata || {};
@@ -179,11 +180,9 @@ export async function POST(_request: NextRequest) {
   }
 }
 
-/** Detects async payment methods (SEPA, iDEAL, etc.) */
-function isAsyncPaymentMethod(session: Stripe.Checkout.Session): boolean {
-  return (session.payment_method_types ?? []).some((t) =>
-    ['sepa_debit', 'ideal', 'bancontact'].includes(t)
-  );
+/** Offered payment methods do not tell us whether this payment has settled. */
+function isPaymentPending(session: Stripe.Checkout.Session): boolean {
+  return session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required';
 }
 
 // --- Invoice payment handling ---
@@ -208,7 +207,7 @@ async function handleInvoicePayment(session: Stripe.Checkout.Session, invoiceId:
   }
 
   if (existingPayment) {
-    const targetStatus = isAsyncPaymentMethod(session) ? 'pending' : 'completed';
+    const targetStatus = isPaymentPending(session) ? 'pending' : 'completed';
     if (existingPayment.status !== targetStatus && existingPayment.status !== 'completed') {
       await billingEngine.updatePaymentStatus(existingPayment.id, targetStatus);
     }
@@ -216,16 +215,32 @@ async function handleInvoicePayment(session: Stripe.Checkout.Session, invoiceId:
     return;
   }
 
-  const payment = await billingEngine.createPayment({
-    invoice_id: invoiceId,
-    amount: session.amount_total ? session.amount_total / 100 : 0,
-    payment_method: 'stripe',
-    external_id: session.payment_intent as string,
-  });
+  let payment;
+  try {
+    payment = await billingEngine.createPayment({
+      invoice_id: invoiceId,
+      amount: session.amount_total ? session.amount_total / 100 : 0,
+      payment_method: 'stripe',
+      external_id: session.payment_intent as string,
+    });
+  } catch (error) {
+    // Paralleles Event hat die Zahlung schon angelegt (Unique-Index auf
+    // Stripe-external_id) — dann ist dieses Event erledigt.
+    const { data: raced } = await supabase
+      .from('payments')
+      .select('id')
+      .eq('external_id', session.payment_intent as string)
+      .maybeSingle();
+    if (raced) {
+      log.info('Payment created concurrently — skipping', { sessionId: session.id });
+      return;
+    }
+    throw error;
+  }
 
   // SEPA Direct Debit clears asynchronously (2-8 days).
   // Mark as 'pending' so payment_intent.succeeded can promote it later.
-  const isAsync = isAsyncPaymentMethod(session);
+  const isAsync = isPaymentPending(session);
   await billingEngine.updatePaymentStatus(payment.id, isAsync ? 'pending' : 'completed');
   log.info('Payment processed', { async: isAsync, invoiceId });
 
@@ -278,7 +293,7 @@ async function handleBookingPayment(session: Stripe.Checkout.Session, bookingId:
   }
 
   // SEPA: keep as 'pending' until payment_intent.succeeded fires
-  const isAsyncBooking = isAsyncPaymentMethod(session);
+  const isAsyncBooking = isPaymentPending(session);
   const bookingPaymentStatus = isAsyncBooking ? 'pending' : 'paid';
   const bookingStatus = isAsyncBooking ? 'pending' : 'confirmed';
 
@@ -345,61 +360,25 @@ async function handleBookingPayment(session: Stripe.Checkout.Session, bookingId:
 async function handleShopOrderPayment(session: Stripe.Checkout.Session, orderId: string) {
   const supabase = createServiceClient();
 
-  // Check for idempotency
-  const { data: order } = await supabase
-    .from('shop_orders')
-    .select('id, status, payment_status, items')
-    .eq('id', orderId)
-    .maybeSingle();
-
-  if (!order) {
-    throw new Error(`Shop-Bestellung ${orderId} nicht gefunden`);
+  // Status und Bestand in einer Transaktion (DB-Funktion). Bestand wird erst
+  // nach Geldeingang abgezogen — per Checkout-Event oder handlePaymentIntentSucceeded.
+  const paid = !isPaymentPending(session);
+  const { data, error } = await supabase.rpc('process_shop_order_payment', {
+    p_order_id: orderId,
+    p_paid: paid,
+  });
+  if (error) {
+    throw new Error(`Shop-Zahlung konnte nicht gespeichert werden: ${error.message}`);
   }
 
-  if (order.payment_status === 'paid') {
-    log.info('Shop order already paid — skipping', { orderId });
-    return;
+  const result = data as { status: string; short_stock?: string[] } | null;
+  if (result?.short_stock?.length) {
+    log.error('Shop order paid but stock insufficient', {
+      orderId,
+      productIds: result.short_stock,
+    });
   }
-
-  // SEPA: keep as 'pending' until payment_intent.succeeded fires
-  const shopPaymentStatus = isAsyncPaymentMethod(session) ? 'pending' : 'paid';
-
-  // Mark payment status; fulfillment starts at 'pending'
-  const { error: updateError } = await supabase
-    .from('shop_orders')
-    .update({
-      status: 'pending',
-      payment_status: shopPaymentStatus,
-    })
-    .eq('id', orderId);
-
-  if (updateError) {
-    throw new Error(`Shop-Zahlung konnte nicht gespeichert werden: ${updateError.message}`);
-  }
-
-  // Only reduce stock for sync methods (card). For SEPA/async, stock is
-  // reduced in handlePaymentIntentSucceeded when funds actually clear.
-  const isAsyncShop = isAsyncPaymentMethod(session);
-  if (!isAsyncShop) {
-    const items = (order.items as any[]) || [];
-    for (const item of items) {
-      if (!item.product_id || !item.quantity) continue;
-      const { data: product } = await supabase
-        .from('shop_products')
-        .select('stock')
-        .eq('id', item.product_id)
-        .single();
-      if (product && product.stock != null && product.stock >= item.quantity) {
-        await supabase
-          .from('shop_products')
-          .update({ stock: product.stock - item.quantity })
-          .eq('id', item.product_id)
-          .gte('stock', item.quantity);
-      }
-    }
-  }
-
-  log.info('Shop order payment processed', { orderId, async: isAsyncShop });
+  log.info('Shop order payment processed', { orderId, status: result?.status });
 }
 
 /**
@@ -425,14 +404,9 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 
   if (paymentError) throw new Error(`Zahlung konnte nicht gelesen werden: ${paymentError.message}`);
 
-  if (!payment) {
-    log.info('No payment record for PI — likely already handled', {
-      paymentIntentId: paymentIntent.id,
-    });
-    return;
-  }
-
-  if (payment.status !== 'completed') {
+  // Booking and shop checkouts do not create an invoice payment row.
+  // Their checkout metadata must still be processed when funds arrive.
+  if (payment && payment.status !== 'completed') {
     // SEPA or other async method: promote to completed
     await billingEngine.updatePaymentStatus(payment.id, 'completed');
     log.info('Payment promoted to completed (SEPA async)', { paymentId: payment.id });
@@ -451,11 +425,16 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
   const { bookingId, orderId, orderType } = session.metadata;
 
   if (bookingId) {
-    const { data: booking } = await supabase
+    const { data: booking, error: bookingReadError } = await supabase
       .from('bookings')
       .select('payment_status')
       .eq('id', bookingId)
       .maybeSingle();
+
+    if (bookingReadError) {
+      throw new Error(`Buchung konnte nicht gelesen werden: ${bookingReadError.message}`);
+    }
+    if (!booking) throw new Error(`Buchung ${bookingId} nicht gefunden`);
 
     if (booking && booking.payment_status !== 'paid') {
       const { error: bookingError } = await supabase
@@ -482,20 +461,9 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
   }
 
   if (orderType === 'shop' && orderId) {
-    const { data: order } = await supabase
-      .from('shop_orders')
-      .select('payment_status')
-      .eq('id', orderId)
-      .maybeSingle();
-
-    if (order && order.payment_status !== 'paid') {
-      const { error: orderError } = await supabase
-        .from('shop_orders')
-        .update({ status: 'pending', payment_status: 'paid' })
-        .eq('id', orderId);
-      if (orderError)
-        throw new Error(`Bestellstatus konnte nicht gespeichert werden: ${orderError.message}`);
-    }
+    // Use the same fulfillment path so a PI arriving before the checkout
+    // success event also decrements stock. The signed PI proves settlement.
+    await handleShopOrderPayment({ ...session, payment_status: 'paid' }, orderId);
   }
 }
 

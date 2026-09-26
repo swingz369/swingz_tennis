@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
+> Zuletzt verifiziert: 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -279,6 +279,24 @@ Shop-Produkten: nur noch Mitglieder des eigenen Vereins.
 Wächter: `src/__tests__/integration/rls-policy-catalog.test.ts` (Policy ohne Vereinsbezug
 oder mit `true` bricht) und `src/__tests__/security/service-client-club-scope.test.ts`
 (Routen mit ID und Service-Client ohne Vereinsprüfung).
+
+## `bookings`-Policies, Stripe-Zahlungsindex, Shop-Zahlung (Stand 26.09.2026, lokal angewendet)
+
+Live gelesen (lokal = Produktion): `booking_access` (ALL) erlaubte jedem mit irgendeiner
+Mitgliedschaft im Verein — ohne Rolle, ohne `is_active` — fremde Buchungen zu ändern/löschen.
+
+- `20260926100000_bookings_rls_booking_access_entfernen.sql`: dropt `booking_access`,
+  `Members can create bookings`, `Members can update their bookings` (Teilmengen von
+  `bookings_insert`/`bookings_update`); `bookings_delete` = `is_owner() OR is_club_trainer(club_id)`.
+  Verbleibend: `bookings_select/insert/update/delete` + `Users can view their own bookings`
+  (aktive Vereinsmitglieder lesen Vereinsbuchungen — bewusst belassen, Produktentscheidung offen).
+- `20260926110000_payments_stripe_external_id_unique.sql`: partieller Unique-Index
+  `payments_stripe_external_id_key` auf `external_id` für `payment_method = 'stripe'`.
+- `20260926120000_process_shop_order_payment_function.sql`: `process_shop_order_payment(uuid, boolean)`,
+  SECURITY DEFINER, nur `service_role`. Sperrt die Bestellung, setzt Zahlstatus und zieht Bestand
+  in einer Transaktion ab; gibt `already_paid` bzw. `short_stock` zurück.
+
+**Noch nicht auf Produktion angewendet.**
 
 ## Rollen-/Club-Scoping-Modell (aktueller, korrekter Stand)
 

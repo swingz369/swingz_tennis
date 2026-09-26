@@ -32,6 +32,7 @@ type TableHandler = (state: {
 let tableHandlers: Record<string, TableHandler> = {};
 let rpcIsNew = true;
 let rpcError: Error | null = null;
+const shopRpcCalls: Record<string, unknown>[] = [];
 
 function buildChain(table: string) {
   const state: {
@@ -89,9 +90,13 @@ vi.doMock('@/lib/stripe/stripe-client', () => ({
 vi.doMock('@/lib/supabase/service', () => ({
   createServiceClient: () => ({
     from: (table: string) => buildChain(table),
-    rpc: () => ({
-      maybeSingle: async () => ({ data: rpcIsNew, error: rpcError }),
-    }),
+    rpc: (name: string, args: Record<string, unknown>) => {
+      if (name === 'process_shop_order_payment') {
+        shopRpcCalls.push(args);
+        return Promise.resolve({ data: { status: 'paid', short_stock: [] }, error: null });
+      }
+      return { maybeSingle: async () => ({ data: rpcIsNew, error: rpcError }) };
+    },
   }),
 }));
 
@@ -124,6 +129,8 @@ describe('POST /api/webhooks/stripe', () => {
     rpcError = null;
     currentEvent = null;
     billingEngineMock.updatePaymentStatus.mockClear();
+    fakeStripeClient.checkout.sessions.list.mockReset();
+    fakeStripeClient.checkout.sessions.list.mockResolvedValue({ data: [] });
   });
 
   it('lehnt eine Anfrage ohne stripe-signature-Header ab', async () => {
@@ -167,6 +174,37 @@ describe('POST /api/webhooks/stripe', () => {
     expect(releasedId).toBe('evt_retry');
   });
 
+  it('überspringt eine Rechnungszahlung, die ein paralleles Event schon angelegt hat', async () => {
+    billingEngineMock.getInvoiceById.mockResolvedValueOnce({
+      id: 'invoice-1',
+      member_id: null,
+    } as never);
+    // Erste Abfrage: noch keine Zahlung. Nach dem Unique-Verstoß: vorhanden.
+    let paymentReads = 0;
+    tableHandlers.payments = () =>
+      paymentReads++ === 0
+        ? { data: null, error: null }
+        : { data: { id: 'payment-raced' }, error: null };
+    billingEngineMock.createPayment.mockRejectedValueOnce(
+      new Error('duplicate key value violates unique constraint')
+    );
+    currentEvent = {
+      id: 'evt_invoice_race',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_race',
+          payment_intent: 'pi_race',
+          payment_status: 'paid',
+          metadata: { invoiceId: 'invoice-1' },
+        },
+      },
+    };
+    const res = await POST(webhookRequest(currentEvent));
+    expect(res.status).toBe(200);
+    expect(billingEngineMock.updatePaymentStatus).not.toHaveBeenCalled();
+  });
+
   it('schließt eine beim ersten Versuch nur angelegte Rechnungszahlung beim Retry ab', async () => {
     billingEngineMock.getInvoiceById.mockResolvedValueOnce({
       id: 'invoice-1',
@@ -183,6 +221,7 @@ describe('POST /api/webhooks/stripe', () => {
         object: {
           id: 'cs_retry',
           payment_intent: 'pi_retry',
+          payment_status: 'paid',
           metadata: { invoiceId: 'invoice-1' },
           payment_method_types: ['card'],
         },
@@ -316,5 +355,106 @@ describe('POST /api/webhooks/stripe', () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toMatchObject({ received: true });
+  });
+
+  it('bestätigt eine bezahlte Buchung auch ohne Rechnungs-Zahlungsdatensatz', async () => {
+    let bookingUpdate: unknown = null;
+    tableHandlers.payments = () => ({ data: null, error: null });
+    tableHandlers.bookings = (state) => {
+      if (state.op === 'update') bookingUpdate = state.payload;
+      return { data: state.op === 'select' ? { payment_status: 'pending' } : null, error: null };
+    };
+    fakeStripeClient.checkout.sessions.list.mockResolvedValueOnce({
+      data: [{ payment_status: 'paid', metadata: { bookingId: 'booking-async' } }],
+    } as never);
+    currentEvent = {
+      id: 'evt_booking_without_invoice',
+      type: 'payment_intent.succeeded',
+      data: { object: { id: 'pi_booking_without_invoice' } },
+    };
+    const res = await POST(webhookRequest(currentEvent));
+    expect(res.status).toBe(200);
+    expect(bookingUpdate).toMatchObject({ status: 'confirmed', payment_status: 'paid' });
+    expect(billingEngineMock.updatePaymentStatus).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['checkout.session.completed', 'paid', ['card', 'sepa_debit'], 'paid', 'confirmed'],
+    ['checkout.session.completed', 'unpaid', ['card'], 'pending', 'pending'],
+    ['checkout.session.async_payment_succeeded', 'paid', ['sepa_debit'], 'paid', 'confirmed'],
+  ])(
+    'verarbeitet %s nach Zahlungsstatus %s statt angebotenen Methoden',
+    async (eventType, paymentStatus, methods, expectedPaymentStatus, expectedStatus) => {
+      let bookingUpdate: unknown = null;
+      tableHandlers.bookings = (state) => {
+        if (state.op === 'update') bookingUpdate = state.payload;
+        return {
+          data: state.op === 'select' ? { id: 'booking-status', payment_status: 'pending' } : null,
+          error: null,
+        };
+      };
+      currentEvent = {
+        id: 'evt_booking_status',
+        type: eventType,
+        data: {
+          object: {
+            id: 'cs_booking_status',
+            payment_status: paymentStatus,
+            payment_method_types: methods,
+            metadata: { bookingId: 'booking-status' },
+          },
+        },
+      };
+      const res = await POST(webhookRequest(currentEvent));
+      expect(res.status).toBe(200);
+      expect(bookingUpdate).toMatchObject({
+        payment_status: expectedPaymentStatus,
+        status: expectedStatus,
+      });
+    }
+  );
+
+  it('gibt Datenbankfehler beim Lesen einer asynchron bezahlten Buchung für Retry zurück', async () => {
+    tableHandlers.payments = () => ({ data: null, error: null });
+    tableHandlers.bookings = () => ({ data: null, error: { message: 'database unavailable' } });
+    fakeStripeClient.checkout.sessions.list.mockResolvedValueOnce({
+      data: [{ payment_status: 'paid', metadata: { bookingId: 'booking-read-error' } }],
+    } as never);
+    currentEvent = {
+      id: 'evt_booking_read_error',
+      type: 'payment_intent.succeeded',
+      data: { object: { id: 'pi_booking_read_error' } },
+    };
+    const res = await POST(webhookRequest(currentEvent));
+    expect(res.status).toBe(500);
+  });
+
+  it('verarbeitet eine Shop-Zahlung ohne Rechnung atomar über die DB-Funktion', async () => {
+    // Bestand und Doppel-Events prüft die DB-Funktion selbst (Zeilensperre,
+    // bedingtes UPDATE) — hier nur, dass beide Wege sie als bezahlt aufrufen.
+    shopRpcCalls.length = 0;
+    tableHandlers.payments = () => ({ data: null, error: null });
+    const session = {
+      id: 'cs_order',
+      payment_status: 'paid',
+      metadata: { orderId: 'order-async', orderType: 'shop' },
+    };
+    fakeStripeClient.checkout.sessions.list.mockResolvedValueOnce({ data: [session] } as never);
+    currentEvent = {
+      id: 'evt_order_pi',
+      type: 'payment_intent.succeeded',
+      data: { object: { id: 'pi_order' } },
+    };
+    expect((await POST(webhookRequest(currentEvent))).status).toBe(200);
+    currentEvent = {
+      id: 'evt_order_session',
+      type: 'checkout.session.async_payment_succeeded',
+      data: { object: session },
+    };
+    expect((await POST(webhookRequest(currentEvent))).status).toBe(200);
+    expect(shopRpcCalls).toEqual([
+      { p_order_id: 'order-async', p_paid: true },
+      { p_order_id: 'order-async', p_paid: true },
+    ]);
   });
 });

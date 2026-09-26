@@ -7865,6 +7865,10 @@ export type Database = {
           read_count: number;
         }[];
       };
+      process_shop_order_payment: {
+        Args: { p_order_id: string; p_paid: boolean };
+        Returns: Json;
+      };
       prune_audit_logs: {
         Args: never;
         Returns: {
