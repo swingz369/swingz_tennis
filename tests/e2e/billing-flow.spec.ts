@@ -49,22 +49,25 @@ test.describe('Billing Page', () => {
     await expect(page.locator('body')).toContainText(/kategorie/i, { timeout: 8000 });
   });
 
-  test('Generate invoices button is clickable', async ({ page }) => {
+  test('Generate invoices button loads the invoice preview', async ({ page }) => {
     await page.goto('/admin/billing', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('h1')).toContainText(/abrechnung/i, { timeout: 8000 });
 
     const generateBtn = page.getByRole('button', { name: /rechnungen generieren/i });
     await expect(generateBtn).toBeVisible();
 
-    // Click - expect either a success toast or an error (since there may be no members)
-    await generateBtn.click();
-
-    // Either success or error toast should appear (or page remains stable)
-    const toast = page.locator('[data-sonner-toast]').first();
-    const toastAppeared = await toast.isVisible().catch(() => false);
-    if (toastAppeared) {
-      await expect(toast).toBeVisible();
-    }
+    const [previewResponse] = await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.url().includes('/api/billing/generate-invoices') &&
+          response.request().method() === 'GET'
+      ),
+      generateBtn.click(),
+    ]);
+    expect(previewResponse.ok()).toBe(true);
+    const preview = page.getByRole('dialog');
+    await expect(preview).toBeVisible();
+    await expect(preview).toContainText(/vorschau für/i);
   });
 
   test('Create invoice dialog opens and closes', async ({ page }) => {
@@ -117,7 +120,7 @@ test.describe('Billing API Access Control', () => {
     await expect(page.locator('h1')).toContainText(/abrechnung/i, { timeout: 8000 });
   });
 
-  test('Create invoice dialog — fill form and submit', async ({ page }) => {
+  test('Create invoice dialog shows fields and can be cancelled', async ({ page }) => {
     await loginAs(page, process.env.TEST_ADMIN_EMAIL!, process.env.TEST_ADMIN_PASSWORD!);
     await page.goto('/admin/billing', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('h1')).toContainText(/abrechnung/i, { timeout: 8000 });

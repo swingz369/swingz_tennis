@@ -227,6 +227,10 @@ describeLive('Mandanten-Isolation über HTTP (Alpha-Admin gegen Gamma)', () => {
       }
       called++;
       if (foreignInPath) withForeignId++;
+      if (res.status() >= 500) {
+        failed.push(`${route}: HTTP ${res.status()}`);
+        continue;
+      }
       if (res.status() < 200 || res.status() >= 300 || route in KNOWN_LEAKS) continue;
 
       // Binär/CSV (PDF, Export): kein UUID-Scan möglich — 2xx auf fremde Pfad-ID ist schon der Befund.
@@ -245,9 +249,12 @@ describeLive('Mandanten-Isolation über HTTP (Alpha-Admin gegen Gamma)', () => {
 
     console.log(
       `Tenant-Isolation: ${called} Routen aufgerufen, ${withForeignId} mit Fremd-ID im Pfad, ` +
-        `${unresolved.length} ohne auflösbare Fremd-ID übersprungen, ${failed.length} ohne Antwort.` +
-        (failed.length ? `\nOhne Antwort:\n  ${failed.join('\n  ')}` : '')
+        `${unresolved.length} ohne auflösbare Fremd-ID übersprungen, ${failed.length} fehlgeschlagen.` +
+        (failed.length ? `\nFehlgeschlagen:\n  ${failed.join('\n  ')}` : '')
     );
+    expect(called, 'Es wurde keine GET-Route geprüft').toBeGreaterThan(0);
+    expect(withForeignId, 'Keine Route wurde mit einer fremden Pfad-ID geprüft').toBeGreaterThan(0);
+    expect(failed, 'Nicht erreichbare Routen dürfen den Test nicht grün lassen').toEqual([]);
     expect(violations).toEqual([]);
   }, 600_000);
 });

@@ -104,8 +104,7 @@ jobs:
     # Migration setzte Tabellen voraus, die keine Migration anlegt.
     name: Migrationen gegen leere DB
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    if: github.event_name == 'pull_request'
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -115,8 +114,27 @@ jobs:
         with:
           version: latest
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Alle Migrationen von null anwenden
         run: supabase db start && supabase db reset --no-seed
+
+      - name: RLS und Vereinsgrenzen gegen die frische DB prüfen
+        env:
+          CI: 'true'
+          TEST_DB_SCHEMA_READY: 'true'
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: pnpm exec vitest run src/__tests__/integration/rls-policy-catalog.test.ts src/__tests__/integration/cross-tenant-isolation.test.ts
 
   e2e-smoke:
     name: E2E Smoke (billing-flow)

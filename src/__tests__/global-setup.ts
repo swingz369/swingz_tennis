@@ -144,6 +144,10 @@ export async function setup(): Promise<void> {
     );
     console.warn('   Für echte Integrationstests eine lokale Test-DB nutzen:');
     console.warn('   `bash scripts/setup-test-db.sh` oder `.env.test` mit lokalem DATABASE_URL.');
+  } else if (dbUrl && process.env.TEST_DB_SCHEMA_READY === 'true') {
+    // CI has already built the schema with `supabase db reset`. A second schema
+    // writer here would change the database being verified by the RLS tests.
+    console.log('📦 DATABASE_URL: configured (schema prepared externally)');
   } else if (dbUrl) {
     console.log('📦 DATABASE_URL: configured (non-production)');
     try {

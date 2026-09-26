@@ -17,6 +17,11 @@ import {
 } from '@/infrastructure/persistence/repositories/trainer-profile.repository';
 import type { TrainerProfile } from '@/domain/entities/trainer.entity';
 
+// Repository operations are mocked below; constructing systemDb must not require secrets.
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceClient: vi.fn(() => ({})),
+}));
+
 function makeProfile(overrides: Partial<TrainerProfile> = {}): TrainerProfile {
   return {
     id: 'profile-1',

@@ -26,7 +26,7 @@
  * gemeinsamen Harness nicht gezielt testbar — beide Fälle sind hier bewusst
  * ausgelassen statt mit einem nicht aussagekräftigen Test vorgetäuscht.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { installSupabaseMock } from '../helpers/api-route';
 
@@ -58,9 +58,13 @@ function csvRequest(
 
 describe('POST /api/members/bulk-import', () => {
   beforeEach(() => {
+    // The SSR client is mocked; satisfy the route's configuration guard without credentials.
+    vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'unit-test-service-key');
     supa.reset();
     mockLogAudit.mockClear();
   });
+
+  afterEach(() => vi.unstubAllEnvs());
 
   it('lehnt Nicht-Admins ab', async () => {
     supa.setRole('trainer', 'club-1');

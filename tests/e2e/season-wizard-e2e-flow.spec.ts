@@ -11,7 +11,7 @@ import { tryClick, waitForText, loginAsAdmin, navigateToFirstSeason } from '../h
  *   4. Verify published state on season detail page
  *
  * Pattern: real Supabase login via /api/auth/login.
- * Gracefully skips if login fails or no seasons exist.
+ * Requires a seeded agent-lane season that is ready for planning.
  */
 
 const TIMEOUT = 30_000;
@@ -23,11 +23,7 @@ const TIMEOUT_LONG = 60_000;
 
 test.describe('Season Wizard E2E — Full Flow', () => {
   test.beforeEach(async ({ page }) => {
-    try {
-      await loginAsAdmin(page);
-    } catch (e) {
-      test.skip(true, `Admin login failed: ${e instanceof Error ? e.message : String(e)}`);
-    }
+    await loginAsAdmin(page);
   });
 
   // ──────────────────────────────────────────────
@@ -132,7 +128,7 @@ test.describe('Season Wizard E2E — Full Flow', () => {
   // ──────────────────────────────────────────────
   test('Full flow: generate plan → review conflicts → confirm & publish', async ({ page }) => {
     const seasonId = await navigateToFirstSeason(page);
-    test.skip(!seasonId, 'No season found');
+    expect(seasonId, 'Für den vollständigen Planungsablauf fehlt eine Testsaison').toBeTruthy();
 
     // Navigate to wizard
     await page.goto(`/admin/seasons/${seasonId}/planning`, {
@@ -145,9 +141,7 @@ test.describe('Season Wizard E2E — Full Flow', () => {
     await test.step('Check readiness and advance to Step 2', async () => {
       const isReady = await waitForText(page, /bereit|ready/i, 3000);
 
-      if (!isReady) {
-        test.skip(true, 'Season not ready for planning — missing members or preferences');
-      }
+      expect(isReady, 'Testsaison ist nicht bereit für die Planung').toBe(true);
 
       const advanced = await tryClick(page, [/^weiter$/i]);
       if (advanced) {
@@ -170,14 +164,12 @@ test.describe('Season Wizard E2E — Full Flow', () => {
           .click();
 
         const planGenerated = await Promise.race([
-          waitForText(page, /planungs-score|score|gruppen|metrik/i, TIMEOUT_LONG).then(() => true),
+          waitForText(page, /planungs-score|score|gruppen|metrik/i, TIMEOUT_LONG),
           waitForText(page, /fehler|error|fehlgeschlagen/i, TIMEOUT_LONG).then(() => false),
           page.waitForTimeout(TIMEOUT_LONG).then(() => false),
         ]);
 
-        if (!planGenerated) {
-          test.skip(true, 'Plan generation did not complete within timeout');
-        }
+        expect(planGenerated, 'Plangenerierung ist fehlgeschlagen oder abgelaufen').toBe(true);
       }
 
       const hasPlanResult =
@@ -205,14 +197,12 @@ test.describe('Season Wizard E2E — Full Flow', () => {
               page,
               /keine.*konflikte|alle.*gelöst|bereit.*bestätigung|warnung|kritisch/i,
               TIMEOUT
-            ).then(() => true),
+            ),
             waitForText(page, /fehler/i, TIMEOUT).then(() => false),
             page.waitForTimeout(TIMEOUT).then(() => false),
           ]);
 
-          if (!checkDone) {
-            test.skip(true, 'Conflict check did not complete');
-          }
+          expect(checkDone, 'Konfliktprüfung ist fehlgeschlagen oder abgelaufen').toBe(true);
         }
       }
     });
@@ -253,29 +243,32 @@ test.describe('Season Wizard E2E — Full Flow', () => {
         .isVisible({ timeout: 3000 })
         .catch(() => false);
 
-      if (hasPublishBtn) {
-        await page
-          .getByRole('button', {
-            name: /planung bestätigen|bestätigen.*veröffentlichen/i,
-          })
-          .first()
-          .click();
+      expect(hasPublishBtn, 'Die Schaltfläche zum Veröffentlichen fehlt').toBe(true);
+      await page
+        .getByRole('button', {
+          name: /planung bestätigen|bestätigen.*veröffentlichen/i,
+        })
+        .first()
+        .click();
 
-        const published = await waitForText(
-          page,
-          /erfolgreich.*bestätigt|veröffentlicht|published/i,
-          TIMEOUT
-        );
+      const published = await waitForText(
+        page,
+        /erfolgreich.*bestätigt|veröffentlicht|published/i,
+        TIMEOUT
+      );
 
-        expect(published).toBe(true);
-      }
+      expect(published).toBe(true);
+      const seasonResponse = await page.request.get(`/api/seasons/${seasonId}`);
+      expect(seasonResponse.ok()).toBe(true);
+      const seasonData = await seasonResponse.json();
+      expect(seasonData.season?.published_at).toBeTruthy();
     });
   });
 
   // ──────────────────────────────────────────────
-  // TEST 5: Published season shows correct tabs
+  // TEST 5: Season detail shows tabs for its current state
   // ──────────────────────────────────────────────
-  test('Published season detail shows plan-related tabs', async ({ page }) => {
+  test('Season detail shows group changes only for published plans', async ({ page }) => {
     // navigateToFirstSeason() already navigates to this exact URL — a second
     // page.goto() here raced its in-flight fetch and left the page stuck on
     // the loading spinner (aborted request), failing every assertion below.
@@ -291,39 +284,21 @@ test.describe('Season Wizard E2E — Full Flow', () => {
     // round trip) instead of racing a tight per-tab timeout against it.
     await page.getByRole('tablist').waitFor({ state: 'visible', timeout: TIMEOUT });
 
-    // Check if season is published (has plan tabs)
-    const hasOverviewTab = await page
-      .getByRole('tab', { name: /übersicht/i })
-      .isVisible({ timeout: 3000 })
-      .catch(() => false);
+    await expect(page.getByRole('tab', { name: 'Übersicht' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Saisonkalender' })).toBeVisible();
 
-    expect(hasOverviewTab).toBe(true);
-
-    // Calendar tab should always be visible
-    const hasCalendarTab = await page
-      .getByRole('tab', { name: /saisonkalender|kalender/i })
-      .isVisible({ timeout: 2000 })
-      .catch(() => false);
-
-    expect(hasCalendarTab).toBe(true);
-
-    // Plan/Konflikte-Tabs direkt prüfen statt über lose Status-Text-Substrings zu raten
-    // (bodyText.includes('active'/'completed') matchte zu oft false-positiv auf unrelated
-    // Seiten-Text und ließ den Test hart fehlschlagen, obwohl die Season schlicht noch
-    // nicht veröffentlicht war — das ist kein Bug, sondern erwarteter Zustand).
-    const hasPlanTab = await page
-      .getByRole('tab', { name: /plan/i })
-      .isVisible({ timeout: 2000 })
-      .catch(() => false);
-
-    const hasConflictsTab = await page
-      .getByRole('tab', { name: /konflikte/i })
-      .isVisible({ timeout: 2000 })
-      .catch(() => false);
-
-    // Veröffentlichte Season: Plan/Konflikte-Tabs vorhanden. Unveröffentlichte Season:
-    // Seite muss trotzdem fehlerfrei mit der Übersicht rendern.
-    expect(hasPlanTab || hasConflictsTab || hasOverviewTab).toBe(true);
+    const seasonResponse = await page.request.get(`/api/seasons/${seasonId}`);
+    expect(seasonResponse.ok()).toBe(true);
+    const seasonData = await seasonResponse.json();
+    const isPublished = ['published', 'active', 'completed', 'archived'].includes(
+      seasonData.season?.planning_status ?? ''
+    );
+    const groupChangeTab = page.getByRole('tab', { name: 'Gruppenwechsel' });
+    if (isPublished) {
+      await expect(groupChangeTab).toBeVisible();
+    } else {
+      await expect(groupChangeTab).toHaveCount(0);
+    }
   });
 
   // ──────────────────────────────────────────────

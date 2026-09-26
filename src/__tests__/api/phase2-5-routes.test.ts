@@ -58,6 +58,11 @@ function createMockSupabase(fromImpl: (table: string) => MockQueryBuilder) {
 // ── Mock modules ──────────────────────────────────────────────
 const mockCreateClient = vi.fn();
 const mockCreateAdminClient = vi.fn();
+const mockCreateServiceClient = vi.fn();
+
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceClient: () => mockCreateServiceClient(),
+}));
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: () => mockCreateClient(),
@@ -145,6 +150,7 @@ beforeEach(() => {
   console.error = vi.fn();
   mockCreateClient.mockReset();
   mockCreateAdminClient.mockReset();
+  mockCreateServiceClient.mockReset();
 });
 afterEach(() => {
   console.error = originalConsoleError;
@@ -630,7 +636,7 @@ describe('POST /api/qr-checkin', () => {
       upsert: vi.fn().mockResolvedValue({ error: null }),
     });
     const mockAdminSupabase = createMockSupabase(() => qbGamification);
-    mockCreateAdminClient.mockResolvedValue(mockAdminSupabase);
+    mockCreateServiceClient.mockReturnValue(mockAdminSupabase);
 
     const res = await POST(buildRequest('POST', { qrToken: makeQrToken('sess-1', 'u1') }));
     expect(res.status).toBe(200);
