@@ -44,8 +44,8 @@ const PricingSection = dynamic(
 const HOW_STEPS = [
   {
     step: '1',
-    title: 'Registrieren',
-    body: 'Erstellt euren Club in wenigen Minuten und legt direkt los.',
+    title: 'Zugang anfragen',
+    body: 'Erzählt uns kurz von eurem Verein und den Aufgaben, die ihr vereinfachen möchtet.',
   },
   {
     step: '2',
@@ -120,8 +120,7 @@ export default function LandingPage() {
               </Button>
               <Button size="sm" asChild>
                 <Link href="/register" onClick={() => analytics.signUp('header_cta', 'default')}>
-                  <span className="sm:hidden">Registrieren</span>
-                  <span className="hidden sm:inline">Jetzt registrieren</span>
+                  Zugang anfragen
                   <ArrowRight className="h-4 w-4 hidden sm:inline" aria-hidden="true" />
                 </Link>
               </Button>
@@ -155,7 +154,7 @@ export default function LandingPage() {
                   href="/register"
                   onClick={() => analytics.signUp('hero_cta_primary', 'default')}
                 >
-                  Jetzt registrieren
+                  Zugang anfragen
                   <ArrowRight className="h-5 w-5" aria-hidden="true" />
                 </Link>
               </Button>
@@ -250,7 +249,7 @@ export default function LandingPage() {
               Bereit für die neue Saison?
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-white/75 leading-relaxed">
-              Transparente Preise. Auf Wunsch richten wir deinen Club persönlich ein.
+              Transparente Preise. Wir richten euren Zugang persönlich ein und begleiten den Start.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button
@@ -259,7 +258,7 @@ export default function LandingPage() {
                 asChild
               >
                 <Link href="/register">
-                  Jetzt registrieren
+                  Zugang anfragen
                   <ArrowRight className="h-5 w-5" aria-hidden="true" />
                 </Link>
               </Button>

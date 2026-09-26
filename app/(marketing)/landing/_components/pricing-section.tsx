@@ -50,7 +50,7 @@ const PRICING_PLANS: Plan[] = [
     description:
       'Alles, was ein Verein braucht, bis zu 200 Mitglieder. Danach wechselt ihr automatisch zu Professional.',
     features: ['Bis zu 200 Mitglieder', ...COMMON_FEATURES],
-    cta: 'Jetzt registrieren',
+    cta: 'Zugang anfragen',
     ctaHref: '/register',
     popular: false,
   },
@@ -65,7 +65,7 @@ const PRICING_PLANS: Plan[] = [
     description:
       'Der gleiche Funktionsumfang wie Starter, nur die Mitgliederanzahl unterscheidet sich.',
     features: ['Ab 201 Mitglieder', ...COMMON_FEATURES],
-    cta: 'Jetzt registrieren',
+    cta: 'Zugang anfragen',
     ctaHref: '/register',
     popular: true,
   },

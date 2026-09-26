@@ -177,7 +177,10 @@ export function BillingCategoriesTabs({
     : 'invoices';
   return (
     <Tabs defaultValue={tab} className="space-y-6">
-      <TabsList className="w-full max-w-3xl grid grid-cols-5 bg-muted dark:bg-card/5 p-1 rounded-xl">
+      <TabsList
+        aria-label="Abrechnungsbereiche"
+        className="flex h-auto w-full max-w-3xl justify-start overflow-x-auto bg-muted dark:bg-card/5 p-1 rounded-xl [&>button]:min-h-11 [&>button]:shrink-0 sm:[&>button]:flex-1"
+      >
         <TabsTrigger
           value="invoices"
           className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-primary data-[state=active]:shadow-sm"

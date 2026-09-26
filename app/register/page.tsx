@@ -36,6 +36,10 @@ export default function RegisterPage() {
         return;
       }
       setDone(true);
+    } catch {
+      setError(
+        'Deine Anfrage konnte nicht gesendet werden. Bitte prüfe deine Verbindung und versuche es erneut.'
+      );
     } finally {
       setLoading(false);
     }
@@ -69,7 +73,9 @@ export default function RegisterPage() {
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success-100 dark:bg-success-900/20 mx-auto">
                 <CheckCircle2 className="h-6 w-6 text-success-600" />
               </div>
-              <h2 className="text-xl font-bold">Anfrage eingegangen!</h2>
+              <h1 className="text-xl font-bold" tabIndex={-1} ref={(node) => node?.focus()}>
+                Anfrage eingegangen!
+              </h1>
               <p className="text-sm text-muted-foreground">
                 Wir melden uns bei dir unter <strong>{email}</strong>. In der Regel innerhalb von 1
                 bis 2 Werktagen.
@@ -83,7 +89,7 @@ export default function RegisterPage() {
               <div className="text-center space-y-1">
                 <h1 className="text-2xl font-bold">Zugang anfragen</h1>
                 <p className="text-sm text-muted-foreground">
-                  Kein Self-Service: Wir richten deinen Zugang manuell ein.
+                  Wir richten euren Vereinszugang persönlich ein und begleiten euch beim Start.
                 </p>
               </div>
               <Card className="p-6">
@@ -92,6 +98,7 @@ export default function RegisterPage() {
                     <Label htmlFor="name">Dein Name *</Label>
                     <Input
                       id="name"
+                      autoComplete="name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Max Mustermann"
@@ -103,6 +110,7 @@ export default function RegisterPage() {
                     <Label htmlFor="clubName">Vereinsname *</Label>
                     <Input
                       id="clubName"
+                      autoComplete="organization"
                       value={clubName}
                       onChange={(e) => setClubName(e.target.value)}
                       placeholder="TC Musterstadt e.V."
@@ -115,6 +123,7 @@ export default function RegisterPage() {
                     <Input
                       id="email"
                       type="email"
+                      autoComplete="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="max@tc-musterstadt.de"
@@ -133,7 +142,11 @@ export default function RegisterPage() {
                       rows={3}
                     />
                   </div>
-                  {error && <p className="text-sm text-destructive">{error}</p>}
+                  {error && (
+                    <p role="alert" className="text-sm text-destructive">
+                      {error}
+                    </p>
+                  )}
                   <Button
                     type="submit"
                     className="w-full"

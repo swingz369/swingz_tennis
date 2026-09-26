@@ -422,7 +422,7 @@ export default function BillingClient({
             </div>
             {/* Bulk actions bar — inline when invoices are selected via header checkbox or row checkboxes */}
             {selectedIds.size > 0 && (
-              <div className="flex items-center gap-3 mt-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
+              <div className="flex flex-wrap items-center gap-3 mt-3 p-3 rounded-xl bg-primary/5 border border-primary/20">
                 <span className="text-sm font-medium text-primary">
                   {selectedIds.size} Rechnung{selectedIds.size !== 1 ? 'en' : ''} ausgewählt
                 </span>
@@ -453,7 +453,7 @@ export default function BillingClient({
                 20 Einzelklicks — die Rechnungen bleiben dann als Entwurf liegen
                 und das Mitglied sieht nie eine Forderung. */}
             {selectedIds.size === 0 && draftInvoiceIds.length > 0 && (
-              <div className="flex items-center gap-3 mt-3 p-3 rounded-xl bg-info-50 border border-info-200">
+              <div className="flex flex-wrap items-center gap-3 mt-3 p-3 rounded-xl bg-info-50 border border-info-200">
                 <span className="text-sm">
                   {draftInvoiceIds.length} Rechnung{draftInvoiceIds.length !== 1 ? 'en' : ''} im
                   Entwurf — für Mitglieder noch nicht sichtbar
@@ -507,7 +507,7 @@ export default function BillingClient({
             ) : invoices.length === 0 ? (
               <NoInvoicesBrandedEmptyState />
             ) : (
-              <Table>
+              <Table className="min-w-[960px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10">
@@ -543,7 +543,9 @@ export default function BillingClient({
                           />
                         )}
                       </TableCell>
-                      <TableCell className="font-mono text-sm">{invoice.invoiceNumber}</TableCell>
+                      <TableCell className="whitespace-nowrap font-mono text-sm">
+                        {invoice.invoiceNumber}
+                      </TableCell>
                       <TableCell className="text-sm">
                         {invoice.invoiceDate
                           ? new Date(invoice.invoiceDate).toLocaleDateString('de-DE')
