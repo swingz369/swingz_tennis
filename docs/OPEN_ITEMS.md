@@ -89,15 +89,15 @@ Code: `lib/subscription-gate.ts` (`isSubscriptionEnforced`), `lib/env.ts`,
 
 ### Ergänzende Prüfung vom 26.09.2026
 
-- **Buchungsrechte: Migration geschrieben, lokal angewendet, Produktion offen.** Produktion und lokal
+- **Buchungsrechte: Migration am 26.09. lokal und in Produktion angewendet.** Produktion und lokal
   am 26.09. per SQL identisch gelesen. `20260926100000_bookings_rls_booking_access_entfernen.sql`
   entfernt `booking_access` und zwei redundante Alt-Policies; `bookings_delete` erlaubt jetzt
   aktive Trainer/Admins (Gruppenwechsel löscht mit Nutzer-Client). Lokal in Rollback-Transaktion
   geprüft: Mitglied ändert/löscht fremde Buchung → 0 Zeilen, Trainer löscht → 1 Zeile.
-  Offen: `supabase db reset`-Gegenprobe (CI), Anwendung in Produktion. Bewusst belassen:
+  Offen: `supabase db reset`-Gegenprobe (CI). Bewusst belassen:
   `Users can view their own bookings` (aktive Mitglieder lesen Buchungen ihres Vereins, u. a.
   RSVP-Teilnehmerliste) — ob das zu weit ist, ist eine Produktentscheidung.
-- **Shop-Zahlung und Lager atomar: Code + Migration fertig, lokal angewendet, Produktion offen.**
+- **Shop-Zahlung und Lager atomar: Migration am 26.09. in Produktion angewendet, Webhook-Code noch nicht ausgeliefert.**
   DB-Funktion `process_shop_order_payment` (Zeilensperre, bedingter Bestandsabzug in einer
   Transaktion; überverkaufte Artikel werden gemeldet, nicht verschluckt). Partieller Unique-Index
   `payments_stripe_external_id_key` (nur `payment_method='stripe'`); der Webhook behandelt den
@@ -122,8 +122,8 @@ Code: `lib/subscription-gate.ts` (`isSubscriptionEnforced`), `lib/env.ts`,
   Schreibvorgänge können beim Retry weiterhin doppelt wirken. → Handler je Event fachlich
   idempotent machen und mit signierten Testereignissen samt Fehler nach dem ersten Schreibschritt
   abnehmen. Siehe [`PRODUKTIONSREIFE.md`](PRODUKTIONSREIFE.md) § aktueller Umsetzungsplan.
-- **Stripe-RPC-Funktionsrechte in Produktion bestätigt (P0), Migration ausstehend** (am 26.09.
-  lokal angewendet, `f|f|t`; Produktion weiter `t|t`). Live gewährt
+- **Stripe-RPC-Funktionsrechte (P0): Migration am 26.09. lokal und in Produktion angewendet,
+  beide `f|f|t`.** Signierter Webhook-Test steht noch aus. Live gewährt
   `anon` und `authenticated` `EXECUTE` auf `check_and_record_stripe_event(text,text)`.
   `20260924100000_stripe_event_rpc_service_role_only.sql` entzieht es; lokaler Rollback-Test
   ergab `f|f|t` für anon/authenticated/service_role. Vor dem Deploy auf leerer DB testen,

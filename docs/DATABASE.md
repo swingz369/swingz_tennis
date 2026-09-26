@@ -280,7 +280,7 @@ Wächter: `src/__tests__/integration/rls-policy-catalog.test.ts` (Policy ohne Ve
 oder mit `true` bricht) und `src/__tests__/security/service-client-club-scope.test.ts`
 (Routen mit ID und Service-Client ohne Vereinsprüfung).
 
-## `bookings`-Policies, Stripe-Zahlungsindex, Shop-Zahlung (Stand 26.09.2026, lokal angewendet)
+## `bookings`-Policies, Stripe-Zahlungsindex, Shop-Zahlung (Stand 26.09.2026, angewendet)
 
 Live gelesen (lokal = Produktion): `booking_access` (ALL) erlaubte jedem mit irgendeiner
 Mitgliedschaft im Verein — ohne Rolle, ohne `is_active` — fremde Buchungen zu ändern/löschen.
@@ -296,7 +296,7 @@ Mitgliedschaft im Verein — ohne Rolle, ohne `is_active` — fremde Buchungen z
   SECURITY DEFINER, nur `service_role`. Sperrt die Bestellung, setzt Zahlstatus und zieht Bestand
   in einer Transaktion ab; gibt `already_paid` bzw. `short_stock` zurück.
 
-**Noch nicht auf Produktion angewendet.**
+Am 26.09.2026 auf Produktion angewendet und per SQL geprüft (Policies, Index, Funktionsrechte).
 
 ## Rollen-/Club-Scoping-Modell (aktueller, korrekter Stand)
 
@@ -314,8 +314,8 @@ dass `anon`, `authenticated` und `service_role` die Funktion
 und schreibt in `stripe_events`; die Tabellen-Policy erlaubt nur `service_role`, schützt aber
 nicht vor dem direkten Funktionsaufruf. Die neue Migration
 `20260924100000_stripe_event_rpc_service_role_only.sql` entzieht `PUBLIC`, `anon` und
-`authenticated` das Ausführungsrecht. **Noch nicht auf Produktion angewendet.** Nach Anwendung
-mit `has_function_privilege` für alle drei Rollen und einem signierten Webhook prüfen.
+`authenticated` das Ausführungsrecht. Am 26.09.2026 auf Produktion angewendet:
+`has_function_privilege` ergibt `f|f|t`. Signierter Webhook-Test steht noch aus.
 
 `is_club_admin`/`is_club_trainer`/`is_club_member` schützen nur, was über RLS läuft. Eine
 SECURITY DEFINER-Funktion umgeht RLS per Definition — sie muss ihre eigene Prüfung mitbringen,
