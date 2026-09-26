@@ -1,8 +1,6 @@
 import type { AuthContext } from '@/lib/api-auth';
 import { getUserDb } from '@/infrastructure/db';
 import { AnalyticsRepository } from '@/infrastructure/persistence/repositories/analytics.repository';
-import { MemberRepository } from '@/infrastructure/persistence/repositories/member.repository';
-import { ClubId } from '@/domain/value-objects';
 
 export interface ClubBooking {
   id: string;
@@ -29,26 +27,16 @@ export interface RevenueData {
   monthlyBreakdown: Array<{ month: string; revenue: number }>;
 }
 
-export interface ClubMember {
-  id: string;
-  name: string;
-  email: string;
-  joinDate: string;
-  lastVisit?: string;
-}
-
 /**
- * Auswertungs-Service (ADR-005): Buchungs-/Umsatz-Export und Insights.
+ * Auswertungs-Service (ADR-005): Buchungs-/Umsatz-Export.
  * Ersetzt die drei use-case-Klassen; Datenzugriff über Repositories mit RLS.
  */
 export class AnalyticsService {
   private readonly analytics: AnalyticsRepository;
-  private readonly members: MemberRepository;
 
   constructor(auth: AuthContext) {
     const db = getUserDb(auth);
     this.analytics = new AnalyticsRepository(db);
-    this.members = new MemberRepository(db);
   }
 
   async listBookings(clubId: string): Promise<ClubBooking[]> {
@@ -95,15 +83,5 @@ export class AnalyticsService {
         .sort((a, b) => a[0].localeCompare(b[0]))
         .map(([month, revenue]) => ({ month, revenue })),
     };
-  }
-
-  async listMembers(clubId: string): Promise<ClubMember[]> {
-    const members = await this.members.findByClub(ClubId.fromString(clubId));
-    return members.map((m) => ({
-      id: m.id.getValue(),
-      name: m.name,
-      email: m.email,
-      joinDate: m.joinDate.toISOString().split('T')[0],
-    }));
   }
 }

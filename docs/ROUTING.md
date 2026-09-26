@@ -453,7 +453,6 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 | -------- | -------------------------------- |
 | GET/POST | `/api/analytics`                 |
 | GET      | `/api/analytics/bookings/export` |
-| GET      | `/api/analytics/insights`        |
 | GET      | `/api/analytics/members/export`  |
 | GET      | `/api/analytics/revenue/export`  |
 | GET      | `/api/statistics`                |

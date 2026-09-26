@@ -99,7 +99,6 @@ test_route GET "/api/trial-trainings/stats"
 # ANALYTICS (fixed random)
 echo "--- ANALYTICS ---"
 test_route GET "/api/analytics"
-test_route GET "/api/analytics/insights"
 test_route GET "/api/statistics/dashboard"
 test_route GET "/api/statistics"
 test_route GET "/api/gamification"

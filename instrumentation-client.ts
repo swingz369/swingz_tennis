@@ -90,3 +90,6 @@ Sentry.init({
     return transaction;
   },
 });
+
+// Seitenwechsel im App Router als Navigation-Spans erfassen.
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

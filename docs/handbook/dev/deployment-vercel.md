@@ -109,8 +109,8 @@ rm -rf .next/cache
 
 Konfiguration in:
 
-- `sentry.client.config.ts` — Browser-Errors
-- `sentry.server.config.ts` — Server-Errors
+- `instrumentation-client.ts` — Browser-Errors
+- `sentry.server.config.ts` — Server-Errors, geladen über `register()` in `instrumentation.ts`
 - `next.config.js` → `withSentryConfig()` — Build-Integration
 
 ⚠️ **P0-Finding 10**: `app/global-error.tsx` loggt nur `console.error`, kein Sentry-Wiring. Inkonsistent zu `app/error.tsx`, das Sentry korrekt verdrahtet hat.
