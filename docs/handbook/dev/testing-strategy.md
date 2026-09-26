@@ -1,6 +1,6 @@
 # Testing-Strategie — Vitest, Playwright, E2E
 
-> Zuletzt verifiziert: 13. August 2026
+> Zuletzt verifiziert: 23. September 2026
 > Welcher Test wo, Coverage-Ziele, Multi-Tenant-Tests. Quelle: `vitest.config.ts`, `playwright.config.ts`, `package.json`.
 
 ## 🧪 Test-Pyramide
@@ -15,8 +15,10 @@
      ╱──────────────────────────────────────────────────╲
 ```
 
-**Aktueller Stand** (verifiziert 13.08.2026): 89 Vitest-Dateien, 1485 Tests bestanden, 10 skipped.
-Coverage unklar (`--coverage` wirft `ERR_LOAD_URL`-Error).
+**Aktueller Stand** (23.09.2026, CI-ähnlicher Lauf ohne Datenbank): 146 Vitest-Dateien,
+1655 Tests bestanden, 78 übersprungen. Dazu kommen 26 Playwright-Dateien und 9 nur bei
+`RUN_BROWSER_E2E=true` einbezogene Browser-Testdateien. Die übersprungenen Tests enthalten
+echte DB-Integrationen; ihre Ergebnisse sind nicht durch den normalen Vitest-Lauf belegt.
 
 ## 🎯 Was teste ich WO?
 
@@ -28,43 +30,16 @@ Coverage unklar (`--coverage` wirft `ERR_LOAD_URL`-Error).
 | Repositories     | Integration | `src/__tests__/infrastructure/repositories/**` | DB-Queries, RLS-Bypass, Joins       |
 | API Routes       | Integration | `src/__tests__/api/**`                         | Auth + Validation + Response-Shape  |
 | React Components | Unit (RTL)  | `src/__tests__/components/**`                  | Rendering, Interactions             |
-| **Pages**        | E2E         | `tests/browser/**.test.ts`                     | User-Flow (Login → Aktion → Result) |
+| **Pages**        | E2E         | `tests/e2e/**.spec.ts`                         | User-Flow (Login → Aktion → Result) |
 
 ## ✅ Multi-Tenant-Tests (P0-Finding 15)
 
 **Vorbedingung** für Marktreife: diese Tests MÜSSEN grün sein.
 
-Pattern:
-
-```ts
-// src/__tests__/api/club-isolation.test.ts
-import { describe, it, expect } from 'vitest';
-import { POST } from '@/app/api/sessions/route';
-
-describe('Multi-Tenant-Isolation für /api/sessions', () => {
-  it('Trainer aus Club A kann KEINE Sessions aus Club B lesen', async () => {
-    const req = new Request('http://localhost/api/sessions?clubId=club-b');
-    const res = await POST(
-      req as any,
-      { params: Promise.resolve({}) },
-      mockAuth({ role: 'trainer', clubId: 'club-a' })
-    );
-    expect(res.status).toBe(403);
-  });
-
-  it('Admin aus Club A kann Sessions nur im eigenen Club sehen', async () => {
-    const req = new Request('http://localhost/api/sessions?clubId=club-a');
-    const res = await GET(
-      req as any,
-      { params: Promise.resolve({}) },
-      mockAuth({ role: 'admin', clubId: 'club-a' })
-    );
-    expect(res.status).toBe(200);
-    const data = await res.json();
-    expect(data.sessions.every((s) => s.club_id === 'club-a')).toBe(true);
-  });
-});
-```
+Die CI prüft `cross-tenant-isolation.test.ts` und `rls-policy-catalog.test.ts` gegen eine
+frisch aufgebaute Supabase-DB. Der ergänzende HTTP-Test
+`tests/browser/tenant-isolation-http.test.ts` läuft lokal über `npm run test:tenant`
+(siehe `docs/ENVIRONMENTS.md` § 5b); er ist kein CI-Gate.
 
 ## 🎨 Visuelle Tests (Playwright Snapshots)
 
@@ -122,7 +97,9 @@ export class MockBookingRepository implements IBookingRepository {
 | Components             | ≥50% (Critical Interactions only) |
 | Pages (E2E)            | Alle Core User-Flows              |
 
-Coverage-Report: `npm run test -- --coverage` (aktuelle Tooling-Bug: `--coverage` Reporter lädt nicht → P1-Finding).
+Coverage wird im normalen CI-Lauf nicht erhoben. `vitest.config.ts` schließt derzeit
+`app/api/**/route.ts` vom Coverage-Report aus; die API-Zielzahl in der Tabelle ist
+deshalb noch kein geprüftes Gate.
 
 ## 🏃 E2E-Lokale-Entwicklung
 
@@ -130,9 +107,9 @@ Coverage-Report: `npm run test -- --coverage` (aktuelle Tooling-Bug: `--coverage
 # Browser installieren (einmalig)
 npx playwright install
 
-# E2E-Tests laufen (Standard: chromium + mobile-chrome — 522 Tests)
+# E2E-Tests laufen (Standard: chromium + mobile-chrome — 536 gelistete Tests)
 npm run test:e2e
-# Vollmatrix (alle 6 Browser-Projekte — 1566 Tests):
+# Vollmatrix (alle 6 Browser-Projekte — 1608 gelistete Tests):
 npm run test:e2e:full
 # Produktions-QA-Audit (gegatet, gegen swingz.vercel.app):
 npm run test:e2e:audit

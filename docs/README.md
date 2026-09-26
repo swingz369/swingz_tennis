@@ -1,6 +1,6 @@
 # SwingZ — Tennis Club Management SaaS
 
-> Zuletzt verifiziert: 23. September 2026
+> Zuletzt verifiziert: 26. September 2026 (Prüfbericht verlinkt)
 > Vollständiger Projektkontext für KI-Agenten: [`AGENTS.md`](../AGENTS.md) / [`CLAUDE.md`](../CLAUDE.md) im Repo-Root.
 
 SwingZ ist eine Management-Lösung für Tennisvereine: Mitglieder, Buchungen, Trainingssessions, Plätze, Saisonplanung und Analytics in einer Weboberfläche. UI-Texte sind durchgängig Deutsch. Produktion: https://swingz.vercel.app
@@ -38,7 +38,9 @@ Architektur-Analyse Datenzugriff: [`ARCHIV/2026-09-13-architektur-analyse-datenz
 
 Diagramm zum Zielbild: [`diagrams/adr-005-datenzugriff.html`](diagrams/adr-005-datenzugriff.html) — Route → Service → Repository → Postgres (RLS) vs. Altdomänen-Pfad über Drizzle; interaktiv (Pan/Zoom, Light/Dark), lokal im Browser öffnen.
 
-Aktuellster Archiv-Snapshot: [`ARCHIV/2026-09-23-rollen-seiten-api-pruefung.md`](ARCHIV/2026-09-23-rollen-seiten-api-pruefung.md) — Rollen-, Seiten- und API-Prüfung mit Agent-Zugängen: 58 Navigationslinks, 95 unterschiedliche Seiten-/Rechtetests und 132 Produktions-GET-Routen; zwei bestätigte HTTP-500-Fehler mit gemeinsamer Join-Ursache. Ergänzt die [`Bestandsanalyse`](ARCHIV/2026-09-23-verkaufsreife-bestandsanalyse.md) und die [`Zugangsprüfung`](ARCHIV/2026-09-23-verkaufsreife-zugangspruefung.md).
+Aktuellster Archiv-Snapshot: [`ARCHIV/2026-09-26-verkaufsreife-gesamtpruefung.md`](ARCHIV/2026-09-26-verkaufsreife-gesamtpruefung.md) — tatsächlicher Code- und lokaler SQL-Stand, Zahlungs-/UX-Korrekturen, 1.637 bestandene Tests ohne DB-Integration, Grenzen der Browserprüfung und verbleibende Verkaufsblocker. Keine Produktionsfreigabe.
+
+Davor: [`ARCHIV/2026-09-23-rollen-seiten-api-pruefung.md`](ARCHIV/2026-09-23-rollen-seiten-api-pruefung.md) — Rollen-, Seiten- und API-Prüfung mit Agent-Zugängen: 58 Navigationslinks, 95 unterschiedliche Seiten-/Rechtetests und 132 Produktions-GET-Routen; zwei bestätigte HTTP-500-Fehler mit gemeinsamer Join-Ursache. Ergänzt die [`Bestandsanalyse`](ARCHIV/2026-09-23-verkaufsreife-bestandsanalyse.md) und die [`Zugangsprüfung`](ARCHIV/2026-09-23-verkaufsreife-zugangspruefung.md).
 
 Davor: [`ARCHIV/2026-09-19-ui-einheitlichkeit-analyse-und-plan.md`](ARCHIV/2026-09-19-ui-einheitlichkeit-analyse-und-plan.md) — Folgeanalyse zur UX-Sanierung: Rahmen und Token sind einheitlich, die Muster nicht (13 `<h1>`-Stile, 41 handgebaute Kennzahl-Kacheln, 10 × `window.confirm()`, zwei Dialog-Systeme, 16 handgebaute Leerzustände, fünf Dashboard-Bauarten). Plan in 6 Phasen mit Muster-Guardrail als Ratsche plus Umsetzungsprompt je Phase.
 

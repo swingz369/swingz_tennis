@@ -1,6 +1,6 @@
 # Umgebungen & Datenbanken
 
-> Zuletzt verifiziert: 19. September 2026 (Auslieferungsweg über `deploy.yml`, lokale Migrations-Realität, Test-/Dev-Server-Rezepte)
+> Zuletzt verifiziert: 23. September 2026 (CI-Tests gegen frische Supabase-DB, Auslieferungsweg, lokale Test-/Dev-Server-Rezepte)
 > Warum es genau so aufgeteilt ist (und nicht mit Staging von Anfang an): [`decisions/adr-003-datenbank-umgebungen.md`](decisions/adr-003-datenbank-umgebungen.md)
 
 Dieses Dokument beschreibt, welche Datenbank wofür da ist, wer darauf schreiben darf und wie eine Änderung von der Entwicklung nach Produktion kommt. Es ist ein **lebendes Dokument** — wer die Aufteilung ändert, ändert diese Datei mit.
@@ -103,7 +103,7 @@ lokal entwickeln → prüfen (§ 5b) → Commit (Hook) → merge/push nach main 
 2. **Lokal prüfen** — je nach Änderungsart siehe § 5b. Immer: `npx tsc --noEmit`, `npx vitest run`.
 3. **Commit.** Der `pre-commit`-Hook (`.husky/pre-commit`) läuft `lint-staged` (eslint + prettier), bei `.md`-Änderungen `npm run docs:check`, `dependency-cruiser` (Architektur-Regeln, Warnungen sind Baseline) und prüft die Git-Identität (Vercel blockt fremde Autoren, Details [`CONTRIBUTING.md`](CONTRIBUTING.md)). Nie mit `--no-verify` umgehen. Commit-Nachricht im Conventional-Commits-Format; KI-Sessions hängen die vom Harness vorgegebene `Co-Authored-By`-Zeile an.
 4. **Auslieferung.** Per PR nach `main` oder direkt `pnpm ship` (= `git push origin HEAD:main`). Dann laufen automatisch:
-   - **`ci.yml`:** Typecheck, Lint, Design-Token-Guardrail, Unit-Tests, Dependency-Audit; bei PRs zusätzlich „Migrationen gegen leere DB“ (`supabase db reset`).
+   - **`ci.yml`:** Typecheck, Lint, Design-Token-Guardrail, Unit-Tests, Dependency-Audit; auf Pushes und PRs zusätzlich „Migrationen gegen leere DB“ (`supabase db reset`) und RLS-/Mandanten-Integrationstests gegen diese frische DB.
    - **`deploy.yml`** (startet nach grüner CI auf `main`, oder manuell per `workflow_dispatch`): 1. Migrationen auf Produktion — **nur** wenn die Repo-Variable `AUTO_MIGRATE=true` gesetzt ist; 2. `vercel deploy --prod` per CLI; 3. Health-Check auf `https://swingz.vercel.app/api/health` (bricht rot ab, wenn nicht grün).
    - Die Reihenfolge Migration → Deploy ist fest eingebaut. Daraus folgt: Migrationen müssen **additiv** sein (Spalte hinzufügen, nicht umbenennen) — zwischen beiden Schritten läuft der alte Code auf dem neuen Schema. Eine Umbenennung wird zu zwei Releases.
 5. **Nach dem Merge prüfen, nicht hoffen** ([`AGENTS.md`](../AGENTS.md) § Auslieferung, Regel 3): `gh run list --workflow deploy --limit 3` (grün?), `curl -s https://swingz.vercel.app/api/health`, und einmal nachsehen, dass `monitor.yml` läuft (`schedule` läuft nur auf `main`).

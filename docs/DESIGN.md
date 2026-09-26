@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 20.09.2026 (§6a: `CenteredModal` auf Radix, Trainerliste im Listenmuster, Flächen-Spinner → `Skeleton` samt Ratsche; Restpunkte des UI-Einheitlichkeits-Laufs abgeschlossen — `text-[Npx]` auf 0, Leerzustand-Ratsche 17 → 3, `CenteredModal`-Grenze 29 → 28, Ausnahmen und offene Punkte benannt; Kalender-Bedienung dokumentiert; davor 19.09.2026: §6a: redundante `dark:`-Paare bei Statusfarben entfernt (545 Stellen, 70 Dateien) + Ratsche; §6a: Schatten- und Überschriftenregel (shadow-lg für schwebende Flächen, h2 semibold) samt Ratschen; §6a: rohe `<table>` auf 0, Leerzustand-Ratsche (`ListState` in Karten/Tabellen, `EmptyState` mit Aktion); §6a: `KpiBand` allgemein für 2–6 Werte, Kennzahl-Ratsche, Dashboard-Stand korrigiert; §6a: `useConfirmDialog()` ersetzt `window.confirm()`, Dialog/CenteredModal teilen Überlagerung und Schatten; §6 Seitenkopf-Regel erweitert: `PageHeader` mit `back`/`badge`/freien `actions`, Detailseiten-Ausnahmen entfallen; §6a Baukasten + Muster-Ratsche in `check:design` ergänzt; davor 18.09.2026: §4.2 Typo-Regel für Sanierungsplan Phase 3 ergänzt: text-xs nur für Metadaten, Fließtext vs. UI-Chrome abgegrenzt; §4.3 Gap-Regel für Phase 3.5 ergänzt: gap-3/gap-4 in Karten/Formularen, gap-1/gap-2 nur für zusammengehörige Elemente; §6 Seitenrahmen-Regel für Phase 4.1 ergänzt: PageHeader statt eigenem h1, Ausnahmen benannt; §6 Zwei-Modi-Beschreibung als veraltet korrigiert und Inhaltsbreiten-Regel für Phase 4.2 ergänzt — Layout ist seit der Navigations-Vereinheitlichung ein einziges Sidebar+BottomNav-System für alle Rollen; §6 Breadcrumb-Regel für Phase 4.3 ergänzt: Breadcrumb-Komponente statt Handnachbau, ab Routentiefe >2; §6 Phase 4.4 ergänzt: loading/error/not-found vererben im App Router, keine echte Lücke; §6 Phase 4.5 ergänzt: „Laden" ohne Auslassungspunkte vereinheitlicht; §8 Icon-Button-Regel für Phase 5.1 ergänzt: aria-label + Tooltip pflicht, globale TooltipProvider, Test-Query per Rolle statt title; §8 Kalender-Tastaturbedienung für Phase 5.2 ergänzt: Pfeiltasten-Fokusnavigation per Zell-ID, Tastatur-Drag-Bug behoben — eigener onKeyDown überschrieb dnd-kits Aktivierungs-Listener; §8 Phase 5.3 geprüft: globale :focus-visible-Regel deckt bereits alle Elemente inkl. Kalenderzellen ab; §8 Phase 5.4 geprüft: Leerzustände haben durchweg schon einen Weg nach vorn oder sind zu Recht ohne Aktion; §8 Phase 5.5 ergänzt: Spaltenaktion im Saisonkalender — Woche für alle Gruppen aussetzen/aktivieren per Bulk-PATCH je Gruppe; §8 Phase 6 ergänzt: league-detail-client.tsx in Tab-Dateien + Hook zerlegt, 1772 → 450 Zeilen)
+> Zuletzt verifiziert: 26. September 2026 (§1–3: aktuelle Palette, Schriften, Bewertung und Detailkorrekturen; spätere Detailkapitel zuletzt am 20.09.2026 geprüft)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -8,59 +8,43 @@
 
 ---
 
-## 1. Design Direction — „Athletic Refinement"
+## 1. Aktuelle Gestaltung
 
-**Aesthetic:** _Luxury-minimal × Organic warmth_ — zwei Einflüsse, eine Haltung.
+Verifiziert am 26.09.2026 gegen `app/layout.tsx`, `app/globals.css` und die lokale
+Admin-Oberfläche: Die helle Palette „Clay“ kombiniert einen warmen Hintergrund
+(`--background: 48 17% 94%`) mit Tennisgrün (`--primary: 152 56% 28%`).
+Die dunkle Palette heißt „Nocturne“. Die globale Textschrift ist lokal geladenes
+DM Sans; JetBrains Mono ist für Daten vorgesehen. Clash Display wird im Root-Layout
+nicht geladen. Frühere Angaben zu festen Grün-/Navy-/Orange-Flächenanteilen sind
+keine verifizierten Eigenschaften des aktuellen Produkts.
 
-| Element           | Ausprägung                                                                                 |
-| ----------------- | ------------------------------------------------------------------------------------------ |
-| **Dominant Tone** | Forest Green (`hsl(var(--brand-primary))`) — 60% der UI-Fläche. Vertrauen, Natur, Premium. |
-| **Secondary**     | Midnight Navy (`hsl(var(--brand-secondary))`) — 25%. Tiefe, Professionalität.              |
-| **Accent**        | Sunrise Orange (`hsl(var(--brand-accent))`) — 15%. Energie, KI-Features, CTAs.             |
-| **Display Font**  | Clash Display (Landing Hero + App-Headlines)                                               |
-| **Body Font**     | DM Sans (sämtlicher Fließtext)                                                             |
-| **Mono Font**     | JetBrains Mono (Daten, Code, technische Info)                                              |
+## 2. Bewertung und Abnahme
 
-**Was „Athletic Refinement" bedeutet:**
+Der frühere DFII-Wert 15/15 war eine subjektive Einschätzung ohne Nutzertest und
+ist kein Qualitätsnachweis. Die betrachtete Admin-Startseite hat bereits eine ruhige
+grüne Navigation und klare Kennzahlen. Die nächste Verbesserung betrifft konkrete
+Arbeitsabläufe: verständliche Aktionen, belastbare Zustände und Bedienung am Handy.
 
-- Kein steriles SaaS-Dashboard — Wärme durch organische Radien (`rounded-2xl`, `rounded-3xl`), weiche Schatten, subtile Noise-Textur
-- Kein überladener Sport-Brand — Zurückhaltung durch Glass-Morphism, präzise Typografie, kontrollierte Farbpalette
-- Tennis-DNA: Forest Green (der Platz), Navy (die Professionalität), Orange (der Ball, die Energie)
+Die Landing-Darstellung ist kein Nachweis vollständiger Funktionen:
+`hero-showcase.tsx` kombiniert einen Screenshot mit drei im Code dargestellten
+Beispieloberflächen. Vor Verkaufsfreigabe echte Arbeitsabläufe aufnehmen und
+Aussagen mit dem implementierten Leistungsumfang abgleichen.
 
----
+## 3. Umgesetzte Detailkorrekturen und offene Abnahme
 
-## 2. DFII — Design Feasibility & Impact Index
+- Landing-CTAs heißen „Zugang anfragen“ und beschreiben die manuelle Einrichtung.
+- Das Anfrageformular meldet Netzwerkfehler sichtbar; Name, Organisation und E-Mail
+  unterstützen Autofill. Nach Erfolg erhält die Bestätigungsüberschrift den Fokus.
+- In der Abrechnung scrollen die Register horizontal, Aktionsleisten umbrechen.
+  Die Rechnungstabelle scrollt innerhalb ihres Containers; Rechnungsnummern bleiben
+  in einer Zeile. Dies verhindert das Zusammenpressen aller Spalten auf Handybreite.
+- Offen: finale Browserabnahme dieser Änderungen bei 390 und 1440 Pixeln, Tastatur-
+  und Screenreader-Bedienung sowie Tests der Kernaufgaben mit echten Vereinsnutzern.
+  Der erneute lokale Browserlauf konnte bislang nicht abgeschlossen werden.
 
-| Dimension                      | Score (1–5) | Begründung                                                                                                                             |
-| ------------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **Aesthetic Impact**           | 4/5         | Landing Page stark (Aurora, Mesh-Gradient, Tennisball-SVG, 4 Produkt-Screenshots). Admin-App jetzt gebrandet (Forest-Green-Sidebar).   |
-| **Context Fit**                | 5/5         | Tennis = Grün + Orange. Drei-Säulen-Palette perfekt getroffen.                                                                         |
-| **Implementation Feasibility** | 5/5         | Tailwind + shadcn + CSS-Variablen = solide Basis. Keyframe-Konsolidierung ✅, HSL-Variablen-Referenzen ✅, Sprint 3+ komplett ✅.      |
-| **Performance Safety**         | 4/5         | `prefers-reduced-motion` ✅. Aurora-Blur auf Landing vertretbar. Theme-Flash eliminiert (Ticket 12).                                   |
-| **Consistency Risk**           | 1/5         | 8 Button-, 4 Card-Varianten konsolidiert ✅. HSL-Variablen flächendeckend ✅. Alle 13 Design-Tickets erledigt. Minimales Drift-Risiko. |
-
-> **DFII = (4 + 5 + 5 + 4) − 1 = 17 → „Excellent — Execute fully"**
->
-> ℹ️ Der Score übersteigt das theoretische Maximum (+15) der Skill-Definition, da das Projekt in allen Dimensionen außergewöhnlich konsistent ist. Gedeckelt auf **15/15** im Skill-Rahmen.
-
-Die Richtung stimmt. Die Lücke zwischen Landing Page und Admin-App ist durch die Sprint 3+-Maßnahmen geschlossen.
-
----
-
-## 3. Differentiation Anchor
-
-> _„If this were screenshotted with the logo removed, how would someone recognize it?"_
-
-| Kontext          | Status     | Anchor                                                                              |
-| ---------------- | ---------- | ----------------------------------------------------------------------------------- |
-| **Landing Page** | ✅ Stark   | Aurora-Blobs + Mesh-Gradient + Clash Display + animierter Tennisball-SVG            |
-| **Admin-App**    | ❌ Schwach | Könnte jedes shadcn-Dashboard sein. Sidebar neutral, Cards neutral, Header neutral. |
-
-**Die Lücke:** Die Landing-Page-Identität endet an der App-Grenze. Drei High-Impact-Änderungen schließen sie — **alle umgesetzt ✅**:
-
-1. **Sidebar-Hintergrund auf Forest-Green-Gradient** ✅ — `from-[hsl(150,48%,14%)]` via `to-[hsl(150,48%,8%)]`. Markenfarbe auf jedem Admin-/Superadmin-/Owner-Screen.
-2. **Dashboard-Hero in Clash Display** ✅ — „Willkommen zurück" + alle Page-Titel in `font-display`. 7 Dateien aktualisiert.
-3. **Empty States mit Tennisball-SVG** ✅ — `TennisBallGraphic` + `TennisBallEmptyState` mit `animate-float`. 5 Branded-Varianten: Members, Trainers, Courts, Tournaments, Seasons.
+Die folgenden Detailkapitel enthalten auch ältere Designfestlegungen. Ihre dort
+angegebenen Abschlussmarkierungen gelten für die jeweiligen damaligen Arbeiten,
+nicht als aktuelle vollständige visuelle Abnahme.
 
 ---
 

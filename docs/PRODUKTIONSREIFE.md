@@ -1,6 +1,6 @@
 # Weg zur Produktionsreife
 
-> Zuletzt verifiziert: 24. September 2026 (Umsetzungsplan aus den Prüfungen vom 23. September ergänzt; ältere Messwerte bleiben historische Stände)
+> Zuletzt verifiziert: 26. September 2026 (gezielte Codekorrekturen und lokale Datenbankprüfung; ältere Messwerte bleiben historische Stände)
 >
 > Lebendes Dokument. **Der Plan** — was in welcher Reihenfolge passieren muss, damit SwingZ ein
 > Produkt ist, das ein Verein kauft, benutzt und behält.
@@ -13,6 +13,14 @@
 ---
 
 ## Aktueller Umsetzungsplan (Prüfungen vom 23.09.2026)
+
+Fortschreibung 26.09.: Die ergänzenden Blocker und umgesetzten Korrekturen stehen in
+[`OPEN_ITEMS.md`](OPEN_ITEMS.md) unter „Ergänzende Prüfung vom 26.09.2026“.
+Zuerst Buchungsrechte und Zahlungs-/Lagertransaktionen schließen, danach denselben Commit
+mit grüner CI ausliefern und F1 nachweisen. Ein erreichbarer Health-Endpunkt und grüne
+Mock-Tests ersetzen weder die fachliche Abnahme F2–F4 noch einen beobachteten Fehleralarm F5.
+Der öffentliche Zugang ist weiterhin eine manuell bearbeitete Anfrage. Die neue Beschriftung
+macht diesen Zustand sichtbar; das Selbstbedienungs-Gate F2 bleibt offen.
 
 Grundlage: [Rollen-/API-Prüfung](ARCHIV/2026-09-23-rollen-seiten-api-pruefung.md),
 [Bestandsanalyse](ARCHIV/2026-09-23-verkaufsreife-bestandsanalyse.md) und
