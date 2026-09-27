@@ -65,19 +65,19 @@ export function DraggableSessionCard({
         isCancelled
           ? 'bg-error-50 text-error-700 border-l-[3px] border-error-400 opacity-70'
           : isDragging
-            ? 'opacity-40 rotate-1 scale-105 shadow-lg bg-info-100'
-            : 'bg-info-50 text-info-800 hover:shadow-md border-l-[3px] border-info-500 cursor-grab active:cursor-grabbing'
+            ? 'opacity-40 rotate-1 scale-105 shadow-lg bg-accent'
+            : 'bg-muted text-foreground hover:shadow-md border-l-[3px] border-event cursor-grab active:cursor-grabbing'
       }`}
     >
       {isCancelled && <div className="text-3xs font-semibold text-error-600 mb-0.5">Abgesagt</div>}
       <div className="flex items-center gap-1.5">
-        <GripVertical className="h-3 w-3 text-info-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+        <GripVertical className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
         <span className="font-bold truncate text-2xs">{session.trainerName || 'Trainer'}</span>
         {session.bookedByUser && (
           <div className="w-2 h-2 rounded-full bg-error-500 flex-shrink-0" />
         )}
       </div>
-      <div className="flex items-center gap-2 mt-0.5 text-2xs text-info-600/80">
+      <div className="flex items-center gap-2 mt-0.5 text-2xs text-muted-foreground">
         <span className="flex items-center gap-0.5">
           <Clock className="h-2.5 w-2.5" />
           {session.startTime}–{session.endTime}

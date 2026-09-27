@@ -204,7 +204,7 @@ export function MonthView({
                               ? 'bg-error-50 text-error-800 border border-error-200'
                               : (session.currentBookings ?? 0) >= session.maxParticipants
                                 ? 'bg-warning-50 text-warning-800'
-                                : 'bg-info-50 text-info-800 hover:bg-info-100 cursor-pointer'
+                                : 'bg-muted text-foreground hover:bg-accent cursor-pointer'
                           }`}
                           role="button"
                           tabIndex={
@@ -316,7 +316,7 @@ export function MonthView({
                                     e.stopPropagation();
                                     openFeedbackModal(session, day);
                                   }}
-                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-2xs bg-info-50 text-info-700 hover:bg-info-100 transition-colors"
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-2xs bg-muted text-foreground hover:bg-accent transition-colors"
                                   title="Feedback geben"
                                 >
                                   <MessageSquare className="h-3 w-3" />

@@ -237,28 +237,19 @@ describe('SLOT_STATUS_STYLES', () => {
     expect(SLOT_STATUS_STYLES[status].length).toBeGreaterThan(0);
   });
 
-  it('available uses success palette', () => {
-    expect(SLOT_STATUS_STYLES.available).toContain('success');
+  // Matchday (ADR-007): Unterscheidbarkeit statt Palettennamen.
+  it('every status looks different', () => {
+    expect(new Set(allStatuses.map((st) => SLOT_STATUS_STYLES[st])).size).toBe(allStatuses.length);
   });
 
-  it('session uses info palette', () => {
-    expect(SLOT_STATUS_STYLES.session).toContain('info');
+  it('sessions carry the event stripe, own bookings the lime edge', () => {
+    expect(SLOT_STATUS_STYLES.session).toContain('border-l-event');
+    expect(SLOT_STATUS_STYLES['own-booking']).toContain('border-l-highlight');
   });
 
-  it('booked uses warning palette', () => {
-    expect(SLOT_STATUS_STYLES.booked).toContain('warning');
-  });
-
-  it('own-booking uses error palette', () => {
-    expect(SLOT_STATUS_STYLES['own-booking']).toContain('error');
-  });
-
-  it('plan uses info palette', () => {
-    expect(SLOT_STATUS_STYLES.plan).toContain('info');
-  });
-
-  it('blocked uses gray palette', () => {
-    expect(SLOT_STATUS_STYLES.blocked).toContain('gray');
+  it('only available slots are clickable for everyone, blocked ones are not', () => {
+    expect(SLOT_STATUS_STYLES.available).toContain('cursor-pointer');
+    expect(SLOT_STATUS_STYLES.blocked).toContain('cursor-not-allowed');
   });
 
   it('admin blocked override includes cursor-pointer', () => {
@@ -282,20 +273,9 @@ describe('DAILY_BLOCK_STYLES', () => {
     expect(style.accent).toBeTruthy();
   });
 
-  it('available uses success palette (matching SLOT_STATUS_STYLES)', () => {
-    expect(DAILY_BLOCK_STYLES.available.bg).toContain('success');
-  });
-
-  it('booked uses warning palette', () => {
-    expect(DAILY_BLOCK_STYLES.booked.bg).toContain('warning');
-  });
-
-  it('own-booking uses error palette', () => {
-    expect(DAILY_BLOCK_STYLES['own-booking'].bg).toContain('error');
-  });
-
-  it('blocked uses gray palette', () => {
-    expect(DAILY_BLOCK_STYLES.blocked.bg).toContain('gray');
+  it('uses the same accents as SLOT_STATUS_STYLES', () => {
+    expect(SLOT_STATUS_STYLES.session).toContain(DAILY_BLOCK_STYLES.session.accent);
+    expect(SLOT_STATUS_STYLES['own-booking']).toContain(DAILY_BLOCK_STYLES['own-booking'].accent);
   });
 });
 
@@ -327,9 +307,10 @@ describe('getCalendarLegendItems', () => {
 
   it('dot colors match SLOT_STATUS_STYLES palette', () => {
     const admin = getCalendarLegendItems(true);
-    expect(admin[0].className).toContain('success'); // Verfügbar
-    expect(admin[1].className).toContain('info'); // Gruppentraining
-    expect(admin[2].className).toContain('info'); // Session
-    expect(admin[3].className).toContain('gray'); // Gesperrt
+    expect(admin[0].className).toContain('border-dashed'); // Verfügbar
+    expect(admin[1].className).toContain('bg-event'); // Gruppentraining
+    expect(admin[2].className).toContain('bg-event'); // Session
+    const member = getCalendarLegendItems(false);
+    expect(member[4].className).toContain('ring-highlight'); // Deine Buchung
   });
 });

@@ -172,22 +172,23 @@ export function getSlotStatus(
  * Colors: Emerald (available), Blue (session), Violet (plan), Rose (own-booking),
  * Amber (booked), Zinc (blocked).
  */
+// Matchday (ADR-007): ruhiges Raster wie in der Vorlage. Freie Stunden sind
+// leise Flächen, Trainings tragen den Termin-Streifen (--event), die eigene
+// Buchung ist die dunkle Insel mit Lime-Kante. Alles über Token, damit das
+// Dunkel-Theme ohne dark:-Paare mitzieht.
 export const SLOT_STATUS_STYLES: Record<SlotStatus, string> = {
   available:
-    'bg-success-50/60 text-success-700 border border-success-200/60 hover:bg-success-100 hover:border-success-300 hover:shadow-sm cursor-pointer',
-  session:
-    'bg-gradient-to-r from-info-100 to-info-200/70 text-info-800 border-l-[3px] border-l-info-500 border border-info-200 shadow-sm',
-  booked:
-    'bg-gradient-to-r from-warning-100 via-warning-100 to-warning-200 text-warning-900 border-l-[4px] border-l-warning-600 border border-warning-300 shadow-md ring-1 ring-inset ring-warning-200/60',
-  'own-booking':
-    'bg-gradient-to-r from-error-100 to-error-200/70 text-error-800 border-l-[3px] border-l-error-500 border border-error-200 shadow-sm',
-  plan: 'bg-info-50/60 text-info-700 border border-info-200/60',
-  blocked: 'bg-gray-50 text-muted-foreground border border-gray-200/80 cursor-not-allowed',
+    'text-muted-foreground/70 border border-dashed border-border hover:bg-muted hover:border-input hover:text-foreground cursor-pointer',
+  session: 'bg-muted text-foreground border-l-[3px] border-l-event',
+  booked: 'bg-accent text-muted-foreground border-l-[3px] border-l-input',
+  'own-booking': 'bg-brand-dark text-white border-l-[3px] border-l-highlight',
+  plan: 'bg-muted/60 text-muted-foreground border border-dashed border-event/60',
+  blocked: 'bg-muted/70 text-muted-foreground border border-border cursor-not-allowed',
 };
 
 /** Admin override for blocked slots — adds hover effect + cursor-pointer */
 export const SLOT_STATUS_STYLES_ADMIN_BLOCKED =
-  'bg-gray-50 text-muted-foreground border border-gray-200/80 cursor-pointer hover:bg-gray-100 hover:shadow-sm';
+  'bg-muted/70 text-muted-foreground border border-border cursor-pointer hover:bg-accent';
 
 /**
  * Decomposed style tokens for the daily-view PositionedSessionBlock.
@@ -200,29 +201,29 @@ export const DAILY_BLOCK_STYLES: Record<
   /* Note: 'available' is kept for API completeness but is not used by
      PositionedSessionBlock (which only renders when a session exists). */
   available: {
-    bg: 'bg-success-50/60 border-success-200/60',
-    text: 'text-success-700',
-    accent: 'border-l-success-500',
+    bg: 'border-border',
+    text: 'text-muted-foreground',
+    accent: 'border-l-border',
   },
   session: {
-    bg: 'bg-info-100 border-info-200 shadow-sm',
-    text: 'text-info-800',
-    accent: 'border-l-info-500',
+    bg: 'bg-muted border-border',
+    text: 'text-foreground',
+    accent: 'border-l-event',
   },
   booked: {
-    bg: 'bg-gradient-to-br from-warning-100 to-warning-200 border-warning-300 shadow-md ring-1 ring-inset ring-warning-200/60',
-    text: 'text-warning-900',
-    accent: 'border-l-warning-600',
+    bg: 'bg-accent border-border',
+    text: 'text-muted-foreground',
+    accent: 'border-l-input',
   },
   'own-booking': {
-    bg: 'bg-error-100 border-error-200 shadow-sm',
-    text: 'text-error-800',
-    accent: 'border-l-error-500',
+    bg: 'bg-brand-dark border-transparent',
+    text: 'text-white',
+    accent: 'border-l-highlight',
   },
   blocked: {
-    bg: 'bg-gray-100 border-gray-300 shadow-sm',
-    text: 'text-gray-600',
-    accent: 'border-l-gray-400',
+    bg: 'bg-muted/70 border-border',
+    text: 'text-muted-foreground',
+    accent: 'border-l-input',
   },
 };
 
@@ -234,17 +235,17 @@ export type LegendItem = { label: string; className: string };
 
 export function getCalendarLegendItems(isAdmin: boolean): LegendItem[] {
   const items: LegendItem[] = [
-    { label: 'Verfügbar', className: 'bg-success-500' },
-    { label: 'Gruppentraining', className: 'bg-info-500' },
+    { label: 'Verfügbar', className: 'border border-dashed border-input' },
+    { label: 'Gruppentraining', className: 'bg-event' },
   ];
 
   if (isAdmin) {
-    items.push({ label: 'Session (Drag & Drop)', className: 'bg-info-500' });
-    items.push({ label: 'Gesperrt', className: 'bg-gray-400' });
+    items.push({ label: 'Session (Drag & Drop)', className: 'bg-event' });
+    items.push({ label: 'Gesperrt', className: 'bg-muted-foreground/40' });
   } else {
-    items.push({ label: 'Offene Session', className: 'bg-info-500' });
-    items.push({ label: 'Belegt (gebucht)', className: 'bg-warning-500' });
-    items.push({ label: 'Deine Buchung', className: 'bg-error-500' });
+    items.push({ label: 'Offene Session', className: 'bg-event' });
+    items.push({ label: 'Belegt (gebucht)', className: 'bg-input' });
+    items.push({ label: 'Deine Buchung', className: 'bg-brand-dark ring-2 ring-highlight' });
   }
 
   return items;

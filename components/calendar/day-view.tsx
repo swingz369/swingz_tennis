@@ -176,7 +176,7 @@ export function DayView({
                     {getSurfaceLabel(court.surface)}
                   </span>
                   {court.hasIndoor && (
-                    <span className="inline-flex items-center px-1 py-0.5 rounded-md bg-info-50 text-3xs sm:text-3xs font-medium text-info-600 border border-info-100">
+                    <span className="inline-flex items-center px-1 py-0.5 rounded-md bg-muted text-3xs sm:text-3xs font-medium text-muted-foreground border border-border">
                       Indoor
                     </span>
                   )}

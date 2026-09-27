@@ -214,8 +214,8 @@ export function AgendaView({
             let cardClass = 'border-dashed border-border text-muted-foreground bg-transparent';
 
             if (status === 'session') {
-              bar = 'bg-info-500';
-              icon = <User className="h-3.5 w-3.5 text-info-500" />;
+              bar = 'bg-event';
+              icon = <User className="h-3.5 w-3.5 text-muted-foreground" />;
               label = session?.trainerName || 'Offene Session';
               const free = Math.max(
                 0,
@@ -249,9 +249,9 @@ export function AgendaView({
               cardClass = 'border-border bg-muted/40 text-muted-foreground';
             } else if (status === 'plan') {
               bar = 'bg-info-300';
-              icon = <Users className="h-3.5 w-3.5 text-info-400" />;
+              icon = <Users className="h-3.5 w-3.5 text-muted-foreground" />;
               label = 'Gruppentraining';
-              cardClass = 'border-dashed border-info-200 bg-info-50/40 text-info-700';
+              cardClass = 'border-dashed border-border bg-info-50/40 text-foreground';
             } else if (isPast) {
               cardClass = 'border-border bg-transparent text-muted-foreground/60';
               label = 'Vorbei';

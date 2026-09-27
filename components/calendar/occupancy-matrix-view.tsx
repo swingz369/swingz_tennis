@@ -19,7 +19,7 @@ const CELL: Record<SlotStatus, { label: string; className: string }> = {
     label: 'Frei',
     className: 'bg-success-50 text-success-700 hover:bg-success-100 cursor-pointer',
   },
-  session: { label: 'Training', className: 'bg-info-500 text-white' },
+  session: { label: 'Training', className: 'bg-event text-white' },
   plan: { label: 'Saisonplan', className: 'bg-warning-100 text-warning-800' },
   booked: { label: 'Belegt', className: 'bg-warning-500 text-white' },
   'own-booking': { label: 'Deine', className: 'bg-error-500 text-white' },

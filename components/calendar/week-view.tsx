@@ -510,12 +510,12 @@ export function WeekView({
                                 </Tooltip>
                               ) : (
                                 <div className="flex items-center gap-1.5 w-full px-2 min-w-0">
-                                  <User className="h-3 w-3 text-info-500 flex-shrink-0" />
+                                  <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                                   <div className="min-w-0">
-                                    <span className="truncate text-2xs font-bold text-info-800 block">
+                                    <span className="truncate text-2xs font-bold text-foreground block">
                                       {session.trainerName?.substring(0, 12) || 'Trainer'}
                                     </span>
-                                    <span className="text-3xs text-info-500 font-medium">
+                                    <span className="text-3xs text-muted-foreground font-medium">
                                       {session.startTime}–{session.endTime}
                                     </span>
                                   </div>
@@ -524,7 +524,7 @@ export function WeekView({
                             ) : status === 'plan' ? (
                               <div className="flex items-center gap-1.5 px-2 min-w-0">
                                 <div
-                                  className={`w-2 h-2 rounded-full flex-shrink-0 ${planEntry?.group_color ? '' : 'bg-info-500'}`}
+                                  className={`w-2 h-2 rounded-full flex-shrink-0 ${planEntry?.group_color ? '' : 'bg-event'}`}
                                   style={
                                     planEntry?.group_color
                                       ? { backgroundColor: planEntry.group_color }
@@ -532,18 +532,18 @@ export function WeekView({
                                   }
                                 />
                                 <div className="min-w-0">
-                                  <span className="text-2xs truncate font-semibold text-info-700 block">
+                                  <span className="text-2xs truncate font-semibold text-foreground block">
                                     {planEntry?.group_name || 'Gruppentraining'}
                                   </span>
                                   {planEntry?.trainer_name && (
-                                    <span className="text-3xs text-info-500 font-medium truncate block">
+                                    <span className="text-3xs text-muted-foreground font-medium truncate block">
                                       {planEntry.trainer_name}
                                     </span>
                                   )}
                                 </div>
                               </div>
                             ) : (
-                              <span className="text-2xs px-2 text-success-600/70 font-medium">
+                              <span className="text-2xs px-2 text-muted-foreground/70 font-medium">
                                 {timeSlot}
                               </span>
                             )}
