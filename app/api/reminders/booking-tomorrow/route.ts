@@ -12,7 +12,6 @@ import {
   type IMemberRepository,
 } from '@/application/use-cases/send-reminders.use-case';
 import { EmailService } from '@/infrastructure/email/email.service';
-import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { pushNotificationService } from '@/lib/push-notification.service';
 import { sendRemindersSchema } from '@/application/validation/schemas/reminders.schema';
 import { createLogger } from '@/lib/logger';
@@ -113,7 +112,6 @@ class TempMemberRepository implements IMemberRepository {
 async function runReminders(dryRun: boolean, cron = false) {
   const reminderService = new ReminderService(
     new EmailService(),
-    new AuditServiceImpl(),
     new TempSessionRepository(cron),
     new TempBookingRepository(cron),
     new TempMemberRepository(cron)

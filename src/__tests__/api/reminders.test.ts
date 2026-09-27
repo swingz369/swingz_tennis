@@ -241,7 +241,7 @@ describe('POST /api/reminders/booking-tomorrow', () => {
 
   // ── Happy path ─────────────────────────────────────────
 
-  it('sends reminder emails, writes an audit log and triggers push for confirmed bookings', async () => {
+  it('sends reminder emails and triggers push for confirmed bookings', async () => {
     const res = await POST(buildRequest({ dryRun: false }));
 
     expect(res.status).toBe(200);
@@ -265,14 +265,8 @@ describe('POST /api/reminders/booking-tomorrow', () => {
       })
     );
 
-    // Audit-Eintrag je Booking
-    expect(mockAuditLog).toHaveBeenCalledWith(
-      expect.objectContaining({
-        entityType: 'booking',
-        entityId: 'booking-001',
-        details: expect.objectContaining({ type: 'booking_reminder' }),
-      })
-    );
+    // Kein Audit-Eintrag: Erinnerungen haben keinen handelnden Nutzer (actor_id ist FK auf users)
+    expect(mockAuditLog).not.toHaveBeenCalled();
 
     // Push für jedes erfolgreich erinnerte Mitglied
     expect(mockPushSend).toHaveBeenCalledWith(

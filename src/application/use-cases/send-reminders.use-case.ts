@@ -1,4 +1,4 @@
-import type { IEmailService, IAuditService } from '@/domain/services';
+import type { IEmailService } from '@/domain/services';
 import type {
   SendRemindersInput,
   ReminderResult,
@@ -41,7 +41,6 @@ export interface IMemberRepository {
 export class ReminderService {
   constructor(
     private emailService: IEmailService,
-    private auditService: IAuditService,
     private sessionRepository: ISessionRepository,
     private bookingRepository: IBookingRepository,
     private memberRepository: IMemberRepository
@@ -184,19 +183,9 @@ export class ReminderService {
             clubName: session.clubs?.name || 'TBD',
           });
 
-          // Audit log via interface
-          await this.auditService.log({
-            userId: 'system',
-            action: 'create', // Using generic action
-            entityType: 'booking',
-            entityId: booking.id,
-            details: {
-              type: 'booking_reminder',
-              sessionId: session.id,
-              memberId: booking.member_id,
-              method: 'email',
-            },
-          });
+          // Kein Audit-Eintrag: eine Erinnerungsmail hat keinen handelnden Nutzer, und
+          // audit_logs.actor_id ist FK auf users — 'system' wurde bei jedem Versand
+          // verworfen und als Sentry-Fehler gemeldet.
 
           results.push({
             sessionId: session.id,

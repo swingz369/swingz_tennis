@@ -49,14 +49,12 @@ function createService() {
     sendEmail: vi.fn().mockResolvedValue(undefined),
     sendBatchEmails: vi.fn().mockResolvedValue(undefined),
   };
-  const auditService = { log: vi.fn().mockResolvedValue(undefined) };
   const sessionRepository = { findSessionsForDateRange: vi.fn() };
   const bookingRepository = { findConfirmedBookingsForSessions: vi.fn() };
   const memberRepository = { findMemberById: vi.fn() };
 
   const service = new ReminderService(
     emailService,
-    auditService,
     sessionRepository,
     bookingRepository,
     memberRepository
@@ -65,7 +63,6 @@ function createService() {
   return {
     service,
     emailService,
-    auditService,
     sessionRepository,
     bookingRepository,
     memberRepository,
@@ -143,7 +140,6 @@ describe('ReminderService.sendTomorrowReminders', () => {
     expect(results[0].sessionId).toBe('session-001');
     expect(results[0].memberEmail).toBe('max@test.com');
     expect(t.emailService.sendBookingReminder).not.toHaveBeenCalled();
-    expect(t.auditService.log).not.toHaveBeenCalled();
   });
 
   it('sends an email and writes an audit entry for a confirmed booking', async () => {
@@ -168,16 +164,6 @@ describe('ReminderService.sendTomorrowReminders', () => {
         sessionTime: expect.any(String),
         courtName: 'Platz 1',
         clubName: 'TC Test',
-      })
-    );
-
-    expect(t.auditService.log).toHaveBeenCalledTimes(1);
-    expect(t.auditService.log).toHaveBeenCalledWith(
-      expect.objectContaining({
-        entityId: 'booking-001',
-        entityType: 'booking',
-        action: 'create',
-        details: expect.objectContaining({ type: 'booking_reminder', sessionId: 'session-001' }),
       })
     );
   });
@@ -208,7 +194,6 @@ describe('ReminderService.sendTomorrowReminders', () => {
     expect(results[0].status).toBe('failed');
     expect(results[0].error).toBe('SMTP down');
     // Kein Audit-Eintrag für fehlgeschlagenen Versand
-    expect(t.auditService.log).not.toHaveBeenCalled();
   });
 
   it('continues with the remaining bookings when one send fails', async () => {
