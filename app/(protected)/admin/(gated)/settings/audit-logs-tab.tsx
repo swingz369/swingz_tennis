@@ -105,7 +105,7 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
       ) : logs.length === 0 ? (
         <ListState empty emptyTitle="Keine Audit-Logs vorhanden" />
       ) : (
-        <Card className="border border-border dark:border-white/10">
+        <Card className="border border-border">
           <CardContent className="p-0 divide-y divide-border dark:divide-white/5">
             {logs.map((log: any) => (
               <div
@@ -117,7 +117,7 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-foreground dark:text-white">
+                    <span className="text-sm font-medium text-foreground">
                       {auditActionLabel(log.action)}
                     </span>
                     <span className="text-sm text-muted-foreground truncate">

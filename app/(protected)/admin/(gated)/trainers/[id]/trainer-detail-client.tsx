@@ -451,7 +451,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
 
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           {/* Header skeleton */}
-          <div className="p-5 border-b border-border dark:border-white/10">
+          <div className="p-5 border-b border-border">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1.5">
                 <Skeleton className="h-7 w-48 rounded" />
@@ -561,9 +561,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                 <h2 className="text-2xl md:text-3xl font-semibold tracking-[-0.03em] text-foreground truncate">
                   {trainer.firstName} {trainer.lastName}
                 </h2>
-                <p className="text-sm text-muted-foreground dark:text-muted-foreground truncate">
-                  {trainer.email}
-                </p>
+                <p className="text-sm text-muted-foreground truncate">{trainer.email}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
@@ -905,7 +903,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                               </Badge>
                             )}
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-muted-foreground dark:text-muted-foreground">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-muted-foreground">
                             <div>
                               <span className="font-medium text-foreground">Aussteller:</span>{' '}
                               {qual.issuer}
@@ -977,20 +975,16 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Card variant="elevated">
                   <CardContent className="p-5 text-center">
-                    <p className="text-muted-foreground dark:text-muted-foreground text-sm mb-1">
-                      Branchenerfahrung
-                    </p>
-                    <div className="text-3xl font-bold tabular-nums text-foreground dark:text-white tabular-nums">
+                    <p className="text-muted-foreground text-sm mb-1">Branchenerfahrung</p>
+                    <div className="text-3xl font-bold tabular-nums text-foreground tabular-nums">
                       {trainer.experience.years} <span className="text-xl">Jahre</span>
                     </div>
                   </CardContent>
                 </Card>
                 <Card variant="elevated">
                   <CardContent className="p-5 text-center">
-                    <p className="text-muted-foreground dark:text-muted-foreground text-sm mb-1">
-                      Vorherige Vereine
-                    </p>
-                    <div className="text-3xl font-bold tabular-nums text-foreground dark:text-white tabular-nums">
+                    <p className="text-muted-foreground text-sm mb-1">Vorherige Vereine</p>
+                    <div className="text-3xl font-bold tabular-nums text-foreground tabular-nums">
                       {trainer.experience.previousClubs.length}
                     </div>
                   </CardContent>
@@ -1550,7 +1544,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
         </div>
 
         {/* ── Detail Footer ─────────────────────────────────────────────── */}
-        <div className="p-5 bg-muted dark:bg-black/10 border-t border-border dark:border-white/10 flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div className="p-5 bg-muted dark:bg-black/10 border-t border-border flex flex-col sm:flex-row gap-3 items-center justify-between">
           {isEditing ? (
             <div className="flex gap-2 w-full sm:w-auto">
               <Button

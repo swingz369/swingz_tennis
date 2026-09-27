@@ -210,11 +210,9 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               aria-label="Benutzermenü"
             >
               {/* User info */}
-              <div className="px-4 py-3 border-b border-border dark:border-white/10" role="none">
-                <p className="text-sm font-semibold text-foreground dark:text-white">
-                  {user?.name || 'User'}
-                </p>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
+              <div className="px-4 py-3 border-b border-border" role="none">
+                <p className="text-sm font-semibold text-foreground">{user?.name || 'User'}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {user?.email || 'user@example.com'}
                 </p>
                 {user?.roles && user.roles.length > 0 && (
@@ -270,7 +268,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               </div>
 
               {/* Sign out */}
-              <div className="border-t border-border dark:border-white/10 pt-1" role="none">
+              <div className="border-t border-border pt-1" role="none">
                 <button
                   onClick={handleSignOut}
                   disabled={isLoggingOut}
@@ -290,7 +288,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden h-9 w-9 text-foreground dark:text-white rounded-xl hover:bg-muted dark:hover:bg-background/10"
+                className="md:hidden h-9 w-9 text-foreground rounded-xl hover:bg-muted dark:hover:bg-background/10"
                 onClick={onMenuClick}
                 aria-label="Menü öffnen"
               >

@@ -54,7 +54,7 @@ const COLOR_MAP: Record<StatColor, { text: string; bg: string; border: string }>
     border: 'hover:border-error-200 dark:hover:border-error-700/50',
   },
   gray: {
-    text: 'text-muted-foreground dark:text-muted-foreground',
+    text: 'text-muted-foreground',
     bg: 'bg-muted dark:bg-card/5',
     border: 'hover:border-border dark:hover:border-white/10',
   },
@@ -150,7 +150,7 @@ export function StatCard({
         // `h-full`: Karten mit Sparkline oder zweiter Zeile sind höher als die
         // übrigen. Ohne das blieben die kürzeren oben kleben statt die Zeilenhöhe
         // mitzugehen — die KPI-Reihe wirkte dadurch ausgefranst.
-        'h-full bg-card dark:bg-card border border-border dark:border-white/10 rounded-xl group transition-colors',
+        'h-full bg-card border border-border rounded-xl group transition-colors',
         // `cursor-pointer` nur, wenn die Karte auch wirklich irgendwohin führt —
         // vorher zeigte jede Kennzahl eine Hand, auch die ohne Ziel.
         href && 'cursor-pointer',
@@ -167,9 +167,7 @@ export function StatCard({
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground">
-              {label}
-            </p>
+            <p className="text-xs font-medium text-muted-foreground">{label}</p>
             <div className="flex items-baseline gap-2 mt-1.5">
               {/* Zahl in der Textschrift, nicht in Mono: Mono war hier kein
                   Argument für Lesbarkeit (`tabular-nums` leistet die Ausrichtung
@@ -179,7 +177,7 @@ export function StatCard({
                   man zuerst sieht — sie ist der Grund für die Karte. */}
               <p
                 className={cn(
-                  'text-[32px] font-semibold leading-none tracking-[-0.04em] text-foreground dark:text-white tabular-nums',
+                  'text-[32px] font-semibold leading-none tracking-[-0.04em] text-foreground tabular-nums',
                   valueClassName
                 )}
               >
@@ -202,9 +200,7 @@ export function StatCard({
               )}
             </div>
             {(sub || sublabel) && (
-              <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
-                {sub || sublabel}
-              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">{sub || sublabel}</p>
             )}
             {trend && trend.length > 1 && (
               <Sparkline points={trend} className={cn('mt-2', colors.text)} />

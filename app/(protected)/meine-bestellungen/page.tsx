@@ -129,10 +129,8 @@ export default function MeineBestellungenPage() {
         <Card>
           <CardContent className="py-16 text-center">
             <IconBox icon={ShoppingBag} size="lg" variant="gray" className="mx-auto mb-4" />
-            <p className="text-lg font-medium text-muted-foreground dark:text-muted-foreground mb-1">
-              Keine Bestellungen
-            </p>
-            <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-4">
+            <p className="text-lg font-medium text-muted-foreground mb-1">Keine Bestellungen</p>
+            <p className="text-sm text-muted-foreground mb-4">
               {activeFilter
                 ? `Keine Bestellungen mit Status „${STATUS_LABELS[activeFilter] || activeFilter}“`
                 : 'Du hast noch keine Bestellungen aufgegeben.'}
@@ -168,7 +166,7 @@ export default function MeineBestellungenPage() {
                         />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-sm text-foreground dark:text-white">
+                        <p className="font-semibold text-sm text-foreground">
                           Bestellung #{order.id.slice(0, 8)}
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
@@ -186,7 +184,7 @@ export default function MeineBestellungenPage() {
                             className={`text-2xs px-1.5 py-0 ${
                               order.payment_status === 'paid'
                                 ? 'border-success-200 text-success-600'
-                                : 'border-border dark:border-white/10 text-muted-foreground'
+                                : 'border-border text-muted-foreground'
                             }`}
                           >
                             {order.payment_status === 'paid' ? 'Bezahlt' : 'Ausstehend'}
@@ -264,7 +262,7 @@ export default function MeineBestellungenPage() {
                     className={`text-xs px-2 py-0.5 ${
                       selectedOrder.payment_status === 'paid'
                         ? 'border-success-200 text-success-600'
-                        : 'border-border dark:border-white/10 text-muted-foreground'
+                        : 'border-border text-muted-foreground'
                     }`}
                   >
                     {selectedOrder.payment_status === 'paid' ? 'Bezahlt' : 'Zahlung ausstehend'}
@@ -287,7 +285,7 @@ export default function MeineBestellungenPage() {
                             <Package className="h-4 w-4 text-muted-foreground" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-foreground dark:text-white">
+                            <p className="text-sm font-medium text-foreground">
                               {item.product_name}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -295,7 +293,7 @@ export default function MeineBestellungenPage() {
                             </p>
                           </div>
                         </div>
-                        <p className="text-sm font-semibold text-foreground dark:text-white tabular-nums">
+                        <p className="text-sm font-semibold text-foreground tabular-nums">
                           {formatCurrency(item.total)}
                         </p>
                       </div>
@@ -304,8 +302,8 @@ export default function MeineBestellungenPage() {
                 </div>
 
                 {/* Total */}
-                <div className="flex items-center justify-between pt-2 border-t border-border dark:border-white/10">
-                  <span className="font-semibold text-foreground dark:text-white">Gesamt</span>
+                <div className="flex items-center justify-between pt-2 border-t border-border">
+                  <span className="font-semibold text-foreground">Gesamt</span>
                   <span className="text-xl font-bold text-brand-light">
                     {formatCurrency(selectedOrder.total_amount)}
                   </span>

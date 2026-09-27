@@ -52,9 +52,7 @@ export function PageError({
           <CardTitle className="text-2xl text-center">{title}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-center text-muted-foreground dark:text-muted-foreground">
-            {error.message || message}
-          </p>
+          <p className="text-center text-muted-foreground">{error.message || message}</p>
 
           {error.digest && (
             <p className="text-xs text-center text-muted-foreground font-mono">

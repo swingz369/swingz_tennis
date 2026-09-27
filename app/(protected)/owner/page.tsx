@@ -380,7 +380,7 @@ export default async function OwnerPage() {
             <Link
               key={action.label}
               href={action.href}
-              className="flex items-center gap-3 p-3 rounded-xl border border-border dark:border-white/10 hover:bg-muted/60 transition-colors bg-card"
+              className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-muted/60 transition-colors bg-card"
             >
               <action.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="text-sm font-medium">{action.label}</span>

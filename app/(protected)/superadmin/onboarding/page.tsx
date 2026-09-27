@@ -451,7 +451,7 @@ export default function SuperadminOnboardingPage() {
   return (
     <div className="min-h-dvh bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
-        <Card className="border border-border dark:border-white/10">
+        <Card className="border border-border">
           <CardHeader className="pb-2">{renderStepper()}</CardHeader>
 
           <Separator />

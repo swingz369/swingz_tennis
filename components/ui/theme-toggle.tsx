@@ -34,7 +34,7 @@ export function ThemeToggle({ className, iconSize = 18, showLabel = false }: The
       onClick={mounted ? () => setTheme(nextTheme) : undefined}
       disabled={!mounted}
       className={cn(
-        'relative inline-flex items-center justify-center gap-2 rounded-xl h-9 w-9 text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-background/10 transition-colors',
+        'relative inline-flex items-center justify-center gap-2 rounded-xl h-9 w-9 text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-background/10 transition-colors',
         showLabel && 'w-auto px-3',
         !mounted && 'pointer-events-none',
         className

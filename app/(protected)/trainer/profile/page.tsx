@@ -242,7 +242,7 @@ export default function TrainerProfilePage() {
           <Skeleton className="h-4 w-32 rounded" />
         </div>
         <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="p-5 border-b border-border dark:border-white/10">
+          <div className="p-5 border-b border-border">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1.5">
                 <Skeleton className="h-7 w-48 rounded" />
@@ -332,9 +332,7 @@ export default function TrainerProfilePage() {
                 <h2 className="text-2xl md:text-3xl font-semibold tracking-[-0.03em] text-foreground truncate">
                   {profile.firstName} {profile.lastName}
                 </h2>
-                <p className="text-sm text-muted-foreground dark:text-muted-foreground truncate">
-                  {profile.email}
-                </p>
+                <p className="text-sm text-muted-foreground truncate">{profile.email}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
@@ -473,7 +471,7 @@ export default function TrainerProfilePage() {
                           value={editForm.bio || ''}
                           onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
                           rows={3}
-                          className="w-full rounded-md border border-border dark:border-white/10 bg-background px-3 py-2 text-sm resize-none"
+                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm resize-none"
                         />
                       ) : (
                         <div className="text-foreground dark:text-foreground text-sm">
@@ -540,7 +538,7 @@ export default function TrainerProfilePage() {
                         Vertragssatz (EUR/h)
                         <Lock className="h-3 w-3 text-muted-foreground" />
                       </Label>
-                      <div className="h-12 flex items-center px-3 rounded-xl border border-border dark:border-white/10 bg-muted/30 text-sm">
+                      <div className="h-12 flex items-center px-3 rounded-xl border border-border bg-muted/30 text-sm">
                         {profile.contractedHourlyRate != null ? (
                           <span className="font-medium">
                             {formatCurrency(profile.contractedHourlyRate)}/h
@@ -633,7 +631,7 @@ export default function TrainerProfilePage() {
 
         {/* ── Detail Footer ─────────────────────────────────────────────── */}
         {isEditing && (
-          <div className="p-5 bg-muted dark:bg-black/10 border-t border-border dark:border-white/10 flex flex-col sm:flex-row gap-3 items-center justify-end">
+          <div className="p-5 bg-muted dark:bg-black/10 border-t border-border flex flex-col sm:flex-row gap-3 items-center justify-end">
             <Button
               variant="outline"
               onClick={() => setIsEditing(false)}

@@ -146,11 +146,11 @@ export function PricingSection() {
                 Am beliebtesten
               </span>
             )}
-            <h3 className="text-xl font-bold text-foreground dark:text-white">{plan.name}</h3>
+            <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
             <p className="mt-1 text-sm text-muted-foreground">{plan.subtitle}</p>
 
             <div className="mt-6 flex items-baseline gap-2">
-              <span className="font-display text-5xl font-extrabold tracking-tight text-foreground dark:text-white">
+              <span className="font-display text-5xl font-extrabold tracking-tight text-foreground">
                 €{billingYearly ? plan.yearlyPrice : plan.price}
               </span>
               <span className="text-sm text-muted-foreground">

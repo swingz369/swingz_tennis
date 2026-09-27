@@ -482,9 +482,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                 <h2 className="text-2xl md:text-3xl font-semibold tracking-[-0.03em] text-foreground truncate">
                   {member.full_name}
                 </h2>
-                <p className="text-sm text-muted-foreground dark:text-muted-foreground truncate">
-                  {member.email}
-                </p>
+                <p className="text-sm text-muted-foreground truncate">{member.email}</p>
                 <p className="text-xs text-muted-foreground font-mono tabular-nums">
                   Mitgliedsnummer {formatMemberNumber(member.member_number)}
                 </p>
@@ -1109,7 +1107,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
         </div>
 
         {/* ── Detail Footer ─────────────────────────────────────────────── */}
-        <div className="p-5 bg-muted dark:bg-black/10 border-t border-border dark:border-white/10 flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div className="p-5 bg-muted dark:bg-black/10 border-t border-border flex flex-col sm:flex-row gap-3 items-center justify-between">
           {isEditing ? (
             <div className="flex gap-2 w-full sm:w-auto">
               <Button

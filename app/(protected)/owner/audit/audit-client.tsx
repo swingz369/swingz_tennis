@@ -307,7 +307,7 @@ export function OwnerAuditClient({ clubOptions }: { clubOptions: ClubOption[] })
             </Button>
           </div>
 
-          <div className="pt-2 border-t border-border dark:border-white/10">
+          <div className="pt-2 border-t border-border">
             <Button
               variant="default"
               size="sm"
@@ -364,7 +364,7 @@ export function OwnerAuditClient({ clubOptions }: { clubOptions: ClubOption[] })
             <div className="overflow-x-auto -mx-2">
               <Table className="w-full text-sm">
                 <TableHeader>
-                  <TableRow className="border-b border-border dark:border-white/10 text-left">
+                  <TableRow className="border-b border-border text-left">
                     <TableHead className="px-2 py-2 font-medium text-xs text-muted-foreground w-44">
                       Zeit
                     </TableHead>
@@ -438,7 +438,7 @@ export function OwnerAuditClient({ clubOptions }: { clubOptions: ClubOption[] })
 
           {/* Pagination */}
           {pagination && pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between gap-2 mt-4 pt-4 border-t border-border dark:border-white/10">
+            <div className="flex items-center justify-between gap-2 mt-4 pt-4 border-t border-border">
               <div className="text-xs text-muted-foreground">
                 Seite {pagination.page} von {pagination.totalPages} ·{' '}
                 {pagination.totalCount.toLocaleString('de-DE')} Einträge

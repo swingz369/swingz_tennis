@@ -646,7 +646,7 @@ export default function AdminTrialApprovals() {
           const trial = requests.find((r) => r.id === approveId);
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-              <div className="bg-background dark:bg-card rounded-xl shadow-lg border border-border dark:border-white/10 w-full max-w-lg mx-4 overflow-hidden">
+              <div className="bg-background dark:bg-card rounded-xl shadow-lg border border-border w-full max-w-lg mx-4 overflow-hidden">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-border dark:border-white/5 flex items-center justify-between">
                   <div>
@@ -692,7 +692,7 @@ export default function AdminTrialApprovals() {
                           id="trainer-select"
                           value={selectedTrainerId}
                           onChange={(e) => setSelectedTrainerId(e.target.value)}
-                          className="w-full appearance-none bg-background dark:bg-muted border border-border dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-foreground dark:text-white pr-10 focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-transparent transition-all"
+                          className="w-full appearance-none bg-background dark:bg-muted border border-border rounded-xl px-4 py-2.5 text-sm text-foreground pr-10 focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-transparent transition-all"
                         >
                           <option value="">Trainer auswählen...</option>
                           {trainers.map((t) => (
@@ -725,7 +725,7 @@ export default function AdminTrialApprovals() {
                           id="court-select"
                           value={selectedCourtId}
                           onChange={(e) => setSelectedCourtId(e.target.value)}
-                          className="w-full appearance-none bg-background dark:bg-muted border border-border dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-foreground dark:text-white pr-10 focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-transparent transition-all"
+                          className="w-full appearance-none bg-background dark:bg-muted border border-border rounded-xl px-4 py-2.5 text-sm text-foreground pr-10 focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-transparent transition-all"
                         >
                           <option value="">Platz auswählen...</option>
                           {courts.map((c) => (
@@ -779,7 +779,7 @@ export default function AdminTrialApprovals() {
           if (!trial) return null;
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-              <div className="bg-background dark:bg-card rounded-xl shadow-lg border border-border dark:border-white/10 w-full max-w-md mx-4 overflow-hidden">
+              <div className="bg-background dark:bg-card rounded-xl shadow-lg border border-border w-full max-w-md mx-4 overflow-hidden">
                 <div className="px-6 py-4 border-b border-border dark:border-white/5 flex items-center justify-between">
                   <div>
                     <h2 className="text-lg font-semibold text-primary">Zu Mitglied konvertieren</h2>

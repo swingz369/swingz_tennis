@@ -299,7 +299,7 @@ export function ClubDetailSheet({
                   </div>
 
                   {detail.admin?.subscription_tier !== null && detail.admin && (
-                    <div className="flex items-center gap-2 pt-3 border-t border-border dark:border-white/10">
+                    <div className="flex items-center gap-2 pt-3 border-t border-border">
                       <CreditCard className="h-4 w-4 text-muted-foreground shrink-0" />
                       <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
                         <Badge variant="outline" className="text-xs">
@@ -339,7 +339,7 @@ export function ClubDetailSheet({
                     </div>
                   )}
 
-                  <div className="flex items-center gap-3 pt-3 border-t border-border dark:border-white/10">
+                  <div className="flex items-center gap-3 pt-3 border-t border-border">
                     <Users className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div className="flex-1">
                       <p className="text-xs text-muted-foreground">Mitglieder</p>

@@ -220,7 +220,7 @@ export default function NotificationSettings() {
               </div>
               <div>
                 <div className="font-medium">Push-Benachrichtigungen</div>
-                <div className="text-sm text-muted-foreground dark:text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   Erhalte Benachrichtigungen direkt in deinem Browser
                 </div>
               </div>
@@ -246,7 +246,7 @@ export default function NotificationSettings() {
               </div>
               <div>
                 <div className="font-medium">E-Mail-Benachrichtigungen</div>
-                <div className="text-sm text-muted-foreground dark:text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   Erhalte wichtige Updates per E-Mail
                 </div>
               </div>
@@ -263,9 +263,9 @@ export default function NotificationSettings() {
               Benachrichtigungstypen
             </div>
 
-            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-xl">
+            <div className="flex items-center justify-between p-3 border rounded-xl">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground dark:text-muted-foreground" />
+                <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">Buchungsbestätigungen</span>
               </div>
               <Switch
@@ -274,9 +274,9 @@ export default function NotificationSettings() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-xl">
+            <div className="flex items-center justify-between p-3 border rounded-xl">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground dark:text-muted-foreground" />
+                <Clock className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">Trainingserinnerungen</span>
               </div>
               <Switch
@@ -285,9 +285,9 @@ export default function NotificationSettings() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-xl">
+            <div className="flex items-center justify-between p-3 border rounded-xl">
               <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-muted-foreground dark:text-muted-foreground" />
+                <Bell className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">News & Updates</span>
               </div>
               <Switch
@@ -296,9 +296,9 @@ export default function NotificationSettings() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-xl">
+            <div className="flex items-center justify-between p-3 border rounded-xl">
               <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground dark:text-muted-foreground" />
+                <User className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">Werbung & Angebote</span>
               </div>
               <Switch
@@ -330,9 +330,7 @@ export default function NotificationSettings() {
                   <SelectItem value="48">48 Stunden vorher</SelectItem>
                 </SelectContent>
               </Select>
-              <span className="text-sm text-muted-foreground dark:text-muted-foreground">
-                vor Trainingssessions
-              </span>
+              <span className="text-sm text-muted-foreground">vor Trainingssessions</span>
             </div>
           </div>
         </CardContent>
@@ -365,7 +363,7 @@ export default function NotificationSettings() {
                     key={notification.id}
                     className={`flex items-start gap-3 p-4 rounded-xl border transition-colors ${
                       notification.read
-                        ? 'bg-background dark:bg-card border-border dark:border-white/10'
+                        ? 'bg-background dark:bg-card border-border'
                         : 'bg-primary/5 border-primary/30'
                     }`}
                   >
@@ -383,11 +381,9 @@ export default function NotificationSettings() {
                           <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2" />
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
-                        {notification.message}
-                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-muted-foreground dark:text-muted-foreground">
+                        <span className="text-xs text-muted-foreground">
                           {new Date(notification.timestamp).toLocaleString('de-DE')}
                         </span>
                         {notification.actionUrl && (

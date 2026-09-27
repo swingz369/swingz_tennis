@@ -142,7 +142,7 @@ export function SettingsEditorClient({ settings }: { settings: EditableSetting[]
       {editable.length > 0 && (
         <section
           aria-label="Editierbare globale DB-Einstellungen"
-          className="rounded-xl border border-border dark:border-white/10 bg-card p-5 sm:p-6"
+          className="rounded-xl border border-border bg-card p-5 sm:p-6"
         >
           <div className="flex items-center gap-2 mb-4">
             <Database className="h-4 w-4" />
@@ -157,10 +157,7 @@ export function SettingsEditorClient({ settings }: { settings: EditableSetting[]
                     const isEditing = editingKey === s.key;
                     const busy = busyKey === s.key;
                     return (
-                      <div
-                        key={s.id}
-                        className="rounded-md border border-border dark:border-white/10 p-3"
-                      >
+                      <div key={s.id} className="rounded-md border border-border p-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -277,7 +274,7 @@ export function SettingsEditorClient({ settings }: { settings: EditableSetting[]
       {lockedRo.length > 0 && (
         <section
           aria-label="Read-only DB-Einstellungen"
-          className="rounded-xl border border-border dark:border-white/10 bg-card p-5 sm:p-6"
+          className="rounded-xl border border-border bg-card p-5 sm:p-6"
         >
           <div className="flex items-center gap-2 mb-4">
             <Shield className="h-4 w-4 text-warning-600" />

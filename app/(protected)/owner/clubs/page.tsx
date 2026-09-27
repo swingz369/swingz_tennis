@@ -302,7 +302,7 @@ export default function OwnerClubsPage() {
         </Select>
       </div>
 
-      <div className="rounded-xl border border-border dark:border-white/10 overflow-hidden">
+      <div className="rounded-xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>

@@ -13,7 +13,7 @@ const RechartsLazy = dynamic(() => import('./analytics-charts').then((m) => m.An
   loading: () => (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="h-80 rounded-xl border border-border dark:border-white/10 p-6">
+        <div key={i} className="h-80 rounded-xl border border-border p-6">
           <Skeleton className="h-5 w-40 mb-4" />
           <Skeleton className="h-56 w-full rounded-xl" />
         </div>

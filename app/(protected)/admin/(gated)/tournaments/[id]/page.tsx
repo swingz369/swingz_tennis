@@ -392,7 +392,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                 )}
               </div>
 
-              <hr className="border-border dark:border-white/10" />
+              <hr className="border-border" />
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -421,7 +421,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
               {tournament.description && (
                 <>
-                  <hr className="border-border dark:border-white/10" />
+                  <hr className="border-border" />
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Beschreibung</p>
                     <p className="text-sm text-foreground dark:text-foreground">
@@ -433,7 +433,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
               {tournament.prize_info && (
                 <>
-                  <hr className="border-border dark:border-white/10" />
+                  <hr className="border-border" />
                   <div className="flex items-start gap-2">
                     <Trophy className="h-4 w-4 text-warning-500 shrink-0 mt-0.5" />
                     <p className="text-sm">{tournament.prize_info}</p>
@@ -444,7 +444,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
               {/* Capacity Bar */}
               {tournament.max_participants && tournament.max_participants > 0 && (
                 <>
-                  <hr className="border-border dark:border-white/10" />
+                  <hr className="border-border" />
                   <div>
                     <div className="flex items-center justify-between text-xs mb-1.5">
                       <span className="text-muted-foreground">Kapazität</span>
@@ -502,7 +502,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                   {registrations.map((reg) => (
                     <div
                       key={reg.id}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-muted dark:bg-card/5 border border-border dark:border-white/10 hover:border-brand-light/30 transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-muted dark:bg-card/5 border border-border hover:border-brand-light/30 transition-colors"
                     >
                       {/* Avatar */}
                       <div className="flex items-center justify-center h-9 w-9 rounded-full bg-primary/10 text-primary text-sm font-semibold shrink-0">

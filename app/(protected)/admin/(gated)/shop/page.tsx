@@ -463,13 +463,11 @@ export default function AdminShopPage() {
             bg: 'bg-brand-accent-50 dark:bg-brand-accent-900/20',
           },
         ].map((kpi) => (
-          <Card key={kpi.label} className="border border-border dark:border-white/10 shadow-sm p-0">
+          <Card key={kpi.label} className="border border-border shadow-sm p-0">
             <CardContent className="p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground">
-                    {kpi.label}
-                  </p>
+                  <p className="text-xs font-medium text-muted-foreground">{kpi.label}</p>
                   <p className="text-2xl font-bold text-primary mt-1.5 tabular-nums">
                     {typeof kpi.value === 'number' ? kpi.value.toLocaleString('de-DE') : kpi.value}
                   </p>
@@ -591,7 +589,7 @@ export default function AdminShopPage() {
                           className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors ${
                             imageMode === 'upload'
                               ? 'bg-brand-light/10 text-brand-light border-brand-light/30'
-                              : 'bg-background dark:bg-surface-dark text-muted-foreground border-border dark:border-white/10'
+                              : 'bg-background dark:bg-surface-dark text-muted-foreground border-border'
                           }`}
                         >
                           <Upload className="h-3.5 w-3.5" />
@@ -603,7 +601,7 @@ export default function AdminShopPage() {
                           className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors ${
                             imageMode === 'url'
                               ? 'bg-brand-light/10 text-brand-light border-brand-light/30'
-                              : 'bg-background dark:bg-surface-dark text-muted-foreground border-border dark:border-white/10'
+                              : 'bg-background dark:bg-surface-dark text-muted-foreground border-border'
                           }`}
                         >
                           <LinkIcon className="h-3.5 w-3.5" />
@@ -649,7 +647,7 @@ export default function AdminShopPage() {
                             className={`flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 ${
                               dragOver
                                 ? 'border-brand-light bg-brand-light/5 scale-[1.02] shadow-lg shadow-brand-light/10'
-                                : 'border-border dark:border-white/10 hover:border-brand-light/40 bg-muted/50 dark:bg-card/[0.02]'
+                                : 'border-border hover:border-brand-light/40 bg-muted/50 dark:bg-card/[0.02]'
                             }`}
                           >
                             {imagePreview ? (
@@ -667,7 +665,7 @@ export default function AdminShopPage() {
                                   <ImagePlus className="h-6 w-6 text-muted-foreground" />
                                 </div>{' '}
                                 <div className="text-center">
-                                  <p className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">
+                                  <p className="text-sm font-medium text-muted-foreground">
                                     Bild auswählen oder hier ablegen
                                   </p>
                                   <p className="text-xs text-muted-foreground mt-1">
@@ -775,10 +773,10 @@ export default function AdminShopPage() {
             <Card>
               <CardContent className="py-16 text-center">
                 <IconBox icon={Store} size="lg" variant="gray" className="mx-auto mb-4" />
-                <p className="text-lg font-medium text-muted-foreground dark:text-muted-foreground mb-1">
+                <p className="text-lg font-medium text-muted-foreground mb-1">
                   Noch keine Produkte
                 </p>
-                <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                   Erstelle das erste Produkt für deinen Vereinsshop
                 </p>
                 <Button onClick={openCreateForm} className="gap-2">
@@ -789,9 +787,9 @@ export default function AdminShopPage() {
           ) : (
             <>
               {activeProducts.length > 0 && (
-                <Card className="border border-border dark:border-white/10 shadow-sm p-0">
+                <Card className="border border-border shadow-sm p-0">
                   <CardHeader className="px-5 pt-5 pb-3">
-                    <CardTitle className="font-semibold flex items-center gap-2 text-foreground dark:text-white">
+                    <CardTitle className="font-semibold flex items-center gap-2 text-foreground">
                       <IconBox icon={Eye} size="xs" variant="light" /> Aktive Produkte
                       <Badge className="text-2xs px-1.5 py-0 bg-brand-light/10 text-brand-light border-brand-light/20 ml-1">
                         {activeProducts.length}
@@ -831,7 +829,7 @@ export default function AdminShopPage() {
                                   )}
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="font-medium text-foreground dark:text-white truncate max-w-[200px]">
+                                  <p className="font-medium text-foreground truncate max-w-[200px]">
                                     {product.name}
                                   </p>
                                   {product.description && (
@@ -847,7 +845,7 @@ export default function AdminShopPage() {
                                 {product.category}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right font-medium text-foreground dark:text-white tabular-nums">
+                            <TableCell className="text-right font-medium text-foreground tabular-nums">
                               {formatCurrency(product.price)}
                             </TableCell>
                             <TableCell className="text-right hidden md:table-cell">
@@ -857,7 +855,7 @@ export default function AdminShopPage() {
                                     ? 'text-error-500 font-medium'
                                     : product.stock < 5
                                       ? 'text-brand-accent-500 font-medium'
-                                      : 'text-muted-foreground dark:text-muted-foreground'
+                                      : 'text-muted-foreground'
                                 }
                               >
                                 {product.stock}
@@ -894,7 +892,7 @@ export default function AdminShopPage() {
               )}
 
               {inactiveProducts.length > 0 && (
-                <Card className="border border-border dark:border-white/10 shadow-sm p-0 opacity-70">
+                <Card className="border border-border shadow-sm p-0 opacity-70">
                   <CardHeader className="px-5 pt-5 pb-3">
                     <CardTitle className="font-semibold flex items-center gap-2 text-muted-foreground">
                       <IconBox icon={EyeOff} size="xs" variant="gray" /> Ausgeblendete Produkte
@@ -951,7 +949,7 @@ export default function AdminShopPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground dark:text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     Möchtest du dieses Produkt wirklich löschen? Diese Aktion kann nicht rückgängig
                     gemacht werden.
                   </p>
@@ -983,7 +981,7 @@ export default function AdminShopPage() {
               className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                 orderStatusFilter === ''
                   ? 'bg-foreground text-background border-foreground dark:bg-card dark:text-foreground dark:border-white'
-                  : 'bg-background dark:bg-surface-dark text-muted-foreground dark:text-muted-foreground border-border dark:border-white/10 hover:border-border dark:hover:border-white/20'
+                  : 'bg-background dark:bg-surface-dark text-muted-foreground border-border hover:border-border dark:hover:border-white/20'
               }`}
             >
               Alle ({orderStats.total_orders})
@@ -1000,7 +998,7 @@ export default function AdminShopPage() {
                 className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                   orderStatusFilter === filter.key
                     ? 'bg-foreground text-background border-foreground dark:bg-card dark:text-foreground dark:border-white'
-                    : 'bg-background dark:bg-surface-dark text-muted-foreground dark:text-muted-foreground border-border dark:border-white/10 hover:border-border dark:hover:border-white/20'
+                    : 'bg-background dark:bg-surface-dark text-muted-foreground border-border hover:border-border dark:hover:border-white/20'
                 }`}
               >
                 {filter.label}
@@ -1022,10 +1020,8 @@ export default function AdminShopPage() {
             <Card>
               <CardContent className="py-16 text-center">
                 <IconBox icon={ClipboardList} size="lg" variant="gray" className="mx-auto mb-4" />
-                <p className="text-lg font-medium text-muted-foreground dark:text-muted-foreground mb-1">
-                  Keine Bestellungen
-                </p>
-                <p className="text-sm text-muted-foreground dark:text-muted-foreground">
+                <p className="text-lg font-medium text-muted-foreground mb-1">Keine Bestellungen</p>
+                <p className="text-sm text-muted-foreground">
                   {orderStatusFilter
                     ? `Keine Bestellungen mit Status „${STATUS_LABELS[orderStatusFilter]}“`
                     : 'Sobald Mitglieder Produkte bestellen, erscheinen sie hier'}
@@ -1033,9 +1029,9 @@ export default function AdminShopPage() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border border-border dark:border-white/10 shadow-sm p-0">
+            <Card className="border border-border shadow-sm p-0">
               <CardHeader className="px-5 pt-5 pb-3">
-                <CardTitle className="font-semibold flex items-center gap-2 text-foreground dark:text-white">
+                <CardTitle className="font-semibold flex items-center gap-2 text-foreground">
                   <IconBox icon={ClipboardList} size="xs" variant="light" />
                   {orderStatusFilter ? STATUS_LABELS[orderStatusFilter] : 'Alle'} Bestellungen
                   <Badge className="text-2xs px-1.5 py-0 bg-brand-light/10 text-brand-light border-brand-light/20 ml-1">
@@ -1063,7 +1059,7 @@ export default function AdminShopPage() {
                         <TableRow key={order.id}>
                           <TableCell>
                             <div className="min-w-0">
-                              <p className="font-medium text-foreground dark:text-white text-xs font-mono truncate max-w-[100px]">
+                              <p className="font-medium text-foreground text-xs font-mono truncate max-w-[100px]">
                                 {order.id.slice(0, 8)}…
                               </p>
                               <p className="text-2xs text-muted-foreground mt-0.5">
@@ -1074,10 +1070,7 @@ export default function AdminShopPage() {
                           <TableCell className="hidden md:table-cell">
                             <div className="space-y-0.5 max-w-[200px]">
                               {(order.items ?? []).slice(0, 2).map((item, i) => (
-                                <div
-                                  key={i}
-                                  className="text-xs text-muted-foreground dark:text-muted-foreground truncate"
-                                >
+                                <div key={i} className="text-xs text-muted-foreground truncate">
                                   {item.quantity}× {item.product_name}
                                 </div>
                               ))}
@@ -1088,7 +1081,7 @@ export default function AdminShopPage() {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="text-right font-medium text-foreground dark:text-white tabular-nums">
+                          <TableCell className="text-right font-medium text-foreground tabular-nums">
                             {formatCurrency(order.total_amount)}
                           </TableCell>
                           <TableCell className="text-center hidden sm:table-cell">

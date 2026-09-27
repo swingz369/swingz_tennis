@@ -310,7 +310,7 @@ export default function LeaguesClient() {
       {/* New League Form */}
       {showNew && (
         <Card>
-          <CardHeader className="border-b border-border dark:border-white/10">
+          <CardHeader className="border-b border-border">
             <CardTitle className="text-base">Neue Liga anlegen</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">

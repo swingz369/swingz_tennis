@@ -752,7 +752,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       {/* Inline Create/Edit Form */}
       {showInlineForm && (
         <Card className="animate-in">
-          <CardHeader className="border-b border-border dark:border-white/10">
+          <CardHeader className="border-b border-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Tooltip>
@@ -773,7 +773,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                   <CardTitle>
                     {showInlineForm === 'create' ? 'Neuen Platz anlegen' : `Platz bearbeiten`}
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
+                  <p className="text-sm text-muted-foreground mt-0.5">
                     {showInlineForm === 'create'
                       ? 'Erstelle einen neuen Tennisplatz für deinen Verein.'
                       : `Ändere die Details von "${selectedCourt?.name}".`}
@@ -798,7 +798,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
           <CardContent>
             <form onSubmit={showInlineForm === 'create' ? handleCreate : handleUpdate}>
               {renderCourtFormFields()}
-              <div className="flex gap-3 pt-4 border-t border-border dark:border-white/10">
+              <div className="flex gap-3 pt-4 border-t border-border">
                 <Button type="button" variant="outline" onClick={handleCloseForm}>
                   Abbrechen
                 </Button>
@@ -857,10 +857,8 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                 <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-brand-light/10 mb-5">
                   <MapPin className="h-10 w-10 text-brand-light" />
                 </div>
-                <h3 className="text-xl font-semibold text-foreground dark:text-white">
-                  Keine Plätze gefunden
-                </h3>
-                <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-2 max-w-xs">
+                <h3 className="text-xl font-semibold text-foreground">Keine Plätze gefunden</h3>
+                <p className="text-sm text-muted-foreground mt-2 max-w-xs">
                   Keine Plätze für &quot;{searchQuery}&quot; gefunden
                 </p>
               </div>
@@ -957,7 +955,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                         )}
                       </div>
                       {court.location && (
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground dark:text-muted-foreground">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                           <span className="truncate">{court.location}</span>
                         </div>

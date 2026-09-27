@@ -86,9 +86,7 @@ export default function ForgotPasswordPage() {
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg">
                 <Trophy className="h-6 w-6 text-white" />
               </div>
-              <span className="text-2xl font-bold text-foreground dark:text-white font-display">
-                SWINGZ
-              </span>
+              <span className="text-2xl font-bold text-foreground font-display">SWINGZ</span>
             </div>
           </div>
 

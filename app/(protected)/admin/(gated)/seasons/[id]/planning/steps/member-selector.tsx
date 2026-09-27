@@ -251,7 +251,7 @@ export function MemberSelector() {
                 className={`px-3 py-1.5 text-xs font-medium rounded-xl transition-colors ${
                   filterLevel === level
                     ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-muted dark:text-muted-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-muted'
                 }`}
               >
                 {level === 'all' ? 'Alle' : level}
@@ -322,9 +322,7 @@ export function MemberSelector() {
                     </TableCell>
                     <TableCell className="px-4 py-3">
                       <div>
-                        <p className="text-sm font-medium text-foreground dark:text-white">
-                          {member.name}
-                        </p>
+                        <p className="text-sm font-medium text-foreground">{member.name}</p>
                         <p className="text-xs text-muted-foreground">{member.email}</p>
                       </div>
                     </TableCell>

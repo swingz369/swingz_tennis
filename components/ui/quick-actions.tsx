@@ -41,7 +41,7 @@ export function QuickActions({
             weggeschnitten. Das bleibt beim Umbruch von 4 auf 2 Spalten richtig
             — und eine unbesetzte Zelle bleibt leer, statt (wie bei der
             gefärbten Lücke) als grauer Block stehenzubleiben. */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 rounded-xl border border-border dark:border-white/10 overflow-hidden">
+        <div className="grid grid-cols-2 lg:grid-cols-4 rounded-xl border border-border overflow-hidden">
           {actions.map((action) => (
             <Link
               key={action.href + action.label}
@@ -49,9 +49,7 @@ export function QuickActions({
               className="flex flex-col gap-1 bg-card p-4 ring-1 ring-border dark:ring-white/10 transition-colors hover:bg-muted/60"
             >
               <IconBox icon={action.icon} size="sm" variant={action.variant ?? 'light'} />
-              <p className="mt-1 text-sm font-semibold text-foreground dark:text-white">
-                {action.label}
-              </p>
+              <p className="mt-1 text-sm font-semibold text-foreground">{action.label}</p>
               {action.description && (
                 <p className="text-sm text-muted-foreground">{action.description}</p>
               )}
@@ -66,7 +64,7 @@ export function QuickActions({
   return (
     <div className={className}>
       <h2 className="text-sm font-semibold text-foreground mb-3">{label}</h2>
-      <div className="grid grid-cols-3 sm:grid-cols-4 rounded-xl border border-border dark:border-white/10 overflow-hidden">
+      <div className="grid grid-cols-3 sm:grid-cols-4 rounded-xl border border-border overflow-hidden">
         {actions.map((action) => (
           <Link
             key={action.href + action.label}

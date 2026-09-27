@@ -80,7 +80,7 @@ export function MyTeamsCard() {
   if (teams.length === 0) return null;
 
   return (
-    <Card className="border border-border dark:border-white/10">
+    <Card className="border border-border">
       <CardHeader className="px-5 pt-5 pb-3">
         <CardTitle className="font-semibold flex items-center justify-between gap-2">
           <span className="flex items-center gap-2">

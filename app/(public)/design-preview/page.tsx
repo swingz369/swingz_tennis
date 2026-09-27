@@ -155,10 +155,10 @@ function Section({
   return (
     <section className="space-y-6">
       <div className="space-y-1">
-        <h2 className="text-2xl font-bold font-display text-foreground dark:text-white">{title}</h2>
-        <p className="text-sm text-muted-foreground dark:text-muted-foreground">{description}</p>
+        <h2 className="text-2xl font-bold font-display text-foreground">{title}</h2>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
-      <div className="border border-border dark:border-white/[0.06] rounded-xl bg-background dark:bg-surface-dark/50 p-6">
+      <div className="border border-border rounded-xl bg-background dark:bg-surface-dark/50 p-6">
         {children}
       </div>
     </section>
@@ -183,8 +183,8 @@ function ColorSwatch({ color }: { color: (typeof brandColors)[0] }) {
         style={{ backgroundColor: `hsl(var(${color.var}))` }}
       />
       <div className="space-y-0.5">
-        <p className="text-sm font-semibold text-foreground dark:text-white">{color.name}</p>
-        <p className="text-xs font-mono text-muted-foreground dark:text-muted-foreground">
+        <p className="text-sm font-semibold text-foreground">{color.name}</p>
+        <p className="text-xs font-mono text-muted-foreground">
           <span className="inline-block w-24">var{color.var}</span>
           <span>{wert}</span>
         </p>
@@ -262,7 +262,7 @@ export default function DesignPreviewPage() {
       </div>
 
       {/* ── Navigation Tabs ── */}
-      <div className="sticky top-0 z-10 border-b border-border/60 dark:border-white/[0.06] bg-background/80 dark:bg-[#0a120e]/80 backdrop-blur-xl">
+      <div className="sticky top-0 z-10 border-b border-border/60 bg-background/80 dark:bg-[#0a120e]/80 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-6">
           <div className="flex gap-1 overflow-x-auto py-3 -mb-px">
             {tabs.map((tab) => (
@@ -273,7 +273,7 @@ export default function DesignPreviewPage() {
                   'px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 whitespace-nowrap',
                   activeTab === tab.id
                     ? 'bg-brand-light/10 text-brand-light dark:text-success-300'
-                    : 'text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-gray-200 hover:bg-muted dark:hover:bg-background/[0.04]'
+                    : 'text-muted-foreground hover:text-foreground dark:hover:text-gray-200 hover:bg-muted dark:hover:bg-background/[0.04]'
                 )}
               >
                 {tab.label}
@@ -313,15 +313,8 @@ export default function DesignPreviewPage() {
                   ] as const
                 ).map((cls) => (
                   <div key={cls} className="space-y-1.5">
-                    <div
-                      className={cn(
-                        'h-10 rounded-xl border border-border/40 dark:border-white/[0.06]',
-                        cls
-                      )}
-                    />
-                    <p className="text-2xs font-mono text-muted-foreground dark:text-muted-foreground truncate">
-                      {cls}
-                    </p>
+                    <div className={cn('h-10 rounded-xl border border-border/40', cls)} />
+                    <p className="text-2xs font-mono text-muted-foreground truncate">{cls}</p>
                   </div>
                 ))}
               </div>
@@ -339,9 +332,7 @@ export default function DesignPreviewPage() {
                       className="flex items-center gap-3 p-3 rounded-xl bg-muted dark:bg-card/[0.03]"
                     >
                       <span className={cn('text-sm font-semibold', cls)}>SwingZ</span>
-                      <span className="text-2xs font-mono text-muted-foreground dark:text-muted-foreground">
-                        {cls}
-                      </span>
+                      <span className="text-2xs font-mono text-muted-foreground">{cls}</span>
                     </div>
                   )
                 )}
@@ -363,9 +354,7 @@ export default function DesignPreviewPage() {
                   className="flex items-baseline gap-4 border-b border-border dark:border-white/[0.04] pb-4 last:border-0"
                 >
                   <span className={cn('flex-1 font-display', t.class)}>{t.text}</span>
-                  <span className="text-xs text-muted-foreground dark:text-muted-foreground font-mono shrink-0">
-                    {t.name}
-                  </span>
+                  <span className="text-xs text-muted-foreground font-mono shrink-0">{t.name}</span>
                 </div>
               ))}
             </div>
@@ -376,26 +365,16 @@ export default function DesignPreviewPage() {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-xl bg-muted dark:bg-card/[0.03]">
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">
-                    Display
-                  </p>
-                  <p className="text-lg font-display text-foreground dark:text-white">
-                    Clash Display
-                  </p>
+                  <p className="text-xs text-muted-foreground mb-2">Display</p>
+                  <p className="text-lg font-display text-foreground">Clash Display</p>
                 </div>
                 <div className="p-4 rounded-xl bg-muted dark:bg-card/[0.03]">
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">
-                    Sans
-                  </p>
-                  <p className="text-lg font-sans text-foreground dark:text-white">DM Sans</p>
+                  <p className="text-xs text-muted-foreground mb-2">Sans</p>
+                  <p className="text-lg font-sans text-foreground">DM Sans</p>
                 </div>
                 <div className="p-4 rounded-xl bg-muted dark:bg-card/[0.03]">
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">
-                    Mono
-                  </p>
-                  <p className="text-lg font-mono text-foreground dark:text-white">
-                    JetBrains Mono
-                  </p>
+                  <p className="text-xs text-muted-foreground mb-2">Mono</p>
+                  <p className="text-lg font-mono text-foreground">JetBrains Mono</p>
                 </div>
               </div>
             </div>
@@ -413,13 +392,11 @@ export default function DesignPreviewPage() {
                 <div
                   key={s.name}
                   className={cn(
-                    'h-28 rounded-xl bg-background dark:bg-surface-dark border border-border/40 dark:border-white/[0.06] flex items-center justify-center',
+                    'h-28 rounded-xl bg-background dark:bg-surface-dark border border-border/40 flex items-center justify-center',
                     s.class
                   )}
                 >
-                  <span className="text-xs font-medium text-muted-foreground dark:text-muted-foreground">
-                    {s.name}
-                  </span>
+                  <span className="text-xs font-medium text-muted-foreground">{s.name}</span>
                 </div>
               ))}
             </div>
@@ -435,11 +412,11 @@ export default function DesignPreviewPage() {
                   <div
                     key={s}
                     className={cn(
-                      'h-24 rounded-xl bg-background dark:bg-surface-dark border border-border/40 dark:border-white/[0.06] flex items-center justify-center',
+                      'h-24 rounded-xl bg-background dark:bg-surface-dark border border-border/40 flex items-center justify-center',
                       s
                     )}
                   >
-                    <span className="text-xs font-medium text-muted-foreground dark:text-muted-foreground capitalize">
+                    <span className="text-xs font-medium text-muted-foreground capitalize">
                       {s.replace('shadow-card-', '')}
                     </span>
                   </div>
@@ -468,9 +445,7 @@ export default function DesignPreviewPage() {
                     <p className="text-xs font-semibold text-foreground dark:text-foreground">
                       {r.name}
                     </p>
-                    <p className="text-2xs font-mono text-muted-foreground dark:text-muted-foreground">
-                      {r.size}
-                    </p>
+                    <p className="text-2xs font-mono text-muted-foreground">{r.size}</p>
                   </div>
                 </div>
               ))}
@@ -489,14 +464,12 @@ export default function DesignPreviewPage() {
                 ].map((ex) => (
                   <div
                     key={ex.label}
-                    className="flex items-center gap-2 px-4 py-2 bg-muted dark:bg-card/[0.03] rounded-xl border border-border/40 dark:border-white/[0.06]"
+                    className="flex items-center gap-2 px-4 py-2 bg-muted dark:bg-card/[0.03] rounded-xl border border-border/40"
                   >
                     <span className="text-sm text-muted-foreground dark:text-foreground">
                       {ex.label}
                     </span>
-                    <span className="text-xs font-mono text-muted-foreground dark:text-muted-foreground">
-                      {ex.cls}
-                    </span>
+                    <span className="text-xs font-mono text-muted-foreground">{ex.cls}</span>
                   </div>
                 ))}
               </div>
@@ -514,7 +487,7 @@ export default function DesignPreviewPage() {
               {animations.map((anim) => (
                 <div
                   key={anim.name}
-                  className="group relative overflow-hidden rounded-xl border border-border/40 dark:border-white/[0.06] bg-background dark:bg-surface-dark p-6 text-center"
+                  className="group relative overflow-hidden rounded-xl border border-border/40 bg-background dark:bg-surface-dark p-6 text-center"
                 >
                   <div
                     key={animKey}
@@ -528,9 +501,7 @@ export default function DesignPreviewPage() {
                   <p className="text-sm font-semibold text-foreground dark:text-foreground">
                     {anim.name}
                   </p>
-                  <p className="text-2xs font-mono text-muted-foreground dark:text-muted-foreground mt-1">
-                    {anim.class}
-                  </p>
+                  <p className="text-2xs font-mono text-muted-foreground mt-1">{anim.class}</p>
                   <button
                     onClick={() => setAnimKey((k) => k + 1)}
                     className="mt-3 text-2xs text-brand-light hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
@@ -559,7 +530,7 @@ export default function DesignPreviewPage() {
             <div className="space-y-3">
               {spacingScale.map((unit) => (
                 <div key={unit} className="flex items-center gap-4">
-                  <span className="w-16 text-xs font-mono text-muted-foreground dark:text-muted-foreground shrink-0">
+                  <span className="w-16 text-xs font-mono text-muted-foreground shrink-0">
                     {unit === 0 ? '0' : unit < 1 ? `p-${unit}`.replace('.', '-') : `p-${unit}`}
                   </span>
                   <div className="flex-1 flex items-center">
@@ -568,7 +539,7 @@ export default function DesignPreviewPage() {
                       style={{ width: `${unit * 4}px`, maxWidth: '100%' }}
                     />
                     {unit > 0 && (
-                      <span className="ml-2 text-2xs text-muted-foreground dark:text-muted-foreground font-mono">
+                      <span className="ml-2 text-2xs text-muted-foreground font-mono">
                         {unit * 4}px
                       </span>
                     )}
@@ -592,9 +563,7 @@ export default function DesignPreviewPage() {
                         />
                       ))}
                     </div>
-                    <span className="text-2xs font-mono text-muted-foreground dark:text-muted-foreground">
-                      gap-{g}
-                    </span>
+                    <span className="text-2xs font-mono text-muted-foreground">gap-{g}</span>
                   </div>
                 ))}
               </div>
@@ -690,9 +659,7 @@ export default function DesignPreviewPage() {
                         size={size}
                         variant={v.variant}
                       />
-                      <span className="text-2xs text-muted-foreground dark:text-muted-foreground font-mono">
-                        {v.label}
-                      </span>
+                      <span className="text-2xs text-muted-foreground font-mono">{v.label}</span>
                     </div>
                   ))}
                 </div>
@@ -725,7 +692,7 @@ export default function DesignPreviewPage() {
                   </button>
                   <button
                     disabled
-                    className="px-5 py-2.5 rounded-xl bg-muted dark:bg-card/[0.06] text-muted-foreground dark:text-muted-foreground text-sm font-medium cursor-not-allowed"
+                    className="px-5 py-2.5 rounded-xl bg-muted dark:bg-card/[0.06] text-muted-foreground text-sm font-medium cursor-not-allowed"
                   >
                     Button Disabled
                   </button>
@@ -741,7 +708,7 @@ export default function DesignPreviewPage() {
                   {['Link', 'Button', 'Input', 'Select'].map((el) => (
                     <div
                       key={el}
-                      className="px-5 py-3 rounded-xl bg-background dark:bg-surface-dark border border-border/40 dark:border-white/[0.06]"
+                      className="px-5 py-3 rounded-xl bg-background dark:bg-surface-dark border border-border/40"
                     >
                       <button className="text-sm text-muted-foreground dark:text-foreground bg-transparent border-none cursor-pointer p-0">
                         {el}
@@ -763,9 +730,9 @@ export default function DesignPreviewPage() {
       </div>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-border/60 dark:border-white/[0.06] py-8">
+      <footer className="border-t border-border/60 py-8">
         <div className="mx-auto max-w-7xl px-6 text-center">
-          <p className="text-sm text-muted-foreground dark:text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             SwingZ Design System · Version 1.0 · Generiert aus globals.css + theme.ts
           </p>
           <p className="text-xs text-muted-foreground/50 dark:text-muted-foreground mt-1">

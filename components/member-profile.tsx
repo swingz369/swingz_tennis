@@ -292,9 +292,7 @@ export default function MemberProfile() {
                 <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.03em] text-foreground truncate">
                   {formData.fullName || 'Mitglied'}
                 </h1>
-                <p className="text-sm text-muted-foreground dark:text-muted-foreground truncate">
-                  {formData.email}
-                </p>
+                <p className="text-sm text-muted-foreground truncate">{formData.email}</p>
                 {/* Die Mitgliedsnummer ist die Nummer, die auf jeder Rechnung
                     und in jeder Rückfrage beim Verein steht — sie gehört
                     dorthin, wo das Mitglied sie nachschlagen kann. */}
@@ -787,7 +785,7 @@ export default function MemberProfile() {
 
         {/* ── Detail Footer ─────────────────────────────────────────────── */}
         {isEditing && (
-          <div className="p-5 bg-muted dark:bg-black/10 border-t border-border dark:border-white/10 flex flex-col sm:flex-row gap-3 items-center justify-end">
+          <div className="p-5 bg-muted dark:bg-black/10 border-t border-border flex flex-col sm:flex-row gap-3 items-center justify-end">
             <Button
               variant="outline"
               onClick={() => setIsEditing(false)}

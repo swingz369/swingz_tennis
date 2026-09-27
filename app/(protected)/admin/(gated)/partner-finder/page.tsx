@@ -111,7 +111,7 @@ export default function PartnerFinderOverviewPage() {
                         <p className="text-sm font-medium text-muted-foreground">
                           Spielende Mitglieder
                         </p>
-                        <p className="text-3xl font-bold text-foreground dark:text-white">
+                        <p className="text-3xl font-bold text-foreground">
                           <AnimatedCounter value={stats?.totalMembers ?? 0} />
                         </p>
                         <p className="text-xs text-muted-foreground">Mitglieder & Trainer</p>
@@ -130,7 +130,7 @@ export default function PartnerFinderOverviewPage() {
                     <div className="flex items-start justify-between">
                       <div className="space-y-2">
                         <p className="text-sm font-medium text-muted-foreground">Aktive Suchende</p>
-                        <p className="text-3xl font-bold text-foreground dark:text-white">
+                        <p className="text-3xl font-bold text-foreground">
                           <AnimatedCounter value={stats?.activeSearchers ?? 0} />
                         </p>
                         <p className="text-xs text-muted-foreground">haben Zeiten hinterlegt</p>
@@ -149,7 +149,7 @@ export default function PartnerFinderOverviewPage() {
                     <div className="flex items-start justify-between">
                       <div className="space-y-2">
                         <p className="text-sm font-medium text-muted-foreground">Niveaustufen</p>
-                        <p className="text-3xl font-bold text-foreground dark:text-white">
+                        <p className="text-3xl font-bold text-foreground">
                           <AnimatedCounter value={levelEntries.length} />
                         </p>
                         <p className="text-xs text-muted-foreground">im Verein vertreten</p>
@@ -166,7 +166,7 @@ export default function PartnerFinderOverviewPage() {
             {/* ── Level Distribution ── */}
             {stats && levelEntries.length > 0 && (
               <ScrollReveal delay={240}>
-                <Card className="border border-border dark:border-white/10">
+                <Card className="border border-border">
                   <CardContent className="p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <BarChart3 className="h-4 w-4 text-muted-foreground" />
@@ -195,7 +195,7 @@ export default function PartnerFinderOverviewPage() {
 
         {/* ── Hinweis auf die persönliche (Mitglieder-)Suche ── */}
         <ScrollReveal delay={320}>
-          <Card className="border border-dashed border-border dark:border-white/10">
+          <Card className="border border-dashed border-border">
             <CardContent className="p-4 flex items-center justify-between gap-3">
               <p className="text-sm text-muted-foreground">
                 Deine persönliche Spielpartnersuche (eigenes Level, Matches, Herausfordern) findest

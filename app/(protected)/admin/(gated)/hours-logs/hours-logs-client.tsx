@@ -212,7 +212,7 @@ export default function HoursLogsClient() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground">Gesamt</p>
+                <p className="text-xs text-muted-foreground">Gesamt</p>
                 <p className="text-xl font-bold mt-0.5">{stats.total}</p>
               </div>
               <Clock className="h-5 w-5 text-muted-foreground/50" />
@@ -223,9 +223,7 @@ export default function HoursLogsClient() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground">
-                  Ausstehend
-                </p>
+                <p className="text-xs text-muted-foreground">Ausstehend</p>
                 <p className="text-xl font-bold mt-0.5 text-warning-600">{stats.pending}</p>
               </div>
               <Hourglass className="h-5 w-5 text-warning-300" />
@@ -236,9 +234,7 @@ export default function HoursLogsClient() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground">
-                  Genehmigt
-                </p>
+                <p className="text-xs text-muted-foreground">Genehmigt</p>
                 <p className="text-xl font-bold mt-0.5 text-success-600">{stats.approved}</p>
               </div>
               <CheckCircle className="h-5 w-5 text-success-300" />
@@ -249,9 +245,7 @@ export default function HoursLogsClient() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground">
-                  Stunden gesamt
-                </p>
+                <p className="text-xs text-muted-foreground">Stunden gesamt</p>
                 <p className="text-xl font-bold mt-0.5 text-primary dark:text-brand-light">
                   {formatHours(stats.totalHours)}
                 </p>
@@ -292,7 +286,7 @@ export default function HoursLogsClient() {
             <div>
               <label
                 htmlFor="hl-filter-status"
-                className="text-xs font-medium mb-1.5 block text-muted-foreground dark:text-muted-foreground"
+                className="text-xs font-medium mb-1.5 block text-muted-foreground"
               >
                 Status
               </label>
@@ -311,7 +305,7 @@ export default function HoursLogsClient() {
             <div>
               <label
                 htmlFor="hl-filter-trainer"
-                className="text-xs font-medium mb-1.5 block text-muted-foreground dark:text-muted-foreground"
+                className="text-xs font-medium mb-1.5 block text-muted-foreground"
               >
                 Trainer
               </label>
@@ -332,7 +326,7 @@ export default function HoursLogsClient() {
             <div>
               <label
                 htmlFor="hl-filter-month"
-                className="text-xs font-medium mb-1.5 block text-muted-foreground dark:text-muted-foreground"
+                className="text-xs font-medium mb-1.5 block text-muted-foreground"
               >
                 Monat
               </label>
@@ -404,24 +398,24 @@ export default function HoursLogsClient() {
                             <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary text-xs font-semibold shrink-0">
                               {log.trainer_name.charAt(0).toUpperCase()}
                             </div>
-                            <span className="font-medium text-sm text-foreground dark:text-white truncate max-w-[150px]">
+                            <span className="font-medium text-sm text-foreground truncate max-w-[150px]">
                               {log.trainer_name}
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground dark:text-muted-foreground">
+                        <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground">
                           {format(parseISO(log.date), 'dd. MMM yyyy', { locale: de })}
                         </TableCell>
-                        <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground dark:text-muted-foreground">
+                        <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground">
                           {getTypeLabel(log.hours, log.description)}
                         </TableCell>
-                        <TableCell className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-right text-foreground dark:text-white">
+                        <TableCell className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-right text-foreground">
                           {formatHours(log.hours)}
                         </TableCell>
                         <TableCell className="px-4 py-3 whitespace-nowrap">
                           {getStatusBadge(log.status)}
                         </TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-muted-foreground dark:text-muted-foreground hidden md:table-cell max-w-[200px] truncate">
+                        <TableCell className="px-4 py-3 text-sm text-muted-foreground hidden md:table-cell max-w-[200px] truncate">
                           {log.description || '—'}
                         </TableCell>
                         <TableCell className="px-4 py-3 whitespace-nowrap text-right">
@@ -497,7 +491,7 @@ export default function HoursLogsClient() {
 
       {/* Summary Footer */}
       {logs.length > 0 && (
-        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground dark:text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <TrendingUp className="h-4 w-4" />
             {stats.uniqueTrainers} Trainer
@@ -519,10 +513,8 @@ export default function HoursLogsClient() {
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-background dark:bg-card rounded-xl shadow-lg p-6 w-full max-w-md mx-4 space-y-4">
-            <h3 className="text-lg font-bold text-foreground dark:text-white">
-              Stundennachweis löschen?
-            </h3>
-            <p className="text-sm text-muted-foreground dark:text-muted-foreground">
+            <h3 className="text-lg font-bold text-foreground">Stundennachweis löschen?</h3>
+            <p className="text-sm text-muted-foreground">
               Dieser Eintrag wird unwiderruflich gelöscht. Diese Aktion kann nicht rückgängig
               gemacht werden.
             </p>
@@ -552,9 +544,7 @@ export default function HoursLogsClient() {
       {rejectId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-background dark:bg-card rounded-xl shadow-lg p-6 w-full max-w-md mx-4 space-y-4">
-            <h3 className="text-lg font-bold text-foreground dark:text-white">
-              Stundennachweis ablehnen
-            </h3>
+            <h3 className="text-lg font-bold text-foreground">Stundennachweis ablehnen</h3>
             <div>
               <label
                 htmlFor="hl-reject-reason"

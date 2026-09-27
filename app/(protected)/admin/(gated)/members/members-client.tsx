@@ -461,7 +461,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
 
           {/* Members Table / Grid */}
           {viewMode === 'table' ? (
-            <div className="rounded-md border border-border dark:border-white/10 bg-background dark:bg-card overflow-hidden">
+            <div className="rounded-md border border-border bg-background dark:bg-card overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -535,9 +535,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                           {formatMemberNumber(member.member_number)}
                         </TableCell>
                         <TableCell className="whitespace-nowrap">
-                          <span className="font-medium text-foreground dark:text-white">
-                            {member.full_name}
-                          </span>
+                          <span className="font-medium text-foreground">{member.full_name}</span>
                           {member.is_honorary && (
                             <span className="ml-1.5 inline-flex items-center rounded-full bg-warning-100 px-1.5 py-0.5 text-2xs font-medium text-warning-700">
                               Ehren
@@ -643,7 +641,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                             <button
                               type="button"
                               onClick={() => setEmailDialogMember(member)}
-                              className="text-xs text-muted-foreground dark:text-muted-foreground truncate mt-0.5 hover:underline text-left"
+                              className="text-xs text-muted-foreground truncate mt-0.5 hover:underline text-left"
                               title="E-Mail senden"
                             >
                               {member.email}
@@ -686,11 +684,9 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                           />
                         </div>
                         {member.phone && (
-                          <p className="text-xs text-muted-foreground dark:text-muted-foreground">
-                            {member.phone}
-                          </p>
+                          <p className="text-xs text-muted-foreground">{member.phone}</p>
                         )}
-                        <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                        <p className="text-xs text-muted-foreground">
                           Beigetreten: {formatDate(member.joined_at)}
                         </p>
                         <div className="flex justify-end gap-1 pt-1 border-t border-border dark:border-white/5">

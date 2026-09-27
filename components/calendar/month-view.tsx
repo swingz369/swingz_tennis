@@ -189,7 +189,7 @@ export function MonthView({
                     key={idx}
                     className={`min-h-[5rem] md:min-h-[6.25rem] ${dayOff ? 'bg-warning-50' : 'bg-background dark:bg-card'} p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
                   >
-                    <div className="text-xs font-medium text-muted-foreground dark:text-muted-foreground mb-1">
+                    <div className="text-xs font-medium text-muted-foreground mb-1">
                       {format(day, 'd')}
                       {dayOff && (
                         <span className="ml-1 font-semibold text-warning-800">{dayOff.name}</span>

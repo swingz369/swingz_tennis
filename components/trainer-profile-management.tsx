@@ -336,7 +336,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
           <Skeleton className="h-11 w-64 rounded-xl" />
           <Skeleton className="h-11 w-44 rounded-xl" />
         </div>
-        <div className="rounded-xl border border-border/60 dark:border-white/10 p-6 space-y-4">
+        <div className="rounded-xl border border-border/60 p-6 space-y-4">
           {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} className="h-12 w-full rounded-xl" />
           ))}
@@ -395,7 +395,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
         )
       ) : (
         /* ── Full-Width Trainer Table ─────────────────────────────────── */
-        <div className="rounded-xl border border-border/60 dark:border-white/10 overflow-x-auto">
+        <div className="rounded-xl border border-border/60 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -726,7 +726,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
               onChange={(e) => setInviteName(e.target.value)}
             />
           </div>
-          <div className="bg-primary/5 border border-primary/10 p-3 rounded-xl text-sm text-muted-foreground dark:text-muted-foreground">
+          <div className="bg-primary/5 border border-primary/10 p-3 rounded-xl text-sm text-muted-foreground">
             Der Trainer erhält eine Einladungs-E-Mail und wird dem Verein mit der Rolle
             &quot;Trainer&quot; hinzugefügt.
           </div>

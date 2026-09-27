@@ -40,13 +40,11 @@ export default function ProtectedError({
           <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-100">
             Etwas ist schiefgelaufen
           </h1>
-          <p className="text-muted-foreground dark:text-muted-foreground">
+          <p className="text-muted-foreground">
             {error.message || 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.'}
           </p>
           {error.digest && (
-            <p className="text-xs text-muted-foreground dark:text-muted-foreground font-mono">
-              Fehler-ID: {error.digest}
-            </p>
+            <p className="text-xs text-muted-foreground font-mono">Fehler-ID: {error.digest}</p>
           )}
         </div>
 

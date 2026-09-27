@@ -719,7 +719,7 @@ export default async function AdminPage() {
             // card's height on lg+) is forgiving for whatever aspect
             // ratio an admin's photo happens to have, unlike a wide,
             // short strip which crops almost any real photo badly.
-            <div className="rounded-xl border border-border dark:border-white/10 overflow-hidden aspect-square lg:aspect-auto max-w-[220px] w-full mx-auto lg:mx-0 lg:max-w-none lg:w-full lg:h-full">
+            <div className="rounded-xl border border-border overflow-hidden aspect-square lg:aspect-auto max-w-[220px] w-full mx-auto lg:mx-0 lg:max-w-none lg:w-full lg:h-full">
               {/* eslint-disable-next-line @next/next/no-img-element -- decorative club photo, dynamic external URL */}
               <img
                 src={club.dashboard_bg_url}
