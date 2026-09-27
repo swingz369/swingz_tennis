@@ -253,7 +253,7 @@ export default function NewTournamentPage() {
               </Button>
               <Button
                 type="submit"
-                className="flex-1 bg-brand-light hover:bg-brand-light/80 text-white"
+                className="flex-1 bg-brand-light hover:bg-brand-light/80 text-primary-foreground"
                 disabled={loading}
               >
                 {loading ? 'Speichern…' : 'Turnier anlegen'}

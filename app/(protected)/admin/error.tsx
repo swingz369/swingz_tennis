@@ -79,7 +79,7 @@ export default function AdminError({
         <div className="flex flex-col gap-3 sm:flex-row">
           <button
             onClick={reset}
-            className="flex-1 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="flex-1 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           >
             Erneut versuchen
           </button>

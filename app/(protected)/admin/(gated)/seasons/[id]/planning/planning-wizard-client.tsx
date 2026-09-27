@@ -181,7 +181,7 @@ function WizardContent({
                 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all
                 ${
                   isActive
-                    ? 'bg-primary text-white shadow-md shadow-primary/20'
+                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
                     : isCompleted
                       ? 'bg-success-50 text-success-700'
                       : isClickable

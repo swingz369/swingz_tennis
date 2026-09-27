@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 26. September 2026 (§1–3: aktuelle Palette, Schriften, Bewertung und Detailkorrekturen; spätere Detailkapitel zuletzt am 20.09.2026 geprüft)
+> Zuletzt verifiziert: 27. September 2026 (§1: Palette Matchday; §2–3 am 26.09.: aktuelle Palette, Schriften, Bewertung und Detailkorrekturen; spätere Detailkapitel zuletzt am 20.09.2026 geprüft)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -10,13 +10,20 @@
 
 ## 1. Aktuelle Gestaltung
 
-Verifiziert am 26.09.2026 gegen `app/layout.tsx`, `app/globals.css` und die lokale
-Admin-Oberfläche: Die helle Palette „Clay“ kombiniert einen warmen Hintergrund
-(`--background: 48 17% 94%`) mit Tennisgrün (`--primary: 152 56% 28%`).
-Die dunkle Palette heißt „Nocturne“. Die globale Textschrift ist lokal geladenes
-DM Sans; JetBrains Mono ist für Daten vorgesehen. Clash Display wird im Root-Layout
-nicht geladen. Frühere Angaben zu festen Grün-/Navy-/Orange-Flächenanteilen sind
-keine verifizierten Eigenschaften des aktuellen Produkts.
+Seit 27.09.2026 gilt die Palette **„Matchday“** ([ADR-007](decisions/adr-007-palette-matchday.md)),
+sie löst „Clay“ ab. Kühles Weiß als Grund (`--background: 214 41% 97%`), Nachtblau #172C48 als
+Schrift- und Aktionsfarbe (`--primary` im Hell-Theme), Tennisgelb #D8F449 als `--highlight`:
+nur als Fläche mit nachtblauer Schrift, für die wichtigste Aktion einer Seite und den aktiven
+Navigationspunkt. Im Dunkel-Theme ist der Grund Nachtblau, `--primary` wird Lime. Dunkle Inseln
+(Sidebar `.sidebar-surface`, Hero-/Saison-Karte `.brand-dark-surface`) bleiben in beiden Themes
+dunkel; dort ist `--brand-accent` Lime statt Oliv. Die Kontraste aller Token-Paare prüft
+`src/__tests__/lib/design-tokens-contrast.test.ts`.
+
+Vereinsfarben aus `clubs.*_color` überschreiben die Brand-Token nur, wenn ein Verein eigene
+gesetzt hat (`NULL` = App-Palette, `lib/branding.ts`).
+
+Die globale Textschrift ist lokal geladenes DM Sans; JetBrains Mono ist für Daten vorgesehen.
+Clash Display wird im Root-Layout nicht geladen.
 
 ## 2. Bewertung und Abnahme
 

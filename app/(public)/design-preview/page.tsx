@@ -714,10 +714,10 @@ export default function DesignPreviewPage() {
                   Button States
                 </h3>
                 <div className="flex flex-wrap gap-3">
-                  <button className="px-5 py-2.5 rounded-xl bg-brand-primary text-white text-sm font-medium hover:bg-brand-dark transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2">
+                  <button className="px-5 py-2.5 rounded-xl bg-brand-primary text-primary-foreground text-sm font-medium hover:bg-brand-primary/90 transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2">
                     Button Default
                   </button>
-                  <button className="px-5 py-2.5 rounded-xl bg-brand-primary text-white text-sm font-medium hover:bg-brand-dark transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2 shadow-glow-primary-sm">
+                  <button className="px-5 py-2.5 rounded-xl bg-brand-primary text-primary-foreground text-sm font-medium hover:bg-brand-primary/90 transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2 shadow-glow-primary-sm">
                     Button Glow
                   </button>
                   <button className="px-5 py-2.5 rounded-xl border border-border dark:border-white/[0.08] text-foreground dark:text-foreground text-sm font-medium hover:bg-muted dark:hover:bg-background/[0.04] transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2">

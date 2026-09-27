@@ -4,8 +4,8 @@
   "description": "Modern tennis club management platform with AI-powered scheduling",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#00599F",
+  "background_color": "#F3F6FA",
+  "theme_color": "#172C48",
   "orientation": "portrait-primary",
   "categories": ["sports", "fitness", "productivity"],
   "icons": [

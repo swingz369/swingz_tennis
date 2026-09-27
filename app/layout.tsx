@@ -36,11 +36,11 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  // Muss dem --background aus app/globals.css entsprechen (Clay / Nocturne),
+  // Muss dem --background aus app/globals.css entsprechen (Matchday, ADR-007),
   // sonst klafft auf Mobile eine Kante zwischen Browser-Chrome und Seite.
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#F3F2EE' },
-    { media: '(prefers-color-scheme: dark)', color: '#0C1116' },
+    { media: '(prefers-color-scheme: light)', color: '#F3F6FA' },
+    { media: '(prefers-color-scheme: dark)', color: '#101C2D' },
   ],
 };
 

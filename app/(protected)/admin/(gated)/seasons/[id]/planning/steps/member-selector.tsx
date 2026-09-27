@@ -250,7 +250,7 @@ export function MemberSelector() {
                 onClick={() => setFilterLevel(level)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-xl transition-colors ${
                   filterLevel === level
-                    ? 'bg-primary text-white'
+                    ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-muted dark:text-muted-foreground'
                 }`}
               >

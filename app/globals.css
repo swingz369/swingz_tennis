@@ -47,65 +47,58 @@
 :root {
   color-scheme: light;
 
-  /* ── shadcn/ui Theme Variables (Light) — Palette "Clay" ──
-     Warmes Neutral (hue ~40) als Grund, tiefes Tennisgrün als einzige
-     Akzentfarbe, Ocker als Signal. Löst das kühle Blaugrau + Lime ab:
-     das Lime war der lauteste Ton im System und hat als Akzent nie
-     genug Kontrast auf hellem Grund gehabt. */
-  --background: 48 17% 94%;
-  --foreground: 160 23% 10%;
-  --card: 40 27% 98%;
-  --card-foreground: 160 23% 10%;
-  --popover: 40 27% 98%;
-  --popover-foreground: 160 23% 10%;
-  --primary: 152 56% 28%;
+  /* ── shadcn/ui Theme Variables (Light) — Palette "Matchday" (ADR-007) ──
+     Kühles Weiß als Grund, Nachtblau #172C48 als Schrift- und Aktionsfarbe.
+     Lime #D8F449 ist `--highlight`: nur Fläche mit nachtblauer Schrift, für
+     die eine wichtigste Aktion einer Seite und den aktiven Navigationspunkt.
+     Als Textfarbe auf Hell käme Lime auf 1,2:1 — genau daran war die frühere
+     Lime-Palette gescheitert. Kontraste prüft design-tokens-contrast.test.ts. */
+  --background: 214 41% 97%;
+  --foreground: 214 52% 19%;
+  --card: 0 0% 100%;
+  --card-foreground: 214 52% 19%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 214 52% 19%;
+  --primary: 214 52% 19%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 43 16% 91%;
-  --secondary-foreground: 160 23% 10%;
-  --muted: 43 16% 91%;
-  --muted-foreground: 153 6% 40%;
-  --accent: 40 15% 89%;
-  --accent-foreground: 160 23% 10%;
-  --destructive: 15 59% 42%;
+  --secondary: 212 45% 94%;
+  --secondary-foreground: 214 52% 19%;
+  --muted: 212 45% 94%;
+  --muted-foreground: 214 20% 41%;
+  --accent: 213 45% 92%;
+  --accent-foreground: 214 52% 19%;
+  --destructive: 14 59% 42%;
   --destructive-foreground: 0 0% 100%;
-  --border: 40 9% 87%;
+  --border: 213 33% 88%;
   /* --input ist bewusst dunkler als --border: die Umrandung eines
      Eingabefelds ist das, was es überhaupt als Eingabefeld erkennbar macht,
      und fällt damit unter WCAG 1.4.11 (3:1). Dekorative Kartenrahmen tun
      das nicht — deshalb bleibt --border hell. */
-  --input: 40 10% 52%;
-  --ring: 152 56% 28%;
+  --input: 215 17% 55%;
+  --ring: 213 61% 38%;
+  --highlight: 70 89% 62%;
+  --highlight-foreground: 214 52% 19%;
+  /* Termine im Kalender (Randstreifen, Balken) — Grafik, 3:1 gegen die Karte. */
+  --event: 211 34% 50%;
 
-  /* ── Brand Tokens — Forest #1F6F4A / Tannen #22443A / Ocker #D8B34A ──
-     Logo-Blau bleibt Marketing/Logo, die App führt Grün. */
-  --brand-primary: 152 56% 28%;
-  --brand-primary-light: 152 40% 42%;
-  --brand-dark: 162 33% 20%;
-  --brand-secondary: 162 33% 20%;
-  /* Ocker abgedunkelt gegenüber dem Entwurf (war 57 % Helligkeit): als
-     Fläche für dünne Grafik — Fortschrittsbalken, Badge-Punkte — kam der
-     helle Ton auf 1,9:1 gegen die Karte und war damit auf einem mässigen
-     Monitor schlicht nicht zu sehen.
-     16.08.2026 ein zweites Mal abgedunkelt, 36 % → 28 %: als Textfarbe
-     (`text-brand-accent`, u. a. die Badge-Variante `accent` und die
-     Eyebrow-Zeilen der Landing Page) lag der Ton auf 3,56:1 gegen den
-     Seitengrund — unter AA. Maßgeblich war der engste Fall, Text auf der
-     eigenen 10-%-Tönung (`bg-brand-accent/10 text-brand-accent`): der
-     verlangt 28 %, um auf 4,69:1 zu kommen. Auf gefüllten Flächen mit
-     weisser Schrift wird es dadurch ebenfalls besser (4,03 → 6,07:1). */
-  --brand-accent: 44 70% 28%;
-  /* Terrakotta aus dem Entwurf (--accent-2, #c1633f). Der dritte Ton neben
-     Grün und Ocker: Zustände, die weder gut noch kaputt sind — Warteliste,
-     Wartet-auf-Freigabe. Ohne ihn landeten die bei Ocker (dem Signalton) oder
-     bei --destructive (dem Fehlerton), und beide sagen etwas Falsches.
-     Wie beim Ocker abgedunkelt: der Entwurfswert (50 % Helligkeit) kam als
-     Text auf der Karte auf 3,9:1. */
+  /* ── Brand Tokens — auf dieselben Werte wie die shadcn-Token gelegt, damit
+     die ~400 `*-brand-*`-Klassen ohne Umbau mitziehen. */
+  --brand-primary: 214 52% 19%;
+  --brand-primary-light: 213 61% 38%;
+  --brand-dark: 214 52% 19%;
+  --brand-secondary: 214 52% 19%;
+  /* Text-Akzent (Eyebrows, Badge `accent`): Lime wäre auf Hell unlesbar,
+     deshalb ein Oliv aus derselben Familie — 6,0:1 auf der Karte, 5,2:1 auf
+     der eigenen 10-%-Tönung. Auf dunklen Inseln wird es zu Lime (unten). */
+  --brand-accent: 68 100% 21%;
+  /* Terrakotta: Zustände, die weder gut noch kaputt sind — Warteliste,
+     Wartet-auf-Freigabe. */
   --brand-accent-2: 17 51% 44%;
-  --surface: 40 27% 98%;
+  --surface: 0 0% 100%;
   --surface-elevated: 0 0% 100%;
-  --border-subtle: 43 16% 91%;
-  --text-primary: 160 23% 10%;
-  --text-secondary: 153 6% 40%;
+  --border-subtle: 212 45% 94%;
+  --text-primary: 214 52% 19%;
+  --text-secondary: 214 20% 41%;
 
   /* ── Statusfarben, themefähig ──────────────────────────────────────────
      success/warning/error/info lagen als statische Hex-Skalen in
@@ -185,50 +178,48 @@
 .dark {
   color-scheme: dark;
 
-  /* ── shadcn/ui Theme Variables (Dark) — Palette "Nocturne" ──
-     Nocturne behält seine kühlen Neutralen (der Grund bleibt blaugrau, damit
-     Karten als eigene Ebene lesbar bleiben) — die Aktionsfarbe ist aber nicht
-     mehr Blau, sondern dasselbe Grün wie im Light-Theme, nur aufgehellt.
-     Grund: ein Haupt-Knopf, der beim Theme-Wechsel die Farbfamilie tauscht,
-     ist kein wiedererkennbares Bedienelement. Das ursprüngliche Argument
-     „Grün auf Schwarz kippt ins Giftige" gilt für die satten, hellen Grüns —
-     152 50% 48% liegt luminanzgleich zum vorherigen Blau (7,5:1 gegen den
-     Grund statt 7,4:1), tauscht also nur den Farbton, nicht den Kontrast. */
-  --background: 210 29% 7%;
-  --foreground: 210 35% 93%;
-  --card: 210 26% 11%;
-  --card-foreground: 210 35% 93%;
-  --popover: 210 26% 11%;
-  --popover-foreground: 210 35% 93%;
-  --primary: 152 50% 48%;
-  --primary-foreground: 210 29% 7%;
-  --secondary: 211 32% 15%;
-  --secondary-foreground: 210 35% 93%;
-  --muted: 211 32% 15%;
-  --muted-foreground: 208 17% 59%;
-  --accent: 209 28% 19%;
-  --accent-foreground: 210 35% 93%;
-  --destructive: 12 73% 66%;
-  --destructive-foreground: 210 29% 7%;
-  --border: 209 28% 19%;
+  /* ── shadcn/ui Theme Variables (Dark) — Palette "Matchday" (ADR-007) ──
+     Nachtblauer Grund, Karten eine Stufe heller. Im Dunkeln ist Lime auch
+     Aktions- und Textfarbe (11,9:1 auf der Karte) — deshalb nie `text-white`
+     auf `bg-primary`, sondern immer `text-primary-foreground`. */
+  --background: 215 48% 12%;
+  --foreground: 215 67% 96%;
+  --card: 214 45% 17%;
+  --card-foreground: 215 67% 96%;
+  --popover: 214 45% 17%;
+  --popover-foreground: 215 67% 96%;
+  --primary: 70 89% 62%;
+  --primary-foreground: 214 52% 19%;
+  --secondary: 212 43% 22%;
+  --secondary-foreground: 215 67% 96%;
+  --muted: 212 43% 22%;
+  --muted-foreground: 213 30% 74%;
+  --accent: 213 43% 26%;
+  --accent-foreground: 215 67% 96%;
+  --destructive: 13 76% 69%;
+  --destructive-foreground: 214 52% 19%;
+  --border: 214 35% 28%;
   /* Gleiche Begründung wie im Light-Theme: Eingabefeld-Rahmen fällt unter
      WCAG 1.4.11, dekorativer Kartenrahmen nicht. */
-  --input: 209 20% 42%;
-  --ring: 152 50% 48%;
+  --input: 214 23% 53%;
+  --ring: 216 100% 83%;
+  --highlight: 70 89% 62%;
+  --highlight-foreground: 214 52% 19%;
+  --event: 213 51% 67%;
 
-  /* ── Brand Tokens — Dark führt dasselbe Grün wie Light, nur aufgehellt ──
-     Das helle Brand-Blau bleibt Marketing/Logo, wie im Light-Theme auch. */
-  --brand-primary: 152 50% 48%;
-  --brand-primary-light: 152 45% 62%;
-  --brand-dark: 210 29% 7%;
-  --brand-secondary: 209 35% 16%;
-  --brand-accent: 77 71% 50%;
+  /* Brand-Dunkel ist im Dark-Theme heller als der Grund: dunkle Inseln
+     (Hero-Karte, Saison-Karte) sollen hervortreten, nicht als Loch wirken. */
+  --brand-primary: 70 89% 62%;
+  --brand-primary-light: 216 100% 83%;
+  --brand-dark: 216 49% 28%;
+  --brand-secondary: 213 43% 26%;
+  --brand-accent: 70 89% 62%;
   --brand-accent-2: 22 62% 62%;
-  --surface: 210 26% 11%;
-  --surface-elevated: 209 35% 16%;
-  --border-subtle: 211 32% 15%;
-  --text-primary: 210 35% 93%;
-  --text-secondary: 208 17% 59%;
+  --surface: 214 45% 17%;
+  --surface-elevated: 213 43% 22%;
+  --border-subtle: 212 43% 22%;
+  --text-primary: 215 67% 96%;
+  --text-secondary: 213 30% 74%;
 
   /* ── Statusfarben, Dark ──
      Flächen kippen auf dunkle Tönungen mit dem jeweiligen Farbton,
@@ -286,18 +277,20 @@
  */
 @layer base {
   .sidebar-surface {
-    --background: 162 33% 20%;
+    /* Nachtblau #172C48 und seine Abstufungen */
+    --background: 214 52% 19%;
     --foreground: 0 0% 100%;
-    --card: 162 30% 24%;
+    --card: 214 45% 24%;
     --card-foreground: 0 0% 100%;
-    --muted: 162 25% 28%;
-    --muted-foreground: 158 14% 76%;
-    --accent: 162 25% 28%;
+    --muted: 214 40% 27%;
+    --muted-foreground: 214 30% 80%;
+    --accent: 214 40% 27%;
     --accent-foreground: 0 0% 100%;
-    --border: 162 22% 30%;
-    --input: 162 22% 34%;
-    --secondary: 162 25% 28%;
+    --border: 214 30% 32%;
+    --input: 214 25% 45%;
+    --secondary: 214 40% 27%;
     --secondary-foreground: 0 0% 100%;
+    --ring: 70 89% 62%;
 
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
@@ -315,42 +308,36 @@
   /* Im Dark-Theme geht die Sidebar noch eine Stufe tiefer als die Seite,
      sonst verschwimmt sie mit dem Inhaltsbereich. */
   .dark .sidebar-surface {
-    --background: 210 30% 9%;
-    --card: 210 26% 13%;
-    --muted: 209 24% 17%;
-    --muted-foreground: 208 17% 66%;
-    --accent: 209 24% 17%;
-    --border: 209 26% 17%;
-    --input: 209 22% 30%;
-    --secondary: 209 24% 17%;
+    --background: 215 48% 9%;
+    --card: 214 45% 14%;
+    --muted: 213 40% 17%;
+    --muted-foreground: 213 30% 74%;
+    --accent: 213 40% 17%;
+    --border: 214 35% 18%;
+    --input: 214 23% 40%;
+    --secondary: 213 40% 17%;
   }
 
-  /* Aktiver Navigationspunkt: helle Pille auf dunklem Grund. Überschreibt
-     die rollenabhängigen `colors.bg`/`colors.text`-Klassen aus sidebar.tsx
-     über höhere Spezifität (0,2,1 gegen 0,1,0) — kein !important nötig. */
+  /* Aktiver Navigationspunkt: Lime-Pille mit nachtblauer Schrift (ADR-007) —
+     in beiden Themes gleich. Überschreibt die rollenabhängigen
+     `colors.bg`/`colors.text`-Klassen aus sidebar.tsx über höhere
+     Spezifität (0,2,1 gegen 0,1,0) — kein !important nötig. */
   .sidebar-surface [aria-current='page'] {
-    background-color: hsl(0 0% 100%);
-    color: hsl(var(--brand-dark));
+    background-color: hsl(var(--highlight));
+    color: hsl(var(--highlight-foreground));
     font-weight: 600;
   }
-  .dark .sidebar-surface [aria-current='page'] {
-    background-color: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-  }
 
-  /* ── Dunkle Insel im hellen Theme (.brand-dark-surface) ──
-   * Für Flächen, die in beiden Themes dunkel bleiben — aktuell die
-   * Saison-Karte. Der Ocker ist dort ein anderes Problem als auf einer
-   * hellen Karte: `--brand-accent` ist wegen des Kontrasts auf hellem Grund
-   * abgedunkelt (siehe oben) und kommt auf `--brand-dark` nur noch auf
-   * 2,7:1 — unter den 3:1, die WCAG 1.4.11 für Grafik verlangt, und genau
-   * das, was Fortschrittsbalken und Eyebrow dort sind. Auf dunklem Grund
-   * gilt der ursprüngliche Entwurfswert #d8b34a: 5,3:1.
+  /* ── Dunkle Insel (.brand-dark-surface) ──
+   * Flächen, die in beiden Themes dunkel bleiben — Hero-/„Als Nächstes"-Karte,
+   * Saison-Karte. Auf Hell ist `--brand-accent` ein Oliv (Lime wäre dort
+   * unlesbar); auf der dunklen Insel gilt Lime: 11,4:1 auf Nachtblau.
    * Gleiches Muster wie `.sidebar-surface` — Token lokal umdefinieren statt
    * an jeder Utility-Klasse eine Sondervariante zu führen.
    */
   .brand-dark-surface {
-    --brand-accent: 44 64% 57%;
+    --brand-accent: 70 89% 62%;
+    --ring: 70 89% 62%;
   }
 }
 

@@ -302,7 +302,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
                         onClick={() => togglePresetSlot(key, start)}
                         className={`text-xs px-2.5 py-1.5 rounded-xl font-medium transition-colors ${
                           active
-                            ? 'bg-primary text-white shadow-sm'
+                            ? 'bg-primary text-primary-foreground shadow-sm'
                             : 'bg-muted text-muted-foreground hover:bg-muted/80'
                         }`}
                       >

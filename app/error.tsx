@@ -70,7 +70,7 @@ export default function GlobalError({
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <button
                 onClick={reset}
-                className="inline-flex items-center justify-center rounded-xl bg-brand-primary px-6 py-3 text-base font-medium text-white hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
+                className="inline-flex items-center justify-center rounded-xl bg-brand-primary px-6 py-3 text-base font-medium text-primary-foreground hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
               >
                 Erneut versuchen
               </button>

@@ -176,9 +176,9 @@ export default function OnboardingPage() {
                 <div
                   className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
                     isCompleted
-                      ? 'bg-primary text-white shadow-md shadow-primary/20'
+                      ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
                       : isCurrent
-                        ? 'bg-primary text-white ring-4 ring-primary/20 shadow-lg shadow-primary/30 scale-110'
+                        ? 'bg-primary text-primary-foreground ring-4 ring-primary/20 shadow-lg shadow-primary/30 scale-110'
                         : 'bg-background border-2 border-border text-muted-foreground'
                   }`}
                 >
@@ -317,7 +317,7 @@ export default function OnboardingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button
                 size="lg"
-                className="bg-primary hover:bg-primary/90 text-white px-8 shadow-lg shadow-primary/20"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 shadow-lg shadow-primary/20"
                 onClick={() => router.push('/admin/courts')}
               >
                 <CheckCircle2 className="mr-2 h-5 w-5" />
@@ -374,7 +374,7 @@ export default function OnboardingPage() {
                     <Button
                       onClick={goNext}
                       disabled={loading}
-                      className="bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/10"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/10"
                     >
                       {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                       Speichern & Weiter

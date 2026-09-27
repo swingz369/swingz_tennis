@@ -156,7 +156,9 @@ export function PlanCards({
             >
               {isRecommended && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-white border-0 px-3 text-xs">Empfohlen</Badge>
+                  <Badge className="bg-primary text-primary-foreground border-0 px-3 text-xs">
+                    Empfohlen
+                  </Badge>
                 </div>
               )}
               <CardHeader className="pb-3 pt-6">

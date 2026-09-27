@@ -351,7 +351,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
             <ClipboardCheck className="h-4 w-4 mr-2" />
             Genehmigungen
             {approvalCount > 0 && (
-              <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-2xs font-semibold bg-primary text-white">
+              <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-2xs font-semibold bg-primary text-primary-foreground">
                 {approvalCount}
               </span>
             )}

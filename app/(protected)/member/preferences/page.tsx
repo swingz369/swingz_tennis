@@ -488,7 +488,7 @@ export default function MemberPreferencesPage() {
                 disabled={isSubmitted}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors border ${
                   level === key
-                    ? 'bg-primary text-white border-primary shadow-sm'
+                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                     : 'border-border bg-background text-foreground hover:bg-muted'
                 } disabled:opacity-50`}
               >

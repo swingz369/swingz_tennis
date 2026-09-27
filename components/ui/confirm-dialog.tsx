@@ -34,7 +34,7 @@ const variantStyles: Record<ConfirmVariant, { icon: React.ElementType; buttonCla
   default: { icon: XCircle, buttonClass: '' },
   primary: {
     icon: CheckCircle,
-    buttonClass: 'bg-primary hover:bg-primary/90 text-white',
+    buttonClass: 'bg-primary hover:bg-primary/90 text-primary-foreground',
   },
 };
 

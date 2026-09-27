@@ -468,7 +468,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
               className={cn(
                 'px-3 py-1.5 rounded-xl text-sm font-medium border transition-colors',
                 (form.daysOfWeek || []).includes(day)
-                  ? 'bg-primary text-white border-primary'
+                  ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-muted text-muted-foreground border-border hover:border-primary/30'
               )}
             >

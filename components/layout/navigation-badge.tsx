@@ -14,7 +14,7 @@ export function NavigationBadge({ count, variant = 'default', className }: Navig
   const displayCount = count > 99 ? '99+' : count.toString();
 
   const variantStyles = {
-    default: 'bg-brand-light text-white',
+    default: 'bg-brand-light text-primary-foreground',
     warning: 'bg-warning-500 text-white',
     danger: 'bg-error-500 text-white',
   };

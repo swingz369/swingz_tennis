@@ -39,6 +39,10 @@ const config: Config = {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+        // Lime-Fläche für die eine Hauptaktion einer Seite (ADR-007) — nie als Textfarbe.
+        highlight: 'hsl(var(--highlight))',
+        'highlight-foreground': 'hsl(var(--highlight-foreground))',
+        event: 'hsl(var(--event))',
         brand: {
           primary: 'hsl(var(--brand-primary))',
           light: 'hsl(var(--brand-primary-light))',
@@ -142,18 +146,19 @@ const config: Config = {
       boxShadow: {
         // ── Schattenskala neu definiert (18.08.2026) ──
         // Tailwind-Default ist neutralgrau und für einen weissen Grund gebaut.
-        // Auf dem warmen Clay-Grund liest sich das als grauer Schmutzrand, und
+        // Auf einem getönten Grund liest sich das als grauer Schmutzrand, und
         // weil `shadow-sm` in 163 Dateien steht, war das der Grundton der ganzen
         // App: jede Fläche schwebt ein bisschen, keine steht.
-        // Die Skala hier ist warm getönt (hue 40, die Grundfarbe) und deutlich
+        // Die Skala hier ist in der Grundfarbe getönt (seit ADR-007 Nachtblau,
+        // hue 214; davor Clay, hue 40) und deutlich
         // flacher — `sm` ist praktisch nur noch eine Kontaktkante. Wer wirklich
         // Höhe braucht, nimmt `md`/`lg`; `xl`/`2xl` bleiben Overlays vorbehalten.
-        sm: '0 1px 1px hsl(40 20% 8% / 0.04)',
-        DEFAULT: '0 1px 2px hsl(40 20% 8% / 0.05), 0 1px 1px hsl(40 20% 8% / 0.03)',
-        md: '0 2px 4px -1px hsl(40 20% 8% / 0.06), 0 1px 2px hsl(40 20% 8% / 0.04)',
-        lg: '0 6px 12px -4px hsl(40 20% 8% / 0.08), 0 2px 4px -2px hsl(40 20% 8% / 0.05)',
-        xl: '0 12px 24px -8px hsl(40 20% 8% / 0.10), 0 4px 8px -4px hsl(40 20% 8% / 0.06)',
-        '2xl': '0 24px 48px -16px hsl(40 20% 8% / 0.14)',
+        sm: '0 1px 1px hsl(214 52% 12% / 0.04)',
+        DEFAULT: '0 1px 2px hsl(214 52% 12% / 0.05), 0 1px 1px hsl(214 52% 12% / 0.03)',
+        md: '0 2px 4px -1px hsl(214 52% 12% / 0.06), 0 1px 2px hsl(214 52% 12% / 0.04)',
+        lg: '0 6px 12px -4px hsl(214 52% 12% / 0.08), 0 2px 4px -2px hsl(214 52% 12% / 0.05)',
+        xl: '0 12px 24px -8px hsl(214 52% 12% / 0.10), 0 4px 8px -4px hsl(214 52% 12% / 0.06)',
+        '2xl': '0 24px 48px -16px hsl(214 52% 12% / 0.14)',
         soft: shadows.md,
         medium: shadows.lg,
         strong: shadows.xl,

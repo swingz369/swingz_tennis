@@ -433,7 +433,7 @@ export default function TrainerAvailabilityManager() {
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
                             count > 0
-                              ? 'bg-primary text-white'
+                              ? 'bg-primary text-primary-foreground'
                               : 'bg-muted-foreground/20 text-muted-foreground'
                           }`}
                         >
@@ -480,7 +480,7 @@ export default function TrainerAvailabilityManager() {
                             onClick={() => handleTogglePresetSlot(value, start)}
                             className={`text-xs px-2.5 py-1.5 rounded-xl font-medium transition-colors ${
                               active
-                                ? 'bg-primary text-white shadow-sm'
+                                ? 'bg-primary text-primary-foreground shadow-sm'
                                 : 'bg-muted text-muted-foreground hover:bg-muted-foreground/20'
                             }`}
                           >

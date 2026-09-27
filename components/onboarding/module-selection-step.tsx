@@ -203,7 +203,7 @@ export function ModuleSelectionStep({
           <div className="flex items-start gap-3">
             <div
               className={`p-2.5 rounded-xl shrink-0 ${
-                enabled ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+                enabled ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
               }`}
             >
               <Icon className="h-5 w-5" />
@@ -278,7 +278,7 @@ export function ModuleSelectionStep({
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="bg-primary hover:bg-primary/90 text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             {saving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

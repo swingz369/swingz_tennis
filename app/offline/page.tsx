@@ -42,7 +42,7 @@ export default function OfflinePage() {
         {/* Retry Button */}
         <button
           onClick={() => window.location.reload()}
-          className="inline-flex items-center gap-2 rounded-xl bg-brand-primary px-6 py-3 font-medium text-white transition-colors hover:bg-brand-primary/90"
+          className="inline-flex items-center gap-2 rounded-xl bg-brand-primary px-6 py-3 font-medium text-primary-foreground transition-colors hover:bg-brand-primary/90"
         >
           <svg
             className="h-5 w-5"

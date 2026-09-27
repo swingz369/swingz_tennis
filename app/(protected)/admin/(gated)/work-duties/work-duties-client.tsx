@@ -1070,7 +1070,7 @@ export default function WorkDutiesClient({
                         onClick={() => toggleWeekday(wd.value)}
                         className={`w-10 h-10 rounded-xl text-xs font-bold transition-colors ${
                           bulkWeekdays.includes(wd.value)
-                            ? 'bg-primary text-white'
+                            ? 'bg-primary text-primary-foreground'
                             : 'bg-muted text-muted-foreground hover:bg-muted'
                         }`}
                       >
