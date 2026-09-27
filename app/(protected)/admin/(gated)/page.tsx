@@ -485,27 +485,69 @@ export default async function AdminPage() {
   const needsBilling = (totalInvoiceCount ?? 0) === 0;
   const hasSessions = (activeSessions ?? 0) > 0;
 
-  // Nächste Einheit des Vereins für die „Als Nächstes"-Karte (Matchday).
-  const { data: nextSessionRows } = await supabase
+  // „Auf der Anlage"-Karte (Matchday): Der Admin schaut auf alle Plätze, nicht
+  // auf eine Gruppe. Gezeigt wird der Zeitblock, der gerade läuft — sonst alle
+  // Einheiten, die zur nächsten Uhrzeit beginnen — plus der Rest des Tages.
+  // ponytail: Obergrenze 200 Einheiten ab jetzt; reicht für einen Anlagentag.
+  const nowIso = new Date().toISOString();
+  const { data: upcomingRows } = await supabase
     .from('sessions')
-    .select('id, timeslot_start, timeslot_end, group_ids, courts(name), schedules!inner(club_id)')
+    .select(
+      'id, timeslot_start, timeslot_end, group_ids, max_participants, courts(name), trainers(name), schedules!inner(club_id)'
+    )
     .eq('schedules.club_id', clubId)
-    .gte('timeslot_start', new Date().toISOString())
+    .not('status', 'in', '(cancelled,holiday_cancelled)')
+    .gt('timeslot_end', nowIso)
     .order('timeslot_start', { ascending: true })
-    .limit(1);
-  const nextSession = nextSessionRows?.[0] ?? null;
-  const nextGroupId = (nextSession?.group_ids as string[] | null)?.[0];
-  const { data: nextGroup } = nextGroupId
-    ? await supabase.from('groups').select('name').eq('id', nextGroupId).maybeSingle()
-    : { data: null };
-  const nextCourt = nextSession
-    ? Array.isArray(nextSession.courts)
-      ? nextSession.courts[0]
-      : nextSession.courts
+    .limit(200);
+  const firstDay = upcomingRows?.[0]
+    ? new Date(asUtcIso(upcomingRows[0].timeslot_start) as string).toDateString()
     : null;
-  const nextStart = nextSession ? asUtcIso(nextSession.timeslot_start) : null;
-  const nextIsToday =
-    !!nextStart && new Date(nextStart as string).toDateString() === new Date().toDateString();
+  const dayRows = (upcomingRows ?? []).filter(
+    (r) => new Date(asUtcIso(r.timeslot_start) as string).toDateString() === firstDay
+  );
+  const ongoingRows = dayRows.filter((r) => r.timeslot_start <= nowIso);
+  const blockRows = ongoingRows.length
+    ? ongoingRows
+    : dayRows.filter((r) => r.timeslot_start === dayRows[0].timeslot_start);
+  const blockIds = new Set(blockRows.map((r) => r.id));
+  const restOfDay = dayRows.filter((r) => !blockIds.has(r.id));
+
+  const blockGroupIds = [
+    ...new Set(blockRows.flatMap((r) => (r.group_ids as string[] | null) ?? [])),
+  ];
+  const { data: blockGroups } = blockGroupIds.length
+    ? await supabase.from('groups').select('id, name, member_ids').in('id', blockGroupIds)
+    : { data: [] };
+  const groupById = new Map((blockGroups ?? []).map((g) => [g.id, g]));
+  const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
+  const block = blockRows
+    .map((r) => {
+      const groups = ((r.group_ids as string[] | null) ?? [])
+        .map((id) => groupById.get(id))
+        .filter((g) => !!g);
+      return {
+        id: r.id,
+        end: asUtcIso(r.timeslot_end) as string,
+        title: groups.map((g) => g.name).join(' + ') || 'Training',
+        court: one(r.courts)?.name ?? 'Ohne Platz',
+        trainer: one(r.trainers)?.name ?? null,
+        participants: groups.reduce(
+          (n, g) => n + (Array.isArray(g.member_ids) ? g.member_ids.length : 0),
+          0
+        ),
+        maxParticipants: r.max_participants,
+      };
+    })
+    .sort((x, y) => x.court.localeCompare(y.court, 'de', { numeric: true }));
+  const blockStart = blockRows[0] ? (asUtcIso(blockRows[0].timeslot_start) as string) : null;
+  const blockIsNow = ongoingRows.length > 0;
+  const blockIsToday = !!firstDay && firstDay === new Date().toDateString();
+  const dayEnd = dayRows.length
+    ? (asUtcIso(
+        dayRows.reduce((m, r) => (r.timeslot_end > m ? r.timeslot_end : m), dayRows[0].timeslot_end)
+      ) as string)
+    : null;
 
   const smartActions: SmartAction[] = [];
 
@@ -738,13 +780,48 @@ export default async function AdminPage() {
           unten in der Nebenspalte, unter der Saison-Karte. */}
       <ScrollReveal delay={50}>
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.8fr)_minmax(280px,1fr)]">
-          {nextSession && nextStart ? (
+          {blockStart ? (
             <NextUpHero
-              eyebrow={`${nextIsToday ? 'Als Nächstes' : formatWeekdayDate(nextStart)} · ${formatTime(nextStart)}–${formatTime(asUtcIso(nextSession.timeslot_end))}`}
-              title={nextGroup?.name ?? 'Training'}
-              meta={nextCourt?.name ?? undefined}
+              eyebrow={
+                blockIsNow
+                  ? 'Jetzt auf der Anlage'
+                  : `${blockIsToday ? 'Als Nächstes' : formatWeekdayDate(blockStart)} · ab ${formatTime(blockStart)}`
+              }
+              title={
+                block.length === 1
+                  ? block[0].title
+                  : `${block.length} Einheiten ${blockIsNow ? 'laufen' : 'parallel'}`
+              }
               action={{ label: 'Im Kalender öffnen', href: '/scheduler' }}
-            />
+              aside={
+                restOfDay.length > 0 && dayEnd
+                  ? `${blockIsToday ? 'Heute' : 'Am selben Tag'} danach noch ${restOfDay.length} ${restOfDay.length === 1 ? 'Einheit' : 'Einheiten'} bis ${formatTime(dayEnd)}`
+                  : undefined
+              }
+            >
+              <ul className="divide-y divide-white/10 border-y border-white/10">
+                {block.slice(0, 6).map((s) => (
+                  <li key={s.id} className="flex items-baseline gap-4 py-2 text-sm">
+                    <span className="w-20 shrink-0 truncate text-white/60">{s.court}</span>
+                    <span className="min-w-0 flex-1 truncate font-medium">
+                      {s.title}
+                      {s.trainer && (
+                        <span className="font-normal text-white/60"> · {s.trainer}</span>
+                      )}
+                    </span>
+                    <span className="shrink-0 tabular-nums text-white/60">
+                      {s.participants}/{s.maxParticipants}
+                      <span className="hidden sm:inline"> · bis {formatTime(s.end)}</span>
+                    </span>
+                  </li>
+                ))}
+                {block.length > 6 && (
+                  <li className="py-2 text-sm text-white/60">
+                    + {block.length - 6} weitere im Kalender
+                  </li>
+                )}
+              </ul>
+            </NextUpHero>
           ) : (
             <NextUpHero
               eyebrow="Als Nächstes"

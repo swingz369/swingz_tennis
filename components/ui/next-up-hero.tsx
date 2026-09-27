@@ -16,6 +16,7 @@ export function NextUpHero({
   meta,
   action,
   aside,
+  children,
   className,
 }: {
   eyebrow: ReactNode;
@@ -25,6 +26,8 @@ export function NextUpHero({
   action?: { label: string; href?: string; onClick?: () => void };
   /** Kleiner Text neben der Aktion, z. B. „4 Teilnehmende" */
   aside?: ReactNode;
+  /** Zusatzinhalt zwischen Titel und Aktion, z. B. die folgenden Termine */
+  children?: ReactNode;
   className?: string;
 }) {
   return (
@@ -47,6 +50,7 @@ export function NextUpHero({
         </h2>
         {meta && <p className="mt-3 text-white/75">{meta}</p>}
       </div>
+      {children && <div className="mt-6">{children}</div>}
       {(action || aside) && (
         <div className="mt-6 flex flex-wrap items-center gap-4">
           {action &&
