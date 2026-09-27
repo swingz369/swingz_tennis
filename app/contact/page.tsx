@@ -38,9 +38,9 @@ export default function ContactPage() {
                   Anmelden
                 </Button>
               </Link>
-              <Link href="/register">
-                <Button variant="accent">Kostenlos registrieren</Button>
-              </Link>
+              <Button asChild variant="highlight">
+                <Link href="/register">Kostenlos registrieren</Link>
+              </Button>
             </div>
           </nav>
         </div>

@@ -34,9 +34,9 @@ export default function ImpressumPage() {
                   Anmelden
                 </Button>
               </Link>
-              <Link href="/register">
-                <Button variant="accent">Registrieren</Button>
-              </Link>
+              <Button asChild variant="highlight">
+                <Link href="/register">Registrieren</Link>
+              </Button>
             </div>
           </nav>
         </div>

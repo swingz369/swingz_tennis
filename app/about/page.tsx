@@ -46,9 +46,9 @@ export default function AboutPage() {
                   Anmelden
                 </Button>
               </Link>
-              <Link href="/register">
-                <Button variant="accent">Kostenlos registrieren</Button>
-              </Link>
+              <Button asChild variant="highlight">
+                <Link href="/register">Kostenlos registrieren</Link>
+              </Button>
             </div>
           </nav>
         </div>
@@ -229,20 +229,19 @@ export default function AboutPage() {
             Teste SWINGZ 14 Tage kostenlos und überzeuge dich selbst, ohne Kreditkarte.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register">
-              <Button variant="accent" size="lg">
+            <Button asChild variant="highlight" size="lg">
+              <Link href="/register">
                 Kostenlos registrieren <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link href="/contact">
-              <Button
-                variant="ghost"
-                size="lg"
-                className="text-white/90 hover:text-white hover:bg-background/10 border border-white/20"
-              >
-                Kontakt aufnehmen
-              </Button>
-            </Link>
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="ghost"
+              size="lg"
+              className="text-white/90 hover:text-white hover:bg-background/10 border border-white/20"
+            >
+              <Link href="/contact">Kontakt aufnehmen</Link>
+            </Button>
           </div>
         </div>
       </section>

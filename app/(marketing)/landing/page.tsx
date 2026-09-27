@@ -15,12 +15,12 @@ import { useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { BrandMark, Wordmark } from '@/components/ui/brand-logo';
 import type { Session } from '@supabase/supabase-js';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import { analytics } from '@/lib/analytics';
-import { ArrowRight, Trophy, ShieldCheck, Server } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Server } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { IconBox } from '@/components/ui/icon-box';
 
 import { SectionReveal } from './_components/section-reveal';
 import { BentoSection } from './_components/bento-section';
@@ -87,10 +87,8 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <nav className="flex h-16 items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
-              <IconBox icon={Trophy} size="sm" variant="gradient-primary" />
-              <span className="font-display text-lg font-bold tracking-tight text-foreground">
-                SWINGZ
-              </span>
+              <BrandMark />
+              <Wordmark className="text-xl" />
             </Link>
             <div className="hidden md:flex items-center gap-6 text-sm font-medium">
               <Link

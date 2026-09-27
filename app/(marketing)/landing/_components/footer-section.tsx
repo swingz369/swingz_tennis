@@ -3,8 +3,7 @@
  */
 
 import Link from 'next/link';
-import { Trophy } from 'lucide-react';
-import { IconBox } from '@/components/ui/icon-box';
+import { BrandMark, Wordmark } from '@/components/ui/brand-logo';
 
 const LINK_GROUPS = [
   {
@@ -47,10 +46,8 @@ export function FooterSection() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="inline-flex items-center gap-2.5">
-              <IconBox icon={Trophy} size="sm" variant="gradient-primary" />
-              <span className="font-display text-lg font-bold tracking-tight text-foreground">
-                SWINGZ
-              </span>
+              <BrandMark />
+              <Wordmark className="text-xl" />
             </Link>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
               Tennisclub-Management, das im Hintergrund arbeitet, damit das Vereinsleben im

@@ -151,7 +151,7 @@ export function PricingSection() {
 
             <div className="mt-6 flex items-baseline gap-2">
               <span className="font-display text-5xl font-extrabold tracking-tight text-foreground">
-                €{billingYearly ? plan.yearlyPrice : plan.price}
+                {billingYearly ? plan.yearlyPrice : plan.price} €
               </span>
               <span className="text-sm text-muted-foreground">
                 {billingYearly ? '/Jahr' : plan.period}
@@ -159,7 +159,7 @@ export function PricingSection() {
             </div>
             {billingYearly && (
               <p className="mt-1.5 text-xs text-muted-foreground">
-                €{plan.yearlyPricePerMonth} / Monat, {plan.savings} gespart
+                {plan.yearlyPricePerMonth} € / Monat, {plan.savings} gespart
               </p>
             )}
 
