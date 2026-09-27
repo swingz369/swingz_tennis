@@ -99,6 +99,10 @@ describe('GET /api/sessions', () => {
     expect(json[0].currentBookings).toBe(1);
     expect(json[0].hasActiveBooking).toBe(true);
     expect(json[0].bookerNames).toEqual([]);
+    // Fremde Einheit: auch Trainer bleibt verborgen
+    expect(json[0].anonymized).toBe(true);
+    expect(json[0].trainerName).toBeNull();
+    expect(json[0].trainerId).toBeNull();
   });
 
   it('zeigt die Namen der Buchenden für Admins', async () => {
@@ -108,5 +112,7 @@ describe('GET /api/sessions', () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json[0].bookerNames).toEqual(['Max Mitglied']);
+    expect(json[0].anonymized).toBe(false);
+    expect(json[0].trainerName).toBe('Trainer Eins');
   });
 });

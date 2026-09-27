@@ -218,6 +218,20 @@ export async function GET(req: NextRequest) {
         }
       }
 
+      // Datenschutz: Ein Mitglied sieht fremde Einheiten nur als „Training" bzw.
+      // „Platz belegt" — ohne Trainer, Notizen oder Absagegrund. Eigen ist, was es
+      // gebucht, zugesagt oder per Saisonplan als Teilnehmer hat. Personal sieht alles.
+      const isStaff = isAdmin || isTrainerRole || auth.roles.includes('owner');
+      const ownPlanEntryIds = new Set<string>();
+      if (!isStaff && typedSessions.some((s) => s.plan_entry_id)) {
+        const { data: ownEntries } = await createServiceClient()
+          .from('season_plan_entries')
+          .select('id')
+          .eq('club_id', clubIdParam)
+          .contains('expected_participants', JSON.stringify([effectiveUserId]));
+        (ownEntries ?? []).forEach((e) => ownPlanEntryIds.add(e.id));
+      }
+
       // Transform sessions to the format the booking UI expects
       const result = typedSessions.map((s) => {
         const start = new Date(s.timeslot_start);
@@ -235,6 +249,13 @@ export async function GET(req: NextRequest) {
         const canSeeBookerNames =
           isAdmin || (!!callerTrainerId && s.trainer_id === callerTrainerId);
         const bookerNames = canSeeBookerNames ? rawBookerNames : [];
+        const isClubBlock = s.session_type === 'event' || s.session_type === 'maintenance';
+        const anonymized =
+          !isStaff &&
+          !isClubBlock &&
+          !booking &&
+          !rsvpMap.has(s.id) &&
+          !(s.plan_entry_id && ownPlanEntryIds.has(s.plan_entry_id));
 
         return {
           id: s.id,
@@ -243,12 +264,12 @@ export async function GET(req: NextRequest) {
           endTime: berlinParts(end).time,
           timeslotStart: s.timeslot_start,
           timeslotEnd: s.timeslot_end,
-          trainerId: s.trainer_id,
-          trainerName: trainersMap.get(s.trainer_id ?? '') ?? 'Trainer',
+          trainerId: anonymized ? null : s.trainer_id,
+          trainerName: anonymized ? null : (trainersMap.get(s.trainer_id ?? '') ?? 'Trainer'),
           courtName: court?.name ?? 'Platz',
           maxParticipants,
           sessionType: s.session_type ?? 'training',
-          notes: s.notes ?? null,
+          notes: anonymized ? null : (s.notes ?? null),
           courtId: s.court_id,
           bookedByUser: !!booking,
           bookingId: booking?.bookingId ?? null,
@@ -258,8 +279,9 @@ export async function GET(req: NextRequest) {
           currentBookings,
           bookerNames,
           cancelledAt: (s as any).cancelled_at ?? null,
-          cancellationReason: (s as any).cancellation_reason ?? null,
+          cancellationReason: anonymized ? null : ((s as any).cancellation_reason ?? null),
           planEntryId: (s as any).plan_entry_id ?? null,
+          anonymized,
         };
       });
 

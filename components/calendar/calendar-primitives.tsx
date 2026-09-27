@@ -12,7 +12,12 @@ import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { GripVertical, Clock, User, Users, Lock, Unlock, Wrench, PartyPopper } from 'lucide-react';
 import type { Session } from '@/hooks/use-sessions';
 import type { PlanEntry } from '@/components/calendar/types';
-import { DAILY_BLOCK_STYLES, type CourtClosure } from '@/lib/court-calendar-utils';
+import {
+  DAILY_BLOCK_STYLES,
+  isForeignSession,
+  sessionLabel,
+  type CourtClosure,
+} from '@/lib/court-calendar-utils';
 
 /** Hours shown in the daily view time axis */
 export const DAILY_HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22] as const;
@@ -141,22 +146,25 @@ export function PositionedSessionBlock({
   const isCancelledSession = !!session.cancelledAt;
   const isBlocked = session.sessionType === 'event' || session.sessionType === 'maintenance';
   const isOwnBooking = session.bookedByUser;
-  const isBooked = session.hasActiveBooking && !isOwnBooking;
-  const isOpen = !isBlocked && !isOwnBooking && !isBooked;
+  const isForeign = isForeignSession(session);
+  const isBooked = session.hasActiveBooking && !isOwnBooking && !isForeign;
+  const isOpen = !isBlocked && !isOwnBooking && !isBooked && !isForeign;
 
   const statusKey = isBlocked
     ? 'blocked'
     : isOwnBooking
       ? 'own-booking'
-      : isBooked
-        ? 'booked'
-        : 'session';
+      : isForeign
+        ? 'foreign'
+        : isBooked
+          ? 'booked'
+          : 'session';
   const rawStyle = DAILY_BLOCK_STYLES[statusKey];
   const bgColor = isCancelledSession ? 'bg-error-50' : rawStyle.bg;
   const accentColor = isCancelledSession ? 'border-error-400' : rawStyle.accent;
   const textColor = isCancelledSession ? 'text-error-700' : rawStyle.text;
 
-  let label = session.trainerName || 'Offene Session';
+  let label = sessionLabel(session, 'Offene Session');
   let icon = <User className="h-3.5 w-3.5" />;
 
   if (isBlocked) {
@@ -170,6 +178,8 @@ export function PositionedSessionBlock({
   } else if (isOwnBooking) {
     label = 'Deine Buchung';
     icon = <div className="w-2.5 h-2.5 rounded-full bg-error-500" />;
+  } else if (isForeign) {
+    icon = <Lock className="h-3.5 w-3.5" />;
   } else if (isBooked) {
     const bookerInfo = session.bookerNames?.length ? session.bookerNames.join(', ') : 'Mitglied';
     label = `Belegt: ${bookerInfo}`;

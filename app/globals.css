@@ -401,6 +401,16 @@ body {
 }
 
 @layer utilities {
+  /* Fremde Belegung im Platzkalender (Mitgliedersicht): „besetzt, aber nicht deins" —
+     Schraffur statt Farbe, damit sie neben eigenen Terminen klar zurücktritt. */
+  .bg-hatch {
+    background-image: repeating-linear-gradient(
+      135deg,
+      hsl(var(--muted)) 0 6px,
+      hsl(var(--background)) 6px 12px
+    );
+  }
+
   /* brand- und surface-Farben kommen aus tailwind.config.ts (alle Varianten inkl. from-, to-, ring-, alpha) */
 
   /* Deko-Hintergrund der Auth-/Legal-Seiten — vorher 10× identisch als Inline-Style kopiert */

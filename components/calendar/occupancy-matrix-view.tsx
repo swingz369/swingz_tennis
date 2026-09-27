@@ -23,6 +23,7 @@ const CELL: Record<SlotStatus, { label: string; className: string }> = {
   plan: { label: 'Saisonplan', className: 'bg-warning-100 text-warning-800' },
   booked: { label: 'Belegt', className: 'bg-warning-500 text-white' },
   'own-booking': { label: 'Deine', className: 'bg-error-500 text-white' },
+  foreign: { label: 'Belegt', className: 'bg-hatch text-muted-foreground' },
   blocked: { label: 'Gesperrt', className: 'bg-muted text-muted-foreground' },
 };
 

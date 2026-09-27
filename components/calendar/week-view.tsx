@@ -28,6 +28,7 @@ import {
   getSlotStatus,
   SLOT_STATUS_STYLES,
   SLOT_STATUS_STYLES_ADMIN_BLOCKED,
+  sessionLabel,
   type CourtClosure,
 } from '@/lib/court-calendar-utils';
 import { CourtCalendarGrid, WeekDaysHeaderRow } from '@/components/court-calendar-shared';
@@ -500,6 +501,18 @@ export function WeekView({
                                   </button>
                                 )}
                               </div>
+                            ) : status === 'foreign' ? (
+                              <div className="flex items-center gap-1.5 px-2 min-w-0">
+                                <Lock className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                <div className="min-w-0">
+                                  <span className="text-2xs font-semibold truncate block">
+                                    {sessionLabel(session)}
+                                  </span>
+                                  <span className="text-3xs font-medium">
+                                    {session.startTime}–{session.endTime}
+                                  </span>
+                                </div>
+                              </div>
                             ) : session.hasActiveBooking ? (
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -548,7 +561,7 @@ export function WeekView({
                                 <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                                 <div className="min-w-0">
                                   <span className="truncate text-2xs font-bold text-foreground block">
-                                    {session.trainerName?.substring(0, 12) || 'Trainer'}
+                                    {sessionLabel(session).substring(0, 12)}
                                   </span>
                                   <span className="text-3xs text-muted-foreground font-medium">
                                     {session.startTime}–{session.endTime}

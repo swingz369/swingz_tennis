@@ -144,8 +144,8 @@ export interface SessionExportInput {
   timeslotStart: string;
   startTime: string;
   endTime: string;
-  trainerName?: string;
-  notes?: string;
+  trainerName?: string | null;
+  notes?: string | null;
   courtId?: string;
 }
 

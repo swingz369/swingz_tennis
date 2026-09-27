@@ -9,12 +9,12 @@ export interface Session {
   dayOfWeek: number;
   startTime: string;
   endTime: string;
-  trainerId: string;
-  trainerName?: string;
+  trainerId: string | null;
+  trainerName?: string | null;
   groupIds: string[];
   groupNames?: string[];
   maxParticipants: number;
-  notes?: string;
+  notes?: string | null;
   sessionType?: 'training' | 'walk_in' | 'event' | 'maintenance';
   bookedByUser?: boolean;
   bookingId?: string;
@@ -30,6 +30,8 @@ export interface Session {
   cancelledAt?: string | null; // ISO date string if session was cancelled
   cancellationReason?: string | null;
   planEntryId?: string | null; // gesetzt, wenn die Session aus der Saisonplanung stammt (editierbar für Admin)
+  /** Fremde Einheit aus Mitgliedersicht: Trainer, Notizen und Absagegrund hat der Server entfernt. */
+  anonymized?: boolean;
 }
 
 export function useSessions(

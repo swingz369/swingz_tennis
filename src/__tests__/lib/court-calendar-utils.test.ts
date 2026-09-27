@@ -6,6 +6,7 @@ import {
   SLOT_STATUS_STYLES_ADMIN_BLOCKED,
   DAILY_BLOCK_STYLES,
   getCalendarLegendItems,
+  sessionLabel,
   type SlotStatus,
 } from '@/lib/court-calendar-utils';
 import type { Session } from '@/hooks/use-sessions';
@@ -292,7 +293,7 @@ describe('getCalendarLegendItems', () => {
   it('returns 5 items for non-admin (member)', () => {
     const items = getCalendarLegendItems(false);
     expect(items).toHaveLength(5);
-    expect(items.map((i) => i.label)).toContain('Belegt (gebucht)');
+    expect(items.map((i) => i.label)).toContain('Belegt (andere)');
     expect(items.map((i) => i.label)).toContain('Deine Buchung');
   });
 
@@ -312,5 +313,31 @@ describe('getCalendarLegendItems', () => {
     expect(admin[2].className).toContain('bg-event'); // Session
     const member = getCalendarLegendItems(false);
     expect(member[4].className).toContain('ring-highlight'); // Deine Buchung
+  });
+});
+
+/* ── Datenschutz: fremde Einheiten aus Mitgliedersicht ── */
+
+describe('anonymisierte Einheiten', () => {
+  it('Saisonplan-Training eines anderen: foreign, Label ohne Namen', () => {
+    const s = makeSession({ anonymized: true, planEntryId: 'pe-1', trainerName: null });
+    expect(getSlotStatus(COURT_A, june8Berlin, '11:00', [s], []).status).toBe('foreign');
+    expect(sessionLabel(s)).toBe('Training');
+  });
+
+  it('fremde Platzbuchung heißt „Platz belegt"', () => {
+    const s = makeSession({ anonymized: true, sessionType: 'walk_in', hasActiveBooking: true });
+    expect(getSlotStatus(COURT_A, june8Berlin, '11:00', [s], []).status).toBe('foreign');
+    expect(sessionLabel(s)).toBe('Platz belegt');
+  });
+
+  it('offene Einheit ohne Saisonplan bleibt buchbar, nennt aber keinen Trainer', () => {
+    const s = makeSession({ anonymized: true, trainerName: 'Max Muster' });
+    expect(getSlotStatus(COURT_A, june8Berlin, '11:00', [s], []).status).toBe('session');
+    expect(sessionLabel(s)).toBe('Training');
+  });
+
+  it('nicht anonymisiert: Trainername bleibt', () => {
+    expect(sessionLabel(makeSession({ trainerName: 'Max Muster' }))).toBe('Max Muster');
   });
 });

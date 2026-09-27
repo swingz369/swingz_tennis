@@ -24,6 +24,7 @@ import {
   CALENDAR_TIME_SLOTS as TIME_SLOTS,
   getSlotStatus,
   getCalendarLegendItems,
+  sessionLabel,
   type CourtClosure,
 } from '@/lib/court-calendar-utils';
 import { CourtCalendarHeader, CourtCalendarLegend } from '@/components/court-calendar-shared';
@@ -216,7 +217,7 @@ export function AgendaView({
             if (status === 'session') {
               bar = 'bg-event';
               icon = <User className="h-3.5 w-3.5 text-muted-foreground" />;
-              label = session?.trainerName || 'Offene Session';
+              label = session ? sessionLabel(session, 'Offene Session') : 'Offene Session';
               const free = Math.max(
                 0,
                 (session?.maxParticipants ?? 0) - (session?.currentBookings ?? 0)
@@ -229,6 +230,12 @@ export function AgendaView({
               label = 'Belegt';
               meta = `${session?.currentBookings ?? 0}/${session?.maxParticipants ?? 0}`;
               cardClass = 'border-border bg-card';
+            } else if (status === 'foreign' && session) {
+              bar = 'bg-input';
+              icon = <Lock className="h-3.5 w-3.5 text-muted-foreground" />;
+              label = sessionLabel(session);
+              meta = `${session.startTime}–${session.endTime}`;
+              cardClass = 'border-border bg-hatch text-muted-foreground';
             } else if (status === 'own-booking') {
               bar = 'bg-brand-light';
               icon = <div className="w-2.5 h-2.5 rounded-full bg-brand-light" />;

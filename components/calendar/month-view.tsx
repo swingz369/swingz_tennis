@@ -33,6 +33,7 @@ import FeedbackModal from '@/components/feedback/feedback-modal';
 import { exportBookingsCSV } from '@/lib/csv-export';
 import { toast } from 'sonner';
 import type { Session } from '@/hooks/use-sessions';
+import { sessionLabel } from '@/lib/court-calendar-utils';
 import type { DayOff } from '@/hooks/use-holidays';
 
 function getBookingStatusLabel(status: string): string {
@@ -117,12 +118,12 @@ export function MonthView({
     const sessionDateTime = new Date(date);
     const [hours, minutes] = session.endTime.split(':');
     sessionDateTime.setHours(parseInt(hours), parseInt(minutes));
-    if (isPast(sessionDateTime)) {
+    if (isPast(sessionDateTime) && session.trainerId) {
       setFeedbackModal({
         open: true,
         sessionId: session.id,
         trainerId: session.trainerId,
-        trainerName: session.trainerName || 'Trainer',
+        trainerName: sessionLabel(session),
         sessionTitle: `${session.startTime} - ${session.endTime}`,
       });
     }
@@ -137,7 +138,7 @@ export function MonthView({
         ? {
             startTime: s.startTime,
             endTime: s.endTime,
-            trainerId: s.trainerId,
+            trainerId: s.trainerId ?? '',
             court: s.trainerName || '-',
           }
         : null,
@@ -260,9 +261,7 @@ export function MonthView({
                           </div>
                           <div className="flex items-center gap-1 text-2xs">
                             <Clock className="h-3 w-3" />
-                            <span className="truncate">
-                              {session.trainerName || session.trainerId}
-                            </span>
+                            <span className="truncate">{sessionLabel(session)}</span>
                           </div>
                           {session.bookedByUser && session.bookingStatus && (
                             <div className="flex flex-col gap-1 mt-0.5">

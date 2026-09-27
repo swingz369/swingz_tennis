@@ -42,7 +42,29 @@ export function getSurfaceLabel(surface: string): string {
 }
 
 /** Visual status of a calendar slot */
-export type SlotStatus = 'available' | 'session' | 'booked' | 'own-booking' | 'plan' | 'blocked';
+export type SlotStatus =
+  'available' | 'session' | 'booked' | 'own-booking' | 'foreign' | 'plan' | 'blocked';
+
+/**
+ * Anzeigename einer Einheit. Fremde Einheiten (anonymized) nennen nie eine Person —
+ * nur, dass der Platz genutzt wird. Einzige Stelle, an der das entschieden wird.
+ */
+export function sessionLabel(session: Session, fallback = 'Trainer'): string {
+  if (session.anonymized) return session.sessionType === 'walk_in' ? 'Platz belegt' : 'Training';
+  return session.trainerName || fallback;
+}
+
+/**
+ * Fremde Belegung aus Mitgliedersicht: nicht buchbar, neutral schraffiert. Eine offene
+ * Einheit ohne Saisonplan bleibt buchbar — sie heißt dann nur „Training" statt Trainername.
+ */
+export function isForeignSession(session: Session): boolean {
+  return (
+    !!session.anonymized &&
+    !session.bookedByUser &&
+    (!!session.planEntryId || !!session.hasActiveBooking || session.sessionType === 'walk_in')
+  );
+}
 
 /**
  * Find the session that covers a given court+date+timeslot.
@@ -144,6 +166,7 @@ export function getSlotStatus(
     }
     // Booked by current user → red "Deine Buchung"
     if (session.bookedByUser) return { status: 'own-booking', session };
+    if (isForeignSession(session)) return { status: 'foreign', session };
     // Someone else booked → orange "Belegt" (unavailable)
     if (session.hasActiveBooking) return { status: 'booked', session };
     return { status: 'session', session };
@@ -182,6 +205,7 @@ export const SLOT_STATUS_STYLES: Record<SlotStatus, string> = {
   session: 'bg-muted text-foreground border-l-[3px] border-l-event',
   booked: 'bg-accent text-muted-foreground border-l-[3px] border-l-input',
   'own-booking': 'bg-brand-dark text-white border-l-[3px] border-l-highlight',
+  foreign: 'bg-hatch text-muted-foreground border border-border cursor-default',
   plan: 'bg-muted/60 text-muted-foreground border border-dashed border-event/60',
   blocked: 'bg-muted/70 text-muted-foreground border border-border cursor-not-allowed',
 };
@@ -195,7 +219,7 @@ export const SLOT_STATUS_STYLES_ADMIN_BLOCKED =
  * Extracted from SLOT_STATUS_STYLES to keep weekly and daily views in sync.
  */
 export const DAILY_BLOCK_STYLES: Record<
-  'available' | 'session' | 'booked' | 'own-booking' | 'blocked',
+  'available' | 'session' | 'booked' | 'own-booking' | 'foreign' | 'blocked',
   { bg: string; text: string; accent: string }
 > = {
   /* Note: 'available' is kept for API completeness but is not used by
@@ -219,6 +243,11 @@ export const DAILY_BLOCK_STYLES: Record<
     bg: 'bg-brand-dark border-transparent',
     text: 'text-white',
     accent: 'border-l-highlight',
+  },
+  foreign: {
+    bg: 'bg-hatch border-border',
+    text: 'text-muted-foreground',
+    accent: 'border-l-input',
   },
   blocked: {
     bg: 'bg-muted/70 border-border',
@@ -244,7 +273,7 @@ export function getCalendarLegendItems(isAdmin: boolean): LegendItem[] {
     items.push({ label: 'Gesperrt', className: 'bg-muted-foreground/40' });
   } else {
     items.push({ label: 'Offene Session', className: 'bg-event' });
-    items.push({ label: 'Belegt (gebucht)', className: 'bg-input' });
+    items.push({ label: 'Belegt (andere)', className: 'bg-hatch border border-border' });
     items.push({ label: 'Deine Buchung', className: 'bg-brand-dark ring-2 ring-highlight' });
   }
 

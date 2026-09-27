@@ -1,6 +1,6 @@
 # SwingZ — Business Rules
 
-> Zuletzt aktualisiert: 19.09.2026 (Buchungsregeln, Rechnung/SEPA/Mail-Absender = Vereinsdaten ergänzt)
+> Zuletzt aktualisiert: 27.09.2026 (Datenschutz im Platzkalender ergänzt; zuvor 19.09.: Buchungsregeln, Rechnung/SEPA/Mail-Absender = Vereinsdaten)
 
 > Verbindliche Produktregeln. Bei Widersprüchen zwischen Code und diesem Dokument gilt dieses Dokument als Referenz.
 
@@ -184,6 +184,15 @@ Dauer, Vorlauf, Wochenende, Prime-Time, Tages-, Wochen- und Gleichzeitig-Limit,
 Saisonfenster und Freigabepflicht. „Woche" ist Montag bis Sonntag nach Berliner Zeit,
 nicht Serverzeit. `clubId` und `courtId` werden gegen den Nutzer geprüft — Buchungen
 in einem fremden Verein werden abgelehnt.
+
+**Datenschutz im Kalender.** Ein Mitglied sieht im Platzkalender keine Namen anderer
+Mitglieder oder Trainer. Fremde Einheiten erscheinen grau schraffiert als „Training"
+(Saisonplan, Trainerstunde) oder „Platz belegt" (freie Platzbuchung), ohne Notiz und
+Absagegrund. Eigen — mit Trainername — ist, was das Mitglied gebucht oder zugesagt hat oder
+wo es laut Saisonplan Teilnehmer ist. Der Server entfernt die Angaben
+(`GET /api/sessions`, Feld `anonymized`), nicht erst die Oberfläche. Admins, Trainer und
+Owner sehen alles; Buchenden-Namen sieht ein Trainer nur bei eigenen Einheiten.
+Club-Blöcke (Veranstaltung, Wartung) bleiben für alle beschriftet.
 
 ---
 
