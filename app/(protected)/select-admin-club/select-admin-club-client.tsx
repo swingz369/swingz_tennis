@@ -1,19 +1,12 @@
 'use client';
 
+import { BrandMark, Wordmark } from '@/components/ui/brand-logo';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Building2,
-  Users,
-  GraduationCap,
-  ChevronRight,
-  Search,
-  Trophy,
-  LogOut,
-} from 'lucide-react';
+import { Building2, Users, GraduationCap, ChevronRight, Search, LogOut } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { IconBox } from '@/components/ui/icon-box';
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { createLogger } from '@/lib/logger';
@@ -65,9 +58,9 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-5 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <IconBox icon={Trophy} size="md" variant="gradient-primary" className="h-9 w-9" />
+          <BrandMark className="h-9 w-9" />
           <div>
-            <span className="text-white font-bold text-lg">SWINGZ</span>
+            <Wordmark tone="onDark" className="text-xl" />
             <span className="ml-2 text-xs text-white/40 font-medium">Superadmin</span>
           </div>
         </div>

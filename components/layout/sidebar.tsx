@@ -1,5 +1,6 @@
 'use client';
 
+import { Wordmark } from '@/components/ui/brand-logo';
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -522,13 +523,7 @@ export function Sidebar({
           Ohne ihn begann die Navigation ganz oben und die aktive Pille las
           sich wie eine zweite Kopfzeile. */}
       <div className="flex h-16 items-center gap-2.5 border-b border-border px-5">
-        <span
-          aria-hidden="true"
-          className="relative block h-6 w-6 shrink-0 rounded-full bg-brand-accent"
-        >
-          <span className="absolute inset-[3px] rounded-full border border-y-transparent border-background" />
-        </span>
-        <span className="text-lg font-bold tracking-[-0.025em] text-foreground">SwingZ</span>
+        <Wordmark className="text-2xl" />
       </div>
 
       {/* Kompaktere Navigation: 12 px oben statt 16, Gruppen dichter. Die

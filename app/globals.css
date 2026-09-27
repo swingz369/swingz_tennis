@@ -291,6 +291,8 @@
     --secondary: 214 40% 27%;
     --secondary-foreground: 0 0% 100%;
     --ring: 70 89% 62%;
+    /* Schrägstrich der Wortmarke „SWINGZ /" — Lime auf Nachtblau */
+    --brand-accent: 70 89% 62%;
 
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));

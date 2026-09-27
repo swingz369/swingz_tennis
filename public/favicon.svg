@@ -1,14 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <defs>
-    <linearGradient id="ballGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#94C121;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#00599F;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <!-- Tennis ball shape -->
-  <ellipse cx="16" cy="16" rx="14" ry="14" fill="url(#ballGrad)"/>
-  <!-- Tennis ball curve -->
-  <path d="M16 2 Q 24 16 16 30 Q 8 16 16 2" fill="none" stroke="white" stroke-width="2"/>
-  <!-- White curve accent -->
-  <path d="M16 4 Q 22 16 16 28 Q 10 16 16 4" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- SwingZ-Bildmarke (Matchday, ADR-007): Lime-Ball, dessen Naht ein kursives S bildet -->
+  <rect width="512" height="512" rx="112" fill="#172C48"/>
+  <circle cx="256" cy="256" r="170" fill="#D8F449"/>
+  <path d="M326 146 C240 118 168 168 206 226 C236 272 330 250 324 318 C318 382 230 392 170 360" fill="none" stroke="#172C48" stroke-width="34" stroke-linecap="round" transform="skewX(-10) translate(46 0)"/>
 </svg>

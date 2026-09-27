@@ -1,4 +1,5 @@
 'use client';
+import { BrandMark, Wordmark } from '@/components/ui/brand-logo';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
@@ -7,9 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { IconBox } from '@/components/ui/icon-box';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { Trophy, Sparkles, ArrowRight, Eye, EyeOff, Shield, Zap } from 'lucide-react';
+import { Sparkles, ArrowRight, Eye, EyeOff, Shield, Zap } from 'lucide-react';
 import { analytics } from '@/lib/analytics';
 import { apiFetch } from '@/lib/api-fetch';
 
@@ -74,17 +74,8 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-between p-16 text-white">
           <div>
             <Link href="/" prefetch={false} className="flex items-center gap-3 mb-12 group w-fit">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-                <IconBox
-                  icon={Trophy}
-                  size="md"
-                  variant="gradient-primary"
-                  className="h-12 w-12"
-                  iconClassName="h-7 w-7"
-                />
-              </div>
-              <span className="text-2xl font-bold font-display">SWINGZ</span>
+              <BrandMark className="h-12 w-12" />
+              <Wordmark tone="onDark" className="text-3xl" />
             </Link>
 
             <h1 className="text-4xl font-extrabold leading-tight max-w-md">
@@ -140,10 +131,8 @@ export default function LoginPage() {
           {/* Mobile logo */}
           <div className="lg:hidden mb-8 text-center">
             <Link href="/" prefetch={false} className="inline-flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg">
-                <Trophy className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold text-foreground font-display">SWINGZ</span>
+              <BrandMark className="h-10 w-10" />
+              <Wordmark className="text-3xl" />
             </Link>
           </div>
 

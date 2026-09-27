@@ -1,4 +1,6 @@
 'use client';
+
+import { BrandMark, Wordmark } from '@/components/ui/brand-logo';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState } from 'react';
@@ -8,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { Trophy, Mail, CheckCircle2, Shield } from 'lucide-react';
+import { Mail, CheckCircle2, Shield } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 
 export default function ForgotPasswordPage() {
@@ -55,10 +57,8 @@ export default function ForgotPasswordPage() {
             <ThemeToggle className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-background/10" />
           </div>
           <div className="flex items-center gap-3 mb-12 group">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-              <Trophy className="h-7 w-7 text-white" />
-            </div>
-            <span className="text-2xl font-bold font-display">SWINGZ</span>
+            <BrandMark className="h-12 w-12" />
+            <Wordmark tone="onDark" className="text-3xl" />
           </div>
 
           <h1 className="text-4xl font-extrabold leading-tight max-w-md">
@@ -83,10 +83,8 @@ export default function ForgotPasswordPage() {
           {/* Mobile logo */}
           <div className="lg:hidden mb-8 text-center">
             <div className="inline-flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg">
-                <Trophy className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold text-foreground font-display">SWINGZ</span>
+              <BrandMark className="h-10 w-10" />
+              <Wordmark className="text-3xl" />
             </div>
           </div>
 

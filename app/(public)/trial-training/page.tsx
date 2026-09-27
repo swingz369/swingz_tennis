@@ -1,8 +1,8 @@
+import { BrandMark, Wordmark } from '@/components/ui/brand-logo';
 import PublicTrialBooking from '@/components/public-trial-booking';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
-import { Sparkles } from 'lucide-react';
 
 import { createLogger } from '@/lib/logger';
 
@@ -73,8 +73,8 @@ export default async function PublicTrialBookingPage({ searchParams }: PageProps
             </div>
           ) : (
             <Link href="/" className="inline-flex items-center gap-2 mb-4">
-              <Sparkles className="h-8 w-8 text-brand-light" />
-              <span className="text-xl font-bold text-brand-primary dark:text-white">SWINGZ</span>
+              <BrandMark className="h-8 w-8" />
+              <Wordmark className="text-2xl" />
             </Link>
           )}
           {clubInfo && !clubInfo.logoUrl && (

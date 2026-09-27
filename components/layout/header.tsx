@@ -1,5 +1,6 @@
 'use client';
 
+import { Wordmark } from '@/components/ui/brand-logo';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
@@ -134,7 +135,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               <Trophy className="h-4 w-4 text-primary" aria-hidden="true" />
             )}
           </span>
-          <span className="text-base font-bold tracking-[-0.02em]">SwingZ</span>
+          <Wordmark className="text-lg" />
         </Link>
 
         {/* Right actions — Utility-Cluster (Suche / Theme / Notifications / User / Mobile).

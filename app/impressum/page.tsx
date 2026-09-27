@@ -1,7 +1,7 @@
+import { BrandMark, Wordmark } from '@/components/ui/brand-logo';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { IconBox } from '@/components/ui/icon-box';
-import { Trophy, FileText, Mail, MapPin, Globe } from 'lucide-react';
+import { FileText, Mail, MapPin, Globe } from 'lucide-react';
 
 export const metadata = {
   title: 'Impressum | SWINGZ',
@@ -22,11 +22,8 @@ export default function ImpressumPage() {
         <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
           <nav className="flex h-20 items-center justify-between">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-                <IconBox icon={Trophy} variant="gradient-primary" iconClassName="h-6 w-6" />
-              </div>
-              <span className="text-2xl font-bold text-white font-display">SWINGZ</span>
+              <BrandMark className="h-10 w-10" />
+              <Wordmark tone="onDark" className="text-3xl" />
             </Link>
             <div className="flex items-center gap-3">
               <Link href="/login">

@@ -1,30 +1,6 @@
-<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background circle -->
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#00599F"/>
-      <stop offset="100%" style="stop-color:#94C121"/>
-    </linearGradient>
-  </defs>
-  <rect width="192" height="192" rx="32" fill="url(#bg)"/>
-
-  <!-- Tennis ball -->
-  <circle cx="96" cy="88" r="42" fill="#D4F57A" stroke="white" stroke-width="3"/>
-
-  <!-- Tennis ball curve lines -->
-  <path d="M68 55 Q96 72 124 55" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-  <path d="M68 121 Q96 104 124 121" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-
-  <!-- Tennis racket handles -->
-  <line x1="96" y1="130" x2="96" y2="168" stroke="white" stroke-width="4" stroke-linecap="round"/>
-  <line x1="86" y1="162" x2="106" y2="162" stroke="white" stroke-width="3" stroke-linecap="round"/>
-
-  <!-- Racket head -->
-  <ellipse cx="96" cy="88" rx="50" ry="32" fill="none" stroke="white" stroke-width="3.5"/>
-  <line x1="68" y1="72" x2="124" y2="72" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
-  <line x1="64" y1="88" x2="128" y2="88" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
-  <line x1="68" y1="104" x2="124" y2="104" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
-  <line x1="78" y1="62" x2="78" y2="114" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
-  <line x1="96" y1="58" x2="96" y2="118" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
-  <line x1="114" y1="62" x2="114" y2="114" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 512 512">
+  <!-- SwingZ-Bildmarke (Matchday, ADR-007): Lime-Ball, dessen Naht ein kursives S bildet -->
+  <rect width="512" height="512" fill="#172C48"/>
+  <circle cx="256" cy="256" r="170" fill="#D8F449"/>
+  <path d="M326 146 C240 118 168 168 206 226 C236 272 330 250 324 318 C318 382 230 392 170 360" fill="none" stroke="#172C48" stroke-width="34" stroke-linecap="round" transform="skewX(-10) translate(46 0)"/>
 </svg>
