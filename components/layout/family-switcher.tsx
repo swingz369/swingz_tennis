@@ -19,7 +19,6 @@ interface FamilySwitcherProps {
   /** Switch back to own account */
   switchToOwnAccount: () => void;
   /** Role-based color scheme */
-  colors: { bg: string; text: string };
 }
 
 export function FamilySwitcher({
@@ -29,7 +28,6 @@ export function FamilySwitcher({
   isParentViewingChild,
   switchToChild,
   switchToOwnAccount,
-  colors,
 }: FamilySwitcherProps) {
   const [open, setOpen] = useState(false);
 
@@ -73,7 +71,7 @@ export function FamilySwitcher({
             className={cn(
               'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
               !isParentViewingChild
-                ? `${colors.bg} ${colors.text} font-medium`
+                ? 'bg-muted text-foreground font-medium'
                 : 'text-muted-foreground hover:bg-muted'
             )}
           >

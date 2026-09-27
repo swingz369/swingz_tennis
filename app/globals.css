@@ -297,14 +297,7 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
 
-    /* Court-Linien: zwei 1px-Raster, 64px-Takt. Bewusst sehr schwach —
-       es soll als Textur gelesen werden, nicht als Tabelle. */
-    background-image:
-      linear-gradient(hsl(0 0% 100% / 0.045) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(0 0% 100% / 0.045) 1px, transparent 1px);
-    background-size:
-      100% 64px,
-      64px 100%;
+    /* Matchday: glattes Nachtblau, keine Raster-Textur. */
   }
 
   /* Im Dark-Theme geht die Sidebar noch eine Stufe tiefer als die Seite,

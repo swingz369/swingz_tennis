@@ -36,21 +36,6 @@ interface Club {
 // Gemeinsames Oberflächen-Design mit zurückhaltenden Rollenakzenten.
 // Die Rollen unterscheiden sich nur über einen kleinen Farbton; Layout,
 // Kontrast, Abstände und Interaktionsmuster bleiben identisch.
-// Matchday: dieselbe Akzentsprache wie adminSectionColors — keine Rollentöne.
-const ROLE_ACCENT = {
-  bg: 'bg-muted',
-  text: 'text-foreground',
-  light: 'highlight',
-  ring: 'ring-highlight/40',
-};
-const roleColors = {
-  owner: ROLE_ACCENT,
-  superadmin: ROLE_ACCENT,
-  admin: ROLE_ACCENT,
-  trainer: ROLE_ACCENT,
-  member: ROLE_ACCENT,
-};
-
 export function Sidebar({
   roles,
   open,
@@ -130,7 +115,7 @@ export function Sidebar({
   }, [open, onClose]);
 
   // Centralised role detection via hook
-  const { currentRole, isOwner, isSuperAdmin, isAdmin, isTrainer } = useUserRole(roles);
+  const { isOwner, isSuperAdmin, isAdmin, isTrainer } = useUserRole(roles);
 
   // Doppelrolle (Verwalten + Spielen): Oberflächen-Modus. Reines UI-Präferenz-
   // Flag, keine Sicherheitsgrenze — autorisiert wird weiterhin über die echten
@@ -139,8 +124,6 @@ export function Sidebar({
     roles,
     initialRoleMode
   );
-
-  const colors = roleColors[isMemberMode ? 'member' : currentRole];
 
   // Rollen-Unterzeile — stand früher im Header unter dem Vereinsnamen und ist
   // mit dem Marken-Cluster dorthin gewandert, wo der Vereinsname jetzt steht.
@@ -539,7 +522,6 @@ export function Sidebar({
             isParentViewingChild={family.isParentViewingChild}
             switchToChild={family.switchToChild}
             switchToOwnAccount={family.switchToOwnAccount}
-            colors={colors}
           />
         )}
 
@@ -632,10 +614,10 @@ export function Sidebar({
             href={dashboardHref}
             onClick={() => onClose?.()}
             className={cn(
-              'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200',
+              'flex min-h-11 items-center gap-3 rounded-md px-3.5 py-2.5 text-sm font-medium transition-colors duration-200',
               isExactActive(pathname, dashboardHref)
-                ? `${colors.bg} ${colors.text}`
-                : 'text-muted-foreground hover:bg-muted/70 dark:hover:bg-white/[0.06] hover:text-foreground'
+                ? 'font-semibold'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             )}
             aria-current={isExactActive(pathname, dashboardHref) ? 'page' : undefined}
           >
@@ -657,7 +639,6 @@ export function Sidebar({
                   subItems={section.subItems}
                   pathname={pathname}
                   onClose={onClose}
-                  colors={colors}
                   extraAction={section.extraAction}
                   badge={sectionBadge(section.label)}
                   defaultOpen={

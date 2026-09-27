@@ -15,21 +15,12 @@ export interface AdminSubItem {
   badge?: number;
 }
 
-export interface AdminSectionColors {
-  gradient?: string;
-  bg: string;
-  text: string;
-  light: string;
-  ring: string;
-}
-
 export interface AdminSectionProps {
   label: string;
   icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
   subItems: AdminSubItem[];
   pathname: string;
   onClose?: () => void;
-  colors: AdminSectionColors;
   extraAction?: {
     label: string;
     icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
@@ -48,24 +39,6 @@ export interface AdminSectionProps {
   badge?: string | null;
 }
 
-// Matchday (ADR-007): eine Akzentsprache für alle Rollen. Die Gruppe mit der
-// aktiven Seite hebt sich hell vom Nachtblau ab; die aktive Seite selbst
-// trägt die Lime-Pille aus globals.css. Rollentöne auf dem Sidebar-Grund
-// (brand-primary = Nachtblau) machten die Überschrift unsichtbar.
-const SIDEBAR_ACCENT: AdminSectionColors = {
-  gradient: 'from-highlight to-highlight',
-  bg: 'bg-muted',
-  text: 'text-foreground',
-  light: 'highlight',
-  ring: 'ring-highlight/40',
-};
-export const adminSectionColors: Record<string, AdminSectionColors> = {
-  superadmin: SIDEBAR_ACCENT,
-  admin: SIDEBAR_ACCENT,
-  trainer: SIDEBAR_ACCENT,
-  neutral: SIDEBAR_ACCENT,
-};
-
 // ── Component ────────────────────────────────────────────────────────
 
 /**
@@ -81,7 +54,6 @@ export function AdminSection({
   subItems,
   pathname,
   onClose,
-  colors,
   extraAction,
   badge,
   defaultOpen = false,
@@ -142,10 +114,10 @@ export function AdminSection({
         className={cn(
           // Abschnittsüberschrift ist eine Beschriftung, kein Menüpunkt: enger
           // gesperrt, kleiner, ohne eigene Hover-Fläche über die volle Breite.
-          'w-full flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-2xs font-semibold uppercase tracking-[0.15em] transition-colors duration-200',
-          hasActiveChild
-            ? `${colors.bg} ${colors.text}`
-            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          // Matchday: Gruppenkopf ist ein ruhiges Versal-Label wie „DEIN
+          // ARBEITSPLATZ" in der Vorlage — keine eigene Fläche, nur Farbe.
+          'mt-3 w-full flex items-center gap-2.5 rounded-md px-3.5 py-1.5 text-2xs font-semibold uppercase tracking-[0.14em] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          hasActiveChild ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
         )}
         aria-expanded={isOpen}
         aria-label={`${label} ${isOpen ? 'einklappen' : 'ausklappen'}`}
@@ -176,7 +148,7 @@ export function AdminSection({
           isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         )}
       >
-        <div className="ml-3.5 border-l border-border pl-1.5 space-y-px pb-0.5">
+        <div className="space-y-0.5 pb-1">
           {subItems.map((item) => {
             const isActive = isActivePath(pathname, item.href);
             return (
@@ -185,20 +157,16 @@ export function AdminSection({
                 href={item.href}
                 onClick={() => onClose?.()}
                 className={cn(
-                  'flex items-center justify-between rounded-xl px-3 py-1.5 text-sm font-medium transition-all duration-150',
+                  // Zeile wie navbtn der Vorlage: 44 px hoch, 8 px Radius; die
+                  // aktive Seite trägt die Lime-Pille aus globals.css.
+                  'flex min-h-11 items-center justify-between rounded-md px-3.5 py-2.5 text-sm font-medium transition-colors duration-150',
                   isActive
-                    ? `${colors.bg} ${colors.text}`
+                    ? 'font-semibold'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <div className="flex items-center gap-2">
-                  {isActive && (
-                    // bg-current: der Punkt übernimmt die Schrift der Lime-Pille.
-                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                  )}
-                  <span>{item.name}</span>
-                </div>
+                <span>{item.name}</span>
                 {item.badge !== undefined && (
                   <NavigationBadge count={item.badge} variant="danger" />
                 )}
@@ -209,7 +177,7 @@ export function AdminSection({
           {extraAction && (
             <button
               onClick={extraAction.onClick}
-              className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-150"
+              className="w-full flex min-h-11 items-center gap-2 rounded-md px-3.5 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-150"
             >
               <extraAction.icon className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
               <span>{extraAction.label}</span>
