@@ -322,7 +322,10 @@
      in beiden Themes gleich. Überschreibt die rollenabhängigen
      `colors.bg`/`colors.text`-Klassen aus sidebar.tsx über höhere
      Spezifität (0,2,1 gegen 0,1,0) — kein !important nötig. */
-  .sidebar-surface [aria-current='page'] {
+  /* Die Dark-Regel muss eigens stehen: die `dark:`-Klassen aus sidebar.tsx
+     haben selbst 0,2,0 und würden als spätere Utilities gewinnen. */
+  .sidebar-surface [aria-current='page'],
+  .dark .sidebar-surface [aria-current='page'] {
     background-color: hsl(var(--highlight));
     color: hsl(var(--highlight-foreground));
     font-weight: 600;
