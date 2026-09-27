@@ -1,4 +1,6 @@
 'use client';
+
+import { formatCurrency } from '@/lib/format';
 import { PageHeader } from '@/components/ui/page-header';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
@@ -311,21 +313,21 @@ export default function MemberBilling() {
         <StatCard
           icon={Calendar}
           label="Diesen Monat"
-          value={`€${monthlyTotal.toFixed(2)}`}
+          value={`${formatCurrency(monthlyTotal)}`}
           sub={`${monthSessions.length} Sessions`}
           color="blue"
         />
         <StatCard
           icon={CreditCard}
           label="Ausstehend"
-          value={`€${openAmount.toFixed(2)}`}
+          value={`${formatCurrency(openAmount)}`}
           sub={`${openCount} Rechnungen`}
           color="orange"
         />
         <StatCard
           icon={CheckCircle2}
           label="Bezahlt"
-          value={`€${paidAmount.toFixed(2)}`}
+          value={`${formatCurrency(paidAmount)}`}
           sub={`${paidCount} Rechnungen`}
           color="green"
         />
@@ -404,7 +406,9 @@ export default function MemberBilling() {
                           <div className="text-xs text-muted-foreground">Monatlicher Beitrag</div>
                         </div>
                       </div>
-                      <div className="text-right font-semibold">€{membershipCosts.toFixed(2)}</div>
+                      <div className="text-right font-semibold">
+                        {formatCurrency(membershipCosts)}
+                      </div>
                     </div>
                   )}
                   {trainingCosts > 0 && (
@@ -416,11 +420,13 @@ export default function MemberBilling() {
                         <div>
                           <div className="font-medium text-sm">Training</div>
                           <div className="text-xs text-muted-foreground">
-                            {monthSessions.length} Sessions × €{feePerSession.toFixed(2)}
+                            {monthSessions.length} Sessions × {formatCurrency(feePerSession)}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right font-semibold">€{trainingCosts.toFixed(2)}</div>
+                      <div className="text-right font-semibold">
+                        {formatCurrency(trainingCosts)}
+                      </div>
                     </div>
                   )}
                   {seasonCosts > 0 && (
@@ -436,7 +442,7 @@ export default function MemberBilling() {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right font-semibold">€{seasonCosts.toFixed(2)}</div>
+                      <div className="text-right font-semibold">{formatCurrency(seasonCosts)}</div>
                     </div>
                   )}
                   {otherCosts > 0 && (
@@ -452,24 +458,24 @@ export default function MemberBilling() {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right font-semibold">€{otherCosts.toFixed(2)}</div>
+                      <div className="text-right font-semibold">{formatCurrency(otherCosts)}</div>
                     </div>
                   )}
                 </div>
                 <div className="border-t pt-3 space-y-1.5">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Zwischensumme</span>
-                    <span className="font-medium">€{totalBeforeTax.toFixed(2)}</span>
+                    <span className="font-medium">{formatCurrency(totalBeforeTax)}</span>
                   </div>
                   {taxRate > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">MwSt ({taxRate}%)</span>
-                      <span className="font-medium">€{taxAmount.toFixed(2)}</span>
+                      <span className="font-medium">{formatCurrency(taxAmount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-lg font-bold border-t pt-2">
                     <span>Gesamt</span>
-                    <span>€{totalWithTax.toFixed(2)}</span>
+                    <span>{formatCurrency(totalWithTax)}</span>
                   </div>
                 </div>
               </>
@@ -514,7 +520,7 @@ export default function MemberBilling() {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <div className="font-semibold">€{invoice.total.toFixed(2)}</div>
+                        <div className="font-semibold">{formatCurrency(invoice.total)}</div>
                         <div className={`text-xs px-2 py-1 rounded-full ${status.color}`}>
                           {status.label}
                         </div>

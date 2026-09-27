@@ -1,5 +1,6 @@
 'use client';
 
+import { formatCurrency } from '@/lib/format';
 import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -367,7 +368,7 @@ export function SpecialEventsClient() {
                       <Euro className="h-3 w-3" />
                       {ev.price_per_person === 0
                         ? 'Kostenlos'
-                        : `${Number(ev.price_per_person).toFixed(2)} €`}
+                        : `${formatCurrency(Number(ev.price_per_person))}`}
                     </span>
                     {ev.location && <span>{ev.location}</span>}
                   </div>

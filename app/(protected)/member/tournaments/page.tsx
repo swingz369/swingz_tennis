@@ -1,4 +1,6 @@
 'use client';
+
+import { formatCurrency } from '@/lib/format';
 import { extractErrorMessage, getErrorMessage } from '@/lib/typed-helpers';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -177,10 +179,7 @@ export default function MemberTournamentsPage() {
                           <span>{CATEGORY_LABELS[t.category] ?? t.category}</span>
                         )}
                         {t.entry_fee > 0 && (
-                          <span className="flex items-center gap-0.5">
-                            <Euro className="h-3 w-3" />
-                            {t.entry_fee.toFixed(2)}
-                          </span>
+                          <span className="tabular-nums">{formatCurrency(t.entry_fee)}</span>
                         )}
                       </div>
                       {t.registration_deadline && (
@@ -261,7 +260,7 @@ export default function MemberTournamentsPage() {
               {confirmTournament.entry_fee > 0 && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Euro className="h-4 w-4" />
-                  Startgebühr: {confirmTournament.entry_fee.toFixed(2)} €
+                  Startgebühr: {formatCurrency(confirmTournament.entry_fee)}
                 </div>
               )}
             </div>

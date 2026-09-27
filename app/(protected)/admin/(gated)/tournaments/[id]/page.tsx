@@ -1,4 +1,6 @@
 'use client';
+
+import { formatCurrency } from '@/lib/format';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getErrorMessage } from '@/lib/typed-helpers';
 
@@ -385,7 +387,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                 {tournament.entry_fee != null && tournament.entry_fee > 0 && (
                   <div>
                     <p className="text-xs text-muted-foreground">Startgebühr</p>
-                    <p className="font-medium">€{tournament.entry_fee.toFixed(2)}</p>
+                    <p className="font-medium">{formatCurrency(tournament.entry_fee)}</p>
                   </div>
                 )}
               </div>

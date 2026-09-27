@@ -50,7 +50,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
-import { formatDate, formatDateLong } from '@/lib/format';
+import { formatDate, formatDateLong, formatCurrency } from '@/lib/format';
 import type {
   TrainerProfile,
   TrainerAvailabilitySlot,
@@ -803,14 +803,14 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                       ) : isEditing && !isAdmin ? (
                         <div className="font-medium flex items-center gap-1.5 text-muted-foreground">
                           {trainer.contractedHourlyRate != null
-                            ? `${trainer.contractedHourlyRate.toFixed(2)} €/h`
+                            ? `${formatCurrency(trainer.contractedHourlyRate)}/h`
                             : 'Nicht festgelegt'}
                           <span className="text-xs italic">(nur Admin)</span>
                         </div>
                       ) : (
                         <div className="font-medium">
                           {trainer.contractedHourlyRate != null
-                            ? `${trainer.contractedHourlyRate.toFixed(2)} €/h`
+                            ? `${formatCurrency(trainer.contractedHourlyRate)}/h`
                             : 'Nicht festgelegt'}
                         </div>
                       )}
@@ -841,7 +841,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                       ) : (
                         <div className="font-medium">
                           {trainer.extraHoursRate != null
-                            ? `${trainer.extraHoursRate.toFixed(2)} €/h`
+                            ? `${formatCurrency(trainer.extraHoursRate)}/h`
                             : 'Nicht festgelegt'}
                         </div>
                       )}

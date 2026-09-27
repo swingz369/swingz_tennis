@@ -1,4 +1,6 @@
 'use client';
+
+import { formatCurrency } from '@/lib/format';
 import { Skeleton } from '@/components/ui/skeleton';
 import { extractErrorMessage, getErrorMessage } from '@/lib/typed-helpers';
 
@@ -197,7 +199,7 @@ function ShopContent() {
                           )}
                         </p>
                         <p className="text-lg font-bold text-brand-light mt-1">
-                          €{p.price.toFixed(2)}
+                          {formatCurrency(p.price)}
                         </p>
                       </div>
 
@@ -318,7 +320,7 @@ function ShopContent() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">{item.productName}</p>
                     <p className="text-xs text-muted-foreground">
-                      €{item.unitPrice.toFixed(2)} / Stk.
+                      {formatCurrency(item.unitPrice)} / Stk.
                     </p>
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <Button
@@ -345,7 +347,7 @@ function ShopContent() {
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-sm font-bold text-brand-light">
-                      €{(item.unitPrice * item.quantity).toFixed(2)}
+                      {formatCurrency(item.unitPrice * item.quantity)}
                     </p>
                     <Button
                       variant="ghost"
@@ -367,7 +369,7 @@ function ShopContent() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Zwischensumme</span>
                 <span className="text-lg font-bold text-foreground dark:text-foreground">
-                  €{cartTotal.toFixed(2)}
+                  {formatCurrency(cartTotal)}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">Versand & Zahlung im nächsten Schritt</p>
@@ -381,7 +383,7 @@ function ShopContent() {
                 ) : (
                   <ExternalLink className="h-4 w-4" />
                 )}
-                {checkingOut ? 'Wird vorbereitet…' : `Zur Kasse · €${cartTotal.toFixed(2)}`}
+                {checkingOut ? 'Wird vorbereitet…' : `Zur Kasse · ${formatCurrency(cartTotal)}`}
               </Button>
               <Button
                 variant="ghost"

@@ -1,4 +1,6 @@
 'use client';
+
+import { formatCurrency } from '@/lib/format';
 import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 import { useState } from 'react';
@@ -364,7 +366,7 @@ export default function FeeCategoriesClient({
                             court: 'Platz',
                             other: 'Sonstiges',
                           }[cat.type] ?? cat.type}{' '}
-                          · {cat.amount.toFixed(2)} € ·{' '}
+                          · {formatCurrency(cat.amount)} ·{' '}
                           {cat.billing_cycle === 'yearly'
                             ? 'Jährlich'
                             : cat.billing_cycle === 'monthly'

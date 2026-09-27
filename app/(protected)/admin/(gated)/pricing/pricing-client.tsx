@@ -1,4 +1,6 @@
 'use client';
+
+import { formatCurrency } from '@/lib/format';
 import { Skeleton } from '@/components/ui/skeleton';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
@@ -678,7 +680,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-mono text-sm">
-                      {rule.pricePerHour.toFixed(2)} €
+                      {formatCurrency(rule.pricePerHour)}
                     </TableCell>
                     <TableCell>
                       {rule.timeRanges && rule.timeRanges.length > 0 ? (

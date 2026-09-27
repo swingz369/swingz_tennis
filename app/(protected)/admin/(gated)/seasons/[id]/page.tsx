@@ -1,4 +1,6 @@
 'use client';
+
+import { formatCurrency } from '@/lib/format';
 import { PageHeader } from '@/components/ui/page-header';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
@@ -164,7 +166,7 @@ function GroupChangeDialog({
           {result && (
             <p className="text-sm font-medium text-success-600">
               Wechsel durchgeführt. Netto: {result.net_delta >= 0 ? '+' : ''}
-              {result.net_delta.toFixed(2)} €
+              {formatCurrency(result.net_delta)}
             </p>
           )}
         </div>

@@ -1,4 +1,6 @@
 'use client';
+
+import { formatCurrency } from '@/lib/format';
 import {
   Table,
   TableBody,
@@ -318,7 +320,7 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
             label="Rechnungen"
             value={summary.invoicedMemberCount.toString()}
             subtitle={
-              billing ? `${billing.grandTotal.toFixed(2)} € Volumen` : 'Preview nicht verfügbar'
+              billing ? `${formatCurrency(billing.grandTotal)} Volumen` : 'Preview nicht verfügbar'
             }
             highlight
           />
@@ -326,7 +328,7 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
             icon={<Mail className="h-4 w-4 text-warning-600" />}
             label="E-Mails"
             value={summary.emailRecipientCount.toString()}
-            subtitle={`~${summary.estimatedEmailCost.toFixed(2)} € Versandkosten`}
+            subtitle={`~${formatCurrency(summary.estimatedEmailCost)} Versandkosten`}
           />
           <KpiCard
             icon={<Users className="h-4 w-4 text-info-600" />}
@@ -679,7 +681,7 @@ function FinancialKpi({
           highlight ? 'text-primary' : 'text-foreground'
         )}
       >
-        {value.toFixed(2)} €
+        {formatCurrency(value)}
       </p>
     </div>
   );

@@ -1,4 +1,6 @@
 'use client';
+
+import { formatCurrency } from '@/lib/format';
 import { Skeleton } from '@/components/ui/skeleton';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
@@ -1260,7 +1262,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                             <Users className="h-3 w-3" /> {type.max_players} Spieler
                           </span>
                           <span className="flex items-center gap-1">
-                            <DollarSign className="h-3 w-3" /> {type.hourly_rate.toFixed(2)} €/h
+                            <DollarSign className="h-3 w-3" /> {formatCurrency(type.hourly_rate)}/h
                           </span>
                           <Badge
                             variant={type.is_active ? 'default' : 'secondary'}

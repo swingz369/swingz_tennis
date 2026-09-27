@@ -1,5 +1,6 @@
 'use client';
 
+import { formatCurrency } from '@/lib/format';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -129,7 +130,7 @@ function SuccessContent() {
                         <span className="text-muted-foreground">×{item.quantity}</span>
                       </span>
                     </div>
-                    <span className="font-medium">€{(item.total || 0).toFixed(2)}</span>
+                    <span className="font-medium">{formatCurrency(item.total || 0)}</span>
                   </div>
                 ))}
             </div>
@@ -137,7 +138,7 @@ function SuccessContent() {
             <div className="border-t pt-3 flex items-center justify-between">
               <span className="font-semibold">Gesamtsumme</span>
               <span className="text-lg font-bold text-brand-light">
-                €{order.total_amount.toFixed(2)}
+                {formatCurrency(order.total_amount)}
               </span>
             </div>
           </CardContent>

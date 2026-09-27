@@ -1,5 +1,6 @@
 'use client';
 
+import { formatCurrency } from '@/lib/format';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -260,7 +261,7 @@ export function SeasonBillingSettings({ seasonId }: { seasonId: string }) {
             <div className="flex items-end">
               <p className="text-xs text-muted-foreground pb-2">
                 {config.membership_fee_amount != null
-                  ? `Manuell: ${config.membership_fee_amount.toFixed(2)} €`
+                  ? `Manuell: ${formatCurrency(config.membership_fee_amount)}`
                   : 'Auto: Betrag aus Beitragskategorien'}
               </p>
             </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { formatCurrency } from '@/lib/format';
 import { useEffect, useState, useCallback } from 'react';
 import {
   User,
@@ -542,7 +543,7 @@ export default function TrainerProfilePage() {
                       <div className="h-12 flex items-center px-3 rounded-xl border border-border dark:border-white/10 bg-muted/30 text-sm">
                         {profile.contractedHourlyRate != null ? (
                           <span className="font-medium">
-                            {profile.contractedHourlyRate.toFixed(2)} €/h
+                            {formatCurrency(profile.contractedHourlyRate)}/h
                           </span>
                         ) : (
                           <span className="text-muted-foreground">Nicht festgelegt</span>

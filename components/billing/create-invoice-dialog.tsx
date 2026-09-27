@@ -1,5 +1,6 @@
 'use client';
 
+import { formatCurrency } from '@/lib/format';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -408,15 +409,15 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Zwischensumme:</span>
-                  <span className="font-medium">{calculateSubtotal().toFixed(2)} €</span>
+                  <span className="font-medium">{formatCurrency(calculateSubtotal())}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">MwSt:</span>
-                  <span className="font-medium">{calculateTax().toFixed(2)} €</span>
+                  <span className="font-medium">{formatCurrency(calculateTax())}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">
                   <span>Gesamtbetrag:</span>
-                  <span>{calculateTotal().toFixed(2)} €</span>
+                  <span>{formatCurrency(calculateTotal())}</span>
                 </div>
               </div>
             </CardContent>

@@ -1,5 +1,6 @@
 'use client';
 
+import { formatCurrency } from '@/lib/format';
 import { useState, useEffect, useCallback } from 'react';
 import {
   Table,
@@ -95,7 +96,7 @@ export function InvoicesTab({ userId }: Props) {
           <strong>{openCount}</strong> offen
         </span>
         <span>
-          Gesamt: <strong>{totalAmount.toFixed(2)} €</strong>
+          Gesamt: <strong>{formatCurrency(totalAmount)}</strong>
         </span>
       </div>
       <Table>
@@ -118,9 +119,7 @@ export function InvoicesTab({ userId }: Props) {
               <TableCell>
                 <InvoiceTypeBadge type={invoice.invoice_type} />
               </TableCell>
-              <TableCell>
-                {(invoice.amount || 0).toFixed(2)} {invoice.currency || 'EUR'}
-              </TableCell>
+              <TableCell>{formatCurrency(invoice.amount || 0)}</TableCell>
               <TableCell>
                 <StatusBadge status={invoice.status} size="sm" />
               </TableCell>

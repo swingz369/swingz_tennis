@@ -1,4 +1,6 @@
 'use client';
+
+import { formatCurrency } from '@/lib/format';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
@@ -504,16 +506,15 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                         <div className="inline-flex items-center justify-end gap-1.5">
                           <span
                             className="inline-flex items-center gap-1 font-medium text-primary"
-                            title={`Vertragssatz (Admin-only) · ${trainer.contractedHourlyRate.toFixed(2)} €/h`}
+                            title={`Vertragssatz (Admin-only) · ${formatCurrency(trainer.contractedHourlyRate)}/h`}
                           >
-                            <Euro className="h-3.5 w-3.5" />
-                            {trainer.contractedHourlyRate.toFixed(2)}/h
+                            {formatCurrency(trainer.contractedHourlyRate)}/h
                           </span>
                           {trainer.extraHoursRate != null && (
                             <Badge
                               variant="outline"
                               className="text-2xs px-1.5 py-0"
-                              title={`Zusatzstunden-Satz · ${trainer.extraHoursRate.toFixed(2)} €/h`}
+                              title={`Zusatzstunden-Satz · ${formatCurrency(trainer.extraHoursRate)}/h`}
                             >
                               +Z
                             </Badge>

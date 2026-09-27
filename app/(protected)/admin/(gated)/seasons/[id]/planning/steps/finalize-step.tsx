@@ -1,4 +1,6 @@
 'use client';
+
+import { formatCurrency } from '@/lib/format';
 import {
   Table,
   TableBody,
@@ -340,7 +342,7 @@ export function FinalizeStep() {
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-xl px-3 py-2">
                       <span className="font-medium text-foreground">Konfiguration:</span>
                       <Badge variant="secondary" className="text-2xs">
-                        Stundensatz {billingPreview.config.trainer_hourly_rate.toFixed(2)} €
+                        Stundensatz {formatCurrency(billingPreview.config.trainer_hourly_rate)}
                       </Badge>
                       {billingPreview.config.use_trainer_profile_rate && (
                         <Badge variant="secondary" className="text-2xs">
@@ -436,7 +438,7 @@ export function FinalizeStep() {
                                 </div>
                               </TableCell>
                               <TableCell className="text-center px-3 py-2.5 tabular-nums">
-                                {group.trainerHourlyRate.toFixed(2)} €
+                                {formatCurrency(group.trainerHourlyRate)}
                               </TableCell>
                               <TableCell className="text-center px-3 py-2.5 tabular-nums">
                                 {group.sessionDurationHours.toFixed(1)} h
@@ -448,10 +450,10 @@ export function FinalizeStep() {
                                 {group.participantCount}
                               </TableCell>
                               <TableCell className="text-right px-3 py-2.5 tabular-nums font-medium">
-                                {group.totalTrainerCost.toFixed(2)} €
+                                {formatCurrency(group.totalTrainerCost)}
                               </TableCell>
                               <TableCell className="text-right px-3 py-2.5 tabular-nums font-medium text-primary">
-                                {group.costPerParticipant.toFixed(2)} €
+                                {formatCurrency(group.costPerParticipant)}
                               </TableCell>
                             </TableRow>
                           ))}
@@ -521,20 +523,20 @@ export function FinalizeStep() {
                                 {member.groupName}
                               </TableCell>
                               <TableCell className="text-right px-3 py-2.5 tabular-nums">
-                                {member.trainingCost.toFixed(2)} €
+                                {formatCurrency(member.trainingCost)}
                               </TableCell>
                               <TableCell className="text-right px-3 py-2.5 tabular-nums">
                                 {member.membershipFee > 0
-                                  ? `${member.membershipFee.toFixed(2)} €`
+                                  ? `${formatCurrency(member.membershipFee)}`
                                   : '–'}
                               </TableCell>
                               <TableCell className="text-right px-3 py-2.5 tabular-nums">
                                 {member.additionalFees > 0
-                                  ? `${member.additionalFees.toFixed(2)} €`
+                                  ? `${formatCurrency(member.additionalFees)}`
                                   : '–'}
                               </TableCell>
                               <TableCell className="text-right px-3 py-2.5 tabular-nums font-semibold text-primary">
-                                {member.totalAmount.toFixed(2)} €
+                                {formatCurrency(member.totalAmount)}
                               </TableCell>
                             </TableRow>
                           ))}
@@ -560,7 +562,7 @@ export function FinalizeStep() {
                       </div>
                     </div>
                     <p className="text-2xl font-bold text-primary tabular-nums">
-                      {billingPreview.grandTotal.toFixed(2)} €
+                      {formatCurrency(billingPreview.grandTotal)}
                     </p>
                   </div>
 
@@ -835,7 +837,7 @@ function BillingKpiCard({
             highlight ? 'text-primary' : 'text-foreground'
           }`}
         >
-          {value.toFixed(2)} €
+          {formatCurrency(value)}
         </p>
         <p className="text-2xs text-muted-foreground">{subtitle}</p>
       </CardContent>

@@ -1,4 +1,6 @@
 'use client';
+
+import { formatCurrency, formatDate } from '@/lib/format';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -507,7 +509,7 @@ export default function BillingClient({
             ) : invoices.length === 0 ? (
               <NoInvoicesBrandedEmptyState />
             ) : (
-              <Table className="min-w-[960px]">
+              <Table className="min-w-[900px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10">
@@ -517,9 +519,8 @@ export default function BillingClient({
                         aria-label="Alle auswählen"
                       />
                     </TableHead>
-                    <TableHead>Rechnungsnr.</TableHead>
+                    <TableHead>Mitglied / Rechnung</TableHead>
                     <TableHead>Datum</TableHead>
-                    <TableHead>Mitglied</TableHead>
                     <TableHead>Typ</TableHead>
                     <TableHead className="text-right">Netto</TableHead>
                     <TableHead className="text-right">Betrag</TableHead>
@@ -543,15 +544,18 @@ export default function BillingClient({
                           />
                         )}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap font-mono text-sm">
-                        {invoice.invoiceNumber}
+                      {/* Wie in der Vorlage: Name trägt die Zeile, die lange
+                          Rechnungsnummer steht klein darunter statt als
+                          breiteste Spalte der Tabelle. */}
+                      <TableCell>
+                        <span className="block font-semibold">{invoice.memberName}</span>
+                        <span className="block whitespace-nowrap font-mono text-xs text-muted-foreground">
+                          {invoice.invoiceNumber}
+                        </span>
                       </TableCell>
-                      <TableCell className="text-sm">
-                        {invoice.invoiceDate
-                          ? new Date(invoice.invoiceDate).toLocaleDateString('de-DE')
-                          : '-'}
+                      <TableCell className="whitespace-nowrap">
+                        {invoice.invoiceDate ? formatDate(invoice.invoiceDate) : '—'}
                       </TableCell>
-                      <TableCell>{invoice.memberName}</TableCell>
                       <TableCell>
                         {invoice.invoiceType ? (
                           <InvoiceTypeBadge type={invoice.invoiceType} />
@@ -560,10 +564,10 @@ export default function BillingClient({
                         )}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {invoice.subtotal.toFixed(2)} {invoice.currency}
+                        {formatCurrency(invoice.subtotal)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium">
-                        {invoice.amount.toFixed(2)} {invoice.currency}
+                        {formatCurrency(invoice.amount)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {invoice.paidAmount > 0 ? (
@@ -574,7 +578,7 @@ export default function BillingClient({
                                 : 'text-brand-accent-600'
                             }
                           >
-                            {invoice.paidAmount.toFixed(2)} {invoice.currency}
+                            {formatCurrency(invoice.paidAmount)}
                           </span>
                         ) : (
                           <span className="text-muted-foreground">—</span>
@@ -583,10 +587,8 @@ export default function BillingClient({
                       <TableCell>
                         <StatusBadge status={invoice.status} size="sm" />
                       </TableCell>
-                      <TableCell>
-                        {invoice.dueDate
-                          ? new Date(invoice.dueDate).toLocaleDateString('de-DE')
-                          : '-'}
+                      <TableCell className="whitespace-nowrap">
+                        {invoice.dueDate ? formatDate(invoice.dueDate) : '—'}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-1 justify-end">
@@ -660,9 +662,7 @@ export default function BillingClient({
                   <div key={id} className="flex items-center justify-between text-xs">
                     <span className="font-mono">{inv.invoiceNumber}</span>
                     <span>{inv.memberName}</span>
-                    <span className="font-medium tabular-nums">
-                      {inv.amount.toFixed(2)} {inv.currency}
-                    </span>
+                    <span className="font-medium tabular-nums">{formatCurrency(inv.amount)}</span>
                   </div>
                 );
               })}
@@ -789,8 +789,8 @@ export default function BillingClient({
                 <div className="flex items-center justify-between text-sm bg-muted/50 rounded-xl p-3">
                   <span className="text-muted-foreground">Gebühr:</span>
                   <span className="font-medium">
-                    {previewData.feeName || 'Mitgliedsbeitrag'} — {previewData.feeAmount.toFixed(2)}{' '}
-                    {previewData.currency}
+                    {previewData.feeName || 'Mitgliedsbeitrag'} —{' '}
+                    {formatCurrency(previewData.feeAmount)}
                     {previewData.taxRate > 0 ? ` (+ ${previewData.taxRate}% MwSt.)` : ''}
                   </span>
                 </div>
@@ -864,7 +864,7 @@ export default function BillingClient({
                               <span className="text-xs text-muted-foreground">{m.email}</span>
                             </div>
                             <span className="font-mono text-xs font-medium tabular-nums whitespace-nowrap">
-                              {m.amount.toFixed(2)} {previewData.currency}
+                              {formatCurrency(m.amount)}
                             </span>
                           </label>
                         );
@@ -877,11 +877,11 @@ export default function BillingClient({
                         Gesamt ({previewData.members.length - previewExcluded.size} Rechnungen)
                       </span>
                       <span className="tabular-nums">
-                        {previewData.members
-                          .filter((m) => !previewExcluded.has(m.memberId))
-                          .reduce((sum, m) => sum + m.amount, 0)
-                          .toFixed(2)}{' '}
-                        {previewData.currency}
+                        {formatCurrency(
+                          previewData.members
+                            .filter((m) => !previewExcluded.has(m.memberId))
+                            .reduce((sum, m) => sum + m.amount, 0)
+                        )}
                       </span>
                     </div>
                   </>
