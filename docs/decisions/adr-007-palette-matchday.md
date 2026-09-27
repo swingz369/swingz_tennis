@@ -31,7 +31,7 @@ Kontrastproblem an über 200 Stellen zurückgebracht.
 text-highlight-foreground` — höchstens eine solche Aktion pro Seite.
 2. **Weiße Schrift auf `bg-primary` ist verboten**, weil `--primary` im Dunkel-Theme hell ist.
    Immer `text-primary-foreground`.
-3. **Kontraste werden geprüft, nicht behauptet:** `src/__tests__/design-tokens-contrast.test.ts`
+3. **Kontraste werden geprüft, nicht behauptet:** `src/__tests__/lib/design-tokens-contrast.test.ts`
    liest die Token aus `globals.css` und verlangt 4,5:1 für Text, 3:1 für Grafik.
 
 ## Verworfene Alternativen
