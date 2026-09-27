@@ -134,7 +134,7 @@ export default async function OwnerAccessPage() {
       ) : (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">
+            <CardTitle className="font-semibold">
               {requests!.length} Anfrage{requests!.length !== 1 ? 'n' : ''}
             </CardTitle>
           </CardHeader>

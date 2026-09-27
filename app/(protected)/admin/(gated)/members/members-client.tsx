@@ -637,7 +637,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <CardTitle className="text-sm font-semibold truncate">
+                            <CardTitle className="font-semibold truncate">
                               {member.full_name}
                             </CardTitle>
                             <button

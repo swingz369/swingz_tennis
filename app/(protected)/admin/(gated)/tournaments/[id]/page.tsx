@@ -357,7 +357,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
         <div className="lg:col-span-1 space-y-6">
           <Card>
             <CardHeader className="px-5 pt-5 pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <CardTitle className="font-semibold flex items-center gap-2">
                 <Trophy className="h-4 w-4 text-warning-500" />
                 Turnier-Details
               </CardTitle>
@@ -471,7 +471,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader className="px-5 pt-5 pb-3 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <CardTitle className="font-semibold flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
                 Teilnehmer ({registrations.length})
               </CardTitle>

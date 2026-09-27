@@ -83,7 +83,7 @@ export default async function OwnerSettingsPage() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <CardTitle className="font-semibold flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Service-Status
           </CardTitle>
@@ -109,7 +109,7 @@ export default async function OwnerSettingsPage() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <CardTitle className="font-semibold flex items-center gap-2">
             <Mail className="h-4 w-4" />
             E-Mail
           </CardTitle>
@@ -133,7 +133,7 @@ export default async function OwnerSettingsPage() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <CardTitle className="font-semibold flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
             Preismodell
           </CardTitle>

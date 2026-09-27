@@ -100,7 +100,7 @@ export function DocumentsClient() {
     <div className="space-y-6">
       <Card className="max-w-lg">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Dokument hochladen</CardTitle>
+          <CardTitle className="font-semibold">Dokument hochladen</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div>
@@ -149,7 +149,7 @@ export function DocumentsClient() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Alle Dokumente ({docs.length})</CardTitle>
+          <CardTitle className="font-semibold">Alle Dokumente ({docs.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {loading || error || docs.length === 0 ? (

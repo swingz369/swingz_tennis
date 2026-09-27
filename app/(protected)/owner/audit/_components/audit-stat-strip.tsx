@@ -44,9 +44,7 @@ export function AuditStatStrip() {
           <Card key={card.title} className="relative overflow-hidden">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {card.title}
-                </CardTitle>
+                <CardTitle className="font-medium text-muted-foreground">{card.title}</CardTitle>
                 {card.comingSoon && (
                   <Badge
                     variant="outline"

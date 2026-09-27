@@ -187,7 +187,7 @@ export function OwnerAuditClient({ clubOptions }: { clubOptions: ClubOption[] })
       {/* Filter-Sidebar */}
       <Card className="lg:sticky lg:top-4">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
             <Filter className="h-4 w-4" /> Filter
           </CardTitle>
         </CardHeader>
@@ -325,7 +325,7 @@ export function OwnerAuditClient({ clubOptions }: { clubOptions: ClubOption[] })
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between gap-2">
-            <CardTitle className="text-sm flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <ScrollText className="h-4 w-4" />
               Audit-Einträge
               {pagination && (

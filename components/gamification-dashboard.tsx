@@ -118,7 +118,7 @@ export default function GamificationDashboard() {
       {badges.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <Medal className="h-4 w-4 text-info-500" />
               Deine Badges
             </CardTitle>
@@ -146,7 +146,7 @@ export default function GamificationDashboard() {
       {leaderboard.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <Trophy className="h-4 w-4 text-warning-500" />
               Rangliste
             </CardTitle>

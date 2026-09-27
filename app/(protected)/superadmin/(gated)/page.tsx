@@ -1,6 +1,7 @@
+import { formatWeekdayDate } from '@/lib/format';
 import { requireAuth } from '@/lib/auth';
 import Link from 'next/link';
-import { Building2, Activity, Shield, TrendingUp, Settings } from 'lucide-react';
+import { Building2, Activity, TrendingUp, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -92,19 +93,11 @@ export default async function SuperadminPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <PageHeader
-          title="Meine Gruppe"
-          description={
-            <>
-              Hallo {firstName} — {clubCount} Verein{clubCount !== 1 ? 'e' : ''} in deiner Gruppe
-            </>
-          }
-        />
-        <Badge variant="outline" className="flex items-center gap-1 border-info-300 text-info-700">
-          <Shield className="h-3 w-3" /> Superadmin
-        </Badge>
-      </div>
+      <PageHeader
+        eyebrow={`${formatWeekdayDate(new Date())} · Superadmin · Hallo ${firstName}`}
+        title="Deine Vereine."
+        description={`${clubCount} Verein${clubCount !== 1 ? 'e' : ''} in deiner Gruppe — Stand, Mitglieder und Abos auf einen Blick.`}
+      />
 
       {/* Kennzahlen als Band — dasselbe Muster wie Owner-, Admin- und
           Trainer-Dashboard. Vorher: drei Karten in einem Vierer-Raster (die
@@ -134,7 +127,7 @@ export default async function SuperadminPage() {
       <Card className="p-0">
         <CardHeader className="flex-row items-start justify-between space-y-0 px-5 pb-3 pt-5">
           <div>
-            <CardTitle className="text-sm font-semibold">Alle Vereine</CardTitle>
+            <CardTitle className="font-semibold">Alle Vereine</CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
               {clubsWithStats.length === 1 ? '1 Verein' : `${clubsWithStats.length} Vereine`}
             </p>

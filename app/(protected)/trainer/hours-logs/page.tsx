@@ -363,7 +363,7 @@ export default function TrainerHoursLogsPage() {
       {/* Filters */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground dark:text-foreground">
+          <CardTitle className="flex items-center gap-2 text-muted-foreground dark:text-foreground">
             <Filter className="h-4 w-4" />
             Filter
           </CardTitle>
@@ -410,7 +410,7 @@ export default function TrainerHoursLogsPage() {
       {/* Logs List */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm text-foreground dark:text-gray-200">
+          <CardTitle className="text-foreground dark:text-gray-200">
             Einträge ({logs.length})
           </CardTitle>
         </CardHeader>

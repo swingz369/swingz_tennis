@@ -178,7 +178,7 @@ export function MemberSelector() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="font-medium flex items-center gap-2">
               <Users className="h-4 w-4 text-primary" />
               Mitglieder
             </CardTitle>
@@ -191,7 +191,7 @@ export function MemberSelector() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="font-medium flex items-center gap-2">
               <Star className="h-4 w-4 text-warning-500" />
               Höherstufungen
             </CardTitle>
@@ -204,7 +204,7 @@ export function MemberSelector() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="font-medium flex items-center gap-2">
               <Clock className="h-4 w-4 text-info-500" />
               Warteliste
             </CardTitle>
@@ -217,7 +217,7 @@ export function MemberSelector() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="font-medium flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-success-500" />
               Auswahl
             </CardTitle>

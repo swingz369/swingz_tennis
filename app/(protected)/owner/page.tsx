@@ -1,3 +1,4 @@
+import { formatWeekdayDate } from '@/lib/format';
 import { requireAuth } from '@/lib/auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import Link from 'next/link';
@@ -163,8 +164,9 @@ export default async function OwnerPage() {
         Owner-Pages folgen demselben Pattern.
       */}
       <PageHeader
-        title="Plattform-Übersicht"
-        description={<>Hallo {firstName} | Swingz Plattform-Dashboard</>}
+        eyebrow={`${formatWeekdayDate(new Date())} · Hallo ${firstName}`}
+        title="Die ganze Plattform."
+        description="Alle Vereine, Abos und Aktivitäten der SwingZ-Plattform."
       />
 
       {/* KPI-Band statt vier Karten — gleiche Behandlung wie im
@@ -231,7 +233,7 @@ export default async function OwnerPage() {
       <Card className="p-0">
         <CardHeader className="flex-row items-start justify-between space-y-0 px-5 pb-3 pt-5">
           <div>
-            <CardTitle className="text-sm font-semibold">Vereine</CardTitle>
+            <CardTitle className="font-semibold">Vereine</CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
               {allClubs.length === 1 ? '1 Verein' : `${allClubs.length} Vereine`}
               {allClubs.length > 10 && ' · die 10 neuesten'}
@@ -308,7 +310,7 @@ export default async function OwnerPage() {
           dass überhaupt etwas passiert ist. */}
       <Card className="p-0">
         <CardHeader className="flex-row items-start justify-between space-y-0 px-5 pb-3 pt-5">
-          <CardTitle className="text-sm font-semibold">Letzte Aktivität</CardTitle>
+          <CardTitle className="font-semibold">Letzte Aktivität</CardTitle>
           <Link
             href="/owner/audit"
             className="shrink-0 text-[12.5px] font-medium text-primary hover:underline"

@@ -791,7 +791,7 @@ export default function AdminShopPage() {
               {activeProducts.length > 0 && (
                 <Card className="border border-border dark:border-white/10 shadow-sm p-0">
                   <CardHeader className="px-5 pt-5 pb-3">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
+                    <CardTitle className="font-semibold flex items-center gap-2 text-foreground dark:text-white">
                       <IconBox icon={Eye} size="xs" variant="light" /> Aktive Produkte
                       <Badge className="text-2xs px-1.5 py-0 bg-brand-light/10 text-brand-light border-brand-light/20 ml-1">
                         {activeProducts.length}
@@ -896,7 +896,7 @@ export default function AdminShopPage() {
               {inactiveProducts.length > 0 && (
                 <Card className="border border-border dark:border-white/10 shadow-sm p-0 opacity-70">
                   <CardHeader className="px-5 pt-5 pb-3">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+                    <CardTitle className="font-semibold flex items-center gap-2 text-muted-foreground">
                       <IconBox icon={EyeOff} size="xs" variant="gray" /> Ausgeblendete Produkte
                       <Badge variant="secondary" className="text-2xs px-1.5 py-0">
                         {inactiveProducts.length}
@@ -1035,7 +1035,7 @@ export default function AdminShopPage() {
           ) : (
             <Card className="border border-border dark:border-white/10 shadow-sm p-0">
               <CardHeader className="px-5 pt-5 pb-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
+                <CardTitle className="font-semibold flex items-center gap-2 text-foreground dark:text-white">
                   <IconBox icon={ClipboardList} size="xs" variant="light" />
                   {orderStatusFilter ? STATUS_LABELS[orderStatusFilter] : 'Alle'} Bestellungen
                   <Badge className="text-2xs px-1.5 py-0 bg-brand-light/10 text-brand-light border-brand-light/20 ml-1">

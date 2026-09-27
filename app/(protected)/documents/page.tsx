@@ -42,7 +42,7 @@ export default function MemberDocumentsPage() {
       />
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Alle Dokumente</CardTitle>
+          <CardTitle className="font-semibold">Alle Dokumente</CardTitle>
         </CardHeader>
         <CardContent>
           {loading || error || docs.length === 0 ? (

@@ -130,7 +130,7 @@ export default function ReportsDashboard() {
       {/* Revenue Chart */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-brand-light" />
             Umsatzentwicklung
           </CardTitle>
@@ -167,7 +167,7 @@ export default function ReportsDashboard() {
       {stats?.topGroups && stats.topGroups.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <Users className="h-4 w-4 text-brand-light" />
               Top Trainingsgruppen
             </CardTitle>

@@ -36,7 +36,7 @@ export async function SeasonStatsCard({ userId, clubId }: Props) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+        <CardTitle className="font-semibold flex items-center gap-2">
           <Trophy className="h-4 w-4 text-warning-500" />
           Saison {new Date().getFullYear()}
         </CardTitle>

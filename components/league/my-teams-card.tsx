@@ -82,7 +82,7 @@ export function MyTeamsCard() {
   return (
     <Card className="border border-border dark:border-white/10">
       <CardHeader className="px-5 pt-5 pb-3">
-        <CardTitle className="text-sm font-semibold flex items-center justify-between gap-2">
+        <CardTitle className="font-semibold flex items-center justify-between gap-2">
           <span className="flex items-center gap-2">
             <Trophy className="h-4 w-4 text-brand-light" />
             Meine Mannschaften

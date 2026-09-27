@@ -256,7 +256,7 @@ export default function FeeCategoriesClient({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-semibold">Kategorien</CardTitle>
+          <CardTitle className="font-semibold">Kategorien</CardTitle>
         </CardHeader>
         <CardContent>
           {categories.length === 0 ? (

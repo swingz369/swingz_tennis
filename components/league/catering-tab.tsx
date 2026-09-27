@@ -152,7 +152,7 @@ export function CateringTab({ leagueId, matchDays }: { leagueId: string; matchDa
           <Card key={m.id}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <CardTitle className="font-medium flex items-center gap-2">
                   <UtensilsCrossed className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span>
                     Spieltag {m.matchday_number} — Heim vs. {m.opponent}

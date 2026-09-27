@@ -161,7 +161,7 @@ export default function ConflictsPage({ params }: { params: Promise<{ id: string
         {SUMMARY_CARDS.map(({ key, label, icon: Icon, color }) => (
           <Card key={key}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{label}</CardTitle>
+              <CardTitle className="font-medium">{label}</CardTitle>
               <Icon className={`h-4 w-4 ${color}`} />
             </CardHeader>
             <CardContent>

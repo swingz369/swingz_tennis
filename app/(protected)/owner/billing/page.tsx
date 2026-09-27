@@ -115,7 +115,7 @@ export default async function OwnerBillingPage() {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Alle Vereine</CardTitle>
+          <CardTitle className="font-semibold">Alle Vereine</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border">

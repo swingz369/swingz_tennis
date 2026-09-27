@@ -866,7 +866,7 @@ export default async function AdminPage() {
                   Zeile Leerraum für einen Klick, den kaum jemand macht. */}
               <CardHeader className="px-5 pt-5 pb-3 flex-row items-start justify-between space-y-0">
                 <div>
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <CardTitle className="font-semibold flex items-center gap-2">
                     <IconBox icon={Calendar} size="xs" variant="light" />
                     Letzte Buchungen
                   </CardTitle>
@@ -984,7 +984,7 @@ export default async function AdminPage() {
 
             <Card padding="none">
               <CardHeader className="px-5 pt-5 pb-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <CardTitle className="font-semibold flex items-center gap-2">
                   <IconBox icon={LayoutGrid} size="xs" variant="light" />
                   Platzbelegung diese Woche
                 </CardTitle>
@@ -1014,7 +1014,7 @@ export default async function AdminPage() {
 
             <Card padding="none">
               <CardHeader className="px-5 pt-5 pb-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <CardTitle className="font-semibold flex items-center gap-2">
                   <IconBox icon={Sparkles} size="xs" variant="light" />
                   Aktivität
                 </CardTitle>

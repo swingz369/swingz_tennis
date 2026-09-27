@@ -129,7 +129,7 @@ export default async function OwnerSuperadminsPage() {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <CardTitle className="font-semibold flex items-center gap-2">
             <Users className="h-4 w-4" />
             {rows.length} aktive Superadmin{rows.length !== 1 ? 's' : ''}
           </CardTitle>

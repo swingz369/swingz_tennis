@@ -92,7 +92,7 @@ export default function NewTournamentPage() {
       <form onSubmit={handleSubmit}>
         <Card className="p-0">
           <CardHeader className="px-5 pt-5 pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <CardTitle className="font-semibold flex items-center gap-2">
               <Trophy className="h-4 w-4 text-warning-500" />
               Turnier-Details
             </CardTitle>
