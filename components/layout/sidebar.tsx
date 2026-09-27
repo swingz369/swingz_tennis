@@ -35,37 +35,19 @@ interface Club {
 // Gemeinsames Oberflächen-Design mit zurückhaltenden Rollenakzenten.
 // Die Rollen unterscheiden sich nur über einen kleinen Farbton; Layout,
 // Kontrast, Abstände und Interaktionsmuster bleiben identisch.
+// Matchday: dieselbe Akzentsprache wie adminSectionColors — keine Rollentöne.
+const ROLE_ACCENT = {
+  bg: 'bg-muted',
+  text: 'text-foreground',
+  light: 'highlight',
+  ring: 'ring-highlight/40',
+};
 const roleColors = {
-  owner: {
-    bg: 'bg-info-50',
-    text: 'text-info-700',
-    light: 'info',
-    ring: 'ring-info-300/50',
-  },
-  superadmin: {
-    bg: 'bg-brand-accent-2/10 dark:bg-brand-accent-2/20',
-    text: 'text-brand-accent-2 dark:text-brand-accent-2',
-    light: 'brand-accent-2',
-    ring: 'ring-brand-accent-2/40',
-  },
-  admin: {
-    bg: 'bg-brand-primary/10 dark:bg-brand-primary/20',
-    text: 'text-brand-primary dark:text-brand-primary-light',
-    light: 'brand-primary',
-    ring: 'ring-brand-primary/30',
-  },
-  trainer: {
-    bg: 'bg-success-50',
-    text: 'text-success-600',
-    light: 'success',
-    ring: 'ring-success-300/40',
-  },
-  member: {
-    bg: 'bg-brand-primary/10 dark:bg-brand-primary/20',
-    text: 'text-brand-primary dark:text-brand-primary-light',
-    light: 'brand-primary',
-    ring: 'ring-brand-primary/30',
-  },
+  owner: ROLE_ACCENT,
+  superadmin: ROLE_ACCENT,
+  admin: ROLE_ACCENT,
+  trainer: ROLE_ACCENT,
+  member: ROLE_ACCENT,
 };
 
 export function Sidebar({

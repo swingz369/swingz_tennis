@@ -1,6 +1,6 @@
 'use client';
 
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, formatHours } from '@/lib/format';
 import {
   Table,
   TableBody,
@@ -441,7 +441,7 @@ export function FinalizeStep() {
                                 {formatCurrency(group.trainerHourlyRate)}
                               </TableCell>
                               <TableCell className="text-center px-3 py-2.5 tabular-nums">
-                                {group.sessionDurationHours.toFixed(1)} h
+                                {formatHours(group.sessionDurationHours)}
                               </TableCell>
                               <TableCell className="text-center px-3 py-2.5 tabular-nums">
                                 {group.totalSessions}

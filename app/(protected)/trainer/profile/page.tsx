@@ -241,7 +241,7 @@ export default function TrainerProfilePage() {
           <Skeleton className="h-3.5 w-3.5 rounded" />
           <Skeleton className="h-4 w-32 rounded" />
         </div>
-        <div className="bg-background dark:bg-surface-dark rounded-xl border border-border dark:border-white/10 shadow-sm overflow-hidden">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
           <div className="p-5 border-b border-border dark:border-white/10">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1.5">
@@ -320,16 +320,16 @@ export default function TrainerProfilePage() {
         className="mb-4"
       />
 
-      <div className="bg-background dark:bg-surface-dark rounded-xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
+      <div className="bg-card rounded-xl border border-border overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
-        <div className="p-5 border-b border-border dark:border-white/10">
+        <div className="brand-dark-surface bg-brand-dark p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <div className="h-12 w-12 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center shrink-0">
                 <User className="h-6 w-6 text-primary" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-xl md:text-2xl font-semibold text-foreground truncate">
+                <h2 className="text-2xl md:text-3xl font-semibold tracking-[-0.03em] text-foreground truncate">
                   {profile.firstName} {profile.lastName}
                 </h2>
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground truncate">

@@ -1,5 +1,7 @@
 'use client';
 
+import { formatHours } from '@/lib/format';
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -296,13 +298,13 @@ export default function TrainerAvailabilityManager() {
         >
           <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span>
-            <span className="font-semibold">{weeklyHours.toFixed(1)} Std</span>
+            <span className="font-semibold">{formatHours(weeklyHours)}</span>
             <span className="text-muted-foreground"> eingetragen diese Woche · Vertrag: </span>
             <span className="font-semibold">{maxHoursPerWeek} Std/Woche</span>
           </span>
           {weeklyHours > maxHoursPerWeek && (
             <span className="ml-auto font-medium">
-              +{(weeklyHours - maxHoursPerWeek).toFixed(1)} Std über Limit
+              +{formatHours(weeklyHours - maxHoursPerWeek)} über Limit
             </span>
           )}
         </div>

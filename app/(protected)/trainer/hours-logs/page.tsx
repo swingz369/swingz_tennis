@@ -1,4 +1,6 @@
 'use client';
+
+import { formatHours } from '@/lib/format';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -337,7 +339,7 @@ export default function TrainerHoursLogsPage() {
                   Stunden gesamt
                 </p>
                 <p className="text-xl font-bold mt-0.5 text-primary dark:text-brand-light">
-                  {stats.totalHours.toFixed(1)}h
+                  {formatHours(stats.totalHours)}
                 </p>
               </div>
               <Clock className="h-5 w-5 text-brand-light/50" />
@@ -356,7 +358,7 @@ export default function TrainerHoursLogsPage() {
               <p className="text-xs text-success-600">Bereits von deinem Verein genehmigt</p>
             </div>
           </div>
-          <p className="text-2xl font-bold text-success-700">{stats.approvedHours.toFixed(1)}h</p>
+          <p className="text-2xl font-bold text-success-700">{formatHours(stats.approvedHours)}</p>
         </div>
       )}
 
@@ -437,7 +439,7 @@ export default function TrainerHoursLogsPage() {
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm text-foreground dark:text-white">
-                        {log.hours.toFixed(1)}h
+                        {formatHours(log.hours)}
                       </span>
                       {getStatusBadge(log.status)}
                     </div>

@@ -48,36 +48,22 @@ export interface AdminSectionProps {
   badge?: string | null;
 }
 
-// Gemeinsame Section-Farben: ein ruhiger Grundton, kleine Akzente pro Rolle.
+// Matchday (ADR-007): eine Akzentsprache für alle Rollen. Die Gruppe mit der
+// aktiven Seite hebt sich hell vom Nachtblau ab; die aktive Seite selbst
+// trägt die Lime-Pille aus globals.css. Rollentöne auf dem Sidebar-Grund
+// (brand-primary = Nachtblau) machten die Überschrift unsichtbar.
+const SIDEBAR_ACCENT: AdminSectionColors = {
+  gradient: 'from-highlight to-highlight',
+  bg: 'bg-muted',
+  text: 'text-foreground',
+  light: 'highlight',
+  ring: 'ring-highlight/40',
+};
 export const adminSectionColors: Record<string, AdminSectionColors> = {
-  superadmin: {
-    gradient: 'from-brand-accent-2 to-brand-accent-2',
-    bg: 'bg-brand-accent-2/10 dark:bg-brand-accent-2/20',
-    text: 'text-brand-accent-2 dark:text-brand-accent-2',
-    light: 'brand-accent-2',
-    ring: 'ring-brand-accent-2/40',
-  },
-  admin: {
-    gradient: 'from-brand-primary to-brand-primary-light',
-    bg: 'bg-brand-primary/10 dark:bg-brand-primary/20',
-    text: 'text-brand-primary dark:text-brand-primary-light',
-    light: 'brand-primary',
-    ring: 'ring-brand-primary/30',
-  },
-  trainer: {
-    gradient: 'from-success-500 to-success-700',
-    bg: 'bg-success-50',
-    text: 'text-success-600',
-    light: 'success',
-    ring: 'ring-success-300/40',
-  },
-  neutral: {
-    gradient: 'from-gray-500 to-gray-700',
-    bg: 'bg-muted dark:bg-muted/20',
-    text: 'text-foreground dark:text-foreground',
-    light: 'gray',
-    ring: 'ring-ring/40',
-  },
+  superadmin: SIDEBAR_ACCENT,
+  admin: SIDEBAR_ACCENT,
+  trainer: SIDEBAR_ACCENT,
+  neutral: SIDEBAR_ACCENT,
 };
 
 // ── Component ────────────────────────────────────────────────────────
@@ -208,12 +194,8 @@ export function AdminSection({
               >
                 <div className="flex items-center gap-2">
                   {isActive && (
-                    <span
-                      className={cn(
-                        'h-1.5 w-1.5 rounded-full',
-                        colors.text.replace('text-', 'bg-').replace('dark:text-', 'dark:bg-')
-                      )}
-                    />
+                    // bg-current: der Punkt übernimmt die Schrift der Lime-Pille.
+                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
                   )}
                   <span>{item.name}</span>
                 </div>

@@ -1,4 +1,6 @@
 'use client';
+
+import { formatHours } from '@/lib/format';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -237,7 +239,7 @@ export function TrainerAvailabilityPanel() {
                     <p className="font-medium truncate">{trainer.trainerName}</p>
                     <p className="text-xs text-muted-foreground">
                       {trainer.hasSubmittedPreferences
-                        ? `${trainer.availableSlots} Slots verfügbar · ${trainer.currentAssignedHours.toFixed(1)}h / ${trainer.effectiveMaxHours.toFixed(1)}h · ${pct}%`
+                        ? `${trainer.availableSlots} Slots verfügbar · ${formatHours(trainer.currentAssignedHours)} / ${formatHours(trainer.effectiveMaxHours)} · ${pct}%`
                         : 'Präferenzen ausstehend — Standardverfügbarkeit wird verwendet'}
                     </p>
                   </div>

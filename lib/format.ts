@@ -86,6 +86,10 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat('de-DE', {
 });
 
 const NUMBER_FORMATTER = new Intl.NumberFormat('de-DE');
+const HOURS_FORMATTER = new Intl.NumberFormat('de-DE', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
 
 // ── Exported Helper Functions ─────────────────────────────────────────────
 
@@ -188,6 +192,12 @@ export function formatWeekdayDate(value: string | Date | null | undefined): stri
 export function formatCurrency(value: number | null | undefined): string {
   if (value == null || isNaN(value)) return '—';
   return CURRENCY_FORMATTER.format(value);
+}
+
+/** Stunden mit einer Nachkommastelle, deutsch (1.5 → "1,5 h") */
+export function formatHours(value: number | null | undefined): string {
+  if (value == null || isNaN(value)) return '—';
+  return `${HOURS_FORMATTER.format(value)} h`;
 }
 
 /** Format a number with locale-specific grouping (e.g., "1.234") */

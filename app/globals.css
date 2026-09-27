@@ -339,8 +339,32 @@
    * an jeder Utility-Klasse eine Sondervariante zu führen.
    */
   .brand-dark-surface {
+    /* Vollständiger Farbraum wie .sidebar-surface: Utilities im Inneren
+       (text-muted-foreground, border-border, Button outline …) lesen auf der
+       dunklen Insel automatisch richtig. */
+    --foreground: 0 0% 100%;
+    --card: 214 45% 24%;
+    --card-foreground: 0 0% 100%;
+    --muted: 214 40% 27%;
+    --muted-foreground: 214 30% 80%;
+    --accent: 214 40% 30%;
+    --accent-foreground: 0 0% 100%;
+    --border: 214 30% 34%;
+    --input: 214 25% 55%;
+    --primary: 70 89% 62%;
+    --primary-foreground: 214 52% 19%;
+    --brand-primary: 70 89% 62%;
+    --brand-primary-light: 216 100% 83%;
+    --brand-secondary: 0 0% 100%;
     --brand-accent: 70 89% 62%;
     --ring: 70 89% 62%;
+    color: hsl(var(--foreground));
+  }
+  .dark .brand-dark-surface {
+    --card: 216 45% 32%;
+    --muted: 216 40% 34%;
+    --accent: 216 40% 36%;
+    --border: 216 35% 40%;
   }
 }
 

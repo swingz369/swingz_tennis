@@ -277,9 +277,9 @@ export default function MemberProfile() {
       {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
       <Breadcrumb items={[{ label: formData.fullName || 'Mein Profil' }]} />
 
-      <div className="bg-background dark:bg-surface-dark rounded-xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
+      <div className="bg-card rounded-xl border border-border overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
-        <div className="p-5 border-b border-border dark:border-white/10">
+        <div className="brand-dark-surface bg-brand-dark p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <AvatarUpload
@@ -289,7 +289,7 @@ export default function MemberProfile() {
                 onAvatarChange={handleAvatarChange}
               />
               <div className="min-w-0">
-                <h1 className="text-xl md:text-2xl font-bold text-foreground dark:text-white truncate">
+                <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.03em] text-foreground truncate">
                   {formData.fullName || 'Mitglied'}
                 </h1>
                 <p className="text-sm text-muted-foreground dark:text-muted-foreground truncate">

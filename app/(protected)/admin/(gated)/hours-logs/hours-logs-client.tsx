@@ -1,4 +1,6 @@
 'use client';
+
+import { formatHours } from '@/lib/format';
 import {
   Table,
   TableBody,
@@ -174,7 +176,7 @@ export default function HoursLogsClient() {
 
   const getTypeLabel = (hours: number, description?: string) => {
     if (description) return description;
-    return `${hours.toFixed(1)}h`;
+    return `${formatHours(hours)}`;
   };
 
   // Unique trainers for filter dropdown
@@ -251,7 +253,7 @@ export default function HoursLogsClient() {
                   Stunden gesamt
                 </p>
                 <p className="text-xl font-bold mt-0.5 text-primary dark:text-brand-light">
-                  {stats.totalHours.toFixed(1)}h
+                  {formatHours(stats.totalHours)}
                 </p>
               </div>
               <TrendingUp className="h-5 w-5 text-brand-light/50" />
@@ -270,7 +272,7 @@ export default function HoursLogsClient() {
                 {stats.pending} ausstehende Stundennachweise
               </p>
               <p className="text-xs text-warning-600">
-                {stats.pendingHours.toFixed(1)}h warten auf Genehmigung
+                {formatHours(stats.pendingHours)} warten auf Genehmigung
               </p>
             </div>
           </div>
@@ -414,7 +416,7 @@ export default function HoursLogsClient() {
                           {getTypeLabel(log.hours, log.description)}
                         </TableCell>
                         <TableCell className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-right text-foreground dark:text-white">
-                          {log.hours.toFixed(1)}h
+                          {formatHours(log.hours)}
                         </TableCell>
                         <TableCell className="px-4 py-3 whitespace-nowrap">
                           {getStatusBadge(log.status)}
@@ -501,13 +503,13 @@ export default function HoursLogsClient() {
             {stats.uniqueTrainers} Trainer
           </span>
           <span>·</span>
-          <span>{stats.totalHours.toFixed(1)}h gesamt</span>
+          <span>{formatHours(stats.totalHours)} gesamt</span>
           <span>·</span>
-          <span className="text-success-600">{stats.approvedHours.toFixed(1)}h genehmigt</span>
+          <span className="text-success-600">{formatHours(stats.approvedHours)} genehmigt</span>
           {stats.pendingHours > 0 && (
             <>
               <span>·</span>
-              <span className="text-warning-600">{stats.pendingHours.toFixed(1)}h ausstehend</span>
+              <span className="text-warning-600">{formatHours(stats.pendingHours)} ausstehend</span>
             </>
           )}
         </div>

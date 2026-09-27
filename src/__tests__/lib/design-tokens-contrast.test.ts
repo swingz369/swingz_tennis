@@ -70,6 +70,14 @@ describe('Farb-Token (ADR-007)', () => {
     });
   }
 
+  it('Text auf der dunklen Insel (.brand-dark-surface) bleibt lesbar', () => {
+    const island = block('.brand-dark-surface');
+    for (const bg of [light['brand-dark'], dark['brand-dark']]) {
+      expect(contrast(island['muted-foreground'], bg)).toBeGreaterThanOrEqual(TEXT);
+      expect(contrast(island.foreground, bg)).toBeGreaterThanOrEqual(TEXT);
+    }
+  });
+
   it('Lime auf der dunklen Insel (Hero, Sidebar) bleibt lesbar', () => {
     expect(contrast(light.highlight, light['brand-dark'])).toBeGreaterThanOrEqual(TEXT);
     expect(contrast(dark.highlight, dark['brand-dark'])).toBeGreaterThanOrEqual(TEXT);
