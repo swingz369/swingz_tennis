@@ -25,6 +25,13 @@ const DATE_FORMATTER = new Intl.DateTimeFormat('de-DE', {
   timeZone: TIME_ZONE,
 });
 
+const DATE_NUMERIC_FORMATTER = new Intl.DateTimeFormat('de-DE', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  timeZone: TIME_ZONE,
+});
+
 const DATE_SHORT_FORMATTER = new Intl.DateTimeFormat('de-DE', {
   day: '2-digit',
   month: '2-digit',
@@ -93,6 +100,16 @@ export function formatDate(value: string | Date | null | undefined): string {
 }
 
 /** Format to day.month only (e.g., "01.01.") */
+/** Datum ohne Wochentag für Tabellenspalten (z. B. "19.09.2026") */
+export function formatDateNumeric(value: string | Date | null | undefined): string {
+  if (!value) return '—';
+  try {
+    return DATE_NUMERIC_FORMATTER.format(new Date(value));
+  } catch {
+    return '—';
+  }
+}
+
 export function formatDateShort(value: string | Date | null | undefined): string {
   if (!value) return '—';
   try {

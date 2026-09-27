@@ -38,7 +38,10 @@ export interface InputProps
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, variant, size, error, leftIcon, rightIcon, type, ...props }, ref) => {
     return (
-      <div className="relative w-full">
+      // Positioniert nur, wenn es eigene Symbole oder eine Fehlermeldung gibt —
+      // sonst malte der Rahmen über das Suchsymbol, das viele Seiten selbst
+      // absolut vor das Feld setzen.
+      <div className={cn('w-full', (leftIcon || rightIcon || error) && 'relative')}>
         {leftIcon && (
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
             {leftIcon}

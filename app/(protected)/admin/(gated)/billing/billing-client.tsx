@@ -1,6 +1,6 @@
 'use client';
 
-import { formatCurrency, formatDate } from '@/lib/format';
+import { formatCurrency, formatDateNumeric } from '@/lib/format';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -554,7 +554,7 @@ export default function BillingClient({
                         </span>
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
-                        {invoice.invoiceDate ? formatDate(invoice.invoiceDate) : '—'}
+                        {invoice.invoiceDate ? formatDateNumeric(invoice.invoiceDate) : '—'}
                       </TableCell>
                       <TableCell>
                         {invoice.invoiceType ? (
@@ -588,7 +588,7 @@ export default function BillingClient({
                         <StatusBadge status={invoice.status} size="sm" />
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
-                        {invoice.dueDate ? formatDate(invoice.dueDate) : '—'}
+                        {invoice.dueDate ? formatDateNumeric(invoice.dueDate) : '—'}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-1 justify-end">
