@@ -235,6 +235,19 @@ const NEXT_LEVEL: Record<SkillLevel, SkillLevel> = {
   professional: 'professional',
 };
 
+// trainers.specialties ist jsonb — neben Arrays stehen dort auch Einzel-Strings
+// („Jugend, Anfänger") oder Objekte. Ein blinder `as string[]` ließ die Planung mit
+// „specialties.some is not a function" abbrechen (Sentry, 26.09.2026).
+export function toSpecialties(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((s): s is string => typeof s === 'string');
+  if (typeof value === 'string')
+    return value
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  return [];
+}
+
 // Bugfix (Q2-Audit): trainer.specialties sind deutsche Freitext-Strings aus der
 // echten Vereinsverwaltung (z.B. 'Anfänger', 'Leistungssport', 'Kindertraining' —
 // siehe scripts/seed-test-club-rheinland.ts), NIEMALS die SkillLevel-Enum-Keys
@@ -948,7 +961,7 @@ export class SeasonClusteringEngine {
       return {
         id: p.trainer.id,
         name: p.trainer_name || p.trainer?.name || 'Unbekannt',
-        specialties: (p.trainer?.specialties as string[]) || [],
+        specialties: toSpecialties(p.trainer?.specialties),
         maxHoursPerWeek: p.trainer?.max_hours_per_week || 30,
         utilizationPct: this.config.trainerUtilizationMaxPct,
         // Gleiche Behandlung wie bei Mitgliedern — die Spalte hat dieselbe
@@ -983,7 +996,7 @@ export class SeasonClusteringEngine {
       loadedTrainers.push({
         id: trainer.id,
         name: trainer.name || 'Unbekannt',
-        specialties: (trainer.specialties as string[]) || [],
+        specialties: toSpecialties(trainer.specialties),
         maxHoursPerWeek: trainer.max_hours_per_week || 30,
         utilizationPct: this.config.trainerUtilizationMaxPct,
         availability: defaultAvailability,
@@ -992,7 +1005,7 @@ export class SeasonClusteringEngine {
           (trainer.max_hours_per_week || 30) / (this.config.slotDurationMinutes / 60)
         ),
         preferredCourtIds: [],
-        canTeachGroups: (trainer.specialties as string[]) || [],
+        canTeachGroups: toSpecialties(trainer.specialties),
         sessionsAssigned: 0,
       });
     }

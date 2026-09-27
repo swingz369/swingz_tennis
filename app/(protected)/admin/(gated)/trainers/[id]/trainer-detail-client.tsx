@@ -49,7 +49,7 @@ import {
   Phone,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { apiFetch } from '@/lib/api-fetch';
+import { apiFetch, fetchJson } from '@/lib/api-fetch';
 import { formatDate, formatDateLong, formatCurrency } from '@/lib/format';
 import type {
   TrainerProfile,
@@ -176,13 +176,9 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
   const loadTrainer = async () => {
     try {
       setIsLoading(true);
-      const res = await apiFetch(`/api/trainer-profiles/${trainerId}`);
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        const detail = errBody.error || `HTTP ${res.status}`;
-        throw new Error(`Failed to load trainer: ${detail}`);
-      }
-      const data = await res.json();
+      const data = await fetchJson<{ trainerProfile: TrainerProfile }>(
+        `/api/trainer-profiles/${trainerId}`
+      );
       setTrainer(data.trainerProfile);
       if (data.trainerProfile?.userId) {
         loadAllSlots(data.trainerProfile.userId);

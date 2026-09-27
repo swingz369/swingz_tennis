@@ -179,6 +179,7 @@ function makeThenableQuery<T>(value: T) {
   q.gte = vi.fn(chain);
   q.order = vi.fn(chain);
   q.limit = vi.fn(chain);
+  q.range = vi.fn(() => Promise.resolve(value));
   q.maybeSingle = vi.fn(() => Promise.resolve(value));
   q.single = vi.fn(() => Promise.resolve(value));
   q.then = (onFulfilled: any, onRejected: any) =>

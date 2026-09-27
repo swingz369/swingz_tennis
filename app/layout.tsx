@@ -4,7 +4,6 @@ import localFont from 'next/font/local';
 import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'sonner';
-import { ServiceWorkerRegistration } from '@/components/sw-registration';
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt';
 import { SkipToContent } from '@/lib/accessibility';
 import { AriaLiveProvider } from '@/components/aria-live-region';
@@ -88,7 +87,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         {/* Kill stale service workers before hydration — a leftover SW from a
             local prod build can serve mismatched Turbopack chunks and break
-            hard reloads before the sw-registration.tsx useEffect ever runs. */}
+            hard reloads. Produktion registriert keinen SW: public/sw.js war nie
+            eingecheckt, die Registrierung lief bis 27.09.2026 nur in einen 404. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -116,7 +116,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${dmSans.className} antialiased`}>
         <AriaLiveProvider>
           <SkipToContent />
-          <ServiceWorkerRegistration />
           <PwaInstallPrompt />
           <Providers>{children}</Providers>
           <Toaster position="top-right" richColors />

@@ -26,6 +26,7 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import { pushNotificationService, type PushPayload } from '@/lib/push-notification.service';
 import { createLogger } from '@/lib/logger';
+import { fetchAll, fetchAllIn } from '@/infrastructure/persistence/repositories/paged';
 import { appBaseUrl } from '../app-url';
 
 const log = createLogger('service:reactivation');
@@ -218,16 +219,20 @@ export class ReactivationService {
     now: Date
   ): Promise<InactiveMember[]> {
     // 1. Get all active memberships + user name in one query
-    const { data: memberships, error: membershipsError } = await supabase
-      .from('user_club_memberships')
-      .select(
-        'user_id, club_id, last_reactivation_sent_at, reactivation_count, users!user_club_memberships_user_id_fkey(full_name)'
-      )
-      .eq('is_active', true)
-      .in('role', ['member', 'trainer', 'admin']);
-
-    if (membershipsError) throw membershipsError;
-    if (!memberships || memberships.length === 0) return [];
+    // Plattformweit, also über 1000 Zeilen möglich — seitenweise lesen.
+    const memberships = await fetchAll(
+      () =>
+        supabase
+          .from('user_club_memberships')
+          .select(
+            'id, user_id, club_id, last_reactivation_sent_at, reactivation_count, users!user_club_memberships_user_id_fkey(full_name)'
+          )
+          .eq('is_active', true)
+          .in('role', ['member', 'trainer', 'admin'])
+          .order('id'),
+      'Mitgliedschaften lesen fehlgeschlagen'
+    );
+    if (memberships.length === 0) return [];
 
     const userIds = [...new Set(memberships.map((m) => m.user_id))];
 
@@ -236,18 +241,23 @@ export class ReactivationService {
       now.getTime() - BOOKING_LOOKBACK_DAYS * 24 * 60 * 60 * 1000
     ).toISOString();
 
-    const { data: bookings, error: bookingsError } = await supabase
-      .from('bookings')
-      .select('member_id, booked_at')
-      .in('member_id', userIds)
-      .gte('booked_at', lookbackCutoff)
-      .in('status', ['confirmed', 'completed']);
-
-    if (bookingsError) throw bookingsError;
+    // In Blöcken: alle Nutzer-IDs in einem .in() sprengten die URL-Länge (Sentry, 27.09.2026).
+    const bookings = await fetchAllIn(
+      userIds,
+      (chunk) =>
+        supabase
+          .from('bookings')
+          .select('id, member_id, booked_at')
+          .in('member_id', chunk)
+          .gte('booked_at', lookbackCutoff)
+          .in('status', ['confirmed', 'completed'])
+          .order('id'),
+      'Buchungen lesen fehlgeschlagen'
+    );
 
     // 3. Index bookings by user (keep the most recent)
     const lastBookingByUser = new Map<string, string>();
-    for (const b of bookings ?? []) {
+    for (const b of bookings) {
       const existing = lastBookingByUser.get(b.member_id);
       if (!existing || b.booked_at > existing) {
         lastBookingByUser.set(b.member_id, b.booked_at);
