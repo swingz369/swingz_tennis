@@ -66,7 +66,13 @@ export function PageHeader({
             </p>
           )}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h1 className="text-[32px] sm:text-[40px] lg:text-[44px] font-bold italic uppercase leading-[1.04] tracking-[-0.035em] text-foreground text-balance">
+            {/* hyphens-auto + overflow-wrap: lange deutsche Titel („Mitgliederverwaltung")
+                sind in Versalien breiter als ein Handy — ohne Trennung scrollte
+                die ganze Seite seitlich. */}
+            <h1
+              lang="de"
+              className="text-[28px] sm:text-[40px] lg:text-[44px] font-bold italic uppercase leading-[1.04] tracking-[-0.035em] text-foreground text-balance hyphens-auto [overflow-wrap:anywhere]"
+            >
               {title}
             </h1>
             {badge}
