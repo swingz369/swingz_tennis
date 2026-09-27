@@ -4,6 +4,7 @@ import { errorResponse, internalErrorResponse } from '@/lib/api-error';
 import { z } from 'zod';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
+import { DEFAULT_BRANDING } from '@/lib/branding';
 import { createLogger } from '@/lib/logger';
 import type { Database } from '@/types/supabase';
 
@@ -68,9 +69,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         clubId,
         brand: {
-          primaryColor: data.primary_color || '#00599F',
-          secondaryColor: data.secondary_color || '#22334F',
-          accentColor: data.accent_color || '#94C121',
+          primaryColor: data.primary_color || DEFAULT_BRANDING.brand.primaryColor,
+          secondaryColor: data.secondary_color || DEFAULT_BRANDING.brand.secondaryColor,
+          accentColor: data.accent_color || DEFAULT_BRANDING.brand.accentColor,
         },
         logos: {
           light: data.logo_light_url || null,

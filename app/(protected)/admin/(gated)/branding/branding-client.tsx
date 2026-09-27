@@ -30,9 +30,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
   const [activeTab, setActiveTab] = useState('colors');
   const [saving, setSaving] = useState(false);
   const [branding, setBranding] = useState<BrandingData>({
-    primaryColor: '#00599F',
-    secondaryColor: '#22334F',
-    accentColor: '#94C121',
+    ...DEFAULT_BRANDING.brand,
     logoLightUrl: '',
     logoDarkUrl: '',
     dashboardBgUrl: '',
@@ -139,7 +137,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
                   <Input
                     value={branding.primaryColor}
                     onChange={(e) => setBranding({ ...branding, primaryColor: e.target.value })}
-                    placeholder="#00599F"
+                    placeholder={DEFAULT_BRANDING.brand.primaryColor}
                   />
                 </div>
               </div>
@@ -155,7 +153,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
                   <Input
                     value={branding.secondaryColor}
                     onChange={(e) => setBranding({ ...branding, secondaryColor: e.target.value })}
-                    placeholder="#22334F"
+                    placeholder={DEFAULT_BRANDING.brand.secondaryColor}
                   />
                 </div>
               </div>
@@ -171,7 +169,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
                   <Input
                     value={branding.accentColor}
                     onChange={(e) => setBranding({ ...branding, accentColor: e.target.value })}
-                    placeholder="#94C121"
+                    placeholder={DEFAULT_BRANDING.brand.accentColor}
                   />
                 </div>
               </div>
