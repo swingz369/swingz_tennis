@@ -3,7 +3,7 @@
 # oder verbotene Radius-Varianten in den UI-Code zurückkommen.
 # Erlaubt sind nur semantische Tokens: success/warning/error/info, gray,
 # brand-*, primary/secondary/muted/accent/destructive (shadcn) sowie
-# rounded-md | rounded-xl | rounded-full.
+# rounded (4 px, Tags) | rounded-md | rounded-xl | rounded-full.
 # Nutzung: bash scripts/check-design-tokens.sh   (Exit 1 bei Verstößen)
 set -uo pipefail
 cd "$(dirname "$0")/.."

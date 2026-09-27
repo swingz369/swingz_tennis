@@ -16,20 +16,21 @@ import { cn } from '@/lib/utils';
  * dann und nur dann gibt es eine Reaktion, und die ist eine Randfärbung,
  * kein Sprung.
  */
-const cardVariants = cva('rounded-xl bg-card dark:bg-card', {
+// Karten mit CardHeader/CardContent tragen den Abstand in den Abschnitten —
+// sonst addierte sich das Karten-Padding dazu (doppelter Rand, 40 px).
+const cardVariants = cva('rounded-xl bg-card [&:has(>div>.card-section)]:p-0', {
   variants: {
     variant: {
-      default: 'border border-border dark:border-white/10',
-      interactive:
-        'border border-border dark:border-white/10 transition-colors duration-150 hover:border-foreground/25 dark:hover:border-white/25',
-      elevated: 'border border-border dark:border-white/10 shadow-md',
-      bordered: 'border border-border dark:border-white/20',
-      flat: 'bg-muted dark:bg-card/5 border border-border dark:border-white/10',
+      default: 'border border-border',
+      interactive: 'border border-border transition-colors duration-150 hover:border-foreground/30',
+      elevated: 'border border-border shadow-md',
+      bordered: 'border border-input',
+      flat: 'bg-muted border border-border',
     },
     padding: {
       none: '',
       sm: 'p-3',
-      md: 'p-4',
+      md: 'p-5',
       lg: 'p-6',
       xl: 'p-8',
     },
@@ -50,13 +51,9 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant, padding, header, footer, children, ...props }, ref) => {
     return (
       <div ref={ref} className={cn(cardVariants({ variant, padding }), className)} {...props}>
-        {header && (
-          <div className="border-b border-border dark:border-white/10 px-4 py-3">{header}</div>
-        )}
+        {header && <div className="border-b border-border px-5 py-4">{header}</div>}
         <div className={cn(header && 'pt-0', footer && 'pb-0')}>{children}</div>
-        {footer && (
-          <div className="border-t border-border dark:border-white/10 px-4 py-3">{footer}</div>
-        )}
+        {footer && <div className="border-t border-border px-5 py-4">{footer}</div>}
       </div>
     );
   }
@@ -65,7 +62,11 @@ Card.displayName = 'Card';
 
 const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('flex flex-col space-y-1.5 px-4 py-4', className)} {...props} />
+    <div
+      ref={ref}
+      className={cn('card-section flex flex-col space-y-1.5 px-5 py-5', className)}
+      {...props}
+    />
   )
 );
 CardHeader.displayName = 'CardHeader';
@@ -75,7 +76,7 @@ const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HT
     <h3
       ref={ref}
       className={cn(
-        'text-lg font-semibold leading-none tracking-tight text-foreground dark:text-white',
+        'text-lg font-semibold leading-tight tracking-[-0.02em] text-foreground',
         className
       )}
       {...props}
@@ -88,24 +89,31 @@ const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p
-    ref={ref}
-    className={cn('text-sm text-muted-foreground dark:text-muted-foreground', className)}
-    {...props}
-  />
+  <p ref={ref} className={cn('text-sm text-muted-foreground', className)} {...props} />
 ));
 CardDescription.displayName = 'CardDescription';
 
 const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('px-4 pb-4 pt-0', className)} {...props} />
+    <div
+      ref={ref}
+      className={cn('card-section px-5 pb-5 pt-5 [.card-section+&]:pt-0', className)}
+      {...props}
+    />
   )
 );
 CardContent.displayName = 'CardContent';
 
 const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('flex items-center px-4 pb-4 pt-0', className)} {...props} />
+    <div
+      ref={ref}
+      className={cn(
+        'card-section flex items-center px-5 pb-5 pt-5 [.card-section+&]:pt-0',
+        className
+      )}
+      {...props}
+    />
   )
 );
 CardFooter.displayName = 'CardFooter';

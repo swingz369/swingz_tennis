@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 27. September 2026 (§1: Palette Matchday; §2–3 am 26.09.: aktuelle Palette, Schriften, Bewertung und Detailkorrekturen; spätere Detailkapitel zuletzt am 20.09.2026 geprüft)
+> Zuletzt verifiziert: 27. September 2026 (§1: Palette Matchday; §6a: Bausteine Matchday; §2–3 am 26.09.: aktuelle Palette, Schriften, Bewertung und Detailkorrekturen; spätere Detailkapitel zuletzt am 20.09.2026 geprüft)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -237,7 +237,9 @@ Commit. Plan und Begründung: `ARCHIV/2026-09-19-ui-einheitlichkeit-analyse-und-
 
 **Statusfarben im Dunkelmodus:** `bg-{success|warning|error|info}-50…300`, `border-…-100…300` und `text-…-600…900` sind über CSS-Variablen (`globals.css`, `.dark`) themefähig und kippen von selbst. Ein `dark:`-Gegenstück derselben Farbe daneben (`bg-info-50 dark:bg-info-900/20`) ist überflüssig und wird von der Ratsche abgewiesen. Ein `dark:` bleibt nur, wo die Basis nicht themefähig ist (Stufen 400/500, gefüllte Buttons).
 
-**Schatten:** `Card` = `shadow-sm`, schwebende Flächen (Dialog, Panel, Popover, Drag-Overlay) = `shadow-lg`; `shadow-xl`/`shadow-2xl` gibt es nicht. **Überschriften:** `h1` (PageHeader) und `h2` sind `font-semibold`, nie `font-bold`; Farbe kommt von `text-foreground`, kein `dark:text-white` daneben. Die verbliebenen `text-[Npx]` (Marke, Hero-Zahl, Mono-Beschriftungen) sind bewusst und über die Ratsche eingefroren.
+**Schatten:** `Card` = `shadow-sm`, schwebende Flächen (Dialog, Panel, Popover, Drag-Overlay) = `shadow-lg`; `shadow-xl`/`shadow-2xl` gibt es nicht. **Überschriften (Matchday, 27.09.2026):** `h1` ist der Display-Titel und entsteht nur in `PageHeader`: DM Sans Bold **kursiv in Versalien**, eng gesetzt, optional mit `eyebrow` (Bereich/Datum) darüber — die eine laute Ebene einer Seite. `h2` bleibt `font-semibold`, nie `font-bold`. Farbe kommt von `text-foreground`, kein `dark:text-white` daneben.
+
+**Bausteine nach der Matchday-Vorlage (27.09.2026):** Radius `rounded-xl` = 12 px (Panels, Dialoge), `rounded-md` = 8 px (Buttons, Felder, Umschalter), `rounded` = 4 px (Tags/Badges, Segmente im Umschalter). `Card` trägt keinen eigenen Innenabstand, sobald `CardHeader`/`CardContent` drin sind. `Table`: Kopf in Versalien auf `bg-muted`, Zellen `px-5 py-4`, Ziffern `tabular-nums`. `Button`: 44 px hoch (`default`/`icon`), Variante `highlight` = Lime-Fläche für die **eine** Hauptaktion einer Seite (ADR-007). `Tabs` = Segment-Umschalter mit Rahmen, aktives Segment `bg-muted`. `KpiBand` = Kennzahlen-Panel mit Trennlinien. Eingabefelder rahmen mit `--input` (3:1). Die verbliebenen `text-[Npx]` (Marke, Hero-Zahl, Mono-Beschriftungen) sind bewusst und über die Ratsche eingefroren.
 
 **Dashboards (Stand 19.09.2026):** Owner, Superadmin, Admin, Trainer und Mitglied bauen bereits gleich — `PageHeader` → `KpiBand` → Schnellaktionen/Karten. Die Analyse hatte das zu pessimistisch gezählt; der Aufbau ist nicht das Problem, sondern nur die Handbau-Kacheln auf den übrigen Seiten.
 

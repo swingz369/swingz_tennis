@@ -143,11 +143,13 @@ describe('TrainerAvailabilityManager (integration)', () => {
     });
 
     // Find the Monday "11:00" chip — should be active (primary).
-    // Auf `bg-primary text-white` prüfen, nicht nur auf `bg-primary`: die
+    // Auf `bg-primary text-primary-foreground` prüfen, nicht nur auf `bg-primary`: die
     // Hinzufügen-Chips tragen `hover:bg-primary` und würden bei einem reinen
     // Teilstring-Vergleich mit anschlagen.
     const allChips = screen.getAllByText('11:00');
-    const mondayChip = allChips.find((el) => el.className.includes('bg-primary text-white'));
+    const mondayChip = allChips.find((el) =>
+      el.className.includes('bg-primary text-primary-foreground')
+    );
     expect(mondayChip).toBeTruthy();
 
     // Click again → toggle off

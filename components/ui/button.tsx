@@ -31,7 +31,7 @@ function nodeHasVisibleText(node: React.ReactNode): boolean {
 // dickste Linie der Oberfläche und zieht Aufmerksamkeit auf die zweitwichtigste
 // Aktion.
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-xl font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-md font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
   {
     variants: {
       variant: {
@@ -39,10 +39,13 @@ const buttonVariants = cva(
           'bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary/50',
         primary:
           'bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary/50',
+        // Die eine Hauptaktion einer Seite (ADR-007) — Lime-Fläche, nachtblaue Schrift.
+        highlight:
+          'bg-highlight text-highlight-foreground hover:bg-highlight/85 focus-visible:ring-highlight/60',
         secondary:
           'bg-brand-secondary text-white hover:bg-brand-secondary/90 focus-visible:ring-brand-secondary/50',
         outline:
-          'border border-input bg-transparent text-foreground dark:text-white hover:bg-muted focus-visible:ring-ring',
+          'border border-input bg-card text-foreground hover:bg-muted focus-visible:ring-ring',
         ghost:
           'text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/10 hover:text-foreground dark:hover:text-white focus-visible:ring-ring',
         destructive: 'bg-error-600 text-white hover:bg-error-700 focus-visible:ring-error-500',
@@ -57,8 +60,8 @@ const buttonVariants = cva(
         xl: 'h-14 px-8 text-xl gap-3',
         // `gap-2` fehlte als einziger Grösse: Knöpfe mit Icon (die meisten
         // Kopfzeilen-Aktionen) klebten Symbol und Text aneinander.
-        default: 'h-10 px-4 py-2 text-sm gap-2',
-        icon: 'h-10 w-10 p-0',
+        default: 'h-11 px-4 py-2 text-sm gap-2',
+        icon: 'h-11 w-11 p-0',
       },
       fullWidth: {
         true: 'w-full',

@@ -80,10 +80,10 @@ export function KpiBand({ items }: { items: KpiBandItem[] }) {
     // Innen: jede Zelle trägt rechte + untere Kante, der Container schneidet die
     // äusseren ab (-mr-px/-mb-px + overflow-hidden) — funktioniert für jede
     // Anzahl und Zeilenzahl, ohne Sonderfälle je Position.
-    <div className="overflow-hidden border-t-2 border-foreground dark:border-t-primary border-b border-border">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       <dl className={cn('-mr-px -mb-px grid', COLS[items.length] ?? 'grid-cols-2 lg:grid-cols-4')}>
         {items.map((item) => {
-          const cellClass = 'px-4 py-5 sm:px-6 border-r border-b border-border';
+          const cellClass = 'px-5 py-5 sm:px-6 border-r border-b border-border';
 
           return item.href ? (
             <Link

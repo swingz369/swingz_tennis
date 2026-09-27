@@ -9,13 +9,15 @@ export interface PageHeaderAction {
   icon?: LucideIcon;
   href?: string;
   onClick?: () => void;
-  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive';
+  variant?: 'default' | 'highlight' | 'outline' | 'secondary' | 'ghost' | 'destructive';
   disabled?: boolean;
 }
 
 interface PageHeaderProps {
   /** Page title */
   title: string;
+  /** Kleine Versalzeile über dem Titel — Bereich oder Datum (Matchday-Vorlage) */
+  eyebrow?: ReactNode;
   /** Optional description below the title (Text oder einfacher JSX-Inhalt) */
   description?: ReactNode;
   /** Action buttons rendered on the right (oder freier Knoten, z. B. Status-Select) */
@@ -31,6 +33,7 @@ interface PageHeaderProps {
 
 export function PageHeader({
   title,
+  eyebrow,
   description,
   actions,
   back,
@@ -51,23 +54,25 @@ export function PageHeader({
         </Link>
       )}
       {/* Title row */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        {/* ── Typografische Hierarchie (18.08.2026) ──
-            Vorher lag zwischen Seitentitel (text-2xl/24 px) und Fliesstext
-            (text-sm/14 px) nicht genug Abstand, um beim Überfliegen als Ebene
-            zu wirken — auf jedem Screen war alles ähnlich laut. Der Titel geht
-            jetzt auf 30 px mit enger Laufweite (die Display-Schrift verträgt
-            das und wirkt erst dadurch gesetzt statt fett), die Beschreibung
-            wird etwas grösser, aber ruhig. */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        {/* ── Display-Titel (Matchday, ADR-007) ──
+            Kursive Versalien in DM Sans Bold, eng gesetzt: der Titel ist die
+            eine laute Ebene der Seite, alles darunter bleibt ruhig. Die
+            Eyebrow darüber sagt, wo man ist (Bereich, Datum). */}
         <div className="min-w-0">
+          {eyebrow && (
+            <p className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+              {eyebrow}
+            </p>
+          )}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h1 className="font-display text-[28px] sm:text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-foreground">
+            <h1 className="text-[32px] sm:text-[40px] lg:text-[44px] font-bold italic uppercase leading-[1.04] tracking-[-0.035em] text-foreground text-balance">
               {title}
             </h1>
             {badge}
           </div>
           {description && (
-            <p className="text-[15px] leading-snug text-muted-foreground mt-1.5 max-w-[60ch]">
+            <p className="text-[15px] leading-snug text-muted-foreground mt-3 max-w-[60ch]">
               {description}
             </p>
           )}

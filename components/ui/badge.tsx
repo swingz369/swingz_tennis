@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 // die die Fläche ohnehin bildet, und lässt das Badge wie einen Aufkleber
 // wirken. Nur `outline` behält ihn, dort ist er das ganze Element.
 const badgeVariants = cva(
-  'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium transition-colors',
+  'inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold transition-colors',
   {
     variants: {
       variant: {

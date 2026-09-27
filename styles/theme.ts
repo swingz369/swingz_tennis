@@ -95,15 +95,17 @@ export const colors = {
 
 export const typography = {
   fontFamily: {
-    sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+    // Über die next/font-Variablen: next/font vergibt einen eigenen Familiennamen,
+    // ein wörtliches "DM Sans" fand nichts und fiel still auf system-ui zurück.
+    sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
     // ponytail: "Clash Display" wurde nirgends geladen — kein @font-face, kein
     // next/font, kein CDN-Link. Die 35 `font-display`-Stellen sind damit seit
     // jeher auf DM Sans zurückgefallen, nur unbemerkt: ein Font-Stack, dessen
     // erster Eintrag nicht existiert, sagt nichts, er verschweigt nur. Der
     // Entwurf führt ohnehin durchgehend DM Sans. Wenn Clash Display wirklich
     // kommen soll, gehört es zuerst in app/fonts/ und app/layout.tsx.
-    display: ['"DM Sans"', 'system-ui', 'sans-serif'],
-    mono: ['"JetBrains Mono"', 'Consolas', 'monospace'],
+    display: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+    mono: ['var(--font-mono)', 'Consolas', 'monospace'],
   },
   fontSize: {
     // Kleinste Stufe. Nur für dichte Raster (Kalenderzellen, Heatmap-Achsen),
@@ -165,7 +167,7 @@ export const radius = {
   sm: '0.375rem',
   md: '0.5rem',
   lg: '0.75rem',
-  xl: '10px',
+  xl: '12px', // Matchday: Panel-Radius der Vorlage (ADR-007)
   '2xl': '1.5rem',
   '3xl': '2rem',
   '4xl': '3rem',

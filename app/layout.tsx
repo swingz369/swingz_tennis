@@ -13,9 +13,13 @@ import { SonnerAriaBridge } from '@/components/sonner-aria-bridge';
 // ponytail: selbst gehostet statt next/font/google — Google lieferte im Vercel-Build
 // eine CSS mit 404-woff2-URLs, was den Turbopack-Build killte. Latin-Subset reicht für DE.
 const dmSans = localFont({
-  src: './fonts/dm-sans.woff2',
+  // Italic nur für die Display-Überschriften (Matchday, ADR-007) — ohne eigene
+  // Datei neigt der Browser die aufrechte Schrift künstlich.
+  src: [
+    { path: './fonts/dm-sans.woff2', weight: '400 700', style: 'normal' },
+    { path: './fonts/dm-sans-italic.woff2', weight: '400 700', style: 'italic' },
+  ],
   variable: '--font-sans',
-  weight: '400 700', // Variable-Achse
   display: 'swap',
   // Die Textschrift der ganzen App wird vorgeladen. Ohne das kam sie erst
   // nach dem ersten Paint, und die Sidebar sprang sichtbar von system-ui auf
