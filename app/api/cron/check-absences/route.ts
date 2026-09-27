@@ -19,6 +19,9 @@ const LOOKBACK_DAYS = 60;
 const NO_SHOW_THRESHOLD = 3;
 const COOLDOWN_DAYS = 30;
 
+/** Geht nur an Trainer; die memberId im Query macht den Link je Mitglied eindeutig. */
+const absenceUrl = (memberId: string) => `/trainer?absent=${memberId}`;
+
 export async function GET(req: NextRequest) {
   // ── Auth: Cron-Secret prüfen ──────────────────────────────────────────────
   const cronSecret = process.env.CRON_SECRET;
@@ -78,7 +81,7 @@ export async function GET(req: NextRequest) {
     }
 
     // 4. Bereits benachrichtigte (member_id, club_id)-Paare der letzten 30 Tage ausschließen
-    // memberId wird in action_url gespeichert für zuverlässige Deduplizierung
+    // action_url trägt die memberId (absenceUrl) — dient zugleich der Deduplizierung
     const { data: recentNotifsFull } = await service
       .from('notifications')
       .select('action_url, club_id')
@@ -92,7 +95,9 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const toProcess = candidates.filter((c) => !alreadyNotified.has(`${c.memberId}::${c.clubId}`));
+    const toProcess = candidates.filter(
+      (c) => !alreadyNotified.has(`${absenceUrl(c.memberId)}::${c.clubId}`)
+    );
 
     // 5. Mitglieder + Trainer je in EINEM Query auflösen statt 2 + N im Loop (N+1).
     const memberIds = [...new Set(toProcess.map((c) => c.memberId))];
@@ -146,8 +151,8 @@ export async function GET(req: NextRequest) {
           title: 'Häufige Fehlzeiten',
           message: `${memberLabel} war ${count}x unentschuldigt abwesend (letzte ${LOOKBACK_DAYS} Tage). Bitte Kontakt aufnehmen.`,
           read: false,
-          // Für den Deduplizierungs-Check (siehe Schritt 4)
-          action_url: memberId,
+          // Klickbarer Link und zugleich Schlüssel für den Deduplizierungs-Check (Schritt 4)
+          action_url: absenceUrl(memberId),
         });
       }
     }

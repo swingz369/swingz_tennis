@@ -167,7 +167,7 @@ async function notifyMembers(
         type: 'warning',
         title: 'Plätze belegt',
         message: `Am ${datum} sind die Plätze wegen des Heimspiels ${leagueName} gegen ${opponent} belegt.`,
-        action_url: '/member',
+        action_url: '/dashboard', // /dashboard leitet je nach Rolle weiter — geht auch an Admins/Trainer
       }))
     );
   } catch (err) {

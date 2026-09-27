@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
             type,
             title,
             message,
-            action_url: '/member',
+            action_url: '/dashboard', // /dashboard leitet je nach Rolle weiter — geht auch an Admins/Trainer
           }));
           await serviceSb.from('notifications').insert(notificationRows);
           log.info('[Closures POST] Notifications sent', { count: members.length, clubId, reason });
