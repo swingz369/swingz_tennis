@@ -1,6 +1,5 @@
 import { PageHeader } from '@/components/ui/page-header';
 import { AnimatedCounter } from '@/components/animations';
-import { cn } from '@/lib/utils';
 
 /** Time-of-day greeting based on the current hour in Germany (Europe/Berlin),
  *  independent of the server's own timezone (e.g. UTC on Vercel). */
@@ -51,7 +50,6 @@ export function PremiumAdminHero({
   overdueInvoiceCount,
   nextInvoiceDue,
 }: PremiumAdminHeroProps) {
-  const isPlatformStaff = role === 'owner' || role === 'superadmin';
   const todayLabel = new Date().toLocaleDateString('de-DE', {
     weekday: 'long',
     day: 'numeric',
@@ -70,37 +68,20 @@ export function PremiumAdminHero({
 
   return (
     <div className="min-w-0">
-      {/* Date + Role pill — Datum in Mono, damit es als Datenzeile liest und
-          nicht als zweite Überschrift mit der Begrüßung konkurriert. */}
-      <div className="flex items-center gap-2 mb-2">
-        <p className="tabular-nums text-2xs font-medium uppercase tracking-[0.13em] text-muted-foreground">
-          {todayLabel}
-        </p>
-        <span
-          className={cn(
-            'text-2xs font-semibold px-2 py-0.5 rounded-full',
-            isPlatformStaff
-              ? 'bg-info-50 text-info-700'
-              : 'bg-brand-light/10 text-brand-light dark:bg-brand-light/20 dark:text-success-300'
-          )}
-        >
-          {ROLE_BADGE_LABEL[role]}
-        </span>
-      </div>
-
       <PageHeader
+        eyebrow={`${todayLabel} · ${ROLE_BADGE_LABEL[role]}`}
         title={`${greeting}, ${firstName}.`}
         description={
           <>
             Heute{' '}
-            <strong className="text-foreground dark:text-white font-semibold">
+            <strong className="text-foreground font-semibold">
               <AnimatedCounter value={todaySessionCount} />
             </strong>{' '}
             {todaySessionCount === 1 ? 'Session' : 'Sessions'}
             {openInvoiceCount > 0 && (
               <>
                 ,{' '}
-                <strong className="text-foreground dark:text-white font-semibold">
+                <strong className="text-foreground font-semibold">
                   {openInvoiceCount} {openInvoiceCount === 1 ? 'Rechnung' : 'Rechnungen'}
                 </strong>{' '}
                 {overdueInvoiceCount > 0 ? 'überfällig' : 'fällig'}

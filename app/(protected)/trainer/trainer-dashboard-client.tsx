@@ -7,8 +7,10 @@ import {
   asUtcIso,
   formatDate as formatDateBerlin,
   formatTime as formatTimeBerlin,
+  formatWeekdayDate,
 } from '@/lib/format';
 import {
+  ArrowRight,
   Calendar,
   Users,
   Clock,
@@ -18,24 +20,16 @@ import {
   CreditCard,
   Target,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { ListState } from '@/components/ui/list-state';
+import { NextUpHero } from '@/components/ui/next-up-hero';
+import { SessionRow } from '@/components/ui/session-row';
 import { KpiBand } from '@/components/ui/kpi-band';
 import { QuickActions } from '@/components/ui/quick-actions';
 import { TrainerRsvpList } from '@/components/trainer-rsvp-list';
 import { ScrollReveal } from '@/components/animations';
-
-// Zeilenmasse wie im Admin-, Owner- und Superadmin-Dashboard.
-const HEAD_CELL = 'h-auto px-5 pb-2.5 pt-0 text-2xs uppercase tracking-[0.09em]';
-const BODY_CELL = 'px-5 py-2.5';
 
 export interface TrainerSession {
   id: string;
@@ -101,27 +95,77 @@ export default function TrainerDashboardClient({
     timeslot_end: s.endTime,
   }));
 
+  // Nur Kommendes: vorher standen hier die ersten fünf Einheiten überhaupt —
+  // am 27.09. also Termine vom 07.09.
+  const now = new Date();
+  const upcoming = sessions.filter((s) => new Date(asUtcIso(s.startTime) as string) >= now);
+  const next = upcoming[0];
+  const isToday = (iso: string) => iso.substring(0, 10) === todayStr;
+  const openAttendance = (id: string) => {
+    setSelectedSessionId(id);
+    document
+      .getElementById('session-teilnehmer')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  const participants = (s: TrainerSession) =>
+    `${s.attendees?.length ?? 0} ${s.attendees?.length === 1 ? 'Teilnehmer' : 'Teilnehmende'}`;
+
   return (
     <div className="space-y-6">
-      {/* ── Kopf ──
-          Vorher stand hier eine dreizeilige Anrede („Trainer-Bereich" /
-          „Willkommen zurück" / „Deine Übersicht über Sessions, Anwesenheit und
-          mehr") plus rechts eine Pille mit derselben Zahl, die zwei Zeilen
-          tiefer noch einmal als Kachel kam. Jetzt: wer, und was heute ansteht. */}
+      {/* ── Matchday-Startseite (ADR-007): nächste Einheit mit der einen
+          Hauptaktion „Anwesenheit erfassen", daneben die Woche. ── */}
       <PageHeader
-        title={trainerName ? `Hallo, ${trainerName.split(' ')[0]}` : 'Trainer-Übersicht'}
+        eyebrow={`${formatWeekdayDate(today)}${trainerName ? ` · Hallo ${trainerName.split(' ')[0]}` : ''}`}
+        title="Bereit fürs Training."
         description={
           todaySessions.length > 0
-            ? `${todaySessions.length} ${todaySessions.length === 1 ? 'Einheit' : 'Einheiten'} heute`
-            : stats.upcomingSessions > 0
-              ? `Heute nichts — ${stats.upcomingSessions} kommende ${stats.upcomingSessions === 1 ? 'Einheit' : 'Einheiten'}`
-              : 'Keine Einheiten geplant'
+            ? `${todaySessions.length} ${todaySessions.length === 1 ? 'Einheit' : 'Einheiten'} heute. Deine Gruppen, deine Termine.`
+            : upcoming.length > 0
+              ? `Heute nichts — ${upcoming.length} kommende ${upcoming.length === 1 ? 'Einheit' : 'Einheiten'}.`
+              : 'Keine Einheiten geplant.'
         }
-        actions={[{ label: 'Alle Einheiten', href: '/scheduler', variant: 'outline' }]}
       />
 
-      {/* Kennzahlen als Band statt als vier gerahmte Kacheln — gleiche
-          Begründung wie in components/ui/kpi-band.tsx. */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.8fr)_minmax(280px,1fr)]">
+        {next ? (
+          <NextUpHero
+            eyebrow={`${isToday(next.startTime) ? 'Heute' : formatWeekdayDate(asUtcIso(next.startTime))} · ${formatTime(next.startTime)}–${formatTime(next.endTime)}`}
+            title={next.groupName || 'Training'}
+            meta={[next.courtName, participants(next)].filter(Boolean).join(' · ')}
+            action={{ label: 'Anwesenheit erfassen', onClick: () => openAttendance(next.id) }}
+          />
+        ) : (
+          <NextUpHero
+            eyebrow="Als Nächstes"
+            title="Keine Einheit geplant."
+            meta="Sobald dir Einheiten zugewiesen werden, stehen sie hier."
+            action={{ label: 'Verfügbarkeit pflegen', href: '/trainer/availability' }}
+          />
+        )}
+
+        <Card className="flex flex-col justify-between p-6">
+          <div>
+            <Badge variant="default" className="uppercase tracking-[0.08em]">
+              Deine Trainingswoche
+            </Badge>
+            <h2 className="mt-3 text-xl font-semibold tracking-[-0.02em]">
+              {stats.thisWeekSessions === 1
+                ? 'Eine Einheit diese Woche.'
+                : `${stats.thisWeekSessions} Einheiten diese Woche.`}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Anwesenheit führst du für jede Einheit einzeln — gespeicherte Angaben kannst du
+              jederzeit bearbeiten.
+            </p>
+          </div>
+          <Button asChild variant="outline" className="mt-6 self-start">
+            <Link href="/scheduler">
+              Platzkalender <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        </Card>
+      </div>
+
       <KpiBand
         items={[
           { label: 'Diese Woche', value: stats.thisWeekSessions, sub: 'Einheiten geplant' },
@@ -137,74 +181,45 @@ export default function TrainerDashboardClient({
         ]}
       />
 
-      {/* ── Kommende Einheiten ──
-          Tabelle in einer Karte, Datum und Uhrzeit als eigene Spalten: so
-          stehen die Termine auf einer gemeinsamen Kante und lassen sich
-          vergleichen. Die Symbol-Kachel je Zeile ist weg — sie war an jeder
-          Zeile dieselbe und unterschied damit nichts. */}
-      <Card className="p-0">
-        <CardHeader className="flex-row items-start justify-between space-y-0 px-5 pb-3 pt-5">
+      <Card padding="none">
+        <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
           <div>
-            <CardTitle className="text-sm font-semibold">Kommende Einheiten</CardTitle>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {sessions.length === 1 ? '1 Einheit' : `${sessions.length} Einheiten`}
-              {sessions.length > 5 && ' · die nächsten 5'}
+            <h2 className="text-lg font-semibold tracking-[-0.02em]">Deine Trainings</h2>
+            <p className="text-sm text-muted-foreground">
+              {upcoming.length === 1
+                ? '1 kommende Einheit'
+                : `${upcoming.length} kommende Einheiten`}
+              {upcoming.length > 5 && ' · die nächsten 5'}
             </p>
           </div>
-          <Link
-            href="/scheduler"
-            className="shrink-0 text-[12.5px] font-medium text-primary hover:underline"
-          >
-            Alle anzeigen →
+          <Link href="/scheduler" className="text-sm font-semibold text-primary hover:underline">
+            Kalender →
           </Link>
-        </CardHeader>
-        <CardContent className="px-0 pb-0">
-          {sessions.length === 0 ? (
-            <p className="px-5 pb-5 text-sm text-muted-foreground">
-              Keine bevorstehenden Einheiten. Sobald dir welche zugewiesen werden, stehen sie hier.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className={cn(HEAD_CELL, 'w-[22%]')}>Datum</TableHead>
-                  <TableHead className={cn(HEAD_CELL, 'w-[18%]')}>Zeit</TableHead>
-                  <TableHead className={HEAD_CELL}>Gruppe / Platz</TableHead>
-                  <TableHead className={cn(HEAD_CELL, 'w-[14%] text-right')}>Aktion</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sessions.slice(0, 5).map((session) => (
-                  <TableRow key={session.id}>
-                    <TableCell className={cn(BODY_CELL, 'text-muted-foreground tabular-nums')}>
-                      {formatDate(session.startTime)}
-                    </TableCell>
-                    <TableCell className={cn(BODY_CELL, 'font-medium tabular-nums')}>
-                      {formatTime(session.startTime)}–{formatTime(session.endTime)}
-                    </TableCell>
-                    <TableCell className={BODY_CELL}>
-                      {session.groupName || session.courtName || 'Training'}
-                    </TableCell>
-                    <TableCell className={cn(BODY_CELL, 'text-right')}>
-                      <button
-                        type="button"
-                        className="text-[12.5px] font-medium text-primary hover:underline"
-                        onClick={() => {
-                          setSelectedSessionId(session.id);
-                          document
-                            .getElementById('session-teilnehmer')
-                            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }}
-                      >
-                        Anwesenheit
-                      </button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
+        </div>
+        {upcoming.length === 0 ? (
+          <ListState
+            empty
+            emptyTitle="Keine bevorstehenden Einheiten"
+            emptyHint="Sobald dir welche zugewiesen werden, stehen sie hier."
+          />
+        ) : (
+          upcoming.slice(0, 5).map((session) => (
+            <SessionRow
+              key={session.id}
+              start={formatTime(session.startTime)}
+              end={formatTime(session.endTime)}
+              title={session.groupName || 'Training'}
+              meta={[formatDate(session.startTime), session.courtName, participants(session)]
+                .filter(Boolean)
+                .join(' · ')}
+              trailing={
+                <Button variant="outline" size="sm" onClick={() => openAttendance(session.id)}>
+                  Anwesenheit
+                </Button>
+              }
+            />
+          ))
+        )}
       </Card>
 
       {/* ── Session RSVPs & Check-in ── */}
