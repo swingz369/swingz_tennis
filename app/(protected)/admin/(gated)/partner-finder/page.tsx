@@ -1,14 +1,16 @@
 'use client';
 
+import { KpiBand } from '@/components/ui/kpi-band';
+
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/page-header';
-import { AnimatedCounter, ScrollReveal } from '@/components/animations';
+import { ScrollReveal } from '@/components/animations';
 import { TennisBallEmptyState } from '@/components/ui/empty-state';
-import { Shuffle, Users, Target, BarChart3, RefreshCw, ArrowUpRight } from 'lucide-react';
+import { BarChart3, RefreshCw, ArrowUpRight } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 
 interface PartnerFinderStats {
@@ -69,14 +71,6 @@ export default function PartnerFinderOverviewPage() {
   return (
     <div className="relative">
       {/* Subtile Marken-Textur — Ambient-Licht + Noise, bewusst kein Banner. */}
-      <div
-        className="pointer-events-none absolute inset-x-0 -top-8 h-72 overflow-hidden"
-        aria-hidden="true"
-      >
-        <div className="absolute -top-24 left-1/4 h-64 w-64 rounded-full bg-brand-light/10 blur-3xl" />
-        <div className="absolute -top-16 right-1/4 h-52 w-52 rounded-full bg-brand-accent/10 blur-3xl" />
-      </div>
-
       <div className="relative z-10 space-y-6">
         {/* Standard-Header wie auf den übrigen Admin-Seiten — kein Hero-Banner. */}
         <PageHeader
@@ -101,67 +95,21 @@ export default function PartnerFinderOverviewPage() {
           />
         ) : (
           <>
-            {/* ── KPI Cards ── */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-              <ScrollReveal delay={0}>
-                <Card variant="interactive" className="group">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-muted-foreground">
-                          Spielende Mitglieder
-                        </p>
-                        <p className="text-3xl font-bold text-foreground">
-                          <AnimatedCounter value={stats?.totalMembers ?? 0} />
-                        </p>
-                        <p className="text-xs text-muted-foreground">Mitglieder & Trainer</p>
-                      </div>
-                      <div className="p-3 rounded-xl bg-info-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                        <Users className="h-5 w-5" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </ScrollReveal>
-
-              <ScrollReveal delay={80}>
-                <Card variant="interactive" className="group">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-muted-foreground">Aktive Suchende</p>
-                        <p className="text-3xl font-bold text-foreground">
-                          <AnimatedCounter value={stats?.activeSearchers ?? 0} />
-                        </p>
-                        <p className="text-xs text-muted-foreground">haben Zeiten hinterlegt</p>
-                      </div>
-                      <div className="p-3 rounded-xl bg-success-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                        <Target className="h-5 w-5" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </ScrollReveal>
-
-              <ScrollReveal delay={160}>
-                <Card variant="interactive" className="group col-span-2 lg:col-span-1">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-muted-foreground">Niveaustufen</p>
-                        <p className="text-3xl font-bold text-foreground">
-                          <AnimatedCounter value={levelEntries.length} />
-                        </p>
-                        <p className="text-xs text-muted-foreground">im Verein vertreten</p>
-                      </div>
-                      <div className="p-3 rounded-xl bg-info-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                        <Shuffle className="h-5 w-5" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </ScrollReveal>
-            </div>
+            <KpiBand
+              items={[
+                {
+                  label: 'Spielende Mitglieder',
+                  value: stats?.totalMembers ?? 0,
+                  sub: 'Mitglieder & Trainer',
+                },
+                {
+                  label: 'Aktive Suchende',
+                  value: stats?.activeSearchers ?? 0,
+                  sub: 'haben Zeiten hinterlegt',
+                },
+                { label: 'Niveaustufen', value: levelEntries.length, sub: 'im Verein vertreten' },
+              ]}
+            />
 
             {/* ── Level Distribution ── */}
             {stats && levelEntries.length > 0 && (

@@ -107,7 +107,7 @@ export function DayView({
     <div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
       {/* Day navigation mini-header — hidden when used inside mobile week pills */}
       {!embedded && (
-        <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-primary/[0.04] to-transparent border-b border-border/40">
+        <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-muted/60 border-b border-border/40">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

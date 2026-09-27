@@ -1,5 +1,7 @@
 'use client';
 
+import { formatCurrency } from '@/lib/format';
+
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Plus, Trophy, Calendar, Users } from 'lucide-react';
@@ -75,7 +77,7 @@ export function TournamentsClient({ initialTournaments, pagination }: Tournament
                         max. {t.max_participants}
                       </span>
                     )}
-                    {t.entry_fee && t.entry_fee > 0 && <span>€{t.entry_fee}</span>}
+                    {t.entry_fee && t.entry_fee > 0 && <span>{formatCurrency(t.entry_fee)}</span>}
                   </div>
                 </div>
                 <Link

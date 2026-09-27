@@ -1,5 +1,7 @@
 'use client';
 
+import { formatCurrency } from '@/lib/format';
+
 import {
   BarChart,
   Bar,
@@ -88,7 +90,7 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value) => `€${Number(value).toLocaleString()}`}
+                  formatter={(value) => formatCurrency(Number(value))}
                   contentStyle={{
                     borderRadius: '8px',
                     border: '1px solid hsl(var(--border))',

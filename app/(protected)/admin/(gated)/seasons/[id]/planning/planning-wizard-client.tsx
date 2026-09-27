@@ -104,7 +104,6 @@ interface PlanningWizardClientProps {
   seasonId: string;
   clubId: string;
   seasonName: string;
-  seasonType: string;
   seasonYear: number;
   planningStatus: string;
   initialStep?: number;
@@ -114,15 +113,7 @@ interface PlanningWizardClientProps {
 // WIZARD CONTENT (inner component with context)
 // ============================================
 
-function WizardContent({
-  seasonName,
-  seasonType,
-  seasonYear,
-}: {
-  seasonName: string;
-  seasonType: string;
-  seasonYear: number;
-}) {
+function WizardContent({ seasonName, seasonYear }: { seasonName: string; seasonYear: number }) {
   const router = useRouter();
   const { state, nextStep, prevStep, goToStep } = useWizard();
   const { currentStep, isProcessing, error } = state;
@@ -154,7 +145,7 @@ function WizardContent({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`${seasonType === 'summer' ? '☀️' : '❄️'} ${seasonName}`}
+        title={seasonName}
         back={{ href: '/admin/seasons', label: 'Zurück zur Saisonübersicht' }}
         description="Automatische Saisonplanung"
         badge={
@@ -280,13 +271,12 @@ export function PlanningWizardClient({
   seasonId,
   clubId,
   seasonName,
-  seasonType,
   seasonYear,
   initialStep,
 }: PlanningWizardClientProps) {
   return (
     <WizardProvider seasonId={seasonId} clubId={clubId} initialStep={initialStep}>
-      <WizardContent seasonName={seasonName} seasonType={seasonType} seasonYear={seasonYear} />
+      <WizardContent seasonName={seasonName} seasonYear={seasonYear} />
     </WizardProvider>
   );
 }

@@ -29,8 +29,6 @@ import {
   Trash2,
   Package,
   Store,
-  ShoppingBag,
-  DollarSign,
   X,
   Save,
   Eye,
@@ -46,6 +44,7 @@ import {
 import { IconBox } from '@/components/ui/icon-box';
 import { apiFetch } from '@/lib/api-fetch';
 import { PaginationNav } from '@/components/ui/pagination-nav';
+import { KpiBand } from '@/components/ui/kpi-band';
 import { PageHeader } from '@/components/ui/page-header';
 import type { PaginationMeta } from '@/lib/pagination';
 
@@ -431,57 +430,17 @@ export default function AdminShopPage() {
         ]}
       />
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          {
-            label: 'Produkte',
-            value: productsPagination?.totalCount ?? products.length,
-            icon: Package,
-            color: 'text-info-600',
-            bg: 'bg-info-50',
-          },
-          {
-            label: 'Aktive',
-            value: activeProducts.length,
-            icon: Eye,
-            color: 'text-brand-light',
-            bg: 'bg-brand-light/10',
-          },
-          {
-            label: 'Bestellungen',
-            value: orderStats.total_orders,
-            icon: ShoppingBag,
-            color: 'text-info-600',
-            bg: 'bg-info-50',
-          },
+      <KpiBand
+        items={[
+          { label: 'Produkte', value: productsPagination?.totalCount ?? products.length },
+          { label: 'Aktive', value: activeProducts.length, sub: 'im Shop sichtbar' },
+          { label: 'Bestellungen', value: orderStats.total_orders },
           {
             label: 'Umsatz Shop',
             value: orderStats.total_revenue > 0 ? formatCurrency(orderStats.total_revenue) : '—',
-            icon: DollarSign,
-            color: 'text-brand-accent',
-            bg: 'bg-brand-accent-50 dark:bg-brand-accent-900/20',
           },
-        ].map((kpi) => (
-          <Card key={kpi.label} className="border border-border shadow-sm p-0">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground">{kpi.label}</p>
-                  <p className="text-2xl font-bold text-primary mt-1.5 tabular-nums">
-                    {typeof kpi.value === 'number' ? kpi.value.toLocaleString('de-DE') : kpi.value}
-                  </p>
-                </div>
-                <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl shrink-0 ${kpi.bg}`}
-                >
-                  <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+        ]}
+      />
 
       {/* Tabs: Products | Orders */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

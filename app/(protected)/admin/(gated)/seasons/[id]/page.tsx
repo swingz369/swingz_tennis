@@ -613,7 +613,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
       />
 
       <PageHeader
-        title={`${season.season_type === 'summer' ? '☀️' : '❄️'} ${season.name}`}
+        title={season.name}
         back={{ href: '/admin/seasons', label: 'Zurück zur Saisonübersicht' }}
         description={`${new Date(season.start_date).toLocaleDateString('de-DE')} - ${new Date(season.end_date).toLocaleDateString('de-DE')}`}
         badge={

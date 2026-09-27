@@ -1,9 +1,9 @@
 'use client';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -142,37 +142,31 @@ export default function AdminApprovals() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <PageHeader
-          title="Mitglieder-Genehmigungen"
-          description={
-            <>
-              {counts.pending} ausstehende{counts.pending !== 1 ? '' : 's'} von {counts.all}{' '}
-              Anträgen
-            </>
-          }
-        />
+      {/* Läuft als Reiter unter „Mitgliederverwaltung" — der Seitentitel steht
+          dort; hier nur eine Abschnittsüberschrift, kein zweites h1. */}
+      <div>
+        <h2 className="text-xl font-semibold tracking-[-0.02em]">Mitglieder-Genehmigungen</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {counts.pending} ausstehende{counts.pending !== 1 ? '' : 's'} von {counts.all} Anträgen
+        </p>
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2">
-        {(['pending', 'approved', 'rejected', 'all'] as const).map((f) => (
-          <Button
-            key={f}
-            variant={filter === f ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilter(f)}
-          >
-            {f === 'pending'
-              ? 'Ausstehend'
-              : f === 'approved'
-                ? 'Genehmigt'
-                : f === 'rejected'
-                  ? 'Abgelehnt'
-                  : 'Alle'}
-          </Button>
-        ))}
-      </div>
+      <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+        <TabsList>
+          {(['pending', 'approved', 'rejected', 'all'] as const).map((f) => (
+            <TabsTrigger key={f} value={f}>
+              {f === 'pending'
+                ? 'Ausstehend'
+                : f === 'approved'
+                  ? 'Genehmigt'
+                  : f === 'rejected'
+                    ? 'Abgelehnt'
+                    : 'Alle'}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {error && (
         <div className="p-4 rounded-xl bg-error-50 border border-error-200 text-error-700 text-sm">

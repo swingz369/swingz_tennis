@@ -13,6 +13,8 @@ import {
   CheckCircle,
   TrendingUp,
   LayoutGrid,
+  Sun,
+  Snowflake,
 } from 'lucide-react';
 import { NoSeasonsBrandedEmptyState } from '@/components/ui/empty-state';
 import type { SeasonWithStats } from '@/lib/types/season-planning';
@@ -35,9 +37,12 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getSeasonIcon = (type: string) => {
-    return type === 'summer' ? '☀️' : '❄️';
-  };
+  const getSeasonIcon = (type: string) =>
+    type === 'summer' ? (
+      <Sun className="h-6 w-6 text-muted-foreground" aria-label="Sommersaison" />
+    ) : (
+      <Snowflake className="h-6 w-6 text-muted-foreground" aria-label="Wintersaison" />
+    );
 
   return (
     <div className="space-y-6">
@@ -97,7 +102,7 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">{getSeasonIcon(season.season_type)}</span>
+                    {getSeasonIcon(season.season_type)}
                     <div>
                       <CardTitle className="text-lg">{season.name}</CardTitle>
                       <CardDescription>

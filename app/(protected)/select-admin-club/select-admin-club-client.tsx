@@ -54,7 +54,7 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
   };
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-brand-dark via-surface-dark to-brand-secondary/40 flex flex-col">
+    <div className="brand-dark-surface min-h-dvh bg-brand-dark flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-5 border-b border-white/10">
         <div className="flex items-center gap-3">
@@ -114,8 +114,8 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
                   selecting !== null && selecting !== club.id && 'opacity-40'
                 )}
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/60 to-brand-light/40 shrink-0">
-                  <Building2 className="h-6 w-6 text-brand-light dark:text-brand-light" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted shrink-0">
+                  <Building2 className="h-6 w-6 text-brand-accent" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">

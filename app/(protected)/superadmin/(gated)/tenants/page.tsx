@@ -1,5 +1,7 @@
 'use client';
 
+import { formatCurrency } from '@/lib/format';
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { ListState } from '@/components/ui/list-state';
 import { useEffect, useState, useCallback } from 'react';
@@ -177,7 +179,7 @@ export default function SuperadminTenantsPage() {
                       <DollarSign className="h-4 w-4" />
                       Umsatz (30 Tage)
                     </span>
-                    <span className="font-bold text-lg">€{club.revenue.toFixed(0)}</span>
+                    <span className="font-bold text-lg">{formatCurrency(club.revenue)}</span>
                   </div>
                   <Button
                     onClick={() => switchToClub(club.id, club.name)}

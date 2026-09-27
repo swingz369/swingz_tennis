@@ -101,9 +101,9 @@ describe('AttendanceHistory', () => {
     render(<AttendanceHistory />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /alle/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /anwesend/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /verpasst/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /alle/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /anwesend/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /verpasst/i })).toBeInTheDocument();
     });
   });
 
@@ -119,7 +119,7 @@ describe('AttendanceHistory', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /anwesend/i }));
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /anwesend/i }), { button: 0 });
 
     await waitFor(() => {
       const secondCallUrl = fetchMock.mock.calls[1][0] as string;
@@ -206,7 +206,7 @@ describe('AttendanceHistory', () => {
     });
 
     // Click filter — should reset to page 1
-    fireEvent.click(screen.getByRole('button', { name: /verpasst/i }));
+    fireEvent.mouseDown(screen.getByRole('tab', { name: /verpasst/i }), { button: 0 });
 
     await waitFor(() => {
       const filterCallUrl = fetchMock.mock.calls[2][0] as string;

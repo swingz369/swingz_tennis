@@ -57,7 +57,7 @@ export function AuditStatStrip() {
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground leading-relaxed">{card.body}</p>
-              <p className="mt-2 text-xs tabular-nums text-info-600/70/70">—</p>
+              <p className="mt-2 text-xs tabular-nums text-info-600/70">—</p>
             </CardContent>
             {/* dezenter Bau-Licht-Vermerk */}
             <div

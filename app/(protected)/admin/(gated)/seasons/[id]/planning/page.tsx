@@ -70,7 +70,6 @@ export default async function PlanningWizardPage({
         seasonId={seasonId}
         clubId={season.club_id}
         seasonName={season.name}
-        seasonType={season.season_type}
         seasonYear={season.year}
         planningStatus={season.planning_status}
         initialStep={initialStep}

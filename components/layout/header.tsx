@@ -187,7 +187,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
             >
               <Avatar className="h-7 w-7 ring-2 ring-brand-light/20 ring-offset-1 ring-offset-transparent transition-shadow duration-300 group-hover:ring-brand-light/40">
                 <AvatarImage src={user?.avatarUrl || undefined} alt={user?.name || 'User'} />
-                <AvatarFallback className="bg-gradient-to-br from-brand-light to-primary text-white text-xs font-semibold">
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>

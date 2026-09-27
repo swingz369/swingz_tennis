@@ -1,5 +1,7 @@
 'use client';
 
+import { KpiBand } from '@/components/ui/kpi-band';
+
 import { useState } from 'react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,7 +19,6 @@ import {
   ChevronRight,
   Shield,
   TrendingUp,
-  Activity,
   GraduationCap,
   ArrowRightLeft,
 } from 'lucide-react';
@@ -80,14 +81,14 @@ export function AdminPanelV2Client({
           {/* Club Switcher Dropdown */}
           <Select onValueChange={handleClubSwitch}>
             <SelectTrigger className="w-full sm:w-[260px] border-info-200 hover:border-info-400 transition-colors">
-              <ArrowRightLeft className="h-4 w-4 text-info-500 dark:text-info-400 mr-2 shrink-0" />
+              <ArrowRightLeft className="h-4 w-4 text-muted-foreground mr-2 shrink-0" />
               <SelectValue placeholder="Verein auswählen…" />
             </SelectTrigger>
             <SelectContent>
               {clubs.map((club) => (
                 <SelectItem key={club.id} value={club.id}>
                   <div className="flex items-center gap-2 truncate">
-                    <Building2 className="h-3.5 w-3.5 text-info-500 dark:text-info-400 shrink-0" />
+                    <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <span className="truncate">{club.name}</span>
                     {club.status === 'inactive' && (
                       <Badge variant="secondary" className="text-2xs px-1 py-0 leading-none">
@@ -111,61 +112,22 @@ export function AdminPanelV2Client({
         </div>
       </div>
 
-      {/* Platform KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          {
-            label: 'Vereine',
-            value: platformStats.totalClubs,
-            icon: Building2,
-            color: 'text-info-600',
-            bg: 'bg-info-50',
-          },
-          {
-            label: 'Mitglieder gesamt',
-            value: platformStats.totalMembers,
-            icon: Users,
-            color: 'text-info-600',
-            bg: 'bg-info-50',
-          },
-          {
-            label: 'Trainer gesamt',
-            value: platformStats.totalTrainers,
-            icon: GraduationCap,
-            color: 'text-warning-600',
-            bg: 'bg-warning-50',
-          },
-          {
-            label: 'Aktiv',
-            value: clubs.filter((c) => c.status === 'active').length,
-            icon: Activity,
-            color: 'text-success-600',
-            bg: 'bg-success-50',
-          },
-        ].map((stat) => (
-          <Card key={stat.label} className="border-0 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value.toLocaleString('de-DE')}</p>
-                </div>
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <KpiBand
+        items={[
+          { label: 'Vereine', value: platformStats.totalClubs.toLocaleString('de-DE') },
+          { label: 'Mitglieder gesamt', value: platformStats.totalMembers.toLocaleString('de-DE') },
+          { label: 'Trainer gesamt', value: platformStats.totalTrainers.toLocaleString('de-DE') },
+          { label: 'Aktiv', value: clubs.filter((c) => c.status === 'active').length },
+        ]}
+      />
 
       {/* Club Overview Grid */}
       <div id="club-overview">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground dark:text-gray-200">Alle Vereine</h2>
+          <h2 className="text-lg font-semibold text-foreground ">Alle Vereine</h2>
           <Link
             href="/superadmin/clubs"
-            className="text-xs text-info-600 hover:underline font-medium flex items-center gap-1"
+            className="text-xs text-primary hover:underline font-semibold flex items-center gap-1"
           >
             Verwalten <ChevronRight className="h-3 w-3" />
           </Link>
@@ -179,8 +141,8 @@ export function AdminPanelV2Client({
             >
               <CardContent className="p-5">
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-50 shrink-0">
-                    <Building2 className="h-5 w-5 text-info-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted shrink-0">
+                    <Building2 className="h-5 w-5 text-foreground" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">{club.name}</p>
@@ -212,7 +174,7 @@ export function AdminPanelV2Client({
 
                 <Link
                   href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-info-600 text-white text-sm font-medium hover:bg-info-700 transition-colors group-hover:shadow-sm"
+                  className="w-full flex min-h-11 items-center justify-center gap-2 py-2 px-4 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
                 >
                   Als Admin verwalten
                   <ChevronRight className="h-4 w-4" />
@@ -260,7 +222,7 @@ export function AdminPanelV2Client({
           <Card>
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-info-600" />
+                <TrendingUp className="h-5 w-5 text-muted-foreground" />
                 Plattform-Statistiken
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -292,7 +254,7 @@ export function AdminPanelV2Client({
                     key={item.label}
                     className="text-center p-4 bg-muted dark:bg-card/5 rounded-xl"
                   >
-                    <p className="text-2xl font-bold text-info-600">
+                    <p className="text-2xl font-bold text-foreground">
                       {item.value.toLocaleString('de-DE')}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
@@ -322,7 +284,7 @@ export function AdminPanelV2Client({
               </p>
               <Link
                 href="#club-overview"
-                className="text-sm text-info-600 hover:underline font-medium"
+                className="text-sm text-primary hover:underline font-semibold"
               >
                 Zur Vereinsübersicht ↑
               </Link>
@@ -341,7 +303,7 @@ export function AdminPanelV2Client({
               </p>
               <Link
                 href="#club-overview"
-                className="text-sm text-info-600 hover:underline font-medium"
+                className="text-sm text-primary hover:underline font-semibold"
               >
                 Zur Vereinsübersicht ↑
               </Link>

@@ -1,5 +1,7 @@
 'use client';
 
+import { formatCurrency } from '@/lib/format';
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { KpiBand } from '@/components/ui/kpi-band';
 import { PageHeader } from '@/components/ui/page-header';
@@ -72,13 +74,13 @@ export default function ReportsDashboard() {
     },
     {
       label: 'Gesamtumsatz',
-      value: stats?.totalRevenue ? `€${stats.totalRevenue.toLocaleString('de-DE')}` : '--',
+      value: stats?.totalRevenue ? formatCurrency(stats.totalRevenue) : '--',
       icon: CreditCard,
       color: 'text-brand-light',
     },
     {
       label: 'Offene Zahlungen',
-      value: stats?.pendingPayments ? `€${stats.pendingPayments.toLocaleString('de-DE')}` : '--',
+      value: stats?.pendingPayments ? formatCurrency(stats.pendingPayments) : '--',
       icon: FileText,
       color: 'text-warning-600',
     },
@@ -150,7 +152,7 @@ export default function ReportsDashboard() {
                     />
                   </div>
                   <span className="text-xs font-medium tabular-nums w-20 text-right">
-                    €{m.revenue.toLocaleString('de-DE')}
+                    {formatCurrency(m.revenue)}
                   </span>
                 </div>
               ))}

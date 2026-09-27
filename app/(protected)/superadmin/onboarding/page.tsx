@@ -183,7 +183,7 @@ export default function SuperadminOnboardingPage() {
                     isCurrent
                       ? 'text-info-600 font-semibold'
                       : isCompleted
-                        ? 'text-info-600/70/70'
+                        ? 'text-info-600/70'
                         : 'text-muted-foreground'
                   }`}
                 >

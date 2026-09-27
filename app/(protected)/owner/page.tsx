@@ -215,7 +215,7 @@ export default async function OwnerPage() {
                 <p className="text-sm font-semibold text-warning-900">
                   {item.count} {item.label}
                 </p>
-                <p className="text-xs text-warning-800/80/70">{item.hint}</p>
+                <p className="text-xs text-warning-800/80">{item.hint}</p>
               </div>
               <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-warning-700" />
             </Link>

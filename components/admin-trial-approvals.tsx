@@ -4,6 +4,7 @@ import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -368,32 +369,29 @@ export default function AdminTrialApprovals() {
       />
 
       {/* Filter tabs */}
-      <div className="flex gap-2 flex-wrap">
-        {(
-          [
-            ['requested', 'Angefragt'],
-            ['scheduled', 'Geplant'],
-            ['completed', 'Abgeschlossen'],
-            ['no_show', 'Nicht erschienen'],
-            ['cancelled', 'Abgelehnt'],
-            ['all', 'Alle'],
-          ] as const
-        ).map(([key, label]) => (
-          <Button
-            key={key}
-            variant={filter === key ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilter(key)}
-          >
-            {label}
-            {key === 'requested' && requestedCount > 0 && (
-              <span className="ml-1.5 bg-background/20 text-2xs px-1.5 py-0 rounded-full">
-                {requestedCount}
-              </span>
-            )}
-          </Button>
-        ))}
-      </div>
+      <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+        <TabsList className="h-auto flex-wrap">
+          {(
+            [
+              ['requested', 'Angefragt'],
+              ['scheduled', 'Geplant'],
+              ['completed', 'Abgeschlossen'],
+              ['no_show', 'Nicht erschienen'],
+              ['cancelled', 'Abgelehnt'],
+              ['all', 'Alle'],
+            ] as const
+          ).map(([key, label]) => (
+            <TabsTrigger key={key} value={key}>
+              {label}
+              {key === 'requested' && requestedCount > 0 && (
+                <span className="ml-1.5 rounded bg-highlight px-1.5 text-2xs font-bold text-highlight-foreground">
+                  {requestedCount}
+                </span>
+              )}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {error && (
         <div className="p-4 rounded-xl bg-error-50 border border-error-200 text-error-700 text-sm">

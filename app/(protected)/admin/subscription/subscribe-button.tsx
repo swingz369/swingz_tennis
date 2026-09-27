@@ -1,4 +1,6 @@
 'use client';
+
+import { formatCurrency } from '@/lib/format';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
@@ -166,12 +168,14 @@ export function PlanCards({
                 <p className="text-xs text-muted-foreground">{plan.sublabel}</p>
                 <div className="mt-2">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-extrabold">€{plan.pricePerMonth}</span>
+                    <span className="text-3xl font-extrabold">
+                      {formatCurrency(plan.pricePerMonth)}
+                    </span>
                     <span className="text-sm text-muted-foreground">/Monat</span>
                   </div>
                   {interval === 'annual' && (
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      zahlbar als €{total} jährlich
+                      zahlbar als {formatCurrency(total)} jährlich
                     </p>
                   )}
                 </div>

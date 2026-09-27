@@ -19,7 +19,7 @@ export function SubscriptionDisabledBanner() {
       <div className="mx-auto flex max-w-7xl items-center gap-2.5 px-4 py-2 text-sm sm:px-6 lg:px-8">
         <AlertTriangle className="h-4 w-4 shrink-0 text-warning-700" aria-hidden="true" />
         <span className="font-semibold text-warning-900">Bezahlschranke abgeschaltet</span>
-        <span className="text-warning-800/80/80">
+        <span className="text-warning-800/80">
           Alle Vereine haben Vollzugriff ohne Abo — Vorlaufbetrieb bis zum Launch.
           <span className="hidden md:inline">
             {' '}

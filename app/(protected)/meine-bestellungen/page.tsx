@@ -3,6 +3,7 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Package, Clock, CheckCircle2, Truck, XCircle, ShoppingBag, Eye, X } from 'lucide-react';
@@ -102,19 +103,15 @@ export default function MeineBestellungenPage() {
       <PageHeader title="Meine Bestellungen" description="Verfolge deine Shop-Bestellungen" />
 
       {/* Filter tabs */}
-      <div className="flex gap-2 flex-wrap">
-        {FILTER_TABS.map((tab) => (
-          <Button
-            key={tab.key}
-            variant={activeFilter === tab.key ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setActiveFilter(tab.key)}
-            className={activeFilter === tab.key ? 'bg-primary hover:bg-primary/90' : ''}
-          >
-            {tab.label}
-          </Button>
-        ))}
-      </div>
+      <Tabs value={activeFilter} onValueChange={(v) => setActiveFilter(v as typeof activeFilter)}>
+        <TabsList className="h-auto flex-wrap">
+          {FILTER_TABS.map((tab) => (
+            <TabsTrigger key={tab.key} value={tab.key}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* Orders list */}
       {loading ? (

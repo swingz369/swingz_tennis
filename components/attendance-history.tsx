@@ -7,8 +7,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { IconBox } from '@/components/ui/icon-box';
-import { CheckCircle, XCircle, Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { CheckCircle, XCircle } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import { buildPaginationMeta } from '@/lib/pagination';
 import type { PaginationMeta } from '@/lib/pagination';
@@ -107,22 +107,21 @@ export default function AttendanceHistory() {
       />
 
       {/* Filter */}
-      <div className="flex gap-2">
-        {(['all', 'attended', 'missed'] as const).map((f) => (
-          <Button
-            key={f}
-            variant={filter === f ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => {
-              setFilter(f);
-              setPage(1);
-            }}
-          >
-            <Filter className="h-3.5 w-3.5 mr-1" />
-            {f === 'all' ? 'Alle' : f === 'attended' ? 'Anwesend' : 'Verpasst'}
-          </Button>
-        ))}
-      </div>
+      <Tabs
+        value={filter}
+        onValueChange={(v) => {
+          setFilter(v as typeof filter);
+          setPage(1);
+        }}
+      >
+        <TabsList>
+          {(['all', 'attended', 'missed'] as const).map((f) => (
+            <TabsTrigger key={f} value={f}>
+              {f === 'all' ? 'Alle' : f === 'attended' ? 'Anwesend' : 'Verpasst'}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* Records list */}
       {loading ? (
