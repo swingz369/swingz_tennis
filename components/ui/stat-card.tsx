@@ -158,8 +158,7 @@ export function StatCard({
         // Hervorgehobene Karte trägt die Aktionsfarbe, nicht den Signal-Ocker:
         // eine ockerne Oberkante neben einem grünen Kennzahlenband las sich wie
         // eine Warnung, gemeint war „das hier zuerst".
-        featured &&
-          'border-t-[3px] border-t-primary bg-gradient-to-b from-primary/[0.06] to-transparent',
+        featured && 'border-t-[3px] border-t-highlight',
         // Ohne `href` ist dieses div selbst das Grid-Kind und trägt die Layout-Klassen.
         !href && className
       )}
@@ -167,8 +166,10 @@ export function StatCard({
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">{label}</p>
-            <div className="flex items-baseline gap-2 mt-1.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              {label}
+            </p>
+            <div className="flex items-baseline gap-2 mt-3">
               {/* Zahl in der Textschrift, nicht in Mono: Mono war hier kein
                   Argument für Lesbarkeit (`tabular-nums` leistet die Ausrichtung
                   bereits), sondern nur ein Stilmittel — und eine Konsolenschrift
@@ -177,7 +178,7 @@ export function StatCard({
                   man zuerst sieht — sie ist der Grund für die Karte. */}
               <p
                 className={cn(
-                  'text-[32px] font-semibold leading-none tracking-[-0.04em] text-foreground tabular-nums',
+                  'text-[32px] font-bold leading-none tracking-[-0.045em] text-foreground tabular-nums',
                   valueClassName
                 )}
               >
@@ -200,7 +201,7 @@ export function StatCard({
               )}
             </div>
             {(sub || sublabel) && (
-              <p className="text-xs text-muted-foreground mt-0.5">{sub || sublabel}</p>
+              <p className="text-xs font-medium text-muted-foreground mt-2">{sub || sublabel}</p>
             )}
             {trend && trend.length > 1 && (
               <Sparkline points={trend} className={cn('mt-2', colors.text)} />

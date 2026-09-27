@@ -4,6 +4,8 @@ import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { KpiBand } from '@/components/ui/kpi-band';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -434,55 +436,25 @@ export default function WorkDutiesClient({
   return (
     <div className="space-y-6">
       {confirmDialog}
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: 'Offen', value: stats.open, color: 'text-warning-600', status: 'open' },
-          {
-            label: 'Zugewiesen',
-            value: stats.assigned,
-            color: 'text-info-600',
-            status: 'assigned',
-          },
-          {
-            label: 'Erledigt',
-            value: stats.completed,
-            color: 'text-success-600',
-            status: 'completed',
-          },
-        ].map((s) => (
-          <Card
-            key={s.label}
-            className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => setFilter(filter === s.status ? 'all' : s.status)}
-          >
-            <CardContent className="p-4 text-center">
-              <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Kennzahlen wie überall (KpiBand); gefiltert wird über den Umschalter darunter. */}
+      <KpiBand
+        items={[
+          { label: 'Offen', value: stats.open, sub: 'noch zu vergeben' },
+          { label: 'Zugewiesen', value: stats.assigned, sub: 'in Arbeit' },
+          { label: 'Erledigt', value: stats.completed, sub: 'abgeschlossen' },
+        ]}
+      />
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          {['all', 'open', 'assigned', 'completed'].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filter === f ? 'bg-gray-900 text-white' : 'bg-muted text-muted-foreground hover:bg-muted'}`}
-            >
-              {f === 'all'
-                ? `Alle (${duties.length})`
-                : f === 'open'
-                  ? `Offen (${stats.open})`
-                  : f === 'assigned'
-                    ? `Zugewiesen (${stats.assigned})`
-                    : `Erledigt (${stats.completed})`}
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Tabs value={filter} onValueChange={setFilter}>
+          <TabsList>
+            <TabsTrigger value="all">Alle ({duties.length})</TabsTrigger>
+            <TabsTrigger value="open">Offen ({stats.open})</TabsTrigger>
+            <TabsTrigger value="assigned">Zugewiesen ({stats.assigned})</TabsTrigger>
+            <TabsTrigger value="completed">Erledigt ({stats.completed})</TabsTrigger>
+          </TabsList>
+        </Tabs>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => setShowBulk(true)} className="gap-1.5">
             <CalendarRange className="h-4 w-4" /> Bulk-Erstellen
