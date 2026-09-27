@@ -34,12 +34,12 @@ function buildResetEmailHtml(params: { resetUrl: string }): string {
     <style>
       body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
       .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-      .header { background: #00599F; color: white; padding: 24px; text-align: center; border-radius: 12px 12px 0 0; }
-      .content { background: #f9f9f9; padding: 32px 24px; }
-      .cta-btn { display: inline-block; background: #00599F; color: #fff !important; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
-      .info { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 20px 0; font-size: 14px; color: #555; }
+      .header { background: #172C48; color: white; padding: 24px; text-align: center; border-radius: 12px 12px 0 0; }
+      .content { background: #F3F6FA; padding: 32px 24px; }
+      .cta-btn { display: inline-block; background: #172C48; color: #fff !important; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+      .info { background: #fff; border: 1px solid #D7E0EB; border-radius: 8px; padding: 16px; margin: 20px 0; font-size: 14px; color: #555; }
       .footer { text-align: center; margin-top: 30px; color: #888; font-size: 13px; }
-      .footer a { color: #00599F; text-decoration: underline; }
+      .footer a { color: #172C48; text-decoration: underline; }
     </style>
   </head>
   <body>
@@ -63,7 +63,7 @@ function buildResetEmailHtml(params: { resetUrl: string }): string {
         </div>
         <p style="font-size:14px;color:#666;">
           Falls der Button nicht funktioniert, kopiere folgenden Link in deinen Browser:<br />
-          <a href="${params.resetUrl}" style="color:#00599F;word-break:break-all;">${params.resetUrl}</a>
+          <a href="${params.resetUrl}" style="color:#172C48;word-break:break-all;">${params.resetUrl}</a>
         </p>
       </div>
       <div class="footer">

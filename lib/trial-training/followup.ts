@@ -78,9 +78,9 @@ function followupHtml(data: {
 <!DOCTYPE html>
 <html lang="de">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:24px;font-family:'Helvetica Neue',Arial,sans-serif;color:#333;background:#f4f4f4;">
+<body style="margin:0;padding:24px;font-family:'Helvetica Neue',Arial,sans-serif;color:#333;background:#F3F6FA;">
   <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:10px;overflow:hidden;">
-    <div style="background:#00599F;color:#fff;padding:32px 28px;">
+    <div style="background:#172C48;color:#fff;padding:32px 28px;">
       <h1 style="margin:0;font-size:22px;">${headline}</h1>
     </div>
     <div style="padding:28px;">
@@ -90,10 +90,10 @@ function followupHtml(data: {
         kind !== 'thanks'
           ? ''
           : `<p style="margin:0 0 12px;font-size:13px;color:#666;">Wie war dein Eindruck?</p>
-             <a href="${feedbackUrl}" style="display:inline-block;background:#f4f4f4;color:#00599F;border:1px solid #00599F;border-radius:8px;padding:10px 18px;text-decoration:none;font-weight:600;margin-bottom:20px;">Bewertung abgeben</a>`
+             <a href="${feedbackUrl}" style="display:inline-block;background:#F3F6FA;color:#172C48;border:1px solid #172C48;border-radius:8px;padding:10px 18px;text-decoration:none;font-weight:600;margin-bottom:20px;">Bewertung abgeben</a>`
       }
       <p style="margin:0 0 12px;font-size:13px;color:#666;">Bereit, Mitglied zu werden?</p>
-      <a href="${signupUrl}" style="display:inline-block;background:#00599F;color:#fff;border-radius:8px;padding:12px 24px;text-decoration:none;font-weight:600;">Jetzt Mitglied werden</a>
+      <a href="${signupUrl}" style="display:inline-block;background:#172C48;color:#fff;border-radius:8px;padding:12px 24px;text-decoration:none;font-weight:600;">Jetzt Mitglied werden</a>
       <p style="margin:24px 0 0;font-size:12px;color:#999;">Dein Verein: ${clubName}</p>
     </div>
   </div>

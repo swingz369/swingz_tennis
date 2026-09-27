@@ -49,7 +49,7 @@ const COLORS = {
   lightGray: rgb(0.75, 0.75, 0.75),
   veryLightGray: rgb(0.92, 0.92, 0.92),
   white: rgb(1, 1, 1),
-  accent: rgb(0.12, 0.22, 0.37), // brand navy
+  accent: rgb(0.09, 0.173, 0.282), // Matchday-Nachtblau #172C48 (ADR-007)
   green: rgb(0.06, 0.72, 0.51),
   blue: rgb(0.23, 0.51, 0.96),
   red: rgb(0.94, 0.27, 0.27),

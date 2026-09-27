@@ -58,7 +58,7 @@ export class EmailService {
       font-family: 'Helvetica Neue', Arial, sans-serif;
       line-height: 1.6;
       color: #333;
-      background-color: #f4f4f4;
+      background-color: #F3F6FA;
       margin: 0;
       padding: 20px;
     }
@@ -71,7 +71,7 @@ export class EmailService {
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
     .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #172C48 0%, #255B9B 100%);
       color: white;
       padding: 40px 30px;
       text-align: center;
@@ -95,15 +95,15 @@ export class EmailService {
       margin-bottom: 20px;
     }
     .info-box {
-      background: #f8f9fa;
-      border-left: 4px solid #667eea;
+      background: #F3F6FA;
+      border-left: 4px solid #172C48;
       padding: 15px;
       margin: 20px 0;
     }
     .info-box h3 {
       margin: 0 0 10px 0;
       font-size: 16px;
-      color: #667eea;
+      color: #172C48;
     }
     .info-box p {
       margin: 0;
@@ -119,7 +119,7 @@ export class EmailService {
     }
     .cta-button {
       display: inline-block;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #172C48 0%, #255B9B 100%);
       color: white;
       text-decoration: none;
       padding: 12px 30px;
@@ -128,18 +128,18 @@ export class EmailService {
       margin: 20px 0;
     }
     .footer {
-      background: #f8f9fa;
+      background: #F3F6FA;
       padding: 20px 30px;
       text-align: center;
       font-size: 12px;
       color: #666;
     }
     .footer a {
-      color: #667eea;
+      color: #172C48;
       text-decoration: none;
     }
     .divider {
-      border-top: 1px solid #e5e5e5;
+      border-top: 1px solid #D7E0EB;
       margin: 30px 0;
     }
   </style>
@@ -312,7 +312,7 @@ Dein ${clubName}-Team
       font-family: 'Helvetica Neue', Arial, sans-serif;
       line-height: 1.6;
       color: #333;
-      background-color: #f4f4f4;
+      background-color: #F3F6FA;
       margin: 0;
       padding: 20px;
     }
@@ -325,7 +325,7 @@ Dein ${clubName}-Team
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
     .header {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      background: linear-gradient(135deg, #216044 0%, #216044 100%);
       color: white;
       padding: 40px 30px;
       text-align: center;
@@ -349,15 +349,15 @@ Dein ${clubName}-Team
       margin-bottom: 20px;
     }
     .info-box {
-      background: #f8f9fa;
-      border-left: 4px solid #10b981;
+      background: #F3F6FA;
+      border-left: 4px solid #216044;
       padding: 15px;
       margin: 20px 0;
     }
     .info-box h3 {
       margin: 0 0 10px 0;
       font-size: 16px;
-      color: #10b981;
+      color: #216044;
     }
     .info-box p {
       margin: 0;
@@ -372,18 +372,18 @@ Dein ${clubName}-Team
       margin-bottom: 5px;
     }
     .footer {
-      background: #f8f9fa;
+      background: #F3F6FA;
       padding: 20px 30px;
       text-align: center;
       font-size: 12px;
       color: #666;
     }
     .footer a {
-      color: #10b981;
+      color: #216044;
       text-decoration: none;
     }
     .divider {
-      border-top: 1px solid #e5e5e5;
+      border-top: 1px solid #D7E0EB;
       margin: 30px 0;
     }
   </style>
@@ -531,7 +531,7 @@ Dein ${clubName}-Team
       font-family: 'Helvetica Neue', Arial, sans-serif;
       line-height: 1.6;
       color: #333;
-      background-color: #f4f4f4;
+      background-color: #F3F6FA;
       margin: 0;
       padding: 20px;
     }
@@ -544,7 +544,7 @@ Dein ${clubName}-Team
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
     .header {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      background: linear-gradient(135deg, #216044 0%, #216044 100%);
       color: white;
       padding: 40px 30px;
       text-align: center;
@@ -568,15 +568,15 @@ Dein ${clubName}-Team
       margin-bottom: 20px;
     }
     .info-box {
-      background: #f8f9fa;
-      border-left: 4px solid #10b981;
+      background: #F3F6FA;
+      border-left: 4px solid #216044;
       padding: 15px;
       margin: 20px 0;
     }
     .info-box h3 {
       margin: 0 0 10px 0;
       font-size: 16px;
-      color: #10b981;
+      color: #216044;
     }
     .info-box p {
       margin: 0;
@@ -592,14 +592,14 @@ Dein ${clubName}-Team
     }
     .success-box {
       background: #d4edda;
-      border-left: 4px solid #28a745;
+      border-left: 4px solid #216044;
       padding: 15px;
       margin: 20px 0;
     }
     .success-box h3 {
       margin: 0 0 10px 0;
       font-size: 16px;
-      color: #28a745;
+      color: #216044;
     }
     .success-box p {
       margin: 0;
@@ -607,18 +607,18 @@ Dein ${clubName}-Team
       color: #155724;
     }
     .footer {
-      background: #f8f9fa;
+      background: #F3F6FA;
       padding: 20px 30px;
       text-align: center;
       font-size: 12px;
       color: #666;
     }
     .footer a {
-      color: #10b981;
+      color: #216044;
       text-decoration: none;
     }
     .divider {
-      border-top: 1px solid #e5e5e5;
+      border-top: 1px solid #D7E0EB;
       margin: 30px 0;
     }
   </style>
@@ -769,7 +769,7 @@ Dein ${clubName}-Team
       font-family: 'Helvetica Neue', Arial, sans-serif;
       line-height: 1.6;
       color: #333;
-      background-color: #f4f4f4;
+      background-color: #F3F6FA;
       margin: 0;
       padding: 20px;
     }
@@ -806,7 +806,7 @@ Dein ${clubName}-Team
       margin-bottom: 20px;
     }
     .info-box {
-      background: #f8f9fa;
+      background: #F3F6FA;
       border-left: 4px solid #ef4444;
       padding: 15px;
       margin: 20px 0;
@@ -822,7 +822,7 @@ Dein ${clubName}-Team
       color: #666;
     }
     .footer {
-      background: #f8f9fa;
+      background: #F3F6FA;
       padding: 20px 30px;
       text-align: center;
       font-size: 12px;
@@ -833,7 +833,7 @@ Dein ${clubName}-Team
       text-decoration: none;
     }
     .divider {
-      border-top: 1px solid #e5e5e5;
+      border-top: 1px solid #D7E0EB;
       margin: 30px 0;
     }
   </style>
@@ -1018,7 +1018,7 @@ Dein ${clubName}-Team
       font-family: 'Helvetica Neue', Arial, sans-serif;
       line-height: 1.6;
       color: #333;
-      background-color: #f4f4f4;
+      background-color: #F3F6FA;
       margin: 0;
       padding: 20px;
     }
@@ -1054,7 +1054,7 @@ Dein ${clubName}-Team
       margin-bottom: 20px;
     }
     .info-box {
-      background: #f8f9fa;
+      background: #F3F6FA;
       border-left: 4px solid #f59e0b;
       padding: 15px;
       margin: 20px 0;
@@ -1091,7 +1091,7 @@ Dein ${clubName}-Team
       margin: 20px 0;
     }
     .footer {
-      background: #f8f9fa;
+      background: #F3F6FA;
       padding: 20px 30px;
       text-align: center;
       font-size: 12px;
@@ -1237,7 +1237,7 @@ Dein SwingZ-Team
       font-family: 'Helvetica Neue', Arial, sans-serif;
       line-height: 1.6;
       color: #333;
-      background-color: #f4f4f4;
+      background-color: #F3F6FA;
       margin: 0;
       padding: 20px;
     }
@@ -1250,7 +1250,7 @@ Dein SwingZ-Team
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
     .header {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      background: linear-gradient(135deg, #216044 0%, #216044 100%);
       color: white;
       padding: 40px 30px;
       text-align: center;
@@ -1273,8 +1273,8 @@ Dein SwingZ-Team
       margin-bottom: 20px;
     }
     .info-box {
-      background: #f8f9fa;
-      border-left: 4px solid #10b981;
+      background: #F3F6FA;
+      border-left: 4px solid #216044;
       padding: 15px;
       margin: 20px 0;
       border-radius: 4px;
@@ -1282,7 +1282,7 @@ Dein SwingZ-Team
     .info-box h3 {
       margin: 0 0 10px 0;
       font-size: 16px;
-      color: #059669;
+      color: #216044;
     }
     .info-table {
       width: 100%;
@@ -1300,7 +1300,7 @@ Dein SwingZ-Team
       width: 40%;
     }
     .footer {
-      background: #f8f9fa;
+      background: #F3F6FA;
       padding: 20px 30px;
       text-align: center;
       font-size: 12px;
@@ -1429,7 +1429,7 @@ Dein ${clubName}-Team
       font-family: 'Helvetica Neue', Arial, sans-serif;
       line-height: 1.6;
       color: #333;
-      background-color: #f4f4f4;
+      background-color: #F3F6FA;
       margin: 0;
       padding: 20px;
     }
@@ -1442,7 +1442,7 @@ Dein ${clubName}-Team
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
     .header {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      background: linear-gradient(135deg, #216044 0%, #216044 100%);
       color: white;
       padding: 40px 30px;
       text-align: center;
@@ -1470,7 +1470,7 @@ Dein ${clubName}-Team
     }
     .button {
       display: inline-block;
-      background: #10b981;
+      background: #216044;
       color: white !important;
       text-decoration: none;
       padding: 14px 28px;
@@ -1479,8 +1479,8 @@ Dein ${clubName}-Team
       font-size: 16px;
     }
     .info-box {
-      background: #f8f9fa;
-      border-left: 4px solid #10b981;
+      background: #F3F6FA;
+      border-left: 4px solid #216044;
       padding: 15px;
       margin: 20px 0;
       border-radius: 4px;
@@ -1488,7 +1488,7 @@ Dein ${clubName}-Team
       color: #666;
     }
     .footer {
-      background: #f8f9fa;
+      background: #F3F6FA;
       padding: 20px 30px;
       text-align: center;
       font-size: 12px;

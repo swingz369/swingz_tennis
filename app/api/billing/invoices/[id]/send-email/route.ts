@@ -102,17 +102,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
         subject: `Ihre Rechnung ${invoice.invoice_number} von ${clubName}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #1a1a1a;">Rechnung ${invoice.invoice_number}</h2>
+            <h2 style="color: #172C48;">Rechnung ${invoice.invoice_number}</h2>
             <p>Hallo ${safeMember},</p>
             <p>anbei erhalten Sie Ihre Rechnung von <strong>${safeClub}</strong>.</p>
-            <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin: 16px 0;">
+            <div style="background: #F3F6FA; padding: 16px; border-radius: 8px; margin: 16px 0;">
               <p style="margin: 4px 0;"><strong>Rechnungsnummer:</strong> ${invoice.invoice_number}</p>
               <p style="margin: 4px 0;"><strong>Gesamtbetrag:</strong> ${formattedAmount}</p>
               <p style="margin: 4px 0;"><strong>Fälligkeitsdatum:</strong> ${formattedDueDate}</p>
             </div>
             <p>Die Rechnung finden Sie als PDF-Anlage in dieser E-Mail.</p>
             <p>Bitte überweisen Sie den Betrag bis zum ${formattedDueDate} auf das in der Rechnung angegebene Konto.</p>
-            <p style="color: #6b7280; font-size: 12px; margin-top: 24px;">
+            <p style="color: #53657C; font-size: 12px; margin-top: 24px;">
               Bei Fragen stehen wir Ihnen gerne zur Verfügung.<br/>
               Mit freundlichen Grüßen,<br/>
               ${safeClub}

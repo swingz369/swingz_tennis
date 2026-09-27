@@ -70,7 +70,7 @@ export function SeasonConfirmationEmail({
           backgroundColor: '#f6f7f9',
           fontFamily:
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-          color: '#1a1a1a',
+          color: '#172C48',
           margin: 0,
           padding: 0,
         }}
@@ -88,7 +88,7 @@ export function SeasonConfirmationEmail({
           {/* Header */}
           <Section
             style={{
-              background: 'linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%)',
+              background: 'linear-gradient(135deg,#172C48 0%,#255B9B 100%)',
               padding: '32px 32px 24px 32px',
               color: '#ffffff',
             }}
@@ -119,7 +119,7 @@ export function SeasonConfirmationEmail({
                 margin: '0 0 24px 0',
                 fontSize: '15px',
                 lineHeight: 1.5,
-                color: '#4a5568',
+                color: '#53657C',
               }}
             >
               schön, dass du wieder dabei bist! Hier sind deine Zuordnungen für die kommende Saison:
@@ -140,7 +140,7 @@ export function SeasonConfirmationEmail({
                   margin: '0 0 6px 0',
                   fontSize: '12px',
                   textTransform: 'uppercase',
-                  color: '#1e40af',
+                  color: '#255B9B',
                   fontWeight: 600,
                   letterSpacing: '0.5px',
                 }}
@@ -152,7 +152,7 @@ export function SeasonConfirmationEmail({
                   margin: '0 0 16px 0',
                   fontSize: '20px',
                   fontWeight: 700,
-                  color: '#1e3a8a',
+                  color: '#172C48',
                 }}
               >
                 {groupName}
@@ -163,7 +163,7 @@ export function SeasonConfirmationEmail({
                   margin: '0 0 6px 0',
                   fontSize: '12px',
                   textTransform: 'uppercase',
-                  color: '#1e40af',
+                  color: '#255B9B',
                   fontWeight: 600,
                   letterSpacing: '0.5px',
                 }}
@@ -175,7 +175,7 @@ export function SeasonConfirmationEmail({
                   margin: 0,
                   fontSize: '16px',
                   fontWeight: 600,
-                  color: '#1a1a1a',
+                  color: '#172C48',
                 }}
               >
                 {trainerName}
@@ -197,7 +197,7 @@ export function SeasonConfirmationEmail({
                   margin: '0 0 6px 0',
                   fontSize: '12px',
                   textTransform: 'uppercase',
-                  color: '#047857',
+                  color: '#216044',
                   fontWeight: 600,
                   letterSpacing: '0.5px',
                 }}
@@ -223,7 +223,7 @@ export function SeasonConfirmationEmail({
                 style={{
                   margin: '12px 0 0 0',
                   fontSize: '13px',
-                  color: '#047857',
+                  color: '#216044',
                 }}
               >
                 Insgesamt <strong>{totalSessions}</strong> Trainingseinheiten in dieser Saison.
@@ -262,13 +262,13 @@ export function SeasonConfirmationEmail({
                 margin: '0 0 16px 0',
                 fontSize: '15px',
                 lineHeight: 1.5,
-                color: '#4a5568',
+                color: '#53657C',
               }}
             >
               Du findest deine Trainingszeiten auch jederzeit in deinem{' '}
               <Link
                 href={`${appUrl}/member`}
-                style={{ color: '#3b82f6', textDecoration: 'underline' }}
+                style={{ color: '#255B9B', textDecoration: 'underline' }}
               >
                 SwingZ-Konto
               </Link>{' '}
@@ -280,7 +280,7 @@ export function SeasonConfirmationEmail({
                 margin: '0 0 4px 0',
                 fontSize: '15px',
                 lineHeight: 1.5,
-                color: '#4a5568',
+                color: '#53657C',
               }}
             >
               Bei Fragen wende dich bitte direkt an deinen Trainer oder die Club-Administration.
@@ -290,13 +290,13 @@ export function SeasonConfirmationEmail({
           {/* Footer */}
           <Section
             style={{
-              backgroundColor: '#f9fafb',
+              backgroundColor: '#F3F6FA',
               padding: '20px 32px',
-              borderTop: '1px solid #e5e7eb',
+              borderTop: '1px solid #D7E0EB',
               textAlign: 'center',
             }}
           >
-            <Text style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#6b7280' }}>
+            <Text style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#53657C' }}>
               Sportliche Grüße,
             </Text>
             <Text
@@ -304,12 +304,12 @@ export function SeasonConfirmationEmail({
                 margin: 0,
                 fontSize: '14px',
                 fontWeight: 600,
-                color: '#1a1a1a',
+                color: '#172C48',
               }}
             >
               Dein SwingZ-Team 🎾
             </Text>
-            <Hr style={{ borderColor: '#e5e7eb', margin: '16px 0' }} />
+            <Hr style={{ borderColor: '#D7E0EB', margin: '16px 0' }} />
             <Text style={{ margin: 0, fontSize: '11px', color: '#9ca3af' }}>
               Diese E-Mail wurde automatisch generiert, da dein neuer Trainingsplan veröffentlicht
               wurde.

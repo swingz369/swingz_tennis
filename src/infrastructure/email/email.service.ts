@@ -53,8 +53,8 @@ const templates = {
           <style>
             body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #00599F; color: white; padding: 20px; text-align: center; }
-            .content { background: #f9f9f9; padding: 20px; margin-top: 20px; }
+            .header { background: #172C48; color: white; padding: 20px; text-align: center; }
+            .content { background: #F3F6FA; padding: 20px; margin-top: 20px; }
             .details { margin: 20px 0; }
             .details table { width: 100%; border-collapse: collapse; }
             .details td { padding: 8px; border-bottom: 1px solid #ddd; }
@@ -102,7 +102,7 @@ const templates = {
             body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { background: #dc2626; color: white; padding: 20px; text-align: center; }
-            .content { background: #f9f9f9; padding: 20px; margin-top: 20px; }
+            .content { background: #F3F6FA; padding: 20px; margin-top: 20px; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
           </style>
         </head>
@@ -159,8 +159,8 @@ const templates = {
             <style>
               body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: ${data.newStatus === 'confirmed' ? '#00599F' : data.newStatus === 'cancelled' ? '#dc2626' : '#6b7280'}; color: white; padding: 20px; text-align: center; }
-              .content { background: #f9f9f9; padding: 20px; margin-top: 20px; }
+              .header { background: ${data.newStatus === 'confirmed' ? '#172C48' : data.newStatus === 'cancelled' ? '#dc2626' : '#53657C'}; color: white; padding: 20px; text-align: center; }
+              .content { background: #F3F6FA; padding: 20px; margin-top: 20px; }
               .details { margin: 20px 0; }
               .details table { width: 100%; border-collapse: collapse; }
               .details td { padding: 8px; border-bottom: 1px solid #ddd; }
@@ -206,8 +206,8 @@ const templates = {
           <style>
             body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
-            .content { background: #f9f9f9; padding: 20px; margin-top: 20px; }
+            .header { background: #255B9B; color: white; padding: 20px; text-align: center; }
+            .content { background: #F3F6FA; padding: 20px; margin-top: 20px; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
           </style>
         </head>
@@ -247,8 +247,8 @@ const templates = {
           <style>
             body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: ${data.isActive ? '#00599F' : '#6b7280'}; color: white; padding: 20px; text-align: center; }
-            .content { background: #f9f9f9; padding: 20px; margin-top: 20px; }
+            .header { background: ${data.isActive ? '#172C48' : '#53657C'}; color: white; padding: 20px; text-align: center; }
+            .content { background: #F3F6FA; padding: 20px; margin-top: 20px; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
           </style>
         </head>
@@ -299,8 +299,8 @@ const templates = {
             <style>
               body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: #00599F; color: white; padding: 20px; text-align: center; }
-              .content { background: #f9f9f9; padding: 20px; margin-top: 20px; }
+              .header { background: #172C48; color: white; padding: 20px; text-align: center; }
+              .content { background: #F3F6FA; padding: 20px; margin-top: 20px; }
               .details { margin: 20px 0; }
               .details table { width: 100%; border-collapse: collapse; }
               .details td { padding: 8px; border-bottom: 1px solid #ddd; }
@@ -345,9 +345,9 @@ const templates = {
           <style>
             body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #00599F; color: white; padding: 20px; text-align: center; }
-            .content { background: #f9f9f9; padding: 20px; margin-top: 20px; }
-            .cta { display: inline-block; background: #00599F; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+            .header { background: #172C48; color: white; padding: 20px; text-align: center; }
+            .content { background: #F3F6FA; padding: 20px; margin-top: 20px; }
+            .cta { display: inline-block; background: #172C48; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
           </style>
         </head>

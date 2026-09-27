@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 
 /** Vom Widget-Anbieter freigegebener Host — muss mit `frame-src` in next.config.js übereinstimmen. */
 const WIDGET_URL = 'https://services.tennis.de/extern/tennisdeteamsearch.zul';
-const LINK_COLOR = '00599F';
+const LINK_COLOR = '255B9B'; // Matchday-Linkblau (ADR-007)
 
 /**
  * Offizielles tennis.de-Mannschaftswidget (Mannschaften, Spielplan, Tabellen) im iFrame.

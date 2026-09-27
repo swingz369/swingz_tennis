@@ -25,7 +25,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TIME = /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
 
 const GROUP_COLORS = [
-  '#2563eb',
+  '#255B9B',
   '#7c3aed',
   '#db2777',
   '#dc2626',
@@ -38,7 +38,7 @@ const GROUP_COLORS = [
   '#c026d3',
   '#e11d48',
 ];
-const FALLBACK_COLOR = '#6b7280';
+const FALLBACK_COLOR = '#53657C';
 
 /** Spalten, die PATCH aus dem Request übernimmt (alles andere wird ignoriert). */
 const UPDATABLE = [
