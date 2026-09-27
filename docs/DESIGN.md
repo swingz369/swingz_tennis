@@ -241,17 +241,22 @@ Commit. Plan und Begründung: `ARCHIV/2026-09-19-ui-einheitlichkeit-analyse-und-
 
 **Bausteine nach der Matchday-Vorlage (27.09.2026):** Radius `rounded-xl` = 12 px (Panels, Dialoge), `rounded-md` = 8 px (Buttons, Felder, Umschalter), `rounded` = 4 px (Tags/Badges, Segmente im Umschalter). `Card` trägt keinen eigenen Innenabstand, sobald `CardHeader`/`CardContent` drin sind. `Table`: Kopf in Versalien auf `bg-muted`, Zellen `px-5 py-4`, Ziffern `tabular-nums`. `Button`: 44 px hoch (`default`/`icon`), Variante `highlight` = Lime-Fläche für die **eine** Hauptaktion einer Seite (ADR-007). `Tabs` = Segment-Umschalter mit Rahmen, aktives Segment `bg-muted`. `KpiBand` = Kennzahlen-Panel mit Trennlinien. Eingabefelder rahmen mit `--input` (3:1). Die verbliebenen `text-[Npx]` (Marke, Hero-Zahl, Mono-Beschriftungen) sind bewusst und über die Ratsche eingefroren.
 
+**Zahlen und Daten (27.09.2026):** Beträge nur über `formatCurrency` („1.234,56 €"), Stunden über `formatHours` („1,5 h"), Tabellendaten über `formatDateNumeric` — nie `toFixed()` mit angehängtem „€"/„h".
+
 **Dashboards (Stand 19.09.2026):** Owner, Superadmin, Admin, Trainer und Mitglied bauen bereits gleich — `PageHeader` → `KpiBand` → Schnellaktionen/Karten. Die Analyse hatte das zu pessimistisch gezählt; der Aufbau ist nicht das Problem, sondern nur die Handbau-Kacheln auf den übrigen Seiten.
 
-| Muster          | Komponente                                                                            | Nicht mehr                    | Ratsche      |
-| --------------- | ------------------------------------------------------------------------------------- | ----------------------------- | ------------ |
-| Seitentitel     | `PageHeader` (+ `back`, `badge`, `actions`)                                           | eigenes `<h1>`                | ✅ 0         |
-| Bestätigung     | `ConfirmDialog`, im Handler per `useConfirmDialog()`                                  | `window.confirm()`            | ✅ 0         |
-| Liste / Tabelle | `Table` + `PaginationNav`                                                             | rohe `<table>`                | ✅ 0         |
-| Schriftgröße    | Typo-Skala § 4.2                                                                      | `text-[Npx]`                  | ✅ 0         |
-| Dialog          | shadcn `Dialog`; `CenteredModal` nur Bestand (gleiche Überlagerung/Schatten, Ratsche) | neue `CenteredModal`-Nutzer   | ✅ Grenze 28 |
-| Kennzahlen      | `KpiBand` (Reihe, 2–6 Werte) / `StatCard` (einzeln)                                   | Zahl als `text-3xl` in `Card` | ✅ Grenze    |
-| Leerzustand     | `EmptyState` (ganze Fläche, mit Aktion) / `ListState` (innerhalb Karte/Tabelle)       | loser „Keine …"-Text          | ✅ Grenze 3  |
+| Muster          | Komponente                                                                            | Nicht mehr                     | Ratsche      |
+| --------------- | ------------------------------------------------------------------------------------- | ------------------------------ | ------------ |
+| Seitentitel     | `PageHeader` (+ `back`, `badge`, `actions`)                                           | eigenes `<h1>`                 | ✅ 0         |
+| Bestätigung     | `ConfirmDialog`, im Handler per `useConfirmDialog()`                                  | `window.confirm()`             | ✅ 0         |
+| Liste / Tabelle | `Table` + `PaginationNav`                                                             | rohe `<table>`                 | ✅ 0         |
+| Schriftgröße    | Typo-Skala § 4.2                                                                      | `text-[Npx]`                   | ✅ 0         |
+| Dialog          | shadcn `Dialog`; `CenteredModal` nur Bestand (gleiche Überlagerung/Schatten, Ratsche) | neue `CenteredModal`-Nutzer    | ✅ Grenze 28 |
+| Kennzahlen      | `KpiBand` (Reihe, 2–6 Werte) / `StatCard` (einzeln)                                   | Zahl als `text-3xl` in `Card`  | ✅ Grenze 16 |
+| Leerzustand     | `EmptyState` (ganze Fläche, mit Aktion) / `ListState` (innerhalb Karte/Tabelle)       | loser „Keine …"-Text           | ✅ Grenze 3  |
+| „Als Nächstes"  | `NextUpHero` (dunkle Insel, genau eine `highlight`-Aktion) — Startseiten              | eigene dunkle Hero-Karte       | —            |
+| Terminliste     | `SessionRow` (Zeit, `--event`-Streifen, Titel, Meta, Pfeil/Tag)                       | Termin-Tabelle auf Startseiten | —            |
+| Dunkle Fläche   | Klasse `.brand-dark-surface` + `bg-brand-dark` (Detailköpfe, Hero, Saison-Karte)      | `dark:`-Sonderfarben im Innern | —            |
 
 **Bewusste Ausnahmen der Ratschen (Stand 20.09.2026):**
 
