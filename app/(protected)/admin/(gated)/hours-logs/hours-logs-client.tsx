@@ -12,6 +12,7 @@ import {
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { Fragment, useState, useEffect, useCallback } from 'react';
+import { KpiBand } from '@/components/ui/kpi-band';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -24,16 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import {
-  Clock,
-  CheckCircle,
-  XCircle,
-  Filter,
-  Hourglass,
-  Trash2,
-  TrendingUp,
-  AlertTriangle,
-} from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Filter, Hourglass, Trash2, TrendingUp } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
@@ -206,72 +198,18 @@ export default function HoursLogsClient() {
 
   return (
     <div className="space-y-6">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Gesamt</p>
-                <p className="text-xl font-bold mt-0.5">{stats.total}</p>
-              </div>
-              <Clock className="h-5 w-5 text-muted-foreground/50" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Ausstehend</p>
-                <p className="text-xl font-bold mt-0.5 text-warning-600">{stats.pending}</p>
-              </div>
-              <Hourglass className="h-5 w-5 text-warning-300" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Genehmigt</p>
-                <p className="text-xl font-bold mt-0.5 text-success-600">{stats.approved}</p>
-              </div>
-              <CheckCircle className="h-5 w-5 text-success-300" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Stunden gesamt</p>
-                <p className="text-xl font-bold mt-0.5 text-primary dark:text-brand-light">
-                  {formatHours(stats.totalHours)}
-                </p>
-              </div>
-              <TrendingUp className="h-5 w-5 text-brand-light/50" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Pending Alert */}
-      {stats.pending > 0 && (
-        <div className="rounded-xl bg-warning-50 border border-warning-200 p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-warning-600" />
-            <div>
-              <p className="text-sm font-medium text-warning-800">
-                {stats.pending} ausstehende Stundennachweise
-              </p>
-              <p className="text-xs text-warning-600">
-                {formatHours(stats.pendingHours)} warten auf Genehmigung
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      <KpiBand
+        items={[
+          { label: 'Nachweise', value: stats.total },
+          {
+            label: 'Ausstehend',
+            value: stats.pending,
+            sub: stats.pending > 0 ? `${formatHours(stats.pendingHours)} warten` : undefined,
+          },
+          { label: 'Genehmigt', value: stats.approved },
+          { label: 'Stunden gesamt', value: formatHours(stats.totalHours) },
+        ]}
+      />
 
       {/* Filters */}
       <Card>

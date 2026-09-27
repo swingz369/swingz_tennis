@@ -22,6 +22,7 @@ import type { LucideIcon } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
 import { apiFetch } from '@/lib/api-fetch';
+import { KpiBand } from '@/components/ui/kpi-band';
 import { PageHeader } from '@/components/ui/page-header';
 
 import { createLogger } from '@/lib/logger';
@@ -292,69 +293,19 @@ export default function TrainerHoursLogsPage() {
         </Card>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Gesamt</p>
-                <p className="text-xl font-bold mt-0.5">{stats.total}</p>
-              </div>
-              <Clock className="h-5 w-5 text-muted-foreground/50" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Ausstehend</p>
-                <p className="text-xl font-bold mt-0.5 text-warning-600">{stats.pending}</p>
-              </div>
-              <Hourglass className="h-5 w-5 text-warning-300" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Genehmigt</p>
-                <p className="text-xl font-bold mt-0.5 text-success-600">{stats.approved}</p>
-              </div>
-              <CheckCircle className="h-5 w-5 text-success-300" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="sm:col-span-1 col-span-2">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Stunden gesamt</p>
-                <p className="text-xl font-bold mt-0.5 text-primary dark:text-brand-light">
-                  {formatHours(stats.totalHours)}
-                </p>
-              </div>
-              <Clock className="h-5 w-5 text-brand-light/50" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Approved Hours Summary */}
-      {stats.approvedHours > 0 && (
-        <div className="rounded-xl bg-success-50 border border-success-200 p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="h-5 w-5 text-success-600" />
-            <div>
-              <p className="text-sm font-medium text-success-800">Bestätigte Stunden</p>
-              <p className="text-xs text-success-600">Bereits von deinem Verein genehmigt</p>
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-success-700">{formatHours(stats.approvedHours)}</p>
-        </div>
-      )}
+      <KpiBand
+        items={[
+          { label: 'Nachweise', value: stats.total },
+          { label: 'Ausstehend', value: stats.pending },
+          {
+            label: 'Genehmigt',
+            value: stats.approved,
+            sub:
+              stats.approvedHours > 0 ? `${formatHours(stats.approvedHours)} bestätigt` : undefined,
+          },
+          { label: 'Stunden gesamt', value: formatHours(stats.totalHours) },
+        ]}
+      />
 
       {/* Filters */}
       <Card>

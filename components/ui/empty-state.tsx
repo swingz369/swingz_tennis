@@ -138,7 +138,16 @@ export function EmptyState({
  */
 
 import React from 'react';
-import { Users, Calendar, Inbox, Search, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import {
+  Users,
+  Calendar,
+  Inbox,
+  Search,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
+  PowerOff,
+} from 'lucide-react';
 
 /**
  * No members empty state
@@ -261,6 +270,30 @@ export function ForbiddenState() {
       icon={XCircle}
       title="Keine Berechtigung"
       description="Du hast keine Berechtigung, um auf diese Ressource zuzugreifen."
+    />
+  );
+}
+
+/**
+ * Optionales Modul ist im Verein abgeschaltet. Admins können es einschalten,
+ * alle anderen nur den Admin fragen.
+ */
+export function ModuleDisabledState({
+  module,
+  canEnable = false,
+}: {
+  module: string;
+  canEnable?: boolean;
+}) {
+  return (
+    <EmptyState
+      icon={PowerOff}
+      title={`${module} ist nicht aktiviert`}
+      description={
+        canEnable
+          ? 'Das Modul lässt sich unter Einstellungen → Module einschalten.'
+          : 'Dein Verein hat dieses Modul nicht eingeschaltet. Bei Bedarf hilft dir der Vereinsadmin weiter.'
+      }
     />
   );
 }

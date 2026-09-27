@@ -5,6 +5,7 @@ import { extractErrorMessage } from '@/lib/typed-helpers';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -293,151 +294,145 @@ export default function OpenMatches({ clubId, userId }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" />
-            Offene Spiele
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Finde Mitspieler oder erstelle ein offenes Spiel
-          </p>
-        </div>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Spiel erstellen
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-brand-light" />
-                Neues offenes Spiel
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div>
-                <Label htmlFor="title">Titel *</Label>
-                <Input
-                  id="title"
-                  value={form.title}
-                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  placeholder="z.B. Doppel am Samstag"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="matchDate">Datum *</Label>
-                  <Input
-                    id="matchDate"
-                    type="date"
-                    value={form.matchDate}
-                    onChange={(e) => setForm((f) => ({ ...f, matchDate: e.target.value }))}
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="maxPlayers">Spieler</Label>
-                  <Select
-                    value={form.maxPlayers}
-                    onValueChange={(v) => setForm((f) => ({ ...f, maxPlayers: v }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[2, 3, 4, 6, 8, 10, 12].map((n) => (
-                        <SelectItem key={n} value={String(n)}>
-                          {n} Spieler
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="startTime">Start *</Label>
-                  <Input
-                    id="startTime"
-                    type="time"
-                    value={form.startTime}
-                    onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="endTime">Ende *</Label>
-                  <Input
-                    id="endTime"
-                    type="time"
-                    value={form.endTime}
-                    onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Spielstärke</Label>
-                  <Select
-                    value={form.skillLevel}
-                    onValueChange={(v) => setForm((f) => ({ ...f, skillLevel: v }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SKILL_LEVELS.map((l) => (
-                        <SelectItem key={l.value} value={l.value}>
-                          {l.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Spieltyp</Label>
-                  <Select
-                    value={form.matchType}
-                    onValueChange={(v) => setForm((f) => ({ ...f, matchType: v }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MATCH_TYPES.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="description">Beschreibung</Label>
-                <Textarea
-                  id="description"
-                  value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  placeholder="z.B. Suchen noch 2 Spieler für ein lockeres Doppel"
-                  rows={2}
-                />
-              </div>
-              <Button onClick={handleCreate} disabled={creating} className="w-full gap-2">
-                {creating ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
+      <PageHeader
+        title="Offene Spiele"
+        description="Finde Mitspieler oder erstelle ein offenes Spiel"
+        actions={
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
                 Spiel erstellen
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-brand-light" />
+                  Neues offenes Spiel
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <Label htmlFor="title">Titel *</Label>
+                  <Input
+                    id="title"
+                    value={form.title}
+                    onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                    placeholder="z.B. Doppel am Samstag"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="matchDate">Datum *</Label>
+                    <Input
+                      id="matchDate"
+                      type="date"
+                      value={form.matchDate}
+                      onChange={(e) => setForm((f) => ({ ...f, matchDate: e.target.value }))}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="maxPlayers">Spieler</Label>
+                    <Select
+                      value={form.maxPlayers}
+                      onValueChange={(v) => setForm((f) => ({ ...f, maxPlayers: v }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[2, 3, 4, 6, 8, 10, 12].map((n) => (
+                          <SelectItem key={n} value={String(n)}>
+                            {n} Spieler
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="startTime">Start *</Label>
+                    <Input
+                      id="startTime"
+                      type="time"
+                      value={form.startTime}
+                      onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="endTime">Ende *</Label>
+                    <Input
+                      id="endTime"
+                      type="time"
+                      value={form.endTime}
+                      onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Spielstärke</Label>
+                    <Select
+                      value={form.skillLevel}
+                      onValueChange={(v) => setForm((f) => ({ ...f, skillLevel: v }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SKILL_LEVELS.map((l) => (
+                          <SelectItem key={l.value} value={l.value}>
+                            {l.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Spieltyp</Label>
+                    <Select
+                      value={form.matchType}
+                      onValueChange={(v) => setForm((f) => ({ ...f, matchType: v }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MATCH_TYPES.map((t) => (
+                          <SelectItem key={t.value} value={t.value}>
+                            {t.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="description">Beschreibung</Label>
+                  <Textarea
+                    id="description"
+                    value={form.description}
+                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                    placeholder="z.B. Suchen noch 2 Spieler für ein lockeres Doppel"
+                    rows={2}
+                  />
+                </div>
+                <Button onClick={handleCreate} disabled={creating} className="w-full gap-2">
+                  {creating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  Spiel erstellen
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        }
+      />
 
       {/* Match list */}
       {loading ? (

@@ -1,7 +1,7 @@
 'use client';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
-import { EmptyState } from '@/components/ui/empty-state';
+import { EmptyState, ModuleDisabledState } from '@/components/ui/empty-state';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -204,11 +204,7 @@ export default function AdminFamilyPage() {
           <Skeleton className="h-32 w-full" />
         </div>
       ) : moduleOff ? (
-        <EmptyState
-          icon={Users}
-          title="Familienkonten sind nicht aktiviert"
-          description="Das Modul lässt sich unter Einstellungen → Module einschalten."
-        />
+        <ModuleDisabledState module="Familienkonten" canEnable />
       ) : groups.length === 0 ? (
         <EmptyState
           icon={Users}

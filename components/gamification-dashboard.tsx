@@ -2,6 +2,7 @@
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { KpiBand } from '@/components/ui/kpi-band';
+import { ModuleDisabledState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -79,11 +80,7 @@ export default function GamificationDashboard() {
     return (
       <div className="space-y-5">
         <PageHeader title="Dein Fortschritt" description="Punkte, Badges & Rangliste" />
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            Das Gamification-Modul ist für deinen Verein nicht aktiviert.
-          </CardContent>
-        </Card>
+        <ModuleDisabledState module="Gamification" />
       </div>
     );
   }

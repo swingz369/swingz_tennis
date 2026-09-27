@@ -603,27 +603,27 @@ export function PricingClient({ clubId }: PricingClientProps) {
       {/* Explanation Cards */}
       {!showForm && rules.length === 0 && !loading && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card className="bg-info-50 dark:from-info-900 dark:to-info-900 border-info-200">
+          <Card>
             <CardContent className="p-4">
-              <Clock className="h-8 w-8 text-info-600 mb-2" />
+              <Clock className="h-5 w-5 text-primary mb-2" />
               <h3 className="font-semibold text-sm">Zeitbasierte Preise</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Definiere Peak- und Off-Peak-Zeiten mit unterschiedlichen Multiplikatoren.
               </p>
             </CardContent>
           </Card>
-          <Card className="bg-success-50 dark:from-success-900 dark:to-success-900 border-success-200">
+          <Card>
             <CardContent className="p-4">
-              <Calendar className="h-8 w-8 text-success-600 mb-2" />
+              <Calendar className="h-5 w-5 text-primary mb-2" />
               <h3 className="font-semibold text-sm">Tagespreise</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Lege unterschiedliche Preise für Wochentage und Wochenenden fest.
               </p>
             </CardContent>
           </Card>
-          <Card className="bg-brand-accent-50 dark:from-brand-accent-950 dark:to-brand-accent-900 border-brand-accent-200">
+          <Card>
             <CardContent className="p-4">
-              <Sun className="h-8 w-8 text-brand-accent-600 mb-2" />
+              <Sun className="h-5 w-5 text-primary mb-2" />
               <h3 className="font-semibold text-sm">Saison-Preise</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Binde Preise an Sommer- oder Wintersaison für automatische Übergänge.

@@ -1,5 +1,6 @@
 import { requireAuth } from '@/lib/auth';
 import WorkDutiesMemberClient from './work-duties-member-client';
+import { ModuleDisabledState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 
 export const metadata = {
@@ -33,10 +34,9 @@ export default async function MemberWorkDutiesPage() {
   const features = (club?.features as Record<string, boolean>) ?? {};
   if (features.work_duty !== true) {
     return (
-      <div className="py-6">
-        <p className="text-muted-foreground">
-          Das Arbeitsdienst-Feature ist für diesen Verein nicht aktiviert.
-        </p>
+      <div className="space-y-6">
+        <PageHeader title="Arbeitsdienste" />
+        <ModuleDisabledState module="Arbeitsdienste" />
       </div>
     );
   }

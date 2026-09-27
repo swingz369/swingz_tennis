@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/auth';
 import { PartnerFinderPanel } from '@/components/partner-finder-panel';
 import { ScrollReveal } from '@/components/animations';
+import { ModuleDisabledState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 
 export default async function PartnerFinderPage() {
@@ -23,9 +24,10 @@ export default async function PartnerFinderPage() {
     const features = (club?.features as Record<string, boolean>) ?? {};
     if (features.partner_finder !== true) {
       return (
-        <p className="text-muted-foreground">
-          Das Modul „Spielpartner-Suche" ist für diesen Verein nicht aktiviert.
-        </p>
+        <div className="space-y-6">
+          <PageHeader title="Spielpartner-Suche" />
+          <ModuleDisabledState module="Spielpartner-Suche" />
+        </div>
       );
     }
   }
