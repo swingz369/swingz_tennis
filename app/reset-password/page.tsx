@@ -303,18 +303,14 @@ export default function ResetPasswordPage() {
                     </div>
                   )}
 
-                  <Button
-                    type="submit"
-                    className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-light text-white font-semibold shadow-glow-primary-sm hover:shadow-glow-primary transition-all duration-300"
-                    disabled={state === 'submitting'}
-                  >
+                  <Button type="submit" className="w-full" disabled={state === 'submitting'}>
                     {state === 'submitting' ? 'Wird gespeichert…' : 'Passwort speichern'}
                   </Button>
 
                   <p className="text-center text-sm text-muted-foreground">
                     <Link
                       href="/login"
-                      className="text-brand-primary hover:text-brand-light font-semibold transition-colors underline-offset-2 hover:underline"
+                      className="text-foreground font-semibold underline-offset-2 hover:underline"
                     >
                       Zurück zum Login
                     </Link>

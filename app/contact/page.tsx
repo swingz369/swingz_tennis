@@ -103,29 +103,25 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-brand-primary to-brand-light rounded-xl p-8 text-white">
+              <div className="brand-dark-surface bg-brand-dark rounded-xl p-8">
                 <Sparkles className="h-8 w-8 mb-4" />
                 <h3 className="text-xl font-bold mb-2">Warum SWINGZ?</h3>
                 <ul className="space-y-2 text-white/80 text-sm mb-6">
                   <li className="flex items-start gap-2">
-                    <span className="text-white mt-0.5">✓</span>
+                    <span className="text-brand-accent mt-0.5">✓</span>
                     <span>14 Tage kostenlos testen</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-white mt-0.5">✓</span>
+                    <span className="text-brand-accent mt-0.5">✓</span>
                     <span>Persönliches Onboarding</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-white mt-0.5">✓</span>
+                    <span className="text-brand-accent mt-0.5">✓</span>
                     <span>Keine Kreditkarte erforderlich</span>
                   </li>
                 </ul>
                 <Link href="/register">
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    className="w-full bg-background text-brand-primary hover:bg-background/90"
-                  >
+                  <Button variant="highlight" size="lg" className="w-full">
                     Kostenlos registrieren
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>

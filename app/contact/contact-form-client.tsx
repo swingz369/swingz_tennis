@@ -117,7 +117,7 @@ export function ContactFormClient() {
           name="message"
           required
           rows={5}
-          className="flex w-full rounded-xl border border-border bg-background px-4 py-3 text-base shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-light resize-none"
+          className="flex w-full rounded-xl border border-border bg-background px-4 py-3 text-base shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
           placeholder="Erzähl uns von deinem Verein und was dich an SWINGZ interessiert..."
         />
       </div>
@@ -128,12 +128,7 @@ export function ContactFormClient() {
         </div>
       )}
 
-      <Button
-        type="submit"
-        size="lg"
-        className="w-full h-12 rounded-xl bg-gradient-primary text-white shadow-lg"
-        disabled={loading}
-      >
+      <Button type="submit" size="lg" className="w-full" disabled={loading}>
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />

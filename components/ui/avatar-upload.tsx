@@ -131,7 +131,7 @@ export function AvatarUpload({
         <Avatar className={`${SIZE_CLASSES[size]} ring-2 ring-border transition-all duration-200`}>
           <AvatarImage src={currentUrl || undefined} alt={userName || 'Avatar'} />
           <AvatarFallback
-            className={`bg-gradient-to-br from-brand-light to-brand-primary text-white font-semibold ${FALLBACK_TEXT_SIZE[size]}`}
+            className={`bg-primary text-primary-foreground font-semibold ${FALLBACK_TEXT_SIZE[size]}`}
           >
             {initials}
           </AvatarFallback>

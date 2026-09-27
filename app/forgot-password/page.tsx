@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-dvh flex relative overflow-hidden">
       {/* ── Left: Brand Panel ── */}
-      <div className="hidden lg:flex lg:flex-1 relative">
+      <div className="hidden lg:flex lg:flex-1 relative brand-dark-surface">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-auth-hero" />
         </div>
@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <h1 className="text-4xl font-extrabold leading-tight max-w-md">
-            Kein Problem. <span className="text-brand-light">Wir helfen dir.</span>
+            Kein Problem. <span className="text-brand-accent">Wir helfen dir.</span>
           </h1>
 
           <p className="mt-6 text-white/55 text-lg max-w-md leading-relaxed">
@@ -154,11 +154,7 @@ export default function ForgotPasswordPage() {
                     </div>
                   )}
 
-                  <Button
-                    type="submit"
-                    className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-light text-white font-semibold shadow-glow-primary-sm hover:shadow-glow-primary transition-all duration-300"
-                    disabled={loading}
-                  >
+                  <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? 'Sende…' : 'Reset-Link anfordern'}
                   </Button>
 
@@ -166,7 +162,7 @@ export default function ForgotPasswordPage() {
                     Du erinnerst dich wieder?{' '}
                     <Link
                       href="/login"
-                      className="text-brand-primary hover:text-brand-light font-semibold transition-colors underline-offset-2 hover:underline"
+                      className="text-foreground font-semibold underline-offset-2 hover:underline"
                     >
                       Zurück zum Login
                     </Link>

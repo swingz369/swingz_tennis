@@ -194,8 +194,8 @@ export default function AboutPage() {
           </div>
           <div className="max-w-2xl mx-auto">
             <div className="bg-muted rounded-xl p-8 sm:p-10 text-center">
-              <div className="h-20 w-20 rounded-full bg-gradient-to-br from-brand-primary to-brand-light flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <span className="text-2xl font-bold text-white">M</span>
+              <div className="h-20 w-20 rounded-full bg-primary flex items-center justify-center mx-auto mb-6">
+                <span className="text-2xl font-bold text-primary-foreground">M</span>
               </div>
               <h3 className="text-xl font-bold text-foreground">Gründerteam</h3>
               <p className="text-sm text-muted-foreground mt-1 mb-4">
@@ -220,7 +220,7 @@ export default function AboutPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 sm:py-28 bg-gradient-to-br from-gray-900 to-gray-950">
+      <section className="py-20 sm:py-28 brand-dark-surface bg-brand-dark">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
             Bereit, die Zukunft mitzugestalten?

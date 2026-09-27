@@ -96,12 +96,12 @@ const AvatarWithStatus = React.forwardRef<HTMLDivElement, AvatarWithStatusProps>
           <img
             src={src}
             alt={name}
-            className={cn('rounded-full object-cover ring-2 ring-white', sizeClasses[size])}
+            className={cn('rounded-full object-cover ring-2 ring-background', sizeClasses[size])}
           />
         ) : (
           <div
             className={cn(
-              'rounded-full bg-gradient-to-br from-brand-primary to-brand-primary/80 flex items-center justify-center font-semibold text-white ring-2 ring-white',
+              'rounded-full bg-primary flex items-center justify-center font-semibold text-primary-foreground ring-2 ring-background',
               sizeClasses[size]
             )}
           >

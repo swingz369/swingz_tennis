@@ -54,7 +54,7 @@ export default async function PublicTrialBookingPage({ searchParams }: PageProps
   const clubInfo = clubId ? await fetchClubInfo(clubId) : null;
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-brand-primary/5 to-brand-light/5 dark:bg-card">
+    <div className="min-h-dvh bg-background">
       <div className="max-w-3xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-8">
@@ -65,7 +65,7 @@ export default async function PublicTrialBookingPage({ searchParams }: PageProps
                 alt={clubInfo.name}
                 width={48}
                 height={48}
-                className="rounded-full object-cover border-2 border-brand-light/20"
+                className="rounded-full object-cover border-2 border-border"
               />
               <span className="text-xl font-bold text-brand-primary dark:text-white">
                 {clubInfo.name}

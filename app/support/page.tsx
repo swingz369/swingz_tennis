@@ -194,7 +194,7 @@ export default function SupportPage() {
                 <p className="text-sm text-muted-foreground mb-3">{item.a}</p>
                 <Link
                   href={item.href}
-                  className="inline-flex items-center text-sm text-brand-primary hover:text-brand-light font-medium transition-colors"
+                  className="inline-flex items-center text-sm text-foreground font-medium underline-offset-2 hover:underline"
                 >
                   {item.cta}
                   <ArrowRight className="h-3.5 w-3.5 ml-1" />
@@ -208,9 +208,9 @@ export default function SupportPage() {
       {/* Status Banner */}
       <section className="pb-16 sm:pb-20">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-xl bg-gradient-to-br from-brand-primary to-brand-light p-8 text-white">
+          <div className="rounded-xl brand-dark-surface bg-brand-dark p-8">
             <div className="flex items-start gap-4">
-              <div className="h-10 w-10 rounded-xl bg-background/20 flex items-center justify-center shrink-0">
+              <div className="h-10 w-10 rounded-xl bg-muted text-brand-accent flex items-center justify-center shrink-0">
                 <Sparkles className="h-5 w-5" />
               </div>
               <div className="flex-1">
@@ -219,10 +219,7 @@ export default function SupportPage() {
                   Schreib uns, welche Unterstützung dein Verein oder deine Tennisschule braucht.
                 </p>
                 <Link href="/contact">
-                  <Button
-                    variant="secondary"
-                    className="bg-background text-brand-primary hover:bg-background/90"
-                  >
+                  <Button variant="highlight">
                     Kontakt aufnehmen
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
