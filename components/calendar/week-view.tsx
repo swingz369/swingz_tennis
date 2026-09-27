@@ -30,11 +30,7 @@ import {
   SLOT_STATUS_STYLES_ADMIN_BLOCKED,
   type CourtClosure,
 } from '@/lib/court-calendar-utils';
-import {
-  CourtCalendarGrid,
-  WeekDaysHeaderRow,
-  CourtRowHeader,
-} from '@/components/court-calendar-shared';
+import { CourtCalendarGrid, WeekDaysHeaderRow } from '@/components/court-calendar-shared';
 import {
   DraggableSessionCard,
   DroppableSlot,
@@ -78,8 +74,15 @@ export interface WeekViewProps {
   handleOpenCancelSession: (session: Session) => void;
 }
 
-/** Höhe einer freien Stunde im Wochenraster (px) — Belegungen wachsen um ihre Stundenzahl. */
-const SLOT_H = 26;
+/** Zeilenhöhe je Stunde und Abstand im Wochenraster (px). */
+const ROW_H = 30;
+const ROW_GAP = 2;
+/** Mindestbreite eines Platzstreifens je Tag (px). */
+const MIN_COURT_W = 76;
+/** Freie Stunde im Wochenraster: keine eigene Kante — die Stundenlinien tragen
+ *  das Raster, die Fläche meldet sich erst beim Überfahren/Fokus. */
+const WEEK_FREE_SLOT =
+  'cursor-pointer hover:bg-muted focus-visible:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 export function WeekView({
   isMobile,
@@ -219,345 +222,374 @@ export function WeekView({
     );
   }
 
+  // ── Matchday-Raster (ADR-007): Zeitachse links, Tage als Spalten ──
+  // Jede Tagesspalte ist ein eigenes Raster: eine Zeile je Stunde, ein
+  // Streifen je sichtbarem Platz. Mehrstündige Belegungen überspannen per
+  // grid-row mehrere Zeilen. Zellen-IDs, Klick-/Tastaturlogik und die
+  // Drag-and-drop-Ziele (Platz × Tag × Uhrzeit) sind dieselben wie vorher.
+  const rowGrid = {
+    gridTemplateRows: `repeat(${TIME_SLOTS.length}, ${ROW_H}px)`,
+    rowGap: ROW_GAP,
+    // Stundenlinien wie in der Vorlage — Teilung = Zeilenhöhe + Abstand.
+    backgroundImage: `repeating-linear-gradient(to bottom, transparent 0 ${ROW_H}px, hsl(var(--border) / 0.7) ${ROW_H}px ${ROW_H + ROW_GAP}px)`,
+    backgroundPosition: '0 4px',
+  } as const;
+
   return (
-    <CourtCalendarGrid>
-      <WeekDaysHeaderRow weekDays={weekDays} dayOffFor={dayOffFor} />
-
-      {displayCourts.map((court) => (
-        <div key={court.id} className="border-b border-border/40 last:border-b-0">
-          <div className="grid grid-cols-[180px_repeat(7,1fr)]">
-            <CourtRowHeader court={court} />
-            {weekDays.map((day, dayIdx) => {
-              const planEntriesForDay = getPlanEntriesForCourtAndDay(court.id, dateFnsGetDay(day));
-              const planForCourt = planEntriesForDay.filter(
-                (e): e is PlanEntry & { court_id: string } => e.court_id !== null
-              );
-              const slotInfos = TIME_SLOTS.map((ts) =>
-                getSlotStatus(
-                  court.id,
-                  day,
-                  ts,
-                  visibleSessions,
-                  planForCourt,
-                  courtClosures,
-                  openingHours
-                )
-              );
-              const busyKey = (i: number) => {
-                const x = slotInfos[i];
-                if (x.status === 'available') return null;
-                return (
-                  x.session?.id ??
-                  x.closure?.id ??
-                  x.planEntry?.id ??
-                  (x.closedDay ? 'closed' : null)
-                );
-              };
-
+    // Jeder Platzstreifen braucht Platz für Name und Uhrzeit; bei vielen Plätzen
+    // scrollt das Raster seitlich (wie in der Vorlage), statt zu Punkten zu schrumpfen.
+    <CourtCalendarGrid minWidth={56 + 7 * Math.max(1, displayCourts.length) * MIN_COURT_W}>
+      <WeekDaysHeaderRow weekDays={weekDays} dayOffFor={dayOffFor} courts={displayCourts} />
+      <div className="grid grid-cols-[56px_repeat(7,minmax(0,1fr))]">
+        <div
+          className="sticky left-0 z-10 grid border-r border-border bg-card px-2 py-1"
+          style={rowGrid}
+          aria-hidden="true"
+        >
+          {TIME_SLOTS.map((t) => (
+            <span
+              key={t}
+              className="-translate-y-0.5 text-2xs font-medium tabular-nums text-muted-foreground"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+        {weekDays.map((day, dayIdx) => {
+          const courtCols = displayCourts.map((court) => {
+            const planEntriesForDay = getPlanEntriesForCourtAndDay(court.id, dateFnsGetDay(day));
+            const planForCourt = planEntriesForDay.filter(
+              (e): e is PlanEntry & { court_id: string } => e.court_id !== null
+            );
+            const slotInfos = TIME_SLOTS.map((ts) =>
+              getSlotStatus(
+                court.id,
+                day,
+                ts,
+                visibleSessions,
+                planForCourt,
+                courtClosures,
+                openingHours
+              )
+            );
+            const busyKey = (i: number) => {
+              const x = slotInfos[i];
+              if (x.status === 'available') return null;
               return (
-                <div
-                  key={day.toISOString()}
-                  className={`p-1.5 border-r border-border/20 last:border-r-0 ${
-                    dayOffFor(day)
-                      ? 'bg-warning-50/50'
-                      : isSameDay(day, new Date())
-                        ? 'bg-primary/[0.03]'
-                        : 'bg-background'
-                  }`}
-                >
-                  {/* Time slots */}
-                  <div className="space-y-0.5">
-                    {TIME_SLOTS.map((timeSlot, timeIdx) => {
-                      const { status, session, closure, planEntry, closedDay } = slotInfos[timeIdx];
-                      // Mehrstündige Belegung (Session, Sperre, Plan-Eintrag) als EIN Block statt
-                      // einer Karte je Stunde — freie Stunden bleiben einzeln klickbar, aber flach.
-                      const key = busyKey(timeIdx);
-                      if (key && timeIdx > 0 && busyKey(timeIdx - 1) === key) return null;
-                      let run = 1;
-                      while (
-                        key &&
-                        timeIdx + run < TIME_SLOTS.length &&
-                        busyKey(timeIdx + run) === key
-                      )
-                        run++;
-                      const dropTargetId = `${court.id}::${day.toISOString()}::${timeSlot}`;
+                x.session?.id ?? x.closure?.id ?? x.planEntry?.id ?? (x.closedDay ? 'closed' : null)
+              );
+            };
+            return { court, slotInfos, busyKey };
+          });
 
-                      return (
-                        <DroppableSlot key={timeSlot} id={dropTargetId} isAdmin={isAdmin}>
-                          <div
-                            id={weekSlotId(court.id, day, timeSlot)}
-                            style={{ minHeight: run * SLOT_H + (run - 1) * 2 }}
-                            className={`group rounded-xl text-2xs flex items-center transition-all duration-150 ${
-                              status === 'blocked' && isAdmin && !closedDay
+          return (
+            <div
+              key={day.toISOString()}
+              className={`grid gap-x-0.5 border-r border-border px-1 py-1 last:border-r-0 ${
+                dayOffFor(day)
+                  ? 'bg-warning-50/50'
+                  : isSameDay(day, new Date())
+                    ? 'bg-muted/60'
+                    : ''
+              }`}
+              style={{
+                ...rowGrid,
+                gridTemplateColumns: `repeat(${displayCourts.length}, minmax(0, 1fr))`,
+              }}
+            >
+              {courtCols.flatMap(({ court, slotInfos, busyKey }, courtIdx) =>
+                TIME_SLOTS.map((timeSlot, timeIdx) => {
+                  const { status, session, closure, planEntry, closedDay } = slotInfos[timeIdx];
+                  const key = busyKey(timeIdx);
+                  if (key && timeIdx > 0 && busyKey(timeIdx - 1) === key) return null;
+                  let run = 1;
+                  while (key && timeIdx + run < TIME_SLOTS.length && busyKey(timeIdx + run) === key)
+                    run++;
+                  const dropTargetId = `${court.id}::${day.toISOString()}::${timeSlot}`;
+
+                  return (
+                    <div
+                      key={`${court.id}-${timeSlot}`}
+                      className="min-w-0"
+                      style={{ gridColumn: courtIdx + 1, gridRow: `${timeIdx + 1} / span ${run}` }}
+                    >
+                      <DroppableSlot id={dropTargetId} isAdmin={isAdmin} className="h-full">
+                        <div
+                          id={weekSlotId(court.id, day, timeSlot)}
+                          aria-label={
+                            status === 'available'
+                              ? `${court.name}, ${format(day, 'EEEE, d. MMMM', { locale: de })}, ${timeSlot} Uhr, frei`
+                              : undefined
+                          }
+                          title={status === 'available' ? undefined : court.name}
+                          className={`group h-full min-w-0 overflow-hidden rounded-md text-2xs flex items-center transition-colors duration-150 ${
+                            status === 'available'
+                              ? WEEK_FREE_SLOT
+                              : status === 'blocked' && isAdmin && !closedDay
                                 ? SLOT_STATUS_STYLES_ADMIN_BLOCKED
                                 : SLOT_STATUS_STYLES[status]
-                            }`}
-                            role="button"
-                            tabIndex={
-                              (!isAdmin && status === 'available') ||
-                              (isAdmin &&
-                                (status === 'available' || (status === 'blocked' && !closedDay)))
-                                ? 0
-                                : -1
-                            }
-                            onClick={
-                              isAdmin && status === 'available'
-                                ? () => openBlockDialog(court.id, day, timeSlot)
-                                : isAdmin && status === 'blocked' && session
-                                  ? () => handleUnblockSlot(session.id)
-                                  : isAdmin && status === 'blocked' && closure
-                                    ? () => handleRemoveClosure(closure.id)
-                                    : !isAdmin && isTrainer && status === 'available'
-                                      ? () => openAdHocDialog(court.id, day, timeSlot)
-                                      : !isAdmin && !isTrainer && status === 'available'
-                                        ? () => handleBookSlot(court.id, day, timeSlot)
-                                        : undefined
-                            }
-                            onKeyDown={(e) => {
-                              // Pfeiltasten bewegen die Auswahl im Wochenraster:
-                              // hoch/runter = Zeit, links/rechts = Tag (Sanierungsplan
-                              // Phase 5.2). Direkter Fokuswechsel statt State, das
-                              // Raster hat bereits eine stabile Zell-ID je Slot.
+                          }`}
+                          role="button"
+                          tabIndex={
+                            (!isAdmin && status === 'available') ||
+                            (isAdmin &&
+                              (status === 'available' || (status === 'blocked' && !closedDay)))
+                              ? 0
+                              : -1
+                          }
+                          onClick={
+                            isAdmin && status === 'available'
+                              ? () => openBlockDialog(court.id, day, timeSlot)
+                              : isAdmin && status === 'blocked' && session
+                                ? () => handleUnblockSlot(session.id)
+                                : isAdmin && status === 'blocked' && closure
+                                  ? () => handleRemoveClosure(closure.id)
+                                  : !isAdmin && isTrainer && status === 'available'
+                                    ? () => openAdHocDialog(court.id, day, timeSlot)
+                                    : !isAdmin && !isTrainer && status === 'available'
+                                      ? () => handleBookSlot(court.id, day, timeSlot)
+                                      : undefined
+                          }
+                          onKeyDown={(e) => {
+                            // Pfeiltasten bewegen die Auswahl im Wochenraster:
+                            // hoch/runter = Zeit, links/rechts = Tag (Sanierungsplan
+                            // Phase 5.2). Direkter Fokuswechsel statt State, das
+                            // Raster hat bereits eine stabile Zell-ID je Slot.
+                            if (
+                              e.key === 'ArrowUp' ||
+                              e.key === 'ArrowDown' ||
+                              e.key === 'ArrowLeft' ||
+                              e.key === 'ArrowRight'
+                            ) {
+                              e.preventDefault();
+                              const nextTimeIdx =
+                                e.key === 'ArrowUp'
+                                  ? timeIdx - 1
+                                  : e.key === 'ArrowDown'
+                                    ? timeIdx + 1
+                                    : timeIdx;
+                              const nextDayIdx =
+                                e.key === 'ArrowLeft'
+                                  ? dayIdx - 1
+                                  : e.key === 'ArrowRight'
+                                    ? dayIdx + 1
+                                    : dayIdx;
                               if (
-                                e.key === 'ArrowUp' ||
-                                e.key === 'ArrowDown' ||
-                                e.key === 'ArrowLeft' ||
-                                e.key === 'ArrowRight'
+                                nextTimeIdx < 0 ||
+                                nextTimeIdx >= TIME_SLOTS.length ||
+                                nextDayIdx < 0 ||
+                                nextDayIdx >= weekDays.length
                               ) {
-                                e.preventDefault();
-                                const nextTimeIdx =
-                                  e.key === 'ArrowUp'
-                                    ? timeIdx - 1
-                                    : e.key === 'ArrowDown'
-                                      ? timeIdx + 1
-                                      : timeIdx;
-                                const nextDayIdx =
-                                  e.key === 'ArrowLeft'
-                                    ? dayIdx - 1
-                                    : e.key === 'ArrowRight'
-                                      ? dayIdx + 1
-                                      : dayIdx;
-                                if (
-                                  nextTimeIdx < 0 ||
-                                  nextTimeIdx >= TIME_SLOTS.length ||
-                                  nextDayIdx < 0 ||
-                                  nextDayIdx >= weekDays.length
-                                ) {
-                                  return;
-                                }
-                                document
-                                  .getElementById(
-                                    weekSlotId(
-                                      court.id,
-                                      weekDays[nextDayIdx],
-                                      TIME_SLOTS[nextTimeIdx]
-                                    )
-                                  )
-                                  ?.focus();
                                 return;
                               }
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                if (isAdmin && status === 'available') {
-                                  openBlockDialog(court.id, day, timeSlot);
-                                } else if (isAdmin && status === 'blocked' && session) {
-                                  handleUnblockSlot(session.id);
-                                } else if (isAdmin && status === 'blocked' && closure) {
-                                  handleRemoveClosure(closure.id);
-                                } else if (!isAdmin && isTrainer && status === 'available') {
-                                  openAdHocDialog(court.id, day, timeSlot);
-                                } else if (!isAdmin && !isTrainer && status === 'available') {
-                                  handleBookSlot(court.id, day, timeSlot);
-                                }
+                              document
+                                .getElementById(
+                                  weekSlotId(
+                                    court.id,
+                                    weekDays[nextDayIdx],
+                                    TIME_SLOTS[nextTimeIdx]
+                                  )
+                                )
+                                ?.focus();
+                              return;
+                            }
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              if (isAdmin && status === 'available') {
+                                openBlockDialog(court.id, day, timeSlot);
+                              } else if (isAdmin && status === 'blocked' && session) {
+                                handleUnblockSlot(session.id);
+                              } else if (isAdmin && status === 'blocked' && closure) {
+                                handleRemoveClosure(closure.id);
+                              } else if (!isAdmin && isTrainer && status === 'available') {
+                                openAdHocDialog(court.id, day, timeSlot);
+                              } else if (!isAdmin && !isTrainer && status === 'available') {
+                                handleBookSlot(court.id, day, timeSlot);
                               }
-                            }}
-                          >
-                            {status === 'blocked' && session ? (
-                              isAdmin ? (
-                                <div className="flex items-center gap-1 w-full justify-between px-2">
-                                  <div className="flex items-center gap-1.5">
-                                    {session.sessionType === 'maintenance' ? (
-                                      <Wrench className="h-3 w-3 text-gray-500" />
-                                    ) : (
-                                      <PartyPopper className="h-3 w-3 text-gray-500" />
-                                    )}
-                                    <span className="truncate text-2xs font-semibold">
-                                      {session.notes?.substring(0, 12) ||
-                                        (session.sessionType === 'maintenance'
-                                          ? 'Wartung'
-                                          : 'Event')}
-                                    </span>
-                                  </div>
-                                  <Unlock className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            }
+                          }}
+                        >
+                          {status === 'blocked' && session ? (
+                            isAdmin ? (
+                              <div className="flex items-center gap-1 w-full justify-between px-2">
+                                <div className="flex items-center gap-1.5">
+                                  {session.sessionType === 'maintenance' ? (
+                                    <Wrench className="h-3 w-3 text-gray-500" />
+                                  ) : (
+                                    <PartyPopper className="h-3 w-3 text-gray-500" />
+                                  )}
+                                  <span className="truncate text-2xs font-semibold">
+                                    {session.notes?.substring(0, 12) ||
+                                      (session.sessionType === 'maintenance' ? 'Wartung' : 'Event')}
+                                  </span>
                                 </div>
-                              ) : (
-                                <div className="flex items-center gap-1.5 px-2">
-                                  <Lock className="h-3 w-3 text-gray-400" />
-                                  <span className="text-2xs font-semibold">Gesperrt</span>
-                                </div>
-                              )
-                            ) : status === 'blocked' && closure ? (
-                              isAdmin ? (
-                                <div className="flex items-center gap-1 w-full justify-between px-2">
-                                  <div className="flex items-center gap-1.5">
-                                    <Lock className="h-3 w-3 text-gray-500" />
-                                    <span className="truncate text-2xs font-semibold">
-                                      {closure.description?.substring(0, 12) ||
-                                        REASON_LABEL_SHORT[closure.reason] ||
-                                        closure.reason}
-                                    </span>
-                                  </div>
-                                  <Unlock className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-1.5 px-2">
-                                  <Lock className="h-3 w-3 text-gray-400" />
-                                  <span className="text-2xs font-semibold">Gesperrt</span>
-                                </div>
-                              )
-                            ) : status === 'blocked' && closedDay ? (
+                                <Unlock className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            ) : (
                               <div className="flex items-center gap-1.5 px-2">
                                 <Lock className="h-3 w-3 text-gray-400" />
-                                <span className="text-2xs font-semibold">Geschlossen</span>
+                                <span className="text-2xs font-semibold">Gesperrt</span>
                               </div>
-                            ) : session ? (
-                              isAdmin ? (
-                                <DraggableSessionCard
-                                  session={session}
-                                  isDragging={activeId === session.id}
-                                  onCancelSession={handleOpenCancelSession}
-                                />
-                              ) : session.bookedByUser ? (
-                                <div className="flex items-center gap-1 w-full justify-between px-2">
-                                  <div className="flex items-center gap-1.5 min-w-0">
-                                    <div className="w-2 h-2 rounded-full bg-error-500 flex-shrink-0" />
-                                    <div className="min-w-0">
-                                      <span className="text-2xs font-bold truncate text-error-700 block">
-                                        Deine Buchung
-                                      </span>
-                                      <span className="text-3xs text-error-500 font-medium">
-                                        {session.startTime}–{session.endTime}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  {session.bookingId && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleCancelBooking(session.id, session.bookingId!);
-                                      }}
-                                      className="p-0.5 rounded-md hover:bg-error-200 text-error-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                                      title="Buchung stornieren"
-                                    >
-                                      <svg
-                                        className="h-3 w-3"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M6 18L18 6M6 6l12 12"
-                                        />
-                                      </svg>
-                                    </button>
-                                  )}
+                            )
+                          ) : status === 'blocked' && closure ? (
+                            isAdmin ? (
+                              <div className="flex items-center gap-1 w-full justify-between px-2">
+                                <div className="flex items-center gap-1.5">
+                                  <Lock className="h-3 w-3 text-gray-500" />
+                                  <span className="truncate text-2xs font-semibold">
+                                    {closure.description?.substring(0, 12) ||
+                                      REASON_LABEL_SHORT[closure.reason] ||
+                                      closure.reason}
+                                  </span>
                                 </div>
-                              ) : session.hasActiveBooking ? (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-1.5 px-2 min-w-0">
-                                      <div className="flex-shrink-0 relative">
-                                        <Lock className="h-3.5 w-3.5 text-warning-700" />
-                                        <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-warning-500 animate-pulse" />
-                                      </div>
-                                      <div className="min-w-0">
-                                        <span className="text-2xs font-bold truncate text-warning-900 block">
-                                          Belegt
-                                        </span>
-                                        <span className="text-3xs text-warning-700 font-semibold">
-                                          {session.startTime}–{session.endTime}
-                                        </span>
-                                      </div>{' '}
-                                      {session.currentBookings && session.currentBookings > 0 && (
-                                        <span className="flex-shrink-0 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-warning-600 text-white text-3xs font-bold">
-                                          {session.currentBookings}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top" className="text-xs">
-                                    <p className="font-semibold">Gebucht von:</p>
-                                    {session.bookerNames && session.bookerNames.length > 0 ? (
-                                      <ul className="mt-0.5 space-y-0.5">
-                                        {session.bookerNames.map((name, i) => (
-                                          <li key={i} className="flex items-center gap-1">
-                                            <User className="h-3 w-3" />
-                                            {name}
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    ) : (
-                                      <p className="text-muted-foreground">Mitglied</p>
-                                    )}
-                                    <p className="mt-1 text-muted-foreground">
-                                      {session.currentBookings} / {session.maxParticipants} Plätze
-                                      belegt
-                                    </p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              ) : (
-                                <div className="flex items-center gap-1.5 w-full px-2 min-w-0">
-                                  <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                <Unlock className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1.5 px-2">
+                                <Lock className="h-3 w-3 text-gray-400" />
+                                <span className="text-2xs font-semibold">Gesperrt</span>
+                              </div>
+                            )
+                          ) : status === 'blocked' && closedDay ? (
+                            <div className="flex items-center gap-1.5 px-2">
+                              <Lock className="h-3 w-3 text-gray-400" />
+                              <span className="text-2xs font-semibold">Geschlossen</span>
+                            </div>
+                          ) : session ? (
+                            isAdmin ? (
+                              <DraggableSessionCard
+                                session={session}
+                                isDragging={activeId === session.id}
+                                onCancelSession={handleOpenCancelSession}
+                              />
+                            ) : session.bookedByUser ? (
+                              <div className="flex items-center gap-1 w-full justify-between px-2">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <div className="w-2 h-2 rounded-full bg-error-500 flex-shrink-0" />
                                   <div className="min-w-0">
-                                    <span className="truncate text-2xs font-bold text-foreground block">
-                                      {session.trainerName?.substring(0, 12) || 'Trainer'}
+                                    <span className="text-2xs font-bold truncate text-error-700 block">
+                                      Deine Buchung
                                     </span>
-                                    <span className="text-3xs text-muted-foreground font-medium">
+                                    <span className="text-3xs text-error-500 font-medium">
                                       {session.startTime}–{session.endTime}
                                     </span>
                                   </div>
                                 </div>
-                              )
-                            ) : status === 'plan' ? (
-                              <div className="flex items-center gap-1.5 px-2 min-w-0">
-                                <div
-                                  className={`w-2 h-2 rounded-full flex-shrink-0 ${planEntry?.group_color ? '' : 'bg-event'}`}
-                                  style={
-                                    planEntry?.group_color
-                                      ? { backgroundColor: planEntry.group_color }
-                                      : undefined
-                                  }
-                                />
-                                <div className="min-w-0">
-                                  <span className="text-2xs truncate font-semibold text-foreground block">
-                                    {planEntry?.group_name || 'Gruppentraining'}
-                                  </span>
-                                  {planEntry?.trainer_name && (
-                                    <span className="text-3xs text-muted-foreground font-medium truncate block">
-                                      {planEntry.trainer_name}
-                                    </span>
+                                {session.bookingId && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCancelBooking(session.id, session.bookingId!);
+                                    }}
+                                    className="p-0.5 rounded-md hover:bg-error-200 text-error-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                                    title="Buchung stornieren"
+                                  >
+                                    <svg
+                                      className="h-3 w-3"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M6 18L18 6M6 6l12 12"
+                                      />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                            ) : session.hasActiveBooking ? (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center gap-1.5 px-2 min-w-0">
+                                    <div className="flex-shrink-0 relative">
+                                      <Lock className="h-3.5 w-3.5 text-warning-700" />
+                                      <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-warning-500 animate-pulse" />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <span className="text-2xs font-bold truncate text-warning-900 block">
+                                        Belegt
+                                      </span>
+                                      <span className="text-3xs text-warning-700 font-semibold">
+                                        {session.startTime}–{session.endTime}
+                                      </span>
+                                    </div>{' '}
+                                    {session.currentBookings && session.currentBookings > 0 && (
+                                      <span className="flex-shrink-0 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-warning-600 text-white text-3xs font-bold">
+                                        {session.currentBookings}
+                                      </span>
+                                    )}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">
+                                  <p className="font-semibold">Gebucht von:</p>
+                                  {session.bookerNames && session.bookerNames.length > 0 ? (
+                                    <ul className="mt-0.5 space-y-0.5">
+                                      {session.bookerNames.map((name, i) => (
+                                        <li key={i} className="flex items-center gap-1">
+                                          <User className="h-3 w-3" />
+                                          {name}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : (
+                                    <p className="text-muted-foreground">Mitglied</p>
                                   )}
+                                  <p className="mt-1 text-muted-foreground">
+                                    {session.currentBookings} / {session.maxParticipants} Plätze
+                                    belegt
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            ) : (
+                              <div className="flex items-center gap-1.5 w-full px-2 min-w-0">
+                                <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                <div className="min-w-0">
+                                  <span className="truncate text-2xs font-bold text-foreground block">
+                                    {session.trainerName?.substring(0, 12) || 'Trainer'}
+                                  </span>
+                                  <span className="text-3xs text-muted-foreground font-medium">
+                                    {session.startTime}–{session.endTime}
+                                  </span>
                                 </div>
                               </div>
-                            ) : (
-                              <span className="text-2xs px-2 text-muted-foreground/70 font-medium">
-                                {timeSlot}
-                              </span>
-                            )}
-                          </div>
-                        </DroppableSlot>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+                            )
+                          ) : status === 'plan' ? (
+                            <div className="flex items-center gap-1.5 px-2 min-w-0">
+                              <div
+                                className={`w-2 h-2 rounded-full flex-shrink-0 ${planEntry?.group_color ? '' : 'bg-event'}`}
+                                style={
+                                  planEntry?.group_color
+                                    ? { backgroundColor: planEntry.group_color }
+                                    : undefined
+                                }
+                              />
+                              <div className="min-w-0">
+                                <span className="text-2xs truncate font-semibold text-foreground block">
+                                  {planEntry?.group_name || 'Gruppentraining'}
+                                </span>
+                                {planEntry?.trainer_name && (
+                                  <span className="text-3xs text-muted-foreground font-medium truncate block">
+                                    {planEntry.trainer_name}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="sr-only">{timeSlot}</span>
+                          )}
+                        </div>
+                      </DroppableSlot>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          );
+        })}
+      </div>
     </CourtCalendarGrid>
   );
 }

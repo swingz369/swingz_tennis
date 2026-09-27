@@ -4,8 +4,7 @@ import React from 'react';
 import { format, isToday } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, MapPin } from 'lucide-react';
-import { getSurfaceLabel } from '@/lib/court-calendar-utils';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { CalendarShell } from '@/components/calendar/CalendarShell';
 import type { DayOff } from '@/hooks/use-holidays';
 
@@ -61,10 +60,20 @@ export function CourtCalendarHeader({
 /**
  * Wrapper for the horizontally scrollable calendar grid.
  */
-export function CourtCalendarGrid({ children }: { children: React.ReactNode }) {
+export function CourtCalendarGrid({
+  children,
+  minWidth = 900,
+}: {
+  children: React.ReactNode;
+  /** Mindestbreite in px — die Wochenansicht wächst mit der Zahl der Plätze. */
+  minWidth?: number;
+}) {
   return (
     <div className="overflow-x-auto -mx-4 px-4 pb-2">
-      <div className="min-w-[900px] rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
+      <div
+        className="rounded-xl border border-border bg-card overflow-clip"
+        style={{ minWidth: Math.max(900, minWidth) }}
+      >
         {children}
       </div>
     </div>
@@ -72,20 +81,25 @@ export function CourtCalendarGrid({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Header row showing day-of-week abbreviations and dates.
- * Today column gets a distinct highlight.
+ * Kopfzeile der Wochenansicht (Matchday): Zeitspalte, je Tag Kürzel und
+ * Datum, darunter die Platz-Streifen der Tagesspalte. Heute: getönte Spalte,
+ * Datum in der Link-Farbe — wie in der Vorlage.
  */
 export function WeekDaysHeaderRow({
   weekDays,
   dayOffFor,
+  courts = [],
 }: {
   weekDays: Date[];
   dayOffFor?: (date: Date) => DayOff | null;
+  courts?: { id: string; name: string }[];
 }) {
+  // „Platz 3" → „3"; andere Namen bleiben (gekürzt über truncate).
+  const short = (name: string) => name.replace(/^Platz\s*/i, '') || name;
   return (
-    <div className="grid grid-cols-[180px_repeat(7,1fr)] bg-muted/50">
-      <div className="p-3 flex items-center justify-center border-b border-r border-border/40">
-        <span className="text-xs font-bold text-muted-foreground">Platz</span>
+    <div className="grid grid-cols-[56px_repeat(7,minmax(0,1fr))] border-b border-border">
+      <div className="sticky left-0 z-10 flex items-end border-r border-border bg-card px-2 pb-2 text-2xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+        Zeit
       </div>
       {weekDays.map((day) => {
         const today = isToday(day);
@@ -93,63 +107,44 @@ export function WeekDaysHeaderRow({
         return (
           <div
             key={day.toISOString()}
-            className={`p-3 text-center border-b border-border/40 last:border-r-0 transition-colors ${
-              today ? 'bg-primary/5 border-b-primary/30' : 'hover:bg-muted/30'
-            } ${dayOff ? 'bg-warning-50' : ''}`}
+            className={`border-r border-border px-1 pt-3 text-center last:border-r-0 ${
+              dayOff ? 'bg-warning-50' : today ? 'bg-muted/60' : ''
+            }`}
           >
-            <div
-              className={`text-xs font-bold ${today ? 'text-primary' : 'text-muted-foreground'}`}
-            >
+            <div className="text-xs font-medium text-muted-foreground">
               {format(day, 'EEE', { locale: de })}
             </div>
             <div
-              className={`mt-1 text-sm font-bold tabular-nums ${
-                today
-                  ? 'inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground'
-                  : 'text-foreground'
-              }`}
+              className={`text-2xl font-bold leading-tight tabular-nums ${today ? 'text-ring' : 'text-foreground'}`}
             >
               {format(day, 'd')}
             </div>
             {dayOff && (
-              <div className="mt-1 text-2xs font-semibold text-warning-800 leading-tight">
+              <div className="text-2xs font-semibold leading-tight text-warning-800">
                 {dayOff.name}
               </div>
+            )}
+            {courts.length > 1 ? (
+              <div
+                className="mt-2 grid gap-x-0.5 pb-1.5"
+                style={{ gridTemplateColumns: `repeat(${courts.length}, minmax(0, 1fr))` }}
+              >
+                {courts.map((c) => (
+                  <span
+                    key={c.id}
+                    title={c.name}
+                    className="truncate text-3xs font-semibold text-muted-foreground"
+                  >
+                    {short(c.name)}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div className="pb-2" />
             )}
           </div>
         );
       })}
-    </div>
-  );
-}
-
-/**
- * Court info cell shown in the leftmost column of each court row.
- * Displays court name, surface badge, and indoor indicator.
- */
-export function CourtRowHeader({
-  court,
-}: {
-  court: { name: string; surface: string; hasIndoor?: boolean };
-}) {
-  return (
-    <div className="p-3 flex items-center gap-2.5 border-r border-border/40 bg-muted/20">
-      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary/10 text-primary">
-        <MapPin className="h-4 w-4" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-semibold text-foreground truncate">{court.name}</div>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-muted text-2xs font-medium text-muted-foreground border border-border/50">
-            {getSurfaceLabel(court.surface)}
-          </span>
-          {court.hasIndoor && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-info-50 text-2xs font-medium text-info-600 border border-info-100">
-              Indoor
-            </span>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import { cn } from '@/lib/utils';
+
 /**
  * Geteilte Bausteine für Wochen- und Tagesansicht des Platzkalenders:
  * draggable/droppable Blöcke, Positionierungs-Helfer und die Kurzlabel-Map
@@ -396,10 +398,12 @@ export function DroppableSlot({
   id,
   isAdmin,
   children,
+  className,
 }: {
   id: string;
   isAdmin: boolean;
   children: React.ReactNode;
+  className?: string;
 }) {
   // Hooks must be called unconditionally; useDroppable id is ignored when not needed.
   const { setNodeRef, isOver } = useDroppable({ id });
@@ -407,7 +411,7 @@ export function DroppableSlot({
     <div
       ref={isAdmin ? setNodeRef : undefined}
       id={isAdmin ? id : undefined}
-      className={isOver && isAdmin ? 'ring-2 ring-inset ring-primary/30 rounded-md' : undefined}
+      className={cn(className, isOver && isAdmin && 'ring-2 ring-inset ring-primary/30 rounded-md')}
     >
       {children}
     </div>

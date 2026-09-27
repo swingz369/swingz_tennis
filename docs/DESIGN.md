@@ -282,8 +282,10 @@ bleiben (Ratsche, nur sinkend); neue Stellen nehmen direkt `Dialog`.
 klein in Schaltflächen oder Inline-Text. Ratsche „Flächen-Spinner" (Grenze 7: Inline-Spinner mit
 `mr-2` und drei Stellen in Planungsschritt/Saisonkalender-Tab).
 
-**Kalender (`components/calendar/*`, 20.09.2026):** Kopfzeile schlank; Tag-Ansicht mit
-Unterumschalter; Wochenansicht kompakt; Platz-Filter als Chips mit Belegungs-Übersicht und
+**Kalender (`components/calendar/*`, 20.09.2026; Wochenansicht 27.09.2026):** Kopfzeile schlank; Tag-Ansicht mit
+Unterumschalter; Wochenansicht im Matchday-Raster — Zeitachse links (fixiert), Tage als
+Spalten, je Tag ein Streifen pro Platz (mind. 76 px, sonst scrollt das Raster seitlich),
+mehrstündige Belegungen über `grid-row: span`, Stundenlinien statt Kästchen; Platz-Filter als Chips mit Belegungs-Übersicht und
 fixierter Platz-Kopfzeile; die Platzwahl der Agenda begrenzt Woche/Tag nicht mehr auf einen Platz.
 
 **Breadcrumb-Regel (Sanierungsplan Phase 4.3, 18.09.2026):** Jede Seite, deren Route tiefer als
