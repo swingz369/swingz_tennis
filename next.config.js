@@ -135,6 +135,8 @@ const nextConfig = {
             value: [
               "default-src 'self'",
               `script-src ${scriptSrc}`,
+              // Sentry Session Replay startet seinen Kompressions-Worker als blob:-URL
+              "worker-src 'self' blob:",
               "style-src 'self' 'unsafe-inline' https://cdn.fontshare.com https://api.fontshare.com https://fonts.googleapis.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data: https://cdn.fontshare.com https://fonts.gstatic.com",

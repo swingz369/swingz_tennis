@@ -55,7 +55,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-dvh flex relative overflow-hidden">
       {/* ── Left: Brand Panel ── */}
-      <div className="hidden lg:flex lg:flex-1 relative">
+      <div className="hidden lg:flex lg:flex-1 relative brand-dark-surface">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-login-hero" />
           <svg
@@ -79,7 +79,7 @@ export default function LoginPage() {
             </Link>
 
             <h1 className="text-4xl font-extrabold leading-tight max-w-md">
-              Dein Tennisclub, <span className="text-brand-light">übersichtlich verwaltet</span>
+              Dein Tennisclub, <span className="text-brand-accent">übersichtlich verwaltet</span>
             </h1>
 
             <p className="mt-6 text-white/55 text-lg max-w-md leading-relaxed">
@@ -90,8 +90,8 @@ export default function LoginPage() {
           {/* Stats + Feature cards */}
           <div className="space-y-4">
             <div className="flex items-center gap-4 p-4 rounded-xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-brand-accent to-brand-accent-600 flex items-center justify-center shadow-lg">
-                <Sparkles className="h-6 w-6 text-white" />
+              <div className="h-12 w-12 rounded-xl bg-brand-accent flex items-center justify-center">
+                <Sparkles className="h-6 w-6 text-brand-dark" />
               </div>
               <div>
                 <p className="font-semibold">Automatisierte Saisonplanung</p>
@@ -109,7 +109,7 @@ export default function LoginPage() {
               </div>
               <div className="p-4 rounded-xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
                 <div className="flex items-center gap-2 mb-1">
-                  <Shield className="h-4 w-4 text-brand-light" />
+                  <Shield className="h-4 w-4 text-brand-accent" />
                   <p className="font-semibold text-sm">DSGVO-konform</p>
                 </div>
                 <p className="text-white/55 text-xs">Daten in der EU</p>
@@ -157,7 +157,7 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@verein.de"
                     required
-                    className="h-12 rounded-xl border-border focus:border-brand-light focus:ring-brand-light/20 pl-4 pr-4 transition-shadow focus:shadow-glow-primary-sm"
+                    className="h-12 rounded-xl border-border pl-4 pr-4"
                     autoComplete="email"
                   />
                 </div>
@@ -170,7 +170,7 @@ export default function LoginPage() {
                   </Label>
                   <a
                     href="/forgot-password"
-                    className="text-xs text-brand-light hover:text-brand-primary font-medium transition-colors"
+                    className="text-xs text-foreground font-medium underline-offset-2 hover:underline"
                   >
                     Passwort vergessen?
                   </a>
@@ -183,7 +183,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="h-12 rounded-xl border-border focus:border-brand-light focus:ring-brand-light/20 pr-12 transition-shadow focus:shadow-glow-primary-sm"
+                    className="h-12 rounded-xl border-border pr-12"
                     autoComplete="current-password"
                   />
                   <button
@@ -204,11 +204,7 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <Button
-                type="submit"
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-light text-white font-semibold shadow-glow-primary-sm hover:shadow-glow-primary transition-all duration-300 hover:brightness-105 active:scale-[0.98]"
-                disabled={loading}
-              >
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -231,7 +227,7 @@ export default function LoginPage() {
                 ) : (
                   <span className="flex items-center gap-2">
                     Anmelden
-                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="h-4 w-4" />
                   </span>
                 )}
               </Button>
@@ -251,7 +247,7 @@ export default function LoginPage() {
                 Noch kein Konto?{' '}
                 <a
                   href="/register"
-                  className="text-brand-primary hover:text-brand-light font-semibold transition-colors underline-offset-2 hover:underline"
+                  className="text-foreground font-semibold underline-offset-2 hover:underline"
                 >
                   Zugang anfragen
                 </a>
