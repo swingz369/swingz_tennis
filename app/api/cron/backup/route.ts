@@ -38,13 +38,16 @@ interface BackupQueryResult {
  * von supabase-js kann hier also nicht greifen. Ein einmaliger, lokal begrenzter
  * Cast auf eine dynamische Query-Signatur statt `as any`.
  */
-async function readTablePage(
+export async function readTablePage(
   supabase: ReturnType<typeof createServiceClient>,
   table: string,
   from: number,
   to: number
 ): Promise<BackupQueryResult> {
-  const dynamic = supabase.from as unknown as (table: string) => {
+  // `bind` ist Pflicht: `from` liest intern `this.rest`. Ohne Bindung warf
+  // jeder Aufruf „Cannot read properties of undefined (reading 'rest')" —
+  // vom 17.08. bis 27.09.2026 enthielt jedes tägliche Backup keine Daten.
+  const dynamic = supabase.from.bind(supabase) as unknown as (table: string) => {
     select: (
       columns: string,
       opts: { count: 'exact' }
