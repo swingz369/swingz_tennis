@@ -46,6 +46,7 @@ interface ClubMember {
 export default function AdminFamilyPage() {
   const [groups, setGroups] = useState<FamilyGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [moduleOff, setModuleOff] = useState(false);
 
   // Create/link dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -60,6 +61,11 @@ export default function AdminFamilyPage() {
     setLoading(true);
     try {
       const res = await apiFetch('/api/admin/family-accounts');
+      // 403 = Modul im Verein abgeschaltet — kein Ladefehler
+      if (res.status === 403) {
+        setModuleOff(true);
+        return;
+      }
       if (!res.ok) throw new Error('Fehler beim Laden');
       const data = await res.json();
       setGroups(data.groups ?? []);
@@ -177,10 +183,19 @@ export default function AdminFamilyPage() {
       <PageHeader
         title="Familienkonten"
         description="Familiengruppen im Verein anlegen und verwalten"
-        actions={[
-          { label: 'Aktualisieren', icon: RefreshCw, variant: 'outline', onClick: fetchGroups },
-          { label: 'Neue Familiengruppe', icon: Plus, onClick: () => openDialog(null) },
-        ]}
+        actions={
+          moduleOff
+            ? []
+            : [
+                {
+                  label: 'Aktualisieren',
+                  icon: RefreshCw,
+                  variant: 'outline',
+                  onClick: fetchGroups,
+                },
+                { label: 'Neue Familiengruppe', icon: Plus, onClick: () => openDialog(null) },
+              ]
+        }
       />
 
       {loading ? (
@@ -188,6 +203,12 @@ export default function AdminFamilyPage() {
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-32 w-full" />
         </div>
+      ) : moduleOff ? (
+        <EmptyState
+          icon={Users}
+          title="Familienkonten sind nicht aktiviert"
+          description="Das Modul lässt sich unter Einstellungen → Module einschalten."
+        />
       ) : groups.length === 0 ? (
         <EmptyState
           icon={Users}

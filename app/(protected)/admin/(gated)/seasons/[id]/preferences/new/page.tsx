@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -21,13 +21,8 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-interface PreferenceFormPageProps {
-  params: {
-    id: string; // season_id
-  };
-}
-
-export default function PreferenceFormPage({ params }: PreferenceFormPageProps) {
+export default function PreferenceFormPage() {
+  const params = useParams<{ id: string }>(); // season_id
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 

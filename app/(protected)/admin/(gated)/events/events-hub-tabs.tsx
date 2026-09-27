@@ -24,35 +24,36 @@ type Props = Parameters<typeof TournamentsClient>[0] & {
 function EventsHubTabsInner({ initialTournaments, pagination, showTournaments }: Props) {
   const searchParams = useSearchParams();
   const defaultTab = showTournaments ? 'tournaments' : 'special-events';
-  const [activeTab, setActiveTab] = useState(searchParams?.get('tab') ?? defaultTab);
+  // Unbekannte oder abgeschaltete Tabs (z. B. ?tab=tournaments ohne Modul) → Standard-Tab
+  const validTab = (tab: string | null | undefined) =>
+    tab === 'special-events' || (tab === 'tournaments' && showTournaments) ? tab : defaultTab;
+  const [activeTab, setActiveTab] = useState(validTab(searchParams?.get('tab')));
 
   useEffect(() => {
     const tab = searchParams?.get('tab');
-    if (tab) setActiveTab(tab);
-  }, [searchParams]);
+    if (tab) setActiveTab(validTab(tab));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, showTournaments]);
+
+  // Nur eine Sicht → keine Reiterleiste
+  if (!showTournaments) return <SpecialEventsClient />;
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <TabsList
-        className={`grid w-full max-w-md ${showTournaments ? 'grid-cols-2' : 'grid-cols-1'}`}
-      >
-        {showTournaments && (
-          <TabsTrigger value="tournaments" className="gap-2">
-            <Trophy className="h-4 w-4" />
-            Turniere
-          </TabsTrigger>
-        )}
+      <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsTrigger value="tournaments" className="gap-2">
+          <Trophy className="h-4 w-4" />
+          Turniere
+        </TabsTrigger>
         <TabsTrigger value="special-events" className="gap-2">
           <CalendarDays className="h-4 w-4" />
           Sonderveranstaltungen
         </TabsTrigger>
       </TabsList>
 
-      {showTournaments && (
-        <TabsContent value="tournaments" className="mt-6">
-          <TournamentsClient initialTournaments={initialTournaments} pagination={pagination} />
-        </TabsContent>
-      )}
+      <TabsContent value="tournaments" className="mt-6">
+        <TournamentsClient initialTournaments={initialTournaments} pagination={pagination} />
+      </TabsContent>
 
       <TabsContent value="special-events" className="mt-6">
         <SpecialEventsClient />

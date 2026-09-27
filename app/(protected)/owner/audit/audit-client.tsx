@@ -29,7 +29,7 @@ interface ClubOption {
 interface AuditLog {
   id: string;
   created_at: string;
-  actor_id: string;
+  actor_id: string | null;
   actor_name: string | null;
   actor_email: string | null;
   action: string;
@@ -399,7 +399,7 @@ export function OwnerAuditClient({ clubOptions }: { clubOptions: ClubOption[] })
                           {logEntry.actor_name ?? logEntry.actor_email ?? '—'}
                         </div>
                         <div className="text-muted-foreground truncate max-w-[180px]">
-                          {logEntry.actor_email ?? logEntry.actor_id.slice(0, 8)}
+                          {logEntry.actor_email ?? logEntry.actor_id?.slice(0, 8) ?? 'System'}
                         </div>
                       </TableCell>
                       <TableCell className="px-2 py-2 text-xs">

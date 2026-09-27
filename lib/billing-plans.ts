@@ -6,6 +6,8 @@
  * driften garantiert auseinander, sobald ein Preis sich ändert.
  */
 
+import { PLANS } from '@/lib/plans';
+
 export const TIER_LABELS: Record<string, string> = {
   free: 'Kein Abo',
   solo_s: 'Einzelverein S',
@@ -16,14 +18,11 @@ export const TIER_LABELS: Record<string, string> = {
   professional: 'Professional', // legacy
 };
 
-/** Monatspreis in Euro. Nur `subscription_status === 'active'` zählt in den MRR. */
+/** Monatspreis in Euro — aus `lib/plans.ts` (einzige Preisquelle). Nur `subscription_status === 'active'` zählt in den MRR. */
 export const PLAN_PRICES: Record<string, number> = {
-  solo_s: 29,
-  solo_l: 59,
-  school_s: 99,
-  school_l: 179,
-  starter: 29,
-  professional: 79,
+  ...Object.fromEntries(Object.entries(PLANS).map(([key, plan]) => [key, plan.pricePerMonth])),
+  starter: PLANS.solo_s.pricePerMonth, // legacy
+  professional: PLANS.solo_l.pricePerMonth, // legacy
 };
 
 /** Monatlich wiederkehrender Umsatz über alle zahlenden Abo-Inhaber. */

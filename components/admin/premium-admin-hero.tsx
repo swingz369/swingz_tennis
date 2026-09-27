@@ -88,7 +88,12 @@ export function PremiumAdminHero({
                 {dueLabel ? ` ${overdueInvoiceCount > 0 ? 'seit' : 'zum'} ${dueLabel}` : ''}
               </>
             )}
-            {overdueInvoiceCount > 0 ? '.' : ' — sonst läuft alles.'}
+            {/* dueLabel „29.08." endet schon mit Punkt — keinen zweiten anhängen */}
+            {overdueInvoiceCount > 0
+              ? dueLabel?.endsWith('.')
+                ? ''
+                : '.'
+              : ' — sonst läuft alles.'}
           </>
         }
       />

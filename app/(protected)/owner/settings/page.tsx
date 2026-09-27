@@ -3,6 +3,8 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, XCircle, Settings, Mail, CreditCard } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
+import { PLANS } from '@/lib/plans';
+import { TIER_LABELS } from '@/lib/billing-plans';
 import { SettingsEditorClient, type EditableSetting } from './_components/settings-editor-client';
 
 export const dynamic = 'force-dynamic';
@@ -140,11 +142,11 @@ export default async function OwnerSettingsPage() {
         </CardHeader>
         <CardContent className="text-sm">
           {[
-            ['Solo S (Einzelverein)', '€ 29 / Monat'],
-            ['Solo L (Einzelverein)', '€ 59 / Monat'],
-            ['Tennisschule S', '€ 99 / Monat'],
-            ['Tennisschule L', '€ 179 / Monat'],
-            ['Stripe API-Version', '2026-05-27.dahlia'],
+            ...Object.entries(PLANS).map(([key, plan]) => [
+              `${plan.label} (${TIER_LABELS[key]})`,
+              `${plan.pricePerMonth} € / Monat`,
+            ]),
+            ['Stripe API-Version', '2026-06-24.dahlia'],
           ].map(([k, v]) => (
             <div
               key={k}
