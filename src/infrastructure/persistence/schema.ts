@@ -381,6 +381,7 @@ export const userClubMemberships = pgTable(
     deactivated_at: timestamp('deactivated_at'),
     deactivated_by: uuid('deactivated_by'),
     include_in_planning: boolean('include_in_planning').notNull().default(true),
+    training_minutes: integer('training_minutes'),
     // Vereinsweite Mitgliedsnummer. Vergibt der DB-Trigger `assign_member_number()`
     // beim INSERT (supabase/migrations/20260818120000_member_number.sql) — nie aus
     // der Anwendung setzen, sonst reißt die Lücke im Zähler auf.

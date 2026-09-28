@@ -167,7 +167,7 @@ export class SeasonClusteringRepository {
         () =>
           this.db
             .from('user_club_memberships')
-            .select('user_id, role, include_in_planning')
+            .select('user_id, role, include_in_planning, training_minutes')
             .eq('club_id', clubId)
             .eq('is_active', true)
             .order('id'),

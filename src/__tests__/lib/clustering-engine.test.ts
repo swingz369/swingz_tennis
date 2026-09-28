@@ -686,7 +686,7 @@ describe('findBestTimeSlot', () => {
     expect(result?.courtId).toBeNull();
   });
 
-  it('uses configured slot duration for trainer hours (not hardcoded 1.5h)', () => {
+  it('rechnet das Stundenbudget in echten Minuten der verplanten Einheiten', () => {
     const engine = new SeasonClusteringEngine('s1', 'c1', {
       slotDurationMinutes: 60, // 1 hour slots
       trainerUtilizationMaxPct: 80,
@@ -697,8 +697,17 @@ describe('findBestTimeSlot', () => {
       maxHoursPerWeek: 10,
       maxSessionsPerWeek: 20,
     });
-    const trainerSessionCount = new Map<string, number>([['t1', 8]]); // 8h done, 2h left
-    // With 60min slots and 10h*80% = 8h max → 8h+1h would exceed
+    const trainerSessionCount = new Map<string, number>([['t1', 4]]);
+    // 10h × 80 % = 8h Budget. Verplant: 4 Doppelstunden = 8h (als Sessions nur 4 —
+    // die frühere Zählung „Sessions × Slotlänge" hätte 4h angenommen).
+    const booked = [1, 2, 3, 4].map((day) =>
+      makeAssignment({
+        trainerId: 't1',
+        dayOfWeek: day as never,
+        startTime: '08:00',
+        endTime: '10:00',
+      })
+    );
     const result = engine.findBestTimeSlot(
       [makeMember()],
       [trainer],
@@ -706,7 +715,7 @@ describe('findBestTimeSlot', () => {
       trainerSessionCount,
       new Map(),
       {},
-      [],
+      booked,
       [{ start: '18:00', end: '19:00' }]
     );
     expect(result).toBeNull();

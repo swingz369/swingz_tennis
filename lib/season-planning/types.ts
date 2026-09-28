@@ -116,6 +116,8 @@ export interface MemberWithDetails {
   preferredCourtIds: string[];
   preferredGroupIds: string[];
   priority: number;
+  /** Individuelle Trainingsdauer (user_club_memberships.training_minutes); fehlt/null = Vereinsstandard. */
+  trainingMinutes?: number | null;
 }
 
 export interface TrainerWithDetails {

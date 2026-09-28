@@ -8,6 +8,8 @@ export interface Member {
   is_honorary?: boolean;
   honorary_since?: string | null;
   include_in_planning: boolean;
+  /** Trainingsdauer je Einheit für die Saisonplanung; null = Vereinsstandard. */
+  training_minutes?: number | null;
   joined_at: string;
   /** Vereinsweite Mitgliedsnummer; null nur bei Altbestand vor der Migration. */
   member_number?: number | null;

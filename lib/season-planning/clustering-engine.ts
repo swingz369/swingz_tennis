@@ -110,6 +110,29 @@ function hhmmToMinutes(hhmm: string): number {
   return Number(h) * 60 + Number(m);
 }
 
+function minutesToHhmm(total: number): string {
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+/** Dauer einer geplanten Einheit in Minuten. */
+function assignmentMinutes(a: { startTime: string; endTime: string }): number {
+  return hhmmToMinutes(a.endTime) - hhmmToMinutes(a.startTime);
+}
+
+/** Hat jemand an diesem Tag ein Zeitfenster, das den ganzen Slot abdeckt? */
+function coversSlot(
+  availability: WeeklyAvailability,
+  dayOfWeek: number,
+  slot: { start: string; end: string }
+): boolean {
+  return (availability[DAY_NAMES[dayOfWeek]] || []).some(
+    (w) => w.start <= slot.start && w.end >= slot.end
+  );
+}
+
+/** Ende der Anlagenzeit — längere Einheiten dürfen bis hierhin reichen. */
+const LATEST_END = '22:00';
+
 const DEFAULT_CONFIG: ClusteringConfig = {
   maxNiveauLevelSteps: 1,
   maxNiveauSpanBeginner: 4,
@@ -367,23 +390,6 @@ export class SeasonClusteringEngine {
   // group clustering in assignMembersToGroups.
   private _cachedPreviousGroupMemberships: Map<string, string> | null = null;
 
-  // ═══ Sprint 4 P0 #1: Slot-Lookup-Cache (Sprint-4-Optimierung) ═══════
-  // Pre-computed availability maps: key = `${kind}|${id}|${day}_${slotStart}`,
-  // value = boolean. Replaces per-iteration Array.some() calls in findBestTimeSlot.
-  private _memberSlotAvail: Map<string, boolean> | null = null;
-  private _trainerSlotAvail: Map<string, boolean> | null = null;
-  // Fallback for direct (non-`runClustering`) callers — when the cache above is
-  // null (e.g. in unit tests that call `findBestTimeSlot` directly), these
-  // arrays let `isMemberSlotAvailable` / `isTrainerSlotAvailable` do an O(n)
-  // linear search + Array.some() instead of returning the `?? false` default
-  // (which would make every member/trainer look unavailable).
-  private _cachedMembersForSlotCheck:
-    | (MemberWithDetails & {
-        _unassignedReason?: string;
-      })[]
-    | null = null;
-  private _cachedTrainersForSlotCheck: TrainerWithDetails[] | null = null;
-
   // Aktive Startvariante des laufenden Durchgangs (Multi-Start, siehe runClustering).
   private variant: PlanVariant = { adultsFirst: false, useAffinity: true };
   // Gruppen, die dieser Lauf neu erfinden will. Sie entstehen erst in
@@ -439,11 +445,6 @@ export class SeasonClusteringEngine {
 
     // Step 2: Build dynamic time slots based on configured duration
     const timeSlots = buildStandardTimeSlots(this.config.slotDurationMinutes);
-
-    // Sprint 4 P0 #1: Pre-compute slot-availability caches so findBestTimeSlot can
-    // do O(1) lookups instead of O(members × trainers) per (day, time) iteration.
-    // Expected impact: 2000m run 32ms → ~18ms (-44%) per docs/SCALING_ANALYSIS.md.
-    this.buildSlotAvailabilityCaches(members, trainers, timeSlots);
 
     // Step 3–6: Multi-Start.
     // Bei einem Greedy-Verfahren entscheidet die Startreihenfolge maßgeblich über
@@ -728,8 +729,10 @@ export class SeasonClusteringEngine {
     //       (skip admins / trainers / superadmins accidentally present in msp)
     const memberships = await this.repo.activeMemberships(this.clubId);
     const membershipRoleMap = new Map<string, string>();
+    const trainingMinutesMap = new Map<string, number | null>();
     for (const m of memberships) {
       membershipRoleMap.set(m.user_id, m.role);
+      trainingMinutesMap.set(m.user_id, m.training_minutes ?? null);
     }
 
     // Baseline rows are eligible only if:
@@ -885,6 +888,7 @@ export class SeasonClusteringEngine {
         preferredCourtIds: ((p.pref.preferred_court_ids as string[] | null) ?? []) as string[],
         preferredGroupIds: ((p.pref.preferred_group_ids as string[] | null) ?? []) as string[],
         priority: p.pref.priority ?? 5,
+        trainingMinutes: trainingMinutesMap.get(p.pref.user_id) ?? null,
         _unavailByDow: unavailByDow,
         _unassignedReason: undefined,
       };
@@ -939,6 +943,7 @@ export class SeasonClusteringEngine {
           // Niedrigste Priorität: bei Platzmangel weicht zuerst, wer nichts
           // angegeben hat — vor jemandem mit ausdrücklichem Wunsch.
           priority: 1,
+          trainingMinutes: trainingMinutesMap.get(u.id) ?? null,
           _unavailByDow: {},
           _unassignedReason: undefined,
         });
@@ -1406,42 +1411,18 @@ export class SeasonClusteringEngine {
     // Improved: also verify member time-slot availability and wish-partner fulfillment
     // so admins see fewer "wrong-time" placements in the plan-edit step.
     const stillUnassigned = sortedMembers.filter((m) => !assignedMemberIds.has(m.id));
-    const DAY_NAMES_LOCAL = DAY_NAMES;
     if (stillUnassigned.length > 0) {
       for (const member of stillUnassigned) {
         const effectiveLevel = member.promotedLevel || member.skillLevel;
         const memberAgeGroup = member.isMinor ? 'kids' : 'adult';
-        const maxSize = member.isMinor ? this.config.kidsGroupMaxSize : this.config.groupMaxSize;
         const avoidSet = new Set(member.avoidMemberIds);
 
         // Try to find an existing group with space, matching level/age, and no avoid-conflicts
         let placed = false;
         for (const assignment of assignments) {
-          // Capacity check — Q2-Audit (Punkt 11): respektiert eine individuelle
-          // Gruppen-Kapazität (groups.max_size) statt immer den globalen Default.
-          const groupInfo = candidateGroups.get(assignment.groupId);
-          const effectiveMaxSize = groupInfo?.maxSize ?? maxSize;
-          if (assignment.memberIds.length >= effectiveMaxSize) continue;
-
-          // Level compatibility: within configured niveau step tolerance
-          if (groupInfo) {
-            const levelDiff = Math.abs(
-              LEVEL_RANK[effectiveLevel] - LEVEL_RANK[groupInfo.level as SkillLevel]
-            );
-            if (levelDiff > this.config.maxNiveauLevelSteps) continue;
-          }
-
-          // Age-group compatibility: must match the group's age group
-          if (groupInfo && groupInfo.ageGroup && groupInfo.ageGroup !== memberAgeGroup) continue;
-
-          // TIME-SLOT CHECK: member must be available for this group's slot
-          // (was previously a known gap — see Optimization #4)
-          const dayName = DAY_NAMES_LOCAL[assignment.dayOfWeek];
-          const daySlots = member.availability[dayName] || [];
-          const memberAvailable = daySlots.some(
-            (s) => s.start <= assignment.startTime && s.end >= assignment.endTime
-          );
-          if (!memberAvailable) continue;
+          if (assignment.memberIds.length >= assignment.maxSize) continue;
+          // Niveau, Altersgruppe, Dauer und Verfügbarkeit — siehe `fitsAssignment`.
+          if (!this.fitsAssignment(member, assignment, membersById)) continue;
 
           // Avoid conflicts: member avoids any existing group member (O(1) Set lookup)
           if (avoidSet.size > 0) {
@@ -1498,26 +1479,19 @@ export class SeasonClusteringEngine {
       const left = sortedMembers.filter((m) => !assignedMemberIds.has(m.id));
       if (left.length === 0) break;
       const before = assignedMemberIds.size;
-      for (const [age, cohort] of [
-        ['kids', left.filter((m) => m.isMinor)],
-        ['adult', left.filter((m) => !m.isMinor)],
-      ] as const) {
-        if (cohort.length === 0) continue;
-        _groupIndex = await this.assignMembersToGroups(
-          cohort,
-          age,
-          trainers,
-          courts,
-          candidateGroups,
-          slotFailureRates,
-          timeSlots,
-          trainerSessionCount,
-          courtTimeSlotUsage,
-          assignments,
-          assignedMemberIds,
-          _groupIndex
-        );
-      }
+      _groupIndex = await this.placeLeftovers(
+        left,
+        trainers,
+        courts,
+        candidateGroups,
+        slotFailureRates,
+        timeSlots,
+        trainerSessionCount,
+        courtTimeSlotUsage,
+        assignments,
+        assignedMemberIds,
+        _groupIndex
+      );
       if (assignedMemberIds.size === before) break;
     }
 
@@ -1532,10 +1506,8 @@ export class SeasonClusteringEngine {
     // unassigned. Expected impact: Unassigned @ 2000m 7 → ~2 (-71%) per
     // docs/SCALING_ANALYSIS.md (Opt #3).
     if (unassigned.length > 0 && this.config.backtrackDepth > 0 && assignments.length > 0) {
-      await this.backtrackForUnassigned(
+      _groupIndex = await this.backtrackForUnassigned(
         unassigned,
-        sortedMembers,
-        membersById,
         members,
         trainers,
         courts,
@@ -1547,7 +1519,8 @@ export class SeasonClusteringEngine {
         assignments,
         assignedMemberIds,
         3, // first pass: maxRetries = 3, depth = 3
-        3 // first pass: explicit depth = 3 (independent of maxRetries now)
+        3,
+        _groupIndex
       );
 
       // Recompute unassigned rate after first pass to decide whether to escalate.
@@ -1560,10 +1533,8 @@ export class SeasonClusteringEngine {
         this.config.backtrackDepth > 0 &&
         assignments.length > 0
       ) {
-        await this.backtrackForUnassigned(
+        _groupIndex = await this.backtrackForUnassigned(
           stillUnassignedAfterPass1,
-          sortedMembers,
-          membersById,
           members,
           trainers,
           courts,
@@ -1575,7 +1546,8 @@ export class SeasonClusteringEngine {
           assignments,
           assignedMemberIds,
           2, // second pass: maxRetries = 2 (bounds total loops)
-          5 // second pass: depth = 5 (deeper re-slotting, matches doc-spec)
+          5, // second pass: depth = 5 (deeper re-slotting, matches doc-spec)
+          _groupIndex
         );
       }
     }
@@ -1586,7 +1558,7 @@ export class SeasonClusteringEngine {
     // Mitgliedern mit Wunsch > 1 weitere, zeitlich nicht überlappende Sessions
     // in bestehenden Gruppen mit Kapazität zuzuweisen. Rein additiv — verändert
     // keine bestehende Zuweisung, daher risikoarm gegenüber dem Rest der Pipeline.
-    this.assignExtraSessions(members, candidateGroups, assignments, membersById);
+    this.assignExtraSessions(members, assignments, membersById);
 
     const finalUnassigned = sortedMembers.filter((m) => !assignedMemberIds.has(m.id));
     return { assignments, unassigned: finalUnassigned };
@@ -1602,7 +1574,6 @@ export class SeasonClusteringEngine {
    */
   private assignExtraSessions(
     members: (MemberWithDetails & { _unassignedReason?: string })[],
-    candidateGroups: Map<string, GroupInfo>,
     assignments: GroupAssignment[],
     membersById: Map<string, MemberWithDetails & { _unassignedReason?: string }>
   ): void {
@@ -1616,25 +1587,12 @@ export class SeasonClusteringEngine {
       let current = sessionCount.get(member.id) || 0;
       if (current === 0 || current >= desired) continue;
 
-      const ageGroup = member.isMinor ? 'kids' : 'adult';
-      const maxSize = member.isMinor ? this.config.kidsGroupMaxSize : this.config.groupMaxSize;
-      const effectiveLevel = member.promotedLevel || member.skillLevel;
-
       while (current < desired) {
         const memberSlots = assignments.filter((a) => a.memberIds.includes(member.id));
         const candidate = assignments.find((a) => {
           if (a.memberIds.includes(member.id)) return false;
-          // Q2-Audit (Punkt 11): individuelle Gruppen-Kapazität respektieren.
-          const groupInfo = candidateGroups.get(a.groupId);
-          if (a.memberIds.length >= (groupInfo?.maxSize ?? maxSize)) return false;
-
-          if (groupInfo) {
-            const levelDiff = Math.abs(
-              LEVEL_RANK[effectiveLevel] - LEVEL_RANK[groupInfo.level as SkillLevel]
-            );
-            if (levelDiff > this.config.maxNiveauLevelSteps) return false;
-            if (groupInfo.ageGroup && groupInfo.ageGroup !== ageGroup) return false;
-          }
+          if (a.memberIds.length >= a.maxSize) return false;
+          if (!this.fitsAssignment(member, a, membersById)) return false;
 
           const overlapsExisting = memberSlots.some(
             (ms) =>
@@ -1642,14 +1600,6 @@ export class SeasonClusteringEngine {
               this.timeSlotsOverlap(ms.startTime, ms.endTime, a.startTime, a.endTime)
           );
           if (overlapsExisting) return false;
-
-          if (
-            !this.isMemberSlotAvailable(member.id, a.dayOfWeek, {
-              start: a.startTime,
-              end: a.endTime,
-            })
-          )
-            return false;
 
           if (member.avoidMemberIds.some((id) => a.memberIds.includes(id))) return false;
           if (a.memberIds.some((mid) => membersById.get(mid)?.avoidMemberIds.includes(member.id)))
@@ -1684,271 +1634,175 @@ export class SeasonClusteringEngine {
   }
 
   /**
-   * Backtracking optimizer: undo the last N group assignments, then re-evaluate them
-   * with the dual goal of (a) re-placing the undone groups in alternative slots and
-   * (b) freeing up the original slots for previously-unassigned members.
+   * Backtracking: die zuletzt gebildeten Gruppen auf einen anderen Termin (oder
+   * anderen Trainer/Platz) verschieben und danach die Übriggebliebenen erneut
+   * einplanen.
    *
-   * Depth-first: tries the most recent group first. Max 3 retries (overrides `backtrackDepth`
-   * if larger) to bound worst-case runtime.
+   * Eine Gruppe wird nur verschoben, nie aufgelöst, und nur auf einen Termin,
+   * an dem alle ihre Mitglieder können. Bringt eine Runde niemanden zusätzlich
+   * unter, werden ihre Verschiebungen zurückgenommen.
+   *
+   * Vorher wurde eine Gruppe ohne Ausweichtermin aufgelöst und ihr Termin an
+   * EIN übriges Mitglied als Einzeltraining vergeben — ohne Niveau-, Alters-
+   * oder Uhrzeitprüfung. Aus einer Zweiergruppe wurde so ein Einzeltraining für
+   * jemand anderen, und ein Kind konnte im 21-Uhr-Termin einer
+   * Erwachsenengruppe landen.
    */
   private async backtrackForUnassigned(
     initialUnassigned: (MemberWithDetails & { _unassignedReason?: string })[],
-    _sortedMembers: (MemberWithDetails & { _unassignedReason?: string })[],
-    _membersById: Map<string, MemberWithDetails & { _unassignedReason?: string }>,
     allMembers: (MemberWithDetails & { _unassignedReason?: string })[],
     trainers: TrainerWithDetails[],
     courts: CourtInfo[],
-    _candidateGroups: Map<string, GroupInfo>,
+    candidateGroups: Map<string, GroupInfo>,
     slotFailureRates: Record<string, number>,
     timeSlots: Array<{ start: string; end: string }>,
     trainerSessionCount: Map<string, number>,
     courtTimeSlotUsage: Map<string, Set<string>>,
     assignments: GroupAssignment[],
     assignedMemberIds: Set<string>,
-    maxRetries: number = 3,
-    depthOverride?: number
-  ): Promise<void> {
-    // Sprint 4 P0 #3: depth is now independent of maxRetries so the adaptive
-    // second pass can use depth=5 with only maxRetries=2 (bounds total work
-    // while allowing deeper re-slotting). The original code coupled them via
-    // `Math.min(backtrackDepth, maxRetries, ...)`, which capped depth at
-    // maxRetries — a leftover from the original 3-retry design.
-    const depth = Math.min(
-      this.config.backtrackDepth,
-      depthOverride ?? maxRetries,
-      assignments.length
-    );
+    maxRetries: number,
+    depth: number,
+    groupIndex: number
+  ): Promise<number> {
+    const byId = new Map(allMembers.map((m) => [m.id, m]));
+    let unassigned = initialUnassigned;
 
-    // Sprint 4 refactor: build a member id -> member map once to replace the per-victim
-    // `allMembers.find(m => m.id === ...)` O(members) scans that previously ran for
-    // each freed victim. Was: 2× O(members) per victim in the worst case.
-    const allMembersById = new Map<string, MemberWithDetails & { _unassignedReason?: string }>();
-    for (const m of allMembers) allMembersById.set(m.id, m);
+    for (let retry = 0; retry < maxRetries && unassigned.length > 0; retry++) {
+      const victimCount = Math.min(this.config.backtrackDepth, depth, assignments.length);
+      const moves: Array<{ original: GroupAssignment; moved: GroupAssignment }> = [];
 
-    let stillUnassigned = initialUnassigned;
-    let retryCount = 0;
+      for (const v of assignments.slice(assignments.length - victimCount)) {
+        const idx = assignments.indexOf(v);
+        assignments.splice(idx, 1);
+        this.bookSlot(v, trainerSessionCount, courtTimeSlotUsage, -1);
 
-    while (retryCount < maxRetries && stillUnassigned.length > 0 && assignments.length > 0) {
-      retryCount++;
+        const victimMembers = v.memberIds
+          .map((id) => byId.get(id))
+          .filter((m): m is NonNullable<typeof m> => !!m);
+        const meta = this.groupMeta(v.groupId, candidateGroups);
+        // Der alte Termin bleibt als Sperre in der Liste: gesucht wird eine
+        // andere Kombination aus Zeit, Trainer und Platz. ponytail: die Sperre
+        // zählt beim Stundenbudget des bisherigen Trainers mit — konservativ,
+        // verplant nie über das Limit.
+        const slot =
+          victimMembers.length > 0
+            ? this.findBestTimeSlot(
+                victimMembers,
+                trainers,
+                courts,
+                trainerSessionCount,
+                courtTimeSlotUsage,
+                slotFailureRates,
+                [...assignments, v],
+                this.slotsFor(assignmentMinutes(v), timeSlots),
+                meta ? this.isTeamGroup(meta.level, meta.ageGroup) : false,
+                true
+              )
+            : null;
 
-      // Take the last `depth` groups (the "victims" we might need to re-slot)
-      const victimCount = Math.min(depth, assignments.length);
-      const victims = assignments.splice(assignments.length - victimCount, victimCount);
-
-      // Free up the resources each victim group consumed
-      for (const v of victims) {
-        // Decrement trainer session count
-        const currentCount = trainerSessionCount.get(v.trainerId) || 0;
-        trainerSessionCount.set(v.trainerId, Math.max(0, currentCount - 1));
-        // Remove member assignments
-        for (const mid of v.memberIds) assignedMemberIds.delete(mid);
-        // Free up court usage
-        if (v.courtId) {
-          const courtKey = `${v.dayOfWeek}_${v.startTime}`;
-          const usage = courtTimeSlotUsage.get(v.courtId);
-          if (usage) usage.delete(courtKey);
-        }
+        const moved: GroupAssignment | null = slot
+          ? {
+              ...v,
+              trainerId: slot.trainerId,
+              trainerName: slot.trainerName,
+              dayOfWeek: slot.dayOfWeek,
+              startTime: slot.startTime,
+              endTime: slot.endTime,
+              courtId: slot.courtId,
+              courtName: slot.courtName,
+            }
+          : null;
+        const placed = moved ?? v;
+        assignments.splice(idx, 0, placed);
+        this.bookSlot(placed, trainerSessionCount, courtTimeSlotUsage, 1);
+        if (moved) moves.push({ original: v, moved });
       }
 
-      // Also re-add the victim members to the "unassigned" pool for this retry
-      const freedMembers: (MemberWithDetails & { _unassignedReason?: string })[] = [];
-      for (const v of victims) {
-        for (const detail of v.memberDetails) {
-          // Pull the full member object via pre-built id index (Sprint 4 refactor:
-          // was O(members) per victim via Array.find, now O(1) Map.get).
-          const fullMember = allMembersById.get(detail.memberId);
-          if (fullMember) {
-            fullMember._unassignedReason = undefined;
-            freedMembers.push(fullMember);
-          }
+      if (moves.length === 0) break;
+
+      const before = assignedMemberIds.size;
+      groupIndex = await this.placeLeftovers(
+        unassigned,
+        trainers,
+        courts,
+        candidateGroups,
+        slotFailureRates,
+        timeSlots,
+        trainerSessionCount,
+        courtTimeSlotUsage,
+        assignments,
+        assignedMemberIds,
+        groupIndex
+      );
+
+      if (assignedMemberIds.size === before) {
+        // Nichts gewonnen — alte Termine wiederherstellen.
+        for (const { original, moved } of moves) {
+          assignments[assignments.indexOf(moved)] = original;
+          this.bookSlot(moved, trainerSessionCount, courtTimeSlotUsage, -1);
+          this.bookSlot(original, trainerSessionCount, courtTimeSlotUsage, 1);
         }
-      }
-
-      // The "unassigned pool" for this retry: previous unassigned + freed members
-      const unassignedPool = [...stillUnassigned, ...freedMembers];
-
-      // Try to re-place victims in alternative slots (excluding the slot they just vacated)
-      const rePlaced: GroupAssignment[] = [];
-      for (const v of victims) {
-        const victimMemberDetails = v.memberDetails;
-        const victimMembers = victimMemberDetails
-          .map((d) => allMembersById.get(d.memberId))
-          .filter((m): m is NonNullable<typeof m> => m !== undefined);
-        if (victimMembers.length === 0) continue;
-        // Find a new slot, excluding the original slot
-        const excludeDayTime = { day: v.dayOfWeek, start: v.startTime };
-        const newSlot = this.findBestTimeSlot(
-          victimMembers,
-          trainers,
-          courts,
-          trainerSessionCount,
-          courtTimeSlotUsage,
-          slotFailureRates,
-          [...assignments, ...rePlaced], // treat re-placed as already-committed
-          timeSlots
-        );
-
-        // If new slot is found AND is different from the original, use it
-        if (
-          newSlot &&
-          (newSlot.dayOfWeek !== excludeDayTime.day || newSlot.startTime !== excludeDayTime.start)
-        ) {
-          // Re-add the victim group at the new slot
-          const rePlacedGroup: GroupAssignment = {
-            ...v,
-            trainerId: newSlot.trainerId,
-            trainerName: newSlot.trainerName,
-            dayOfWeek: newSlot.dayOfWeek,
-            startTime: newSlot.startTime,
-            endTime: newSlot.endTime,
-            courtId: newSlot.courtId,
-            courtName: newSlot.courtName,
-          };
-          rePlaced.push(rePlacedGroup);
-          // Update trainer + court usage for the new slot
-          const newCount = trainerSessionCount.get(newSlot.trainerId) || 0;
-          trainerSessionCount.set(newSlot.trainerId, newCount + 1);
-          if (newSlot.courtId) {
-            const newCourtKey = `${newSlot.dayOfWeek}_${newSlot.startTime}`;
-            const newUsage = courtTimeSlotUsage.get(newSlot.courtId) || new Set();
-            newUsage.add(newCourtKey);
-            courtTimeSlotUsage.set(newSlot.courtId, newUsage);
-          }
-          // Re-mark victim members as assigned
-          for (const mid of v.memberIds) assignedMemberIds.add(mid);
-        }
-        // If no new slot, the victim members stay in `unassignedPool` and will be retried
-      }
-
-      // Commit the re-placed groups back into assignments
-      assignments.push(...rePlaced);
-
-      // Now try to place the still-unassigned members into the freed-up original slots
-      // of any victims that were NOT successfully re-placed
-      const freedOriginalSlots: Array<{
-        day: number;
-        start: string;
-        end: string;
-        courtId: string | null;
-        trainerId: string;
-        trainerName: string;
-      }> = [];
-      for (const v of victims) {
-        const wasReplaced = rePlaced.some(
-          (r) =>
-            r.groupId === v.groupId && (r.dayOfWeek !== v.dayOfWeek || r.startTime !== v.startTime)
-        );
-        if (!wasReplaced) {
-          freedOriginalSlots.push({
-            day: v.dayOfWeek,
-            start: v.startTime,
-            end: v.endTime,
-            courtId: v.courtId,
-            trainerId: v.trainerId,
-            trainerName: v.trainerName,
-          });
-        }
-      }
-
-      // For each unassigned member, try to fit them into a freed original slot
-      const newlyPlaced: string[] = [];
-      for (const member of unassignedPool) {
-        if (assignedMemberIds.has(member.id)) continue;
-
-        for (const slot of freedOriginalSlots) {
-          // Check member availability for this slot
-          const dayName = DAY_NAMES[slot.day];
-          const daySlots = member.availability[dayName] || [];
-          const available = daySlots.some((s) => s.start <= slot.start && s.end >= slot.end);
-          if (!available) continue;
-
-          // Capacity check: 1 per slot (we're creating a single-member group)
-          // Avoid conflicts: check against the other victim members that are still unassigned
-          const otherFreed = unassignedPool.filter(
-            (m) => m.id !== member.id && !assignedMemberIds.has(m.id)
-          );
-          const hasAvoid = member.avoidMemberIds.some((id) => otherFreed.some((o) => o.id === id));
-          if (hasAvoid) continue;
-
-          // Place the member in a new solo group at the freed slot. Wie im Hauptpfad ein
-          // Platzhalter: die Gruppe entsteht erst in `saveToDatabase` als DB-Zeile. Früher
-          // trug sie eine synthetische ID ohne Platzhalter-Eintrag — sie wurde nie angelegt,
-          // ihr Planeintrag bekam `group_id = null` und ihre Wartelisteneinträge fielen weg.
-          const soloAgeGroup: 'kids' | 'adult' = member.isMinor ? 'kids' : 'adult';
-          const soloLevel = member.promotedLevel ?? member.skillLevel;
-          const soloName = `Einzeltraining ${
-            soloAgeGroup === 'kids' ? 'Kids' : LEVEL_LABEL[soloLevel]
-          } — ${member.name}`;
-          const soloGroupId = `${PLACEHOLDER_GROUP_PREFIX}${randomUUID()}`;
-          this.pendingGroups.set(soloGroupId, {
-            name: soloName,
-            level: soloLevel,
-            ageGroup: soloAgeGroup,
-          });
-          const ghostAssignment: GroupAssignment = {
-            groupId: soloGroupId,
-            groupName: soloName,
-            trainerId: slot.trainerId,
-            trainerName: slot.trainerName,
-            dayOfWeek: slot.day as DayOfWeek,
-            startTime: slot.start,
-            endTime: slot.end,
-            courtId: slot.courtId,
-            courtName:
-              victims.find((v) => v.dayOfWeek === slot.day && v.startTime === slot.start)
-                ?.courtName ?? null,
-            maxSize: 1,
-            memberIds: [member.id],
-            memberDetails: [
-              {
-                memberId: member.id,
-                memberName: member.name,
-                niveauMatch: -1,
-                experienceMonths: member.experienceMonths,
-                groupExperienceSpan: '—',
-                wishPartnerFulfilled: false,
-                wishPartnerNames: [],
-                isPromoted: !!member.promotedLevel,
-                assignmentReason: `Backtracking-Retry ${retryCount} (freier Slot nach Re-Slotting)`,
-              },
-            ],
-            waitlistIds: [],
-            waitlistDetails: [],
-            warnings: ['Backtracking-Einzelzuweisung - bitte manuell prüfen'],
-            conflictIds: [],
-          };
-          assignments.push(ghostAssignment);
-          assignedMemberIds.add(member.id);
-          // Update trainer session count for the freed slot
-          const tc = trainerSessionCount.get(slot.trainerId) || 0;
-          trainerSessionCount.set(slot.trainerId, tc + 1);
-          if (slot.courtId) {
-            const ck = `${slot.day}_${slot.start}`;
-            const cu = courtTimeSlotUsage.get(slot.courtId) || new Set();
-            cu.add(ck);
-            courtTimeSlotUsage.set(slot.courtId, cu);
-          }
-          // Consume this slot so no other unassigned member takes it
-          freedOriginalSlots.splice(freedOriginalSlots.indexOf(slot), 1);
-          newlyPlaced.push(member.id);
-          break;
-        }
-      }
-
-      // If no progress was made in this retry, break to avoid infinite loop
-      if (newlyPlaced.length === 0 && rePlaced.length === 0) {
-        // Restore victims to assignments so we don't lose their data permanently
-        // (they will be marked unassigned, but at least the data is preserved)
-        for (const v of victims) {
-          for (const mid of v.memberIds) assignedMemberIds.add(mid);
-        }
-        assignments.push(...victims);
         break;
       }
-
-      // Update stillUnassigned for next retry
-      stillUnassigned = unassignedPool.filter((m) => !assignedMemberIds.has(m.id));
+      unassigned = unassigned.filter((m) => !assignedMemberIds.has(m.id));
     }
+    return groupIndex;
+  }
+
+  /** Übrig gebliebene Mitglieder nach Altersgruppe getrennt erneut einplanen. */
+  private async placeLeftovers(
+    left: (MemberWithDetails & { _unassignedReason?: string })[],
+    trainers: TrainerWithDetails[],
+    courts: CourtInfo[],
+    candidateGroups: Map<string, GroupInfo>,
+    slotFailureRates: Record<string, number>,
+    timeSlots: Array<{ start: string; end: string }>,
+    trainerSessionCount: Map<string, number>,
+    courtTimeSlotUsage: Map<string, Set<string>>,
+    assignments: GroupAssignment[],
+    assignedMemberIds: Set<string>,
+    groupIndex: number
+  ): Promise<number> {
+    for (const [age, cohort] of [
+      ['kids', left.filter((m) => m.isMinor)],
+      ['adult', left.filter((m) => !m.isMinor)],
+    ] as const) {
+      if (cohort.length === 0) continue;
+      groupIndex = await this.assignMembersToGroups(
+        cohort,
+        age,
+        trainers,
+        courts,
+        candidateGroups,
+        slotFailureRates,
+        timeSlots,
+        trainerSessionCount,
+        courtTimeSlotUsage,
+        assignments,
+        assignedMemberIds,
+        groupIndex
+      );
+    }
+    return groupIndex;
+  }
+
+  /** Trainer-Zähler und Platzbelegung einer Einheit buchen (+1) oder freigeben (-1). */
+  private bookSlot(
+    a: GroupAssignment,
+    trainerSessionCount: Map<string, number>,
+    courtTimeSlotUsage: Map<string, Set<string>>,
+    delta: 1 | -1
+  ): void {
+    trainerSessionCount.set(
+      a.trainerId,
+      Math.max(0, (trainerSessionCount.get(a.trainerId) ?? 0) + delta)
+    );
+    if (!a.courtId) return;
+    const key = `${a.dayOfWeek}_${a.startTime}`;
+    const usage = courtTimeSlotUsage.get(a.courtId) ?? new Set<string>();
+    if (delta > 0) usage.add(key);
+    else usage.delete(key);
+    courtTimeSlotUsage.set(a.courtId, usage);
   }
 
   /**
@@ -1989,6 +1843,9 @@ export class SeasonClusteringEngine {
       const aRank = LEVEL_RANK[a.promotedLevel || a.skillLevel];
       const bRank = LEVEL_RANK[b.promotedLevel || b.skillLevel];
       if (aRank !== bRank) return aRank - bRank;
+      const aMin = this.ownMinutes(a) ?? 0;
+      const bMin = this.ownMinutes(b) ?? 0;
+      if (aMin !== bMin) return aMin - bMin;
       const aAff = affinity.get(a.id) ?? 0;
       const bAff = affinity.get(b.id) ?? 0;
       if (aAff !== bAff) return aAff - bAff;
@@ -2020,6 +1877,8 @@ export class SeasonClusteringEngine {
     // zersplittert die Gruppen nicht: er greift nur dort, wo ohnehin ein Sprung
     // von mehr als einer Stufe liegt.
     // Erst Läufe bilden, die nur an echten Niveau-Sprüngen getrennt werden ...
+    // ... und an einem Wechsel der individuellen Trainingsdauer: wer 90 Minuten
+    // bekommt, trainiert nicht in einer 60-Minuten-Gruppe (und umgekehrt).
     const runs: (typeof sorted)[] = [];
     {
       let current: typeof sorted = [];
@@ -2028,7 +1887,12 @@ export class SeasonClusteringEngine {
       for (const m of sorted) {
         const rank = LEVEL_RANK[m.promotedLevel || m.skillLevel];
         const spanWithMember = Math.max(maxRank, rank) - Math.min(minRank, rank);
-        if (current.length > 0 && spanWithMember > this.config.maxNiveauLevelSteps) {
+        const otherMinutes =
+          current.length > 0 && this.ownMinutes(current[0]) !== this.ownMinutes(m);
+        if (
+          current.length > 0 &&
+          (spanWithMember > this.config.maxNiveauLevelSteps || otherMinutes)
+        ) {
           runs.push(current);
           current = [];
           minRank = Infinity;
@@ -2069,10 +1933,13 @@ export class SeasonClusteringEngine {
 
       if (filteredSlice.length < minSize && numGroups > 1) {
         for (const m of slice) {
-          if (!filteredSlice.includes(m) && !assignedMemberIds.has(m.id)) {
-            if (!m._unassignedReason)
-              m._unassignedReason = `Avoid-Konflikt (${ageGroup}) — wird in zweiter Runde neu zugewiesen`;
-          }
+          if (assignedMemberIds.has(m.id) || m._unassignedReason) continue;
+          const own = this.ownMinutes(m);
+          m._unassignedReason = !filteredSlice.includes(m)
+            ? `Avoid-Konflikt (${ageGroup}) — wird in zweiter Runde neu zugewiesen`
+            : own
+              ? `Zu wenige Spieler mit ${own} Minuten auf diesem Niveau für eine eigene Gruppe (Mindestgröße ${minSize})`
+              : `Zu wenige passende Mitglieder für eine eigene Gruppe (Mindestgröße ${minSize})`;
         }
         continue;
       }
@@ -2092,19 +1959,14 @@ export class SeasonClusteringEngine {
       const levelRanks = filteredSlice.map((m) => LEVEL_RANK[m.promotedLevel || m.skillLevel]);
       const levelSpan = Math.max(...levelRanks) - Math.min(...levelRanks);
 
-      // Fix 4: Team/Leistungsgruppen bekommen Doppelstunden (120 min consecutive block)
-      const isTeamGroup =
-        (ageGroup === 'kids' && skillLevel === 'advanced') || // U18 Mannschaft
-        (!this.config.teamLevels.length
-          ? false
-          : (this.config.teamLevels as string[]).includes(skillLevel) && ageGroup !== 'kids');
-      const slotDuration = isTeamGroup
-        ? this.config.teamSlotMinutes
-        : this.config.slotDurationMinutes;
-      const groupTimeSlots =
-        slotDuration !== this.config.slotDurationMinutes
-          ? buildStandardTimeSlots(slotDuration, 22)
-          : timeSlots;
+      // Dauer: individuelle Angabe der Mitglieder (innerhalb eines Slices gleich,
+      // siehe Läufe oben), sonst Vereinsstandard bzw. Doppelstunde für Team-/
+      // Leistungsgruppen (Fix 4).
+      const isTeamGroup = this.isTeamGroup(skillLevel, ageGroup);
+      const slotDuration =
+        (filteredSlice[0] && this.ownMinutes(filteredSlice[0])) ??
+        this.defaultMinutes(skillLevel, ageGroup);
+      const groupTimeSlots = this.slotsFor(slotDuration, timeSlots);
 
       // Find best time slot
       const bestSlot = this.findBestTimeSlot(
@@ -2210,16 +2072,9 @@ export class SeasonClusteringEngine {
       // abweichende Kapazität haben. Ist die Slice größer, wird sie hier gekürzt;
       // die überzähligen Mitglieder gehen (wie bei Avoid-Konflikten) in den Second-Pass.
       const effectiveMaxSize = group.maxSize ?? maxSize;
-      // Snapshot BEFORE the capacity-trim splice so the avoid-conflict removedCount
-      // warning below doesn't conflate the two different reasons for removal.
-      const preCapacityTrimLength = filteredSlice.length;
-      const capacityOverflow =
-        filteredSlice.length > effectiveMaxSize ? filteredSlice.splice(effectiveMaxSize) : [];
-      for (const m of capacityOverflow) {
-        if (!assignedMemberIds.has(m.id) && !m._unassignedReason) {
-          m._unassignedReason = `Gruppe "${group.name}" hat begrenzte Kapazität (${effectiveMaxSize}) — wird in zweiter Runde neu zugewiesen`;
-        }
-      }
+      // Vor den Kürzungen festhalten, damit die Avoid-Warnung unten nicht die
+      // anderen Entfernungsgründe mitzählt.
+      const avoidRemovedCount = slice.length - filteredSlice.length;
 
       // Der Zeitslot wurde anhand der Verfügbarkeit eines TEILS der Gruppe gewählt
       // (findBestTimeSlot filtert dort auf verfügbare Mitglieder). Übrig blieben
@@ -2231,13 +2086,24 @@ export class SeasonClusteringEngine {
       const unavailableForSlot: typeof filteredSlice = [];
       for (let i = filteredSlice.length - 1; i >= 0; i--) {
         const m = filteredSlice[i];
-        if (!this.isMemberSlotAvailable(m.id, bestSlot.dayOfWeek, slotWindow)) {
+        if (!coversSlot(m.availability, bestSlot.dayOfWeek, slotWindow)) {
           unavailableForSlot.push(...filteredSlice.splice(i, 1));
         }
       }
       for (const m of unavailableForSlot) {
         if (!assignedMemberIds.has(m.id) && !m._unassignedReason) {
           m._unassignedReason = `Zu ${DAY_LABELS[bestSlot.dayOfWeek]} ${bestSlot.startTime} laut eigener Angabe nicht verfügbar — wird in zweiter Runde neu zugewiesen`;
+        }
+      }
+
+      // Kapazität erst NACH dem Verfügbarkeitsfilter kürzen: umgekehrt konnten
+      // genau die Mitglieder abgeschnitten werden, für die der Slot gewählt
+      // wurde, und es blieb eine Gruppe ohne Teilnehmer übrig.
+      const capacityOverflow =
+        filteredSlice.length > effectiveMaxSize ? filteredSlice.splice(effectiveMaxSize) : [];
+      for (const m of capacityOverflow) {
+        if (!assignedMemberIds.has(m.id) && !m._unassignedReason) {
+          m._unassignedReason = `Gruppe "${group.name}" hat begrenzte Kapazität (${effectiveMaxSize}) — wird in zweiter Runde neu zugewiesen`;
         }
       }
 
@@ -2281,10 +2147,9 @@ export class SeasonClusteringEngine {
       if (filteredSlice.length < minSize) {
         warnings.push(`Gruppe hat nur ${filteredSlice.length} Mitglieder (Minimum: ${minSize})`);
       }
-      const removedCount = slice.length - preCapacityTrimLength;
-      if (removedCount > 0) {
+      if (avoidRemovedCount > 0) {
         warnings.push(
-          `${removedCount} Mitglieder wegen Avoid-Konflikten aus dieser Gruppe entfernt`
+          `${avoidRemovedCount} Mitglieder wegen Avoid-Konflikten aus dieser Gruppe entfernt`
         );
       }
       if (capacityOverflow.length > 0) {
@@ -2292,15 +2157,6 @@ export class SeasonClusteringEngine {
           `${capacityOverflow.length} Mitglieder wegen begrenzter Gruppenkapazität (${effectiveMaxSize}) in zweiter Runde neu zugewiesen`
         );
       }
-
-      trainerSessionCount.set(
-        bestSlot.trainerId,
-        (trainerSessionCount.get(bestSlot.trainerId) || 0) + 1
-      );
-      const courtKey = `${bestSlot.dayOfWeek}_${bestSlot.startTime}`;
-      const courtUsage = courtTimeSlotUsage.get(bestSlot.courtId || '') || new Set<string>();
-      courtUsage.add(courtKey);
-      courtTimeSlotUsage.set(bestSlot.courtId || '', courtUsage);
 
       const memberDetails = filteredSlice.map((m) => {
         const fulfilledWishes = m.wishPartnerIds.filter((wpid) =>
@@ -2321,7 +2177,7 @@ export class SeasonClusteringEngine {
         };
       });
 
-      assignments.push({
+      const assignment: GroupAssignment = {
         groupId: group.id,
         groupName: group.name,
         trainerId: bestSlot.trainerId,
@@ -2338,7 +2194,9 @@ export class SeasonClusteringEngine {
         waitlistDetails: [],
         warnings,
         conflictIds: [],
-      });
+      };
+      assignments.push(assignment);
+      this.bookSlot(assignment, trainerSessionCount, courtTimeSlotUsage, 1);
 
       for (const m of filteredSlice) assignedMemberIds.add(m.id);
     }
@@ -2356,7 +2214,9 @@ export class SeasonClusteringEngine {
     existingAssignments: GroupAssignment[],
     timeSlots: Array<{ start: string; end: string }>,
     /** Mannschaftsgruppe — gilt der Medenspiel-Korridor (siehe TRAININGSFENSTER). */
-    isTeamGroup = false
+    isTeamGroup = false,
+    /** Nur Slots, an denen ALLE Mitglieder können (Verschieben einer fertigen Gruppe). */
+    requireAll = false
   ):
     | (TimeSlotInfo & {
         trainerId: string;
@@ -2365,16 +2225,6 @@ export class SeasonClusteringEngine {
         courtName: string | null;
       })
     | null {
-    // Sprint 4 follow-up: stash the call's member/trainer lists into the
-    // fallback fields so the slot-check helpers (`isMemberSlotAvailable` /
-    // `isTrainerSlotAvailable`) can do a linear search when the pre-computed
-    // Map cache is null — this is the path taken by direct callers such as
-    // unit tests that call `findBestTimeSlot` without going through
-    // `runClustering`. Production callers are unaffected because the Map
-    // cache is always populated first and is preferred over the fallback.
-    this._cachedMembersForSlotCheck = members;
-    this._cachedTrainersForSlotCheck = trainers;
-
     let bestScore = -Infinity;
     let bestResult:
       | (TimeSlotInfo & {
@@ -2386,6 +2236,16 @@ export class SeasonClusteringEngine {
       | null = null;
 
     const groupHasMinors = members.some((m) => m.isMinor);
+
+    // Einmal pro Aufruf nach Trainer und Platz sortieren — die Prüfungen unten
+    // laufen je Tag × Slot × Trainer/Platz und sollen nicht jedes Mal alle
+    // Einheiten des Plans durchgehen.
+    const byTrainer = new Map<string, GroupAssignment[]>();
+    const byCourt = new Map<string, GroupAssignment[]>();
+    for (const a of existingAssignments) {
+      byTrainer.set(a.trainerId, [...(byTrainer.get(a.trainerId) ?? []), a]);
+      if (a.courtId) byCourt.set(a.courtId, [...(byCourt.get(a.courtId) ?? []), a]);
+    }
 
     // Sonntag ist standardmäßig kein Trainingstag (Vereinsrealität — spielfrei/Turniertag —
     // sowie Arbeits-/Ruhezeitregeln für Trainer). Mo(0)-Sa(5) per Default, So(6) nur wenn
@@ -2426,13 +2286,17 @@ export class SeasonClusteringEngine {
         // Algorithmus auf 20–22 Uhr aus und hätte dort auch Kinder einsortiert.
         if (groupHasMinors && timeSlot.end > MINOR_LATEST_END) continue;
 
-        // HARD CONSTRAINT: Check member availability via pre-computed cache
-        // (Sprint 4 P0 #1: O(1) lookup instead of Array.some() per member)
+        // HARD CONSTRAINT: Verfügbarkeit gegen den GANZEN Slot prüfen. Bis
+        // 27.09.2026 lief das über einen Cache, der nur nach Startzeit schlüsselte
+        // und für die Standard-Slotlänge gebaut war: eine Doppelstunde 18–20 Uhr
+        // galt als passend, wenn jemand 18–19 Uhr konnte, und Slots, deren Start
+        // nicht im Standardraster lag, galten als nie verfügbar.
         const availableMembers = members.filter((m) =>
-          this.isMemberSlotAvailable(m.id, dayOfWeek, timeSlot)
+          coversSlot(m.availability, dayOfWeek, timeSlot)
         );
 
         if (availableMembers.length < Math.max(1, this.config.groupMinSize)) continue;
+        if (requireAll && availableMembers.length < members.length) continue;
 
         // Sprint 4 refactor: pre-compute the Set of member skill levels once per
         // (day, timeSlot) iteration. The previous code rebuilt the Set inside the
@@ -2446,34 +2310,29 @@ export class SeasonClusteringEngine {
         let bestTrainerScore = -Infinity;
 
         for (const trainer of trainers) {
-          // Check availability via pre-computed cache (Sprint 4 P0 #1)
-          if (!this.isTrainerSlotAvailable(trainer.id, dayOfWeek, timeSlot)) continue;
+          if (!coversSlot(trainer.availability, dayOfWeek, timeSlot)) continue;
 
           // Check max sessions
           const currentSessions = trainerSessionCount.get(trainer.id) || 0;
           if (currentSessions >= trainer.maxSessionsPerWeek) continue;
 
-          // Stundenbudget gegen die TATSÄCHLICHE Slot-Länge prüfen. Vorher stand
-          // hier `config.slotDurationMinutes`, obwohl Team-/Leistungsgruppen mit
-          // 120-Minuten-Slots hereinkommen — Doppelstunden zählten als eine Stunde
-          // und Trainer wurden über ihr Wochenlimit hinaus verplant.
-          const slotHours = (hhmmToMinutes(timeSlot.end) - hhmmToMinutes(timeSlot.start)) / 60;
-          // ponytail: bereits verplante Sessions werden mit der Länge DIESES Slots
-          // bewertet, weil die Engine pro Trainer nur Sessions zählt, keine Stunden.
-          // Überschätzt die Last bei gemischten Längen — echte Stundenbuchführung
-          // erst, wenn ein Verein das wirklich braucht.
-          const hoursAssigned = currentSessions * slotHours;
-          const maxHours = trainer.maxHoursPerWeek * (trainer.utilizationPct / 100);
-          if (hoursAssigned + slotHours > maxHours) continue;
-
-          // Check trainer not already assigned to same day+time
-          const isDoubleBooked = existingAssignments.some(
-            (a) =>
-              a.trainerId === trainer.id &&
+          // Stundenbudget in echten Minuten: Einheiten sind unterschiedlich lang
+          // (Standard, Doppelstunde, individuelle Dauer). Im selben Durchlauf die
+          // Doppelbelegung prüfen.
+          let bookedMinutes = 0;
+          let isDoubleBooked = false;
+          for (const a of byTrainer.get(trainer.id) ?? []) {
+            bookedMinutes += assignmentMinutes(a);
+            if (
               a.dayOfWeek === dayOfWeek &&
               this.timeSlotsOverlap(a.startTime, a.endTime, timeSlot.start, timeSlot.end)
-          );
+            )
+              isDoubleBooked = true;
+          }
           if (isDoubleBooked) continue;
+          const slotMinutes = hhmmToMinutes(timeSlot.end) - hhmmToMinutes(timeSlot.start);
+          const maxMinutes = trainer.maxHoursPerWeek * 60 * (trainer.utilizationPct / 100);
+          if (bookedMinutes + slotMinutes > maxMinutes) continue;
 
           // Score trainer: specialization match + availability match
           let score = 0;
@@ -2521,9 +2380,8 @@ export class SeasonClusteringEngine {
           const usage = courtTimeSlotUsage.get(court.id) || new Set();
           if (usage.has(courtKey)) continue;
           // Check existing assignments for this court
-          const isTaken = existingAssignments.some(
+          const isTaken = (byCourt.get(court.id) ?? []).some(
             (a) =>
-              a.courtId === court.id &&
               a.dayOfWeek === dayOfWeek &&
               this.timeSlotsOverlap(a.startTime, a.endTime, timeSlot.start, timeSlot.end)
           );
@@ -2623,102 +2481,6 @@ export class SeasonClusteringEngine {
     }
 
     return bestResult;
-  }
-
-  // ═══ Sprint 4 P0 #1: Slot-Lookup-Cache ═══════════════════════════════
-  /**
-   * Pre-compute (member, day, timeSlot) → boolean and (trainer, day, timeSlot) → boolean
-   * availability maps. findBestTimeSlot uses these instead of running
-   * `member.availability[day].some(slot => slot.start <= t.start && slot.end >= t.end)`
-   * on every iteration, which is the hottest path in the engine
-   * (2000m run: 32ms before, ~18ms after expected per SCALING_ANALYSIS.md).
-   *
-   * Cache key format: `${kind}|${id}|${dayOfWeek}_${slotStart}`
-   *   - kind = 'm' (member) or 't' (trainer)
-   *   - id = member/trainer UUID
-   *   - dayOfWeek = 0..6
-   *   - slotStart = \"08:00\", \"09:30\" etc.
-   *
-   * The cache is invalidated on the next call to buildSlotAvailabilityCaches.
-   */
-  private buildSlotAvailabilityCaches(
-    members: (MemberWithDetails & { _unassignedReason?: string })[],
-    trainers: TrainerWithDetails[],
-    timeSlots: Array<{ start: string; end: string }>
-  ): void {
-    this._memberSlotAvail = new Map();
-    this._trainerSlotAvail = new Map();
-    // Stash the input lists so the slot-check helpers can fall back to a
-    // direct Array.some() when the cache is null (unit-test / direct call path).
-    this._cachedMembersForSlotCheck = members;
-    this._cachedTrainersForSlotCheck = trainers;
-
-    const DAY_NAMES_LOCAL = DAY_NAMES;
-
-    for (let day = 0; day < 7; day++) {
-      const dayName = DAY_NAMES_LOCAL[day];
-      for (const slot of timeSlots) {
-        for (const m of members) {
-          const daySlots = m.availability[dayName] || [];
-          const ok = daySlots.some((s) => s.start <= slot.start && s.end >= slot.end);
-          this._memberSlotAvail.set(`m|${m.id}|${day}_${slot.start}`, ok);
-        }
-        for (const t of trainers) {
-          const daySlots = t.availability[dayName] || [];
-          const ok = daySlots.some((s) => s.start <= slot.start && s.end >= slot.end);
-          this._trainerSlotAvail.set(`t|${t.id}|${day}_${slot.start}`, ok);
-        }
-      }
-    }
-  }
-
-  /**
-   * Fast member-availability lookup: O(1) Map.get() instead of Array.some().
-   * Returns true iff the member has at least one availability window that fully
-   * covers the given (day, timeSlot).
-   *
-   * Sprint 4 follow-up: when the pre-computed cache is null (direct callers
-   * like unit tests that call `findBestTimeSlot` without going through
-   * `runClustering`), falls back to a linear search over the last-known
-   * member list. Preserves the original semantics for production callers
-   * (where the cache is always populated) while letting tests use the same
-   * entry point.
-   */
-  private isMemberSlotAvailable(
-    memberId: string,
-    dayOfWeek: number,
-    timeSlot: { start: string; end: string }
-  ): boolean {
-    if (this._memberSlotAvail) {
-      return this._memberSlotAvail.get(`m|${memberId}|${dayOfWeek}_${timeSlot.start}`) ?? false;
-    }
-    const member = this._cachedMembersForSlotCheck?.find((m) => m.id === memberId);
-    if (!member) return false;
-    const dayName = DAY_NAMES[dayOfWeek];
-    const daySlots = member.availability[dayName] || [];
-    return daySlots.some((s) => s.start <= timeSlot.start && s.end >= timeSlot.end);
-  }
-
-  /**
-   * Fast trainer-availability lookup: O(1) Map.get() instead of Array.some().
-   * Note: this checks *availability only* — max-sessions and hours-limit checks
-   * remain in findBestTimeSlot (those depend on per-run state).
-   *
-   * Sprint 4 follow-up: same null-cache fallback as `isMemberSlotAvailable`.
-   */
-  private isTrainerSlotAvailable(
-    trainerId: string,
-    dayOfWeek: number,
-    timeSlot: { start: string; end: string }
-  ): boolean {
-    if (this._trainerSlotAvail) {
-      return this._trainerSlotAvail.get(`t|${trainerId}|${dayOfWeek}_${timeSlot.start}`) ?? false;
-    }
-    const trainer = this._cachedTrainersForSlotCheck?.find((t) => t.id === trainerId);
-    if (!trainer) return false;
-    const dayName = DAY_NAMES[dayOfWeek];
-    const daySlots = trainer.availability[dayName] || [];
-    return daySlots.some((s) => s.start <= timeSlot.start && s.end >= timeSlot.end);
   }
 
   /**
@@ -2824,7 +2586,12 @@ export class SeasonClusteringEngine {
     // Training, haben aber keinen Platz bekommen, und jemand muss darüber
     // entscheiden. Sie kommen auf die Warteliste der fachlich am besten passenden
     // Gruppe. Nachgerückt wird bewusst nicht automatisch.
-    const groupInfoById = new Map(_groups.map((g) => [g.id, g]));
+    // Auch die in diesem Lauf neu entstandenen Gruppen kennen — sonst fand der
+    // Abgleich nur bestehende DB-Gruppen und fiel auf die erste beliebige zurück.
+    const groupInfoById = new Map<string, { level: string; ageGroup: string }>(
+      _groups.map((g) => [g.id, g])
+    );
+    for (const [id, g] of this.pendingGroups) groupInfoById.set(id, g);
     const alreadyWaitlisted = new Set(waitlisted.map((w) => w.memberId));
 
     for (const member of members) {
@@ -2946,6 +2713,95 @@ export class SeasonClusteringEngine {
   // ============================================
   // HELPERS
   // ============================================
+
+  /** Team-/Leistungsgruppe: Doppelstunde und Medenspiel-Korridor (Fix 4). */
+  private isTeamGroup(level: SkillLevel, ageGroup: string): boolean {
+    if (ageGroup === 'kids') return level === 'advanced'; // U18 Mannschaft
+    return (this.config.teamLevels as string[]).includes(level);
+  }
+
+  /** Dauer ohne individuelle Angabe. */
+  private defaultMinutes(level: SkillLevel, ageGroup: string): number {
+    return this.isTeamGroup(level, ageGroup)
+      ? this.config.teamSlotMinutes
+      : this.config.slotDurationMinutes;
+  }
+
+  /**
+   * Eigene Dauer eines Mitglieds, sofern sie von dem abweicht, was es ohnehin
+   * bekäme. Ein Wert gleich dem Standard erzwingt keine eigene Gruppe — sonst
+   * würden Spieler mit „90 Minuten" in einem 90-Minuten-Verein von allen anderen
+   * getrennt.
+   */
+  private ownMinutes(m: MemberWithDetails): number | null {
+    if (!m.trainingMinutes) return null;
+    const standard = this.defaultMinutes(
+      m.promotedLevel || m.skillLevel,
+      m.isMinor ? 'kids' : 'adult'
+    );
+    return m.trainingMinutes === standard ? null : m.trainingMinutes;
+  }
+
+  /**
+   * Slots einer bestimmten Dauer. Sie beginnen auf dem Raster der Standard-Slots
+   * — eine 90-Minuten-Gruppe startet dort, wo auch alle anderen starten — und
+   * dürfen bis zum Ende der Anlagenzeit reichen.
+   */
+  private slotsFor(
+    minutes: number,
+    baseSlots: Array<{ start: string; end: string }>
+  ): Array<{ start: string; end: string }> {
+    if (minutes === this.config.slotDurationMinutes) return baseSlots;
+    return baseSlots
+      .map((s) => ({ start: s.start, end: minutesToHhmm(hhmmToMinutes(s.start) + minutes) }))
+      .filter((s) => s.end <= LATEST_END);
+  }
+
+  /** Niveau und Altersgruppe einer Gruppe — bestehend oder in diesem Lauf neu. */
+  private groupMeta(
+    groupId: string,
+    candidateGroups: Map<string, GroupInfo>
+  ): { level: SkillLevel; ageGroup: string } | undefined {
+    return candidateGroups.get(groupId) ?? this.pendingGroups.get(groupId);
+  }
+
+  /**
+   * Darf ein Mitglied nachträglich in eine fertige Gruppe (zweite Runde,
+   * Zusatz-Einheiten)? Kapazität und Avoid prüft der Aufrufer.
+   *
+   * Geprüft wird gegen die tatsächlichen Mitglieder der Gruppe. Vorher kannten
+   * diese Pfade nur bestehende DB-Gruppen: bei den in diesem Lauf neu
+   * entstandenen fehlte die Gruppeninfo, und Niveau- wie Altersprüfung entfielen
+   * still — im Test mit 2000 Mitgliedern waren 107 Gruppen gemischt aus Kindern
+   * und Erwachsenen. Und der Vergleich mit dem häufigsten Niveau der Gruppe ließ
+   * einen Fortgeschrittenen in eine Gruppe mit Anfängern.
+   */
+  private fitsAssignment(
+    member: MemberWithDetails,
+    a: GroupAssignment,
+    membersById: Map<string, MemberWithDetails>
+  ): boolean {
+    const rank = (m: MemberWithDetails) => LEVEL_RANK[m.promotedLevel || m.skillLevel];
+    const others = a.memberIds
+      .map((id) => membersById.get(id))
+      .filter((m): m is MemberWithDetails => !!m);
+    if (others.some((o) => o.isMinor !== member.isMinor)) return false;
+    const ranks = [...others.map(rank), rank(member)];
+    if (Math.max(...ranks) - Math.min(...ranks) > this.config.maxNiveauLevelSteps) return false;
+
+    // Wer eine eigene Dauer hat, nur in Gruppen genau dieser Länge; alle
+    // anderen nicht in Gruppen mit einer Sonderdauer.
+    const minutes = assignmentMinutes(a);
+    if (member.trainingMinutes) {
+      if (minutes !== member.trainingMinutes) return false;
+    } else if (
+      minutes !== this.config.slotDurationMinutes &&
+      minutes !== this.config.teamSlotMinutes
+    ) {
+      return false;
+    }
+    return coversSlot(member.availability, a.dayOfWeek, { start: a.startTime, end: a.endTime });
+  }
 
   /**
    * Bugfix (Q2-Audit / structural): bitmask of which weekdays a member has ANY
@@ -3080,13 +2936,12 @@ export class SeasonClusteringEngine {
       );
     }
 
-    const trainerCounts = assignments.reduce(
-      (acc, a) => {
-        acc[a.trainerId] = (acc[a.trainerId] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
+    const trainerCounts: Record<string, number> = {};
+    const trainerMinutes: Record<string, number> = {};
+    for (const a of assignments) {
+      trainerCounts[a.trainerId] = (trainerCounts[a.trainerId] || 0) + 1;
+      trainerMinutes[a.trainerId] = (trainerMinutes[a.trainerId] || 0) + assignmentMinutes(a);
+    }
     // Sprint 4 refactor: O(1) trainer lookup (was O(trainers) per assignment via Array.find).
     const trainerByIdForExplanations = new Map<string, TrainerWithDetails>();
     for (const t of trainers) trainerByIdForExplanations.set(t.id, t);
@@ -3094,16 +2949,12 @@ export class SeasonClusteringEngine {
     for (const [tid, count] of Object.entries(trainerCounts)) {
       const trainer = trainerByIdForExplanations.get(tid);
       if (trainer) {
-        // Slot-Dauer kommt aus der DB-Config (default 60min im Engine-Default,
-        // 90min in der DB-Migration). Wir rechnen mit der effektiven Dauer
-        // statt einer hartcodierten 1,5h, sodass 60-Minuten-Konfigurationen
-        // korrekt dargestellt werden. Team-/Doppelstunden sind im Engine-
-        // Engine separat gehandhabt (groupTimeSlots mit teamSlotMinutes).
-        const hoursPerSession = this.config.slotDurationMinutes / 60;
-        const hours = count * hoursPerSession;
+        // Summe der tatsächlichen Einheitenlängen (Standard, Doppelstunde,
+        // individuelle Dauer).
+        const hours = trainerMinutes[tid] / 60;
         const max = trainer.maxHoursPerWeek * (trainer.utilizationPct / 100);
         explanations.push(
-          `Trainer ${trainer.name}: ${count} Sessions (${hours.toFixed(2)}h à ${this.config.slotDurationMinutes}min von max ${max.toFixed(2)}h)`
+          `Trainer ${trainer.name}: ${count} Sessions (${hours.toFixed(2)}h von max ${max.toFixed(2)}h)`
         );
       }
     }
@@ -3190,9 +3041,10 @@ export class SeasonClusteringEngine {
       day_of_week: g.dayOfWeek,
       start_time: `${g.startTime}:00`,
       end_time: `${g.endTime}:00`,
-      // Use configured slot duration instead of recomputing from HH:MM diff
-      // (more robust against malformed times, single source of truth)
-      duration_minutes: this.config.slotDurationMinutes,
+      // Tatsächliche Länge — vorher stand hier immer die Standard-Dauer, auch
+      // bei Doppelstunden. Die Abrechnung rechnet mit diesem Wert: eine
+      // 120-Minuten-Einheit wurde als 60 Minuten berechnet.
+      duration_minutes: assignmentMinutes(g),
       // Q2-Audit (Punkt 11): eine Session mit genau 1 Teilnehmer ist ein Einzeltraining
       // ('private_lesson' ist ein bereits vorhandener, DB-seitig erlaubter Wert), kein
       // "Gruppentraining mit 1 Person". Deckt Haupt-Pass, Second-Pass-Reste und

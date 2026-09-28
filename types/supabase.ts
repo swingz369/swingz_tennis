@@ -6928,6 +6928,7 @@ export type Database = {
           role: string;
           status: string | null;
           tenant_id: string | null;
+          training_minutes: number | null;
           user_id: string;
         };
         Insert: {
@@ -6949,6 +6950,7 @@ export type Database = {
           role?: string;
           status?: string | null;
           tenant_id?: string | null;
+          training_minutes?: number | null;
           user_id: string;
         };
         Update: {
@@ -6970,6 +6972,7 @@ export type Database = {
           role?: string;
           status?: string | null;
           tenant_id?: string | null;
+          training_minutes?: number | null;
           user_id?: string;
         };
         Relationships: [

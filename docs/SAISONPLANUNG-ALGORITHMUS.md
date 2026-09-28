@@ -1,6 +1,6 @@
 # Saisonplanung — wie der Algorithmus arbeitet
 
-> Zuletzt verifiziert: 30. August 2026 (Trainingsfenster und Medenspiel-Sperren am Code geprüft, Lauf gegen 500 Mitglieder gemessen)
+> Zuletzt verifiziert: 27. September 2026 (Trainingsdauer je Spieler, Backtracking und zweite Runde neu, Planprüfung mit 200/2000 Mitgliedern; zuvor 30.08.: Trainingsfenster und Medenspiel-Sperren)
 
 Dieses Dokument beschreibt den **Ist-Zustand** von `lib/season-planning/clustering-engine.ts`
 (≈3400 Zeilen): was er tut, warum er es so tut, wo er heute nachgibt und an welchen
@@ -49,7 +49,7 @@ runClustering(dryRun)
 │     loadHistoricGroups()      Gruppen der Vorsaison + deren Anwesenheitsquote
 │
 ├─ 2  buildStandardTimeSlots()  Zeitraster 08:00–21:00 in slotDurationMinutes-Schritten
-├─     buildSlotAvailabilityCaches()   O(1)-Lookups statt O(Mitglieder × Trainer)
+│                               (längere Einheiten: slotsFor(), gleiche Startzeiten)
 │
 ├─ 3  Multi-Start: drei feste Startvarianten rechnen
 │     ├─ { adultsFirst: false, useAffinity: true }   ← Default
@@ -57,7 +57,7 @@ runClustering(dryRun)
 │     └─ { adultsFirst: false, useAffinity: false }
 │     je Variante:
 │        greedyCluster()            Mitglieder sortieren, Gruppen bilden, Slots vergeben
-│        backtrackForUnassigned()   nicht Untergebrachte durch Umlegen anderer retten
+│        backtrackForUnassigned()   Gruppen verschieben, Übrige neu einplanen (siehe unten)
 │        assignExtraSessions()      Zweittermin für Gruppen, wenn Kapazität übrig
 │        computeMetrics()
 │     die Variante mit dem besten `scorePlan` gewinnt
@@ -66,6 +66,18 @@ runClustering(dryRun)
 ├─ 5  generateExplanations()    deutscher Klartext je Zuweisung und je Absage
 └─ 6  saveToDatabase()          nur wenn dryRun === false
 ```
+
+**Backtracking:** verschiebt die zuletzt gebildeten Gruppen auf einen anderen Termin
+(oder anderen Trainer/Platz), an dem **alle** ihre Mitglieder können, und plant danach die
+Übriggebliebenen mit den normalen Regeln neu ein. Bringt das niemanden zusätzlich unter,
+werden die Verschiebungen zurückgenommen. Eine Gruppe wird nie aufgelöst. (Bis 27.09.2026
+löste es Gruppen ohne Ausweichtermin auf und gab ihren Termin einem einzelnen Übrigen —
+ohne Niveau-, Alters- oder Uhrzeitprüfung; der Plan wurde dadurch messbar schlechter.)
+
+**Zweite Runde und Zusatz-Einheiten** setzen Mitglieder nachträglich in fertige Gruppen.
+`fitsAssignment` prüft dabei gegen die tatsächlichen Mitglieder: gleiche Altersgruppe,
+Niveau-Spanne inkl. Neuzugang ≤ `maxNiveauLevelSteps`, passende Dauer, Verfügbarkeit für
+den ganzen Termin.
 
 **Warum Multi-Start:** Bei einem Greedy-Verfahren entscheidet die Reihenfolge über das
 Ergebnis — wer zuerst schneidet, bekommt die besten Trainer und Plätze. Statt einen
@@ -116,6 +128,29 @@ nicht anbietet.
 (`teamSlotMinutes: 120`). Als Mannschaft gilt: `ageGroup === 'kids' && level === 'advanced'`
 (U18-Mannschaft) oder ein Level aus `teamLevels` (`advanced`, `professional`) bei
 Erwachsenen.
+
+### Trainingsdauer — Standard, Doppelstunde, individuell
+
+Die Dauer einer Einheit ergibt sich in dieser Reihenfolge:
+
+1. **Individuell je Spieler:** `user_club_memberships.training_minutes` (30–240, `NULL` =
+   Standard). Admin setzt sie im Mitgliedsprofil → Tab „Präferenzen". Spieler mit
+   gleichem Wert werden gemeinsam eingeplant — die Sortier-Läufe in
+   `assignMembersToGroups` trennen an einem Wechsel der Dauer genauso wie an einem
+   Niveau-Sprung. Eine „lange Gruppe" entsteht, indem alle ihre Mitglieder denselben Wert
+   bekommen. Grund: längere Zeit lässt sich in der Realität nicht aus Niveau oder Alter
+   ableiten.
+2. **Doppelstunde** (`teamSlotMinutes`) für Team-/Leistungsgruppen, siehe Regel 4.
+3. **Vereinsstandard** `slotDurationMinutes`.
+
+Längere oder kürzere Einheiten beginnen auf denselben Startzeiten wie die
+Standard-Slots (`slotsFor`) und dürfen bis 22:00 reichen. Verfügbarkeit, Stundenbudget
+der Trainer und Platzbelegung werden in echten Minuten gerechnet;
+`season_plan_entries.duration_minutes` trägt die tatsächliche Länge — die Abrechnung
+rechnet damit.
+
+In der zweiten Runde nimmt eine Gruppe nur Mitglieder mit derselben Dauer auf; wer keine
+eigene Dauer hat, kommt nur in Gruppen mit Standard- oder Doppelstunden-Länge.
 
 ### Regel 6 — Medenspiele, im Detail
 
@@ -237,6 +272,14 @@ Sa —         So —
 
 Nur Kids liegen auf 14:00, Erwachsene ab 17:00, Samstag ab 16:00 leer, Sonntag leer.
 
+**Nachprüfung 27.09.2026** (synthetisch, 200 und 2000 Mitglieder, jede Zuweisung gegen die
+Regeln geprüft): Die Kennzahl „Niveau-Verletzungen" oben zählte nur Warnungen des
+Hauptdurchlaufs. Nachträgliche Zuweisungen blieben unsichtbar — bei 2000 Mitgliedern
+waren es 244 Mitglieder in Terminen außerhalb ihrer Verfügbarkeit, 107 gemischte
+Kinder-/Erwachsenengruppen und 64 Gruppen mit zu großer Niveau-Spanne. Nach der
+Korrektur: jeweils 0, bei 5 bzw. 6 weniger zugeordneten Mitgliedern (genau die
+ungültigen) und kürzerer Rechenzeit (2000 Mitglieder: 0,9 s statt 1,0 s).
+
 **Vor** dem Trainingsrahmen ordnete derselbe Lauf 404 Mitglieder zu — mit
 Erwachsenengruppen um 08:00. Die 33 weniger sind kein Rückschritt, sondern der Preis
 dafür, dass der Plan jetzt stimmt.
@@ -294,8 +337,11 @@ Feiertagen". `school_holidays` existiert als Tabelle, die Engine liest sie nicht
 
 ### 8.6 Performance
 
-Aktuell unkritisch (217 ms bei 500 Mitgliedern). Die vorhandenen Caches
-(`_memberSlotAvail`, `_trainerSlotAvail`) haben den Lauf seinerzeit um ~44 % gedrückt.
+Aktuell unkritisch (217 ms bei 500 Mitgliedern). Die früheren Verfügbarkeits-Caches
+(`_memberSlotAvail`, `_trainerSlotAvail`) sind seit 27.09.2026 entfernt: sie schlüsselten
+nur nach Startzeit und kannten nur die Standard-Slotlänge — Doppelstunden galten als
+verfügbar, wenn jemand nur die erste Stunde konnte. Stattdessen indiziert
+`findBestTimeSlot` die vorhandenen Einheiten einmal je Aufruf nach Trainer und Platz.
 Der nächste Engpass wäre nicht die Rechenzeit, sondern das Laden — die Route braucht
 1,8 s bei 217 ms Rechnung.
 
@@ -311,6 +357,7 @@ kommt, ist pro Saison einstellbar; der Rest nur über den Konstruktor.
 | `groupMinSize` / `groupMaxSize`         | 1 / 6                  | ✅         | Gruppengröße Erwachsene                               |
 | `kidsGroupMinSize` / `kidsGroupMaxSize` | 1 / 8                  | ✅         | Kinder vertragen größere Gruppen                      |
 | `slotDurationMinutes`                   | 60                     | ✅         | Länge einer Einheit                                   |
+| `training_minutes` (je Mitgliedschaft)  | `NULL`                 | ✅         | individuelle Dauer, siehe § 3 Trainingsdauer          |
 | `maxNiveauLevelSteps`                   | 1                      | ✅         | erlaubte Spielstärke-Spanne                           |
 | `maxNiveauSpanBeginner` / `Advanced`    | 4 / 8                  | ✅         | Erfahrungsspanne in Monaten                           |
 | `trainerUtilizationMaxPct`              | 100                    | ✅         | Auslastungsdeckel je Trainer                          |

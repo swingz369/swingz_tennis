@@ -104,8 +104,21 @@ export async function PATCH(
         is_active,
         role,
         include_in_planning,
+        training_minutes,
         joinedAt,
       } = body;
+
+      // Trainingsdauer für die Saisonplanung: null = Vereinsstandard.
+      if (
+        training_minutes !== undefined &&
+        training_minutes !== null &&
+        !(Number.isInteger(training_minutes) && training_minutes >= 30 && training_minutes <= 240)
+      ) {
+        return NextResponse.json(
+          { error: 'Trainingsdauer muss zwischen 30 und 240 Minuten liegen' },
+          { status: 400 }
+        );
+      }
 
       if (joinedAt !== undefined && joinedAt !== null && !/^\d{4}-\d{2}-\d{2}$/.test(joinedAt)) {
         return NextResponse.json({ error: 'Ungültiges Beitrittsdatum' }, { status: 400 });
@@ -193,10 +206,18 @@ export async function PATCH(
       if (role !== undefined) membershipUpdate.role = role;
       if (include_in_planning !== undefined)
         membershipUpdate.include_in_planning = include_in_planning;
+      if (training_minutes !== undefined) membershipUpdate.training_minutes = training_minutes;
       if (joinedAt !== undefined) membershipUpdate.joined_at = joinedAt;
 
       if (Object.keys(membershipUpdate).length > 0) {
-        await auth.supabase.from('user_club_memberships').update(membershipUpdate).eq('id', id);
+        const { error: membershipError } = await auth.supabase
+          .from('user_club_memberships')
+          .update(membershipUpdate)
+          .eq('id', id);
+        if (membershipError) {
+          log.error('Failed to update membership:', membershipError);
+          return internalErrorResponse();
+        }
       }
 
       return NextResponse.json({ success: true, member: updated });

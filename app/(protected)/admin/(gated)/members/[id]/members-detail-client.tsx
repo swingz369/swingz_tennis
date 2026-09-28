@@ -329,6 +329,25 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
     }
   };
 
+  const handleTrainingMinutesChange = async (value: string) => {
+    const minutes = value === 'standard' ? null : Number(value);
+    try {
+      const res = await apiFetch(`/api/members/${member.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ training_minutes: minutes }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(extractErrorMessage(err) || 'Fehler beim Speichern');
+      }
+      setMember((prev) => ({ ...prev, training_minutes: minutes }));
+      toast.success('Trainingsdauer gespeichert');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler');
+    }
+  };
+
   const handleJoinedAtChange = async (newDate: string) => {
     if (!newDate || newDate === member.joined_at?.slice(0, 10)) return;
     try {
@@ -845,6 +864,30 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                   <p className="text-sm text-muted-foreground mb-4">
                     Verfügbarkeiten und Wünsche für die Trainingsplanung
                   </p>
+                  <div className="space-y-1.5 mb-6">
+                    <Label className="text-xs text-muted-foreground">
+                      Trainingsdauer je Einheit
+                    </Label>
+                    <Select
+                      value={member.training_minutes ? String(member.training_minutes) : 'standard'}
+                      onValueChange={handleTrainingMinutesChange}
+                    >
+                      <SelectTrigger className="w-56">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="standard">Vereinsstandard</SelectItem>
+                        <SelectItem value="45">45 Minuten</SelectItem>
+                        <SelectItem value="60">60 Minuten</SelectItem>
+                        <SelectItem value="90">90 Minuten</SelectItem>
+                        <SelectItem value="120">120 Minuten</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Die Saisonplanung legt Spieler mit gleicher Dauer in eine gemeinsame Gruppe.
+                      Für eine längere Gruppe allen Mitgliedern denselben Wert geben.
+                    </p>
+                  </div>
                   <PreferencesTab userId={member.user_id} clubId={clubId} />
                 </CardContent>
               </Card>
