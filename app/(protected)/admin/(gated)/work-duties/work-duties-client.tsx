@@ -85,7 +85,7 @@ const dutyTypeLabels: Record<string, { label: string; icon: typeof HardHat; colo
   other: {
     label: 'Sonstiges',
     icon: HardHat,
-    color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
+    color: 'bg-muted text-muted-foreground',
   },
 };
 
@@ -108,12 +108,12 @@ const statusConfig: Record<string, { label: string; icon: typeof CheckCircle2; c
   cancelled: {
     label: 'Storniert',
     icon: XCircle,
-    color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
+    color: 'bg-muted text-muted-foreground',
   },
 };
 
 const priorityColors: Record<string, string> = {
-  low: 'bg-gray-100 text-gray-600 dark:bg-gray-800/40 dark:text-gray-300',
+  low: 'bg-muted text-muted-foreground',
   medium: 'bg-info-100 text-info-700',
   high: 'bg-error-100 text-error-700',
 };
@@ -1023,7 +1023,7 @@ export default function WorkDutiesClient({
                       onClick={() => setBulkRecurrence(r.value)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                         bulkRecurrence === r.value
-                          ? 'bg-gray-900 text-white'
+                          ? 'bg-foreground text-background'
                           : 'bg-muted text-muted-foreground hover:bg-muted'
                       }`}
                     >

@@ -157,11 +157,7 @@ export default function AssignmentsClient({
           </Badge>
         );
       case 'excused':
-        return (
-          <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300 text-xs">
-            Entschuldigt
-          </Badge>
-        );
+        return <Badge className="bg-muted text-muted-foreground text-xs">Entschuldigt</Badge>;
       default:
         return (
           <Badge variant="outline" className="text-xs">
@@ -196,7 +192,7 @@ export default function AssignmentsClient({
             onClick={() => setActiveView('assignments')}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               activeView === 'assignments'
-                ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                ? 'bg-foreground text-background'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }`}
           >
@@ -206,7 +202,7 @@ export default function AssignmentsClient({
             onClick={() => setActiveView('stats')}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               activeView === 'stats'
-                ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                ? 'bg-foreground text-background'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }`}
           >
@@ -238,7 +234,7 @@ export default function AssignmentsClient({
                 onClick={() => setFilterStatus(f)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   filterStatus === f
-                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                    ? 'bg-foreground text-background'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }`}
               >

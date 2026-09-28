@@ -310,7 +310,7 @@ export function MemberSelector() {
                 return (
                   <TableRow
                     key={member.id}
-                    className={`transition-colors hover:bg-muted dark:hover:bg-gray-800/30 ${
+                    className={`transition-colors hover:bg-muted ${
                       isSelected ? 'bg-brand-light/5' : ''
                     }`}
                   >

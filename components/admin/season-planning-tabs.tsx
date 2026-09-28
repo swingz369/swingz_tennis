@@ -22,7 +22,7 @@ export function SeasonPlanningTabs({ seasonId }: { seasonId: string }) {
   return (
     <nav
       aria-label="Saisonplanungs-Werkzeuge"
-      className="flex gap-1 border-b border-border mb-4 overflow-x-auto"
+      className="mb-4 inline-flex h-11 max-w-full items-center gap-1 overflow-x-auto rounded-md border border-border bg-card p-1"
     >
       {tabs.map((tab) => {
         const active =
@@ -33,10 +33,8 @@ export function SeasonPlanningTabs({ seasonId }: { seasonId: string }) {
             href={tab.href}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors',
-              active
-                ? 'border-brand-light text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
+              'inline-flex items-center justify-center whitespace-nowrap h-full rounded px-3 py-1 text-sm font-medium transition-colors hover:text-foreground',
+              active ? 'bg-muted font-semibold text-foreground' : 'text-muted-foreground'
             )}
           >
             {tab.name}

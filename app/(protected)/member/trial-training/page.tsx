@@ -57,8 +57,7 @@ const statusConfig: Record<
   cancelled: {
     label: 'Abgesagt',
     icon: XCircle,
-    color:
-      'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800',
+    color: 'bg-muted text-muted-foreground border-border',
     description: 'Dieses Probetraining wurde abgesagt.',
   },
   no_show: {

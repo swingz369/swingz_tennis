@@ -562,36 +562,12 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
         {/* ── Detail Body ──────────────────────────────────────────────── */}
         <div className="p-5">
           <Tabs defaultValue="profile" className="space-y-5">
-            <TabsList className="w-full justify-start bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b rounded-none px-0 gap-6 overflow-x-auto sticky top-0 z-20">
-              <TabsTrigger
-                value="profile"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
-              >
-                Profil
-              </TabsTrigger>
-              <TabsTrigger
-                value="preferences"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
-              >
-                Präferenzen
-              </TabsTrigger>
-              <TabsTrigger
-                value="invoices"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
-              >
-                Rechnungen
-              </TabsTrigger>
-              <TabsTrigger
-                value="bookings"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
-              >
-                Buchungen
-              </TabsTrigger>
-              <TabsTrigger
-                value="fehlzeiten"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
-                onClick={fetchAbsences}
-              >
+            <TabsList className="max-w-full justify-start overflow-x-auto">
+              <TabsTrigger value="profile">Profil</TabsTrigger>
+              <TabsTrigger value="preferences">Präferenzen</TabsTrigger>
+              <TabsTrigger value="invoices">Rechnungen</TabsTrigger>
+              <TabsTrigger value="bookings">Buchungen</TabsTrigger>
+              <TabsTrigger value="fehlzeiten" onClick={fetchAbsences}>
                 Fehlzeiten
               </TabsTrigger>
             </TabsList>
@@ -958,28 +934,30 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                           </span>
                         )}
                       </div>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Trainingsdatum</TableHead>
-                            <TableHead>Gebucht am</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {absences.noShows.map((a) => (
-                            <TableRow key={a.id}>
-                              <TableCell>
-                                {a.session_start_time
-                                  ? new Date(a.session_start_time).toLocaleString('de-DE')
-                                  : '—'}
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
-                                {a.booked_at ? formatDate(a.booked_at) : '—'}
-                              </TableCell>
+                      <div className="overflow-hidden rounded-xl border border-border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Trainingsdatum</TableHead>
+                              <TableHead>Gebucht am</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {absences.noShows.map((a) => (
+                              <TableRow key={a.id}>
+                                <TableCell>
+                                  {a.session_start_time
+                                    ? new Date(a.session_start_time).toLocaleString('de-DE')
+                                    : '—'}
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {a.booked_at ? formatDate(a.booked_at) : '—'}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </>
                   )}
                 </CardContent>
@@ -1008,70 +986,72 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                       Noch keine Buchungen
                     </div>
                   ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Datum/Uhrzeit</TableHead>
-                          <TableHead>Trainer</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Gebucht am</TableHead>
-                          <TableHead></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {bookings.map((b) => (
-                          <TableRow key={b.id}>
-                            <TableCell>
-                              {b.session_start
-                                ? new Date(b.session_start).toLocaleString('de-DE')
-                                : '-'}
-                            </TableCell>
-                            <TableCell>{b.trainer_name || '-'}</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={
-                                  b.status === 'confirmed'
-                                    ? 'success'
-                                    : b.status === 'cancelled'
-                                      ? 'error'
-                                      : b.status === 'no_show'
-                                        ? 'secondary'
-                                        : 'warning'
-                                }
-                              >
-                                {b.status === 'confirmed'
-                                  ? 'Bestätigt'
-                                  : b.status === 'cancelled'
-                                    ? 'Storniert'
-                                    : b.status === 'no_show'
-                                      ? 'Nicht erschienen'
-                                      : 'Ausstehend'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {b.booked_at ? formatDate(b.booked_at) : '-'}
-                            </TableCell>
-                            <TableCell>
-                              {['confirmed', 'pending'].includes(b.status) && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setRescheduleBooking(b);
-                                    setRescheduleDate('');
-                                    setSessionOptions([]);
-                                    setNewSessionId('');
-                                  }}
-                                >
-                                  <Edit className="h-3.5 w-3.5 mr-1" />
-                                  Umbuchen
-                                </Button>
-                              )}
-                            </TableCell>
+                    <div className="overflow-hidden rounded-xl border border-border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Datum/Uhrzeit</TableHead>
+                            <TableHead>Trainer</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Gebucht am</TableHead>
+                            <TableHead></TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {bookings.map((b) => (
+                            <TableRow key={b.id}>
+                              <TableCell>
+                                {b.session_start
+                                  ? new Date(b.session_start).toLocaleString('de-DE')
+                                  : '-'}
+                              </TableCell>
+                              <TableCell>{b.trainer_name || '-'}</TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    b.status === 'confirmed'
+                                      ? 'success'
+                                      : b.status === 'cancelled'
+                                        ? 'error'
+                                        : b.status === 'no_show'
+                                          ? 'secondary'
+                                          : 'warning'
+                                  }
+                                >
+                                  {b.status === 'confirmed'
+                                    ? 'Bestätigt'
+                                    : b.status === 'cancelled'
+                                      ? 'Storniert'
+                                      : b.status === 'no_show'
+                                        ? 'Nicht erschienen'
+                                        : 'Ausstehend'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {b.booked_at ? formatDate(b.booked_at) : '-'}
+                              </TableCell>
+                              <TableCell>
+                                {['confirmed', 'pending'].includes(b.status) && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setRescheduleBooking(b);
+                                      setRescheduleDate('');
+                                      setSessionOptions([]);
+                                      setNewSessionId('');
+                                    }}
+                                  >
+                                    <Edit className="h-3.5 w-3.5 mr-1" />
+                                    Umbuchen
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   )}
                 </CardContent>
               </Card>

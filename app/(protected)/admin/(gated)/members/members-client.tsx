@@ -772,7 +772,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
             ariaLabel={`${selectedIds.size} Mitglied${selectedIds.size !== 1 ? 'er' : ''} deaktivieren`}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold">
+              <h3 className="text-lg font-semibold">
                 {selectedIds.size} Mitglied{selectedIds.size !== 1 ? 'er' : ''} deaktivieren?
               </h3>
               <Tooltip>
@@ -850,7 +850,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
         ariaLabel="Neues Mitglied einladen"
       >
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold">Neues Mitglied einladen</h3>
+          <h3 className="text-lg font-semibold">Neues Mitglied einladen</h3>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

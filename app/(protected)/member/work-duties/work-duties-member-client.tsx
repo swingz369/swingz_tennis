@@ -72,7 +72,7 @@ const dutyTypeLabels: Record<string, { label: string; icon: typeof HardHat; colo
   other: {
     label: 'Sonstiges',
     icon: HardHat,
-    color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
+    color: 'bg-muted text-muted-foreground',
   },
 };
 

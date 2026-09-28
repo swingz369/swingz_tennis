@@ -371,24 +371,11 @@ export default function TrainerProfilePage() {
         {/* ── Detail Body ──────────────────────────────────────────────── */}
         <div className="p-5">
           <Tabs defaultValue="profile" className="space-y-5">
-            <TabsList className="w-full justify-start bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b rounded-none px-0 gap-6 overflow-x-auto sticky top-0 z-20">
-              <TabsTrigger
-                value="profile"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
-              >
-                Profil
-              </TabsTrigger>
-              <TabsTrigger
-                value="rates"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
-              >
-                Honorar
-              </TabsTrigger>
+            <TabsList className="max-w-full justify-start overflow-x-auto">
+              <TabsTrigger value="profile">Profil</TabsTrigger>
+              <TabsTrigger value="rates">Honorar</TabsTrigger>
               {profile.qualifications && profile.qualifications.length > 0 && (
-                <TabsTrigger
-                  value="qualifications"
-                  className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
-                >
+                <TabsTrigger value="qualifications">
                   Qualifikationen ({profile.qualifications.length})
                 </TabsTrigger>
               )}

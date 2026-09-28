@@ -99,47 +99,49 @@ export function InvoicesTab({ userId }: Props) {
           Gesamt: <strong>{formatCurrency(totalAmount)}</strong>
         </span>
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Rechnungsnr.</TableHead>
-            <TableHead>Typ</TableHead>
-            <TableHead>Betrag</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Fällig</TableHead>
-            <TableHead className="text-right">Aktionen</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {invoices.map((invoice) => (
-            <TableRow key={invoice.id}>
-              <TableCell className="font-mono text-sm">
-                {invoice.invoice_number || invoice.id.slice(0, 8)}
-              </TableCell>
-              <TableCell>
-                <InvoiceTypeBadge type={invoice.invoice_type} />
-              </TableCell>
-              <TableCell>{formatCurrency(invoice.amount || 0)}</TableCell>
-              <TableCell>
-                <StatusBadge status={invoice.status} size="sm" />
-              </TableCell>
-              <TableCell>
-                {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('de-DE') : '-'}
-              </TableCell>
-              <TableCell className="text-right">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => window.open(`/api/invoices/${invoice.id}/pdf`, '_blank')}
-                  title="PDF herunterladen"
-                >
-                  <FileText className="h-3.5 w-3.5" />
-                </Button>
-              </TableCell>
+      <div className="overflow-hidden rounded-xl border border-border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Rechnungsnr.</TableHead>
+              <TableHead>Typ</TableHead>
+              <TableHead>Betrag</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Fällig</TableHead>
+              <TableHead className="text-right">Aktionen</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {invoices.map((invoice) => (
+              <TableRow key={invoice.id}>
+                <TableCell className="font-mono text-sm">
+                  {invoice.invoice_number || invoice.id.slice(0, 8)}
+                </TableCell>
+                <TableCell>
+                  <InvoiceTypeBadge type={invoice.invoice_type} />
+                </TableCell>
+                <TableCell>{formatCurrency(invoice.amount || 0)}</TableCell>
+                <TableCell>
+                  <StatusBadge status={invoice.status} size="sm" />
+                </TableCell>
+                <TableCell>
+                  {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('de-DE') : '-'}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => window.open(`/api/invoices/${invoice.id}/pdf`, '_blank')}
+                    title="PDF herunterladen"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

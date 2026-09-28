@@ -613,7 +613,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
         onClose={() => (bulkDeactivating ? undefined : setBulkConfirmOpen(false))}
       >
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold">{selectedIds.size} Trainer deaktivieren?</h3>
+          <h3 className="text-lg font-semibold">{selectedIds.size} Trainer deaktivieren?</h3>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -683,7 +683,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
       {/* ── Invite Modal ──────────────────────────────────────────────────── */}
       <CenteredModal open={showInviteForm} onClose={() => setShowInviteForm(false)}>
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold">Trainer einladen</h3>
+          <h3 className="text-lg font-semibold">Trainer einladen</h3>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

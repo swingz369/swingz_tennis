@@ -472,7 +472,7 @@ export default function BillingClient({
               </div>
             )}
             {/* Invoice type filter tabs */}
-            <div className="flex gap-3 border-b mt-4 overflow-x-auto">
+            <div className="mt-4 inline-flex h-11 max-w-full items-center gap-1 overflow-x-auto rounded-md border border-border bg-card p-1">
               {(['all', 'season', 'membership', 'adhoc'] as InvoiceTypeFilter[]).map((t) => {
                 const labels: Record<InvoiceTypeFilter, string> = {
                   all: 'Alle',
@@ -488,10 +488,10 @@ export default function BillingClient({
                       setSelectedIds(new Set());
                       setPage(1);
                     }}
-                    className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
+                    className={`inline-flex items-center justify-center whitespace-nowrap h-full rounded px-3 py-1 text-sm font-medium transition-colors hover:text-foreground ${
                       invoiceTypeFilter === t
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                        ? 'bg-muted font-semibold text-foreground'
+                        : 'text-muted-foreground'
                     }`}
                   >
                     {labels[t]}

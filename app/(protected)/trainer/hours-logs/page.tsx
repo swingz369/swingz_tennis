@@ -5,6 +5,7 @@ import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Input } from '@/components/ui/input';
@@ -168,8 +169,9 @@ export default function TrainerHoursLogsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      <div className="space-y-4">
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
@@ -357,9 +359,7 @@ export default function TrainerHoursLogsPage() {
       {/* Logs List */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-foreground dark:text-gray-200">
-            Einträge ({logs.length})
-          </CardTitle>
+          <CardTitle className="text-foreground">Einträge ({logs.length})</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           {logs.length === 0 ? (
@@ -379,7 +379,7 @@ export default function TrainerHoursLogsPage() {
               {logs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-center justify-between p-4 rounded-xl border bg-background dark:bg-card/5 hover:border-border dark:hover:border-white/20 transition-all"
+                  className="flex items-center justify-between p-4 rounded-xl border bg-background dark:bg-card/5 hover:border-border transition-all"
                 >
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center gap-2">

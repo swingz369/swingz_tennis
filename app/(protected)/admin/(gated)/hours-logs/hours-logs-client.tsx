@@ -13,6 +13,7 @@ import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { Fragment, useState, useEffect, useCallback } from 'react';
 import { KpiBand } from '@/components/ui/kpi-band';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -190,8 +191,9 @@ export default function HoursLogsClient() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      <div className="space-y-4">
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
@@ -282,9 +284,7 @@ export default function HoursLogsClient() {
       {/* Logs Table */}
       <Card className="p-0">
         <CardHeader className="px-5 pt-5 pb-3">
-          <CardTitle className="text-foreground dark:text-gray-200">
-            Einträge ({logs.length})
-          </CardTitle>
+          <CardTitle className="text-foreground">Einträge ({logs.length})</CardTitle>
         </CardHeader>
         <CardContent className="px-5 pb-5">
           {logs.length === 0 ? (
@@ -327,7 +327,7 @@ export default function HoursLogsClient() {
                     </TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody className="divide-y divide-border dark:divide-white/10">
+                <TableBody className="divide-y divide-border">
                   {logs.map((log) => (
                     <Fragment key={log.id}>
                       <TableRow className="hover:bg-muted dark:hover:bg-background/5 transition-colors">
@@ -451,7 +451,7 @@ export default function HoursLogsClient() {
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-background dark:bg-card rounded-xl shadow-lg p-6 w-full max-w-md mx-4 space-y-4">
-            <h3 className="text-lg font-bold text-foreground">Stundennachweis löschen?</h3>
+            <h3 className="text-lg font-semibold text-foreground">Stundennachweis löschen?</h3>
             <p className="text-sm text-muted-foreground">
               Dieser Eintrag wird unwiderruflich gelöscht. Diese Aktion kann nicht rückgängig
               gemacht werden.
@@ -482,7 +482,7 @@ export default function HoursLogsClient() {
       {rejectId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-background dark:bg-card rounded-xl shadow-lg p-6 w-full max-w-md mx-4 space-y-4">
-            <h3 className="text-lg font-bold text-foreground">Stundennachweis ablehnen</h3>
+            <h3 className="text-lg font-semibold text-foreground">Stundennachweis ablehnen</h3>
             <div>
               <label
                 htmlFor="hl-reject-reason"

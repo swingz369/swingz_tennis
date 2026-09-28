@@ -575,37 +575,16 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
         {/* ── Detail Body ──────────────────────────────────────────────── */}
         <div className="p-5">
           <Tabs defaultValue="profile" className="space-y-5">
-            <TabsList className="w-full justify-start bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b rounded-none px-0 gap-6 overflow-x-auto sticky top-0 z-20">
-              <TabsTrigger
-                value="profile"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
-              >
-                Profil
-              </TabsTrigger>
-              <TabsTrigger
-                value="qualifications"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
-              >
+            <TabsList className="max-w-full justify-start overflow-x-auto">
+              <TabsTrigger value="profile">Profil</TabsTrigger>
+              <TabsTrigger value="qualifications">
                 Qualifikationen ({trainer.qualifications.length})
               </TabsTrigger>
-              <TabsTrigger
-                value="experience"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
-              >
-                Erfahrung
-              </TabsTrigger>
-              <TabsTrigger
-                value="availability"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
-              >
+              <TabsTrigger value="experience">Erfahrung</TabsTrigger>
+              <TabsTrigger value="availability">
                 Verfügbarkeit ({weeklySlots.length + availabilitySlots.length})
               </TabsTrigger>
-              <TabsTrigger
-                value="trials"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
-              >
-                Probetrainings ({trialTrainings.length})
-              </TabsTrigger>
+              <TabsTrigger value="trials">Probetrainings ({trialTrainings.length})</TabsTrigger>
             </TabsList>
 
             {/* ── Profile Tab ──────────────────────────────────────────── */}
@@ -875,7 +854,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
             {/* ── Qualifications Tab ───────────────────────────────────── */}
             <TabsContent value="qualifications" className="space-y-5 animate-in">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold">Zertifikate & Qualifikationen</h3>
+                <h3 className="text-lg font-semibold">Zertifikate & Qualifikationen</h3>
                 <Button variant="outline" size="sm">
                   <Plus className="h-4 w-4 mr-2" />
                   Hinzufügen
@@ -964,7 +943,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
 
             {/* ── Experience Tab ───────────────────────────────────────── */}
             <TabsContent value="experience" className="space-y-5 animate-in">
-              <h3 className="text-lg font-bold flex items-center gap-2">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Briefcase className="h-5 w-5 text-primary" />
                 Berufserfahrung
               </h3>
@@ -1136,7 +1115,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
               {/* Weekly Slot Dialog */}
               <CenteredModal open={weeklyDialogOpen} onClose={() => setWeeklyDialogOpen(false)}>
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold">Neue wöchentliche Verfügbarkeit</h3>
+                  <h3 className="text-lg font-semibold">Neue wöchentliche Verfügbarkeit</h3>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -1322,7 +1301,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
               {/* Add Slot Dialog */}
               <CenteredModal open={slotDialogOpen} onClose={() => setSlotDialogOpen(false)}>
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold">Neue Verfügbarkeit</h3>
+                  <h3 className="text-lg font-semibold">Neue Verfügbarkeit</h3>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -1598,7 +1577,7 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
       {/* ── Absence Dialog ──────────────────────────────────────────────── */}
       <CenteredModal open={absenceDialogOpen} onClose={() => setAbsenceDialogOpen(false)}>
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold">Abwesenheit eintragen</h3>
+          <h3 className="text-lg font-semibold">Abwesenheit eintragen</h3>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

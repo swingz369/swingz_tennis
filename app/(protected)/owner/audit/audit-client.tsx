@@ -389,7 +389,7 @@ export function OwnerAuditClient({ clubOptions }: { clubOptions: ClubOption[] })
                   {logs.map((logEntry) => (
                     <TableRow
                       key={logEntry.id}
-                      className="border-b border-border/40 dark:border-white/5 hover:bg-muted/40 dark:hover:bg-white/5 transition-colors"
+                      className="border-b border-border/40 hover:bg-muted/40 transition-colors"
                     >
                       <TableCell className="px-2 py-2 text-xs whitespace-nowrap text-muted-foreground">
                         {formatDateTime(logEntry.created_at)}
