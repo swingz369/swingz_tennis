@@ -270,6 +270,16 @@ export class TrainerProfileRepository {
       const trainerName = name || 'Trainer';
       const now = new Date().toISOString();
 
+      // Über Einladung, CSV-Import und Seed entstandene Trainer haben eine eigene
+      // trainers.id und nur user_id gesetzt — der Normalfall, keine Kollision.
+      const { data: linked } = await systemDb
+        .from('trainers')
+        .select('id')
+        .eq('user_id', userId)
+        .limit(1)
+        .maybeSingle();
+      if (linked) return linked.id;
+
       const { error: insertError } = await systemDb.from('trainers').insert({
         id: userId,
         // Dritter Pfad, der Trainer anlegt (neben members/invite und

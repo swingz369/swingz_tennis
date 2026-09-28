@@ -165,6 +165,15 @@ export async function GET(_request: NextRequest) {
 
           const usersMap = new Map((users ?? []).map((u: any) => [u.id, u]));
 
+          // Anlegen erlaubt RLS (trainer_profiles_admin_manage) nur Admins des Vereins;
+          // der Owner läuft im Service über systemDb. Trainer bekämen je fehlendem Profil
+          // und Aufruf zwei RLS-Fehler — sie sehen stattdessen direkt die Platzhalter unten.
+          const canCreate =
+            auth.role === 'owner' ||
+            auth.memberships.some(
+              (m) => m.club_id === clubId && (m.role === 'admin' || m.role === 'superadmin')
+            );
+
           // Auto-create missing profiles (with retry on transient errors)
           const newProfiles: TrainerProfile[] = [];
           for (const userId of missingUserIds) {
@@ -172,7 +181,7 @@ export async function GET(_request: NextRequest) {
             const nameParts = (user?.full_name || '').split(' ');
 
             let created: TrainerProfile | null = null;
-            for (let attempt = 0; attempt < 2; attempt++) {
+            for (let attempt = 0; canCreate && attempt < 2; attempt++) {
               try {
                 created = await service.createTrainerProfile({
                   userId,

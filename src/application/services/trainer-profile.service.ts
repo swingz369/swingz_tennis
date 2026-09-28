@@ -33,7 +33,10 @@ export class TrainerProfileService {
   private readonly repo: TrainerProfileRepository;
 
   constructor(auth: AuthContext) {
-    this.repo = new TrainerProfileRepository(getUserDb(auth));
+    // Owner hat keine Membership — RLS auf trainer_profiles liefert ihm 0 Zeilen (ADR-005-Whitelist).
+    this.repo = new TrainerProfileRepository(
+      auth.role === 'owner' ? systemDb('Owner: Trainer-Profile aller Vereine') : getUserDb(auth)
+    );
   }
 
   async createTrainerProfile(input: CreateTrainerProfileInput): Promise<TrainerProfile> {

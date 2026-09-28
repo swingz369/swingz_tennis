@@ -6,7 +6,7 @@ import 'server-only';
 import type { AuthContext } from '@/lib/api-auth';
 import type { Tables, TablesInsert, TablesUpdate } from '@/types/supabase';
 import { createLogger } from '@/lib/logger';
-import { fetchAll } from './paged';
+import { fetchAll, fetchAllIn } from './paged';
 
 const log = createLogger('infrastructure:season-plan.repository');
 
@@ -205,8 +205,11 @@ export class SeasonPlanRepository {
 
   async userNames(ids: string[]): Promise<Map<string, string | null>> {
     if (ids.length === 0) return new Map();
-    const { data, error } = await this.db.from('users').select('id, full_name').in('id', ids);
-    assertNoError(error, 'Lesen der Mitgliedernamen fehlgeschlagen');
-    return new Map((data ?? []).map((u) => [u.id, u.full_name]));
+    const rows = await fetchAllIn(
+      ids,
+      (chunk) => this.db.from('users').select('id, full_name').in('id', chunk).order('id'),
+      'Lesen der Mitgliedernamen fehlgeschlagen'
+    );
+    return new Map(rows.map((u) => [u.id, u.full_name]));
   }
 }

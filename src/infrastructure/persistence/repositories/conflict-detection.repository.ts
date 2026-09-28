@@ -7,7 +7,7 @@ import type { AuthContext } from '@/lib/api-auth';
 import type { Json, Tables, TablesInsert } from '@/types/supabase';
 import { getUserDb, systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
-import { fetchAll } from './paged';
+import { fetchAll, fetchAllIn } from './paged';
 
 const log = createLogger('infrastructure:conflict-detection.repository');
 
@@ -78,8 +78,9 @@ export class ConflictDetectionRepository {
 
   async userNames(ids: string[]): Promise<{ id: string; name: string | null }[]> {
     if (ids.length === 0) return [];
-    const rows = await fetchAll(
-      () => this.db.from('users').select('id, full_name').in('id', ids).order('id'),
+    const rows = await fetchAllIn(
+      ids,
+      (chunk) => this.db.from('users').select('id, full_name').in('id', chunk).order('id'),
       'Lesen der Mitgliedernamen fehlgeschlagen'
     );
     return (rows ?? []).map((r) => ({ id: r.id, name: r.full_name }));
