@@ -146,7 +146,11 @@ describe('ReminderService.sendTomorrowReminders', () => {
     const t = createService();
     happyPathSetup(t);
 
-    const results = await t.service.sendTomorrowReminders({ dryRun: false });
+    // Vercel läuft in UTC — die Mail muss trotzdem Berliner Zeit zeigen.
+    process.env.TZ = 'UTC';
+    const results = await t.service
+      .sendTomorrowReminders({ dryRun: false })
+      .finally(() => (process.env.TZ = 'Europe/Berlin'));
 
     expect(results).toHaveLength(1);
     expect(results[0].status).toBe('sent');
@@ -160,8 +164,9 @@ describe('ReminderService.sendTomorrowReminders', () => {
       'max@test.com',
       expect.objectContaining({
         memberName: 'Max Mustermann',
-        sessionDate: expect.any(String),
-        sessionTime: expect.any(String),
+        // 17:00 UTC im August = 19:00 in Berlin, unabhängig von der Server-Zeitzone
+        sessionDate: '14.8.2026',
+        sessionTime: '19:00',
         courtName: 'Platz 1',
         clubName: 'TC Test',
       })

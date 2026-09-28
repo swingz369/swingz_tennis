@@ -157,10 +157,12 @@ export class ReminderService {
           } = {
             memberName: member.full_name || 'Member',
             sessionStartFormatted: new Date(session.timeslot_start).toLocaleTimeString('de-DE', {
+              timeZone: 'Europe/Berlin',
               hour: '2-digit',
               minute: '2-digit',
             }),
             sessionEndFormatted: new Date(session.timeslot_end).toLocaleTimeString('de-DE', {
+              timeZone: 'Europe/Berlin',
               hour: '2-digit',
               minute: '2-digit',
             }),
@@ -169,8 +171,12 @@ export class ReminderService {
           if (session.courts?.name) emailData.courtName = session.courts.name;
 
           // Send reminder email via interface
-          const sessionDate = new Date(session.timeslot_start).toLocaleDateString('de-DE');
+          // Vercel läuft in UTC — ohne timeZone stand in jeder Mail die UTC-Uhrzeit.
+          const sessionDate = new Date(session.timeslot_start).toLocaleDateString('de-DE', {
+            timeZone: 'Europe/Berlin',
+          });
           const sessionTime = new Date(session.timeslot_start).toLocaleTimeString('de-DE', {
+            timeZone: 'Europe/Berlin',
             hour: '2-digit',
             minute: '2-digit',
           });
