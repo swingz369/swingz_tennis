@@ -106,7 +106,7 @@ export function MobileBottomNav({
               <span
                 className={cn(
                   'text-2xs font-medium leading-tight transition-all duration-300',
-                  isActive ? 'opacity-100 translate-y-0' : 'opacity-80'
+                  isActive ? 'translate-y-0' : ''
                 )}
               >
                 {item.name}

@@ -1,6 +1,6 @@
 'use client';
 import { extractErrorMessage } from '@/lib/typed-helpers';
-import { formatMemberNumber } from '@/lib/format';
+import { formatMemberNumber, formatDateNumeric } from '@/lib/format';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -130,6 +130,13 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
   });
   const [inviteLoading, setInviteLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 639px)');
+    const updateView = () => setViewMode(media.matches ? 'grid' : 'table');
+    updateView();
+    media.addEventListener('change', updateView);
+    return () => media.removeEventListener('change', updateView);
+  }, []);
   const [planningFilter, setPlanningFilter] = useState<string>('all'); // 'all' | 'included' | 'excluded'
 
   // Bulk selection
@@ -270,13 +277,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('de-DE', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+  const formatDate = formatDateNumeric;
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -390,7 +391,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                 setSelectedIds(new Set());
               }}
             >
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger aria-label="Nach Rolle filtern" className="w-full sm:w-[160px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -406,7 +407,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                 setSelectedIds(new Set());
               }}
             >
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger aria-label="Nach Status filtern" className="w-full sm:w-[160px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -422,7 +423,10 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                 setSelectedIds(new Set());
               }}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger
+                aria-label="Nach Planungsstatus filtern"
+                className="w-full sm:w-[180px]"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -440,8 +444,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
+                  size="default"
                   onClick={() => setViewMode(viewMode === 'table' ? 'grid' : 'table')}
                   title={viewMode === 'table' ? 'Kartenansicht' : 'Tabellenansicht'}
                   aria-label={viewMode === 'table' ? 'Kartenansicht' : 'Tabellenansicht'}
@@ -451,6 +454,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                   ) : (
                     <List className="h-4 w-4" />
                   )}
+                  {viewMode === 'table' ? 'Kartenansicht' : 'Tabellenansicht'}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -636,12 +640,17 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <CardTitle className="font-semibold truncate">
-                              {member.full_name}
+                              <Link
+                                href={`/admin/members/${member.id}`}
+                                className="hover:underline"
+                              >
+                                {member.full_name}
+                              </Link>
                             </CardTitle>
                             <button
                               type="button"
                               onClick={() => setEmailDialogMember(member)}
-                              className="text-xs text-muted-foreground truncate mt-0.5 hover:underline text-left"
+                              className="min-h-11 sm:min-h-0 text-sm text-muted-foreground break-all mt-0.5 hover:underline text-left"
                               title="E-Mail senden"
                             >
                               {member.email}
@@ -652,14 +661,19 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                               checked={isSelected}
                               onCheckedChange={() => toggleSelect(member.id)}
                               aria-label={`${member.full_name} auswählen`}
-                              className="translate-y-0.5"
+                              className="h-6 w-6 translate-y-0.5"
                             />
                             {member.role === 'member' && (
                               <button
                                 onClick={() =>
                                   handleTogglePlanning(member.id, member.include_in_planning)
                                 }
-                                className="hover:scale-110 transition-transform"
+                                className="h-11 w-11 inline-flex items-center justify-center hover:scale-110 transition-transform"
+                                aria-label={
+                                  member.include_in_planning
+                                    ? `${member.full_name} von Planung ausschließen`
+                                    : `${member.full_name} in Planung einbeziehen`
+                                }
                                 title={
                                   member.include_in_planning
                                     ? 'Von Planung ausschließen'
@@ -695,7 +709,6 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8"
                                 title="Details"
                                 aria-label="Details"
                                 asChild
@@ -712,7 +725,6 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8"
                                 title={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
                                 aria-label={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
                                 onClick={() => handleToggleActive(member.id, member.is_active)}
@@ -902,7 +914,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                 })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger id="invite_role">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

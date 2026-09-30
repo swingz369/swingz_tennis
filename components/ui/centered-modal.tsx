@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { cn } from '@/lib/utils';
 
@@ -48,6 +48,8 @@ export function CenteredModal({
   overlayClassName,
   ariaLabel,
 }: CenteredModalProps) {
+  const previousFocus = useRef<HTMLElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogPrimitive.Portal>
@@ -59,8 +61,30 @@ export function CenteredModal({
         />
         <div className="fixed inset-0 z-50 flex min-h-dvh items-center justify-center p-4 pointer-events-none">
           <DialogPrimitive.Content
+            ref={contentRef}
             aria-label={ariaLabel}
             aria-describedby={undefined}
+            onOpenAutoFocus={(event) => {
+              previousFocus.current =
+                document.activeElement instanceof HTMLElement ? document.activeElement : null;
+              // Begin form dialogs in their first field. Focusing a tooltip trigger
+              // opens another dismissible layer that would consume the first Escape.
+              const firstField = Array.from(
+                contentRef.current?.querySelectorAll<HTMLElement>(
+                  'input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled])'
+                ) ?? []
+              ).find((field) => field.getClientRects().length > 0 && !field.closest('[inert]'));
+              if (firstField) {
+                event.preventDefault();
+                firstField.focus();
+              }
+            }}
+            onCloseAutoFocus={(event) => {
+              if (previousFocus.current?.isConnected) {
+                event.preventDefault();
+                previousFocus.current.focus();
+              }
+            }}
             onEscapeKeyDown={(e) => disableEscape && e.preventDefault()}
             onPointerDownOutside={(e) => disableOverlayClose && e.preventDefault()}
             onInteractOutside={(e) => disableOverlayClose && e.preventDefault()}

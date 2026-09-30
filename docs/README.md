@@ -1,6 +1,6 @@
 # SwingZ — Tennis Club Management SaaS
 
-> Zuletzt verifiziert: 26. September 2026 (Prüfbericht verlinkt)
+> Zuletzt verifiziert: 30. September 2026 (Matchday-Abschlussbericht und Browserprüfungen aktualisiert; Seed-Befehl korrigiert)
 > Vollständiger Projektkontext für KI-Agenten: [`AGENTS.md`](../AGENTS.md) / [`CLAUDE.md`](../CLAUDE.md) im Repo-Root.
 
 SwingZ ist eine Management-Lösung für Tennisvereine: Mitglieder, Buchungen, Trainingssessions, Plätze, Saisonplanung und Analytics in einer Weboberfläche. UI-Texte sind durchgängig Deutsch. Produktion: https://swingz.vercel.app
@@ -38,7 +38,9 @@ Architektur-Analyse Datenzugriff: [`ARCHIV/2026-09-13-architektur-analyse-datenz
 
 Diagramm zum Zielbild: [`diagrams/adr-005-datenzugriff.html`](diagrams/adr-005-datenzugriff.html) — Route → Service → Repository → Postgres (RLS) vs. Altdomänen-Pfad über Drizzle; interaktiv (Pan/Zoom, Light/Dark), lokal im Browser öffnen.
 
-Aktuellster Archiv-Snapshot: [`ARCHIV/2026-09-26-verkaufsreife-gesamtpruefung.md`](ARCHIV/2026-09-26-verkaufsreife-gesamtpruefung.md) — tatsächlicher Code- und lokaler SQL-Stand, Zahlungs-/UX-Korrekturen, 1.637 bestandene Tests ohne DB-Integration, Grenzen der Browserprüfung und verbleibende Verkaufsblocker. Keine Produktionsfreigabe.
+Aktuellster Archiv-Snapshot: [`ARCHIV/2026-09-30-matchday-redesign-abschluss.md`](ARCHIV/2026-09-30-matchday-redesign-abschluss.md) — behobene Matchday-Lücken, responsive Details und Listen, funktionsfähige Aktionen sowie lokale Browser-, Barrierefreiheits- und Regressionsergebnisse.
+
+Davor: [`ARCHIV/2026-09-26-verkaufsreife-gesamtpruefung.md`](ARCHIV/2026-09-26-verkaufsreife-gesamtpruefung.md) — tatsächlicher Code- und lokaler SQL-Stand, Zahlungs-/UX-Korrekturen, 1.637 bestandene Tests ohne DB-Integration, Grenzen der Browserprüfung und verbleibende Verkaufsblocker. Keine Produktionsfreigabe.
 
 Davor: [`ARCHIV/2026-09-23-rollen-seiten-api-pruefung.md`](ARCHIV/2026-09-23-rollen-seiten-api-pruefung.md) — Rollen-, Seiten- und API-Prüfung mit Agent-Zugängen: 58 Navigationslinks, 95 unterschiedliche Seiten-/Rechtetests und 132 Produktions-GET-Routen; zwei bestätigte HTTP-500-Fehler mit gemeinsamer Join-Ursache. Ergänzt die [`Bestandsanalyse`](ARCHIV/2026-09-23-verkaufsreife-bestandsanalyse.md) und die [`Zugangsprüfung`](ARCHIV/2026-09-23-verkaufsreife-zugangspruefung.md).
 
@@ -84,7 +86,8 @@ npm run dev                  # http://localhost:3000
 Test-Accounts (Rollen owner/superadmin/admin/trainer/member): siehe `CLAUDE.md` → Test-Accounts. Passwörter in `.env.local` (`TEST_*_PASSWORD`, nicht in Git).
 
 ```bash
-npm run seed          # Test-User anlegen (scripts/seed-users.ts)
+pnpm seed             # Ist-Zustand lesen (scripts/seed-testdata.ts), keine Änderungen
+pnpm seed:agent       # Nur Agent-Testvereine neu anlegen; Nutzer-Lane bleibt unverändert
 ```
 
 ---

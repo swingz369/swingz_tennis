@@ -1,4 +1,5 @@
 'use client';
+import { KpiBand } from '@/components/ui/kpi-band';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useRef } from 'react';
@@ -192,26 +193,19 @@ export default function MemberImportDialog({ onImportComplete }: MemberImportDia
               <CardContent>
                 <div className="space-y-4">
                   {/* Summary */}
-                  <div className="grid grid-cols-4 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-success-600">{result.imported}</div>
-                      <div className="text-xs text-muted-foreground">Importiert</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-info-600">{result.skipped}</div>
-                      <div className="text-xs text-muted-foreground">Übersprungen</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-error-600">{result.failed}</div>
-                      <div className="text-xs text-muted-foreground">Fehlgeschlagen</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-warning-600">
-                        {result.invalid.length}
-                      </div>
-                      <div className="text-xs text-muted-foreground">Ungültig</div>
-                    </div>
-                  </div>
+                  <KpiBand
+                    items={[
+                      { label: 'Importiert', value: result.imported },
+                      { label: 'Übersprungen', value: result.skipped },
+                      {
+                        label: 'Fehlgeschlagen',
+                        value: result.failed,
+                        sub: result.failed ? 'Bitte prüfen' : undefined,
+                        tone: 'down',
+                      },
+                      { label: 'Ungültig', value: result.invalid.length },
+                    ]}
+                  />
 
                   {/* Invalid Records */}
                   {result.invalid.length > 0 && (

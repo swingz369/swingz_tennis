@@ -1,4 +1,5 @@
 'use client';
+import { KpiBand } from '@/components/ui/kpi-band';
 
 import {
   Table,
@@ -10,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import { ListState } from '@/components/ui/list-state';
 import { useState, useEffect, useCallback } from 'react';
-import { Users, TrendingUp, Clock, Star, AlertCircle, CheckCircle, Search } from 'lucide-react';
+import { Clock, Star, AlertCircle, CheckCircle, Search } from 'lucide-react';
 import { useWizard } from '@/lib/season-planning/wizard-context';
 import type { SelectMembersResponse } from '@/lib/season-planning/types';
 import type { SkillLevel } from '@/lib/types/season-planning';
@@ -174,62 +175,25 @@ export function MemberSelector() {
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="font-medium flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
-              Mitglieder
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{members.length}</p>
-            <p className="text-xs text-muted-foreground">{selectedCount} ausgewählt</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="font-medium flex items-center gap-2">
-              <Star className="h-4 w-4 text-warning-500" />
-              Höherstufungen
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{promotedMembers.length}</p>
-            <p className="text-xs text-muted-foreground">Bereit für nächstes Level</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="font-medium flex items-center gap-2">
-              <Clock className="h-4 w-4 text-info-500" />
-              Warteliste
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{waitlistCarryovers.length}</p>
-            <p className="text-xs text-muted-foreground">Noch kein Platz erhalten</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="font-medium flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-success-500" />
-              Auswahl
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              {members.length > 0 ? Math.round((selectedCount / members.length) * 100) : 0}%
-            </p>
-            <p className="text-xs text-muted-foreground">Ausgewählt</p>
-          </CardContent>
-        </Card>
-      </div>
+      <KpiBand
+        items={[
+          { label: 'Mitglieder', value: members.length, sub: `${selectedCount} ausgewählt` },
+          {
+            label: 'Höherstufungen',
+            value: promotedMembers.length,
+            sub: 'Bereit für nächstes Level',
+          },
+          {
+            label: 'Warteliste',
+            value: waitlistCarryovers.length,
+            sub: 'Noch kein Platz erhalten',
+          },
+          {
+            label: 'Auswahl',
+            value: `${members.length > 0 ? Math.round((selectedCount / members.length) * 100) : 0} %`,
+          },
+        ]}
+      />
 
       {/* Filters */}
       <div className="flex items-center gap-3">

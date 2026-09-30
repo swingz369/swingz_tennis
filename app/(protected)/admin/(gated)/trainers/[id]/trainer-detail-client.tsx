@@ -1,4 +1,5 @@
 'use client';
+import { KpiBand } from '@/components/ui/kpi-band';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect } from 'react';
@@ -14,6 +15,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CenteredModal } from '@/components/ui/centered-modal';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -83,6 +93,16 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
   const [trainer, setTrainer] = useState<TrainerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [qualificationOpen, setQualificationOpen] = useState(false);
+  const [qualificationSaving, setQualificationSaving] = useState(false);
+  const [qualificationError, setQualificationError] = useState<string | null>(null);
+  const [qualificationForm, setQualificationForm] = useState({
+    name: '',
+    issuer: '',
+    issuedDate: '',
+    expiryDate: '',
+    certificateUrl: '',
+  });
   const [editForm, setEditForm] = useState<Partial<TrainerProfile>>({});
   const [availabilitySlots, setAvailabilitySlots] = useState<TrainerAvailabilitySlot[]>([]);
   const [availLoading, setAvailLoading] = useState(false);
@@ -551,19 +571,19 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
       <div className="bg-card rounded-xl border border-border overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
         <div className="brand-dark-surface bg-brand-dark p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <div>
-                <h2 className="text-2xl md:text-3xl font-semibold tracking-[-0.03em] text-foreground truncate">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="min-w-0">
+                <h2 className="text-2xl md:text-3xl font-semibold tracking-[-0.03em] text-foreground break-words">
                   {trainer.firstName} {trainer.lastName}
                 </h2>
-                <p className="text-sm text-muted-foreground truncate">{trainer.email}</p>
+                <p className="text-sm text-muted-foreground break-all">{trainer.email}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 flex-wrap">
               <StatusBadge status={trainer.status} size="lg" />
               {!isEditing && (
-                <Button onClick={handleEdit} variant="primary" size="sm" className="gap-1.5">
+                <Button onClick={handleEdit} variant="highlight" className="gap-1.5">
                   <Edit className="h-4 w-4" />
                   Bearbeiten
                 </Button>
@@ -855,10 +875,177 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
             <TabsContent value="qualifications" className="space-y-5 animate-in">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Zertifikate & Qualifikationen</h3>
-                <Button variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Hinzufügen
-                </Button>
+                <Dialog
+                  open={qualificationOpen}
+                  onOpenChange={(open) => {
+                    if (qualificationSaving) return;
+                    setQualificationOpen(open);
+                    if (open) setQualificationError(null);
+                  }}
+                >
+                  <DialogTrigger asChild>
+                    <Button variant="highlight">
+                      <Plus className="h-4 w-4" />
+                      Hinzufügen
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Qualifikation hinzufügen</DialogTitle>
+                      <DialogDescription>
+                        Erfasse das Zertifikat und seinen Aussteller. Die Verifizierung erfolgt
+                        anschließend separat.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form
+                      className="space-y-4"
+                      onSubmit={async (event) => {
+                        event.preventDefault();
+                        if (qualificationSaving) return;
+                        setQualificationSaving(true);
+                        setQualificationError(null);
+                        try {
+                          const data = await fetchJson<{ trainerProfile: TrainerProfile }>(
+                            `/api/trainer-profiles/${trainer.id}/qualifications`,
+                            {
+                              method: 'POST',
+                              body: JSON.stringify({
+                                name: qualificationForm.name.trim(),
+                                issuer: qualificationForm.issuer.trim(),
+                                issuedDate: qualificationForm.issuedDate,
+                                expiryDate: qualificationForm.expiryDate || undefined,
+                                certificateUrl:
+                                  qualificationForm.certificateUrl.trim() || undefined,
+                              }),
+                            }
+                          );
+                          setTrainer(data.trainerProfile);
+                          setQualificationOpen(false);
+                          setQualificationForm({
+                            name: '',
+                            issuer: '',
+                            issuedDate: '',
+                            expiryDate: '',
+                            certificateUrl: '',
+                          });
+                          toast.success('Qualifikation hinzugefügt');
+                        } catch (error) {
+                          log.error(
+                            'Qualification addition failed',
+                            error instanceof Error ? error : undefined
+                          );
+                          setQualificationError(
+                            'Die Qualifikation konnte nicht gespeichert werden. Bitte versuche es erneut.'
+                          );
+                        } finally {
+                          setQualificationSaving(false);
+                        }
+                      }}
+                    >
+                      <div className="space-y-2">
+                        <Label htmlFor="qualification-name">Bezeichnung *</Label>
+                        <Input
+                          id="qualification-name"
+                          required
+                          maxLength={200}
+                          value={qualificationForm.name}
+                          onChange={(e) =>
+                            setQualificationForm({ ...qualificationForm, name: e.target.value })
+                          }
+                          disabled={qualificationSaving}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="qualification-issuer">Aussteller *</Label>
+                        <Input
+                          id="qualification-issuer"
+                          required
+                          maxLength={200}
+                          value={qualificationForm.issuer}
+                          onChange={(e) =>
+                            setQualificationForm({ ...qualificationForm, issuer: e.target.value })
+                          }
+                          disabled={qualificationSaving}
+                        />
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="qualification-issued">Ausgestellt am *</Label>
+                          <Input
+                            id="qualification-issued"
+                            type="date"
+                            required
+                            value={qualificationForm.issuedDate}
+                            onChange={(e) =>
+                              setQualificationForm({
+                                ...qualificationForm,
+                                issuedDate: e.target.value,
+                              })
+                            }
+                            disabled={qualificationSaving}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="qualification-expiry">Gültig bis</Label>
+                          <Input
+                            id="qualification-expiry"
+                            type="date"
+                            min={qualificationForm.issuedDate || undefined}
+                            value={qualificationForm.expiryDate}
+                            onChange={(e) =>
+                              setQualificationForm({
+                                ...qualificationForm,
+                                expiryDate: e.target.value,
+                              })
+                            }
+                            disabled={qualificationSaving}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="qualification-url">Zertifikat-Link</Label>
+                        <Input
+                          id="qualification-url"
+                          type="url"
+                          placeholder="https://"
+                          value={qualificationForm.certificateUrl}
+                          onChange={(e) =>
+                            setQualificationForm({
+                              ...qualificationForm,
+                              certificateUrl: e.target.value,
+                            })
+                          }
+                          disabled={qualificationSaving}
+                        />
+                      </div>
+                      {qualificationError && (
+                        <p role="alert" className="text-sm text-destructive">
+                          {qualificationError}
+                        </p>
+                      )}
+                      <DialogFooter className="gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={qualificationSaving}
+                          onClick={() => setQualificationOpen(false)}
+                        >
+                          Abbrechen
+                        </Button>
+                        <Button
+                          type="submit"
+                          variant="highlight"
+                          isLoading={qualificationSaving}
+                          disabled={
+                            !qualificationForm.name.trim() || !qualificationForm.issuer.trim()
+                          }
+                        >
+                          Speichern
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </div>
               {trainer.qualifications.length > 0 ? (
                 <div className="space-y-3">
@@ -947,24 +1134,12 @@ export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
                 <Briefcase className="h-5 w-5 text-primary" />
                 Berufserfahrung
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Card variant="elevated">
-                  <CardContent className="p-5 text-center">
-                    <p className="text-muted-foreground text-sm mb-1">Branchenerfahrung</p>
-                    <div className="text-3xl font-bold tabular-nums text-foreground tabular-nums">
-                      {trainer.experience.years} <span className="text-xl">Jahre</span>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card variant="elevated">
-                  <CardContent className="p-5 text-center">
-                    <p className="text-muted-foreground text-sm mb-1">Vorherige Vereine</p>
-                    <div className="text-3xl font-bold tabular-nums text-foreground tabular-nums">
-                      {trainer.experience.previousClubs.length}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <KpiBand
+                items={[
+                  { label: 'Branchenerfahrung', value: trainer.experience.years, suffix: ' Jahre' },
+                  { label: 'Vorherige Vereine', value: trainer.experience.previousClubs.length },
+                ]}
+              />
 
               <div className="space-y-4">
                 <Card variant="bordered">

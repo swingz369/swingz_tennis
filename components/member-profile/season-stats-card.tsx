@@ -1,7 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Trophy, TrendingUp, Minus } from 'lucide-react';
+import { KpiBand } from '@/components/ui/kpi-band';
+import { Trophy } from 'lucide-react';
 
 interface Props {
   userId: string;
@@ -47,28 +47,13 @@ export async function SeasonStatsCard({ userId, clubId }: Props) {
             Noch keine Mannschaftsspiele in dieser Saison.
           </p>
         ) : (
-          <div className="flex items-center gap-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-success-600">{wins}</p>
-              <p className="text-xs text-muted-foreground">Siege</p>
-            </div>
-            <Minus className="h-4 w-4 text-muted-foreground" />
-            <div className="text-center">
-              <p className="text-2xl font-bold text-error-500">{losses}</p>
-              <p className="text-xs text-muted-foreground">Niederlagen</p>
-            </div>
-            <div className="ml-auto">
-              {winRate !== null && (
-                <Badge
-                  variant="secondary"
-                  className={`gap-1 ${winRate >= 50 ? 'text-success-700 bg-success-100' : 'text-muted-foreground'}`}
-                >
-                  <TrendingUp className="h-3 w-3" />
-                  {winRate} % Siege
-                </Badge>
-              )}
-            </div>
-          </div>
+          <KpiBand
+            items={[
+              { label: 'Siege', value: wins },
+              { label: 'Niederlagen', value: losses },
+              { label: 'Siegquote', value: `${winRate} %` },
+            ]}
+          />
         )}
       </CardContent>
     </Card>

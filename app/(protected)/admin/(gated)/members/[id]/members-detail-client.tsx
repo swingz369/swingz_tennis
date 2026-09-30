@@ -492,22 +492,22 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
       <div className="bg-card rounded-xl border border-border overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
         <div className="brand-dark-surface bg-brand-dark p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <User className="h-6 w-6 text-primary" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-2xl md:text-3xl font-semibold tracking-[-0.03em] text-foreground truncate">
+                <h2 className="text-2xl md:text-3xl font-semibold tracking-[-0.03em] text-foreground break-words">
                   {member.full_name}
                 </h2>
-                <p className="text-sm text-muted-foreground truncate">{member.email}</p>
+                <p className="text-sm text-muted-foreground break-all">{member.email}</p>
                 <p className="text-xs text-muted-foreground font-mono tabular-nums">
                   Mitgliedsnummer {formatMemberNumber(member.member_number)}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 flex-wrap">
               <StatusBadge status={member.is_active ? 'active' : 'inactive'} size="lg" />
               <Badge variant="secondary" size="lg">
                 {getRoleLabel(member.role)}
@@ -515,7 +515,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
               {!isEditing && (
                 <Button
                   onClick={() => setIsEditing(true)}
-                  variant="primary"
+                  variant="highlight"
                   size="sm"
                   className="gap-1.5"
                 >

@@ -66,8 +66,9 @@ KACHELN=$(grep -rlE 'className="[^"]*text-(2xl|3xl) font-bold' "${UI_SCOPE[@]}" 
       grep -q '<Card' "$f" && ! grep -qE 'KpiBand|StatCard' "$f" && echo "$f"
     done)
 KACHELN_N=$(printf '%s' "$KACHELN" | grep -c . || true)
-if [ "$KACHELN_N" -gt 16 ]; then
-  echo "❌ Muster-Ratsche 'Kennzahl-Kachel statt KpiBand': $KACHELN_N Dateien, erlaubt sind 16 (docs/DESIGN.md § 6a)."
+# Vier fachliche Ausnahmen: Wetterwert, zwei Spielstände, Bestätigungs-Seitentitel.
+if [ "$KACHELN_N" -gt 4 ]; then
+  echo "❌ Muster-Ratsche 'Kennzahl-Kachel statt KpiBand': $KACHELN_N Dateien, erlaubt sind 4 (docs/DESIGN.md § 6a)."
   echo "$KACHELN" | head -10
   FAIL=1
 fi

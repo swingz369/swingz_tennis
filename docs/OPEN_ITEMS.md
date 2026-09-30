@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 26. September 2026 (Buchungs-RLS, Stripe-RPC-Rechte und Zahlungsindex lokal und in Produktion per SQL gelesen; Korrekturmigrationen lokal angewendet; Insights-Attrappe entfernt); davor 20. September 2026 (UI-Einheitlichkeit abgeschlossen; nuLiga-Scraper entfernt, Widget statt Abruf; davor 18. September 2026: Abgleich gegen Code und Produktion: E-Mail, rohe DB-Fehler, CI-Mocks, P3-Punkte erledigt; nuLiga-Rechtsklärung als Launch-Punkt ergänzt); davor 17. September 2026 (Auslieferung von 33 Commits nach main, 8 Migrationen
+> Zuletzt verifiziert: 30. September 2026 (Matchday-Redesign: responsive Browsermatrix, axe-core und Detailaktionen; übrige Themen behalten ihre bisherigen Prüfstände); davor 26. September 2026 (Buchungs-RLS, Stripe-RPC-Rechte und Zahlungsindex lokal und in Produktion per SQL gelesen; Korrekturmigrationen lokal angewendet; Insights-Attrappe entfernt); davor 20. September 2026 (UI-Einheitlichkeit abgeschlossen; nuLiga-Scraper entfernt, Widget statt Abruf; davor 18. September 2026: Abgleich gegen Code und Produktion: E-Mail, rohe DB-Fehler, CI-Mocks, P3-Punkte erledigt; nuLiga-Rechtsklärung als Launch-Punkt ergänzt); davor 17. September 2026 (Auslieferung von 33 Commits nach main, 8 Migrationen
 > auf Produktion angewendet, Deploy-Kette geprüft — drei neue Befunde unten); davor 16. September
 > 2026 (ADR-005-Migrationsfortschritt am Code geprüft); 30. August 2026 (Bezahlschranke
 > abgeschaltet — siehe unten)
@@ -340,6 +340,30 @@ arch:check` läuft mit `--ignore-known` dagegen und meldet "grün", obwohl der r
 ---
 
 ## P2 — Politur & Ehrlichkeit der Oberfläche
+
+### Matchday-Redesign — technische Korrekturen abgeschlossen (30.09.2026)
+
+Die bestätigten Lücken der Abschlussprüfung sind behoben: responsive Profilköpfe,
+begrenzter Wochenkalender, mobile Mitglieder-/Trainerkarten, größere Aktionen,
+funktionierende Qualifikations-, SEPA- und Kündigungsrisiko-Aktionen, priorisierte
+Hauptaktionen, gemeinsame Kennzahlen und numerische Datumsformatierung. Dialoge
+fokussieren das erste Formularfeld und geben den Fokus beim Schließen zurück;
+Checkboxen und Verfügbarkeit verwenden im Dunkelmodus die passende Kontrastfarbe.
+Die anschließende axe-Prüfung ergänzte gültige Kennzahlen-Definitionslisten,
+eine nicht fokussierbare geschlossene Sidebar, zugängliche Filter-/Aktionsnamen,
+Tastaturzugriff auf scrollbare Tabellen und stärkere Textkontraste.
+
+Prüfumfang: 52 Ansichten auf 13 Routen (1440/390 px, Hell/Dunkel), vier neue
+Interaktionsregressionen und 20 dauerhafte axe-Kombinationen auf fünf Kernseiten.
+Der vollständige bestehende Seiten-/Rechtetestlauf wurde
+wegen lokaler Serverneustarts nicht abgeschlossen. Kennzahlen-Ratsche
+auf vier fachlich begründete Heuristik-Ausnahmen gesenkt; die 28 Radix-basierten
+`CenteredModal`-Bestandsstellen bleiben gemäß der bestehenden Regel zulässig.
+Ergebnisse und Grenzen: [Abschlussbericht](ARCHIV/2026-09-30-matchday-redesign-abschluss.md).
+
+Eine vollständige Screenreader-Abnahme und Kernaufgaben mit echten Vereinsnutzern
+bleiben Teil der Verkaufsreifeprüfung. Der technische Redesign-Abschluss ist keine
+Produktions- oder Verkaufsfreigabe.
 
 - **UI-Einheitlichkeit** ✅ **Erledigt 20.09.2026** — Phasen 0–6 gemergt, Restpunkte umgesetzt
   (`CenteredModal` läuft auf Radix, Trainerliste im Listenmuster, Flächen-Spinner → `Skeleton`,

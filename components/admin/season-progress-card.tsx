@@ -124,7 +124,7 @@ export function SeasonProgressCard({ season }: { season: SeasonProgress }) {
         <>
           <p className="relative mt-3 text-3xl font-bold tabular-nums tracking-[-0.04em]">
             {season.submitted}
-            <span className="text-base font-semibold text-white/55">
+            <span className="text-base font-semibold text-white/70">
               /{season.total} Mitgliedern
             </span>
           </p>
@@ -149,7 +149,7 @@ export function SeasonProgressCard({ season }: { season: SeasonProgress }) {
         <>
           <p className="relative mt-3 text-3xl font-bold tabular-nums tracking-[-0.04em]">
             Woche {weeks.current}
-            <span className="text-base font-semibold text-white/55">/{weeks.total} der Saison</span>
+            <span className="text-base font-semibold text-white/70">/{weeks.total} der Saison</span>
           </p>
           <div
             className="relative mt-3 h-1.5 overflow-hidden rounded-full bg-white/20"

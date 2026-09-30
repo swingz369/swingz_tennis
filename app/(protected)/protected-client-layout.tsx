@@ -12,7 +12,6 @@ const Sidebar = dynamic(() => import('@/components/layout/sidebar').then((m) => 
   loading: () => <Skeleton className="h-full w-64" />,
 });
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
-import { SkipToContent } from '@/lib/accessibility';
 import { CommandPalette } from '@/components/command-palette';
 import type { RoleModeInitial } from '@/hooks/use-role-mode';
 import { SearchDialog } from '@/components/search-dialog';
@@ -116,7 +115,6 @@ export function ProtectedClientLayout({
             schnitt die Sidebar oben ab — mit der dunklen Sidebar wäre daraus
             eine sichtbare Stufe geworden. */}
         <div className="flex min-h-dvh">
-          <SkipToContent />
           <Sidebar
             roles={user.roles ?? []}
             selectedClubId={user.selectedClubId ?? null}

@@ -341,28 +341,27 @@ export function DayView({
                     })}
 
                     {/* Clickable empty area */}
-                    <div
-                      className="absolute inset-0 z-0"
-                      role="button"
-                      tabIndex={isAdmin || isTrainer ? 0 : -1}
-                      onClick={(e) => {
-                        if (e.target !== e.currentTarget) return;
-                        if (isAdmin) {
-                          openBlockDialog(court.id, targetDate, '10:00');
-                        } else if (isTrainer) {
-                          openAdHocDialog(court.id, targetDate, '10:00');
+                    {(isAdmin || isTrainer) && (
+                      <button
+                        type="button"
+                        className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                        aria-label={
+                          isAdmin
+                            ? `${court.name} am ${format(targetDate, 'dd.MM.yyyy')} sperren`
+                            : isTrainer
+                              ? `Training auf ${court.name} am ${format(targetDate, 'dd.MM.yyyy')} erstellen`
+                              : undefined
                         }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key !== 'Enter' && e.key !== ' ') return;
-                        e.preventDefault();
-                        if (isAdmin) {
-                          openBlockDialog(court.id, targetDate, '10:00');
-                        } else if (isTrainer) {
-                          openAdHocDialog(court.id, targetDate, '10:00');
-                        }
-                      }}
-                    />
+                        onClick={(e) => {
+                          if (e.target !== e.currentTarget) return;
+                          if (isAdmin) {
+                            openBlockDialog(court.id, targetDate, '10:00');
+                          } else if (isTrainer) {
+                            openAdHocDialog(court.id, targetDate, '10:00');
+                          }
+                        }}
+                      />
+                    )}
                   </div>
                 );
               })}

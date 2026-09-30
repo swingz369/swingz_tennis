@@ -12,12 +12,14 @@ type BookingRow = Database['public']['Tables']['bookings']['Row'];
 type InvoiceRow = Database['public']['Tables']['invoices']['Row'];
 
 interface MemberWithUser {
+  id: string;
   user_id: string;
   users: { full_name?: string | null; email?: string | null } | null;
   created_at: string | null;
 }
 
 interface AtRiskMember {
+  memberId: string;
   userId: string;
   name: string;
   email: string;
@@ -63,10 +65,10 @@ export async function GET(request: NextRequest) {
       // deactivated_by auflösen und aktive Mitglieder (deactivated_by = NULL) rausfiltern.
       const { data: memberships, error: membersError } = (await supabase
         .from('user_club_memberships')
-        .select('user_id, created_at')
+        .select('id, user_id, created_at')
         .eq('club_id', clubId)
         .eq('is_active', true)) as {
-        data: { user_id: string; created_at: string | null }[] | null;
+        data: { id: string; user_id: string; created_at: string | null }[] | null;
         error: unknown;
       };
 
@@ -83,6 +85,7 @@ export async function GET(request: NextRequest) {
 
       const userMap = new Map((usersData ?? []).map((u) => [u.id, u]));
       const members: MemberWithUser[] = memberships.map((m) => ({
+        id: m.id,
         user_id: m.user_id,
         created_at: m.created_at,
         users: userMap.get(m.user_id) ?? null,
@@ -183,6 +186,7 @@ export async function GET(request: NextRequest) {
 
         if (riskScore >= 50) {
           atRisk.push({
+            memberId: m.id,
             userId,
             name: m.users?.full_name || 'Unbekannt',
             email: m.users?.email || '',

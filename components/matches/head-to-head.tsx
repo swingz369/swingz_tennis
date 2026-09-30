@@ -120,7 +120,7 @@ export default function HeadToHead({ myUserId, clubId }: HeadToHeadProps) {
             <div className="text-sm text-muted-foreground">Lade Mitglieder…</div>
           ) : (
             <Select value={opponentId} onValueChange={handleOpponentChange}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger aria-label="Gegner auswählen" className="w-full">
                 <SelectValue placeholder="Mitglied auswählen…" />
               </SelectTrigger>
               <SelectContent>

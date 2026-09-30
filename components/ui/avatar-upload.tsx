@@ -138,19 +138,19 @@ export function AvatarUpload({
         </Avatar>
 
         {editable && (
-          <div
-            className={`absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ${uploading ? 'opacity-100' : ''}`}
+          <button
+            type="button"
+            aria-label="Profilbild ändern"
+            disabled={uploading}
+            className={`absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-opacity cursor-pointer ${uploading ? 'opacity-100' : ''}`}
             onClick={() => !uploading && fileInputRef.current?.click()}
-            onKeyDown={(e) => e.key === 'Enter' && !uploading && fileInputRef.current?.click()}
-            role="button"
-            tabIndex={0}
           >
             {uploading ? (
               <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <Camera className="h-5 w-5 text-white" />
             )}
-          </div>
+          </button>
         )}
 
         <input

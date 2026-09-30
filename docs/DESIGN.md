@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 27. September 2026 (§1: Palette Matchday; §6a: Bausteine Matchday; §2–3 am 26.09.: aktuelle Palette, Schriften, Bewertung und Detailkorrekturen; spätere Detailkapitel zuletzt am 20.09.2026 geprüft)
+> Zuletzt verifiziert: 30. September 2026 (Matchday-Abschlussprüfung: Code, Token-Tests, responsive Browsermatrix und axe-core; spätere historische Detailkapitel nicht vollständig neu abgenommen)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -28,8 +28,8 @@ Clash Display wird im Root-Layout nicht geladen.
 ## 2. Bewertung und Abnahme
 
 Der frühere DFII-Wert 15/15 war eine subjektive Einschätzung ohne Nutzertest und
-ist kein Qualitätsnachweis. Die betrachtete Admin-Startseite hat bereits eine ruhige
-grüne Navigation und klare Kennzahlen. Die nächste Verbesserung betrifft konkrete
+ist kein Qualitätsnachweis. Die betrachtete Admin-Startseite hat bereits eine nachtblaue
+Navigation mit Lime-Markierung und klare Kennzahlen. Die nächste Verbesserung betrifft konkrete
 Arbeitsabläufe: verständliche Aktionen, belastbare Zustände und Bedienung am Handy.
 
 Die Landing-Darstellung ist kein Nachweis vollständiger Funktionen:
@@ -37,7 +37,15 @@ Die Landing-Darstellung ist kein Nachweis vollständiger Funktionen:
 Beispieloberflächen. Vor Verkaufsfreigabe echte Arbeitsabläufe aufnehmen und
 Aussagen mit dem implementierten Leistungsumfang abgleichen.
 
-## 3. Umgesetzte Detailkorrekturen und offene Abnahme
+**Abschlussstand 30.09.2026:** Die bei der Abschlussprüfung bestätigten Matchday-Lücken
+sind umgesetzt: responsive Profilköpfe und Listen, begrenzter Kalender-Scrollbereich,
+funktionierende Detailaktionen, priorisierte Hauptaktionen und gemeinsame Kennzahlen.
+Die technische Abschlussprüfung umfasst 52 Ansichten auf 13 Routen in beiden Themes
+bei 1440 und 390 Pixeln sowie gezielte Regressionstests. Umfang und Ergebnisse:
+[Abschlussbericht](ARCHIV/2026-09-30-matchday-redesign-abschluss.md).
+Eine Verkaufsfreigabe und Tests mit echten Vereinsnutzern sind eigene Abnahmen.
+
+## 3. Umgesetzte Detailkorrekturen und Prüfumfang
 
 - Landing-CTAs heißen „Zugang anfragen“ und beschreiben die manuelle Einrichtung.
 - Das Anfrageformular meldet Netzwerkfehler sichtbar; Name, Organisation und E-Mail
@@ -45,9 +53,27 @@ Aussagen mit dem implementierten Leistungsumfang abgleichen.
 - In der Abrechnung scrollen die Register horizontal, Aktionsleisten umbrechen.
   Die Rechnungstabelle scrollt innerhalb ihres Containers; Rechnungsnummern bleiben
   in einer Zeile. Dies verhindert das Zusammenpressen aller Spalten auf Handybreite.
-- Offen: finale Browserabnahme dieser Änderungen bei 390 und 1440 Pixeln, Tastatur-
-  und Screenreader-Bedienung sowie Tests der Kernaufgaben mit echten Vereinsnutzern.
-  Der erneute lokale Browserlauf konnte bislang nicht abgeschlossen werden.
+- Profilköpfe stapeln Identität und Aktionen mobil; Namen bleiben sichtbar und E-Mails
+  umbrechen. Mitglieder starten mobil in Kartenansicht, Trainer haben eigene mobile Karten.
+- Die Wochenansicht hält auch vier Plätze vollständig im eigenen Scrollcontainer.
+- Trainerqualifikationen lassen sich über ein validiertes Formular erfassen; Fehler bleiben
+  im Dialog sichtbar. „Mandat erteilen“ öffnet den vorhandenen SEPA-Ablauf.
+  Kündigungsrisiko-Aktionen führen zur E-Mail bzw. zum tatsächlichen Mitgliedsprofil.
+- `PageHeader` hebt die erste nicht ausdrücklich anders gestaltete Aktion hervor;
+  Abrechnungsimport bleibt sekundär. Filter und CSV-Aktionen passen sich Handybreiten an.
+- Kennzahlen in Importergebnissen, Saisonstatistik, Planung, Konflikten und Trainererfahrung
+  verwenden `KpiBand`; das Kündigungsrisiko verwendet `StatCard`.
+- Formulardialoge beginnen im ersten Eingabefeld und geben den Fokus beim Schließen zurück.
+  Dialog-Schließen und Sprunglink sind deutsch; der Sprunglink erscheint nur einmal.
+- Verlinkte Kennzahlen verwenden gültige Definitionslisten. Geschlossene mobile Sidebars
+  sind `inert`; scrollbare Tabellen sind per Tastatur erreichbar. Filter, Kalenderaktionen,
+  Profilbild-Upload und der mobile Startseitenlink haben zugängliche deutsche Namen.
+- Navigation, Saisonhinweise, Vorlaufbanner und bezahlte Rechnungsbeträge verwenden
+  kontrastreiche Textfarben in beiden Themes. Die dauerhafte axe-Prüfung umfasst
+  fünf Kernseiten bei 1440/390 px und Hell/Dunkel (20 Kombinationen).
+- Die Browsermatrix umfasst alle fünf Rollen und beide Themes bei 1440 und 390 Pixeln.
+  Sie wird durch gezielte Interaktionstests ergänzt. Eine vollständige
+  Screenreader-Prüfung und Nutzertests mit echten Vereinsnutzern wurden nicht durchgeführt.
 
 Die folgenden Detailkapitel enthalten auch ältere Designfestlegungen. Ihre dort
 angegebenen Abschlussmarkierungen gelten für die jeweiligen damaligen Arbeiten,
@@ -59,28 +85,28 @@ nicht als aktuelle vollständige visuelle Abnahme.
 
 ### 4.1 Farb-Rollen
 
-| Rolle                            | Wert                                          | Verwendung                   |
-| -------------------------------- | --------------------------------------------- | ---------------------------- |
-| Page Background                  | `hsl(var(--background))`                      | Gesamte App                  |
-| Card Surface                     | `hsl(var(--card))`                            | Cards, Modals, Sheets        |
-| Elevated Surface                 | `hsl(var(--surface-elevated))`                | Hover, Dropdowns             |
-| Primary Action                   | `bg-gradient-primary`                         | Haupt-Buttons, Active-States |
-| Secondary Action                 | `bg-brand-secondary`                          | Alternative Aktionen         |
-| Accent / KI                      | `bg-gradient-accent` + `Sparkles`-Icon        | KI-Features, CTAs            |
-| Success / Warning / Error / Info | `#22c55e` / `#f59e0b` / `#ef4444` / `#3b82f6` | Status-Indikatoren           |
+| Rolle                            | Wert                                          | Verwendung                               |
+| -------------------------------- | --------------------------------------------- | ---------------------------------------- |
+| Page Background                  | `hsl(var(--background))`                      | Gesamte App                              |
+| Card Surface                     | `hsl(var(--card))`                            | Cards, Modals, Sheets                    |
+| Elevated Surface                 | `hsl(var(--surface-elevated))`                | Hover, Dropdowns                         |
+| Primary Action                   | `bg-highlight text-highlight-foreground`      | Eine hervorgehobene Hauptaktion je Seite |
+| Secondary Action                 | `bg-brand-secondary`                          | Alternative Aktionen                     |
+| Standard Action                  | `bg-primary text-primary-foreground`          | Übrige Standardaktionen                  |
+| Success / Warning / Error / Info | `#22c55e` / `#f59e0b` / `#ef4444` / `#3b82f6` | Status-Indikatoren                       |
 
 ### 4.2 Typografie-Hierarchie
 
-| Ebene         | Font           | Weight | Size     | Einsatz                            |
-| ------------- | -------------- | ------ | -------- | ---------------------------------- |
-| Landing Hero  | Clash Display  | 800    | 4.5rem   | Nur Landing                        |
-| Page Title    | Clash Display  | 700    | 2.25rem  | Dashboard, Wizard — **NEU in App** |
-| Section Title | DM Sans        | 700    | 1.5rem   | Card-Headers                       |
-| Card Title    | DM Sans        | 600    | 1.125rem | Feature-Cards, Stats               |
-| Body          | DM Sans        | 400    | 1rem     | Fließtext, Formulare               |
-| Body Small    | DM Sans        | 400    | 0.875rem | Sidebar, Tabellen, Meta            |
-| Caption       | DM Sans        | 500    | 0.75rem  | Labels, Badges                     |
-| Mono          | JetBrains Mono | 400    | 0.875rem | Daten, Code                        |
+| Ebene         | Font           | Weight | Size            | Einsatz                                      |
+| ------------- | -------------- | ------ | --------------- | -------------------------------------------- |
+| Landing Hero  | DM Sans        | 700    | responsiv       | Landing, `font-display` löst auf DM Sans auf |
+| Page Title    | DM Sans        | 700    | 28 / 40 / 44 px | `PageHeader`, kursiv und Versalien           |
+| Section Title | DM Sans        | 700    | 1.5rem          | Card-Headers                                 |
+| Card Title    | DM Sans        | 600    | 1.125rem        | Feature-Cards, Stats                         |
+| Body          | DM Sans        | 400    | 1rem            | Fließtext, Formulare                         |
+| Body Small    | DM Sans        | 400    | 0.875rem        | Sidebar, Tabellen, Meta                      |
+| Caption       | DM Sans        | 500    | 0.75rem         | Labels, Badges                               |
+| Mono          | JetBrains Mono | 400    | 0.875rem        | Daten, Code                                  |
 
 **Regel (Sanierungsplan Phase 3, 18.09.2026):** Diese Skala gilt für **echten Fließtext** —
 Absätze, Beschreibungen, Leerzustände, Fehlermeldungen, Formular-Hilfetexte: Dinge, die ein
@@ -252,26 +278,30 @@ Commit. Plan und Begründung: `ARCHIV/2026-09-19-ui-einheitlichkeit-analyse-und-
 | Liste / Tabelle | `Table` + `PaginationNav`                                                             | rohe `<table>`                 | ✅ 0         |
 | Schriftgröße    | Typo-Skala § 4.2                                                                      | `text-[Npx]`                   | ✅ 0         |
 | Dialog          | shadcn `Dialog`; `CenteredModal` nur Bestand (gleiche Überlagerung/Schatten, Ratsche) | neue `CenteredModal`-Nutzer    | ✅ Grenze 28 |
-| Kennzahlen      | `KpiBand` (Reihe, 2–6 Werte) / `StatCard` (einzeln)                                   | Zahl als `text-3xl` in `Card`  | ✅ Grenze 16 |
+| Kennzahlen      | `KpiBand` (Reihe, 2–6 Werte) / `StatCard` (einzeln)                                   | Zahl als `text-3xl` in `Card`  | ✅ Grenze 4  |
 | Leerzustand     | `EmptyState` (ganze Fläche, mit Aktion) / `ListState` (innerhalb Karte/Tabelle)       | loser „Keine …"-Text           | ✅ Grenze 3  |
 | „Als Nächstes"  | `NextUpHero` (dunkle Insel, genau eine `highlight`-Aktion) — Startseiten              | eigene dunkle Hero-Karte       | —            |
 | Terminliste     | `SessionRow` (Zeit, `--event`-Streifen, Titel, Meta, Pfeil/Tag)                       | Termin-Tabelle auf Startseiten | —            |
 | Dunkle Fläche   | Klasse `.brand-dark-surface` + `bg-brand-dark` (Detailköpfe, Hero, Saison-Karte)      | `dark:`-Sonderfarben im Innern | —            |
 
-**Bewusste Ausnahmen der Ratschen (Stand 20.09.2026):**
+**Bewusste Ausnahmen der Ratschen (Stand 29.09.2026):**
 
 - `<h1>` außerhalb `PageHeader`: Bestätigungsseiten (`payment-success`, `shop/success`), Fehlerseite
   (`error.tsx`), `select-admin-club` (Vollbild, dunkel), `subscription-dunning-block`
   (Bezahlschranke), `member-profile` (Personenname als Titel).
 - Leerzustand-Ratsche (Grenze 3): `select-admin-club` (Vollbild, dunkel), `admin/analytics`
   (zwei Fehlertexte „Keine Club-Daten", kein Leerzustand), `perf-history-client` (Diagramm-Platzhalter).
+- Kennzahlen-Heuristik (Grenze 4): Wettertemperatur, Match-Ergebnis, Direktvergleich
+  und Bestätigungsüberschrift im Shop sind keine Verwaltungskennzahlen.
 - Dashboards: Kopf → `KpiBand` → Inhalt → Schnellzugriff ist überall gleich. Abweichungen sind gewollt:
   Mitglieder haben den Schnellzugriff **vor** den Karten (keine Sidebar, er ist ihre Navigation);
   Owner hat keinen `QuickActions`-Block, sondern Link-Kacheln zu den Plattformbereichen.
 
-**Dialoge (20.09.2026):** `CenteredModal` ist keine Eigenbau-Überlagerung mehr, sondern eine Hülle
+**Dialoge (29.09.2026):** `CenteredModal` ist keine Eigenbau-Überlagerung mehr, sondern eine Hülle
 mit der alten Props-Schnittstelle über Radix (`@radix-ui/react-dialog`) — Fokusfalle, Escape,
-Scroll-Sperre und Fokus-Rückgabe kommen von dort, wie bei shadcn `Dialog`. Die 28 Bestandsstellen
+Scroll-Sperre kommen von dort, wie bei shadcn `Dialog`. Die Hülle merkt sich bei kontrolliertem
+Öffnen den Auslöser für die Fokus-Rückgabe und fokussiert bei Formularen das erste Feld.
+Dadurch öffnet sich kein Schließen-Tooltip, der das erste Escape verbraucht. Die 28 Bestandsstellen
 bleiben (Ratsche, nur sinkend); neue Stellen nehmen direkt `Dialog`.
 
 **Listenmuster (20.09.2026):** Filterleiste = Suchfeld (Icon links, `flex-1`) + `Select` je 160 px,

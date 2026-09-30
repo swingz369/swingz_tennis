@@ -51,14 +51,21 @@ function Cell({ item }: { item: KpiBandItem }) {
             {item.suffix}
           </span>
         )}
-      </dd>
-      {/* Ohne `font-mono`: der Zusatz ist ein Satz („nichts offen"), keine
+        {/* Ohne `font-mono`: der Zusatz ist ein Satz („nichts offen"), keine
           Zahlenkolonne. In Konsolenschrift gesetzt sah das ganze Band nach
           Log-Ausgabe aus — die Zahl darüber richtet sich über `tabular-nums`
           aus, dafür braucht es keine zweite Schrift. */}
-      {item.sub && (
-        <p className={cn('mt-2 text-xs font-medium', toneClass[item.tone ?? 'flat'])}>{item.sub}</p>
-      )}
+        {item.sub && (
+          <p
+            className={cn(
+              'mt-2 text-xs font-medium leading-normal tracking-normal',
+              toneClass[item.tone ?? 'flat']
+            )}
+          >
+            {item.sub}
+          </p>
+        )}
+      </dd>
     </>
   );
 }
@@ -81,7 +88,7 @@ export function KpiBand({ items }: { items: KpiBandItem[] }) {
     // äusseren ab (-mr-px/-mb-px + overflow-hidden) — funktioniert für jede
     // Anzahl und Zeilenzahl, ohne Sonderfälle je Position.
     <div className="overflow-hidden rounded-xl border border-border bg-card">
-      <dl className={cn('-mr-px -mb-px grid', COLS[items.length] ?? 'grid-cols-2 lg:grid-cols-4')}>
+      <div className={cn('-mr-px -mb-px grid', COLS[items.length] ?? 'grid-cols-2 lg:grid-cols-4')}>
         {items.map((item) => {
           const cellClass = 'px-5 py-5 sm:px-6 border-r border-b border-border';
 
@@ -94,15 +101,17 @@ export function KpiBand({ items }: { items: KpiBandItem[] }) {
                 'block transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset'
               )}
             >
-              <Cell item={item} />
+              <dl>
+                <Cell item={item} />
+              </dl>
             </Link>
           ) : (
-            <div key={item.label} className={cellClass}>
+            <dl key={item.label} className={cellClass}>
               <Cell item={item} />
-            </div>
+            </dl>
           );
         })}
-      </dl>
+      </div>
     </div>
   );
 }

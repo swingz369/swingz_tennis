@@ -628,14 +628,14 @@ export function ClubSettingsContent() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-3">
             <span className="text-sm font-medium">Mitglieder</span>
             <div className="flex items-center gap-2">
               <MemberImportDialog />
               <CsvExportButton kind="members" />
             </div>
           </div>
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-3">
             <span className="text-sm font-medium">Trainer</span>
             <div className="flex items-center gap-2">
               <TrainerImportDialog />

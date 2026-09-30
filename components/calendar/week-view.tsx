@@ -175,7 +175,7 @@ export function WeekView({
                       : 'bg-muted/50 text-muted-foreground hover:bg-muted'
                 }`}
               >
-                <span className="text-2xs opacity-80">{format(day, 'EEE', { locale: de })}</span>
+                <span className="text-2xs">{format(day, 'EEE', { locale: de })}</span>
                 <span className="text-base font-bold mt-0.5 tabular-nums">{format(day, 'd')}</span>
                 {dayOff && (
                   <span

@@ -192,7 +192,7 @@ export function PaginationNav({
               value={String(currentLimit ?? limit)}
               onValueChange={(v) => onPageSizeChange(Number(v))}
             >
-              <SelectTrigger className="w-[70px] h-7 text-xs">
+              <SelectTrigger aria-label="Einträge pro Seite" className="w-[70px] h-7 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

@@ -160,7 +160,7 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
+      <Button variant="highlight" onClick={() => setOpen(true)}>
         <Plus className="h-4 w-4 mr-2" />
         Rechnung erstellen
       </Button>

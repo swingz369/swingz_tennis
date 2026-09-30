@@ -86,10 +86,12 @@ export function PageHeader({
 
         {/* Actions */}
         {actions && !actionList && (
-          <div className="flex items-center gap-2 shrink-0">{actions as ReactNode}</div>
+          <div className="flex flex-wrap items-center gap-2 shrink-0 max-w-full">
+            {actions as ReactNode}
+          </div>
         )}
         {actionList && actionList.length > 0 && (
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0 max-w-full">
             {actionList.map((action, i) => {
               const Icon = action.icon;
               const btnContent = (
@@ -103,7 +105,7 @@ export function PageHeader({
                 return (
                   <Button
                     key={i}
-                    variant={action.variant ?? 'default'}
+                    variant={action.variant ?? (i === 0 ? 'highlight' : 'outline')}
                     disabled={action.disabled}
                     asChild
                   >
@@ -114,7 +116,7 @@ export function PageHeader({
               return (
                 <Button
                   key={i}
-                  variant={action.variant ?? 'default'}
+                  variant={action.variant ?? (i === 0 ? 'highlight' : 'outline')}
                   onClick={action.onClick}
                   disabled={action.disabled}
                 >

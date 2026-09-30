@@ -12,15 +12,16 @@ export interface BreadcrumbItem {
 export function Breadcrumb({ items, className }: { items: BreadcrumbItem[]; className?: string }) {
   return (
     <nav
-      aria-label="Breadcrumb"
+      aria-label="Brotkrumennavigation"
       className={cn('flex items-center gap-1.5 text-sm text-muted-foreground', className)}
     >
       <Link
         href="/dashboard"
+        aria-label="Startseite"
         className="flex items-center gap-1 hover:text-foreground transition-colors"
       >
         <Home className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Home</span>
+        <span className="hidden sm:inline">Startseite</span>
       </Link>
       {items.map((item, i) => (
         <span key={i} className="flex items-center gap-1.5">

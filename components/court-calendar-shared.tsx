@@ -69,7 +69,7 @@ export function CourtCalendarGrid({
   minWidth?: number;
 }) {
   return (
-    <div className="overflow-x-auto -mx-4 px-4 pb-2">
+    <div className="relative overflow-x-auto -mx-4 px-4 pb-2">
       <div
         className="rounded-xl border border-border bg-card overflow-clip"
         style={{ minWidth: Math.max(900, minWidth) }}

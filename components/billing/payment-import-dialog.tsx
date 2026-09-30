@@ -1,4 +1,5 @@
 'use client';
+import { KpiBand } from '@/components/ui/kpi-band';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useRef } from 'react';
@@ -85,7 +86,7 @@ export default function PaymentImportDialog() {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
+      <Button variant="outline" onClick={() => setOpen(true)}>
         <span className="flex items-center gap-2">
           <Upload className="h-4 w-4" />
           Zahlungen importieren
@@ -159,22 +160,18 @@ export default function PaymentImportDialog() {
               <CardContent>
                 <div className="space-y-4">
                   {/* Summary */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-success-600">{result.imported}</div>
-                      <div className="text-sm text-muted-foreground">Erfolgreich</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-error-600">{result.failed}</div>
-                      <div className="text-sm text-muted-foreground">Fehlgeschlagen</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-warning-600">
-                        {result.invalid.length}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Ungültig</div>
-                    </div>
-                  </div>
+                  <KpiBand
+                    items={[
+                      { label: 'Erfolgreich', value: result.imported },
+                      {
+                        label: 'Fehlgeschlagen',
+                        value: result.failed,
+                        sub: result.failed ? 'Bitte prüfen' : undefined,
+                        tone: 'down',
+                      },
+                      { label: 'Ungültig', value: result.invalid.length },
+                    ]}
+                  />
 
                   {/* Invalid Records */}
                   {result.invalid.length > 0 && (

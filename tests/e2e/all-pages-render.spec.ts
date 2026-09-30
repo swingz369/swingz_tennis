@@ -76,7 +76,8 @@ const ADMIN_ROUTES: RouteTest[] = [
   { path: '/admin/hours-logs', expectedContent: /stunden|hours/i },
   { path: '/admin/events', expectedContent: /turnier|veranstaltung|event/i },
   // Alt-Einstiege — leiten auf /admin/events?tab=… um
-  { path: '/admin/tournaments', expectedContent: /turnier|tournament/i },
+  // Bei deaktiviertem Turniermodul führt der Hub auf Sonderveranstaltungen.
+  { path: '/admin/tournaments', expectedContent: /turnier|tournament|sonderveranstaltung/i },
   { path: '/admin/tournaments/new', expectedContent: /turnier|tournament|erstellen/i },
   { path: '/admin/onboarding', expectedContent: /Schritt|Verein|onboarding/i },
   { path: '/admin/partner-finder', expectedContent: /spielpartner|niveau|mitglied/i },

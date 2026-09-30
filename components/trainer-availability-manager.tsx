@@ -408,7 +408,7 @@ export default function TrainerAvailabilityManager() {
                 <button
                   key={start}
                   onClick={() => handleTogglePresetSlot(1, start)}
-                  className="text-xs px-2.5 py-1.5 rounded-xl font-medium transition-colors bg-muted text-muted-foreground hover:bg-primary hover:text-white"
+                  className="text-xs px-2.5 py-1.5 rounded-xl font-medium transition-colors bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground"
                 >
                   {start}
                 </button>

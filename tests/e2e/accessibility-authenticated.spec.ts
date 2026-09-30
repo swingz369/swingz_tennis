@@ -54,16 +54,26 @@ function credentials(role: Role): { email: string; password: string } {
 }
 
 for (const { role, path, label } of AUTHD_PAGES) {
-  test(`axe-core: ${label} (${role} → ${path})`, async ({ page }) => {
-    const { email, password } = credentials(role);
-    await loginAsRoleAware(page, email, password);
-    await page.goto(`${BASE_URL}${path}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  for (const theme of ['light', 'dark']) {
+    for (const width of [1440, 390]) {
+      test(`axe-core: ${label} (${role} → ${path}, ${theme}, ${width}px)`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 900 });
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        await page.addInitScript((value) => localStorage.setItem('theme', value), theme);
+        const { email, password } = credentials(role);
+        await loginAsRoleAware(page, email, password);
+        await page.goto(`${BASE_URL}${path}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+        // Wait for the actual page content, including cold client/API compilation.
+        await expect(page.locator('main h1').first()).toBeVisible({ timeout: 30000 });
+        await expect(page.locator('html')).toHaveClass(new RegExp(`\\b${theme}\\b`));
 
-    const violations = await runAxe(page);
+        const violations = await runAxe(page);
 
-    expect(
-      violations.map((v) => `${v.id} [${v.impact}] (${v.nodes}×): ${v.description}`),
-      `axe-core serious+critical auf ${label}`
-    ).toEqual([]);
-  });
+        expect(
+          violations.map((v) => `${v.id} [${v.impact}] (${v.nodes}×): ${v.description}`),
+          `axe-core serious+critical auf ${label}`
+        ).toEqual([]);
+      });
+    }
+  }
 }

@@ -134,7 +134,7 @@ export function TrainerRsvpList({
                     }`}
                   >
                     <div>{formatDate(startIso)}</div>
-                    <div className="opacity-80">{formatTime(startIso)}</div>
+                    <div>{formatTime(startIso)}</div>
                   </button>
                 );
               })}

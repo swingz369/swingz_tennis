@@ -2,6 +2,7 @@
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -280,19 +281,19 @@ export default function MemberProfile() {
       <div className="bg-card rounded-xl border border-border overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
         <div className="brand-dark-surface bg-brand-dark p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <AvatarUpload
                 userName={formData.fullName}
                 avatarUrl={avatarUrl}
                 size="md"
                 onAvatarChange={handleAvatarChange}
               />
-              <div className="min-w-0">
-                <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.03em] text-foreground truncate">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl md:text-3xl font-semibold tracking-[-0.03em] text-foreground break-words">
                   {formData.fullName || 'Mitglied'}
                 </h1>
-                <p className="text-sm text-muted-foreground truncate">{formData.email}</p>
+                <p className="text-sm text-muted-foreground break-all">{formData.email}</p>
                 {/* Die Mitgliedsnummer ist die Nummer, die auf jeder Rechnung
                     und in jeder Rückfrage beim Verein steht — sie gehört
                     dorthin, wo das Mitglied sie nachschlagen kann. */}
@@ -306,12 +307,12 @@ export default function MemberProfile() {
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 flex-wrap">
               <StatusBadge status="active" label="Aktives Mitglied" size="sm" />
               {!isEditing && (
                 <Button
                   onClick={() => setIsEditing(true)}
-                  variant="primary"
+                  variant="highlight"
                   size="sm"
                   className="gap-1.5"
                 >
@@ -589,9 +590,11 @@ export default function MemberProfile() {
                           Du hast noch kein SEPA-Lastschriftmandat erteilt. Ein Mandat wird für die
                           automatische Zahlungsabwicklung benötigt.
                         </p>
-                        <Button variant="outline" size="sm" className="mt-3 gap-2">
-                          <FileText className="h-4 w-4" />
-                          Mandat erteilen
+                        <Button variant="highlight" className="mt-3 gap-2" asChild>
+                          <Link href="/sepa-mandate">
+                            <FileText className="h-4 w-4" />
+                            Mandat erteilen
+                          </Link>
                         </Button>
                       </div>
                     </div>

@@ -2,9 +2,14 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
+/* eslint-disable jsx-a11y/no-noninteractive-tabindex -- The table overflow container must receive keyboard focus for horizontal scrolling. */
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto">
+    // The overflow container needs focus so keyboard users can scroll wide tables.
+    <div
+      tabIndex={0}
+      className="relative w-full overflow-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+    >
       <table
         ref={ref}
         className={cn('w-full caption-bottom text-sm tabular-nums', className)}

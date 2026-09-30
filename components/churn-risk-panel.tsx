@@ -2,6 +2,8 @@
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,11 +21,12 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { AnimatedCounter } from '@/components/animations';
+import { StatCard } from '@/components/ui/stat-card';
 import { apiFetch } from '@/lib/api-fetch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface AtRiskMember {
+  memberId: string;
   userId: string;
   name: string;
   email: string;
@@ -122,19 +125,11 @@ export function ChurnRiskPanel() {
             <AlertTriangle className="h-5 w-5 text-error-500" />
           </div>
           <div>
-            <CardTitle className="text-lg font-semibold">Churn Prediction</CardTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">Mitglieder mit Kündigungsrisiko</p>
+            <CardTitle className="text-lg font-semibold">Kündigungsrisiko</CardTitle>
+            <p className="text-sm text-muted-foreground mt-0.5">Mitglieder mit Kündigungsrisiko</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {data && (
-            <div className="text-right">
-              <p className="text-2xl font-bold tabular-nums">
-                <AnimatedCounter value={data.churnRiskRate} duration={1000} suffix="%" />
-              </p>
-              <p className="text-xs text-muted-foreground">Risiko-Rate</p>
-            </div>
-          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -153,9 +148,19 @@ export function ChurnRiskPanel() {
       </CardHeader>
 
       <CardContent>
+        {data && (
+          <StatCard
+            icon={AlertTriangle}
+            label="Kündigungsrisiko"
+            value={`${data.churnRiskRate} %`}
+            sub={`Anteil an ${data.totalMembers} aktiven Mitgliedern`}
+            color="red"
+          />
+        )}
         {loading && !data && (
-          <div className="flex items-center justify-center py-8">
-            <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="space-y-3 py-4" aria-label="Kündigungsrisiken werden geladen">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
           </div>
         )}
 
@@ -246,24 +251,31 @@ export function ChurnRiskPanel() {
                       {isExpanded && (
                         <div className="mt-3 pt-3 border-t border-white/50 space-y-3">
                           <div>
-                            <p className="text-xs font-medium mb-1">Risikofaktoren:</p>
+                            <p className="text-sm font-medium mb-1">Risikofaktoren:</p>
                             <ul className="space-y-1">
                               {member.reasons.map((reason, i) => (
-                                <li key={i} className="text-xs flex items-start gap-1.5">
+                                <li key={i} className="text-sm flex items-start gap-1.5">
                                   <span className="mt-0.5">•</span>
                                   <span>{reason}</span>
                                 </li>
                               ))}
                             </ul>
                           </div>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
-                              <Mail className="h-3 w-3" />
-                              Kontaktieren
+                          <div className="flex flex-wrap gap-2">
+                            <Button variant="outline" asChild disabled={!member.email}>
+                              <a
+                                href={member.email ? `mailto:${member.email}` : undefined}
+                                aria-disabled={!member.email}
+                              >
+                                <Mail className="h-4 w-4" />
+                                Kontaktieren
+                              </a>
                             </Button>
-                            <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
-                              <UserX className="h-3 w-3" />
-                              Profil
+                            <Button variant="outline" asChild>
+                              <Link href={`/admin/members/${member.memberId}`}>
+                                <UserX className="h-4 w-4" />
+                                Profil
+                              </Link>
                             </Button>
                           </div>
                         </div>

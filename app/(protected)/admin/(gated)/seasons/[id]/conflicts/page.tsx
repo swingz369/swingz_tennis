@@ -1,11 +1,13 @@
 'use client';
+import { KpiBand } from '@/components/ui/kpi-band';
+import { Skeleton } from '@/components/ui/skeleton';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
 import { useState, useEffect, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, AlertCircle, Info, Clock, RefreshCw, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, AlertCircle, Info, RefreshCw, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import type { ConflictDetectionResult } from '@/lib/season-planning/types';
@@ -88,8 +90,10 @@ export default function ConflictsPage({ params }: { params: Promise<{ id: string
 
   if (loading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <Clock className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-4" aria-label="Planungskonflikte werden geladen">
+        <Skeleton className="h-12 w-64" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-56 w-full" />
       </div>
     );
   }
@@ -157,20 +161,14 @@ export default function ConflictsPage({ params }: { params: Promise<{ id: string
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {SUMMARY_CARDS.map(({ key, label, icon: Icon, color }) => (
-          <Card key={key}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium">{label}</CardTitle>
-              <Icon className={`h-4 w-4 ${color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{counts[key]}</div>
-              <p className="text-xs text-muted-foreground">offen</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <KpiBand
+        items={SUMMARY_CARDS.map(({ key, label }) => ({
+          label,
+          value: counts[key],
+          sub: 'offen',
+          tone: key === 'critical' && counts[key] > 0 ? 'down' : 'flat',
+        }))}
+      />
 
       <ConflictList
         conflicts={conflicts}

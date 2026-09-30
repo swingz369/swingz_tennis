@@ -488,6 +488,7 @@ export function Sidebar({
       role="navigation"
       aria-label="Seitennavigation"
       aria-hidden={isMobile === true && !open ? true : undefined}
+      inert={isMobile === true && !open ? true : undefined}
     >
       {/* Mobile close button */}
       {open && (

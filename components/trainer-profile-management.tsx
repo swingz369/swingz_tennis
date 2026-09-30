@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import {
   NoTrainersBrandedEmptyState,
@@ -373,7 +374,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilterAndClear}>
-          <SelectTrigger className="w-full sm:w-[160px]">
+          <SelectTrigger aria-label="Nach Trainerstatus filtern" className="w-full sm:w-[160px]">
             <SelectValue placeholder="Alle Status" />
           </SelectTrigger>
           <SelectContent>
@@ -395,190 +396,256 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
         )
       ) : (
         /* ── Full-Width Trainer Table ─────────────────────────────────── */
-        <div className="rounded-xl border border-border/60 overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">
-                  <Checkbox
-                    checked={allSelected}
-                    ref={(el) => {
-                      if (el) {
-                        // `indeterminate` is a DOM property on HTMLInputElement;
-                        // the Radix Checkbox ref forwards to its button which
-                        // doesn't expose it in the type system.
-                        (el as unknown as { indeterminate: boolean }).indeterminate =
-                          someSelected && !allSelected;
-                      }
-                    }}
-                    onCheckedChange={toggleSelectAll}
-                    disabled={selectableTrainers.length === 0}
-                    aria-label="Alle auswählen"
-                  />
-                </TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead className="hidden md:table-cell">E-Mail</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden lg:table-cell">Spezialisierungen</TableHead>
-                <TableHead className="hidden lg:table-cell">Qualifikationen</TableHead>
-                <TableHead className="hidden xl:table-cell text-right">Stundensatz</TableHead>
-                <TableHead className="text-right">Aktionen</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedTrainers.map((trainer) => {
-                const selectable = trainer.status !== 'terminated' && trainer.status !== 'on_leave';
-                return (
-                  <TableRow
-                    key={trainer.id}
-                    className="hover:bg-muted/40 dark:hover:bg-background/40"
-                  >
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedIds.has(trainer.id)}
-                        onCheckedChange={() => toggleSelect(trainer.id)}
-                        disabled={!selectable}
-                        aria-label={`${trainer.firstName} ${trainer.lastName} auswählen`}
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 shrink-0">
-                          <User className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold">
-                            {trainer.firstName} {trainer.lastName}
-                          </div>
-                          <div className="truncate text-xs text-muted-foreground md:hidden">
-                            {trainer.email}
-                          </div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
+        <>
+          <div className="grid gap-3 md:hidden">
+            <div className="flex min-h-11 items-center gap-3">
+              <Checkbox
+                id="select-mobile-trainers"
+                checked={allSelected}
+                onCheckedChange={toggleSelectAll}
+                disabled={selectableTrainers.length === 0}
+              />
+              <Label htmlFor="select-mobile-trainers">Alle Trainer auswählen</Label>
+            </div>
+            {paginatedTrainers.map((trainer) => (
+              <Card key={trainer.id}>
+                <CardContent className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      aria-label={`${trainer.firstName} ${trainer.lastName} auswählen`}
+                      checked={selectedIds.has(trainer.id)}
+                      onCheckedChange={() => toggleSelect(trainer.id)}
+                      disabled={trainer.status === 'terminated' || trainer.status === 'on_leave'}
+                    />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Link
+                        href={`/admin/trainers/${trainer.id}`}
+                        className="block font-semibold break-words hover:underline"
+                      >
+                        {trainer.firstName} {trainer.lastName}
+                      </Link>
                       <button
                         type="button"
+                        className="min-h-11 text-left text-sm text-muted-foreground break-all hover:underline"
                         onClick={() => setEmailDialogTrainer(trainer)}
-                        className="hover:underline hover:text-foreground"
-                        title="E-Mail senden"
                       >
                         {trainer.email}
                       </button>
-                    </TableCell>
-                    <TableCell>
                       <StatusBadge status={trainer.status} size="sm" />
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm">
-                      {trainer.specializations.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {/* Spezialisierungen kommen teils ohne `id` aus der API —
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" asChild>
+                      <Link href={`/admin/trainers/${trainer.id}`}>
+                        <Eye className="h-4 w-4" />
+                        Details
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleToggleTrainerStatus(trainer.id, trainer.status)}
+                      disabled={trainer.status === 'terminated' || trainer.status === 'on_leave'}
+                    >
+                      {trainer.status === 'active' ? (
+                        <UserX className="h-4 w-4" />
+                      ) : (
+                        <UserCheck className="h-4 w-4" />
+                      )}
+                      {trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="hidden md:block rounded-xl border border-border/60 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={allSelected}
+                      ref={(el) => {
+                        if (el) {
+                          // `indeterminate` is a DOM property on HTMLInputElement;
+                          // the Radix Checkbox ref forwards to its button which
+                          // doesn't expose it in the type system.
+                          (el as unknown as { indeterminate: boolean }).indeterminate =
+                            someSelected && !allSelected;
+                        }
+                      }}
+                      onCheckedChange={toggleSelectAll}
+                      disabled={selectableTrainers.length === 0}
+                      aria-label="Alle auswählen"
+                    />
+                  </TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="hidden md:table-cell">E-Mail</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden lg:table-cell">Spezialisierungen</TableHead>
+                  <TableHead className="hidden lg:table-cell">Qualifikationen</TableHead>
+                  <TableHead className="hidden xl:table-cell text-right">Stundensatz</TableHead>
+                  <TableHead className="text-right">Aktionen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedTrainers.map((trainer) => {
+                  const selectable =
+                    trainer.status !== 'terminated' && trainer.status !== 'on_leave';
+                  return (
+                    <TableRow
+                      key={trainer.id}
+                      className="hover:bg-muted/40 dark:hover:bg-background/40"
+                    >
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(trainer.id)}
+                          onCheckedChange={() => toggleSelect(trainer.id)}
+                          disabled={!selectable}
+                          aria-label={`${trainer.firstName} ${trainer.lastName} auswählen`}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 shrink-0">
+                            <User className="h-4 w-4 text-primary" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold">
+                              {trainer.firstName} {trainer.lastName}
+                            </div>
+                            <div className="truncate text-xs text-muted-foreground md:hidden">
+                              {trainer.email}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
+                        <button
+                          type="button"
+                          onClick={() => setEmailDialogTrainer(trainer)}
+                          className="hover:underline hover:text-foreground"
+                          title="E-Mail senden"
+                        >
+                          {trainer.email}
+                        </button>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={trainer.status} size="sm" />
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm">
+                        {trainer.specializations.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {/* Spezialisierungen kommen teils ohne `id` aus der API —
                               dann ist key={s.id} undefined und React warnt für die
                               ganze Liste. Name und Index sind hier eindeutig genug. */}
-                          {trainer.specializations.slice(0, 2).map((s, i) => (
-                            <Badge key={s.id ?? `${s.name}-${i}`} variant="outline" size="sm">
-                              {s.name}
-                            </Badge>
-                          ))}
-                          {trainer.specializations.length > 2 && (
-                            <span className="text-xs text-muted-foreground">
-                              +{trainer.specializations.length - 2}
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-xs">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm">
-                      <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                        <Award className="h-3.5 w-3.5" />
-                        {trainer.qualifications.length}
-                      </span>
-                    </TableCell>
-                    <TableCell className="hidden xl:table-cell text-right tabular-nums text-sm">
-                      {trainer.contractedHourlyRate != null ? (
-                        // Sprint 4 Trainer Dual-Rate: show the contracted rate
-                        // (admin-controlled) as the primary value, and add a tiny
-                        // "+Z" badge when the trainer has also configured an extra-
-                        // hours rate (trainer-editable). The Detail page renders
-                        // the full form, so this list view stays terse.
-                        <div className="inline-flex items-center justify-end gap-1.5">
-                          <span
-                            className="inline-flex items-center gap-1 font-medium text-primary"
-                            title={`Vertragssatz (Admin-only) · ${formatCurrency(trainer.contractedHourlyRate)}/h`}
-                          >
-                            {formatCurrency(trainer.contractedHourlyRate)}/h
-                          </span>
-                          {trainer.extraHoursRate != null && (
-                            <Badge
-                              variant="outline"
-                              className="text-2xs px-1.5 py-0"
-                              title={`Zusatzstunden-Satz · ${formatCurrency(trainer.extraHoursRate)}/h`}
-                            >
-                              +Z
-                            </Badge>
-                          )}
-                        </div>
-                      ) : trainer.hourlyRate ? (
-                        // Legacy fallback for trainers created before the dual-rate
-                        // migration was applied (contracted_hourly_rate IS NULL).
-                        <span className="inline-flex items-center gap-1 text-muted-foreground">
-                          <Euro className="h-3.5 w-3.5" />
-                          {trainer.hourlyRate}/h
+                            {trainer.specializations.slice(0, 2).map((s, i) => (
+                              <Badge key={s.id ?? `${s.name}-${i}`} variant="outline" size="sm">
+                                {s.name}
+                              </Badge>
+                            ))}
+                            {trainer.specializations.length > 2 && (
+                              <span className="text-xs text-muted-foreground">
+                                +{trainer.specializations.length - 2}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm">
+                        <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                          <Award className="h-3.5 w-3.5" />
+                          {trainer.qualifications.length}
                         </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Details"
-                              aria-label="Details"
-                              asChild
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell text-right tabular-nums text-sm">
+                        {trainer.contractedHourlyRate != null ? (
+                          // Sprint 4 Trainer Dual-Rate: show the contracted rate
+                          // (admin-controlled) as the primary value, and add a tiny
+                          // "+Z" badge when the trainer has also configured an extra-
+                          // hours rate (trainer-editable). The Detail page renders
+                          // the full form, so this list view stays terse.
+                          <div className="inline-flex items-center justify-end gap-1.5">
+                            <span
+                              className="inline-flex items-center gap-1 font-medium text-primary"
+                              title={`Vertragssatz (Admin-only) · ${formatCurrency(trainer.contractedHourlyRate)}/h`}
                             >
-                              <Link href={`/admin/trainers/${trainer.id}`}>
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Details</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title={trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
-                              aria-label={
-                                trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'
-                              }
-                              onClick={() => handleToggleTrainerStatus(trainer.id, trainer.status)}
-                            >
-                              {trainer.status === 'active' ? (
-                                <UserX className="h-4 w-4 text-brand-accent-600" />
-                              ) : (
-                                <UserCheck className="h-4 w-4 text-success-600" />
-                              )}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
+                              {formatCurrency(trainer.contractedHourlyRate)}/h
+                            </span>
+                            {trainer.extraHoursRate != null && (
+                              <Badge
+                                variant="outline"
+                                className="text-2xs px-1.5 py-0"
+                                title={`Zusatzstunden-Satz · ${formatCurrency(trainer.extraHoursRate)}/h`}
+                              >
+                                +Z
+                              </Badge>
+                            )}
+                          </div>
+                        ) : trainer.hourlyRate ? (
+                          // Legacy fallback for trainers created before the dual-rate
+                          // migration was applied (contracted_hourly_rate IS NULL).
+                          <span className="inline-flex items-center gap-1 text-muted-foreground">
+                            <Euro className="h-3.5 w-3.5" />
+                            {formatCurrency(trainer.hourlyRate)}/h
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Details"
+                                aria-label="Details"
+                                asChild
+                              >
+                                <Link href={`/admin/trainers/${trainer.id}`}>
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Details</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title={trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
+                                aria-label={
+                                  trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'
+                                }
+                                onClick={() =>
+                                  handleToggleTrainerStatus(trainer.id, trainer.status)
+                                }
+                              >
+                                {trainer.status === 'active' ? (
+                                  <UserX className="h-4 w-4 text-brand-accent-600" />
+                                ) : (
+                                  <UserCheck className="h-4 w-4 text-success-600" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {/* ── Pagination ─────────────────────────────────────────────────────── */}

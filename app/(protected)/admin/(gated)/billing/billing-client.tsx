@@ -574,7 +574,7 @@ export default function BillingClient({
                           <span
                             className={
                               invoice.paidAmount >= invoice.amount
-                                ? 'text-success-600'
+                                ? 'text-success-700'
                                 : 'text-brand-accent-600'
                             }
                           >
