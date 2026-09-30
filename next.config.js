@@ -299,8 +299,14 @@ const nextConfig = {
     // Exclude Supabase Edge Functions from Next.js build
     config.externals = config.externals || [];
     if (Array.isArray(config.externals)) {
-      config.externals.push(function ({ request }) {
-        return request.includes('supabase/functions');
+      config.externals.push(function ({ request }, callback) {
+        // Webpack's function externals must settle every request. Returning a
+        // boolean leaves normal imports pending and stalls /instrumentation.
+        if (request && /(^|[/\\])supabase[/\\]functions([/\\]|$)/.test(request)) {
+          callback(null, `commonjs ${request}`);
+          return;
+        }
+        callback();
       });
     }
 
