@@ -1,6 +1,6 @@
 # Umgebungen & Datenbanken
 
-> Zuletzt verifiziert: 23. September 2026 (CI-Tests gegen frische Supabase-DB, Auslieferungsweg, lokale Test-/Dev-Server-Rezepte)
+> Zuletzt verifiziert: 30. September 2026 (Seed-Aufrufe gegen package.json und Seed-CLI korrigiert); übrige Abschnitte zuletzt 23. September 2026 (CI-Tests gegen frische Supabase-DB, Auslieferungsweg, lokale Test-/Dev-Server-Rezepte)
 > Warum es genau so aufgeteilt ist (und nicht mit Staging von Anfang an): [`decisions/adr-003-datenbank-umgebungen.md`](decisions/adr-003-datenbank-umgebungen.md)
 
 Dieses Dokument beschreibt, welche Datenbank wofür da ist, wer darauf schreiben darf und wie eine Änderung von der Entwicklung nach Produktion kommt. Es ist ein **lebendes Dokument** — wer die Aufteilung ändert, ändert diese Datei mit.
@@ -80,8 +80,13 @@ DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
 Alle übrigen Variablen (Stripe-Testkeys, Resend) bleiben unverändert. Testdaten:
 
 ```bash
-npm run seed:reset                # baut alle 7 Testvereine neu — jetzt lokal, gefahrlos
+pnpm seed                         # zeigt den Ist-Zustand, ändert keine Daten
+pnpm seed -- --lane=agent --yes    # baut nur die Agent-Lane neu auf
 ```
+
+Ein Vollreset (`pnpm seed -- --all --yes`) löscht auch die Nutzer-Lane und braucht
+vorher die Zustimmung des Menschen. Die alten Scripts `seed:agent` und
+`seed:reset` sind in `package.json` nicht vorhanden.
 
 E-Mails laufen lokal in Inbucket (http://127.0.0.1:54324), gehen also nicht raus.
 
@@ -135,7 +140,7 @@ Danach:
 
 - **Typen:** `types/supabase.ts` aktualisieren (`npm run gen:types`; geht das nicht, von Hand in derselben Form ergänzen — Tabellen/Funktionen alphabetisch). Ohne den Eintrag scheitert `tsc` am neuen RPC-Aufruf.
 - **Doku:** `docs/DATABASE.md` im selben Zug pflegen, sobald Policies, Helper-Funktionen oder das Rollenmodell betroffen sind ([`AGENTS.md`](../AGENTS.md) § Migrationen, Regel 2).
-- **Saubere Gegenprobe** (läuft die Migration auf einer leeren DB?): `supabase db reset` — löscht **alle** lokalen Daten inklusive der Nutzer-Lane. Nur nach Rückfrage beim Menschen; danach ist `npm run seed:reset` nötig (ebenfalls destruktiv). CI führt dieselbe Prüfung bei jedem PR aus.
+- **Saubere Gegenprobe** (läuft die Migration auf einer leeren DB?): `supabase db reset` — löscht **alle** lokalen Daten inklusive der Nutzer-Lane. Nur nach Rückfrage beim Menschen; danach lässt sich die Agent-Lane mit `pnpm seed -- --lane=agent --yes` neu aufbauen. Ein Vollauf (`pnpm seed -- --all --yes`) betrifft beide Lanes und braucht ebenfalls Zustimmung. CI führt dieselbe Prüfung bei jedem PR aus.
 - **Live-Zustand vor dem Schreiben prüfen** (`pg_policies`, `pg_proc`): [`DATABASE.md`](DATABASE.md) § Wie man den echten Live-Zustand prüft.
 - Neue Tabellen zusätzlich in `BACKUP_TABLES` eintragen ([`RUNBOOK-BACKUP-ROLLBACK.md`](RUNBOOK-BACKUP-ROLLBACK.md)).
 
