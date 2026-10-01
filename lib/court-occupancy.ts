@@ -152,9 +152,10 @@ export interface OccupancySession {
 }
 
 /**
- * Platzbelegung: belegte Stunden je Platz (Training, Buchung, Sperre) geteilt durch die
+ * Platzbelegung: belegte Stunden je Platz (Training, Buchung, Sperre-Session und
+ * Platzsperren aus `court_closures`, als Intervall übergeben) geteilt durch die
  * Öffnungsstunden im Zeitraum [from, to). Abgesagte Sessions filtert der Aufrufer heraus.
- * Ergebnis in ganzen Prozent, gedeckelt auf 100 (Überlappungen werden nicht entdoppelt).
+ * Ergebnis in ganzen Prozent, gedeckelt auf 100; Überlappungen auf demselben Platz zählen einmal.
  */
 export function computeCourtOccupancy(
   courts: { id: string; name: string }[],
@@ -163,17 +164,46 @@ export function computeCourtOccupancy(
   from: Date,
   to: Date
 ): { court: string; util: number }[] {
-  let openHours = 0;
+  const days: { start: number; end: number; open: number }[] = [];
   for (let t = from.getTime(); t < to.getTime(); t += OCC_DAY_MS) {
-    openHours += openHoursOn(openingHours, new Date(t));
+    days.push({
+      start: t,
+      end: Math.min(t + OCC_DAY_MS, to.getTime()),
+      open: openHoursOn(openingHours, new Date(t)),
+    });
   }
+  const openHours = days.reduce((sum, d) => sum + d.open, 0);
 
-  const busy = new Map<string, number>();
+  // Intervalle je Platz sammeln und verschmelzen — überlappende Sessions (Training +
+  // Buchung zur selben Zeit, Sperre über einer Buchung) zählen die Zeit nur einmal.
+  const intervals = new Map<string, [number, number][]>();
   for (const s of sessions) {
     if (!s.court_id) continue;
     const start = Math.max(new Date(s.timeslot_start).getTime(), from.getTime());
     const end = Math.min(new Date(s.timeslot_end).getTime(), to.getTime());
-    if (end > start) busy.set(s.court_id, (busy.get(s.court_id) ?? 0) + (end - start) / 3_600_000);
+    if (end > start)
+      intervals.set(s.court_id, [...(intervals.get(s.court_id) ?? []), [start, end]]);
+  }
+  const busy = new Map<string, number>();
+  for (const [courtId, list] of intervals) {
+    list.sort((x, y) => x[0] - y[0]);
+    const merged: [number, number][] = [];
+    for (const [st, en] of list) {
+      const last = merged[merged.length - 1];
+      if (last && st <= last[1]) last[1] = Math.max(last[1], en);
+      else merged.push([st, en]);
+    }
+    // Je Tag höchstens die Öffnungsstunden: eine ganztägige Platzsperre belegt den Tag
+    // zu 100 %, nicht 24 Stunden.
+    // ponytail: Tagesgrenzen in Server-Zeit (UTC auf Vercel) — eine Sperre über
+    // Berliner Mitternacht kann am Rand bis zu 2 h zu viel zählen.
+    let hours = 0;
+    for (const d of days) {
+      let ms = 0;
+      for (const [st, en] of merged) ms += Math.max(0, Math.min(en, d.end) - Math.max(st, d.start));
+      hours += Math.min(d.open, ms / 3_600_000);
+    }
+    busy.set(courtId, hours);
   }
 
   return courts.map((c) => ({

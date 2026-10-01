@@ -117,4 +117,53 @@ describe('computeCourtOccupancy', () => {
       { court: 'Platz 2', util: 10 },
     ]);
   });
+
+  it('zählt überlappende Sessions auf demselben Platz nur einmal', () => {
+    const res = computeCourtOccupancy(
+      courts,
+      [
+        {
+          court_id: 'a',
+          timeslot_start: '2026-06-08T10:00:00Z',
+          timeslot_end: '2026-06-08T12:00:00Z',
+        },
+        {
+          court_id: 'a',
+          timeslot_start: '2026-06-08T11:00:00Z',
+          timeslot_end: '2026-06-08T13:00:00Z',
+        },
+        {
+          court_id: 'a',
+          timeslot_start: '2026-06-08T10:00:00Z',
+          timeslot_end: '2026-06-08T12:00:00Z',
+        },
+      ],
+      hours,
+      from,
+      to
+    );
+    expect(res[0]).toEqual({ court: 'Platz 1', util: 15 });
+  });
+
+  it('zählt eine ganztägige Platzsperre als voll belegten Tag, nicht als 24 h', () => {
+    const res = computeCourtOccupancy(
+      courts,
+      [
+        {
+          court_id: 'b',
+          timeslot_start: '2026-06-08T00:00:00Z',
+          timeslot_end: '2026-06-09T00:00:00Z',
+        },
+        {
+          court_id: 'b',
+          timeslot_start: '2026-06-08T10:00:00Z',
+          timeslot_end: '2026-06-08T12:00:00Z',
+        },
+      ],
+      hours,
+      from,
+      to
+    );
+    expect(res[1]).toEqual({ court: 'Platz 2', util: 50 });
+  });
 });

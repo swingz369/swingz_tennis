@@ -177,9 +177,33 @@ export default async function AnalyticsPage({
                 .order('id'),
             'Sessions für Platzbelegung laden'
           );
+    // Platzsperren (court_closures) belegen den Platz ebenfalls; end_date = null heißt
+    // „bis auf Weiteres".
+    const occupancyClosures =
+      courtIds.length === 0
+        ? []
+        : await fetchAll<{ court_id: string; start_date: string; end_date: string | null }>(
+            () =>
+              supabase
+                .from('court_closures')
+                .select('court_id, start_date, end_date')
+                .in('court_id', courtIds)
+                .eq('is_active', true)
+                .lt('start_date', occupancyTo.toISOString())
+                .or(`end_date.is.null,end_date.gt.${occupancyFrom.toISOString()}`)
+                .order('id'),
+            'Platzsperren für Platzbelegung laden'
+          );
     const capacityUtilization = computeCourtOccupancy(
       courts ?? [],
-      occupancySessions,
+      [
+        ...occupancySessions,
+        ...occupancyClosures.map((c) => ({
+          court_id: c.court_id,
+          timeslot_start: c.start_date,
+          timeslot_end: c.end_date ?? occupancyTo.toISOString(),
+        })),
+      ],
       club?.opening_hours,
       occupancyFrom,
       occupancyTo
@@ -198,14 +222,38 @@ export default async function AnalyticsPage({
       0
     );
 
+    // Umsatz nach Verein ergibt nur bei mehreren Vereinen Sinn (Tennisschule/Superadmin).
+    // Ein Admin hat genau einen Verein — dort bleibt die Liste leer und das Diagramm aus.
+    let revenueByClub: { club: string; revenue: number }[] = [];
+    if (clubs.length > 1) {
+      const invoices = await fetchAll<{ club_id: string; amount: number | null }>(
+        () =>
+          supabase
+            .from('invoices')
+            .select('club_id, amount')
+            .in(
+              'club_id',
+              clubs.map((c) => c.id)
+            )
+            .eq('status', 'paid')
+            .order('id'),
+        'Umsatz je Verein laden'
+      );
+      const byClub = new Map<string, number>();
+      for (const inv of invoices) {
+        byClub.set(inv.club_id, (byClub.get(inv.club_id) ?? 0) + (Number(inv.amount) || 0));
+      }
+      revenueByClub = clubs
+        .map((c) => ({ club: c.name, revenue: byClub.get(c.id) ?? 0 }))
+        .filter((r) => r.revenue > 0);
+    }
+
     analyticsData = {
       totalMembers: totalMembers ?? 0,
       totalBookings: totalBookings ?? 0,
       totalRevenue,
       totalSessions: totalSessionCount,
-      revenueByClub: [
-        { club: clubs.find((c) => c.id === effectiveClubId)?.name ?? '', revenue: totalRevenue },
-      ],
+      revenueByClub,
       bookingsOverTime,
       sessionsPerTrainer,
       capacityUtilization,

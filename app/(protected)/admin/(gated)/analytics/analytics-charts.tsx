@@ -70,42 +70,44 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
         </Card>
       </ScrollReveal>
 
-      {/* Revenue by Club (Pie) */}
-      <ScrollReveal delay={150}>
-        <Card variant="bordered" className="p-6 transition-all duration-300 hover:shadow-md">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Umsatz nach Verein</h3>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={data.revenueByClub}
-                  dataKey="revenue"
-                  nameKey="club"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  label={({ name, percent }) => `${name} ${(percent! * 100).toFixed(0)}%`}
-                  animationDuration={1200}
-                >
-                  {data.revenueByClub.map((_, idx) => (
-                    <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value) => formatCurrency(Number(value))}
-                  contentStyle={{
-                    borderRadius: '8px',
-                    border: '1px solid hsl(var(--border))',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                    backgroundColor: 'hsl(var(--popover))',
-                    color: 'hsl(var(--popover-foreground))',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </ScrollReveal>
+      {/* Revenue by Club (Pie) — nur mit mindestens zwei Vereinen mit Umsatz */}
+      {data.revenueByClub.length > 1 && (
+        <ScrollReveal delay={150}>
+          <Card variant="bordered" className="p-6 transition-all duration-300 hover:shadow-md">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Umsatz nach Verein</h3>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data.revenueByClub}
+                    dataKey="revenue"
+                    nameKey="club"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label={({ name, percent }) => `${name} ${(percent! * 100).toFixed(0)}%`}
+                    animationDuration={1200}
+                  >
+                    {data.revenueByClub.map((_, idx) => (
+                      <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) => formatCurrency(Number(value))}
+                    contentStyle={{
+                      borderRadius: '8px',
+                      border: '1px solid hsl(var(--border))',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                      backgroundColor: 'hsl(var(--popover))',
+                      color: 'hsl(var(--popover-foreground))',
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </ScrollReveal>
+      )}
 
       {/* Sessions per Trainer (Bar) */}
       <ScrollReveal delay={200}>
