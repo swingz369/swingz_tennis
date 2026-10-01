@@ -11,7 +11,7 @@
  * Ausgelagert aus unified-court-calendar.tsx (Sanierungsplan Phase 2.2).
  */
 import type { ReactNode } from 'react';
-import { format, isSameDay, getDay as dateFnsGetDay } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -44,7 +44,7 @@ export interface AgendaViewProps {
   openingHours: unknown;
   getPlanEntriesForCourtAndDay: (
     courtId: string,
-    dayOfWeek: number
+    date: Date
   ) => (PlanEntry & { court_id: string })[];
   nextFreeSlot: { courtId: string; courtName: string; date: Date; timeSlot: string } | null;
   isAdmin: boolean;
@@ -111,7 +111,7 @@ export function AgendaView({
   const activeCourtId = selectedCourtId ?? courts[0]?.id ?? null;
   const activeCourt = activeCourtId ? (courts.find((c) => c.id === activeCourtId) ?? null) : null;
   const planEntriesForDay = activeCourtId
-    ? getPlanEntriesForCourtAndDay(activeCourtId, dateFnsGetDay(selectedDate))
+    ? getPlanEntriesForCourtAndDay(activeCourtId, selectedDate)
     : [];
   const isToday = isSameDay(selectedDate, new Date());
   const nextFreeLabel =

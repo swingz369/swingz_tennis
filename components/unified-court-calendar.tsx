@@ -223,6 +223,7 @@ export default function UnifiedCourtCalendar({
       visibleSessions,
       courtClosures,
       openingHours,
+      dayOffFor,
     }
   );
 

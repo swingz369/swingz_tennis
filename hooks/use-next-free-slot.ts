@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { addDays, getDay as dateFnsGetDay } from 'date-fns';
+import type { DayOff } from '@/hooks/use-holidays';
 import {
   CALENDAR_TIME_SLOTS as TIME_SLOTS,
   getSlotStatus,
@@ -22,7 +23,7 @@ function findNextFreeSlot(
   courts: { id: string; name: string }[],
   sessions: Session[],
   closures: CourtClosure[],
-  getPlanEntries: (courtId: string, dayOfWeek: number) => (PlanEntry & { court_id: string })[],
+  getPlanEntries: (courtId: string, date: Date) => (PlanEntry & { court_id: string })[],
   openingHours: unknown
 ): { courtId: string; courtName: string; date: Date; timeSlot: string } | null {
   if (courts.length === 0) return null;
@@ -34,7 +35,7 @@ function findNextFreeSlot(
       const slotDateTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), h, m);
       if (slotDateTime <= now) continue;
       const court = courts.find((c) => {
-        const planEntriesForDay = getPlanEntries(c.id, dateFnsGetDay(date));
+        const planEntriesForDay = getPlanEntries(c.id, date);
         const { status } = getSlotStatus(
           c.id,
           date,
@@ -61,26 +62,31 @@ export function useNextFreeSlot({
   visibleSessions,
   courtClosures,
   openingHours,
+  dayOffFor,
 }: {
   visiblePlanSlots: PlanEntry[];
+  dayOffFor: (date: Date) => DayOff | null;
   courts: { id: string; name: string }[];
   visibleSessions: Session[];
   courtClosures: CourtClosure[];
   openingHours: unknown;
 }) {
+  // In Ferien und an Feiertagen findet kein Training statt — der Saisonplan legt dort beim
+  // Veröffentlichen keine Termine an, also belegt er die Plätze auch im Kalender nicht.
   const getPlanEntriesForCourtAndDay = useCallback(
-    (courtId: string, dayOfWeek: number) => {
-      const apiDay = jsDayToApiDay(dayOfWeek);
+    (courtId: string, date: Date) => {
+      if (dayOffFor(date)) return [];
+      const apiDay = jsDayToApiDay(dateFnsGetDay(date));
       return visiblePlanSlots.filter(
         (slot) => slot.court_id === courtId && slot.day_of_week === apiDay
       );
     },
-    [visiblePlanSlots]
+    [visiblePlanSlots, dayOffFor]
   );
 
   const getPlanEntriesForNextFree = useCallback(
-    (courtId: string, dayOfWeek: number) =>
-      getPlanEntriesForCourtAndDay(courtId, dayOfWeek).filter(
+    (courtId: string, date: Date) =>
+      getPlanEntriesForCourtAndDay(courtId, date).filter(
         (e): e is PlanEntry & { court_id: string } => e.court_id !== null
       ),
     [getPlanEntriesForCourtAndDay]

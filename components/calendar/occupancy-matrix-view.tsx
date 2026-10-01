@@ -4,7 +4,7 @@
  * Belegungs-Übersicht: alle Plätze × Stunden eines Tages auf einen Blick.
  * Freie Zelle → Buchen, alles andere zeigt nur den Status (Details im Tag-/Agenda-Kalender).
  */
-import { format, getDay } from 'date-fns';
+import { format } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -45,13 +45,13 @@ export function OccupancyMatrixView({
   openingHours: unknown;
   getPlanEntriesForCourtAndDay: (
     courtId: string,
-    dow: number
+    date: Date
   ) => (PlanEntry & { court_id: string })[];
   goToPrevious: () => void;
   goToNext: () => void;
   onBook: (courtId: string, date: Date, timeSlot: string) => void;
 }) {
-  const planEntries = courts.flatMap((c) => getPlanEntriesForCourtAndDay(c.id, getDay(date)));
+  const planEntries = courts.flatMap((c) => getPlanEntriesForCourtAndDay(c.id, date));
 
   return (
     <div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">

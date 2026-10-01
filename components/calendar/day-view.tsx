@@ -8,7 +8,7 @@
  *
  * Ausgelagert aus unified-court-calendar.tsx (Sanierungsplan Phase 2.2).
  */
-import { format, isSameDay, getDay as dateFnsGetDay } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -30,7 +30,7 @@ export interface DayViewProps {
   targetDate: Date;
   activeDragId?: string | null;
   displayCourts: { id: string; name: string; surface: string; hasIndoor?: boolean }[];
-  getPlanEntriesForCourtAndDay: (courtId: string, dayOfWeek: number) => PlanEntry[];
+  getPlanEntriesForCourtAndDay: (courtId: string, date: Date) => PlanEntry[];
   visibleSessions: Session[];
   sessions: Session[];
   courtClosures: CourtClosure[];
@@ -79,7 +79,7 @@ export function DayView({
   // Gather all plan entries for the target day across all courts
   const planEntriesByCourt = new Map<string, PlanEntry[]>();
   for (const court of displayCourts) {
-    const entries = getPlanEntriesForCourtAndDay(court.id, dateFnsGetDay(targetDate));
+    const entries = getPlanEntriesForCourtAndDay(court.id, targetDate);
     if (entries.length > 0) planEntriesByCourt.set(court.id, entries);
   }
 

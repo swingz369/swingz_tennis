@@ -8,15 +8,7 @@
  * Ausgelagert aus unified-court-calendar.tsx (Sanierungsplan Phase 2.2).
  */
 import { useRef } from 'react';
-import {
-  format,
-  isSameDay,
-  getDay as dateFnsGetDay,
-  addWeeks,
-  subWeeks,
-  addDays,
-  subDays,
-} from 'date-fns';
+import { format, isSameDay, addWeeks, subWeeks, addDays, subDays } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Lock, PartyPopper, Unlock, User, Wrench } from 'lucide-react';
@@ -56,7 +48,7 @@ export interface WeekViewProps {
   mobileSelectedDay: Date;
   setMobileSelectedDay: (date: Date) => void;
   displayCourts: { id: string; name: string; surface: string; hasIndoor?: boolean }[];
-  getPlanEntriesForCourtAndDay: (courtId: string, dayOfWeek: number) => PlanEntry[];
+  getPlanEntriesForCourtAndDay: (courtId: string, date: Date) => PlanEntry[];
   visibleSessions: Session[];
   sessions: Session[];
   courtClosures: CourtClosure[];
@@ -258,7 +250,7 @@ export function WeekView({
         </div>
         {weekDays.map((day, dayIdx) => {
           const courtCols = displayCourts.map((court) => {
-            const planEntriesForDay = getPlanEntriesForCourtAndDay(court.id, dateFnsGetDay(day));
+            const planEntriesForDay = getPlanEntriesForCourtAndDay(court.id, day);
             const planForCourt = planEntriesForDay.filter(
               (e): e is PlanEntry & { court_id: string } => e.court_id !== null
             );
