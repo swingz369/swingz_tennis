@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> Zuletzt verifiziert: 30. September 2026 (Matchday-Abschlussprüfung: Code, Token-Tests, responsive Browsermatrix und axe-core; spätere historische Detailkapitel nicht vollständig neu abgenommen)
+> Zuletzt verifiziert: 1. Oktober 2026 (Diagramm-Farben nach Matchday; zuvor 30.09. Matchday-Abschlussprüfung: Code, Token-Tests, responsive Browsermatrix und axe-core; spätere historische Detailkapitel nicht vollständig neu abgenommen)
 
 > **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
@@ -268,6 +268,12 @@ Commit. Plan und Begründung: `ARCHIV/2026-09-19-ui-einheitlichkeit-analyse-und-
 **Bausteine nach der Matchday-Vorlage (27.09.2026):** Radius `rounded-xl` = 12 px (Panels, Dialoge), `rounded-md` = 8 px (Buttons, Felder, Umschalter), `rounded` = 4 px (Tags/Badges, Segmente im Umschalter). `Card` trägt keinen eigenen Innenabstand, sobald `CardHeader`/`CardContent` drin sind. `Table`: Kopf in Versalien auf `bg-muted`, Zellen `px-5 py-4`, Ziffern `tabular-nums`. `Button`: 44 px hoch (`default`/`icon`), Variante `highlight` = Lime-Fläche für die **eine** Hauptaktion einer Seite (ADR-007). `Tabs` = Segment-Umschalter mit Rahmen, aktives Segment `bg-muted`. `KpiBand` = Kennzahlen-Panel mit Trennlinien. Eingabefelder rahmen mit `--input` (3:1). Die verbliebenen `text-[Npx]` (Marke, Hero-Zahl, Mono-Beschriftungen) sind bewusst und über die Ratsche eingefroren.
 
 **Zahlen und Daten (27.09.2026):** Beträge nur über `formatCurrency` („1.234,56 €"), Stunden über `formatHours` („1,5 h"), Tabellendaten über `formatDateNumeric` — nie `toFixed()` mit angehängtem „€"/„h".
+
+**Diagramme (01.10.2026):** Serienfarben nur aus `--chart-1…5` (`hsl(var(--chart-n))` in Recharts/SVG,
+`bg-chart-n` als Klasse) — hell Nachtblau, Blau, Oliv, Terrakotta, Graublau; dunkel mit Lime vorn.
+Gitter `hsl(var(--border))`, Achsen und Achsentext `hsl(var(--muted-foreground))`, Tooltip
+`--popover`/`--popover-foreground`. Statusbedeutung (Zusage/Absage) bleibt bei success/error/warning.
+Hex-Literale im UI-Code weist die Ratsche „Hex-Farbe statt Token" ab (Grenze 0).
 
 **Dashboards (Stand 19.09.2026):** Owner, Superadmin, Admin, Trainer und Mitglied bauen bereits gleich — `PageHeader` → `KpiBand` → Schnellaktionen/Karten. Die Analyse hatte das zu pessimistisch gezählt; der Aufbau ist nicht das Problem, sondern nur die Handbau-Kacheln auf den übrigen Seiten.
 

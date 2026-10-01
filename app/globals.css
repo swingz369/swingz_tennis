@@ -80,6 +80,14 @@
   --highlight-foreground: 214 52% 19%;
   /* Termine im Kalender (Randstreifen, Balken) — Grafik, 3:1 gegen die Karte. */
   --event: 211 34% 50%;
+  /* Diagramme (Recharts/SVG) — Reihenfolge = Serienreihenfolge. Nachtblau zuerst,
+     danach Blau, Oliv, Terrakotta, Graublau: aus der Matchday-Palette, im Dark
+     Mode mit Lime vorn. Gitter/Achsen nehmen --border/--muted-foreground. */
+  --chart-1: 214 52% 19%;
+  --chart-2: 213 61% 38%;
+  --chart-3: 68 100% 21%;
+  --chart-4: 17 51% 44%;
+  --chart-5: 211 34% 50%;
 
   /* ── Brand Tokens — auf dieselben Werte wie die shadcn-Token gelegt, damit
      die ~400 `*-brand-*`-Klassen ohne Umbau mitziehen. */
@@ -206,6 +214,11 @@
   --highlight: 70 89% 62%;
   --highlight-foreground: 214 52% 19%;
   --event: 213 51% 67%;
+  --chart-1: 70 89% 62%;
+  --chart-2: 216 100% 83%;
+  --chart-3: 213 51% 67%;
+  --chart-4: 22 62% 62%;
+  --chart-5: 213 30% 74%;
 
   /* Brand-Dunkel ist im Dark-Theme heller als der Grund: dunkle Inseln
      (Hero-Karte, Saison-Karte) sollen hervortreten, nicht als Loch wirken. */

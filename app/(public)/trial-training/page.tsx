@@ -67,9 +67,7 @@ export default async function PublicTrialBookingPage({ searchParams }: PageProps
                 height={48}
                 className="rounded-full object-cover border-2 border-border"
               />
-              <span className="text-xl font-bold text-brand-primary dark:text-white">
-                {clubInfo.name}
-              </span>
+              <span className="text-xl font-bold text-foreground">{clubInfo.name}</span>
             </div>
           ) : (
             <Link href="/" className="inline-flex items-center gap-2 mb-4">
@@ -78,9 +76,7 @@ export default async function PublicTrialBookingPage({ searchParams }: PageProps
             </Link>
           )}
           {clubInfo && !clubInfo.logoUrl && (
-            <p className="text-lg font-semibold text-brand-primary dark:text-white mb-4">
-              {clubInfo.name}
-            </p>
+            <p className="text-lg font-semibold text-foreground mb-4">{clubInfo.name}</p>
           )}
         </div>
 

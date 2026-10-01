@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { colors } from '@/styles/theme';
 
 export interface PieChartDatum {
   /** Stable identifier, used as React key + aria-label. */
@@ -9,7 +10,7 @@ export interface PieChartDatum {
   label: string;
   /** Numeric value (>= 0). Zero values are dropped from the chart. */
   value: number;
-  /** Tailwind color token, e.g. "success-500" or a hex like "#16a34a". */
+  /** Status token from styles/theme.ts, e.g. "success-500", or any CSS color. */
   color: string;
 }
 
@@ -27,52 +28,14 @@ interface Props {
   ariaLabel?: string;
 }
 
-const DEFAULT_COLORS = [
-  '#16a34a', // success-600
-  '#dc2626', // error-600
-  '#d97706', // warning-600
-  '#2563eb', // info-600
-  '#6b7280', // gray-500
-  '#9333ea', // info-600
-];
+const DEFAULT_COLORS = [1, 2, 3, 4, 5].map((n) => `hsl(var(--chart-${n}))`);
 
-/** Map a Tailwind token like "success-500" to a hex equivalent. */
+/** Map a status token like "success-500" to its value in styles/theme.ts. */
 function resolveColor(token: string, fallbackIndex: number): string {
-  if (token.startsWith('#') || token.startsWith('rgb')) return token;
-  const map: Record<string, string> = {
-    'success-100': '#dcfce7',
-    'success-200': '#bbf7d0',
-    'success-300': '#86efac',
-    'success-400': '#4ade80',
-    'success-500': '#22c55e',
-    'success-600': '#16a34a',
-    'success-700': '#15803d',
-    'error-100': '#fee2e2',
-    'error-200': '#fecaca',
-    'error-300': '#fca5a5',
-    'error-400': '#f87171',
-    'error-500': '#ef4444',
-    'error-600': '#dc2626',
-    'error-700': '#b91c1c',
-    'warning-100': '#fef3c7',
-    'warning-200': '#fde68a',
-    'warning-300': '#fcd34d',
-    'warning-400': '#fbbf24',
-    'warning-500': '#f59e0b',
-    'warning-600': '#d97706',
-    'warning-700': '#b45309',
-    'info-100': '#dbeafe',
-    'info-200': '#bfdbfe',
-    'info-300': '#93c5fd',
-    'info-400': '#60a5fa',
-    'info-500': '#3b82f6',
-    'info-600': '#2563eb',
-    'info-700': '#1d4ed8',
-    'gray-300': '#d1d5db',
-    'gray-400': '#9ca3af',
-    'gray-500': '#6b7280',
-  };
-  return map[token] ?? DEFAULT_COLORS[fallbackIndex % DEFAULT_COLORS.length];
+  if (token.startsWith('#') || token.startsWith('rgb') || token.startsWith('hsl')) return token;
+  const [scale, shade] = token.split('-');
+  const value = (colors as Record<string, Record<string, string> | undefined>)[scale]?.[shade];
+  return value ?? DEFAULT_COLORS[fallbackIndex % DEFAULT_COLORS.length];
 }
 
 export function PieChart({
@@ -86,7 +49,6 @@ export function PieChart({
 }: Props) {
   const total = data.reduce((acc, d) => acc + Math.max(0, d.value), 0);
   const radius = size / 2;
-  const innerRadius = strokeWidth > 0 ? radius - strokeWidth : 0;
   const circumference = 2 * Math.PI * (radius - strokeWidth / 2);
 
   if (total <= 0) {
@@ -185,10 +147,6 @@ export function PieChart({
               return <path key={s.key} d={path} fill={s.color} />;
             })}
           </g>
-        )}
-        {/* Inner mask for clean donut hole (visual polish) */}
-        {innerRadius > 0 && (
-          <circle cx={radius} cy={radius} r={innerRadius} fill="hsl(var(--background, white))" />
         )}
       </svg>
       {(centerLabel || centerSubLabel) && (

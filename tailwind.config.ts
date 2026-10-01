@@ -16,7 +16,7 @@ const config: Config = {
   blocklist: ['[-:T.Z]'],
   // `bg-gradient-hero` und `bg-gradient-accent` fielen am 18.08.2026 weg —
   // beide Verläufe hatten keine Verwendung mehr (siehe globals.css).
-  safelist: ['bg-gradient-primary', 'animate-shimmer'],
+  safelist: ['animate-shimmer'],
   theme: {
     extend: {
       colors: {
@@ -43,6 +43,7 @@ const config: Config = {
         highlight: 'hsl(var(--highlight))',
         'highlight-foreground': 'hsl(var(--highlight-foreground))',
         event: 'hsl(var(--event))',
+        chart: Object.fromEntries([1, 2, 3, 4, 5].map((n) => [n, `hsl(var(--chart-${n}))`])),
         brand: {
           primary: 'hsl(var(--brand-primary))',
           light: 'hsl(var(--brand-primary-light))',

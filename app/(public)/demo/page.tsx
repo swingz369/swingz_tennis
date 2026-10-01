@@ -180,8 +180,8 @@ export default function DemoPage() {
 
         {/* ═══════════ CTA ═══════════ */}
         <section className="pt-6">
-          <div className="relative overflow-hidden rounded-xl bg-gradient-primary text-white px-6 py-12 sm:px-16 sm:py-16 text-center shadow-strong">
-            <div className="relative">
+          <div className="rounded-xl bg-brand-secondary text-white px-6 py-12 sm:px-16 sm:py-16 text-center">
+            <div>
               <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
                 Bereit für euren eigenen Verein?
               </h2>
@@ -190,7 +190,7 @@ export default function DemoPage() {
               </p>
               <Button
                 size="lg"
-                className="mt-6 bg-white text-brand-primary hover:bg-white/90 hover:brightness-100"
+                className="mt-6 bg-white text-brand-secondary hover:bg-white/90 hover:brightness-100"
                 asChild
               >
                 <Link href="/register">

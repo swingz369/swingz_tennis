@@ -46,9 +46,9 @@ interface GithubPayload {
 }
 
 const SOURCE_COLORS: Record<PerfPoint['source'], string> = {
-  'local-bench': '#1B4332',
-  'local-scaling': '#40916C',
-  github: '#7C3AED',
+  'local-bench': 'hsl(var(--chart-1))',
+  'local-scaling': 'hsl(var(--chart-2))',
+  github: 'hsl(var(--chart-4))',
 };
 
 export function PerfHistoryClient() {

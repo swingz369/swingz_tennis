@@ -62,7 +62,7 @@ export function PerfHistoryChart({ points, colors }: ChartProps) {
       if (!groups.has(key)) {
         groups.set(key, {
           points: [],
-          color: colors[p.source] ?? '#1B4332',
+          color: colors[p.source] ?? 'hsl(var(--chart-1))',
           label:
             p.numMembers != null
               ? `${SOURCE_LABELS[p.source]} (n=${p.numMembers})`
@@ -109,20 +109,16 @@ export function PerfHistoryChart({ points, colors }: ChartProps) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={rows} margin={{ top: 10, right: 24, left: 0, bottom: 10 }}>
-        <CartesianGrid
-          strokeDasharray="3 3"
-          stroke="currentColor"
-          className="text-border/60 dark:text-white/10"
-        />
+        <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border" />
         <XAxis
           dataKey="timestampLabel"
-          tick={{ fontSize: 11 }}
+          tick={{ fontSize: 11, fill: 'currentColor' }}
           stroke="currentColor"
           className="text-muted-foreground"
           interval="preserveStartEnd"
         />
         <YAxis
-          tick={{ fontSize: 11 }}
+          tick={{ fontSize: 11, fill: 'currentColor' }}
           stroke="currentColor"
           className="text-muted-foreground"
           label={{
@@ -135,9 +131,9 @@ export function PerfHistoryChart({ points, colors }: ChartProps) {
         <Tooltip
           contentStyle={{
             borderRadius: 8,
-            border: '1px solid var(--border, #e5e7eb)',
-            backgroundColor: 'var(--background, #ffffff)',
-            color: 'var(--foreground, #111827)',
+            border: '1px solid hsl(var(--border))',
+            backgroundColor: 'hsl(var(--popover))',
+            color: 'hsl(var(--popover-foreground))',
             fontSize: 12,
             boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
           }}

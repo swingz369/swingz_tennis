@@ -20,7 +20,9 @@ import {
 import { Card } from '@/components/ui/card';
 import { ScrollReveal } from '@/components/animations';
 
-const COLORS = ['#1B4332', '#40916C', '#52B788', '#74C69D', '#95D5B2'];
+const COLORS = [1, 2, 3, 4, 5].map((n) => `hsl(var(--chart-${n}))`);
+const GRID = 'hsl(var(--border))';
+const AXIS = 'hsl(var(--muted-foreground))';
 
 interface ChartData {
   revenueByClub: { club: string; revenue: number }[];
@@ -39,9 +41,9 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.bookingsOverTime}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#6b7280" />
-                <YAxis tick={{ fontSize: 12 }} stroke="#6b7280" allowDecimals={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+                <XAxis dataKey="date" tick={{ fontSize: 12, fill: AXIS }} stroke={AXIS} />
+                <YAxis tick={{ fontSize: 12, fill: AXIS }} stroke={AXIS} allowDecimals={false} />
                 <Tooltip
                   contentStyle={{
                     borderRadius: '8px',
@@ -56,9 +58,9 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
                 <Line
                   type="monotone"
                   dataKey="bookings"
-                  stroke="#1B4332"
+                  stroke={COLORS[0]}
                   strokeWidth={2}
-                  dot={{ fill: '#1B4332', r: 4 }}
+                  dot={{ fill: COLORS[0], r: 4 }}
                   activeDot={{ r: 6 }}
                   animationDuration={1500}
                 />
@@ -112,19 +114,19 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.sessionsPerTrainer} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID} horizontal={false} />
                 <XAxis
                   type="number"
-                  tick={{ fontSize: 12 }}
-                  stroke="#6b7280"
+                  tick={{ fontSize: 12, fill: AXIS }}
+                  stroke={AXIS}
                   allowDecimals={false}
                 />
                 <YAxis
                   dataKey="trainer"
                   type="category"
                   width={100}
-                  tick={{ fontSize: 12 }}
-                  stroke="#6b7280"
+                  tick={{ fontSize: 12, fill: AXIS }}
+                  stroke={AXIS}
                 />
                 <Tooltip
                   contentStyle={{
@@ -138,7 +140,7 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
                 />
                 <Bar
                   dataKey="sessions"
-                  fill="#1B4332"
+                  fill={COLORS[0]}
                   radius={[0, 4, 4, 0]}
                   animationDuration={1200}
                 />
@@ -155,20 +157,20 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.capacityUtilization} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID} horizontal={false} />
                 <XAxis
                   type="number"
                   domain={[0, 100]}
-                  tick={{ fontSize: 12 }}
-                  stroke="#6b7280"
+                  tick={{ fontSize: 12, fill: AXIS }}
+                  stroke={AXIS}
                   allowDecimals={false}
                 />
                 <YAxis
                   dataKey="court"
                   type="category"
                   width={80}
-                  tick={{ fontSize: 12 }}
-                  stroke="#6b7280"
+                  tick={{ fontSize: 12, fill: AXIS }}
+                  stroke={AXIS}
                 />
                 <Tooltip
                   contentStyle={{
@@ -180,7 +182,12 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
                   }}
                   formatter={(value) => [`${value}%`, 'Auslastung']}
                 />
-                <Bar dataKey="util" fill="#40916C" radius={[0, 4, 4, 0]} animationDuration={1200} />
+                <Bar
+                  dataKey="util"
+                  fill={COLORS[1]}
+                  radius={[0, 4, 4, 0]}
+                  animationDuration={1200}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>

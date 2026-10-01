@@ -330,7 +330,7 @@ export function PositionedPlanBlock({
       style={{
         top: `${topPx}px`,
         height: `${heightPx}px`,
-        backgroundColor: entry.group_color || '#7c3aed',
+        backgroundColor: entry.group_color || 'hsl(var(--brand-dark))',
       }}
       title={`${entry.group_name} · ${entry.trainer_name || ''} · ${entry.start_time}–${entry.end_time}`}
     >

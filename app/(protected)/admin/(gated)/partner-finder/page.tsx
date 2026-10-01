@@ -29,12 +29,12 @@ const levelLabels: Record<string, string> = {
 };
 
 const levelColors: Record<string, string> = {
-  beginner: 'from-success-500 to-success-600',
-  advanced_beginner: 'from-info-500 to-info-600',
-  intermediate: 'from-warning-500 to-brand-accent-600',
-  advanced: 'from-brand-accent-500 to-error-600',
-  tournament: 'from-info-500 to-info-600',
-  unbekannt: 'from-gray-400 to-gray-500',
+  beginner: 'bg-chart-5',
+  advanced_beginner: 'bg-chart-3',
+  intermediate: 'bg-chart-2',
+  advanced: 'bg-chart-4',
+  tournament: 'bg-chart-1',
+  unbekannt: 'bg-muted-foreground',
 };
 
 /**
@@ -127,7 +127,7 @@ export default function PartnerFinderOverviewPage() {
                           className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50"
                         >
                           <div
-                            className={`h-3 w-3 rounded-full bg-gradient-to-br ${levelColors[level] ?? 'from-gray-400 to-gray-500'}`}
+                            className={`h-3 w-3 rounded-full ${levelColors[level] ?? 'bg-muted-foreground'}`}
                           />
                           <span className="text-sm font-medium">{levelLabels[level] ?? level}</span>
                           <span className="text-sm text-muted-foreground">({count})</span>

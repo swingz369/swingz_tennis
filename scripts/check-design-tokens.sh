@@ -54,6 +54,9 @@ ratchet 'Flächen-Spinner statt Skeleton' 7 '<Loader2 className="h-[68] w-[68] a
 
 ratchet 'Schwebende Flächen: shadow-lg statt shadow-xl/2xl' 0 '\bshadow-(xl|2xl)\b' 'components/ui/'
 ratchet 'h2 semibold statt bold (wie PageHeader)' 0 '<h2[^>]*font-bold' 'components/ui/'
+# Farben als Hex-Literal (Diagramme, Inline-Styles) umgehen die Palette-Prüfung oben und kippen nicht
+# im Dark Mode. Diagramme nehmen hsl(var(--chart-1…5)), Gitter/Achsen --border/--muted-foreground.
+ratchet 'Hex-Farbe statt Token' 0 "[\"'\`]#[0-9a-fA-F]{6}[\"'\`]" 'components/ui/'
 
 # Statusflächen sind themefähig (globals.css: --success-50 … --info-text-900 kippen im .dark von selbst).
 # Ein zusätzliches dark:-Gegenstück derselben Farbe ist doppelt gepflegt und driftet.
