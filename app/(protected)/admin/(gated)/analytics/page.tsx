@@ -5,7 +5,9 @@ import { AnalyticsTabsClient } from './analytics-tabs-client';
 import { ClubSelector } from './club-selector';
 import type { AnalyticsData } from './analytics-client';
 
+import { format, getISOWeek, parseISO, startOfISOWeek } from 'date-fns';
 import { createLogger } from '@/lib/logger';
+import { fetchAll } from '@/infrastructure/persistence/repositories/paged';
 
 const log = createLogger('admin:analytics:page');
 
@@ -84,27 +86,35 @@ export default async function AnalyticsPage({
           .limit(200),
       ]);
 
-    // Bookings over last 6 months grouped by month
+    // Buchungen der letzten 6 Monate je Kalenderwoche. bookings hat kein created_at —
+    // die Abfrage scheiterte daran still und das Diagramm blieb leer.
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-    const { data: recentBookings } = await supabase
-      .from('bookings')
-      .select('id, created_at')
-      .eq('club_id', effectiveClubId)
-      .gte('created_at', sixMonthsAgo.toISOString())
-      .order('created_at', { ascending: true });
+    const recentBookings = await fetchAll<{ booked_at: string | null }>(
+      () =>
+        supabase
+          .from('bookings')
+          .select('booked_at')
+          .eq('club_id', effectiveClubId)
+          .gte('booked_at', sixMonthsAgo.toISOString())
+          .order('booked_at', { ascending: true })
+          .order('id'),
+      'Buchungen für Vereinsanalyse laden'
+    );
 
-    // Group bookings by week
     const bookingsByWeek = new Map<string, number>();
-    (recentBookings ?? []).forEach((b: any) => {
-      const weekKey = b.created_at?.substring(0, 10) ?? '';
+    for (const b of recentBookings) {
+      if (!b.booked_at) continue;
+      const weekKey = format(startOfISOWeek(parseISO(b.booked_at)), 'yyyy-MM-dd');
       bookingsByWeek.set(weekKey, (bookingsByWeek.get(weekKey) ?? 0) + 1);
-    });
+    }
 
-    const bookingsOverTime = Array.from(bookingsByWeek.entries())
-      .map(([date, bookings]) => ({ date, bookings }))
-      .slice(0, 30);
+    // Aufsteigend sortiert, Beschriftung = Montag der Woche („KW 38 · 14.09.")
+    const bookingsOverTime = Array.from(bookingsByWeek.entries()).map(([monday, bookings]) => {
+      const d = parseISO(monday);
+      return { date: `KW ${getISOWeek(d)} · ${format(d, 'dd.MM.')}`, bookings };
+    });
 
     // Sessions per trainer
     const trainerSessionCounts = new Map<string, number>();
@@ -118,12 +128,14 @@ export default async function AnalyticsPage({
     const trainerIds = Array.from(trainerSessionCounts.keys());
     const trainerNamesMap = new Map<string, string>();
     if (trainerIds.length > 0) {
-      const { data: trainerUsers } = await supabase
-        .from('users')
-        .select('id, full_name')
+      // sessions.trainer_id zeigt auf trainers.id, nicht auf users.id — die frühere
+      // users-Abfrage fand nie etwas, jeder Balken hieß „Trainer".
+      const { data: trainers } = await supabase
+        .from('trainers')
+        .select('id, name')
         .in('id', trainerIds);
-      (trainerUsers ?? []).forEach((u: any) => {
-        trainerNamesMap.set(u.id, u.full_name || 'Trainer');
+      (trainers ?? []).forEach((t) => {
+        trainerNamesMap.set(t.id, t.name || 'Trainer');
       });
     }
 
