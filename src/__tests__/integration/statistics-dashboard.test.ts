@@ -216,7 +216,11 @@ vi.mock('@/infrastructure/persistence/repositories/hours-log.repository', () => 
 //    über den gelöschten Adapter) ──
 vi.mock('@/infrastructure/persistence/repositories/trial-training.repository', () => {
   const now = Date.now();
-  const dp = (days: number) => new Date(now - days * 86400000).toISOString();
+  // Die Kennzahlen zählen nur den laufenden Monat — „vor n Tagen" fiel an den ersten
+  // Tagen eines Monats in den Vormonat und machte die Conversion-Rate 0.
+  const today = new Date(now);
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).getTime();
+  const dp = (days: number) => new Date(Math.max(now - days * 86400000, monthStart)).toISOString();
 
   const trialTrainings = [
     {
