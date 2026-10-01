@@ -7,6 +7,7 @@ import {
   DAILY_BLOCK_STYLES,
   getCalendarLegendItems,
   sessionLabel,
+  summarizeSlot,
   type SlotStatus,
 } from '@/lib/court-calendar-utils';
 import type { Session } from '@/hooks/use-sessions';
@@ -339,5 +340,29 @@ describe('anonymisierte Einheiten', () => {
 
   it('nicht anonymisiert: Trainername bleibt', () => {
     expect(sessionLabel(makeSession({ trainerName: 'Max Muster' }))).toBe('Max Muster');
+  });
+});
+
+/* ── summarizeSlot ── */
+
+describe('summarizeSlot', () => {
+  const courts = [{ id: COURT_A }, { id: 'court-b' }];
+  const noPlan = () => [];
+
+  it('zählt freie Plätze und markiert Training', () => {
+    const training = makeSession({ sessionType: 'training' });
+    const at11 = summarizeSlot(courts, june8Berlin, '11:00', [training], noPlan);
+    expect(at11).toEqual({ free: 1, total: 2, training: true });
+    const at12 = summarizeSlot(courts, june8Berlin, '12:00', [training], noPlan);
+    expect(at12).toEqual({ free: 2, total: 2, training: false });
+  });
+
+  it('zählt Planeinträge als belegt mit Training', () => {
+    const plan = (courtId: string) =>
+      courtId === COURT_A
+        ? [{ id: 'p', court_id: COURT_A, start_time: '15:00', end_time: '16:30' }]
+        : [];
+    const res = summarizeSlot(courts, june8Berlin, '16:00', [], plan as never);
+    expect(res).toEqual({ free: 1, total: 2, training: true });
   });
 });

@@ -189,6 +189,41 @@ export function getSlotStatus(
   return { status: 'available' };
 }
 
+/** Belegung einer Stunde über mehrere Plätze — Grundlage der Wochenübersicht und der
+ *  Monats-Auslastung, damit beide dieselbe Zählung benutzen wie das Buchungsraster. */
+export interface SlotSummary {
+  free: number;
+  total: number;
+  training: boolean;
+}
+
+export function summarizeSlot(
+  courts: { id: string }[],
+  date: Date,
+  timeSlot: string,
+  sessions: Session[],
+  getPlanEntries: (courtId: string, date: Date) => CalendarPlanEntry[],
+  closures: CourtClosure[] = [],
+  openingHours: unknown = null
+): SlotSummary {
+  let free = 0;
+  let training = false;
+  for (const court of courts) {
+    const { status, session } = getSlotStatus(
+      court.id,
+      date,
+      timeSlot,
+      sessions,
+      getPlanEntries(court.id, date),
+      closures,
+      openingHours
+    );
+    if (status === 'available') free++;
+    if (status === 'plan' || session?.sessionType === 'training') training = true;
+  }
+  return { free, total: courts.length, training };
+}
+
 /**
  * Tailwind classes for each slot status.
  * Single source of truth — used by the weekly view in unified-court-calendar.tsx.

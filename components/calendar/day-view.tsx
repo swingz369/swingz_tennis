@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Session } from '@/hooks/use-sessions';
 import type { PlanEntry } from '@/components/calendar/types';
+import type { DayOff } from '@/hooks/use-holidays';
 import { getSurfaceLabel, type CourtClosure } from '@/lib/court-calendar-utils';
 import {
   DAILY_HOURS,
@@ -31,6 +32,8 @@ export interface DayViewProps {
   activeDragId?: string | null;
   displayCourts: { id: string; name: string; surface: string; hasIndoor?: boolean }[];
   getPlanEntriesForCourtAndDay: (courtId: string, date: Date) => PlanEntry[];
+  /** Ferien/Feiertag: schmaler Hinweis, kein Training — Plätze bleiben buchbar. */
+  dayOffFor?: (date: Date) => DayOff | null;
   visibleSessions: Session[];
   sessions: Session[];
   courtClosures: CourtClosure[];
@@ -55,6 +58,7 @@ export function DayView({
   activeDragId,
   displayCourts,
   getPlanEntriesForCourtAndDay,
+  dayOffFor,
   visibleSessions,
   sessions,
   courtClosures,
@@ -75,6 +79,7 @@ export function DayView({
   const gridStartHour = DAILY_HOURS[0];
   const totalHours = DAILY_HOURS.length;
   const gridHeight = totalHours * PX_PER_HOUR;
+  const dayOff = dayOffFor?.(targetDate) ?? null;
 
   // Gather all plan entries for the target day across all courts
   const planEntriesByCourt = new Map<string, PlanEntry[]>();
@@ -149,6 +154,13 @@ export function DayView({
             </TooltipTrigger>
             <TooltipContent>Nächster Tag</TooltipContent>
           </Tooltip>
+        </div>
+      )}
+
+      {dayOff && (
+        <div className="flex items-center gap-2 border-b border-warning-200 bg-warning-50 px-3 py-2 text-xs font-semibold text-warning-800 sm:px-4 sm:text-sm">
+          <span>{dayOff.name}</span>
+          <span className="font-normal">– kein Training, alle Plätze sind buchbar</span>
         </div>
       )}
 

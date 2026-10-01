@@ -325,18 +325,23 @@ export function PositionedPlanBlock({
   heightPx: number;
 }) {
   return (
+    // Training im Matchday-Stil: ruhige Fläche mit --event-Streifen (wie SessionRow);
+    // die Gruppenfarbe bleibt nur als Punkt, sonst wird der Tag zur Farbpalette.
     <div
-      className="absolute left-0.5 right-0.5 rounded-xl text-white px-2 py-1.5 overflow-hidden shadow-sm border border-white/20 z-[5]"
-      style={{
-        top: `${topPx}px`,
-        height: `${heightPx}px`,
-        backgroundColor: entry.group_color || 'hsl(var(--brand-dark))',
-      }}
+      className="absolute left-0.5 right-0.5 z-[5] overflow-hidden rounded-md border-l-[3px] border-event bg-event/15 px-2 py-1.5 text-foreground"
+      style={{ top: `${topPx}px`, height: `${heightPx}px` }}
       title={`${entry.group_name} · ${entry.trainer_name || ''} · ${entry.start_time}–${entry.end_time}`}
     >
-      <div className="font-bold text-2xs truncate">{entry.group_name}</div>
+      <div className="flex items-center gap-1.5 font-bold text-2xs">
+        <span
+          aria-hidden="true"
+          className="size-2 shrink-0 rounded-full bg-event"
+          style={entry.group_color ? { backgroundColor: entry.group_color } : undefined}
+        />
+        <span className="truncate">{entry.group_name}</span>
+      </div>
       {heightPx >= 24 && (
-        <div className="flex items-center gap-2 mt-0.5 text-2xs opacity-90">
+        <div className="flex items-center gap-2 mt-0.5 text-2xs text-muted-foreground">
           <span className="flex items-center gap-0.5">
             <Clock className="h-2.5 w-2.5" />
             {entry.start_time}–{entry.end_time}

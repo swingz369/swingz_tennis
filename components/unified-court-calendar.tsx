@@ -19,6 +19,8 @@ import { MonthView } from '@/components/calendar/month-view';
 import { AgendaView } from '@/components/calendar/agenda-view';
 import { WeekView } from '@/components/calendar/week-view';
 import { DayView } from '@/components/calendar/day-view';
+import { WeekOverview } from '@/components/calendar/week-overview';
+import { Button } from '@/components/ui/button';
 import { DraggableSessionCard } from '@/components/calendar/calendar-primitives';
 import {
   WeatherBanner,
@@ -130,6 +132,8 @@ export default function UnifiedCourtCalendar({
   const {
     viewMode,
     setViewMode,
+    weekMode,
+    setWeekMode,
     currentWeek,
     setCurrentWeek,
     selectedDate,
@@ -199,6 +203,18 @@ export default function UnifiedCourtCalendar({
     canFilterCourts || (selectedCourtId && courts.length > 0 && !selectedCourt)
       ? null
       : selectedCourtId;
+
+  // Woche „Pro Platz": welcher Platz gezeigt wird (Standard: der erste)
+  const [weekCourtId, setWeekCourtId] = useState<string | null>(null);
+
+  // Übersicht/Monat → Tag: Personal landet im Raster, Mitglieder in ihrem Buchungsablauf.
+  const openDay = useCallback(
+    (day: Date) => {
+      setSelectedDate(day);
+      setViewMode(isAdmin || isTrainer ? 'daily' : 'agenda');
+    },
+    [isAdmin, isTrainer, setSelectedDate, setViewMode]
+  );
 
   const queryClient = useQueryClient();
 
@@ -334,6 +350,8 @@ export default function UnifiedCourtCalendar({
     <CalendarViewToggle
       viewMode={viewMode}
       setViewMode={setViewMode}
+      weekMode={weekMode}
+      setWeekMode={setWeekMode}
       isAdmin={isAdmin}
       isTrainer={isTrainer}
     />
@@ -404,6 +422,11 @@ export default function UnifiedCourtCalendar({
           memberId={memberId}
           clubId={clubId}
           dayOffFor={dayOffFor}
+          courts={courts}
+          closures={courtClosures}
+          openingHours={openingHours}
+          getPlanEntries={getPlanEntriesForNextFree}
+          onOpenDay={openDay}
           canManageStatus={isAdmin || isTrainer}
           onBookSession={handleBookSession}
           onCancelBooking={handleCancelBooking}
@@ -419,13 +442,29 @@ export default function UnifiedCourtCalendar({
 
   // ── Court filtering: single-court mode for members ──
   // Admin/Trainer: Mehrfachfilter (Chips); Mitglieder: ein Platz (Kartenansicht)
+  // Die Wochenübersicht ist schmal genug für alle Plätze — die Vorgabe „erste 4"
+  // brauchte nur das alte Raster. Ein gesetzter Filter gilt weiterhin.
+  const isWeekOverview = viewMode === 'weekly' && weekMode === 'overview';
   const displayCourts = effectiveCourtId
     ? courts.filter((c) => c.id === effectiveCourtId)
-    : canFilterCourts
+    : canFilterCourts && !(isWeekOverview && !visibleCourtIds)
       ? resolveVisibleCourts(courts, visibleCourtIds)
       : courts;
 
-  const weeklyView = (
+  const weekCourt = courts.find((c) => c.id === weekCourtId) ?? displayCourts[0] ?? courts[0];
+
+  const weeklyView = isWeekOverview ? (
+    <WeekOverview
+      weekDays={weekDays}
+      courts={displayCourts}
+      sessions={visibleSessions}
+      closures={courtClosures}
+      openingHours={openingHours}
+      getPlanEntries={getPlanEntriesForNextFree}
+      dayOffFor={dayOffFor}
+      onPick={openDay}
+    />
+  ) : (
     <WeekView
       isMobile={isMobile}
       weekDays={weekDays}
@@ -436,7 +475,7 @@ export default function UnifiedCourtCalendar({
       setCurrentWeek={setCurrentWeek}
       mobileSelectedDay={mobileSelectedDay}
       setMobileSelectedDay={setMobileSelectedDay}
-      displayCourts={displayCourts}
+      displayCourts={weekCourt ? [weekCourt] : []}
       getPlanEntriesForCourtAndDay={getPlanEntriesForCourtAndDay}
       visibleSessions={visibleSessions}
       sessions={sessions}
@@ -516,6 +555,7 @@ export default function UnifiedCourtCalendar({
         activeDragId={activeDragId}
         displayCourts={displayCourts}
         getPlanEntriesForCourtAndDay={getPlanEntriesForCourtAndDay}
+        dayOffFor={dayOffFor}
         visibleSessions={visibleSessions}
         sessions={sessions}
         courtClosures={courtClosures}
@@ -584,8 +624,28 @@ export default function UnifiedCourtCalendar({
         {roleActionButtonsEl}
       </CourtCalendarHeader>
 
-      {canFilterCourts && courts.length > 3 && viewMode !== 'list' && !effectiveCourtId && (
-        <CourtFilterChips courts={courts} visible={displayCourts} onChange={setVisibleCourtIds} />
+      {viewMode === 'weekly' && weekMode === 'court' ? (
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Platz wählen">
+          {courts.map((c) => (
+            <Button
+              key={c.id}
+              size="sm"
+              variant={c.id === weekCourt?.id ? 'default' : 'outline'}
+              aria-pressed={c.id === weekCourt?.id}
+              className="rounded-full"
+              onClick={() => setWeekCourtId(c.id)}
+            >
+              {c.name}
+            </Button>
+          ))}
+        </div>
+      ) : (
+        canFilterCourts &&
+        courts.length > 3 &&
+        viewMode !== 'list' &&
+        !effectiveCourtId && (
+          <CourtFilterChips courts={courts} visible={displayCourts} onChange={setVisibleCourtIds} />
+        )
       )}
 
       {/* Weather banner (admin only) */}
@@ -604,7 +664,7 @@ export default function UnifiedCourtCalendar({
       ) : (
         <>
           {calendarContent}
-          <CourtCalendarLegend items={getCalendarLegendItems(isAdmin)} />
+          {!isWeekOverview && <CourtCalendarLegend items={getCalendarLegendItems(isAdmin)} />}
         </>
       )}
     </div>

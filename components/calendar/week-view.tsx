@@ -220,11 +220,14 @@ export function WeekView({
   // Streifen je sichtbarem Platz. Mehrstündige Belegungen überspannen per
   // grid-row mehrere Zeilen. Zellen-IDs, Klick-/Tastaturlogik und die
   // Drag-and-drop-Ziele (Platz × Tag × Uhrzeit) sind dieselben wie vorher.
+  // Ein einzelner Platz (Woche „Pro Platz") hat breite Spalten — dann auch höhere Zeilen,
+  // damit Titel und Uhrzeit untereinander passen.
+  const rowH = displayCourts.length === 1 ? 44 : ROW_H;
   const rowGrid = {
-    gridTemplateRows: `repeat(${TIME_SLOTS.length}, ${ROW_H}px)`,
+    gridTemplateRows: `repeat(${TIME_SLOTS.length}, ${rowH}px)`,
     rowGap: ROW_GAP,
     // Stundenlinien wie in der Vorlage — Teilung = Zeilenhöhe + Abstand.
-    backgroundImage: `repeating-linear-gradient(to bottom, transparent 0 ${ROW_H}px, hsl(var(--border) / 0.7) ${ROW_H}px ${ROW_H + ROW_GAP}px)`,
+    backgroundImage: `repeating-linear-gradient(to bottom, transparent 0 ${rowH}px, hsl(var(--border) / 0.7) ${rowH}px ${rowH + ROW_GAP}px)`,
     backgroundPosition: '0 4px',
   } as const;
 

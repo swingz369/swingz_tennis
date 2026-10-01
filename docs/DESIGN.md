@@ -318,6 +318,15 @@ bleiben (Ratsche, nur sinkend); neue Stellen nehmen direkt `Dialog`.
 klein in Schaltflächen oder Inline-Text. Ratsche „Flächen-Spinner" (Grenze 7: Inline-Spinner mit
 `mr-2` und drei Stellen in Planungsschritt/Saisonkalender-Tab).
 
+**Kalender-Neuaufbau (01.10.2026):** Woche startet als **Übersicht** (`week-overview.tsx`: Tage ×
+Stunden, Zelle = freie Plätze, je voller desto dunkler; Klick öffnet den Tag), Unteransicht **Pro Platz**
+= Wochenraster eines Platzes (`?calWeek=court`). **Monat** = Kacheln mit Auslastungsbalken,
+Trainings/Buchungen und Prozent frei; Klick zeigt darunter die Termine des Tages (Buchen, Status,
+Feedback, Warteliste) und „Tag öffnen". Woche und Monat zählen über `summarizeSlot`
+(`lib/court-calendar-utils.ts`) — dieselbe Regel wie das Buchungsraster. **Ferien/Feiertage:**
+gelb eingefärbt, kein Saisontraining, Plätze buchbar; als Etikett/Streifen, nie als Fläche über den
+Inhalt. Trainingsblöcke im Tag: `--event`-Streifen, Gruppenfarbe nur als Punkt.
+
 **Kalender (`components/calendar/*`, 20.09.2026; Wochenansicht 27.09.2026):** Kopfzeile schlank; Tag-Ansicht mit
 Unterumschalter; Wochenansicht im Matchday-Raster — Zeitachse links (fixiert), Tage als
 Spalten, je Tag ein Streifen pro Platz (mind. 76 px, sonst scrollt das Raster seitlich),

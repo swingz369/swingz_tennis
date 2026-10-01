@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Calendar as CalendarIcon, Download, Lock, MoreHorizontal } from 'lucide-react';
-import type { ViewMode } from '@/hooks/use-calendar-state';
+import type { ViewMode, WeekMode } from '@/hooks/use-calendar-state';
 
 const DAY_MODES: ViewMode[] = ['agenda', 'matrix', 'daily'];
 
@@ -51,15 +51,20 @@ function Segment<T extends string>({
 /**
  * Ansichten: Tag | Woche | Monat | Liste. „Tag“ hat einen kleinen Unter-Umschalter
  * (Buchen · Übersicht · Raster) — vorher waren das drei gleichrangige Hauptansichten.
+ * „Woche“ ebenso: Übersicht (freie Plätze je Stunde) · Pro Platz (Raster eines Platzes).
  */
 export function CalendarViewToggle({
   viewMode,
   setViewMode,
+  weekMode,
+  setWeekMode,
   isAdmin,
   isTrainer,
 }: {
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
+  weekMode: WeekMode;
+  setWeekMode: (mode: WeekMode) => void;
   isAdmin: boolean;
   isTrainer: boolean;
 }) {
@@ -85,6 +90,17 @@ export function CalendarViewToggle({
       />
       {isDay && dayItems.length > 1 && (
         <Segment value={viewMode} items={dayItems} onChange={setViewMode} size="xs" />
+      )}
+      {viewMode === 'weekly' && (
+        <Segment
+          value={weekMode}
+          items={[
+            { value: 'overview' as const, label: 'Übersicht' },
+            { value: 'court' as const, label: 'Pro Platz' },
+          ]}
+          onChange={setWeekMode}
+          size="xs"
+        />
       )}
     </>
   );

@@ -16,6 +16,8 @@ import {
 } from 'date-fns';
 
 export type ViewMode = 'agenda' | 'weekly' | 'daily' | 'list' | 'month' | 'matrix';
+/** Woche: Übersicht (freie Plätze je Stunde, alle Plätze) oder Raster eines einzelnen Platzes. */
+export type WeekMode = 'overview' | 'court';
 
 const VIEW_MODES: ViewMode[] = ['agenda', 'weekly', 'daily', 'list', 'month', 'matrix'];
 
@@ -66,6 +68,9 @@ export function useCalendarState({
   const [selectedCourtId, setSelectedCourtId] = useState<string | null>(
     searchParams.get('calCourt')
   );
+  const [weekMode, setWeekMode] = useState<WeekMode>(
+    searchParams.get('calWeek') === 'court' ? 'court' : 'overview'
+  );
 
   // Mehrfach-Platzfilter (Admin/Trainer); null = Standard (alle bzw. die ersten 4)
   const [visibleCourtIds, setVisibleCourtIds] = useState<string[] | null>(
@@ -93,12 +98,14 @@ export function useCalendarState({
     else params.delete('calCourt');
     if (visibleCourtIds) params.set('calCourts', visibleCourtIds.join(','));
     else params.delete('calCourts');
+    if (viewMode === 'weekly' && weekMode === 'court') params.set('calWeek', 'court');
+    else params.delete('calWeek');
     const next = `${pathname}?${params.toString()}`;
     if (next !== `${pathname}?${searchParams.toString()}`) {
       router.replace(next, { scroll: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewMode, currentWeek, selectedDate, selectedCourtId, visibleCourtIds, pathname]);
+  }, [viewMode, weekMode, currentWeek, selectedDate, selectedCourtId, visibleCourtIds, pathname]);
 
   // ── Sync mobile selected day when week changes ──
   useEffect(() => {
@@ -139,6 +146,8 @@ export function useCalendarState({
   return {
     viewMode,
     setViewMode,
+    weekMode,
+    setWeekMode,
     currentWeek,
     setCurrentWeek,
     selectedDate,
