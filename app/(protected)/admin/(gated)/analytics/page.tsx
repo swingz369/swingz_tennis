@@ -78,7 +78,7 @@ export default async function AnalyticsPage({
           .eq('club_id', effectiveClubId),
         supabase
           .from('sessions')
-          .select('id, timeslot_start, trainer_id, schedules!inner(club_id)')
+          .select('id, timeslot_start, trainer_id, court_id, schedules!inner(club_id)')
           .eq('schedules.club_id', effectiveClubId)
           .order('timeslot_start', { ascending: false })
           .limit(200),
