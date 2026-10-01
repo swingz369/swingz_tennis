@@ -11,7 +11,7 @@ const TINTS = [
   'bg-event/20',
 ];
 
-const SIZES = { sm: 'h-7 w-7 text-[11px]', md: 'h-10 w-10 text-sm', lg: 'h-14 w-14 text-lg' };
+const SIZES = { sm: 'h-7 w-7 text-xs', md: 'h-10 w-10 text-sm', lg: 'h-14 w-14 text-lg' };
 
 export function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);

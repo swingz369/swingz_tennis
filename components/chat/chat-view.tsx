@@ -561,7 +561,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
 
   return (
     <>
-      <div className="flex h-[calc(100dvh-15rem)] min-h-[30rem] overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+      <div className="flex h-[calc(100dvh-15rem)] min-h-[30rem] overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
         {/* ── Liste ── */}
         <div
           className={cn(
@@ -606,7 +606,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
                 >
                   {label}
                   {key === 'unread' && unreadTotal > 0 && (
-                    <span className="rounded-full bg-highlight px-1.5 text-[10px] text-highlight-foreground">
+                    <span className="rounded-full bg-highlight px-1.5 text-xs text-highlight-foreground">
                       {unreadTotal}
                     </span>
                   )}
@@ -621,7 +621,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
                 type="button"
                 onClick={openNews}
                 className={cn(
-                  'mx-3 mt-3 flex w-[calc(100%-1.5rem)] items-center gap-3 rounded-2xl bg-primary px-3.5 py-3 text-left text-primary-foreground transition-opacity hover:opacity-95',
+                  'mx-3 mt-3 flex w-[calc(100%-1.5rem)] items-center gap-3 rounded-xl bg-primary px-3.5 py-3 text-left text-primary-foreground transition-opacity hover:opacity-95',
                   newsOpen && 'ring-2 ring-highlight ring-offset-2 ring-offset-card'
                 )}
               >
@@ -671,7 +671,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
                 return (
                   <div key={c.id}>
                     {newBucket && (
-                      <p className="px-4 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <p className="px-4 pb-1 pt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         {bucket}
                       </p>
                     )}
@@ -712,7 +712,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
                         <span className="mt-0.5 flex items-center justify-between gap-2">
                           <span
                             className={cn(
-                              'truncate text-[13px]',
+                              'truncate text-xs',
                               unread ? 'font-medium text-foreground' : 'text-muted-foreground'
                             )}
                           >
@@ -728,7 +728,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
                             {unread && (
                               <span
                                 className={cn(
-                                  'flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-bold',
+                                  'flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold',
                                   c.muted
                                     ? 'bg-muted-foreground text-background'
                                     : 'bg-primary text-primary-foreground'
@@ -751,7 +751,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
           <Button
             variant="highlight"
             size="icon"
-            className="absolute bottom-4 right-4 h-14 w-14 rounded-2xl shadow-lg lg:hidden"
+            className="absolute bottom-4 right-4 h-14 w-14 rounded-xl shadow-lg lg:hidden"
             onClick={() => setNewChatOpen(true)}
             aria-label="Neue Nachricht"
           >
@@ -789,7 +789,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
             </>
           ) : !selected ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-muted/30 p-8 text-center">
-              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-card shadow-sm">
+              <span className="flex h-16 w-16 items-center justify-center rounded-xl bg-card shadow-sm">
                 <MessagesSquare className="h-8 w-8 text-muted-foreground" />
               </span>
               <p className="font-semibold">Wähle einen Chat aus</p>
@@ -816,7 +816,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
                 <button
                   type="button"
                   onClick={openInfo}
-                  className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left"
+                  className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left"
                 >
                   <ChatAvatar
                     id={otherId(selected, userId)}
@@ -953,7 +953,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
                             <div
                               {...(active ? longPress(() => setMsgSheet(m)) : {})}
                               className={cn(
-                                'select-none whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm leading-relaxed sm:select-text',
+                                'select-none whitespace-pre-wrap break-words rounded-xl px-3.5 py-2 text-sm leading-relaxed sm:select-text',
                                 m.deleted_at
                                   ? 'border border-dashed border-border italic text-muted-foreground'
                                   : mine
@@ -970,7 +970,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
                                       ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
                                   }
                                   className={cn(
-                                    'mb-1.5 block w-full rounded-lg border-l-[3px] border-highlight px-2 py-1 text-left text-xs',
+                                    'mb-1.5 block w-full rounded-xl border-l-[3px] border-highlight px-2 py-1 text-left text-xs',
                                     mine ? 'bg-primary-foreground/10' : 'bg-muted'
                                   )}
                                 >
@@ -993,7 +993,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
                               {m.deleted_at ? 'Nachricht gelöscht' : m.body}
                               <span
                                 className={cn(
-                                  'ml-2 inline-flex translate-y-0.5 select-none items-center gap-0.5 text-[11px]',
+                                  'ml-2 inline-flex translate-y-0.5 select-none items-center gap-0.5 text-xs',
                                   mine && !m.deleted_at
                                     ? 'text-primary-foreground/70'
                                     : 'text-muted-foreground'
@@ -1122,7 +1122,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
                     </Button>
                   </div>
                 )}
-                <div className="flex items-end gap-2 rounded-2xl border border-border bg-background py-1.5 pl-1 pr-1.5 focus-within:ring-2 focus-within:ring-ring/40">
+                <div className="flex items-end gap-2 rounded-xl border border-border bg-background py-1.5 pl-1 pr-1.5 focus-within:ring-2 focus-within:ring-ring/40">
                   <Textarea
                     ref={composerRef}
                     value={draft}
@@ -1155,7 +1155,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
                     )}
                   </Button>
                 </div>
-                <p className="mt-1.5 hidden px-1 text-[11px] text-muted-foreground md:block">
+                <p className="mt-1.5 hidden px-1 text-xs text-muted-foreground md:block">
                   Enter senden · Shift+Enter neue Zeile
                 </p>
               </div>
@@ -1198,7 +1198,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
 
       {/* Handy: Nachricht gedrückt halten */}
       <Sheet open={!!msgSheet} onOpenChange={(o) => !o && setMsgSheet(null)}>
-        <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 pt-3">
+        <SheetContent side="bottom" className="rounded-t-xl px-4 pb-8 pt-3">
           <SheetTitle className="sr-only">Aktionen für die Nachricht</SheetTitle>
           <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-border" />
           {msgSheet && (
@@ -1237,7 +1237,7 @@ export function ChatView({ clubId, userId, isAdmin, canCreateGroup }: Props) {
 
       {/* Handy: Chat in der Liste gedrückt halten */}
       <Sheet open={!!convSheet} onOpenChange={(o) => !o && setConvSheet(null)}>
-        <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8 pt-3">
+        <SheetContent side="bottom" className="rounded-t-xl px-4 pb-8 pt-3">
           <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-border" />
           {convSheet && (
             <>
@@ -1324,7 +1324,7 @@ function SheetItem({ onSelect, destructive, children }: ItemProps) {
       type="button"
       onClick={onSelect}
       className={cn(
-        'flex w-full items-center gap-4 px-2 py-3.5 text-left text-[15px] active:bg-muted',
+        'flex w-full items-center gap-4 px-2 py-3.5 text-left text-base active:bg-muted',
         destructive && 'text-destructive'
       )}
     >
@@ -1386,14 +1386,14 @@ function ConversationInfo({
 
       {conv.kind === 'group' && (
         <div>
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Mitglieder · {conv.participant_count}
           </p>
           <ul className="space-y-0.5">
             {conv.participants.map((p) => (
               <li key={p.user_id}>
                 {p.user_id === userId ? (
-                  <div className="flex items-center gap-3 rounded-lg px-1.5 py-1.5 text-sm">
+                  <div className="flex items-center gap-3 rounded-xl px-1.5 py-1.5 text-sm">
                     <ChatAvatar id={p.user_id} name={p.name} size="sm" />
                     <span className="truncate">{p.name}</span>
                     <span className="ml-auto text-xs text-muted-foreground">Du</span>
@@ -1402,7 +1402,7 @@ function ConversationInfo({
                   <button
                     type="button"
                     onClick={() => onMessage(p.user_id)}
-                    className="group/member flex w-full items-center gap-3 rounded-lg px-1.5 py-1.5 text-left text-sm hover:bg-muted"
+                    className="group/member flex w-full items-center gap-3 rounded-xl px-1.5 py-1.5 text-left text-sm hover:bg-muted"
                     title={`Privat an ${p.name} schreiben`}
                   >
                     <ChatAvatar id={p.user_id} name={p.name} size="sm" />

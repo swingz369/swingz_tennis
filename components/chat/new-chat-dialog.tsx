@@ -158,7 +158,7 @@ export function NewChatDialog({
 
         {mode === 'direct' && !search && recent.length > 0 && (
           <div className="space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Zuletzt
             </p>
             <div className="flex gap-3 overflow-x-auto pb-1">
@@ -180,7 +180,7 @@ export function NewChatDialog({
 
         {mode === 'direct' && !search && canCreateGroup && (
           <div className="space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Schnell erreichen
             </p>
             {(
@@ -199,7 +199,7 @@ export function NewChatDialog({
                 }}
                 className="flex w-full items-center gap-3 rounded-xl border border-border/60 p-2.5 text-left hover:bg-muted/60"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="min-w-0 flex-1">
