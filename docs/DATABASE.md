@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
+> Zuletzt verifiziert: 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -645,6 +645,8 @@ läuft, ist eine Absichtserklärung. Der nächste Schritt wäre, sie an
 - RLS über `is_conversation_participant(id)`. Anlegen nur per RPC `start_direct_conversation` / `create_group_conversation` (prüfen Vereinszugehörigkeit; Gruppen nur Trainer/Admin/Superadmin, max. 500). Spaltenrechte: Teilnehmer ändern nur `last_read_at`/`muted`, Absender nur `body`/`edited_at`/`deleted_at`.
 - Ungelesen = `created_at > last_read_at`, kein `is_read` je Zeile: `list_my_conversations()`, `chat_unread_total()`.
 - Echtzeit: Trigger `chat_after_message` sendet per `realtime.send` an privaten Kanal `chat:<user_id>`; Policy `chat_broadcast_receive` auf `realtime.messages`.
+- Reaktionen (`20261001100000_chat_reactions.sql`): `conversation_message_reactions` (PK `message_id, user_id, emoji`; Emoji per CHECK auf 👍 🎾 ❤️ 😂 🙏 begrenzt, gleiche Liste in `lib/chat-reactions.ts`). Policies `conversation_message_reactions_select`/`_insert` über `is_message_participant(message_id)`, `_delete_own` nur eigene Zeile; kein UPDATE. Trigger `chat_after_reaction` sendet Event `reaction` auf `chat:<user_id>`.
+- Antworten: `conversation_messages.reply_to_id` wird seit 01.10.2026 von der Oberfläche gesetzt (Zitat in der Blase).
 
 ## Ankündigungen (`20260920160000_news_audience_reads.sql`)
 

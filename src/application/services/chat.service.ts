@@ -70,6 +70,12 @@ export class ChatService {
     if (!msg) throw new ApiException('NOT_FOUND', 'Nachricht nicht gefunden');
   }
 
+  /** Reaktion setzen oder zurücknehmen. Wer kein Teilnehmer ist, scheitert an RLS (42501). */
+  async react(messageId: string, emoji: string, on: boolean) {
+    if (on) await this.repo.addReaction(messageId, this.userId, emoji);
+    else await this.repo.removeReaction(messageId, this.userId, emoji);
+  }
+
   async updateOwnState(conversationId: string, patch: { read?: true; muted?: boolean }) {
     const ok = await this.repo.updateParticipant(conversationId, this.userId, {
       ...(patch.read ? { last_read_at: new Date().toISOString() } : {}),

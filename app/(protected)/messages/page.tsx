@@ -2,17 +2,14 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useSearchParams } from 'next/navigation';
-import { Mail, MessageSquare, Newspaper, PenSquare } from 'lucide-react';
+import { Mail, MessageSquare } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/ui/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollReveal } from '@/components/animations';
 import { ChatView } from '@/components/chat/chat-view';
-import NewsAnnouncements from '@/components/news-announcements';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useUserClub, useUserRoles } from '@/hooks/use-user-data';
-import { cn } from '@/lib/utils';
 
 const EmailCampaignsClient = dynamic(
   () => import('@/app/(protected)/admin/(gated)/email-campaigns/email-campaigns-client'),
@@ -41,11 +38,6 @@ export default function MessagesPage() {
 }
 
 function MessagesContent() {
-  const searchParams = useSearchParams();
-  const [section, setSection] = useState<'chats' | 'news'>(
-    searchParams.get('section') === 'news' ? 'news' : 'chats'
-  );
-  const [newChatOpen, setNewChatOpen] = useState(false);
   const [userId, setUserId] = useState<string | undefined>();
 
   const { data: userRoles, isLoading: rolesLoading } = useUserRoles();
@@ -63,52 +55,18 @@ function MessagesContent() {
 
   const pageHeader = (
     <ScrollReveal>
-      <PageHeader
-        title="Nachrichten"
-        description="Chats mit Mitgliedern, Trainern und Gruppen"
-        actions={[{ label: 'Neuer Chat', icon: PenSquare, onClick: () => setNewChatOpen(true) }]}
-      />
+      <PageHeader title="Nachrichten" description="Chats, Gruppen und Vereinsnews an einem Ort" />
     </ScrollReveal>
   );
 
+  // Vereinsnews stecken als angepinnte Karte in der Chatliste — keine zweite Tab-Ebene.
   const messagesView = (
-    <div className="space-y-4">
-      <div className="flex gap-1">
-        {(
-          [
-            ['chats', 'Chats', MessageSquare],
-            ['news', 'News', Newspaper],
-          ] as const
-        ).map(([key, label, Icon]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setSection(key)}
-            className={cn(
-              'flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors',
-              section === key
-                ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:bg-muted'
-            )}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </button>
-        ))}
-      </div>
-      {section === 'news' ? (
-        <NewsAnnouncements canManage={isAdmin} />
-      ) : (
-        <ChatView
-          clubId={clubId}
-          userId={userId}
-          isAdmin={isAdmin}
-          canCreateGroup={isAdmin || isSuperAdmin || isTrainer}
-          newChatOpen={newChatOpen}
-          onNewChatClose={() => setNewChatOpen(false)}
-        />
-      )}
-    </div>
+    <ChatView
+      clubId={clubId}
+      userId={userId}
+      isAdmin={isAdmin}
+      canCreateGroup={isAdmin || isSuperAdmin || isTrainer}
+    />
   );
 
   // Die Rollen kommen per Query nach; bis sie feststehen, kein Layout-Wechsel (Tabs erscheinen sonst nachträglich).

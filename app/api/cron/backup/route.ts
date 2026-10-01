@@ -112,6 +112,10 @@ const BACKUP_TABLES = [
   'rate_history',
   'trainer_profiles',
   'trial_trainings',
+  'conversations',
+  'conversation_participants',
+  'conversation_messages',
+  'conversation_message_reactions',
 ];
 
 /**

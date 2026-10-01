@@ -8,11 +8,17 @@ import type { AuthContext } from '@/lib/api-auth';
 import { ApiException } from '@/lib/api-error';
 import type { Tables } from '@/types/supabase';
 import { createLogger } from '@/lib/logger';
+import { fetchAllIn } from './paged';
 
 const log = createLogger('infrastructure:chat.repository');
 
 export type ChatMessage = Tables<'conversation_messages'>;
-export type ChatMessageWithSender = ChatMessage & { sender_name: string };
+/** Reaktionen je Emoji mit den Personen, die sie gesetzt haben. */
+export type ChatReaction = { emoji: string; user_ids: string[] };
+export type ChatMessageWithSender = ChatMessage & {
+  sender_name: string;
+  reactions: ChatReaction[];
+};
 
 /** Zeile aus `list_my_conversations`; `participants` ist auf 50 Einträge begrenzt. */
 export interface ChatConversation {
@@ -97,8 +103,60 @@ export class ChatRepository {
     const { data, error } = await q;
     fail(error, 'Laden der Nachrichten fehlgeschlagen');
     const rows = (data ?? []).reverse();
-    const names = await this.userNames([...new Set(rows.map((m) => m.sender_id))]);
-    return rows.map((m) => ({ ...m, sender_name: names.get(m.sender_id) ?? 'Mitglied' }));
+    const [names, reactions] = await Promise.all([
+      this.userNames([...new Set(rows.map((m) => m.sender_id))]),
+      this.reactionsFor(rows.map((m) => m.id)),
+    ]);
+    return rows.map((m) => ({
+      ...m,
+      sender_name: names.get(m.sender_id) ?? 'Mitglied',
+      reactions: reactions.get(m.id) ?? [],
+    }));
+  }
+
+  private async reactionsFor(messageIds: string[]): Promise<Map<string, ChatReaction[]>> {
+    const rows = await fetchAllIn(
+      messageIds,
+      (chunk) =>
+        this.db
+          .from('conversation_message_reactions')
+          .select('message_id, user_id, emoji')
+          .in('message_id', chunk)
+          .order('created_at')
+          .order('message_id')
+          .order('user_id')
+          .order('emoji'),
+      'Laden der Reaktionen fehlgeschlagen'
+    );
+    const out = new Map<string, ChatReaction[]>();
+    for (const r of rows) {
+      const list = out.get(r.message_id) ?? [];
+      const entry = list.find((x) => x.emoji === r.emoji);
+      if (entry) entry.user_ids.push(r.user_id);
+      else list.push({ emoji: r.emoji, user_ids: [r.user_id] });
+      out.set(r.message_id, list);
+    }
+    return out;
+  }
+
+  async addReaction(messageId: string, userId: string, emoji: string): Promise<void> {
+    const { error } = await this.db
+      .from('conversation_message_reactions')
+      .upsert(
+        { message_id: messageId, user_id: userId, emoji },
+        { onConflict: 'message_id,user_id,emoji', ignoreDuplicates: true }
+      );
+    fail(error, 'Reagieren fehlgeschlagen');
+  }
+
+  async removeReaction(messageId: string, userId: string, emoji: string): Promise<void> {
+    const { error } = await this.db
+      .from('conversation_message_reactions')
+      .delete()
+      .eq('message_id', messageId)
+      .eq('user_id', userId)
+      .eq('emoji', emoji);
+    fail(error, 'Reaktion entfernen fehlgeschlagen');
   }
 
   async insertMessage(

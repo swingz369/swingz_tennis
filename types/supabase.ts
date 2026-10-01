@@ -984,6 +984,35 @@ export type Database = {
         };
         Relationships: [];
       };
+      conversation_message_reactions: {
+        Row: {
+          created_at: string;
+          emoji: string;
+          message_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          emoji: string;
+          message_id: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          emoji?: string;
+          message_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'conversation_message_reactions_message_id_fkey';
+            columns: ['message_id'];
+            isOneToOne: false;
+            referencedRelation: 'conversation_messages';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       conversation_messages: {
         Row: {
           body: string;
@@ -7823,6 +7852,10 @@ export type Database = {
       is_club_trainer: { Args: { p_club_id: string }; Returns: boolean };
       is_conversation_participant: {
         Args: { p_conv: string };
+        Returns: boolean;
+      };
+      is_message_participant: {
+        Args: { p_message: string };
         Returns: boolean;
       };
       is_owner: { Args: never; Returns: boolean };

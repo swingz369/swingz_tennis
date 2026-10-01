@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Search } from 'lucide-react';
+import { ChevronRight, Loader2, Megaphone, Search, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { apiFetch } from '@/lib/api-fetch';
 import { extractErrorMessage } from '@/lib/typed-helpers';
+import { ChatAvatar } from '@/components/chat/chat-avatar';
 
 interface Person {
   id: string;
@@ -36,6 +37,8 @@ interface Props {
   /** Vollständige Mitgliederliste (Admin) oder nur Namensverzeichnis (alle anderen). */
   isAdmin: boolean;
   currentUserId?: string;
+  /** Zuletzt angeschriebene Personen (aus den Direktchats) für den Schnellzugriff. */
+  recent?: { id: string; name: string }[];
   onCreated: (conversationId: string) => void;
 }
 
@@ -47,6 +50,7 @@ export function NewChatDialog({
   canCreateGroup,
   isAdmin,
   currentUserId,
+  recent = [],
   onCreated,
 }: Props) {
   const [mode, setMode] = useState<'direct' | 'group'>('direct');
@@ -111,11 +115,11 @@ export function NewChatDialog({
     <CenteredModal
       open={open}
       onClose={onClose}
-      ariaLabel="Neuer Chat"
+      ariaLabel="Neue Nachricht"
       className="w-full max-w-md p-5"
     >
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Neuer Chat</h2>
+        <h2 className="text-lg font-semibold">Neue Nachricht</h2>
         {canCreateGroup && (
           <Tabs value={mode} onValueChange={(v) => setMode(v as 'direct' | 'group')}>
             <TabsList className="grid w-full grid-cols-2">
@@ -152,12 +156,68 @@ export function NewChatDialog({
           </div>
         )}
 
+        {mode === 'direct' && !search && recent.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Zuletzt
+            </p>
+            <div className="flex gap-3 overflow-x-auto pb-1">
+              {recent.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => clubId && request({ kind: 'direct', userId: p.id })}
+                  className="flex w-14 shrink-0 flex-col items-center gap-1 text-xs"
+                >
+                  <ChatAvatar id={p.id} name={p.name} />
+                  <span className="w-full truncate text-center">{p.name.split(' ')[0]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {mode === 'direct' && !search && canCreateGroup && (
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Schnell erreichen
+            </p>
+            {(
+              [
+                ['all', 'Alle Mitglieder', 'Eine Gruppe mit dem ganzen Verein', Megaphone],
+                ['trainers', 'Trainer und Verwaltung', 'Abstimmung im Team', ShieldCheck],
+              ] as const
+            ).map(([key, label, sub, Icon]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => {
+                  setMode('group');
+                  setAudience(key);
+                  setTitle((t) => t || label);
+                }}
+                className="flex w-full items-center gap-3 rounded-xl border border-border/60 p-2.5 text-left hover:bg-muted/60"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold">{label}</span>
+                  <span className="block text-xs text-muted-foreground">{sub}</span>
+                </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            ))}
+          </div>
+        )}
+
         {(mode === 'direct' || audience === 'custom') && (
           <div className="space-y-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Person suchen…"
+                placeholder="Name suchen…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-9 pl-8"
@@ -178,9 +238,10 @@ export function NewChatDialog({
                       type="button"
                       disabled={busy}
                       onClick={() => clubId && request({ kind: 'direct', userId: p.id })}
-                      className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted/60"
+                      className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-muted/60"
                     >
-                      <span className="truncate">{p.name}</span>
+                      <ChatAvatar id={p.id} name={p.name} size="sm" />
+                      <span className="flex-1 truncate">{p.name}</span>
                       <span className="text-xs text-muted-foreground">{p.sub}</span>
                     </button>
                   ) : (

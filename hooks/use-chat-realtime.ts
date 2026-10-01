@@ -15,8 +15,17 @@ export interface ChatRealtimeMessage {
   created_at: string;
 }
 
+export interface ChatRealtimeReaction {
+  conversation_id: string;
+  message_id: string;
+  user_id: string;
+  emoji: string;
+  removed: boolean;
+}
+
 export type ChatRealtimeEvent =
   | { type: 'message' | 'message_updated'; message: ChatRealtimeMessage }
+  | { type: 'reaction'; reaction: ChatRealtimeReaction }
   /** Verbindung war weg und ist zurück: Zustand neu laden, Nachrichten könnten fehlen. */
   | { type: 'resync' };
 
@@ -46,6 +55,9 @@ function connect(userId: string) {
     .channel(`chat:${userId}`, { config: { private: true } })
     .on('broadcast', { event: 'message' }, forward('message'))
     .on('broadcast', { event: 'message_updated' }, forward('message_updated'))
+    .on('broadcast', { event: 'reaction' }, ({ payload }) =>
+      emit({ type: 'reaction', reaction: payload as ChatRealtimeReaction })
+    )
     .subscribe((status) => {
       if (status !== 'SUBSCRIBED') return;
       if (subscribedBefore) emit({ type: 'resync' });

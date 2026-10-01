@@ -97,7 +97,9 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   }, [fetchCount]);
 
   useNotificationsRealtime(userId, fetchCount);
-  useChatRealtime(userId, fetchCount);
+  useChatRealtime(userId, (e) => {
+    if (e.type !== 'reaction') fetchCount();
+  });
 
   // Fetch notifications + messages when dropdown opens
   const fetchAlerts = useCallback(async () => {
