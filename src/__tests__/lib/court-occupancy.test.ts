@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildOccupancyGrid, currentWeekRange } from '@/lib/court-occupancy';
+import { buildOccupancyGrid, computeCourtOccupancy, currentWeekRange } from '@/lib/court-occupancy';
 
 // 2026-08-10 ist ein Montag. Alle Timestamps hier in UTC angegeben, damit
 // der Test die Zeitzonen-Umrechnung tatsächlich prüft und nicht umgeht.
@@ -52,5 +52,69 @@ describe('currentWeekRange', () => {
     expect(new Date(from).getDay()).toBe(1); // Montag
     expect(new Date(from).getDate()).toBe(10);
     expect(new Date(to).getDate()).toBe(17);
+  });
+});
+
+// Zwei Tage, je 10 Öffnungsstunden → 20 h Kapazität je Platz.
+const from = new Date('2026-06-08T00:00:00Z'); // Montag
+const to = new Date('2026-06-10T00:00:00Z');
+const hours = {
+  monday: { open: '08:00', close: '18:00' },
+  tuesday: { open: '08:00', close: '18:00' },
+};
+const courts = [
+  { id: 'a', name: 'Platz 1' },
+  { id: 'b', name: 'Platz 2' },
+];
+
+describe('computeCourtOccupancy', () => {
+  it('teilt belegte Stunden durch Öffnungsstunden', () => {
+    const res = computeCourtOccupancy(
+      courts,
+      [
+        {
+          court_id: 'a',
+          timeslot_start: '2026-06-08T10:00:00Z',
+          timeslot_end: '2026-06-08T15:00:00Z',
+        },
+        {
+          court_id: 'a',
+          timeslot_start: '2026-06-09T10:00:00Z',
+          timeslot_end: '2026-06-09T11:00:00Z',
+        },
+      ],
+      hours,
+      from,
+      to
+    );
+    expect(res).toEqual([
+      { court: 'Platz 1', util: 30 },
+      { court: 'Platz 2', util: 0 },
+    ]);
+  });
+
+  it('kappt Sessions am Zeitraum und deckelt bei 100 %', () => {
+    const res = computeCourtOccupancy(
+      courts,
+      [
+        {
+          court_id: 'b',
+          timeslot_start: '2026-06-07T20:00:00Z',
+          timeslot_end: '2026-06-08T02:00:00Z',
+        },
+        {
+          court_id: 'a',
+          timeslot_start: '2026-06-08T00:00:00Z',
+          timeslot_end: '2026-06-10T00:00:00Z',
+        },
+      ],
+      hours,
+      from,
+      to
+    );
+    expect(res).toEqual([
+      { court: 'Platz 1', util: 100 },
+      { court: 'Platz 2', util: 10 },
+    ]);
   });
 });

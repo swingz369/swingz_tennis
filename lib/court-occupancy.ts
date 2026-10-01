@@ -12,6 +12,8 @@
  * Gleiche Begründung wie in `lib/utils/admin-date.ts`.
  */
 
+import { openHoursOn } from '@/lib/booking/opening-hours';
+
 const TIME_ZONE = 'Europe/Berlin';
 
 /** Öffnungsfenster der Heatmap. Slots ausserhalb werden verworfen. */
@@ -135,4 +137,47 @@ export function currentWeekRange(now: Date = new Date()): { from: string; to: st
   end.setDate(end.getDate() + 7);
 
   return { from: start.toISOString(), to: end.toISOString() };
+}
+
+// ── Belegung je Platz über einen Zeitraum (Vereinsanalyse) ──
+// 28 Tage enthalten jeden Wochentag genau viermal — die Summe der Öffnungsstunden
+// hängt deshalb nicht davon ab, ob der Server in UTC oder Berlin-Zeit rechnet.
+
+const OCC_DAY_MS = 86_400_000;
+
+export interface OccupancySession {
+  court_id: string | null;
+  timeslot_start: string;
+  timeslot_end: string;
+}
+
+/**
+ * Platzbelegung: belegte Stunden je Platz (Training, Buchung, Sperre) geteilt durch die
+ * Öffnungsstunden im Zeitraum [from, to). Abgesagte Sessions filtert der Aufrufer heraus.
+ * Ergebnis in ganzen Prozent, gedeckelt auf 100 (Überlappungen werden nicht entdoppelt).
+ */
+export function computeCourtOccupancy(
+  courts: { id: string; name: string }[],
+  sessions: OccupancySession[],
+  openingHours: unknown,
+  from: Date,
+  to: Date
+): { court: string; util: number }[] {
+  let openHours = 0;
+  for (let t = from.getTime(); t < to.getTime(); t += OCC_DAY_MS) {
+    openHours += openHoursOn(openingHours, new Date(t));
+  }
+
+  const busy = new Map<string, number>();
+  for (const s of sessions) {
+    if (!s.court_id) continue;
+    const start = Math.max(new Date(s.timeslot_start).getTime(), from.getTime());
+    const end = Math.min(new Date(s.timeslot_end).getTime(), to.getTime());
+    if (end > start) busy.set(s.court_id, (busy.get(s.court_id) ?? 0) + (end - start) / 3_600_000);
+  }
+
+  return courts.map((c) => ({
+    court: c.name,
+    util: openHours > 0 ? Math.min(100, Math.round(((busy.get(c.id) ?? 0) / openHours) * 100)) : 0,
+  }));
 }

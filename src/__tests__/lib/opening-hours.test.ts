@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isDayClosed, CLOSED_DAY_ERROR } from '@/lib/booking/opening-hours';
+import { isDayClosed, openHoursOn, CLOSED_DAY_ERROR } from '@/lib/booking/opening-hours';
 
 /* Mittagszeiten, damit getDay() unabhängig von der Laufzeit-Zeitzone stimmt.
  * 2026-06-08 = Montag, 2026-06-14 = Sonntag. */
@@ -49,5 +49,26 @@ describe('isDayClosed', () => {
 describe('CLOSED_DAY_ERROR', () => {
   it('is a readable German message', () => {
     expect(CLOSED_DAY_ERROR).toContain('geschlossen');
+  });
+});
+
+describe('openHoursOn', () => {
+  const hours = {
+    monday: { open: '07:00', close: '22:00' },
+    sunday: { open: '09:00', close: '18:30', closed: true },
+  };
+
+  it('rechnet Öffnungs- bis Schließzeit', () => {
+    expect(openHoursOn(hours, monday)).toBe(15);
+  });
+
+  it('gibt 0 für geschlossene Tage', () => {
+    expect(openHoursOn(hours, sunday)).toBe(0);
+  });
+
+  it('fällt ohne Angabe auf 08–22 Uhr zurück', () => {
+    expect(openHoursOn(null, monday)).toBe(14);
+    expect(openHoursOn({}, monday)).toBe(14);
+    expect(openHoursOn({ monday: { open: 'x', close: '22:00' } }, monday)).toBe(14);
   });
 });

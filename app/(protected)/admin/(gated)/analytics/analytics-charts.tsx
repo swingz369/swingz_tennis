@@ -153,7 +153,10 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
       {/* Court Utilization (Bar) */}
       <ScrollReveal delay={250}>
         <Card variant="bordered" className="p-6 transition-all duration-300 hover:shadow-md">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Platzauslastung</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">
+            Platzauslastung{' '}
+            <span className="text-sm font-normal text-muted-foreground">· letzte 4 Wochen</span>
+          </h3>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.capacityUtilization} layout="vertical">
@@ -180,7 +183,7 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
                     backgroundColor: 'hsl(var(--popover))',
                     color: 'hsl(var(--popover-foreground))',
                   }}
-                  formatter={(value) => [`${value}%`, 'Auslastung']}
+                  formatter={(value) => [`${value} %`, 'der Öffnungszeit belegt']}
                 />
                 <Bar
                   dataKey="util"

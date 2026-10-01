@@ -8,6 +8,7 @@ import type { AnalyticsData } from './analytics-client';
 import { format, getISOWeek, parseISO, startOfISOWeek } from 'date-fns';
 import { createLogger } from '@/lib/logger';
 import { fetchAll } from '@/infrastructure/persistence/repositories/paged';
+import { computeCourtOccupancy, type OccupancySession } from '@/lib/court-occupancy';
 
 const log = createLogger('admin:analytics:page');
 
@@ -80,7 +81,7 @@ export default async function AnalyticsPage({
           .eq('club_id', effectiveClubId),
         supabase
           .from('sessions')
-          .select('id, timeslot_start, trainer_id, court_id, schedules!inner(club_id)')
+          .select('id, timeslot_start, trainer_id, schedules!inner(club_id)')
           .eq('schedules.club_id', effectiveClubId)
           .order('timeslot_start', { ascending: false })
           .limit(200),
@@ -146,28 +147,44 @@ export default async function AnalyticsPage({
       })
     );
 
-    // Courts capacity utilization
-    const { data: courts } = await supabase
-      .from('courts')
-      .select('id, name')
-      .eq('club_id', effectiveClubId)
-      .eq('is_active', true);
-
-    const courtSessionCounts = new Map<string, number>();
-    (sessionsData ?? []).forEach((s: Record<string, unknown> & { court_id?: string }) => {
-      if (s.court_id) {
-        courtSessionCounts.set(s.court_id, (courtSessionCounts.get(s.court_id) ?? 0) + 1);
-      }
-    });
-
+    // Platzbelegung der letzten 4 Wochen: belegte Stunden je Platz / Öffnungsstunden.
+    // Vorher stand hier der Anteil der Sessions je Platz — das ist eine Verteilung,
+    // keine Auslastung (ein einziges Training ergab 100 %).
+    const [{ data: courts }, { data: club }] = await Promise.all([
+      supabase
+        .from('courts')
+        .select('id, name')
+        .eq('club_id', effectiveClubId)
+        .eq('is_active', true)
+        .order('name'),
+      supabase.from('clubs').select('opening_hours').eq('id', effectiveClubId).maybeSingle(),
+    ]);
+    const occupancyTo = new Date();
+    const occupancyFrom = new Date(occupancyTo.getTime() - 28 * 86_400_000);
+    const courtIds = (courts ?? []).map((c) => c.id);
+    const occupancySessions =
+      courtIds.length === 0
+        ? []
+        : await fetchAll<OccupancySession>(
+            () =>
+              supabase
+                .from('sessions')
+                .select('court_id, timeslot_start, timeslot_end')
+                .in('court_id', courtIds)
+                .is('cancelled_at', null)
+                .lt('timeslot_start', occupancyTo.toISOString())
+                .gt('timeslot_end', occupancyFrom.toISOString())
+                .order('id'),
+            'Sessions für Platzbelegung laden'
+          );
+    const capacityUtilization = computeCourtOccupancy(
+      courts ?? [],
+      occupancySessions,
+      club?.opening_hours,
+      occupancyFrom,
+      occupancyTo
+    );
     const totalSessionCount = sessionsData?.length ?? 0;
-    const capacityUtilization = (courts ?? []).map((c: any) => ({
-      court: c.name,
-      util:
-        totalSessionCount > 0
-          ? Math.round(((courtSessionCounts.get(c.id) ?? 0) / totalSessionCount) * 100)
-          : 0,
-    }));
 
     // Fetch revenue from paid invoices for the selected club
     const { data: paidInvoices } = await supabase
