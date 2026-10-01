@@ -282,11 +282,14 @@ Seed-Skripte brechen ab, wenn `DATABASE_URL` nicht auf localhost zeigt.
 > Stand 13.08.2026: Die DB wurde komplett zurückgesetzt. Alle früheren Test-Accounts
 > (`*@tc-rheinland.de`, `*@tsv-dortmund.de`, `*@ts-westfalen.de`) existieren **nicht mehr**.
 
+**Entwicklungsphase:** Alle Daten (lokal und Produktion) sind Testdaten und dürfen bei Bedarf
+bearbeitet werden — Regeln und Ausnahmen in `AGENTS.md` § Testdaten 0.
+
 Testvereine gehören genau einer **Lane** — dem Eigentümer der Daten:
 
 | Lane    | E-Mail-Domain   | Eigentümer | Regel für KI-Agenten                             |
 | ------- | --------------- | ---------- | ------------------------------------------------ |
-| `user`  | `*.swingz.test` | Mensch     | **Nur lesen. Niemals schreiben.**                |
+| `user`  | `*.swingz.test` | Mensch     | Bearbeiten, wenn nötig; im Bericht nennen.       |
 | `agent` | `*.claude.test` | KI         | Freie Spielwiese — hier testen und kaputtmachen. |
 
 | Verein               | Lane    | Zweck                                                 |

@@ -36,6 +36,12 @@ einer SaaS (statt auf der Vereinshomepage) erlaubt ist und wie es mit dem eingeb
 PREMIUM-Werbebanner steht. `league_players` hat derzeit keine Befüllung mehr (Kader, „Meine
 Mannschaften"-Zuordnung): Entscheidung nötig, ob es manuell gepflegt wird oder entfällt.
 
+### Testdaten sind freigegeben (01.10.2026)
+
+Alle Daten gelten als Testdaten; Agenten dürfen sie bei Bedarf bearbeiten, auch in der
+`user`-Lane (`AGENTS.md` § Testdaten 0). **Vor dem Launch:** Freigabe streichen, die
+`user`-Lane wieder auf „nur lesen" setzen und Produktionsdaten von Testdaten trennen.
+
 ### Automatische Auslieferung und Auto-Migration
 
 `deploy.yml` deployt jeden grünen Push auf `main` nach Produktion; mit `AUTO_MIGRATE=true`

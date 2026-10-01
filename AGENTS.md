@@ -95,16 +95,27 @@ Einmal gemergte Migrationsdateien werden nicht mehr nachträglich editiert (wie 
 
 Grund für diese Regeln: Die Datenbank enthielt 85 Vereine, 537 Profile und 1912 Rechnungen — fast alles Rückstände aus Testläufen verschiedener Agenten (`Billing Test Club <timestamp>` × 40). Parallel existierten 14 verschiedene `seed-*.ts`-Skripte mit je eigener Vorstellung davon, was „Testdaten" sind. Niemand konnte einem Befund noch ansehen, ob er echt oder Müll war. Am 13.08.2026 wurde die DB deshalb komplett zurückgesetzt.
 
+### 0. Entwicklungsphase: alles sind Testdaten (Stand 01.10.2026)
+
+Es gibt noch keine echten Vereine, Mitglieder oder Zahlungen — **alle Daten, lokal wie in
+Produktion, sind Testdaten**. Sie dürfen bearbeitet werden, wenn eine Aufgabe es braucht
+(Testfall nachstellen, kaputte Daten reparieren, Seed-Lücke schließen), auch in der
+`user`-Lane. Was dort geändert wurde, steht im Ergebnisbericht — der Mensch arbeitet mit
+diesen Vereinen und muss Abweichungen wiederfinden. Erste Wahl für Experimente bleibt die
+`agent`-Lane. Unverändert gilt: `TC Neuland e.V.` bleibt leer, `pnpm seed:reset` nur nach Rückfrage.
+
+Vor dem Launch wird diese Freigabe zurückgenommen (`docs/OPEN_ITEMS.md` § Vor dem Launch).
+
 ### 1. Lanes — wem gehören die Daten
 
 Jeder Testverein gehört genau einer Lane, erkennbar an der E-Mail-Domain seiner Accounts:
 
-| Lane    | Domain          | Eigentümer | Regel                                                        |
-| ------- | --------------- | ---------- | ------------------------------------------------------------ |
-| `user`  | `*.swingz.test` | Mensch     | Ein Agent liest hier höchstens. **Schreiben ist untersagt.** |
-| `agent` | `*.claude.test` | KI         | Freie Spielwiese. Hier testen, kaputtmachen, zurücksetzen.   |
+| Lane    | Domain          | Eigentümer | Regel                                                                 |
+| ------- | --------------- | ---------- | --------------------------------------------------------------------- |
+| `user`  | `*.swingz.test` | Mensch     | Bearbeiten nur, wenn die Aufgabe es braucht; im Bericht nennen (§ 0). |
+| `agent` | `*.claude.test` | KI         | Freie Spielwiese. Hier testen, kaputtmachen, zurücksetzen.            |
 
-Wer als Agent Daten anlegen, ändern oder löschen will, tut das in **Claude Sandbox Alpha** oder **Beta**. Muss ein Testfall zwingend in einem Nutzer-Verein laufen, vorher fragen — nicht einfach machen.
+Wer als Agent Daten anlegen, ändern oder löschen will, tut das in **Claude Sandbox Alpha** oder **Beta**. Muss ein Testfall in einem Nutzer-Verein laufen, ist das in der Entwicklungsphase erlaubt (§ 0) — die Änderung im Bericht nennen.
 
 `TC Neuland e.V.` bleibt leer. Kein Mitglied, kein Trainer, kein Platz, `setup_completed_at = NULL`. Das ist der Erstlogin-Testfall des Menschen und wird von keinem Agenten bestückt.
 
