@@ -1,6 +1,6 @@
 # Umgebungen & Datenbanken
 
-> Zuletzt verifiziert: 30. September 2026 (Seed-Aufrufe gegen package.json und Seed-CLI korrigiert); übrige Abschnitte zuletzt 23. September 2026 (CI-Tests gegen frische Supabase-DB, Auslieferungsweg, lokale Test-/Dev-Server-Rezepte)
+> Zuletzt verifiziert: 2. Oktober 2026 (Git-Remote auf HTTPS, § 5); Seed-Aufrufe zuletzt 30. September 2026; übrige Abschnitte zuletzt 23. September 2026 (CI-Tests gegen frische Supabase-DB, Auslieferungsweg, lokale Test-/Dev-Server-Rezepte)
 > Warum es genau so aufgeteilt ist (und nicht mit Staging von Anfang an): [`decisions/adr-003-datenbank-umgebungen.md`](decisions/adr-003-datenbank-umgebungen.md)
 
 Dieses Dokument beschreibt, welche Datenbank wofür da ist, wer darauf schreiben darf und wie eine Änderung von der Entwicklung nach Produktion kommt. Es ist ein **lebendes Dokument** — wer die Aufteilung ändert, ändert diese Datei mit.
@@ -111,6 +111,7 @@ lokal entwickeln → prüfen (§ 5b) → Commit (Hook) → merge/push nach main 
    - **`ci.yml`:** Typecheck, Lint, Design-Token-Guardrail, Unit-Tests, Dependency-Audit; auf Pushes und PRs zusätzlich „Migrationen gegen leere DB“ (`supabase db reset`) und RLS-/Mandanten-Integrationstests gegen diese frische DB.
    - **`deploy.yml`** (startet nach grüner CI auf `main`, oder manuell per `workflow_dispatch`): 1. Migrationen auf Produktion — **nur** wenn die Repo-Variable `AUTO_MIGRATE=true` gesetzt ist; 2. `vercel deploy --prod` per CLI; 3. Health-Check auf `https://swingz.vercel.app/api/health` (bricht rot ab, wenn nicht grün).
    - Die Reihenfolge Migration → Deploy ist fest eingebaut. Daraus folgt: Migrationen müssen **additiv** sein (Spalte hinzufügen, nicht umbenennen) — zwischen beiden Schritten läuft der alte Code auf dem neuen Schema. Eine Umbenennung wird zu zwei Releases.
+   - **Remote läuft über HTTPS** (seit 02.10.2026): `origin` = `https://swingz369@github.com/swingz369/swingz_tennis.git`. Grund: SSH zu GitHub (Port 22 und 443) ist aus der Entwicklungsumgebung gesperrt, `pnpm ship` lief in einen Timeout. Angemeldet wird über den gh-Login (`gh auth git-credential`, global in `~/.gitconfig`). `swingz369@` in der URL hält das Konto fest, auch wenn in gh ein anderes Konto aktiv ist. Schlägt ein Push mit Auth-Fehler fehl: `gh auth status`, ggf. `gh auth login`. Zurück auf SSH: `git remote set-url origin git@github.com-swingz369:swingz369/swingz_tennis.git`.
 5. **Nach dem Merge prüfen, nicht hoffen** ([`AGENTS.md`](../AGENTS.md) § Auslieferung, Regel 3): `gh run list --workflow deploy --limit 3` (grün?), `curl -s https://swingz.vercel.app/api/health`, und einmal nachsehen, dass `monitor.yml` läuft (`schedule` läuft nur auf `main`).
 6. **Migrationen von Hand** (wenn `AUTO_MIGRATE` aus ist — der Zustand nach dem Launch):
 
