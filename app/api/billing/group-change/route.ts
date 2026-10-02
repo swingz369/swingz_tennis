@@ -33,7 +33,10 @@ export async function POST(request: NextRequest) {
     .eq('club_id', parsed.data.club_id)
     .eq('is_active', true)
     .maybeSingle();
-  if (!membership || !['admin', 'superadmin', 'trainer'].includes(membership.role))
+  // Kein Trainer: Saisonplan (`season_plan_entries`) und Guthaben (`member_balances`) schreiben
+  // laut RLS nur Admins. Ein Trainer-Aufruf hängte Buchungen um und scheiterte erst danach —
+  // halber Wechsel ohne Plan- und Guthabenänderung.
+  if (!membership || !['admin', 'superadmin'].includes(membership.role))
     return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
   try {
