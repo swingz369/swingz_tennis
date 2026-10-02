@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireAuth } from '@/lib/api-auth';
+import { withApiAuth } from '@/lib/api-auth';
 import { internalErrorResponse } from '@/lib/api-error';
 import { createLogger } from '@/lib/logger';
 import { processGroupChange } from '@/lib/services/group-change.service';
@@ -18,32 +18,34 @@ const Schema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAuth(request);
-  if (!auth.user) return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
-  const { supabase, user } = auth;
+  return withApiAuth(request, async (auth) => {
+    if (!auth.user) return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
+    const { supabase, user } = auth;
 
-  const body = await request.json();
-  const parsed = Schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const body = await request.json();
+    const parsed = Schema.safeParse(body);
+    if (!parsed.success)
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { data: membership } = await supabase
-    .from('user_club_memberships')
-    .select('role')
-    .eq('user_id', user.id)
-    .eq('club_id', parsed.data.club_id)
-    .eq('is_active', true)
-    .maybeSingle();
-  // Kein Trainer: Saisonplan (`season_plan_entries`) und Guthaben (`member_balances`) schreiben
-  // laut RLS nur Admins. Ein Trainer-Aufruf hängte Buchungen um und scheiterte erst danach —
-  // halber Wechsel ohne Plan- und Guthabenänderung.
-  if (!membership || !['admin', 'superadmin'].includes(membership.role))
-    return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
+    const { data: membership } = await supabase
+      .from('user_club_memberships')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('club_id', parsed.data.club_id)
+      .eq('is_active', true)
+      .maybeSingle();
+    // Kein Trainer: Saisonplan (`season_plan_entries`) und Guthaben (`member_balances`) schreiben
+    // laut RLS nur Admins. Ein Trainer-Aufruf hängte Buchungen um und scheiterte erst danach —
+    // halber Wechsel ohne Plan- und Guthabenänderung.
+    if (!membership || !['admin', 'superadmin'].includes(membership.role))
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
-  try {
-    const result = await processGroupChange({ ...parsed.data, created_by: user.id });
-    return NextResponse.json({ data: result });
-  } catch (e) {
-    log.error('Gruppenwechsel fehlgeschlagen', e instanceof Error ? e : undefined);
-    return internalErrorResponse();
-  }
+    try {
+      const result = await processGroupChange({ ...parsed.data, created_by: user.id });
+      return NextResponse.json({ data: result });
+    } catch (e) {
+      log.error('Gruppenwechsel fehlgeschlagen', e instanceof Error ? e : undefined);
+      return internalErrorResponse();
+    }
+  });
 }

@@ -1,4 +1,5 @@
 import type { AuthContext } from '@/lib/api-auth';
+import { berlinParts } from '@/lib/berlin-time';
 import { getUserDb } from '@/infrastructure/db';
 import { AnalyticsRepository } from '@/infrastructure/persistence/repositories/analytics.repository';
 
@@ -58,13 +59,15 @@ export class AnalyticsService {
   async revenue(clubId: string): Promise<RevenueData> {
     const paid = await this.analytics.findPaidPayments(clubId);
     const payments = paid.map((p) => {
-      const date = new Date(p.paidAt);
+      // Berliner Kalendertag, nicht UTC — sonst rutscht eine Zahlung kurz nach
+      // Mitternacht in den Vortag bzw. Vormonat (Vercel läuft in UTC).
+      const { date, time } = berlinParts(new Date(p.paidAt));
       return {
         id: p.id,
         memberId: p.memberId ?? '',
         amount: p.amount,
-        date: date.toISOString().split('T')[0],
-        time: date.toISOString().slice(11, 16),
+        date,
+        time,
         method: p.method,
         status: 'paid' as const,
       };

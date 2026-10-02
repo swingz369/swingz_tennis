@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { z } from 'zod';
-import { requireAuth } from '@/lib/api-auth';
+import { withApiAuth } from '@/lib/api-auth';
 
 const MarkPaidSchema = z.object({
   payment_method: z.enum(['sepa', 'transfer', 'cash', 'stripe']),
@@ -11,55 +11,57 @@ const MarkPaidSchema = z.object({
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { supabase, user } = await requireAuth(request);
-  const body = await request.json();
-  const parsed = MarkPaidSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  return withApiAuth(request, async ({ supabase, user }) => {
+    const body = await request.json();
+    const parsed = MarkPaidSchema.safeParse(body);
+    if (!parsed.success)
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { data: installment, error: fetchErr } = await supabase
-    .from('invoice_installments')
-    .select('*, invoices(club_id, member_id, amount)')
-    .eq('id', id)
-    .single();
-  if (fetchErr || !installment)
-    return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
+    const { data: installment, error: fetchErr } = await supabase
+      .from('invoice_installments')
+      .select('*, invoices(club_id, member_id, amount)')
+      .eq('id', id)
+      .single();
+    if (fetchErr || !installment)
+      return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 });
 
-  const clubId = installment.invoices?.club_id;
-  const { data: membership } = await supabase
-    .from('user_club_memberships')
-    .select('role')
-    .eq('user_id', user.id)
-    .eq('club_id', clubId)
-    .eq('is_active', true)
-    .maybeSingle();
-  if (!membership || !['admin', 'superadmin'].includes(membership.role))
-    return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
+    const clubId = installment.invoices?.club_id;
+    const { data: membership } = await supabase
+      .from('user_club_memberships')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('club_id', clubId)
+      .eq('is_active', true)
+      .maybeSingle();
+    if (!membership || !['admin', 'superadmin'].includes(membership.role))
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
 
-  const paidAt = parsed.data.paid_at ?? new Date().toISOString();
+    const paidAt = parsed.data.paid_at ?? new Date().toISOString();
 
-  const { error: markErr } = await supabase
-    .from('invoice_installments')
-    .update({ status: 'paid', paid_at: paidAt })
-    .eq('id', id);
-  if (markErr) return internalErrorResponse();
+    const { error: markErr } = await supabase
+      .from('invoice_installments')
+      .update({ status: 'paid', paid_at: paidAt })
+      .eq('id', id);
+    if (markErr) return internalErrorResponse();
 
-  // Check if all installments paid
-  const { data: remaining } = await supabase
-    .from('invoice_installments')
-    .select('status')
-    .eq('invoice_id', installment.invoice_id)
-    .neq('status', 'paid');
+    // Check if all installments paid
+    const { data: remaining } = await supabase
+      .from('invoice_installments')
+      .select('status')
+      .eq('invoice_id', installment.invoice_id)
+      .neq('status', 'paid');
 
-  if (!remaining?.length) {
-    await supabase
-      .from('invoices')
-      .update({
-        status: 'paid',
-        paid_at: paidAt,
-        paid_amount: installment.invoices?.amount ?? 0,
-      })
-      .eq('id', installment.invoice_id);
-  }
+    if (!remaining?.length) {
+      await supabase
+        .from('invoices')
+        .update({
+          status: 'paid',
+          paid_at: paidAt,
+          paid_amount: installment.invoices?.amount ?? 0,
+        })
+        .eq('id', installment.invoice_id);
+    }
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
+  });
 }

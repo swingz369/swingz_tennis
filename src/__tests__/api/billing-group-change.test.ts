@@ -8,13 +8,13 @@ const { processGroupChange, role } = vi.hoisted(() => ({
 
 vi.mock('@/lib/services/group-change.service', () => ({ processGroupChange }));
 vi.mock('@/lib/api-auth', () => ({
-  requireAuth: async () => {
+  withApiAuth: async (_req: unknown, handler: (auth: unknown) => Promise<unknown>) => {
     const chain = {
       select: () => chain,
       eq: () => chain,
       maybeSingle: async () => ({ data: { role: role.value } }),
     };
-    return { user: { id: 'u1' }, supabase: { from: () => chain } };
+    return handler({ user: { id: 'u1' }, supabase: { from: () => chain } });
   },
 }));
 

@@ -55,4 +55,14 @@ describe('AnalyticsService', () => {
     expect(r.totalRevenue).toBe(33.5);
     expect(r.monthlyBreakdown).toEqual([{ month: '2026-09', revenue: 33.5 }]);
   });
+
+  it('ordnet Zahlungen dem Berliner Kalendertag zu, nicht UTC', async () => {
+    vi.spyOn(AnalyticsRepository.prototype, 'findPaidPayments').mockResolvedValue([
+      // 30.09. 22:30 UTC = 01.10. 00:30 in Berlin
+      { id: 'pay-1', memberId: 'm', amount: 5, paidAt: '2026-09-30T22:30:00Z', method: 'cash' },
+    ]);
+    const r = await new AnalyticsService(fakeAuth()).revenue('club-1');
+    expect(r.payments[0]).toMatchObject({ date: '2026-10-01', time: '00:30' });
+    expect(r.monthlyBreakdown).toEqual([{ month: '2026-10', revenue: 5 }]);
+  });
 });

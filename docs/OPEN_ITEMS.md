@@ -123,11 +123,12 @@ Seit 26.09.2026 auf `main` und deployt: `payment_status`-Auswertung,
   wirken → Handler je Event fachlich idempotent machen.
 - **Abnahme:** signierte Testereignisse gegen den Stripe-Testmodus, inkl. Fehler nach dem ersten
   Schreibschritt, Live-Rechte der RPC nachprüfen. Siehe [`PRODUKTIONSREIFE.md`](PRODUKTIONSREIFE.md).
+- **Blocker dafür (02.10.2026):** `.env.local` enthält einen **Live**-Key (`STRIPE_SECRET_KEY=sk_live…`).
+  Lokale Entwicklung und Tests brauchen Test-Keys (`sk_test…`, `whsec_…` aus `stripe listen`) —
+  sonst kann jeder lokale Checkout echtes Geld bewegen.
 
 ### Abnahmen ausgelieferter Änderungen
 
-- **Abo-Gate:** Code-Sperre (402 bei `none`) seit 24.09. Direkte API-Tests mit Agent-Admin ohne
-  Abo und mit Tennisschule stehen aus (`SUBSCRIPTION_ENFORCEMENT` dafür nur lokal scharf schalten).
 - **Sentry:** `instrumentation.ts` / `instrumentation-client.ts` korrigiert. Echten Server- und
   Client-Testfehler bis zum Alarm verfolgen.
 - **E-Mail:** Domain bei Resend `verified`, Env in Vercel gesetzt. Noch kein echter Versand aus
@@ -139,9 +140,6 @@ Seit 26.09.2026 auf `main` und deployt: `payment_status`-Auswertung,
 
 ## P1 — Wichtig
 
-- **Umsatz-Export (`/api/analytics/revenue/export`): Live-Abnahme offen.** Code seit 24.09.
-  korrigiert (nur abgeschlossene `payments`, kein HTML-als-PDF). → Mit Agent-Rechnung und
-  Testzahlung gegenprüfen, dann als für die Buchhaltung abgenommen markieren.
 - **Architektur-Baseline (`dependency-cruiser`) nicht aktuell gehalten.**
   `.dependency-cruiser-known-violations.json` zuletzt am 18.09.2026 geändert; `arch:check` läuft
   mit `--ignore-known` und meldet „grün", auch wenn sich der Verstoß-Stand nicht bewegt.
