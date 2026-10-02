@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
+> Zuletzt verifiziert: 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -332,10 +332,27 @@ zwar korrekt vor dem RPC-Aufruf — das schützt aber nicht vor einem direkten A
 vorbei. Migration `20260914120000_generate_season_invoices_atomic_auth_check.sql` trägt
 `IF NOT is_club_admin(p_club_id) THEN RAISE EXCEPTION ...` am Funktionsanfang nach.
 
-**Noch nicht geprüft:** ob weitere SECURITY DEFINER-Funktionen mit `authenticated`-Grant
-dieselbe Lücke haben (`next_invoice_sequence`, `generate_invoice_number`, o.ä.) — nicht Teil
-dieses Funds, sollte bei Gelegenheit systematisch durchgegangen werden (`SELECT proname, proacl
-FROM pg_proc WHERE prosecdef AND proacl::text LIKE '%authenticated%'`).
+**Systematisch durchgegangen am 02.10.2026** (`20261002100000_security_definer_rechte.sql`):
+59 SECURITY DEFINER-Funktionen in `public` waren für `authenticated` ausführbar, fast alle auch
+für `anon`. Ergebnis:
+
+- **Nur noch `service_role`:** alle Trigger-Funktionen (Trigger feuern unabhängig vom
+  EXECUTE-Recht) und alle Funktionen, die nur der Server (`create_booking_safe`,
+  `prune_audit_logs`, Edge Function `generate_weekly_club_reports`) oder niemand aufruft
+  (Job-Queue, Gebühren-/Settings-Helfer, `create_invoice_with_items`,
+  `increment_member_balance`, `mark_overdue_invoices` u. a.).
+- **SECURITY INVOKER:** `add_balance_entry_atomic` (Gruppenwechsel, Nutzer-Client; schreibt jetzt
+  unter `mb_admin_all`/`mbe_admin_all` — und lief vorher wegen mehrdeutigem `id` nie durch) und
+  `get_trial_training_stats` (zählt nur sichtbare Probetrainings).
+- **Bleiben für Nutzer:** RLS-Helfer (`is_club_admin` & Co., auch für `anon`, weil Policies sie
+  im Kontext des Abfragenden aufrufen), Chat-/News-Funktionen mit eigener Prüfung,
+  `generate_season_invoices_atomic` (ohne `anon`).
+
+Neue Funktionen bekommen in Supabase per Default-Privilegien wieder `EXECUTE` für `anon` und
+`authenticated`. Der Test „keine SECURITY-DEFINER-Funktion für Nutzer ausführbar …" in
+`src/__tests__/integration/rls-policy-catalog.test.ts` (läuft in CI) bricht dann, bis die neue
+Funktion entweder `REVOKE … FROM PUBLIC, anon, authenticated` bekommt oder mit Begründung in
+`DEFINER_FOR_USERS` steht.
 
 ## Gelöste Altlasten (Stand 05.08.2026, zweiter Fix-Durchgang)
 

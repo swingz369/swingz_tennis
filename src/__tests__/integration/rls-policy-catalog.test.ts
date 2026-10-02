@@ -51,4 +51,53 @@ describeDb('RLS-Policy-Katalog', () => {
     const bad = rows.filter((r) => !(r.tablename in ALLOWED_OPEN));
     expect(bad.map((r) => `${r.tablename}.${r.policyname}`)).toEqual([]);
   });
+
+  it('keine SECURITY-DEFINER-Funktion für Nutzer ausführbar, die nicht freigegeben ist', async () => {
+    const rows = await sql<{ proname: string; anon: boolean }[]>`
+      SELECT p.proname, has_function_privilege('anon', p.oid, 'EXECUTE') AS anon
+      FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'public' AND p.prosecdef
+        AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
+    `;
+    const bad = rows
+      .filter((r) => !(r.proname in DEFINER_FOR_USERS) || (r.anon && !RLS_HELPERS.has(r.proname)))
+      .map((r) => `${r.proname}${r.anon ? ' (anon)' : ''}`);
+    expect(bad).toEqual([]);
+  });
 });
+
+/**
+ * RLS-Helfer: Policies rufen sie im Kontext des Abfragenden auf, auch für anon.
+ * Sie geben nur Auskunft über den Aufrufer selbst.
+ */
+const RLS_HELPERS = new Set([
+  'get_my_trainer_id',
+  'get_user_club_ids',
+  'is_admin_of_user',
+  'is_club_admin',
+  'is_club_member',
+  'is_club_trainer',
+  'is_conversation_participant',
+  'is_message_participant',
+  'is_owner',
+  'is_staff_of_user',
+  'is_superadmin',
+  'is_superadmin_of',
+  'news_audience_matches',
+  'shares_active_club_with',
+]);
+
+/**
+ * SECURITY DEFINER umgeht RLS. Für `authenticated` freigegeben ist nur, was selbst prüft, wer
+ * aufruft (Grund: 20261002100000_security_definer_rechte.sql). Alles andere: EXECUTE nur
+ * service_role, oder SECURITY INVOKER.
+ */
+const DEFINER_FOR_USERS: Record<string, string> = {
+  ...Object.fromEntries([...RLS_HELPERS].map((n) => [n, 'RLS-Helfer'])),
+  chat_unread_total: 'zählt nur Gespräche von auth.uid()',
+  create_group_conversation: 'prüft Staff-Rolle im Verein',
+  list_my_conversations: 'nur Gespräche von auth.uid()',
+  start_direct_conversation: 'prüft gemeinsame Vereinsmitgliedschaft',
+  news_read_stats: 'prüft Admin des Vereins',
+  generate_season_invoices_atomic: 'prüft Admin des Vereins (20260914120000)',
+};

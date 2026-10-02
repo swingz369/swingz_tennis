@@ -89,19 +89,6 @@ Code: `lib/subscription-gate.ts` (`isSubscriptionEnforced`), `lib/env.ts`,
 
 ## P0 — Blocker
 
-### SECURITY DEFINER-Funktionen ohne eigenen Autorisierungs-Check
-
-59 SECURITY DEFINER-Funktionen in `public` sind für `authenticated` ausführbar (lokal gezählt
-02.10.2026). Nur `generate_season_invoices_atomic` wurde bisher abgesichert
-(`20260914120000_…_auth_check.sql`). Lokal bestätigt: `add_balance_entry_atomic`,
-`create_invoice_with_items` und `increment_member_balance` sind für `authenticated` ausführbar
-und prüfen im Funktionskörper weder `auth.uid()` noch eine Vereinsrolle — bei
-`add_balance_entry_atomic` gibt der Aufrufer sogar `p_created_by` selbst mit. Damit kann
-vermutlich jeder angemeldete Nutzer per `POST /rest/v1/rpc/…` fremde Guthabenbuchungen anlegen
-(nicht ausprobiert). → **Fix:** alle 59 inventarisieren; vom Server mit Service-Client
-aufgerufene → `EXECUTE` nur für `service_role`; nutzergerufene → Rollenprüfung im Körper.
-→ Quelle: `docs/DATABASE.md` § SECURITY DEFINER-Funktionen ohne eigenen Autorisierungs-Check.
-
 ### Service-Client-Bypass in API-Routen
 
 `DATABASE_URL` verbindet als `postgres` (BYPASSRLS), `createServiceClient()` umgeht RLS
