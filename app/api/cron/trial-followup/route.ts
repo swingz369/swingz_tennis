@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/nextjs';
 import { createServiceClient } from '@/lib/supabase/service';
 import { env } from '@/lib/env';
 import { createLogger } from '@/lib/logger';
+import { recordHeartbeat } from '@/lib/ops-heartbeat';
 import {
   nextFollowupStage,
   sendFollowupEmail,
@@ -104,6 +105,7 @@ export async function GET(request: NextRequest) {
     }
 
     Sentry.captureCheckIn({ checkInId, monitorSlug: 'trial-followup', status: 'ok' });
+    await recordHeartbeat('cron-trial-followup');
     return NextResponse.json({
       success: true,
       processed: trials?.length ?? 0,
@@ -114,6 +116,6 @@ export async function GET(request: NextRequest) {
     log.error('Trial followup cron failed', { error: message });
     Sentry.captureCheckIn({ checkInId, monitorSlug: 'trial-followup', status: 'error' });
     Sentry.captureException(error, { tags: { cron: 'trial-followup' } });
-    return NextResponse.json({ error: 'Cron-Job fehlgeschlagen', message }, { status: 500 });
+    return NextResponse.json({ error: 'Cron-Job fehlgeschlagen' }, { status: 500 });
   }
 }

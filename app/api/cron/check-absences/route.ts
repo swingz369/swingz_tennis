@@ -5,13 +5,14 @@
  * bei denen in den letzten 30 Tagen KEINE Abwesenheits-Benachrichtigung verschickt wurde.
  * Trägt für jeden betroffenen Trainer eine Notification ein.
  *
- * Auth: Header x-cron-secret muss mit CRON_SECRET übereinstimmen.
+ * Auth: `Authorization: Bearer <CRON_SECRET>` (Vercel Cron) oder Header x-cron-secret.
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import { recordHeartbeat } from '@/lib/ops-heartbeat';
 
 const log = createLogger('cron:check-absences');
 
@@ -25,7 +26,10 @@ const absenceUrl = (memberId: string) => `/trainer?absent=${memberId}`;
 export async function GET(req: NextRequest) {
   // ── Auth: Cron-Secret prüfen ──────────────────────────────────────────────
   const cronSecret = process.env.CRON_SECRET;
-  const incomingSecret = req.headers.get('x-cron-secret');
+  // Vercel Cron schickt `Authorization: Bearer` — nur x-cron-secret hätte jeden geplanten Lauf abgewiesen.
+  const incomingSecret =
+    req.headers.get('x-cron-secret') ??
+    req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
 
   if (!cronSecret || incomingSecret !== cronSecret) {
     log.error('Cron-Aufruf mit ungültigem Secret abgewiesen', undefined);
@@ -77,6 +81,7 @@ export async function GET(req: NextRequest) {
       log.info('Keine Mitglieder mit Fehlzeiten über Schwellenwert', {
         threshold: NO_SHOW_THRESHOLD,
       });
+      await recordHeartbeat('cron-check-absences');
       return NextResponse.json({ processed: 0, notified: 0 });
     }
 
@@ -176,6 +181,7 @@ export async function GET(req: NextRequest) {
       notified: totalNotified,
     });
 
+    await recordHeartbeat('cron-check-absences');
     return NextResponse.json({
       processed: toProcess.length,
       notified: totalNotified,

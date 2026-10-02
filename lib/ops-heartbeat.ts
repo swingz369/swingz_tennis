@@ -27,6 +27,9 @@ export const MONITORED_JOBS: Record<string, { maxAgeHours: number; label: string
   'cron-billing-overdue': { maxAgeHours: 36, label: 'Mahnlauf' },
   'cron-booking-reminders': { maxAgeHours: 36, label: 'Buchungserinnerungen' },
   'cron-reactivation': { maxAgeHours: 36, label: 'Reaktivierung' },
+  'cron-trial-followup': { maxAgeHours: 36, label: 'Probetraining-Nachfassen' },
+  'cron-check-absences': { maxAgeHours: 36, label: 'Fehlzeiten-Hinweise' },
+  'cron-refresh-base-rates': { maxAgeHours: 36, label: 'Basiszins-Prüfung' },
   // Läuft nur sonntags — eine ausgefallene Woche darf nicht sofort Alarm geben.
   'cron-prune-audit-logs': { maxAgeHours: 24 * 9, label: 'Protokoll-Bereinigung' },
 };

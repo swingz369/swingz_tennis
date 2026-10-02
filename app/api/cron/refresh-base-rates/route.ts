@@ -1,10 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import * as Sentry from '@sentry/nextjs';
 import { internalErrorResponse } from '@/lib/api-error';
 import { timingSafeEqual } from 'crypto';
 import { env } from '@/lib/env';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import { recordHeartbeat } from '@/lib/ops-heartbeat';
 
 export const dynamic = 'force-dynamic';
 const log = createLogger('cron:refresh-base-rates');
@@ -117,9 +119,15 @@ async function runDiagnostics(sb: ReturnType<typeof createServiceClient>) {
   const lastValidFrom = data?.[0]?.valid_from ?? null;
   const nextRefresh = computeNextRefreshDate(new Date());
 
-  // Refresh fällig genau am 1.1. oder 1.7. → ja wenn lastValidFrom älter
-  const today = new Date().toISOString().slice(0, 10);
-  const isRefreshDue = lastValidFrom === null || (lastValidFrom <= today && nextRefresh <= today);
+  // Fällig, sobald der letzte Stichtag (1.1./1.7.) nach dem jüngsten bekannten Satz liegt.
+  // Vorher verglich die Prüfung mit dem *nächsten* Stichtag und schlug dadurch nie an.
+  const isRefreshDue = lastValidFrom === null || lastValidFrom < lastRefreshDate(new Date());
+  if (isRefreshDue) {
+    // Täglich, bis der neue Satz eingetragen ist — Mahnzinsen rechnen sonst mit dem alten.
+    log.warn('Basiszinssatz veraltet — neuen Satz der Bundesbank eintragen', { lastValidFrom });
+    Sentry.captureMessage('Basiszinssatz veraltet', 'warning');
+  }
+  await recordHeartbeat('cron-refresh-base-rates');
 
   return NextResponse.json({
     ok: true,
@@ -145,6 +153,13 @@ function computeNextRefreshDate(today: Date): string {
     if (c > todayStr) return c;
   }
   return candidates[candidates.length - 1]!;
+}
+
+/** Jüngster Stichtag (1.1. oder 1.7.) bis einschließlich heute. */
+function lastRefreshDate(today: Date): string {
+  const yyyy = today.getUTCFullYear();
+  const julFirst = `${yyyy}-07-01`;
+  return today.toISOString().slice(0, 10) >= julFirst ? julFirst : `${yyyy}-01-01`;
 }
 
 /**

@@ -31,8 +31,9 @@ freigegebene Mannschaftswidget (`components/tennisde-widget.tsx`) und der manuel
 Offen: beim tennis.de Service-Center klären, ob das Widget in einer SaaS (statt auf der
 Vereinshomepage) erlaubt ist und wie es mit dem PREMIUM-Werbebanner steht.
 `league_players` wird nicht mehr befüllt (lokal 0 Zeilen, Stand 02.10.), wird aber noch von
-`leagues/[id]/roster`, `member/leagues` (+ `claim`) und dem Mitglieder-Dashboard gelesen →
-**Entscheidung nötig:** manuell pflegen oder Tabelle samt Oberfläche entfernen.
+`leagues/[id]/roster`, `member/leagues` (+ `claim`) und dem Mitglieder-Dashboard gelesen.
+**Entschieden 02.10.2026: Kader werden manuell gepflegt** → Pflegeoberfläche für Admins fehlt
+noch (siehe P2).
 
 ### Testdaten sind freigegeben (01.10.2026)
 
@@ -47,6 +48,12 @@ Repo-Variable gesetzt (seit 19.09.2026), die Migrationen laufen also ohne Rückf
 Entwicklungsphase gewollt. **Vor dem Launch:** `gh variable delete AUTO_MIGRATE` (Migrationen
 wieder von Hand nach Sichtung mit `pnpm db:status:prod`) und entscheiden, ob Pull Requests mit
 Freigabe wieder Pflicht werden.
+
+### Pflicht-Abo für Neukonten
+
+Neukonten starten im Freemium-Default. **Entschieden 02.10.2026:** erst zum Launch umsetzen,
+zusammen mit dem Scharfschalten der Bezahlschranke.
+→ Quelle: `docs/tickets/roadmap/TICKET-mandatory-subscription-onboarding.md`.
 
 ### Bezahlschranke ist abgeschaltet
 
@@ -132,10 +139,6 @@ Seit 26.09.2026 auf `main` und deployt: `payment_status`-Auswertung,
 
 ## P1 — Wichtig
 
-- **Drei Cron-Routen haben keinen Zeitplan.** `cron/trial-followup`, `cron/check-absences` und
-  `cron/refresh-base-rates` stehen weder in `vercel.json` (5 Einträge) noch in einem
-  GitHub-Workflow. Der Nurture-Flow des Probetrainings verschickt damit weder die Erinnerung nach
-  2 Tagen noch den letzten Anstoß nach 7 Tagen. → **Entscheiden:** einplanen oder Route löschen.
 - **Umsatz-Export (`/api/analytics/revenue/export`): Live-Abnahme offen.** Code seit 24.09.
   korrigiert (nur abgeschlossene `payments`, kein HTML-als-PDF). → Mit Agent-Rechnung und
   Testzahlung gegenprüfen, dann als für die Buchhaltung abgenommen markieren.
@@ -144,11 +147,6 @@ Seit 26.09.2026 auf `main` und deployt: `payment_status`-Auswertung,
   mit `--ignore-known` und meldet „grün", auch wenn sich der Verstoß-Stand nicht bewegt.
   → **Fix:** CI-Gate gegen Anstieg der Verstoßzahl (oder `arch:baseline` bei jedem
   ADR-005-Commit).
-- **Buchungen: Lesebreite ist Produktentscheidung.** `Users can view their own bookings` lässt
-  aktive Mitglieder alle Buchungen ihres Vereins lesen (u. a. RSVP-Teilnehmerliste). Ob das zu
-  weit ist, ist zu entscheiden.
-- **Pflicht-Abo für Neukonten fehlt.** Neukonten starten im Freemium-Default.
-  → Quelle: `docs/tickets/roadmap/TICKET-mandatory-subscription-onboarding.md`.
 - **Integrationstests laufen in CI nur teilweise.** CI fährt `rls-policy-catalog` und
   `cross-tenant-isolation` gegen eine frische lokale DB (`supabase db reset`). Die übrigen
   (`billing-engine`, `payment-flow`, `stripe-webhook`, …) skippen weiter → in denselben CI-Job
@@ -170,6 +168,9 @@ Seit 26.09.2026 auf `main` und deployt: `payment_status`-Auswertung,
 - **Dependency-Audit:** 3 moderate unter der Gate-Schwelle (`csv-parse` bräuchte Major 6→7,
   eigener Vorgang); node-forge-Advisory ohne Patch bewusst ausgenommen (Commit `084a3066`) —
   bei verfügbarem Patch Ausnahme entfernen.
+- **Mannschaftskader manuell pflegen** (Entscheidung 02.10.2026): Admin-Oberfläche zum Anlegen,
+  Bearbeiten und CSV-Import von `league_players` je Mannschaft. Bis dahin bleiben Kader und
+  „Meine Mannschaften" leer.
 
 ---
 
@@ -201,5 +202,7 @@ die bewusst nicht im Kernweg liegen:
 - `background_jobs`, `base_interest_rates`, `school_holidays` bleiben unscoped
   (plattformweite Konzepte ohne Vereinsbezug).
 - Kein automatisches „Undo" einer Abmeldung — überbuchungsfrei nur als eigener Vorgang denkbar.
+- Mitglieder lesen alle Buchungen ihres Vereins (`Users can view their own bookings`, u. a.
+  RSVP-Teilnehmerliste) — so gewollt, entschieden 02.10.2026.
 - `ops_heartbeats` hat RLS (FORCE) ohne Policy: Zugriff ausschließlich per Service-Client
   (VPS-Skripte schreiben, `/api/health` liest) — gewollt.
