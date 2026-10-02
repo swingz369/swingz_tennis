@@ -3,3 +3,8 @@ allowBuilds:
   '@swc/core': true
   esbuild: true
   sharp: true
+auditConfig:
+  ignoreGhsas:
+    # node-forge <=1.4.0, kein Patch. Lücke steckt in der RSA-Signatur-Verifikation;
+    # passkit-generator (lib/wallet/apple-pass.ts) signiert nur, verifiziert nie.
+    - GHSA-86w9-cpqp-85rv
