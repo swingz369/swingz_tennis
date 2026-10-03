@@ -17,50 +17,6 @@ function getStripeClient(): Stripe {
   return stripeInstance;
 }
 
-export interface StripeCheckoutData {
-  invoiceId: string;
-  amount: number;
-  currency: string;
-  description: string;
-  customerEmail?: string;
-  successUrl: string;
-  cancelUrl: string;
-}
-
-export async function createStripeCheckoutSession(data: StripeCheckoutData): Promise<string> {
-  const stripe = getStripeClient();
-  const sessionParams: Stripe.Checkout.SessionCreateParams = {
-    // Omit payment_method_types → Stripe uses dashboard-configured methods
-    line_items: [
-      {
-        price_data: {
-          currency: data.currency,
-          product_data: {
-            name: data.description,
-            description: `Invoice ${data.invoiceId}`,
-          },
-          unit_amount: Math.round(data.amount * 100),
-        },
-        quantity: 1,
-      },
-    ],
-    mode: 'payment',
-    success_url: data.successUrl,
-    cancel_url: data.cancelUrl,
-    metadata: {
-      invoiceId: data.invoiceId,
-    },
-  };
-
-  if (data.customerEmail) {
-    sessionParams.customer_email = data.customerEmail;
-  }
-
-  const session = await stripe.checkout.sessions.create(sessionParams);
-
-  return session.url || '';
-}
-
 export async function getStripeCheckoutSession(sessionId: string) {
   const stripe = getStripeClient();
   const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -133,12 +89,19 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent): P
 export function constructStripeEvent(payload: string, signature: string): Stripe.Event {
   const stripe = getStripeClient();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  // Zweiter Endpunkt in Stripe für Ereignisse verbundener Konten (Connect, ADR-008).
+  const connectSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
     throw new Error('STRIPE_WEBHOOK_SECRET is not configured');
   }
 
-  return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+  try {
+    return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+  } catch (error) {
+    if (!connectSecret) throw error;
+    return stripe.webhooks.constructEvent(payload, signature, connectSecret);
+  }
 }
 
 export { getStripeClient as stripe };

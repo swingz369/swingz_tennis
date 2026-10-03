@@ -416,6 +416,7 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 | GET/PATCH/DELETE      | `/api/payment-settings/[id]`            |
 | POST                  | `/api/payment-settings/[id]/test`       |
 | POST                  | `/api/stripe/checkout`                  |
+| GET/POST              | `/api/stripe/connect`                   |
 | GET/POST/PATCH/DELETE | `/api/sepa-mandates`                    |
 | GET/POST              | `/api/coupons`                          |
 

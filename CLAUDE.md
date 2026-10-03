@@ -190,6 +190,10 @@ In `notifications`-Tabelle via Service-Client einfügen.
 - Checkout (Client, graceful — gibt `null` wenn nicht konfiguriert): `@/lib/stripe/client.ts`
 - Webhooks (Server, wirft Fehler wenn nicht konfiguriert): `@/lib/stripe/stripe-client.ts`
 - **Niemals** `stripe`-Package direkt importieren — immer diese Wrapper nutzen
+- **Mitgliederzahlungen** (Buchung, Rechnung, Shop) laufen über Stripe Connect auf das Konto des
+  Vereins, 0,5 % Plattformgebühr (ADR-008). Neue Checkouts nur über
+  `StripeConnectService.createCheckoutSession` — nie `checkout.sessions.create` direkt
+  (signierte Metadaten, sonst verwirft der Webhook das Ereignis).
 - Tarife (`lib/plans.ts`, einzige Quelle): Starter €29, Professional €49,
   Tennisschule S €79, Tennisschule L €99 — je Monat. Tarif-Keys in der DB:
   `solo_s`, `solo_l`, `school_s`, `school_l` (`users.subscription_tier`).

@@ -20,6 +20,7 @@ vi.hoisted(() => {
   process.env.STRIPE_PRICE_SOLO_L ??= 'price_solo_l_test';
   process.env.STRIPE_PRICE_SCHOOL_S ??= 'price_school_s_test';
   process.env.STRIPE_PRICE_SCHOOL_L ??= 'price_school_l_test';
+  process.env.STRIPE_SECRET_KEY ??= 'sk_test_webhook';
 });
 import { makeApiRequest } from '../helpers/api-route';
 
@@ -75,7 +76,12 @@ function buildChain(table: string) {
   return chain;
 }
 
-let currentEvent: { id: string; type: string; data: { object: unknown } } | null = null;
+let currentEvent: {
+  id: string;
+  type: string;
+  account?: string;
+  data: { object: unknown };
+} | null = null;
 
 const fakeStripeClient = {
   subscriptions: { retrieve: vi.fn(), update: vi.fn() },
@@ -113,6 +119,7 @@ class FakeResend {
 vi.doMock('resend', () => ({ Resend: FakeResend }));
 
 const { POST } = await import('@/app/api/webhooks/stripe/route');
+const { signMetadata } = await import('@/application/services/stripe-connect.service');
 
 function webhookRequest(event: unknown, signature: string | null = 'sig_test') {
   return makeApiRequest('http://localhost/api/webhooks/stripe', {
@@ -172,6 +179,46 @@ describe('POST /api/webhooks/stripe', () => {
     const res = await POST(webhookRequest(currentEvent));
     expect(res.status).toBe(500);
     expect(releasedId).toBe('evt_retry');
+  });
+
+  describe('Connect-Ereignisse (ADR-008)', () => {
+    const connectEvent = (metadata: Record<string, string>) => ({
+      id: `evt_connect_${Math.random()}`,
+      type: 'checkout.session.completed',
+      account: 'acct_club_a',
+      data: {
+        object: { id: 'cs_c', payment_intent: 'pi_c', payment_status: 'paid', metadata },
+      },
+    });
+
+    beforeEach(() => {
+      billingEngineMock.getInvoiceById.mockClear();
+      tableHandlers.club_stripe_accounts = () => ({
+        data: { club_id: 'club-a', stripe_account_id: 'acct_club_a' },
+        error: null,
+      });
+    });
+
+    it('verwirft unsignierte Metadaten eines verbundenen Kontos', async () => {
+      currentEvent = connectEvent({ invoiceId: 'invoice-x', clubId: 'club-a' });
+      const res = await POST(webhookRequest(currentEvent));
+      expect(await res.json()).toMatchObject({ ignored: true });
+      expect(billingEngineMock.getInvoiceById).not.toHaveBeenCalled();
+    });
+
+    it('verwirft signierte Metadaten eines fremden Vereins', async () => {
+      currentEvent = connectEvent(signMetadata({ invoiceId: 'invoice-x', clubId: 'club-b' }));
+      const res = await POST(webhookRequest(currentEvent));
+      expect(await res.json()).toMatchObject({ ignored: true });
+      expect(billingEngineMock.getInvoiceById).not.toHaveBeenCalled();
+    });
+
+    it('verarbeitet signierte Metadaten des eigenen Vereins', async () => {
+      currentEvent = connectEvent(signMetadata({ invoiceId: 'invoice-1', clubId: 'club-a' }));
+      await POST(webhookRequest(currentEvent));
+      // Die Rechnungsverarbeitung wird erreicht (Rechnung selbst ist hier nicht gemockt).
+      expect(billingEngineMock.getInvoiceById).toHaveBeenCalledWith('invoice-1');
+    });
   });
 
   it('überspringt eine Rechnungszahlung, die ein paralleles Event schon angelegt hat', async () => {

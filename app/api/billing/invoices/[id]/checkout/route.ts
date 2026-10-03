@@ -1,12 +1,17 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
+import {
+  errorResponse,
+  internalErrorResponse,
+  ApiException,
+  safeErrorMessage,
+} from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
-import { createStripeCheckoutSession } from '@/lib/stripe/stripe-client';
 import { createLogger } from '@/lib/logger';
 import { appBaseUrl } from '@/lib/app-url';
+import { StripeConnectService } from '@/application/services/stripe-connect.service';
 
 const log = createLogger('api:billing:invoices:[id]:checkout');
 
@@ -48,31 +53,31 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       const successUrl = `${baseUrl}/billing?payment=success`;
       const cancelUrl = `${baseUrl}/billing?payment=cancelled`;
 
-      const checkoutData: {
-        invoiceId: string;
-        amount: number;
-        currency: string;
-        description: string;
-        successUrl: string;
-        cancelUrl: string;
-        customerEmail?: string;
-      } = {
-        invoiceId,
-        amount: invoice.amount,
-        currency: invoice.currency || 'EUR',
-        description: `Rechnung ${invoice.invoice_number}`,
-        successUrl,
-        cancelUrl,
-      };
-
-      if (auth.user.email) {
-        checkoutData.customerEmail = auth.user.email;
-      }
-
-      const checkoutUrl = await createStripeCheckoutSession(checkoutData);
+      const checkoutUrl = await new StripeConnectService(auth).createCheckoutSession(
+        invoice.club_id,
+        {
+          lineItems: [
+            {
+              price_data: {
+                currency: (invoice.currency || 'EUR').toLowerCase(),
+                unit_amount: Math.round(invoice.amount * 100),
+                product_data: { name: `Rechnung ${invoice.invoice_number}` },
+              },
+              quantity: 1,
+            },
+          ],
+          metadata: { invoiceId },
+          successUrl,
+          cancelUrl,
+          customerEmail: auth.user.email || undefined,
+        }
+      );
 
       return NextResponse.json({ checkoutUrl });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Error creating Stripe Checkout session:', error);
       return internalErrorResponse();
     }

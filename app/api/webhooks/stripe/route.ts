@@ -8,6 +8,7 @@ import { billingEngine } from '@/lib/billing-engine';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 import type { PlanKey } from '@/lib/plans';
+import { StripeConnectService } from '@/application/services/stripe-connect.service';
 
 // Reverse-map Stripe price ID → plan key
 function priceToPlan(priceId: string): PlanKey | null {
@@ -70,7 +71,34 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ error: 'Webhook vorübergehend nicht verfügbar' }, { status: 503 });
     }
 
-    log.info('Received Stripe event', { type: event.type, eventId: event.id });
+    log.info('Received Stripe event', {
+      type: event.type,
+      eventId: event.id,
+      account: event.account,
+    });
+
+    // Ereignisse verbundener Vereinskonten (Connect): Kontostatus übernehmen, Zahlungen
+    // nur verarbeiten, wenn die Metadaten von uns stammen und zum Konto passen.
+    if (event.account) {
+      if (event.type === 'account.updated') {
+        await StripeConnectService.syncAccount(event.data.object as Stripe.Account);
+        return NextResponse.json({ received: true });
+      }
+      if (event.type === 'account.application.deauthorized') {
+        await StripeConnectService.disconnect(event.account);
+        return NextResponse.json({ received: true });
+      }
+      if (event.type.startsWith('checkout.session.') || event.type.startsWith('payment_intent.')) {
+        const { metadata } = event.data.object as { metadata?: Record<string, string> | null };
+        if (!(await StripeConnectService.isTrustedConnectEvent(event.account, metadata))) {
+          log.error('Connect-Ereignis abgelehnt: Metadaten nicht von SwingZ oder falscher Verein', {
+            eventId: event.id,
+            account: event.account,
+          });
+          return NextResponse.json({ received: true, ignored: true });
+        }
+      }
+    }
 
     switch (event.type) {
       case 'checkout.session.completed':
@@ -117,7 +145,7 @@ export async function POST(_request: NextRequest) {
         log.info('Payment intent succeeded', { paymentIntentId: paymentIntent.id });
         // SEPA Direct Debit payments arrive here (not via checkout.session.completed)
         // Look up the checkout session from the payment intent to find metadata
-        await handlePaymentIntentSucceeded(paymentIntent);
+        await handlePaymentIntentSucceeded(paymentIntent, event.account);
         break;
       }
 
@@ -147,7 +175,7 @@ export async function POST(_request: NextRequest) {
           await billingEngine.updatePaymentStatus(payment.id, 'failed');
         }
         // Also try booking lookup via checkout session
-        await handleBookingPaymentFailed(paymentIntent.id);
+        await handleBookingPaymentFailed(paymentIntent.id, event.account);
         break;
       }
 
@@ -392,7 +420,10 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, orderId:
  * the customer authorizes but funds take 2–8 days to clear. This handler
  * promotes any still-pending payments to 'completed' once funds arrive.
  */
-async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
+async function handlePaymentIntentSucceeded(
+  paymentIntent: Stripe.PaymentIntent,
+  stripeAccount?: string
+) {
   const supabase = createServiceClient();
 
   // Find the payment record created by checkout.session.completed
@@ -414,10 +445,11 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 
   // Also update associated booking/shop order if still pending
   const stripeClient = getStripeClient();
-  const sessions = await stripeClient.checkout.sessions.list({
-    payment_intent: paymentIntent.id,
-    limit: 1,
-  });
+  // Bei Connect liegt die Session auf dem Vereinskonto, nicht auf der Plattform.
+  const sessions = await stripeClient.checkout.sessions.list(
+    { payment_intent: paymentIntent.id, limit: 1 },
+    stripeAccount ? { stripeAccount } : undefined
+  );
 
   const session = sessions.data[0];
   if (!session?.metadata) return;
@@ -633,15 +665,15 @@ async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
   log.info('SaaS subscription deleted → reset to free', { customerId });
 }
 
-async function handleBookingPaymentFailed(paymentIntentId: string) {
+async function handleBookingPaymentFailed(paymentIntentId: string, stripeAccount?: string) {
   const stripeClient = getStripeClient();
   const supabase = createServiceClient();
 
   try {
-    const sessions = await stripeClient.checkout.sessions.list({
-      payment_intent: paymentIntentId,
-      limit: 1,
-    });
+    const sessions = await stripeClient.checkout.sessions.list(
+      { payment_intent: paymentIntentId, limit: 1 },
+      stripeAccount ? { stripeAccount } : undefined
+    );
     const bookingId = sessions.data[0]?.metadata?.bookingId;
     if (bookingId) {
       const { error } = await supabase

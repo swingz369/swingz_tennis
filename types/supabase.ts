@@ -796,6 +796,44 @@ export type Database = {
           },
         ];
       };
+      club_stripe_accounts: {
+        Row: {
+          charges_enabled: boolean;
+          club_id: string;
+          connected_at: string | null;
+          created_at: string;
+          details_submitted: boolean;
+          stripe_account_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          charges_enabled?: boolean;
+          club_id: string;
+          connected_at?: string | null;
+          created_at?: string;
+          details_submitted?: boolean;
+          stripe_account_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          charges_enabled?: boolean;
+          club_id?: string;
+          connected_at?: string | null;
+          created_at?: string;
+          details_submitted?: boolean;
+          stripe_account_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'club_stripe_accounts_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: true;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       clubs: {
         Row: {
           accent_color: string | null;

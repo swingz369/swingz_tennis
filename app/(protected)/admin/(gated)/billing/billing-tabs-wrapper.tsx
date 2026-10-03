@@ -1,10 +1,11 @@
 'use client';
 import { extractErrorMessage } from '@/lib/typed-helpers';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { CreditCard, Tag, FileDown, Info, BookOpen, GraduationCap } from 'lucide-react';
+import { CreditCard, Tag, FileDown, Info, BookOpen, GraduationCap, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
@@ -161,6 +162,85 @@ function SepaExportTab() {
   );
 }
 
+interface ConnectStatus {
+  connected: boolean;
+  chargesEnabled: boolean;
+  detailsSubmitted: boolean;
+}
+
+function OnlinePaymentTab() {
+  const [status, setStatus] = useState<ConnectStatus | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    apiFetch('/api/stripe/connect')
+      .then((res) => (res.ok ? res.json() : null))
+      .then(setStatus)
+      .catch(() => setStatus(null));
+  }, []);
+
+  const handleConnect = async () => {
+    setIsLoading(true);
+    try {
+      const res = await apiFetch('/api/stripe/connect', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) {
+        toast.error(extractErrorMessage(data) ?? 'Einrichtung konnte nicht gestartet werden');
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      toast.error('Ein Fehler ist aufgetreten');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const ready = status?.chargesEnabled;
+
+  return (
+    <Card>
+      <CardContent className="pt-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <h3 className="font-semibold">Online-Zahlung über Stripe</h3>
+          {status && (
+            <Badge variant={ready ? 'default' : 'secondary'}>
+              {ready ? 'Aktiv' : status.connected ? 'Angaben unvollständig' : 'Nicht eingerichtet'}
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-start gap-3 text-sm text-muted-foreground">
+          <Info className="h-5 w-5 mt-0.5 shrink-0 text-primary" />
+          <p>
+            Mitglieder bezahlen Rechnungen und Shop-Bestellungen per Karte oder SEPA-Lastschrift.
+            Das Geld geht direkt auf das Stripe-Konto des Vereins. Stripe berechnet seine üblichen
+            Gebühren, SwingZ behält 0,5 % je Zahlung ein. Für die Einrichtung braucht ihr
+            Vereinsregister-Auszug, Angaben zum Vorstand und die IBAN des Vereins.
+          </p>
+        </div>
+        {!ready && (
+          <Button disabled={isLoading} onClick={handleConnect} className="gap-2">
+            <Wallet className="h-4 w-4" />
+            {isLoading
+              ? 'Weiterleitung…'
+              : status?.connected
+                ? 'Einrichtung fortsetzen'
+                : 'Online-Zahlung einrichten'}
+          </Button>
+        )}
+        {ready && (
+          <Button variant="outline" asChild className="gap-2">
+            <a href="https://dashboard.stripe.com" target="_blank" rel="noopener noreferrer">
+              <Wallet className="h-4 w-4" />
+              Stripe-Dashboard öffnen
+            </a>
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function BillingCategoriesTabs({
   children,
   initialCategories,
@@ -172,7 +252,7 @@ export function BillingCategoriesTabs({
   clubId: string;
   defaultTab?: string;
 }) {
-  const tab = ['categories', 'trainer', 'sepa', 'datev'].includes(defaultTab)
+  const tab = ['categories', 'trainer', 'sepa', 'datev', 'online'].includes(defaultTab)
     ? defaultTab
     : 'invoices';
   return (
@@ -216,6 +296,13 @@ export function BillingCategoriesTabs({
           <BookOpen className="h-4 w-4 mr-2" />
           DATEV
         </TabsTrigger>
+        <TabsTrigger
+          value="online"
+          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-primary data-[state=active]:shadow-sm"
+        >
+          <Wallet className="h-4 w-4 mr-2" />
+          Online-Zahlung
+        </TabsTrigger>
       </TabsList>
 
       {/* Rechnungen Tab — renders the existing BillingClient */}
@@ -239,6 +326,10 @@ export function BillingCategoriesTabs({
       {/* DATEV-Export Tab */}
       <TabsContent value="datev">
         <DatevExportTab />
+      </TabsContent>
+
+      <TabsContent value="online">
+        <OnlinePaymentTab />
       </TabsContent>
     </Tabs>
   );

@@ -28,8 +28,7 @@ test.describe('Stripe Checkout Flow', () => {
     await page.waitForURL(/dashboard/);
   });
 
-  test('Stripe checkout API returns 503 when not configured', async ({ page }) => {
-    // Call the checkout API with a valid booking but without real Stripe keys
+  test('Stripe checkout API returns 404 for unknown booking', async ({ page }) => {
     const response = await page.evaluate(async () => {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
@@ -43,12 +42,8 @@ test.describe('Stripe Checkout Flow', () => {
       return { status: res.status, body: await res.json() };
     });
 
-    // Either 503 (Stripe not configured) or 404 (booking not found) is acceptable
-    // Both indicate the API is working correctly
-    expect([404, 503]).toContain(response.status);
-    if (response.status === 503) {
-      expect(response.body.error).toContain('nicht konfiguriert');
-    }
+    // Der Verein kommt aus der Buchung (Stripe Connect) — unbekannte Buchung → 404.
+    expect(response.status).toBe(404);
   });
 
   test('Stripe checkout API requires authentication', async ({ page }) => {

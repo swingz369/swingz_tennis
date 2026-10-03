@@ -6,13 +6,18 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
+import {
+  errorResponse,
+  internalErrorResponse,
+  ApiException,
+  safeErrorMessage,
+} from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { getStripe } from '@/lib/stripe/client';
 import { createLogger } from '@/lib/logger';
 import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
 import { appBaseUrl } from '@/lib/app-url';
+import { StripeConnectService } from '@/application/services/stripe-connect.service';
 
 const log = createLogger('api:shop:checkout');
 
@@ -120,15 +125,20 @@ export async function POST(_request: NextRequest) {
         });
       }
 
-      // Check Stripe availability BEFORE creating the order
-      const stripe = getStripe();
-      if (!stripe) {
+      // Bezahlt wird an den Verein (Stripe Connect, ADR-008) — ein Warenkorb, ein Verein.
+      const clubIds = new Set(products.map((p) => p.club_id));
+      const [clubId] = clubIds;
+      if (clubIds.size !== 1 || !clubId) {
         return NextResponse.json(
-          {
-            error:
-              'Zahlungsdienstleister ist nicht konfiguriert. Bitte wende dich an den Administrator.',
-          },
-          { status: 503 }
+          { error: 'Bitte bestelle Artikel verschiedener Vereine getrennt.' },
+          { status: 400 }
+        );
+      }
+      const connect = new StripeConnectService(auth);
+      if (!(await connect.getStatus(clubId)).chargesEnabled) {
+        return NextResponse.json(
+          { error: 'Der Verein hat die Online-Zahlung noch nicht eingerichtet.' },
+          { status: 409 }
         );
       }
 
@@ -161,21 +171,19 @@ export async function POST(_request: NextRequest) {
       const successUrl = `${baseUrl}/shop/success?orderId=${order.id}`;
       const cancelUrl = `${baseUrl}/shop?payment=cancelled&orderId=${order.id}`;
 
-      const session = await stripe.checkout.sessions.create({
-        mode: 'payment',
-        line_items: lineItems,
-        success_url: successUrl,
-        cancel_url: cancelUrl,
-        customer_email: auth.user.email || undefined,
-        metadata: {
-          orderId: order.id,
-          orderType: 'shop',
-          userId: auth.user.id,
-        },
+      const url = await connect.createCheckoutSession(clubId, {
+        lineItems,
+        metadata: { orderId: order.id, orderType: 'shop', userId: auth.user.id },
+        successUrl,
+        cancelUrl,
+        customerEmail: auth.user.email || undefined,
       });
 
-      return NextResponse.json({ url: session.url, orderId: order.id });
+      return NextResponse.json({ url, orderId: order.id });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('[Shop Checkout] Error:', error);
       return internalErrorResponse();
     }

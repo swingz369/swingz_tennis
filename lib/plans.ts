@@ -83,3 +83,13 @@ export const PLAN_LABELS: Record<string, string> = {
   starter: 'Starter',
   professional: 'Professional',
 };
+
+// Plattformgebühr auf Mitgliederzahlungen über Stripe Connect (ADR-008). Trägt der
+// Verein — Stripe zieht sie von seiner Auszahlung ab. Kein Aufschlag beim Zahlenden
+// (§ 270a BGB).
+export const PLATFORM_FEE_PERCENT = 0.5;
+
+/** Plattformgebühr in Cent für einen Betrag in Cent. */
+export function platformFeeCents(amountCents: number): number {
+  return Math.round((amountCents * PLATFORM_FEE_PERCENT) / 100);
+}

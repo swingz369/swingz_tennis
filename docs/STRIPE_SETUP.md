@@ -1,6 +1,6 @@
 # Stripe Setup Guide
 
-> Zuletzt aktualisiert: 16.06.2026 (Stand der letzten Code-Änderung an diesem Dokument)
+> Zuletzt verifiziert: 03.10.2026 (Mitgliederzahlungen auf Stripe Connect umgestellt, ADR-008)
 
 ## Required Environment Variables
 
@@ -8,6 +8,7 @@
 | ------------------------------------ | ------------------------------- | ------------------------------ |
 | `STRIPE_SECRET_KEY`                  | Server-side secret key          | `sk_test_...` or `sk_live_...` |
 | `STRIPE_WEBHOOK_SECRET`              | Webhook endpoint signing secret | `whsec_...`                    |
+| `STRIPE_CONNECT_WEBHOOK_SECRET`      | Secret des Connect-Endpunkts    | `whsec_...`                    |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Client-side publishable key     | `pk_test_...` or `pk_live_...` |
 
 ## Local Development Setup
@@ -170,26 +171,32 @@ The app handles missing Stripe keys gracefully:
 - `lib/stripe/client.ts` — Returns `null` if keys are missing or match the placeholder prefix (`sk_test_51Qabc`). The checkout route returns a 503 error with a user-friendly message.
 - `STRIPE_CONFIGURED` — Boolean flag you can check to conditionally show/hide payment UI.
 
-## Checkout Flow
+## Checkout Flow — Stripe Connect (ADR-008)
 
-### Booking Payments
+Mitgliederzahlungen laufen als **Direct Charge auf dem Stripe-Konto des Vereins**.
+SwingZ behält 0,5 % per `application_fee_amount` ein (`PLATFORM_FEE_PERCENT` in
+`lib/plans.ts`). Nur das Abo des Vereins bei SwingZ (`/api/stripe/subscribe`) läuft auf dem
+Plattformkonto.
 
-1. Member clicks "Pay" on a booking → `POST /api/stripe/checkout`
-2. Server creates a Stripe Checkout Session → returns `{ url, sessionId }`
-3. Member is redirected to Stripe-hosted checkout page
-4. After payment, Stripe redirects to `/bookings?payment=success`
-5. Webhook `checkout.session.completed` fires → booking marked as `paid`
+Einrichtung durch den Vereinsadmin: Abrechnung → Tab **Online-Zahlung** →
+`POST /api/stripe/connect` legt das Konto an (Stripe trägt Gebühren und Verluste, Verein
+bekommt das volle Stripe-Dashboard) und leitet zum Stripe-Onboarding. `account.updated`
+setzt `club_stripe_accounts.charges_enabled`. Ohne freigeschaltetes Konto antworten alle
+Checkout-Routen mit 409.
 
-### Invoice Payments
+Alle drei Checkouts gehen über `StripeConnectService.createCheckoutSession`:
 
-1. Member clicks "Pay" on an invoice → `POST /api/billing/invoices/[id]/checkout`
-2. Server creates a Stripe Checkout Session → returns `{ checkoutUrl }`
-3. After payment, webhook marks invoice as `paid` and creates payment record
+| Zahlung  | Route                                      | Verein aus                                        |
+| -------- | ------------------------------------------ | ------------------------------------------------- |
+| Buchung  | `POST /api/stripe/checkout`                | `bookings.club_id`                                |
+| Rechnung | `POST /api/billing/invoices/[id]/checkout` | `invoices.club_id`                                |
+| Shop     | `POST /api/shop/checkout`                  | `shop_products.club_id` (ein Verein je Warenkorb) |
 
-### Shop Order Payments
+**Webhook-Sicherheit:** Jeder verbundene Verein kann selbst Checkout-Sessions anlegen, deren
+Ereignisse signiert bei uns ankommen. Die Metadaten tragen deshalb eine HMAC-Signatur
+(`sig`); Connect-Ereignisse werden nur verarbeitet, wenn Signatur und Konto↔Verein passen.
 
-1. Member completes checkout for shop items → `POST /api/stripe/checkout` with `type: 'shop'`
-2. Webhook `checkout.session.completed` fires → order marked as `paid`, stock reduced
+Lokal testen: `stripe listen --forward-to localhost:3000/api/webhooks/stripe --forward-connect-to localhost:3000/api/webhooks/stripe`
 
 ## Async Payment Methods (SEPA, iDEAL)
 

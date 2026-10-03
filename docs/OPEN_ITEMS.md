@@ -55,6 +55,14 @@ Neukonten starten im Freemium-Default. **Entschieden 02.10.2026:** erst zum Laun
 zusammen mit dem Scharfschalten der Bezahlschranke.
 → Quelle: `docs/tickets/roadmap/TICKET-mandatory-subscription-onboarding.md`.
 
+### Stripe Connect: Plattform und zweiter Webhook einrichten (03.10.2026)
+
+Code steht (ADR-008), in Stripe fehlt noch: Connect-Plattformprofil aktivieren (Dashboard →
+Connect, Stripe prüft das Geschäftsmodell), zweiten Webhook-Endpunkt auf
+`/api/webhooks/stripe` für **Ereignisse verbundener Konten** anlegen und dessen Secret als
+`STRIPE_CONNECT_WEBHOOK_SECRET` in Vercel setzen. Ohne das kann kein Verein Online-Zahlung
+einrichten; Checkouts antworten mit 409. Dazu: Transaktionsgebühr (0,5 %) in AGB/Preisliste.
+
 ### Bezahlschranke ist abgeschaltet
 
 `SUBSCRIPTION_ENFORCEMENT=off` ist gesetzt (lokal und in Vercel Production).

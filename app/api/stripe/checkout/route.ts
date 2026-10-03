@@ -2,14 +2,15 @@
  * POST /api/stripe/checkout
  *
  * Creates a Stripe Checkout Session for a booking payment.
- * If Stripe is not configured (placeholder keys), returns a simulated response
- * so the app remains fully functional without real payment credentials.
+ * Bezahlt wird an den Verein (Stripe Connect, ADR-008), Verein aus der Buchung —
+ * nie aus dem Request-Body.
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { getStripe } from '@/lib/stripe/client';
+import { errorResponse, ApiException, safeErrorMessage } from '@/lib/api-error';
+import { StripeConnectService } from '@/application/services/stripe-connect.service';
 import { createLogger } from '@/lib/logger';
 import { appBaseUrl } from '@/lib/app-url';
 import { PricingRuleService } from '@/application/services/pricing-rule.service';
@@ -49,6 +50,7 @@ export async function POST(_request: NextRequest) {
       // €15-Default existiert nicht mehr.
       let resolvedAmount = 0; // in cents
       let courtName = 'Platz';
+      let bookingClubId: string | null = null;
 
       if (type === 'booking' && bookingId) {
         const supabase = auth.supabase;
@@ -78,6 +80,8 @@ export async function POST(_request: NextRequest) {
         if (bookingError || !booking) {
           return NextResponse.json({ error: 'Buchung nicht gefunden' }, { status: 404 });
         }
+
+        bookingClubId = booking.club_id;
 
         // Only the booking owner can pay
         if (booking.member_id !== auth.user.id) {
@@ -160,54 +164,34 @@ export async function POST(_request: NextRequest) {
       const successUrl = `${baseUrl}/bookings?payment=success`;
       const cancelUrl = `${baseUrl}/bookings?payment=cancelled`;
 
-      // --- Stripe not configured → return error ---
-      const stripe = getStripe();
-      if (!stripe) {
-        return NextResponse.json(
-          {
-            error:
-              'Zahlungsdienstleister ist nicht konfiguriert. Bitte wende dich an den Administrator.',
-          },
-          { status: 503 }
-        );
+      if (!bookingClubId) {
+        return NextResponse.json({ error: 'Buchung nicht gefunden' }, { status: 404 });
       }
 
-      // --- Create real Stripe Checkout Session ---
-      const lineItemName = description || `Platzbuchung - ${courtName}`;
-
-      const session = await stripe.checkout.sessions.create(
-        {
-          mode: 'payment',
-          line_items: [
-            {
-              price_data: {
-                currency: 'eur',
-                unit_amount: resolvedAmount,
-                product_data: {
-                  name: lineItemName,
-                },
-              },
-              quantity: 1,
+      const url = await new StripeConnectService(auth).createCheckoutSession(bookingClubId, {
+        lineItems: [
+          {
+            price_data: {
+              currency: 'eur',
+              unit_amount: resolvedAmount,
+              product_data: { name: description || `Platzbuchung - ${courtName}` },
             },
-          ],
-          success_url: successUrl,
-          cancel_url: cancelUrl,
-          customer_email: auth.user.email || undefined,
-          metadata: {
-            bookingId: bookingId || '',
-            sessionId: sessionId || '',
-            userId: auth.user.id,
-            clubId,
+            quantity: 1,
           },
-        },
-        {
-          // Wiederholte Klicks erzeugen keine doppelten Checkout-Sessions.
-          idempotencyKey: `booking-checkout-${bookingId}`,
-        }
-      );
+        ],
+        metadata: { bookingId, sessionId: sessionId || '', userId: auth.user.id },
+        successUrl,
+        cancelUrl,
+        customerEmail: auth.user.email || undefined,
+        // Wiederholte Klicks erzeugen keine doppelten Checkout-Sessions.
+        idempotencyKey: `booking-checkout-${bookingId}`,
+      });
 
-      return NextResponse.json({ url: session.url, sessionId: session.id });
+      return NextResponse.json({ url });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('[Stripe Checkout] Error:', error);
       return NextResponse.json(
         { error: 'Fehler beim Erstellen der Checkout-Session' },
