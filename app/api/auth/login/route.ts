@@ -95,7 +95,16 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      log.error('Login error:', error.message);
+      // Falsche Zugangsdaten sind Alltag, kein Fehler — nur echte Störungen nach Sentry.
+      if (error.code === 'invalid_credentials') {
+        log.info('Login abgelehnt: falsche Zugangsdaten');
+      } else {
+        log.error('Login error', {
+          code: error.code,
+          status: error.status,
+          message: error.message,
+        });
+      }
       await logFailedLogin(email, request, error.message);
       return errorResponse('UNAUTHORIZED', 'E-Mail oder Passwort ist falsch');
     }

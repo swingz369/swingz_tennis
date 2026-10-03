@@ -11,6 +11,9 @@ import * as Sentry from '@sentry/nextjs';
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NODE_ENV || 'development',
+  // Lokale Entwicklung und E2E-Läufe (gemockte 500er) landeten sonst im selben Projekt
+  // und verdeckten echte Befunde. Server: sentry.server.config.ts, ebenfalls nur Produktion.
+  enabled: process.env.NODE_ENV === 'production',
 
   // Performance Monitoring
   // 100% in dev for debugging, 10% in prod to reduce quota usage

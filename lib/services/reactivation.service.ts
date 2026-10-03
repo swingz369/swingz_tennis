@@ -134,7 +134,7 @@ export class ReactivationService {
     try {
       members = await this.findInactiveMembers(supabase, now);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+      const message = errorMessage(error);
       log.error('Failed to find inactive members', { error: message });
       result.errors.push({ userId: '*', error: `findInactiveMembers: ${message}` });
       return result;
@@ -188,7 +188,7 @@ export class ReactivationService {
           result.skipped++;
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
+        const message = errorMessage(error);
         result.failed++;
         result.errors.push({ userId: member.userId, error: message });
         log.error('Reactivation push failed', { userId: member.userId, error: message });
@@ -290,4 +290,11 @@ export class ReactivationService {
 
     return inactive;
   }
+}
+
+// PostgREST-Fehler sind Objekte ohne Error-Prototyp — ohne das stand in Sentry nur „Unknown error".
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === 'object' && 'message' in error) return String(error.message);
+  return String(error);
 }

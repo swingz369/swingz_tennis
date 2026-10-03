@@ -133,26 +133,31 @@ class Logger {
 
 export const logger = new Logger();
 
+// Aufrufer übergeben teils Strings oder andere Primitive (`log.error('…', error.message)`).
+// Ein String in `{ ...data }` gespreizt wird zu { 0: 'I', 1: 'n', … } — so kam es in Sentry an.
+function toContext(data: unknown, context: string): LogContext {
+  if (data === undefined || data === null) return { context };
+  if (typeof data !== 'object') return { detail: data, context };
+  return { ...(data as Record<string, unknown>), context };
+}
+
 export function createLogger(context: string) {
   return {
-    debug: (message: string, data?: unknown) =>
-      logger.debug(message, { ...(data as Record<string, unknown>), context }),
-    info: (message: string, data?: unknown) =>
-      logger.info(message, { ...(data as Record<string, unknown>), context }),
-    warn: (message: string, data?: unknown) =>
-      logger.warn(message, { ...(data as Record<string, unknown>), context }),
+    debug: (message: string, data?: unknown) => logger.debug(message, toContext(data, context)),
+    info: (message: string, data?: unknown) => logger.info(message, toContext(data, context)),
+    warn: (message: string, data?: unknown) => logger.warn(message, toContext(data, context)),
     error: (message: string, dataOrError?: unknown) => {
       if (dataOrError instanceof Error) {
         logger.error(message, dataOrError);
       } else {
-        logger.error(message, { ...(dataOrError as Record<string, unknown>), context });
+        logger.error(message, toContext(dataOrError, context));
       }
     },
     fatal: (message: string, dataOrError?: unknown) => {
       if (dataOrError instanceof Error) {
         logger.fatal(message, dataOrError);
       } else {
-        logger.fatal(message, { ...(dataOrError as Record<string, unknown>), context });
+        logger.fatal(message, toContext(dataOrError, context));
       }
     },
   };
