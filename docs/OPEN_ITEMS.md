@@ -55,13 +55,15 @@ Neukonten starten im Freemium-Default. **Entschieden 02.10.2026:** erst zum Laun
 zusammen mit dem Scharfschalten der Bezahlschranke.
 → Quelle: `docs/tickets/roadmap/TICKET-mandatory-subscription-onboarding.md`.
 
-### Stripe Connect: Plattform und zweiter Webhook einrichten (03.10.2026)
+### Stripe Connect: Plattformprofil aktivieren (03.10.2026)
 
-Code steht (ADR-008), in Stripe fehlt noch: Connect-Plattformprofil aktivieren (Dashboard →
-Connect, Stripe prüft das Geschäftsmodell), zweiten Webhook-Endpunkt auf
-`/api/webhooks/stripe` für **Ereignisse verbundener Konten** anlegen und dessen Secret als
-`STRIPE_CONNECT_WEBHOOK_SECRET` in Vercel setzen. Ohne das kann kein Verein Online-Zahlung
-einrichten; Checkouts antworten mit 409. Dazu: Transaktionsgebühr (0,5 %) in AGB/Preisliste.
+Code (ADR-008), Connect-Webhook `we_1UMN3sCyfxebfhruEE1aJzSL` (Sandbox) und
+`STRIPE_CONNECT_WEBHOOK_SECRET` in Vercel Production sind eingerichtet. Offen: im
+Stripe-Dashboard Connect aktivieren (Dashboard → Connect, Plattformprofil ausfüllen) —
+bis dahin kann kein Verein Online-Zahlung einrichten, Checkouts antworten mit 409. Danach
+einmal mit Claude Sandbox Alpha durchspielen (Karte + SEPA, Gebühr prüfen). Beim Wechsel auf
+Live-Schlüssel den Connect-Webhook im Live-Modus neu anlegen. Dazu: Transaktionsgebühr (0,5 %)
+in AGB/Preisliste.
 
 ### Bezahlschranke ist abgeschaltet
 
