@@ -152,27 +152,13 @@ Seit 26.09.2026 auf `main` und deployt: `payment_status`-Auswertung,
   Lokale Entwicklung und Tests brauchen Test-Keys (`sk_test…`, `whsec_…` aus `stripe listen`) —
   sonst kann jeder lokale Checkout echtes Geld bewegen.
 
-### Sentry: offene Issues gesichtet (03.10.2026)
+### Sentry: offen nur die gewollte Bezahlschranken-Warnung (03.10.2026)
 
-16 unaufgelöste Issues (7 Tage), keines aus der Stripe-Connect-Umstellung. Einordnung:
-
-- **`JAVASCRIPT-NEXTJS-Q` „Idempotency check unavailable"** (Stripe-Webhook, Produktion, 1× am
-  03.10. 06:06 UTC, Release `f1905cff`): Stripe-Ereignis wurde mit 503 abgelehnt und von Stripe
-  wiederholt. Vermutlich vor Anwendung der Korrekturmigration `20261003100000_stripe_event_idempotenz_fix`.
-  Beobachten; tritt es erneut auf, `check_and_record_stripe_event` in Produktion prüfen.
-- **`JAVASCRIPT-NEXTJS-2` „Login error"** (16×, Produktion): falsches Passwort wird als `error`
-  geloggt — Rauschen. Zusätzlich übergibt der Aufruf in `app/api/auth/login` einen String als
-  zweites Argument an `log.error`, Sentry zerlegt ihn in Einzelzeichen. Falsche Zugangsdaten als
-  `warn` loggen, String nicht als Error-Argument übergeben.
-- **`JAVASCRIPT-NEXTJS-M`/`-P` „Prüffehler"** auf `/admin/trainers/:id` (8×, 30.09.): nicht
-  untersucht.
-- **`JAVASCRIPT-NEXTJS-3` Bezahlschranke abgeschaltet** und **`-R`/`-S` Basiszinssatz veraltet**:
-  gewollte Warnungen (Bezahlschranke s. oben; Basiszins: neuen Satz der Bundesbank eintragen).
-- **Nur Entwicklungsumgebung:** `-0U-2` „aborted" (Dev-Server beendet), `-N` „require is not
-  defined" (lokaler Webpack-Dev-Build). Lokale Fehler landen im selben Sentry-Projekt — für
-  `environment: development` Sentry abschalten oder filtern, sonst verdecken sie echte Befunde.
-- Ältere Einzelfälle (`-1` Service-Worker 404 auf Preview-URL, `-7`/`-6` Reaktivierung, `-8`
-  Backup-Versuch ohne Berechtigung, `-D`/`-E`/`-F`): seit ≥ 4 Tagen nicht wieder aufgetreten.
+Alle Issues der letzten 7 Tage behoben oder als erledigt geschlossen, Ursachen in den Commits vom
+03.10.2026. Offen bleibt bewusst `JAVASCRIPT-NEXTJS-3` (Bezahlschranke abgeschaltet) — verschwindet
+mit dem Scharfschalten vor dem Launch. Basiszinssatz: nächster Satz zum 01.01.2027 über
+`/api/cron/refresh-base-rates` eintragen; das lokale `CRON_SECRET` in `.env.prod.local` passt nicht
+zu Vercel (Aufruf lieferte 401), Wert bei Bedarf aus Vercel nachziehen.
 
 ### Abnahmen ausgelieferter Änderungen
 
