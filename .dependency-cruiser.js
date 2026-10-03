@@ -38,7 +38,7 @@ module.exports = {
     },
     {
       name: 'routes-no-direct-db-baseline',
-      severity: 'warn',
+      severity: 'error',
       comment:
         'Zielbild: Routes/Components/Hooks gehen nie direkt an Drizzle oder den Service-Client, ' +
         'sondern über ein Repository (Analyse § 5.1, § 6 Phase 3). Heute ~85 Routes über Drizzle ' +

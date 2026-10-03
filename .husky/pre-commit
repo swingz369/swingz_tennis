@@ -170,7 +170,7 @@ fi
 # ═══ Schritt 4: Architektur-Regeln (nur wenn app/components/hooks/lib/src betroffen) ═
 # Purpose: docs/ARCHIV/2026-09-13-architektur-analyse-datenzugriff.md § 6 Phase 0 —
 # "Architektur-Check im Modus 'nur melden' mit Baseline der heutigen Verstöße".
-# .dependency-cruiser-known-violations.json grandfathert die 180 heutigen Verstöße
+# .dependency-cruiser-known-violations.json grandfathert die bekannten Verstöße
 # (direkter DB-Zugriff aus Routes, wenige Zirkularitäten); neue Verstöße brechen
 # den Commit ab, alte werden Domäne für Domäne abgebaut (Phase 3), nicht ausgeklammert.
 ARCH_CHANGES=$(echo "$STAGED_FILES" | grep -E '^(app|components|hooks|lib|src)/.*\.(ts|tsx)$' || true)
