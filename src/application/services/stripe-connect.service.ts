@@ -3,7 +3,7 @@ import type Stripe from 'stripe';
 import type { AuthContext } from '@/lib/api-auth';
 import { ApiException } from '@/lib/api-error';
 import { platformFeeCents } from '@/lib/plans';
-import { stripe } from '@/lib/stripe/stripe-client';
+import { CHECKOUT_STUDIO_PARAMS, stripe } from '@/lib/stripe/stripe-client';
 import { getUserDb, systemDb } from '@/infrastructure/db';
 import { StripeConnectRepository } from '@/infrastructure/persistence/repositories/stripe-connect.repository';
 
@@ -124,6 +124,8 @@ export class StripeConnectService {
     const metadata = signMetadata({ ...input.metadata, clubId });
     const session = await stripe().checkout.sessions.create(
       {
+        ...CHECKOUT_STUDIO_PARAMS,
+        submit_type: 'auto',
         mode: 'payment',
         line_items: input.lineItems,
         success_url: input.successUrl,

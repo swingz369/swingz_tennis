@@ -104,4 +104,19 @@ export function constructStripeEvent(payload: string, signature: string): Stripe
   }
 }
 
+/**
+ * Gemeinsame Checkout-Einstellungen aus dem Stripe Checkout Studio — für jeden
+ * `checkout.sessions.create`. `submit_type` nur im Modus `payment`,
+ * `payment_method_collection` nur im Modus `subscription` (Stripe lehnt sonst ab).
+ */
+export const CHECKOUT_STUDIO_PARAMS = {
+  ui_mode: 'hosted_page',
+  origin_context: 'web',
+  integration_identifier: 'hosted_web_0001',
+  billing_address_collection: 'auto',
+  phone_number_collection: { enabled: false },
+  automatic_tax: { enabled: false },
+  allow_promotion_codes: false,
+} as const satisfies Stripe.Checkout.SessionCreateParams;
+
 export { getStripeClient as stripe };

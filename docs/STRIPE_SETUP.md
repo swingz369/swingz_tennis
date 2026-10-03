@@ -1,6 +1,6 @@
 # Stripe Setup Guide
 
-> Zuletzt verifiziert: 03.10.2026 (Mitgliederzahlungen auf Stripe Connect umgestellt, ADR-008)
+> Zuletzt verifiziert: 03.10.2026 (Mitgliederzahlungen auf Stripe Connect umgestellt, ADR-008; Checkout-Studio-Parameter)
 
 ## Required Environment Variables
 
@@ -191,6 +191,12 @@ Alle drei Checkouts gehen über `StripeConnectService.createCheckoutSession`:
 | Buchung  | `POST /api/stripe/checkout`                | `bookings.club_id`                                |
 | Rechnung | `POST /api/billing/invoices/[id]/checkout` | `invoices.club_id`                                |
 | Shop     | `POST /api/shop/checkout`                  | `shop_products.club_id` (ein Verein je Warenkorb) |
+
+**Checkout-Einstellungen (Checkout Studio):** `CHECKOUT_STUDIO_PARAMS` in
+`lib/stripe/stripe-client.ts` gilt für jeden Checkout (gehostete Seite, Rechnungsadresse
+automatisch, kein Telefon, keine automatische Steuer, keine Gutscheincodes). Zusätzlich
+`submit_type: 'auto'` nur bei Einmalzahlungen, `payment_method_collection: 'always'` nur beim
+Abo — Stripe lehnt sie im jeweils anderen Modus ab.
 
 **Webhook-Sicherheit:** Jeder verbundene Verein kann selbst Checkout-Sessions anlegen, deren
 Ereignisse signiert bei uns ankommen. Die Metadaten tragen deshalb eine HMAC-Signatur

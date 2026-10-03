@@ -7,6 +7,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, forbiddenResponse } from '@/lib/api-auth';
 import { getStripe, STRIPE_CONFIGURED } from '@/lib/stripe/client';
+import { CHECKOUT_STUDIO_PARAMS } from '@/lib/stripe/stripe-client';
 import { getPriceId, type PlanKey, type BillingInterval, BILLING_INTERVALS } from '@/lib/plans';
 import { createLogger } from '@/lib/logger';
 import { appBaseUrl } from '@/lib/app-url';
@@ -132,6 +133,8 @@ export async function POST(request: NextRequest) {
       try {
         const customerId = (profile as any)?.stripe_customer_id as string | undefined;
         const baseSessionParams = {
+          ...CHECKOUT_STUDIO_PARAMS,
+          payment_method_collection: 'always' as const,
           mode: 'subscription' as const,
           line_items: [{ price: priceId, quantity: 1 }],
           success_url: `${baseUrl}${returnPath}?success=1`,
