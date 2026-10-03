@@ -70,6 +70,18 @@ jobs:
       - name: Design-Token-Guardrail
         run: bash scripts/check-design-tokens.sh
 
+      # Neue Verstöße brechen (Regel-Severity error); behobene müssen aus der Baseline,
+      # sonst dürfte derselbe Import später unbemerkt zurückkommen.
+      - name: Architektur-Regeln (dependency-cruiser)
+        run: |
+          pnpm arch:check
+          known=$(jq length .dependency-cruiser-known-violations.json)
+          now=$(pnpm -s exec depcruise app components hooks lib src --config .dependency-cruiser.js --output-type baseline | jq length)
+          if [ "$now" -lt "$known" ]; then
+            echo "::error::Baseline veraltet ($known bekannt, $now übrig) — pnpm arch:baseline ausführen und committen"
+            exit 1
+          fi
+
       - name: Unit tests
         run: pnpm test:run
 
@@ -126,15 +138,29 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Datenbank plus REST (kong, postgrest) und Auth (gotrue) — payment-flow und
+      # billing-engine schreiben über den Service-Client und legen Auth-Nutzer an.
       - name: Alle Migrationen von null anwenden
-        run: supabase db start && supabase db reset --no-seed
+        run: |
+          supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+          supabase db reset --no-seed
 
-      - name: RLS und Vereinsgrenzen gegen die frische DB prüfen
+      - name: Zugangsdaten des lokalen Stacks übernehmen
+        run: |
+          supabase status -o json > /tmp/sb.json
+          echo "NEXT_PUBLIC_SUPABASE_URL=$(jq -r .API_URL /tmp/sb.json)" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$(jq -r .ANON_KEY /tmp/sb.json)" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$(jq -r .SERVICE_ROLE_KEY /tmp/sb.json)" >> "$GITHUB_ENV"
+
+      - name: Integrationstests gegen die frische DB
         env:
           CI: 'true'
+          RUN_DB_INTEGRATION: 'true'
           TEST_DB_SCHEMA_READY: 'true'
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-        run: pnpm exec vitest run src/__tests__/integration/rls-policy-catalog.test.ts src/__tests__/integration/cross-tenant-isolation.test.ts
+          # Offizielle Test-Gläubiger-ID der Bundesbank — schaltet die SEPA-Tests frei.
+          SEPA_CREDITOR_ID: DE98ZZZ09999999999
+        run: pnpm exec vitest run src/__tests__/integration/ src/__tests__/lib/billing-engine.test.ts
 
   e2e-smoke:
     name: E2E Smoke (billing-flow)

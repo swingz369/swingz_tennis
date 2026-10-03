@@ -192,7 +192,9 @@ describeIntegration('Payment Flow Integration Tests', () => {
 
     (hasSepaCreditorId ? it : it.skip)('Step 5: should generate SEPA Pain.008 XML', async () => {
       const result = await billingEngine.generateSepaDirectDebit([testPaymentId], {
+        creditorName: 'Payment Flow Test Club',
         creditorAccountIban: process.env.SEPA_CREDITOR_IBAN || 'DE12500105170648489890', // test fallback
+        creditorId: process.env.SEPA_CREDITOR_ID!,
       });
 
       expect(result).toBeDefined();
