@@ -157,8 +157,8 @@ Seit 26.09.2026 auf `main` und deployt: `payment_status`-Auswertung,
 Alle Issues der letzten 7 Tage behoben oder als erledigt geschlossen, Ursachen in den Commits vom
 03.10.2026. Offen bleibt bewusst `JAVASCRIPT-NEXTJS-3` (Bezahlschranke abgeschaltet) — verschwindet
 mit dem Scharfschalten vor dem Launch. Basiszinssatz: nächster Satz zum 01.01.2027 über
-`/api/cron/refresh-base-rates` eintragen; das lokale `CRON_SECRET` in `.env.prod.local` passt nicht
-zu Vercel (Aufruf lieferte 401), Wert bei Bedarf aus Vercel nachziehen.
+`/api/cron/refresh-base-rates` eintragen (Aufruf mit `CRON_SECRET` aus `.env.prod.local`; am
+03.10.2026 neu gesetzt, weil der Vercel-Wert als vertraulich nicht auslesbar war).
 
 ### Abnahmen ausgelieferter Änderungen
 

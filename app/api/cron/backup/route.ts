@@ -105,6 +105,7 @@ const BACKUP_TABLES = [
   'trainer_absences',
   'fee_configurations',
   'payment_settings',
+  'club_stripe_accounts',
   'system_settings',
   'sepa_mandates',
   'hourly_rate_tiers',
