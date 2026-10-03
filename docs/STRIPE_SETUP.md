@@ -179,8 +179,10 @@ SwingZ behält 0,5 % per `application_fee_amount` ein (`PLATFORM_FEE_PERCENT` in
 Plattformkonto.
 
 Einrichtung durch den Vereinsadmin: Abrechnung → Tab **Online-Zahlung** →
-`POST /api/stripe/connect` legt das Konto an (Stripe trägt Gebühren und Verluste, Verein
-bekommt das volle Stripe-Dashboard) und leitet zum Stripe-Onboarding. `account.updated`
+`POST /api/stripe/connect` legt das Konto über **Accounts v2** an (`/v2/core/accounts`; v1-Kontoanlage
+lehnt Stripe für neue Plattformen ab). Stripe trägt Gebühren und Verluste
+(`fees_collector`/`losses_collector: stripe`), Verein bekommt das volle Stripe-Dashboard,
+angefragt werden Karte und SEPA-Lastschrift und leitet zum Stripe-Onboarding. `account.updated`
 setzt `club_stripe_accounts.charges_enabled`. Ohne freigeschaltetes Konto antworten alle
 Checkout-Routen mit 409.
 

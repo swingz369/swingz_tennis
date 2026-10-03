@@ -77,17 +77,29 @@ export class StripeConnectService {
 
     if (!accountId) {
       // Idempotenz-Schlüssel: Doppelklick legt bei Stripe kein zweites Konto an.
-      const account = await stripe().accounts.create(
+      // Accounts v2 — Stripe nimmt für neue Plattformen keine v1-Kontoanlage mehr an.
+      // Stripe zieht seine Gebühren beim Verein ein und haftet für Verluste, der Verein
+      // bekommt das volle Dashboard (ADR-008).
+      const account = await stripe().v2.core.accounts.create(
         {
-          country: 'DE',
-          controller: {
-            fees: { payer: 'account' },
-            losses: { payments: 'stripe' },
-            stripe_dashboard: { type: 'full' },
+          dashboard: 'full',
+          identity: { country: 'de', entity_type: 'non_profit' },
+          defaults: {
+            currency: 'eur',
+            locales: ['de-DE'],
+            responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' },
+          },
+          configuration: {
+            merchant: {
+              capabilities: {
+                card_payments: { requested: true },
+                sepa_debit_payments: { requested: true },
+              },
+            },
           },
           metadata: { clubId },
         },
-        { idempotencyKey: `connect-account-${clubId}` }
+        { idempotencyKey: `connect-account-v2-${clubId}` }
       );
       await new StripeConnectRepository(systemDb('Stripe Connect: Konto anlegen')).insert({
         club_id: clubId,
@@ -96,11 +108,16 @@ export class StripeConnectService {
       accountId = account.id;
     }
 
-    const link = await stripe().accountLinks.create({
+    const link = await stripe().v2.core.accountLinks.create({
       account: accountId,
-      type: 'account_onboarding',
-      return_url: returnUrl,
-      refresh_url: returnUrl,
+      use_case: {
+        type: 'account_onboarding',
+        account_onboarding: {
+          configurations: ['merchant'],
+          return_url: returnUrl,
+          refresh_url: returnUrl,
+        },
+      },
     });
     return link.url;
   }
