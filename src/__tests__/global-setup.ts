@@ -92,9 +92,10 @@ async function applyTargetedTestDdl(dbUrl: string): Promise<void> {
 
     INSERT INTO public.base_interest_rates (valid_from, rate, source) VALUES
       ('2024-07-01', 0.0337, 'Bundesbank H2/2024'),
-      ('2025-01-01', 0.0238, 'Bundesbank H1/2025'),
-      ('2025-07-01', 0.0153, 'Bundesbank H2/2025'),
-      ('2026-01-01', 0.0119, 'Bundesbank H1/2026')
+      ('2025-01-01', 0.0227, 'Bundesbank H1/2025'),
+      ('2025-07-01', 0.0127, 'Bundesbank H2/2025'),
+      ('2026-01-01', 0.0127, 'Bundesbank H1/2026'),
+      ('2026-07-01', 0.0152, 'Bundesbank H2/2026')
     ON CONFLICT (valid_from) DO NOTHING;
   `;
 

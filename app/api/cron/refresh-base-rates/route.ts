@@ -33,7 +33,7 @@ const log = createLogger('cron:refresh-base-rates');
  *
  *   curl -H "x-cron-secret: $CRON_SECRET" \
  *        "https://swingz.vercel.app/api/cron/refresh-base-rates?\
- *         valid_from=2026-07-01&rate=0.0153&source=Bundesbank+H2/2026"
+ *         valid_from=2027-01-01&rate=0.0152&source=Bundesbank+H1/2027"
  *
  * Langfristig: GitHub Action / eigener Scheduler ruft diese URL halbjährlich.
  */

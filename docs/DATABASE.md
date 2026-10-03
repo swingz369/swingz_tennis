@@ -298,6 +298,12 @@ Mitgliedschaft im Verein — ohne Rolle, ohne `is_active` — fremde Buchungen z
 
 Am 26.09.2026 auf Produktion angewendet und per SQL geprüft (Policies, Index, Funktionsrechte).
 
+## `base_interest_rates` — Basiszinssatz korrigiert (Stand 03.10.2026)
+
+`20261003140000_basiszinssatz_korrektur.sql`: Die Zeilen ab 2025 (am 29.06.2026 von Hand
+eingetragen) waren falsch, der Satz ab 01.07.2026 fehlte. Jetzt laut Bundesbank: 2,27 % (01.01.2025),
+1,27 % (01.07.2025 und 01.01.2026), 1,52 % (01.07.2026). Upsert auf `valid_from`.
+
 ## `club_stripe_accounts` — Stripe Connect (Stand 03.10.2026, lokal angewendet)
 
 `20261003120000_club_stripe_accounts.sql`: ein verbundenes Stripe-Konto je Verein (ADR-008).
