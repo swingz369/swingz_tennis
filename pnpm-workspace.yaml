@@ -8,3 +8,7 @@ auditConfig:
     # node-forge <=1.4.0, kein Patch. Lücke steckt in der RSA-Signatur-Verifikation;
     # passkit-generator (lib/wallet/apple-pass.ts) signiert nur, verifiziert nie.
     - GHSA-86w9-cpqp-85rv
+    # braces <=3.0.3, kein Patch (03.10.2026). Stack-Überlauf bei tief verschachtelten
+    # Mustern; braces läuft nur im Build (tailwindcss, eslint) über unsere eigenen Globs,
+    # nie über Nutzereingaben. Entfernen, sobald ein Patch erscheint.
+    - GHSA-vfj7-8cjw-p6xm
