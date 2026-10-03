@@ -64,7 +64,7 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: Cache psql cold-connect (read-replica use)
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/psql
           key: psql-${{ runner.os }}-${{ hashFiles('package.json') }}
