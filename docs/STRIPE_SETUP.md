@@ -204,7 +204,10 @@ Abo — Stripe lehnt sie im jeweils anderen Modus ab.
 Ereignisse signiert bei uns ankommen. Die Metadaten tragen deshalb eine HMAC-Signatur
 (`sig`); Connect-Ereignisse werden nur verarbeitet, wenn Signatur und Konto↔Verein passen.
 
-Lokal testen: `stripe listen --forward-to localhost:3000/api/webhooks/stripe --forward-connect-to localhost:3000/api/webhooks/stripe`
+Lokal testen: `stripe listen --api-key <sk_test aus .env.local> --forward-to localhost:3000/api/webhooks/stripe --forward-connect-to localhost:3000/api/webhooks/stripe`.
+Das Secret der CLI (`stripe listen --print-secret`) steht lokal als `STRIPE_CONNECT_WEBHOOK_SECRET` in
+`.env.local` — der Webhook probiert es nach `STRIPE_WEBHOOK_SECRET`, deshalb kommen Plattform- und
+Connect-Ereignisse der CLI beide durch.
 
 ## Async Payment Methods (SEPA, iDEAL)
 

@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
+> Zuletzt verifiziert: 3. Oktober 2026 (Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
 > Produktion und lokale DB geprüft; Erledigtes gestrichen — die gestrichenen Punkte stehen in der
 > Git-Historie dieser Datei). Produktions-DB nicht direkt abgefragt; wo ein Befund nur lokal
 > belegt ist, steht das dabei.
@@ -55,15 +55,30 @@ Neukonten starten im Freemium-Default. **Entschieden 02.10.2026:** erst zum Laun
 zusammen mit dem Scharfschalten der Bezahlschranke.
 → Quelle: `docs/tickets/roadmap/TICKET-mandatory-subscription-onboarding.md`.
 
-### Stripe Connect: Plattformprofil aktivieren (03.10.2026)
+### Stripe Connect: Ende-zu-Ende-Abnahme offen (Stand 03.10.2026)
 
-Code (ADR-008), Connect-Webhook `we_1UMN3sCyfxebfhruEE1aJzSL` (Sandbox) und
-`STRIPE_CONNECT_WEBHOOK_SECRET` in Vercel Production sind eingerichtet. Offen: im
-Stripe-Dashboard Connect aktivieren (Dashboard → Connect, Plattformprofil ausfüllen) —
-bis dahin kann kein Verein Online-Zahlung einrichten, Checkouts antworten mit 409. Danach
-einmal mit Claude Sandbox Alpha durchspielen (Karte + SEPA, Gebühr prüfen). Beim Wechsel auf
-Live-Schlüssel den Connect-Webhook im Live-Modus neu anlegen. Dazu: Transaktionsgebühr (0,5 %)
-in AGB/Preisliste.
+**Erledigt:** Code (ADR-008), Kontoanlage über Accounts v2 (Stripe lehnt v1 für neue Plattformen
+ab), Connect im Sandbox-Konto aktiv, Connect-Webhook `we_1UMN3sCyfxebfhruEE1aJzSL` und
+`STRIPE_CONNECT_WEBHOOK_SECRET` in Vercel Production. Lokal belegt: Admin Claude Sandbox Alpha →
+Abrechnung → Online-Zahlung → Stripe-Konto `acct_1UMOPHCyfxdYrXvR` angelegt, in
+`club_stripe_accounts` gespeichert (lokale DB), Weiterleitung zur Stripe-Einrichtung.
+
+**Offen:**
+
+1. **Stripe-Einrichtung für `acct_1UMOPHCyfxdYrXvR` abschließen** — nur durch den Menschen: Stripe
+   verlangt dort ein neues Stripe-Login mit Passwort (Konto hat volles Dashboard), das legt kein
+   Agent an. Testwerte: Code `000000`, IBAN `DE89370400440532013000`. Frischen Link holt
+   „Einrichtung fortsetzen“ im Tab (Stripe-Links gelten nur einmal).
+2. Danach lokal mit `stripe listen` (Befehl in `docs/STRIPE_SETUP.md`) prüfen: `account.updated`
+   setzt `charges_enabled`, Tab zeigt „Aktiv“; als Alpha-Mitglied eine Rechnung mit Karte
+   `4242 4242 4242 4242` und einmal per SEPA bezahlen; Rechnung wird bezahlt markiert;
+   Plattformgebühr 0,5 % erscheint im Sandbox-Dashboard unter „Erhobene Gebühren“.
+3. **Erster Klick auf „Online-Zahlung einrichten“ / „Einrichtung fortsetzen“ blieb zweimal ohne
+   Wirkung**, erst der zweite löste den POST aus (lokal, Dev-Modus). Prüfen, ob das nur die
+   Erst-Kompilierung war oder auch in Produktion auftritt.
+4. Beim Wechsel auf Live-Schlüssel den Connect-Webhook im Live-Modus neu anlegen und dessen
+   Secret in Vercel setzen.
+5. Transaktionsgebühr (0,5 %) in AGB/Preisliste aufnehmen.
 
 ### Bezahlschranke ist abgeschaltet
 
@@ -136,6 +151,28 @@ Seit 26.09.2026 auf `main` und deployt: `payment_status`-Auswertung,
 - **Blocker dafür (02.10.2026):** `.env.local` enthält einen **Live**-Key (`STRIPE_SECRET_KEY=sk_live…`).
   Lokale Entwicklung und Tests brauchen Test-Keys (`sk_test…`, `whsec_…` aus `stripe listen`) —
   sonst kann jeder lokale Checkout echtes Geld bewegen.
+
+### Sentry: offene Issues gesichtet (03.10.2026)
+
+16 unaufgelöste Issues (7 Tage), keines aus der Stripe-Connect-Umstellung. Einordnung:
+
+- **`JAVASCRIPT-NEXTJS-Q` „Idempotency check unavailable"** (Stripe-Webhook, Produktion, 1× am
+  03.10. 06:06 UTC, Release `f1905cff`): Stripe-Ereignis wurde mit 503 abgelehnt und von Stripe
+  wiederholt. Vermutlich vor Anwendung der Korrekturmigration `20261003100000_stripe_event_idempotenz_fix`.
+  Beobachten; tritt es erneut auf, `check_and_record_stripe_event` in Produktion prüfen.
+- **`JAVASCRIPT-NEXTJS-2` „Login error"** (16×, Produktion): falsches Passwort wird als `error`
+  geloggt — Rauschen. Zusätzlich übergibt der Aufruf in `app/api/auth/login` einen String als
+  zweites Argument an `log.error`, Sentry zerlegt ihn in Einzelzeichen. Falsche Zugangsdaten als
+  `warn` loggen, String nicht als Error-Argument übergeben.
+- **`JAVASCRIPT-NEXTJS-M`/`-P` „Prüffehler"** auf `/admin/trainers/:id` (8×, 30.09.): nicht
+  untersucht.
+- **`JAVASCRIPT-NEXTJS-3` Bezahlschranke abgeschaltet** und **`-R`/`-S` Basiszinssatz veraltet**:
+  gewollte Warnungen (Bezahlschranke s. oben; Basiszins: neuen Satz der Bundesbank eintragen).
+- **Nur Entwicklungsumgebung:** `-0U-2` „aborted" (Dev-Server beendet), `-N` „require is not
+  defined" (lokaler Webpack-Dev-Build). Lokale Fehler landen im selben Sentry-Projekt — für
+  `environment: development` Sentry abschalten oder filtern, sonst verdecken sie echte Befunde.
+- Ältere Einzelfälle (`-1` Service-Worker 404 auf Preview-URL, `-7`/`-6` Reaktivierung, `-8`
+  Backup-Versuch ohne Berechtigung, `-D`/`-E`/`-F`): seit ≥ 4 Tagen nicht wieder aufgetreten.
 
 ### Abnahmen ausgelieferter Änderungen
 
