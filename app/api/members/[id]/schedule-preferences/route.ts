@@ -5,6 +5,7 @@ import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import type { AuthContext } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import { uuidSchema } from '@/application/validation/schemas';
 
 const log = createLogger('api:members:[id]:schedule-preferences');
 
@@ -28,6 +29,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (!clubId) {
       return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
+    }
+    if (!uuidSchema.safeParse(clubId).success || !uuidSchema.safeParse(userId).success) {
+      return NextResponse.json({ error: 'Ungültige ID' }, { status: 400 });
     }
 
     if (!(await canAccess(auth, userId, clubId))) {
@@ -93,6 +97,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     if (!clubId) {
       return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
+    }
+    if (!uuidSchema.safeParse(clubId).success || !uuidSchema.safeParse(userId).success) {
+      return NextResponse.json({ error: 'Ungültige ID' }, { status: 400 });
     }
 
     if (!(await canAccess(auth, userId, clubId))) {

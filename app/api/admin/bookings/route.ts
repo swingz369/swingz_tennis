@@ -18,6 +18,7 @@ import {
   type DefaultTrainerShape,
 } from '@/lib/typed-helpers';
 import type { Database } from '@/types/supabase';
+import { uuidSchema } from '@/application/validation/schemas';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '@/lib/logger';
 import { berlinParts } from '@/lib/berlin-time';
@@ -103,6 +104,10 @@ export async function GET(req: NextRequest) {
 
     if (!clubId) {
       return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
+    }
+    // „null"/„undefined" aus Template-Strings des Clients sonst als 500 (22P02) statt 400.
+    if ([clubId, memberId, courtId].some((id) => id && !uuidSchema.safeParse(id).success)) {
+      return NextResponse.json({ error: 'Ungültige ID' }, { status: 400 });
     }
 
     const supabase = auth.supabase as SupabaseClient<Database>;
