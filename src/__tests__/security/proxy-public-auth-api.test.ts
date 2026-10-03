@@ -21,6 +21,7 @@ const PUBLIC_POST_ENDPOINTS = [
   '/api/auth/register',
   '/api/auth/register-interest',
   '/api/auth/join',
+  '/monitoring', // Sentry-Tunnel: Browser-Fehlerberichte kommen ohne Session und CSRF-Header
 ];
 
 describe('proxy: öffentliche Auth-API ohne CSRF-Cookie', () => {

@@ -17,16 +17,8 @@ Sentry.init({
 
   // Performance Monitoring (10% sampling in prod to reduce cost)
   tracesSampleRate: isProd ? 0.1 : 0,
-
-  // Profiling (captures function-level performance, 10% in prod)
-  profilesSampleRate: isProd ? 0.1 : 0,
-
-  integrations: isProd
-    ? [
-        // PostgreSQL query tracing
-        Sentry.postgresIntegration(),
-      ]
-    : [],
+  // Postgres-Spans (pg und postgres-js) liefert das SDK von selbst, sobald Tracing läuft.
+  // Profiling bräuchte @sentry/profiling-node — nicht installiert, daher kein profilesSampleRate.
 
   // Scrub sensitive data before sending
   beforeSend(event) {

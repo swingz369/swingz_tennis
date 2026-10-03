@@ -15,9 +15,8 @@ Sentry.init({
   // und verdeckten echte Befunde. Server: sentry.server.config.ts, ebenfalls nur Produktion.
   enabled: process.env.NODE_ENV === 'production',
 
-  // Performance Monitoring
-  // 100% in dev for debugging, 10% in prod to reduce quota usage
-  tracesSampleRate: process.env.NODE_ENV === 'development' ? 1.0 : 0.1,
+  // Performance Monitoring: 10 % der Seitenaufrufe
+  tracesSampleRate: 0.1,
 
   // Session Replay
   // Record 100% of sessions with errors, 10% of normal sessions
@@ -54,13 +53,7 @@ Sentry.init({
   ],
 
   // Scrub sensitive data before sending
-  beforeSend(event, hint) {
-    // Log in development for debugging
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Sentry Client] Event:', event);
-      console.log('[Sentry Client] Hint:', hint);
-    }
-
+  beforeSend(event) {
     // Remove sensitive headers
     if (event.request?.headers) {
       delete event.request.headers.Authorization;

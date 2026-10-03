@@ -121,6 +121,7 @@ const PUBLIC_ROUTES = [
   '/api/csrf-token', // CSRF token fetch — must be public
   '/manifest.json', // PWA manifest — must be public for browser parsing
   '/sw.js', // Service Worker
+  '/monitoring', // Sentry-Tunnel (next.config.js tunnelRoute) — Fehler auch von nicht eingeloggten Seiten
 ];
 
 // API-Routen, die sich selbst authentifizieren (CRON_SECRET bzw. HMAC-Signatur

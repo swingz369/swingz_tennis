@@ -359,10 +359,15 @@ const nextConfig = {
 
 module.exports = withSentryConfig(withBundleAnalyzer(nextConfig), {
   silent: true,
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
+  // Ohne org/project lädt der Build keine Source Maps hoch — Stacktraces in Sentry
+  // zeigten nur minifizierte Chunks (`_19e_7m2._.js:2:583`). Kein Geheimnis, daher fest.
+  org: process.env.SENTRY_ORG || 'swingz',
+  project: process.env.SENTRY_PROJECT || 'javascript-nextjs',
   authToken: process.env.SENTRY_AUTH_TOKEN,
   widenClientFileUpload: true,
+  // Browser-Fehler über die eigene Domain schicken — Adblocker sperren *.sentry.io,
+  // die Fehler dieser Nutzer kamen nie an. Route ist in proxy.ts öffentlich.
+  tunnelRoute: '/monitoring',
   webpack: {
     treeshake: { removeDebugLogging: true },
   },
