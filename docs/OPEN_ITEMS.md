@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 3. Oktober 2026 (Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
+> Zuletzt verifiziert: 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
 > Produktion und lokale DB geprüft; Erledigtes gestrichen — die gestrichenen Punkte stehen in der
 > Git-Historie dieser Datei). Produktions-DB nicht direkt abgefragt; wo ein Befund nur lokal
 > belegt ist, steht das dabei.
@@ -148,9 +148,8 @@ Seit 26.09.2026 auf `main` und deployt: `payment_status`-Auswertung,
   wirken → Handler je Event fachlich idempotent machen.
 - **Abnahme:** signierte Testereignisse gegen den Stripe-Testmodus, inkl. Fehler nach dem ersten
   Schreibschritt, Live-Rechte der RPC nachprüfen. Siehe [`PRODUKTIONSREIFE.md`](PRODUKTIONSREIFE.md).
-- **Blocker dafür (02.10.2026):** `.env.local` enthält einen **Live**-Key (`STRIPE_SECRET_KEY=sk_live…`).
-  Lokale Entwicklung und Tests brauchen Test-Keys (`sk_test…`, `whsec_…` aus `stripe listen`) —
-  sonst kann jeder lokale Checkout echtes Geld bewegen.
+- Lokal und in `.env.prod.local` stehen seit 02.10.2026 Test-Keys (`sk_test…`/`pk_test…`, geprüft
+  03.10.2026). Die Live-Keys liegen nur noch in den ignorierten Sicherungen `.env*.bak-*`.
 
 ### Sentry: offen nur die gewollte Bezahlschranken-Warnung (03.10.2026)
 
@@ -173,18 +172,9 @@ mit dem Scharfschalten vor dem Launch. Basiszinssatz: nächster Satz zum 01.01.2
 
 ## P1 — Wichtig
 
-- **Architektur-Baseline (`dependency-cruiser`) nicht aktuell gehalten.**
-  `.dependency-cruiser-known-violations.json` zuletzt am 18.09.2026 geändert; `arch:check` läuft
-  mit `--ignore-known` und meldet „grün", auch wenn sich der Verstoß-Stand nicht bewegt.
-  → **Fix:** CI-Gate gegen Anstieg der Verstoßzahl (oder `arch:baseline` bei jedem
-  ADR-005-Commit).
-- **Integrationstests laufen in CI nur teilweise.** CI fährt `rls-policy-catalog` und
-  `cross-tenant-isolation` gegen eine frische lokale DB (`supabase db reset`). Die übrigen
-  (`billing-engine`, `payment-flow`, `stripe-webhook`, …) skippen weiter → in denselben CI-Job
-  aufnehmen.
-- **Verwaiste Session-Einheiten** (`sessions.plan_entry_id IS NULL`) aus Neuplanungen vor dem
-  B5-Fix. Diagnose-SQL in `docs/DATABASE.md` („Offene Datenhygiene-Aufräumung"). In der
-  Entwicklungsphase (nur Testdaten) per Diagnose-Query prüfen und ggf. direkt bereinigen.
+- **Verwaiste Session-Einheiten in Produktion prüfen.** Lokal (03.10.2026) keine Geister: alle
+  `plan_entry_id IS NULL`-Sessions sind `walk_in` mit Buchung. Produktion mit der Abfrage aus
+  `docs/DATABASE.md` („Verwaiste Geister-Sessions") prüfen; nur `training`-Treffer sind Geister.
 
 ---
 

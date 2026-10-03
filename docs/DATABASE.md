@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 3. Oktober 2026 (`club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
+> Zuletzt verifiziert: 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -492,18 +492,22 @@ Vereine, die vor dem B5-Fix nach dem Veröffentlichen neu geplant haben, tragen
 `sessions.plan_entry_id IS NULL`-Geistertermine. **Kein Blind-DELETE** — es hängen ggf. echte
 Buchungen/Anwesenheiten dran. Erst diagnostizieren:
 
-```sql
--- Wie viele Sessions ohne Rückverweis auf einen Plan-Eintrag?
-SELECT count(*) FROM sessions WHERE plan_entry_id IS NULL;
+`walk_in`-Termine (Laufkundschaft) haben nie einen Plan-Eintrag — Geister sind nur
+`training`-Sessions:
 
--- Aufschlüsselung pro Schedule (stammen sie aus einer Saison?):
-SELECT schedule_id, count(*) AS n
-FROM sessions
-WHERE plan_entry_id IS NULL
-GROUP BY schedule_id
-ORDER BY n DESC
-LIMIT 20;
+```sql
+SELECT c.name, s.session_type, count(*) AS n,
+       sum((SELECT count(*) FROM bookings b WHERE b.session_id = s.id)) AS buchungen
+FROM sessions s
+JOIN schedules sc ON sc.id = s.schedule_id
+JOIN clubs c ON c.id = sc.club_id
+WHERE s.plan_entry_id IS NULL
+GROUP BY 1, 2
+ORDER BY 1;
 ```
+
+Stand 03.10.2026, lokale DB: 9 Treffer, alle `walk_in` mit Buchung — keine Geister.
+Produktion noch nicht geprüft.
 
 Erst nach Sichtung entscheiden, ob und welche Zeilen (und deren abhängige Datensätze) gelöscht
 werden — die Audit-Quelle (`docs/ARCHIV/2026-08-13-kernmodul-durchlauf.md`, B5) warnt ausdrücklich
