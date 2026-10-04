@@ -168,10 +168,12 @@ export async function POST(_request: NextRequest) {
         const supabase = createServiceClient();
         const { data: payment } = await supabase
           .from('payments')
-          .select('id')
+          .select('id, status')
           .eq('external_id', paymentIntent.id)
-          .single();
-        if (payment) {
+          .maybeSingle();
+        // Stripe stellt Events nicht geordnet zu: ein Fehlversuch derselben
+        // PaymentIntent kann nach dem Erfolg ankommen und darf ihn nicht kippen.
+        if (payment && !isSettled(payment.status)) {
           await billingEngine.updatePaymentStatus(payment.id, 'failed');
         }
         // Also try booking lookup via checkout session
@@ -206,6 +208,11 @@ export async function POST(_request: NextRequest) {
     }
     return internalErrorResponse();
   }
+}
+
+/** Endzustand einer Zahlung/Buchung — ein späterer Fehlversuch ändert daran nichts mehr. */
+function isSettled(status: string | null | undefined): boolean {
+  return status === 'completed' || status === 'paid' || status === 'refunded';
 }
 
 /** Offered payment methods do not tell us whether this payment has settled. */
@@ -676,6 +683,14 @@ async function handleBookingPaymentFailed(paymentIntentId: string, stripeAccount
     );
     const bookingId = sessions.data[0]?.metadata?.bookingId;
     if (bookingId) {
+      const { data: booking, error: readError } = await supabase
+        .from('bookings')
+        .select('payment_status')
+        .eq('id', bookingId)
+        .maybeSingle();
+      if (readError) throw new Error(`Buchung konnte nicht gelesen werden: ${readError.message}`);
+      if (isSettled(booking?.payment_status)) return;
+
       const { error } = await supabase
         .from('bookings')
         .update({ payment_status: 'failed' })

@@ -396,6 +396,51 @@ describe('POST /api/webhooks/stripe', () => {
     expect(bookingUpdate).toMatchObject({ status: 'confirmed', payment_status: 'paid' });
   });
 
+  it('lässt ein verspätetes payment_failed eine bezahlte Zahlung und Buchung nicht kippen', async () => {
+    let bookingUpdate: unknown = null;
+    tableHandlers.payments = () => ({
+      data: { id: 'payment-1', status: 'completed' },
+      error: null,
+    });
+    tableHandlers.bookings = (state) => {
+      if (state.op === 'update') bookingUpdate = state.payload;
+      return { data: state.op === 'select' ? { payment_status: 'paid' } : null, error: null };
+    };
+    fakeStripeClient.checkout.sessions.list.mockResolvedValueOnce({
+      data: [{ metadata: { bookingId: 'booking-1' } }],
+    } as never);
+    currentEvent = {
+      id: 'evt_late_fail',
+      type: 'payment_intent.payment_failed',
+      data: { object: { id: 'pi_late_fail' } },
+    };
+    const res = await POST(webhookRequest(currentEvent));
+    expect(res.status).toBe(200);
+    expect(billingEngineMock.updatePaymentStatus).not.toHaveBeenCalled();
+    expect(bookingUpdate).toBeNull();
+  });
+
+  it('markiert eine offene Buchung bei payment_failed als fehlgeschlagen', async () => {
+    let bookingUpdate: unknown = null;
+    tableHandlers.payments = () => ({ data: { id: 'payment-1', status: 'pending' }, error: null });
+    tableHandlers.bookings = (state) => {
+      if (state.op === 'update') bookingUpdate = state.payload;
+      return { data: state.op === 'select' ? { payment_status: 'pending' } : null, error: null };
+    };
+    fakeStripeClient.checkout.sessions.list.mockResolvedValueOnce({
+      data: [{ metadata: { bookingId: 'booking-1' } }],
+    } as never);
+    currentEvent = {
+      id: 'evt_fail',
+      type: 'payment_intent.payment_failed',
+      data: { object: { id: 'pi_fail' } },
+    };
+    const res = await POST(webhookRequest(currentEvent));
+    expect(res.status).toBe(200);
+    expect(billingEngineMock.updatePaymentStatus).toHaveBeenCalledWith('payment-1', 'failed');
+    expect(bookingUpdate).toEqual({ payment_status: 'failed' });
+  });
+
   it('beantwortet einen unbekannten Event-Typ ohne Fehler (default-Branch)', async () => {
     currentEvent = { id: 'evt_6', type: 'some.unhandled.event', data: { object: {} } };
     const res = await POST(webhookRequest(currentEvent));

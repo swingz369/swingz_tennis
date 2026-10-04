@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
+> Zuletzt verifiziert: 4. Oktober 2026 (Stripe-Retry-Idempotenz geprüft und geschlossen); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
 > Produktion und lokale DB geprüft; Erledigtes gestrichen — die gestrichenen Punkte stehen in der
 > Git-Historie dieser Datei). Produktions-DB nicht direkt abgefragt; wo ein Befund nur lokal
 > belegt ist, steht das dabei.
@@ -144,8 +144,6 @@ Seit 26.09.2026 auf `main` und deployt: `payment_status`-Auswertung,
 `process_shop_order_payment`, Unique-Index `payments_stripe_external_id_key`, `EXECUTE` auf
 `check_and_record_stripe_event` nur noch für `service_role`. Offen:
 
-- **Retry-Idempotenz:** Teilweise erfolgte fachliche Schreibvorgänge können beim Retry doppelt
-  wirken → Handler je Event fachlich idempotent machen.
 - **Abnahme:** signierte Testereignisse gegen den Stripe-Testmodus, inkl. Fehler nach dem ersten
   Schreibschritt, Live-Rechte der RPC nachprüfen. Siehe [`PRODUKTIONSREIFE.md`](PRODUKTIONSREIFE.md).
 - Lokal und in `.env.prod.local` stehen seit 02.10.2026 Test-Keys (`sk_test…`/`pk_test…`, geprüft
