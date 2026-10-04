@@ -278,7 +278,7 @@ export class SeasonPlanRepository {
         'group_id, trainer_id, day_of_week, start_time, end_time, expected_participants, courts(name), groups(name), seasons(name, planning_status)'
       )
       .eq('club_id', clubId)
-      .contains('expected_participants', [userId])
+      .contains('expected_participants', JSON.stringify([userId])) // jsonb: JSON, kein PG-Array
       .order('day_of_week')
       .order('start_time')
       .order('id');
