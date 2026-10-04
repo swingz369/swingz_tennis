@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
+> Zuletzt verifiziert: 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
 > Produktion und lokale DB geprüft; Erledigtes gestrichen — die gestrichenen Punkte stehen in der
 > Git-Historie dieser Datei). Produktions-DB nicht direkt abgefragt; wo ein Befund nur lokal
 > belegt ist, steht das dabei.
@@ -130,13 +130,14 @@ Offen: **87 Routen** unter `app/api/` importieren noch `createServiceClient` →
 **Fix:** Domäne für Domäne nach ADR-005 migrieren, Whitelist-Fälle über `systemDb(reason)`.
 → Quelle: `docs/ARCHIV/2026-09-16-adr-005-migrationsfortschritt-befund.md`.
 
-### DB-Transport unverschlüsselt
+### DB-Passwort rotieren (Folge des unverschlüsselten Pooler-Transports)
 
-Der Pooler `supabase.swingz.cloud:6543` akzeptiert Klartext (mit TLS „wrong version number").
-Seit 04.10.2026 nutzt die App ihn nicht mehr (nur PostgREST über HTTPS); unverschlüsselt laufen
-noch die Migrationen — `pnpm db:*:prod` und der GitHub-Runner in `deploy.yml` (`AUTO_MIGRATE`),
-also Superuser-Credentials über das Internet. VPS-Thema.
-→ Quelle: `docs/DATABASE.md`, `docs/tickets/roadmap/TICKET-pooler-tls-und-drizzle-service-pfad.md`.
+Seit 04.10.2026 spricht der Pooler TLS, alle bekannten Clients verlangen es (`docs/DATABASE.md`).
+Bis dahin gingen die Superuser-Credentials monatelang im Klartext übers Internet (Migrationen vom
+GitHub-Runner und von der Dev-Maschine). → Passwort von `postgres`/Tenant `swingz` wechseln —
+hängt am ganzen Supabase-Stack (`POSTGRES_PASSWORD`), dazu `DATABASE_URL_PROD`, `.env.prod.local`,
+Vercel `DATABASE_URL` (App nutzt sie nicht mehr; Variable dann löschen). Strenger zusätzlich:
+Port 6543 nur noch per SSH-Tunnel, weil Supavisor Klartext nicht ablehnen kann.
 
 ### Stripe: Code ausgeliefert, Abnahme mit signierten Testereignissen offen
 

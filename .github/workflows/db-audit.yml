@@ -79,6 +79,8 @@ jobs:
       - name: Run bulk-track-only-migrations.sh (DRY-RUN)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+          DATABASE_SSL: require # Pooler spricht TLS (04.10.2026): postgres.js-Skripte
+          PGSSLMODE: require # dasselbe für psql/libpq
         run: |
           set +e
           bash scripts/bulk-track-only-migrations.sh \
@@ -111,6 +113,8 @@ jobs:
       - name: Run file-count-vs-claim-reconciliation.sh
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+          DATABASE_SSL: require # Pooler spricht TLS (04.10.2026): postgres.js-Skripte
+          PGSSLMODE: require # dasselbe für psql/libpq
         run: |
           set +e
           bash scripts/file-count-vs-claim-reconciliation.sh \

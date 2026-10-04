@@ -1,6 +1,6 @@
 # Umgebungen & Datenbanken
 
-> Zuletzt verifiziert: 2. Oktober 2026 (Git-Remote auf HTTPS, § 5); Seed-Aufrufe zuletzt 30. September 2026; übrige Abschnitte zuletzt 23. September 2026 (CI-Tests gegen frische Supabase-DB, Auslieferungsweg, lokale Test-/Dev-Server-Rezepte)
+> Zuletzt verifiziert: 4. Oktober 2026 (Pooler-TLS, `DATABASE_SSL`/`PGSSLMODE` für Prod-Migrationen); davor 2. Oktober 2026 (Git-Remote auf HTTPS, § 5); Seed-Aufrufe zuletzt 30. September 2026; übrige Abschnitte zuletzt 23. September 2026 (CI-Tests gegen frische Supabase-DB, Auslieferungsweg, lokale Test-/Dev-Server-Rezepte)
 > Warum es genau so aufgeteilt ist (und nicht mit Staging von Anfang an): [`decisions/adr-003-datenbank-umgebungen.md`](decisions/adr-003-datenbank-umgebungen.md)
 
 Dieses Dokument beschreibt, welche Datenbank wofür da ist, wer darauf schreiben darf und wie eine Änderung von der Entwicklung nach Produktion kommt. Es ist ein **lebendes Dokument** — wer die Aufteilung ändert, ändert diese Datei mit.
@@ -121,7 +121,7 @@ lokal entwickeln → prüfen (§ 5b) → Commit (Hook) → merge/push nach main 
    npm run db:migrate:prod    # anwenden, VOR dem Deploy
    ```
 
-   Jeder dieser Befehle gibt zuerst das Ziel aus (`→ supabase.swingz.cloud:6543 (.env.prod.local)`). Steht dort etwas anderes als erwartet: abbrechen.
+   Jeder dieser Befehle gibt zuerst das Ziel aus (`→ supabase.swingz.cloud:6543 (.env.prod.local, TLS)`). Steht dort etwas anderes als erwartet — anderer Host oder `Klartext` — abbrechen. TLS kommt aus `DATABASE_SSL=require` und `PGSSLMODE=require` in `.env.prod.local` (seit 04.10.2026; der Pooler nimmt Klartext weiterhin an, verlangen muss es der Client).
 
 **Vor dem Launch zurückdrehen** (Liste: [`OPEN_ITEMS.md`](OPEN_ITEMS.md) § Vor dem Launch): `AUTO_MIGRATE` löschen, Pull Requests mit Freigabe wieder Pflicht, `SUBSCRIPTION_ENFORCEMENT` entfernen.
 

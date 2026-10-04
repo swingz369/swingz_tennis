@@ -36,7 +36,9 @@ if (!process.env.DATABASE_URL) {
 }
 
 // Ziel immer zeigen — ein Prod-Lauf, den man für lokal hielt, ist der teuerste Fehler hier.
-console.log(`→ ${new URL(process.env.DATABASE_URL).host} (${ENV_FILE})`);
+console.log(
+  `→ ${new URL(process.env.DATABASE_URL).host} (${ENV_FILE}, ${process.env.DATABASE_SSL === 'require' ? 'TLS' : 'Klartext'})`
+);
 
 const sql = postgres(process.env.DATABASE_URL, {
   ssl: process.env.DATABASE_SSL === 'require' ? 'require' : false,

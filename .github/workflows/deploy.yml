@@ -66,12 +66,16 @@ jobs:
         env:
           MIGRATE_ENV: prod
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+          DATABASE_SSL: require # Pooler spricht TLS (04.10.2026): postgres.js-Skripte
+          PGSSLMODE: require # dasselbe für psql/libpq
         run: pnpm db:status:prod
 
       - name: Migrationen auf Produktion anwenden
         if: ${{ vars.AUTO_MIGRATE == 'true' }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+          DATABASE_SSL: require # Pooler spricht TLS (04.10.2026): postgres.js-Skripte
+          PGSSLMODE: require # dasselbe für psql/libpq
         run: pnpm db:migrate:prod
 
       - name: Deploy nach Produktion

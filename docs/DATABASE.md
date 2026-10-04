@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 4. Oktober 2026 (`restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
+> Zuletzt verifiziert: 4. Oktober 2026 (Pooler-TLS auf dem VPS eingerichtet und von außen verifiziert; `restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -449,7 +449,15 @@ Weitere Befunde desselben Audits; Live-Abgleich vom 24.09.2026 darunter:
 - **`season_planning_configs` und `season_statistics`** hatten damals 0 Policies; live am 24.09.2026 haben beide Policies. Unter Public-Tabellen mit aktivem RLS ist nur `ops_heartbeats` ohne Policy (beabsichtigter Service-Zugriff; siehe unten).
 - **`20260812020000_scope_remaining_superadmin_policies.sql`** war beim damaligen Audit noch nicht angewendet. Live am 24.09.2026 nutzt keine Policy auf `audit_logs`, `trainers` oder `users` in ihrer `USING`-Klausel mehr `is_superadmin()` ohne Vereinsbezug. Ob die Datei oder ein anderer Fix den Zustand hergestellt hat, ist wegen des unvollständigen Trackings offen; nicht blind nachziehen.
 - **Verbleibende unscoped `is_superadmin()`-Policies nach diesem Durchgang, alle bewusst so**: `background_jobs`, `base_interest_rates`, `school_holidays` (plattformweite Konzepte ohne Vereinsbezug). Die Abrechnungstabellen sind seit 15.08.2026 club-scoped (siehe unten).
-- **Der Pooler auf `supabase.swingz.cloud:6543` akzeptiert Klartext-Verbindungen** (Verbindung mit `ssl: false` erfolgreich, mit TLS „wrong version number"). DB-Credentials und Nutzdaten gehen unverschlüsselt über die Leitung. VPS-Thema, keine Migration. Seit 04.10.2026 betrifft das nur noch die Migrationsläufe (lokal `db:*:prod`, GitHub-Runner in `deploy.yml`) — die App selbst spricht nur noch HTTPS/PostgREST.
+- **Pooler `supabase.swingz.cloud:6543` spricht seit 04.10.2026 TLS.** Supavisor bekommt das
+  Let's-Encrypt-Zertifikat von `shared-caddy` schreibgeschützt eingebunden
+  (`GLOBAL_DOWNSTREAM_CERT_PATH`/`_KEY_PATH` in `/home/deploy/swingz-supabase/docker-compose.yml`,
+  Sicherung `docker-compose.yml.bak-2026-10-04`). Supavisor liest das Zertifikat nur beim Start;
+  `~/pooler-cert-check.sh` (Cron `deploy`, täglich 4:17) startet den Pooler neu, wenn Caddy erneuert
+  hat. `sslmode=verify-full` mit System-CAs verifiziert. **Klartext nimmt Supavisor weiterhin an** —
+  der Schutz liegt bei den Clients: `DATABASE_SSL=require` (postgres.js-Skripte; ein explizites
+  `ssl: false` schlägt `sslmode` in der URL) und `PGSSLMODE=require` (psql) in `.env.prod.local`,
+  `deploy.yml` und `db-audit.yml`. Offen: das DB-Passwort lief bis dahin im Klartext — Rotation.
 
 ## `season_planning_configs` / `season_statistics` — RLS nachgerüstet (Stand 15.08.2026)
 
