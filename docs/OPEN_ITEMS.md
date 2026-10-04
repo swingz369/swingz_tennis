@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
+> Zuletzt verifiziert: 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
 > Produktion und lokale DB geprüft; Erledigtes gestrichen — die gestrichenen Punkte stehen in der
 > Git-Historie dieser Datei). Produktions-DB nicht direkt abgefragt; wo ein Befund nur lokal
 > belegt ist, steht das dabei.
@@ -139,17 +139,17 @@ hängt am ganzen Supabase-Stack (`POSTGRES_PASSWORD`), dazu `DATABASE_URL_PROD`,
 Vercel `DATABASE_URL` (App nutzt sie nicht mehr; Variable dann löschen). Strenger zusätzlich:
 Port 6543 nur noch per SSH-Tunnel, weil Supavisor Klartext nicht ablehnen kann.
 
-### Stripe: Code ausgeliefert, Abnahme mit signierten Testereignissen offen
+### Stripe: Webhook abgenommen (Testmodus, 04.10.2026), Live-Umstellung offen
 
-Seit 26.09.2026 auf `main` und deployt: `payment_status`-Auswertung,
-`checkout.session.async_payment_succeeded`, atomare Shop-Zahlung über
-`process_shop_order_payment`, Unique-Index `payments_stripe_external_id_key`, `EXECUTE` auf
-`check_and_record_stripe_event` nur noch für `service_role`. Offen:
-
-- **Abnahme:** signierte Testereignisse gegen den Stripe-Testmodus, inkl. Fehler nach dem ersten
-  Schreibschritt, Live-Rechte der RPC nachprüfen. Siehe [`PRODUKTIONSREIFE.md`](PRODUKTIONSREIFE.md).
-- Lokal und in `.env.prod.local` stehen seit 02.10.2026 Test-Keys (`sk_test…`/`pk_test…`, geprüft
-  03.10.2026). Die Live-Keys liegen nur noch in den ignorierten Sicherungen `.env*.bak-*`.
+Abgenommen in Produktion mit selbst signierten Ereignissen (Webhook-Secret aus
+`.env.prod.local`) gegen eine Rechnung in Claude Sandbox Alpha: ungültige Signatur → 400, Handler-
+Fehler → 500 mit freigegebener Reservierung und erneuter Verarbeitung, doppelte Zustellung →
+`deduplicated`, zweites Ereignis zur selben Zahlung bucht nichts, genau eine Zahlung, Rechnung
+`paid`, verspätetes `payment_failed` ändert nichts. `EXECUTE` auf `check_and_record_stripe_event`
+und `process_shop_order_payment` live nur `service_role`. Ein Fehler _nach_ dem ersten
+Schreibschritt ist nur per Unit-Test belegt (in Produktion nicht gezielt auslösbar).
+Offen: Lokal und in `.env.prod.local` stehen Test-Keys; beim Wechsel auf Live-Keys die
+Webhook-Endpunkte (Plattform und Connect) im Live-Modus anlegen und einmal echt abnehmen.
 
 ### Sentry: offen nur die gewollte Bezahlschranken-Warnung (03.10.2026)
 

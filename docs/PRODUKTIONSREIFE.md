@@ -1,6 +1,6 @@
 # Weg zur Produktionsreife
 
-> Zuletzt verifiziert: 26. September 2026 (gezielte Codekorrekturen und lokale Datenbankprüfung; ältere Messwerte bleiben historische Stände)
+> Zuletzt verifiziert: 4. Oktober 2026 (Stripe-Abnahme Schritt 2, TLS); davor 26. September 2026 (gezielte Codekorrekturen und lokale Datenbankprüfung; ältere Messwerte bleiben historische Stände)
 >
 > Lebendes Dokument. **Der Plan** — was in welcher Reihenfolge passieren muss, damit SwingZ ein
 > Produkt ist, das ein Verein kauft, benutzt und behält.
@@ -36,6 +36,11 @@ deren Auslieferung ist nicht durch diesen Plan belegt.
 | 4           | Zahlungs- und Abrechnungsdaten berichtigen: fiktiven Umsatzexport entfernen oder durch echte Zahlungen ersetzen; Vereins-Gesamtexport und Restore/Heartbeat prüfen.                                                                                                                                                                                                                                                                                                                | Export stimmt mit bezahlten Rechnungen überein; vollständiger Ausstieg ist probeweise lesbar; aktuelles Restore-Protokoll und kritische Cron-Läufe liegen vor.                                                                      |
 | 5           | Kaufmodell und öffentliche Aussagen konsistent umsetzen. **Entschieden:** Einmalkauf pro Tennisschule mit mehreren Vereinen; nach Kündigung der Betriebspauschale endet der Nutzungszugang, der Export bleibt erreichbar; bestehende Abos werden umgestellt und der volle Einmalkaufpreis wird fällig, ohne Anrechnung bisheriger Abozahlungen. **Offen:** Preise, Umfang, Zeitpunkt/Einwilligung der Bestandskunden-Umstellung, Rückerstattung, Support und juristische Freigabe. | Erst nach Entscheidung: Checkout, getrennte Kauf- und Betriebsberechtigung, API-Gate, Website, AGB und Rechnung in einem vollständigen Testkauf prüfen. Keine Preisannahmen im Code treffen.                                        |
 | 6           | F1–F5 mit Agent-Konten und einem fremden Testnutzer abnehmen.                                                                                                                                                                                                                                                                                                                                                                                                                      | Je Rolle eine echte Kernaufgabe auf Mobilgerät; Kauf bis Kündigung und Webhook-Retry; Deploy-Commit, Monitor und Restore nachweisen.                                                                                                |
+
+**Schritt 2 abgenommen (04.10.2026, Produktion):** signierte Testereignisse gegen
+`/api/webhooks/stripe` — Fehler wird erneut verarbeitet, doppelte Zustellung bucht einmal,
+RPC-Rechte nur `service_role`. Einzelheiten: `OPEN_ITEMS.md` § Stripe.
+**Schritt 3, Transport:** Pooler spricht TLS, die App nutzt Drizzle nicht mehr (04.10.2026).
 
 **Freigabestatus:** Die fünf Agent-Logins und breite Seiten-Smoke-Tests sind belegt; F2–F5
 sind dadurch nicht erfüllt. Die Verkaufsfreigabe bleibt gesperrt, bis die obigen Abnahmen

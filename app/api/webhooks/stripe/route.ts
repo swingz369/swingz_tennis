@@ -40,7 +40,17 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ error: 'stripe-signature-Header fehlt' }, { status: 400 });
     }
 
-    const event = constructStripeEvent(body, signature);
+    let event: Stripe.Event;
+    try {
+      event = constructStripeEvent(body, signature);
+    } catch (signatureError) {
+      // Nicht von Stripe (oder falsches Secret): kein Serverfehler, kein Retry.
+      log.warn(
+        'Stripe-Signatur ungültig',
+        signatureError instanceof Error ? signatureError : undefined
+      );
+      return NextResponse.json({ error: 'Ungültige Signatur' }, { status: 400 });
+    }
 
     // ── Idempotency: atomic check-and-record (race-condition safe) ──
     const supabase = createServiceClient();

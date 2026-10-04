@@ -145,6 +145,16 @@ describe('POST /api/webhooks/stripe', () => {
     expect(res.status).toBe(400);
   });
 
+  it('antwortet auf eine ungültige Signatur mit 400, ohne zu reservieren', async () => {
+    const { constructStripeEvent } = await import('@/lib/stripe/stripe-client');
+    vi.mocked(constructStripeEvent).mockImplementationOnce(() => {
+      throw new Error('No signatures found matching the expected signature for payload');
+    });
+    rpcIsNew = true;
+    const res = await POST(webhookRequest({}, 't=1,v1=deadbeef'));
+    expect(res.status).toBe(400);
+  });
+
   it('dedupliziert ein bereits verarbeitetes Event (Idempotency-Gate)', async () => {
     rpcIsNew = false;
     currentEvent = { id: 'evt_1', type: 'checkout.session.completed', data: { object: {} } };
