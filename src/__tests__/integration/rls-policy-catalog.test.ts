@@ -100,4 +100,5 @@ const DEFINER_FOR_USERS: Record<string, string> = {
   start_direct_conversation: 'prüft gemeinsame Vereinsmitgliedschaft',
   news_read_stats: 'prüft Admin des Vereins',
   generate_season_invoices_atomic: 'prüft Admin des Vereins (20260914120000)',
+  restore_club: 'prüft Owner oder Superadmin des Vereins (20261004100000)',
 };

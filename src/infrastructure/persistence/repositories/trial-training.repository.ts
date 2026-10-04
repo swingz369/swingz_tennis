@@ -340,4 +340,23 @@ export class TrialTrainingRepository {
     if (error) throw parsePostgresError(error);
     return (data ?? []).length > 0;
   }
+
+  /** Vorname, E-Mail und Vereinsname für die öffentlichen Links (Anmeldung, Feedback). */
+  async findPublicContext(
+    participantId: string
+  ): Promise<{ firstName: string; email: string; clubName: string | null } | null> {
+    const { data, error } = await this.db
+      .from('trial_trainings')
+      .select('participant_first_name, participant_email, clubs(name)')
+      .eq('participant_id', participantId)
+      .limit(1)
+      .maybeSingle();
+    if (error) throw parsePostgresError(error);
+    if (!data) return null;
+    return {
+      firstName: data.participant_first_name,
+      email: data.participant_email,
+      clubName: data.clubs?.name ?? null,
+    };
+  }
 }

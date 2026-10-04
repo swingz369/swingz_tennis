@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 4. Oktober 2026 (Stripe-Retry-Idempotenz geprüft und geschlossen); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
+> Zuletzt verifiziert: 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
 > Produktion und lokale DB geprüft; Erledigtes gestrichen — die gestrichenen Punkte stehen in der
 > Git-Historie dieser Datei). Produktions-DB nicht direkt abgefragt; wo ein Befund nur lokal
 > belegt ist, steht das dabei.
@@ -123,18 +123,19 @@ Code: `lib/subscription-gate.ts` (`isSubscriptionEnforced`), `lib/env.ts`,
 
 ### Service-Client-Bypass in API-Routen
 
-`DATABASE_URL` verbindet als `postgres` (BYPASSRLS), `createServiceClient()` umgeht RLS
-ebenfalls. Genau dieser Pfad war laut ADR-005 Ursache der zwei Datenlecks im Juli. Stand
-02.10.2026: **87 Routen** unter `app/api/` importieren `createServiceClient` (16.09.: 84 — die
-Zahl steigt wieder); Drizzle-Importe nur noch in **5 Routen** (16.09.: 21). → **Fix:** Domäne für
-Domäne nach ADR-005 migrieren, Whitelist-Fälle über `systemDb(reason)`; danach dedizierte
-App-Rolle ohne BYPASSRLS + neue `DATABASE_URL` (Infra-Änderung, keine Migration).
+`createServiceClient()` umgeht RLS. Genau dieser Pfad war laut ADR-005 Ursache der zwei
+Datenlecks im Juli. Stand 04.10.2026: **Drizzle ist aus der App entfernt** (letzte 5 Routen,
+3 öffentliche Seiten, `trainer-record`, Gebührenkategorien migriert; `db.ts` gelöscht).
+Offen: **87 Routen** unter `app/api/` importieren noch `createServiceClient` →
+**Fix:** Domäne für Domäne nach ADR-005 migrieren, Whitelist-Fälle über `systemDb(reason)`.
 → Quelle: `docs/ARCHIV/2026-09-16-adr-005-migrationsfortschritt-befund.md`.
 
 ### DB-Transport unverschlüsselt
 
 Der Pooler `supabase.swingz.cloud:6543` akzeptiert Klartext (mit TLS „wrong version number").
-Credentials und Nutzdaten gehen unverschlüsselt über die Leitung. VPS-Thema.
+Seit 04.10.2026 nutzt die App ihn nicht mehr (nur PostgREST über HTTPS); unverschlüsselt laufen
+noch die Migrationen — `pnpm db:*:prod` und der GitHub-Runner in `deploy.yml` (`AUTO_MIGRATE`),
+also Superuser-Credentials über das Internet. VPS-Thema.
 → Quelle: `docs/DATABASE.md`, `docs/tickets/roadmap/TICKET-pooler-tls-und-drizzle-service-pfad.md`.
 
 ### Stripe: Code ausgeliefert, Abnahme mit signierten Testereignissen offen

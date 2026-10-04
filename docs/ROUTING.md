@@ -479,8 +479,6 @@ app/layout.tsx                          ← Root Layout (DM Sans, QueryProvider,
 | GET              | `/api/audit-logs/export`     |
 | GET              | `/api/audit-logs/summary`    |
 | GET/POST/PATCH   | `/api/admin/system/settings` |
-| GET/POST         | `/api/system-settings`       |
-| GET/PATCH/DELETE | `/api/system-settings/[id]`  |
 | GET/POST         | `/api/branding`              |
 | GET/POST         | `/api/applications`          |
 

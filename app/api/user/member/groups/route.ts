@@ -2,15 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { db } from '@/src/infrastructure/persistence/db';
-import {
-  seasonPlanEntries,
-  groups,
-  trainers,
-  courts,
-  seasons,
-} from '@/src/infrastructure/persistence/schema';
-import { and, eq, sql, asc } from 'drizzle-orm';
+import { SeasonPlanService } from '@/application/services/season-plan.service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:user:member:groups');
@@ -46,44 +38,7 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-      const rows = await db
-        .select({
-          groupId: seasonPlanEntries.group_id,
-          groupName: groups.name,
-          dayOfWeek: seasonPlanEntries.day_of_week,
-          startTime: seasonPlanEntries.start_time,
-          endTime: seasonPlanEntries.end_time,
-          trainerName: trainers.name,
-          courtName: courts.name,
-          participants: seasonPlanEntries.expected_participants,
-          seasonName: seasons.name,
-          seasonStatus: seasons.planning_status,
-        })
-        .from(seasonPlanEntries)
-        .leftJoin(groups, eq(seasonPlanEntries.group_id, groups.id))
-        .leftJoin(trainers, eq(seasonPlanEntries.trainer_id, trainers.id))
-        .leftJoin(courts, eq(seasonPlanEntries.court_id, courts.id))
-        .leftJoin(seasons, eq(seasonPlanEntries.season_id, seasons.id))
-        .where(
-          and(
-            eq(seasonPlanEntries.club_id, clubId),
-            sql`${seasonPlanEntries.expected_participants} @> ${JSON.stringify([auth.user.id])}::jsonb`
-          )
-        )
-        .orderBy(asc(seasonPlanEntries.day_of_week), asc(seasonPlanEntries.start_time));
-
-      const groupList = rows.map((r) => ({
-        id: r.groupId,
-        name: r.groupName ?? 'Trainingsgruppe',
-        dayOfWeek: r.dayOfWeek,
-        startTime: r.startTime,
-        endTime: r.endTime,
-        trainerName: r.trainerName ?? null,
-        courtName: r.courtName ?? null,
-        participantCount: ((r.participants as string[] | null) ?? []).length,
-        seasonName: r.seasonName ?? null,
-        isPublished: r.seasonStatus === 'published',
-      }));
+      const groupList = await new SeasonPlanService(auth).memberGroups(clubId);
 
       return NextResponse.json({
         groups: groupList,

@@ -129,6 +129,73 @@ export class SeasonPlanRepository {
     };
   }
 
+  async findEntryById(entryId: string): Promise<PlanEntry | null> {
+    const { data, error } = await this.db
+      .from('season_plan_entries')
+      .select()
+      .eq('id', entryId)
+      .maybeSingle();
+    assertNoError(error, 'Lesen des Planeintrags fehlgeschlagen');
+    return data;
+  }
+
+  /** Künftige Termine eines Plan-Eintrags ab einem Zeitpunkt. */
+  async listSessionsFrom(entryId: string, from: Date) {
+    return fetchAll(
+      () =>
+        this.db
+          .from('sessions')
+          .select('id, schedule_id, timeslot_start, timeslot_end')
+          .eq('plan_entry_id', entryId)
+          .gte('timeslot_start', from.toISOString())
+          .order('id'),
+      'Lesen der Trainingstermine fehlgeschlagen'
+    );
+  }
+
+  /** Termine desselben Plans im Zeitfenster, die Trainer oder Platz belegen. */
+  async listOccupyingSessions(
+    scheduleId: string,
+    window: { from: Date; to: Date },
+    trainerId: string,
+    courtId: string | null
+  ) {
+    return fetchAll(
+      () =>
+        this.db
+          .from('sessions')
+          .select('id, timeslot_start, timeslot_end')
+          .eq('schedule_id', scheduleId)
+          .lt('timeslot_start', window.to.toISOString())
+          .gt('timeslot_end', window.from.toISOString())
+          .or(
+            courtId
+              ? `trainer_id.eq.${trainerId},court_id.eq.${courtId}`
+              : `trainer_id.eq.${trainerId}`
+          )
+          .order('id'),
+      'Konfliktprüfung fehlgeschlagen'
+    );
+  }
+
+  /** Atomar: Termine verschieben + Vorlage anpassen (DB-Funktion reschedule_plan_entry). */
+  async reschedule(
+    entryId: string,
+    entry: Pick<
+      PlanEntry,
+      'day_of_week' | 'start_time' | 'end_time' | 'trainer_id' | 'court_id' | 'admin_notes'
+    >,
+    moves: { id: string; start: string; end: string }[]
+  ): Promise<number> {
+    const { data, error } = await this.db.rpc('reschedule_plan_entry', {
+      p_entry_id: entryId,
+      p_entry: entry,
+      p_moves: moves,
+    });
+    assertNoError(error, 'Verschieben der Trainingsgruppe fehlgeschlagen');
+    return data ?? 0;
+  }
+
   async updateEntry(
     entryId: string,
     patch: TablesUpdate<'season_plan_entries'>
@@ -201,6 +268,29 @@ export class SeasonPlanRepository {
     const { data, error } = await this.db.from('courts').select('id, name').eq('club_id', clubId);
     assertNoError(error, 'Plätze konnten nicht geladen werden.');
     return data ?? [];
+  }
+
+  /** Einträge, in denen ein Mitglied als Teilnehmer steht (RLS: Mitglieder sehen nur veröffentlichte). */
+  async listParticipantEntries(clubId: string, userId: string) {
+    const { data, error } = await this.db
+      .from('season_plan_entries')
+      .select(
+        'group_id, trainer_id, day_of_week, start_time, end_time, expected_participants, courts(name), groups(name), seasons(name, planning_status)'
+      )
+      .eq('club_id', clubId)
+      .contains('expected_participants', [userId])
+      .order('day_of_week')
+      .order('start_time')
+      .order('id');
+    assertNoError(error, 'Gruppen des Mitglieds konnten nicht geladen werden');
+    return data ?? [];
+  }
+
+  async trainerNames(ids: string[]): Promise<Map<string, string | null>> {
+    if (ids.length === 0) return new Map();
+    const { data, error } = await this.db.from('trainers').select('id, name').in('id', ids);
+    assertNoError(error, 'Lesen der Trainernamen fehlgeschlagen');
+    return new Map((data ?? []).map((t) => [t.id, t.name]));
   }
 
   async userNames(ids: string[]): Promise<Map<string, string | null>> {

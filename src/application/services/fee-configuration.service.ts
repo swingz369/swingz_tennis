@@ -1,17 +1,25 @@
+/**
+ * Gebührenkategorien (ADR-005). Die Datenbank (RLS) trennt Vereine: Admins lesen und schreiben
+ * die Kategorien ihres Vereins, Trainer lesen sie, Mitglieder sehen nur die aktiven.
+ */
+import type { AuthContext } from '@/lib/api-auth';
+import { ApiException } from '@/lib/api-error';
 import type {
   FeeConfiguration,
   CreateFeeConfigurationInput,
   UpdateFeeConfigurationInput,
-} from '../../domain/entities/fee-configuration.entity';
+} from '@/domain/entities/fee-configuration.entity';
+import { FeeConfigurationRepository } from '@/infrastructure/persistence/repositories/fee-configuration.repository';
+
+function isValidDate(dateString: string): boolean {
+  return !isNaN(new Date(dateString).getTime());
+}
 
 export class FeeConfigurationService {
-  private static feeConfigurations: FeeConfiguration[] = [];
+  private readonly repo: FeeConfigurationRepository;
 
-  /**
-   * Generate a unique ID
-   */
-  private static generateId(): string {
-    return `fee-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  constructor(db: AuthContext['supabase']) {
+    this.repo = new FeeConfigurationRepository(db);
   }
 
   /**
@@ -39,11 +47,11 @@ export class FeeConfigurationService {
       errors.push('Abrechnungszyklus ist erforderlich');
     }
 
-    if (input.validFrom && !this.isValidDate(input.validFrom)) {
+    if (input.validFrom && !isValidDate(input.validFrom)) {
       errors.push('Ungültiges Gültig-ab-Datum');
     }
 
-    if (input.validUntil && !this.isValidDate(input.validUntil)) {
+    if (input.validUntil && !isValidDate(input.validUntil)) {
       errors.push('Ungültiges Gültig-bis-Datum');
     }
 
@@ -77,174 +85,41 @@ export class FeeConfigurationService {
     };
   }
 
-  /**
-   * Validate date format
-   */
-  private static isValidDate(dateString: string): boolean {
-    const date = new Date(dateString);
-    return !isNaN(date.getTime());
+  async create(input: CreateFeeConfigurationInput, clubId: string): Promise<FeeConfiguration> {
+    const { valid, errors } = FeeConfigurationService.validateFeeConfigurationInput(input);
+    if (!valid) throw new ApiException('VALIDATION_ERROR', errors.join(', '));
+    return this.repo.create(input, clubId);
   }
 
-  /**
-   * Create a new fee configuration
-   */
-  static async createFeeConfiguration(
-    input: CreateFeeConfigurationInput
-  ): Promise<FeeConfiguration> {
-    const validation = this.validateFeeConfigurationInput(input);
-    if (!validation.valid) {
-      throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
-    }
-
-    const now = new Date().toISOString();
-    const feeConfiguration: FeeConfiguration = {
-      id: this.generateId(),
-      name: input.name,
-      description: input.description,
-      type: input.type,
-      amount: input.amount,
-      currency: input.currency || 'EUR',
-      billingCycle: input.billingCycle,
-      isActive: true,
-      validFrom: input.validFrom,
-      validUntil: input.validUntil,
-      conditions: input.conditions,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    this.feeConfigurations.push(feeConfiguration);
-    return feeConfiguration;
+  get(id: string) {
+    return this.repo.findById(id);
   }
 
-  /**
-   * Get fee configuration by ID
-   */
-  static async getFeeConfigurationById(id: string): Promise<FeeConfiguration | null> {
-    return this.feeConfigurations.find((f) => f.id === id) || null;
+  list(clubId: string, filter: { type?: string; billingCycle?: string } = {}) {
+    return this.repo.list(clubId, filter);
   }
 
-  /**
-   * Get all fee configurations
-   */
-  static async getAllFeeConfigurations(): Promise<FeeConfiguration[]> {
-    return [...this.feeConfigurations];
+  listActive(clubId: string) {
+    return this.repo.listActive(clubId);
   }
 
-  /**
-   * Get active fee configurations
-   */
-  static async getActiveFeeConfigurations(): Promise<FeeConfiguration[]> {
-    const now = new Date();
-    return this.feeConfigurations.filter((f) => {
-      if (!f.isActive) {
-        return false;
-      }
-
-      if (f.validFrom && new Date(f.validFrom) > now) {
-        return false;
-      }
-
-      if (f.validUntil && new Date(f.validUntil) < now) {
-        return false;
-      }
-
+  /** Aktive Kategorien, deren Bedingungen (Alter, Mitgliedsart) auf das Mitglied passen. */
+  async calculateForMember(clubId: string, memberType: string, memberAge: number) {
+    const active = await this.repo.listActive(clubId);
+    return active.filter(({ conditions: c }) => {
+      if (!c) return true;
+      if (c.minAge != null && memberAge < c.minAge) return false;
+      if (c.maxAge != null && memberAge > c.maxAge) return false;
+      if (c.memberType && !c.memberType.includes(memberType)) return false;
       return true;
     });
   }
 
-  /**
-   * Get fee configurations by type
-   */
-  static async getFeeConfigurationsByType(
-    type: FeeConfiguration['type']
-  ): Promise<FeeConfiguration[]> {
-    return this.feeConfigurations.filter((f) => f.type === type);
+  update(id: string, input: UpdateFeeConfigurationInput) {
+    return this.repo.update(id, input);
   }
 
-  /**
-   * Get fee configurations by billing cycle
-   */
-  static async getFeeConfigurationsByBillingCycle(
-    billingCycle: FeeConfiguration['billingCycle']
-  ): Promise<FeeConfiguration[]> {
-    return this.feeConfigurations.filter((f) => f.billingCycle === billingCycle);
-  }
-
-  /**
-   * Update fee configuration
-   */
-  static async updateFeeConfiguration(
-    id: string,
-    input: UpdateFeeConfigurationInput
-  ): Promise<FeeConfiguration | null> {
-    const index = this.feeConfigurations.findIndex((f) => f.id === id);
-    if (index === -1) {
-      return null;
-    }
-
-    const existing = this.feeConfigurations[index];
-    const updated: FeeConfiguration = {
-      ...existing,
-      ...input,
-      updatedAt: new Date().toISOString(),
-    };
-
-    this.feeConfigurations[index] = updated;
-    return updated;
-  }
-
-  /**
-   * Delete fee configuration
-   */
-  static async deleteFeeConfiguration(id: string): Promise<boolean> {
-    const index = this.feeConfigurations.findIndex((f) => f.id === id);
-    if (index === -1) {
-      return false;
-    }
-
-    this.feeConfigurations.splice(index, 1);
-    return true;
-  }
-
-  /**
-   * Calculate fee for a member based on conditions
-   */
-  static async calculateFeeForMember(
-    memberType: string,
-    memberAge: number,
-    trainingGroup?: string
-  ): Promise<FeeConfiguration[]> {
-    const activeConfigs = await this.getActiveFeeConfigurations();
-
-    return activeConfigs.filter((config) => {
-      if (!config.conditions) {
-        return true;
-      }
-
-      if (config.conditions.memberType && !config.conditions.memberType.includes(memberType)) {
-        return false;
-      }
-
-      if (config.conditions.minAge && memberAge < config.conditions.minAge) {
-        return false;
-      }
-
-      if (config.conditions.maxAge && memberAge > config.conditions.maxAge) {
-        return false;
-      }
-
-      if (
-        config.conditions.trainingGroup &&
-        trainingGroup &&
-        !config.conditions.trainingGroup.includes(trainingGroup)
-      ) {
-        return false;
-      }
-
-      return true;
-    });
+  delete(id: string) {
+    return this.repo.delete(id);
   }
 }
-
-// NOTE: initializeMockData() removed — API routes now use the DB-backed adapter

@@ -77,6 +77,32 @@ export class ClubService {
     return { name: club.name, deactivated };
   }
 
+  /** Öffentliche Vereinsliste (Probetraining-Auswahl) — Interessenten haben keine Mitgliedschaft. */
+  static listPublic() {
+    return new ClubRepository(systemDb('öffentliche Vereinsliste, kein Login')).listPublic();
+  }
+
+  /** Name und Logo eines nicht gelöschten Vereins für die öffentliche Probetraining-Seite. */
+  static async findPublic(id: string): Promise<{ name: string; logoUrl: string | null } | null> {
+    const club = await new ClubRepository(
+      systemDb('öffentliche Probetraining-Seite, kein Login')
+    ).findById(id);
+    if (!club || club.deleted_at) return null;
+    return { name: club.name, logoUrl: club.logo_url ?? null };
+  }
+
+  /** Soft-Delete rückgängig machen (Owner oder Superadmin des Vereins — prüft die DB-Funktion). */
+  async restore(id: string) {
+    const result = await this.repo.restore(id);
+    if (result.status === 'not_found') throw new ApiException('NOT_FOUND', 'Verein nicht gefunden');
+    if (result.status === 'not_deleted') {
+      throw new ApiException('CONFLICT', 'Verein ist nicht gelöscht — nichts wiederherzustellen', {
+        details: { current_status: result.current_status },
+      });
+    }
+    return result;
+  }
+
   /** Endgültig löschen (Owner/Superadmin + Token, in der Route geprüft). clubs_delete kennt den Owner nicht → systemDb. */
   async hardDelete(id: string): Promise<{ name: string; deactivated: number }> {
     const club = await this.getById(id);

@@ -144,7 +144,6 @@ test_route GET "/api/payment-settings"
 test_route GET "/api/hours-logs"
 test_route GET "/api/attendance-records"
 test_route GET "/api/fee-configurations"
-test_route GET "/api/system-settings"
 test_route GET "/api/absences"
 
 # HOURLY RATES

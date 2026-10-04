@@ -1,7 +1,13 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
-import { feeConfigurationService } from '@/src/application/services/fee-configuration-service.adapter';
+import {
+  ApiException,
+  errorResponse,
+  internalErrorResponse,
+  safeErrorMessage,
+} from '@/lib/api-error';
+import { FeeConfigurationService } from '@/application/services/fee-configuration.service';
+import { getUserDb } from '@/infrastructure/db';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
@@ -51,13 +57,16 @@ export async function POST(_request: NextRequest) {
         );
       }
 
-      const feeConfiguration = await feeConfigurationService.createFeeConfiguration(
+      const feeConfiguration = await new FeeConfigurationService(getUserDb(auth)).create(
         validation.data as CreateFeeConfigurationInput,
         clubId
       );
 
       return NextResponse.json({ success: true, feeConfiguration });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), { status: error.status });
+      }
       log.error('Fee configuration creation error:', error);
       return internalErrorResponse();
     }
@@ -90,38 +99,23 @@ export async function GET(_request: NextRequest) {
       const memberType = searchParams.get('memberType');
       const memberAge = searchParams.get('memberAge');
 
+      const service = new FeeConfigurationService(getUserDb(auth));
+
       if (active && memberType && memberAge) {
         // Filter active configs by member type and age
         const memberAgeNum = parseInt(memberAge, 10);
         if (isNaN(memberAgeNum)) {
           return NextResponse.json({ error: 'Ungültiger memberAge-Parameter' }, { status: 400 });
         }
-        const configs = await feeConfigurationService.calculateFeeForMember(
-          memberType,
-          memberAgeNum,
-          clubId
-        );
+        const configs = await service.calculateForMember(clubId, memberType, memberAgeNum);
         return NextResponse.json({ feeConfigurations: configs });
       }
 
-      if (type) {
-        const configs = await feeConfigurationService.getFeeConfigurationsByType(
-          type as 'membership' | 'training' | 'court' | 'other',
-          clubId
-        );
-        return NextResponse.json({ feeConfigurations: configs });
-      }
-
-      if (billingCycle) {
-        const configs = await feeConfigurationService.getFeeConfigurationsByBillingCycle(
-          billingCycle as 'monthly' | 'quarterly' | 'yearly' | 'one_time',
-          clubId
-        );
-        return NextResponse.json({ feeConfigurations: configs });
-      }
-
-      const allConfigs = await feeConfigurationService.getAllFeeConfigurations(clubId);
-      return NextResponse.json({ feeConfigurations: allConfigs });
+      const configs = await service.list(clubId, {
+        type: type ?? undefined,
+        billingCycle: billingCycle ?? undefined,
+      });
+      return NextResponse.json({ feeConfigurations: configs });
     } catch (error) {
       log.error('Fee configurations fetch error:', error);
       return internalErrorResponse();

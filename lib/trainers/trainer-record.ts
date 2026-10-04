@@ -21,31 +21,50 @@
  * Reihenfolge der Auflösung: `trainers.user_id` (die verlässliche Verknüpfung) →
  * `trainers.id` (Legacy-Zeilen, bei denen beides gleich ist) → nichts.
  */
-import { db } from '@/src/infrastructure/persistence/db';
-import { trainers, userClubMemberships } from '@/src/infrastructure/persistence/schema';
-import { and, eq, inArray, or } from 'drizzle-orm';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('trainer-record');
+
+// Identitätsauflösung über Vereinsgrenzen hinweg (Mitglied liest fremde
+// Trainer-Slots, RLS gibt `trainers` nur dem Trainer selbst und seinem Admin frei).
+const db = () => systemDb('Trainer-ID-Auflösung');
+
+// Werte landen in PostgREST-`or`-Filtern — nur echte UUIDs zulassen.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type TrainerRow = { id: string; user_id: string | null };
+
+async function trainerRows(filter: string): Promise<TrainerRow[]> {
+  const { data, error } = await db().from('trainers').select('id, user_id').or(filter);
+  if (error) throw new Error(`Trainerdatensätze konnten nicht gelesen werden: ${error.message}`);
+  return data ?? [];
+}
+
+async function activeTrainerUserIds(column: 'user_id' | 'club_id', value: string) {
+  const { data, error } = await db()
+    .from('user_club_memberships')
+    .select('user_id, club_id')
+    .eq(column, value)
+    .eq('role', 'trainer')
+    .eq('is_active', true);
+  if (error)
+    throw new Error(`Trainer-Mitgliedschaften konnten nicht gelesen werden: ${error.message}`);
+  return data ?? [];
+}
 
 /**
  * Liefert die `trainers.id` zu einer `users.id` — oder `null`, wenn es zu diesem
  * Nutzer keinen Trainerdatensatz gibt.
  */
 export async function resolveTrainerRecordId(userId: string): Promise<string | null> {
-  const rows = await db
-    .select({ id: trainers.id, userId: trainers.user_id })
-    .from(trainers)
-    .where(or(eq(trainers.user_id, userId), eq(trainers.id, userId)));
-
+  if (!UUID.test(userId)) return null;
+  const rows = await trainerRows(`user_id.eq.${userId},id.eq.${userId}`);
   if (rows.length === 0) return null;
 
   // Die Verknüpfung über user_id ist verlässlich; die Gleichheit von id und
   // userId ist nur eine Legacy-Konvention und wird deshalb nachrangig behandelt.
-  const byUserId = rows.find((r) => r.userId === userId);
-  if (byUserId) return byUserId.id;
-
-  return rows[0].id;
+  return (rows.find((r) => r.user_id === userId) ?? rows[0]).id;
 }
 
 /**
@@ -56,29 +75,13 @@ export async function resolveTrainerRecordId(userId: string): Promise<string | n
  * freigibt.
  */
 export async function resolveTrainerClubId(trainerId: string): Promise<string | null> {
-  const rows = await db
-    .select({ id: trainers.id, userId: trainers.user_id })
-    .from(trainers)
-    .where(or(eq(trainers.id, trainerId), eq(trainers.user_id, trainerId)));
-
+  if (!UUID.test(trainerId)) return null;
+  const rows = await trainerRows(`id.eq.${trainerId},user_id.eq.${trainerId}`);
   if (rows.length === 0) return null;
 
-  const row = rows.find((r) => r.userId) ?? rows[0];
-  const userId = row.userId ?? row.id;
-
-  const membership = await db
-    .select({ clubId: userClubMemberships.club_id })
-    .from(userClubMemberships)
-    .where(
-      and(
-        eq(userClubMemberships.user_id, userId),
-        eq(userClubMemberships.role, 'trainer'),
-        eq(userClubMemberships.is_active, true)
-      )
-    )
-    .limit(1);
-
-  return membership[0]?.clubId ?? null;
+  const row = rows.find((r) => r.user_id) ?? rows[0];
+  const memberships = await activeTrainerUserIds('user_id', row.user_id ?? row.id);
+  return memberships[0]?.club_id ?? null;
 }
 
 /**
@@ -87,20 +90,19 @@ export async function resolveTrainerClubId(trainerId: string): Promise<string | 
  */
 export async function resolveTrainerRecordIds(userIds: string[]): Promise<Map<string, string>> {
   const result = new Map<string, string>();
-  if (userIds.length === 0) return result;
+  const ids = userIds.filter((id) => UUID.test(id));
+  if (ids.length === 0) return result;
 
-  const rows = await db
-    .select({ id: trainers.id, userId: trainers.user_id })
-    .from(trainers)
-    .where(or(inArray(trainers.user_id, userIds), inArray(trainers.id, userIds)));
+  const list = ids.join(',');
+  const rows = await trainerRows(`user_id.in.(${list}),id.in.(${list})`);
 
   // Erst die Legacy-Treffer (id === userId), dann die verlässlichen über user_id —
   // so gewinnt user_id, falls beide existieren.
   for (const row of rows) {
-    if (userIds.includes(row.id)) result.set(row.id, row.id);
+    if (ids.includes(row.id)) result.set(row.id, row.id);
   }
   for (const row of rows) {
-    if (row.userId && userIds.includes(row.userId)) result.set(row.userId, row.id);
+    if (row.user_id && ids.includes(row.user_id)) result.set(row.user_id, row.id);
   }
 
   const missing = userIds.filter((id) => !result.has(id));
@@ -117,17 +119,8 @@ export async function resolveTrainerRecordIds(userIds: string[]): Promise<Map<st
  * Kalender, der Trainerstunden vereinsweit anzeigt).
  */
 export async function resolveClubTrainerRecordIds(clubId: string): Promise<string[]> {
-  const memberships = await db
-    .select({ userId: userClubMemberships.user_id })
-    .from(userClubMemberships)
-    .where(
-      and(
-        eq(userClubMemberships.club_id, clubId),
-        eq(userClubMemberships.role, 'trainer'),
-        eq(userClubMemberships.is_active, true)
-      )
-    );
-  const userIds = memberships.map((m) => m.userId);
+  const memberships = await activeTrainerUserIds('club_id', clubId);
+  const userIds = memberships.map((m) => m.user_id);
   if (userIds.length === 0) return [];
 
   const ids = await resolveTrainerRecordIds(userIds);

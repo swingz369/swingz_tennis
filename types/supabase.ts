@@ -7964,6 +7964,14 @@ export type Database = {
         };
         Returns: Json;
       };
+      reschedule_plan_entry: {
+        Args: { p_entry: Json; p_entry_id: string; p_moves: Json };
+        Returns: number;
+      };
+      restore_club: {
+        Args: { p_club_id: string };
+        Returns: Json;
+      };
       save_season_clustering: {
         Args: {
           p_conflicts?: Json;

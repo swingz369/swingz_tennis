@@ -3,7 +3,7 @@
 @AGENTS.md
 
 > Automatisch bei jedem Session-Start geladen. Nur Dinge die NICHT aus dem Code offensichtlich sind.
-> Zuletzt verifiziert: 26. September 2026 (Code-Stand-Zahlen, pnpm statt npm; zuvor 13.09.: Rollen-Hierarchie und Tarife gegen Code geprüft;
+> Zuletzt verifiziert: 4. Oktober 2026 (Drizzle-Laufzeitzugriff entfernt); 26. September 2026 (Code-Stand-Zahlen, pnpm statt npm; zuvor 13.09.: Rollen-Hierarchie und Tarife gegen Code geprüft;
 > Datenzugriffsmuster ADR-005 ergänzt)
 > Doku-Governance-Regeln (welche Datei wohin, wann updaten statt neu anlegen): siehe `AGENTS.md`.
 
@@ -87,9 +87,9 @@ Route (Auth + Zod) → Service (Fachlogik) → Repository (einziger DB-Zugriff) 
   Abfrage braucht `.order('id')` als letztes Kriterium). Mehrere Schreibschritte, die zusammengehören,
   laufen als DB-Funktion in einer Transaktion (`publish_season_plan`, `save_season_clustering`) —
   nie als Folge einzelner Supabase-Aufrufe.
-- Ältere Domänen laufen noch über Drizzle (`src/infrastructure/persistence/db.ts`, Port 6543
-  ohne TLS) oder direkten Service-Client-Zugriff in der Route — Migration Domäne für Domäne
-  (Plan: Archiv-Analyse § 6).
+- Drizzle als Laufzeit-Datenzugriff ist seit 04.10.2026 entfernt (`db.ts` gelöscht, Schema bleibt
+  nur als Typquelle). Ältere Domänen greifen noch direkt per Service-Client in der Route zu —
+  Migration Domäne für Domäne (Plan: Archiv-Analyse § 6).
 
 ### UI
 

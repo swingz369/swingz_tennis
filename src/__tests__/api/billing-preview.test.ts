@@ -2,7 +2,7 @@
  * Unit tests for POST /api/seasons/[id]/billing-preview
  *
  * Die Route reimplementiert die historische Billing-Preview (Fee-Config-
- * Matching) auf Basis von `feeConfigurationService` (Drizzle-Adapter) und der
+ * Matching) auf Basis von `FeeConfigurationService` (RLS) und der
  * puren Funktion `computeBillingPreview` aus `@/lib/billing/billing-preview`.
  *
  * Getestet werden: Tenant-Isolation (authorizeSeasonAccess), DB-Fehlerpfade,
@@ -52,9 +52,9 @@ vi.mock('@/lib/season-auth', () => ({
   ),
 }));
 
-vi.mock('@/src/application/services/fee-configuration-service.adapter', () => ({
-  feeConfigurationService: {
-    getActiveFeeConfigurations: vi.fn(async () => mockFeeConfigs),
+vi.mock('@/application/services/fee-configuration.service', () => ({
+  FeeConfigurationService: class {
+    listActive = vi.fn(async () => mockFeeConfigs);
   },
 }));
 

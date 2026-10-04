@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
+> Zuletzt verifiziert: 4. Oktober 2026 (`restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -192,6 +192,27 @@ unverändert (`admins_manage_pricing`, `club_members_see_pricing`, beide über `
 Drizzle-Transaktion in `DELETE /api/clubs/[id]`. RLS des Aufrufers gilt (`clubs_update`,
 `memberships_manage_admin`); ein fremder Verein liefert `P0002`. Hard-Delete bleibt außerhalb:
 `clubs_delete` kennt nur `is_superadmin_of`, der Owner hat keine Membership → `systemDb`.
+
+## `restore_club()` und `reschedule_plan_entry()` — letzte Drizzle-Transaktionen ersetzt (Stand 04.10.2026, lokal angewendet)
+
+`restore_club(p_club_id)` (`20261004100000_restore_club_function.sql`): Gegenstück zu
+`soft_delete_club` für `POST /api/clubs/[id]/restore`. **`SECURITY DEFINER`**, weil RLS nach dem
+Soft-Delete nicht mehr tragen kann — alle Mitgliedschaften sind deaktiviert, auch der Superadmin
+besteht `is_club_admin()` nicht mehr. Die Funktion prüft selbst: `is_owner()` oder Superadmin mit
+(auch inaktiver) Mitgliedschaft in genau diesem Verein; sonst `not_found` (fremde IDs werden nicht
+bestätigt). Liefert `jsonb` mit `status` `restored`/`not_deleted`/`not_found`. In
+`rls-policy-catalog.test.ts` als Nutzer-ausführbarer DEFINER freigegeben.
+
+`reschedule_plan_entry(p_entry_id, p_entry, p_moves)` (`20261004110000_reschedule_plan_entry_function.sql`):
+schreibt für `POST /api/plan-entries/[entryId]/reschedule` die verschobenen Termine und die
+Planvorlage in einer Transaktion. `SECURITY INVOKER` — `sessions_update` (Trainer/Admin) und die
+Admin-Policy auf `season_plan_entries` gelten. Trifft das Update nicht jede übergebene Session des
+Eintrags (fremd, von RLS ausgeblendet), bricht alles mit `42501` ab. Die Zeiten rechnet
+`SeasonPlanService.reschedule` als Berliner Wandzeit.
+
+Damit öffnet die App zur Laufzeit keine direkte Postgres-Verbindung mehr
+(`src/infrastructure/persistence/db.ts` gelöscht). `DATABASE_URL` nutzen nur noch die
+Migrationsskripte (`db:*:prod`, `deploy.yml` mit `AUTO_MIGRATE`) und die Test-Einrichtung.
 
 ## `user_training_preferences` — Policies für die Migration auf RLS (Stand 19.09.2026, lokal angewendet)
 
@@ -420,7 +441,7 @@ Policy-Satz danach: je ein Trainer- und ein Admin-Pfad pro Kommando, keine Gener
 Inhalt und Befund:
 
 - **FORCE RLS** auf allen 114 Tabellen. Wichtig: Das ändert heute faktisch **nichts** — Eigentümer aller Tabellen ist `postgres` mit `rolbypassrls = true`, und BYPASSRLS gewinnt immer gegen FORCE. Es wirkt erst, wenn die App auf eine Rolle ohne BYPASSRLS umgestellt wird.
-- **Das eigentliche Risiko dahinter:** `DATABASE_URL` verbindet als `postgres` (BYPASSRLS). Die 26 API-Routes, die Drizzle statt Supabase-REST nutzen, umgehen RLS damit vollständig — dort schützt allein der Anwendungscode. Fix = dedizierte App-Rolle ohne BYPASSRLS + neue `DATABASE_URL`. Infra-Änderung, keine Migration.
+- **Das eigentliche Risiko dahinter:** `DATABASE_URL` verbindet als `postgres` (BYPASSRLS). Damals umgingen 26 API-Routes über Drizzle RLS vollständig; seit 04.10.2026 nutzt die App Drizzle nicht mehr. `createServiceClient()` (service_role) umgeht RLS aber weiterhin in rund 85 Routen. Fix = dedizierte App-Rolle ohne BYPASSRLS + neue `DATABASE_URL`. Infra-Änderung, keine Migration.
 - **Sechs INSERT-Policies mit `WITH CHECK (true)` ohne `TO`** (gelten also für PUBLIC inkl. `anon`, und `anon` hat auf allen sechs das INSERT-Grant): `email_queue`, `nuliga_sync_log`, `newsletter_send_logs`, `rate_history`, `gamification_badges`, `registration_requests`. Vier der Namen sagen selbst „System"/„service role" — gemeint war `service_role`, gewirkt hat jeder. **`email_queue` ist der gravierendste Fall**: anonyme Zeilen in der Versand-Warteschlange bedeuten Mailversand über `noreply@swingz.cloud`, also Spam-/Phishing-Relay auf Kosten der Domain-Reputation. Gedroppt werden die vier reinen Service-Fälle; `gamification_badges` wird auf `TO authenticated` beschnitten (Schreibpfad läuft über `withApiAuth`); `registration_requests` bleibt bewusst offen (öffentlicher Registrierungspfad).
 
 Weitere Befunde desselben Audits; Live-Abgleich vom 24.09.2026 darunter:
@@ -428,7 +449,7 @@ Weitere Befunde desselben Audits; Live-Abgleich vom 24.09.2026 darunter:
 - **`season_planning_configs` und `season_statistics`** hatten damals 0 Policies; live am 24.09.2026 haben beide Policies. Unter Public-Tabellen mit aktivem RLS ist nur `ops_heartbeats` ohne Policy (beabsichtigter Service-Zugriff; siehe unten).
 - **`20260812020000_scope_remaining_superadmin_policies.sql`** war beim damaligen Audit noch nicht angewendet. Live am 24.09.2026 nutzt keine Policy auf `audit_logs`, `trainers` oder `users` in ihrer `USING`-Klausel mehr `is_superadmin()` ohne Vereinsbezug. Ob die Datei oder ein anderer Fix den Zustand hergestellt hat, ist wegen des unvollständigen Trackings offen; nicht blind nachziehen.
 - **Verbleibende unscoped `is_superadmin()`-Policies nach diesem Durchgang, alle bewusst so**: `background_jobs`, `base_interest_rates`, `school_holidays` (plattformweite Konzepte ohne Vereinsbezug). Die Abrechnungstabellen sind seit 15.08.2026 club-scoped (siehe unten).
-- **Der Pooler auf `supabase.swingz.cloud:6543` akzeptiert Klartext-Verbindungen** (Verbindung mit `ssl: false` erfolgreich, mit TLS „wrong version number"). DB-Credentials und Nutzdaten gehen unverschlüsselt über die Leitung. VPS-Thema, keine Migration.
+- **Der Pooler auf `supabase.swingz.cloud:6543` akzeptiert Klartext-Verbindungen** (Verbindung mit `ssl: false` erfolgreich, mit TLS „wrong version number"). DB-Credentials und Nutzdaten gehen unverschlüsselt über die Leitung. VPS-Thema, keine Migration. Seit 04.10.2026 betrifft das nur noch die Migrationsläufe (lokal `db:*:prod`, GitHub-Runner in `deploy.yml`) — die App selbst spricht nur noch HTTPS/PostgREST.
 
 ## `season_planning_configs` / `season_statistics` — RLS nachgerüstet (Stand 15.08.2026)
 

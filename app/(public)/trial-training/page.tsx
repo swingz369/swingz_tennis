@@ -15,28 +15,19 @@ export const metadata: Metadata = {
     canonical: '/trial-training',
   },
 };
-import { eq } from 'drizzle-orm';
-import { db } from '@/infrastructure/persistence/db';
-import { clubs } from '@/infrastructure/persistence/schema';
+import { ClubService } from '@/application/services/club.service';
 
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 async function fetchClubInfo(
   clubId: string
 ): Promise<{ name: string; logoUrl: string | null } | null> {
   try {
-    const result = await db
-      .select({ name: clubs.name, logoUrl: clubs.logo_url })
-      .from(clubs)
-      .where(eq(clubs.id, clubId))
-      .limit(1);
-
-    if (result.length === 0) return null;
-    return { name: result[0].name, logoUrl: result[0].logoUrl ?? null };
+    return await ClubService.findPublic(clubId);
   } catch (error) {
     log.error('Failed to fetch club info for trial booking page:', error);
     return null;
@@ -44,7 +35,8 @@ async function fetchClubInfo(
 }
 
 export default async function PublicTrialBookingPage({ searchParams }: PageProps) {
-  const clubParam = searchParams.club;
+  // Next.js 16: searchParams ist ein Promise — ohne await blieb `club` immer undefined.
+  const clubParam = (await searchParams).club;
   const clubId =
     typeof clubParam === 'string' &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clubParam)

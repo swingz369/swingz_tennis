@@ -1,6 +1,5 @@
-import { eq } from 'drizzle-orm';
-import { db } from '@/infrastructure/persistence/db';
-import { trialTrainings, clubs } from '@/infrastructure/persistence/schema';
+import { TrialTrainingService } from '@/application/services/trial-training.service';
+import { systemDb } from '@/infrastructure/db';
 import TrialFeedbackForm from '@/components/trial-feedback-form';
 import { createLogger } from '@/lib/logger';
 
@@ -23,18 +22,12 @@ export default async function TrialFeedbackPage({ searchParams }: PageProps) {
 
   if (UUID_RE.test(participantId)) {
     try {
-      const rows = await db
-        .select({
-          firstName: trialTrainings.participant_first_name,
-          clubName: clubs.name,
-        })
-        .from(trialTrainings)
-        .leftJoin(clubs, eq(trialTrainings.club_id, clubs.id))
-        .where(eq(trialTrainings.participant_id, participantId))
-        .limit(1);
-      if (rows.length > 0) {
-        firstName = rows[0].firstName;
-        clubName = rows[0].clubName ?? undefined;
+      const ctx = await new TrialTrainingService(
+        systemDb('öffentlicher Probetraining-Link, kein Login')
+      ).getPublicContext(participantId);
+      if (ctx) {
+        firstName = ctx.firstName;
+        clubName = ctx.clubName ?? undefined;
       }
     } catch (error) {
       log.error(

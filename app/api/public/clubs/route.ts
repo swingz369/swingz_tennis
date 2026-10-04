@@ -1,8 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { db } from '@/infrastructure/persistence/db';
-import { clubs } from '@/infrastructure/persistence/schema';
-import { asc } from 'drizzle-orm';
+import { ClubService } from '@/application/services/club.service';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
 
@@ -14,19 +12,15 @@ const log = createLogger('api:public:clubs');
  * Returns a minimal list of clubs (id, name) for use in the
  * onboarding Probetraining form's club selector.
  *
- * Uses Drizzle directly (bypasses RLS) because the clubs SELECT
- * policy requires active membership — which onboarding users don't
- * have yet.
+ * Läuft über systemDb (ClubService.listPublic): die clubs-SELECT-Policy
+ * verlangt eine Mitgliedschaft, die Interessenten noch nicht haben.
  */
 export async function GET(request: NextRequest) {
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
   try {
-    const data = await db
-      .select({ id: clubs.id, name: clubs.name })
-      .from(clubs)
-      .orderBy(asc(clubs.name));
+    const data = await ClubService.listPublic();
 
     return NextResponse.json({ clubs: data });
   } catch (error) {

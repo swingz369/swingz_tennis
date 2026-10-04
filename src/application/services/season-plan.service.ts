@@ -5,6 +5,7 @@ import type { ScheduleSlot } from '@/lib/season-planning/types';
 import type { TablesUpdate } from '@/types/supabase';
 import { createLogger } from '@/lib/logger';
 import { getUserDb, systemDb } from '@/infrastructure/db';
+import { berlinDateTime, berlinParts } from '@/lib/berlin-time';
 import {
   SeasonPlanRepository,
   type PlanEntry,
@@ -39,6 +40,33 @@ const GROUP_COLORS = [
   '#e11d48',
 ];
 const FALLBACK_COLOR = '#53657C';
+
+const WEEKDAY_LABELS = [
+  'Montag',
+  'Dienstag',
+  'Mittwoch',
+  'Donnerstag',
+  'Freitag',
+  'Samstag',
+  'Sonntag',
+];
+
+export type RescheduleRequest = {
+  day_of_week?: number;
+  start_time?: string;
+  end_time?: string;
+  trainer_id?: string;
+  court_id?: string | null;
+  /** ISO-Datum; Standard: jetzt */
+  effective_from?: string;
+};
+
+/** Berliner Datum "YYYY-MM-DD" um n Tage verschoben. */
+function addDays(date: string, days: number): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 /** Spalten, die PATCH aus dem Request übernimmt (alles andere wird ignoriert). */
 const UPDATABLE = [
@@ -110,6 +138,121 @@ export class SeasonPlanService {
       throw new ApiException('FORBIDDEN', 'Keine ausreichende Rolle für diese Saison');
     }
     return { season, role: m.role };
+  }
+
+  /** Trainingsgruppen des angemeldeten Mitglieds — Grundlage ist der Saisonplan. */
+  async memberGroups(clubId: string) {
+    const rows = await this.repo.listParticipantEntries(clubId, this.auth.user.id);
+    // trainers ist per RLS nur für Trainer selbst und Admins lesbar. Die IDs stammen aus
+    // Zeilen, die das Mitglied sehen darf — nur deren Namen werden nachgeschlagen.
+    const trainerIds = [
+      ...new Set(rows.map((r) => r.trainer_id).filter((id): id is string => !!id)),
+    ];
+    const names = await new SeasonPlanRepository(
+      systemDb('Trainernamen für die Gruppen eines Mitglieds')
+    ).trainerNames(trainerIds);
+    return rows.map((r) => ({
+      id: r.group_id,
+      name: r.groups?.name ?? 'Trainingsgruppe',
+      dayOfWeek: r.day_of_week,
+      startTime: r.start_time,
+      endTime: r.end_time,
+      trainerName: (r.trainer_id && names.get(r.trainer_id)) || null,
+      courtName: r.courts?.name ?? null,
+      participantCount: ((r.expected_participants as string[] | null) ?? []).length,
+      seasonName: r.seasons?.name ?? null,
+      isPublished: r.seasons?.planning_status === 'published',
+    }));
+  }
+
+  /**
+   * Veröffentlichte Trainingsgruppe ab einem Datum auf neuen Tag/Zeit/Trainer/Platz legen —
+   * künftige Termine und Vorlage zusammen. Zeiten als Berliner Wandzeit (bleibt über die
+   * Zeitumstellung gleich; vorher rechnete die Route in der Serverzeitzone, auf Vercel UTC).
+   */
+  async reschedule(entryId: string, body: RescheduleRequest): Promise<number> {
+    const entry = UUID.test(entryId) ? await this.repo.findEntryById(entryId) : null;
+    if (!entry) throw new ApiException('NOT_FOUND', 'Plan-Eintrag nicht gefunden');
+    await this.access(entry.season_id, WRITE_ROLES);
+
+    const day = body.day_of_week ?? entry.day_of_week;
+    const startTime = toSqlTime(body.start_time ?? entry.start_time);
+    const endTime = toSqlTime(body.end_time ?? entry.end_time);
+    const trainerId = body.trainer_id ?? entry.trainer_id;
+    const courtId = body.court_id !== undefined ? body.court_id : entry.court_id;
+
+    const invalid = (msg: string) => new ApiException('VALIDATION_ERROR', msg);
+    if (!Number.isInteger(day) || day < 0 || day > 6) {
+      throw invalid('day_of_week muss zwischen 0 und 6 liegen');
+    }
+    if (!TIME.test(startTime) || !TIME.test(endTime)) throw invalid('Ungültige Uhrzeit');
+    if (startTime >= endTime) throw invalid('start_time muss vor end_time liegen');
+    if (!trainerId || !UUID.test(trainerId) || (courtId && !UUID.test(courtId))) {
+      throw invalid('Ungültiger Trainer oder Platz');
+    }
+    // Vereinsrealität: regulärer Trainingsbetrieb findet nicht sonntags statt.
+    if (day === 6 && entry.entry_type === 'training') {
+      throw invalid('Trainingsstunden können nicht auf einen Sonntag gelegt werden (nur Mo-Sa).');
+    }
+    const from = body.effective_from ? new Date(body.effective_from) : new Date();
+    if (Number.isNaN(from.getTime())) throw invalid('effective_from ist kein gültiges Datum');
+
+    const sessions = await this.repo.listSessionsFrom(entryId, from);
+    if (sessions.length === 0) {
+      throw invalid(
+        'Keine künftigen Trainingseinheiten ab diesem Datum gefunden — ist die Saison veröffentlicht?'
+      );
+    }
+
+    const [sh, sm] = startTime.split(':').map(Number);
+    const [eh, em] = endTime.split(':').map(Number);
+    const durationMs = (eh * 60 + em - (sh * 60 + sm)) * 60_000;
+    const moves = sessions.map((session) => {
+      const { date, dayOfWeek } = berlinParts(new Date(session.timeslot_start));
+      const monday = addDays(date, -((dayOfWeek + 6) % 7));
+      const start = berlinDateTime(addDays(monday, day), startTime);
+      return { id: session.id, start, end: new Date(start.getTime() + durationMs) };
+    });
+
+    // Konflikt: anderer Termin desselben Plans mit diesem Trainer oder Platz überlappt.
+    const moving = new Set(moves.map((m) => m.id));
+    const occupied = (
+      await this.repo.listOccupyingSessions(
+        sessions[0].schedule_id,
+        {
+          from: new Date(Math.min(...moves.map((m) => m.start.getTime()))),
+          to: new Date(Math.max(...moves.map((m) => m.end.getTime()))),
+        },
+        trainerId,
+        courtId
+      )
+    ).filter((o) => !moving.has(o.id));
+    const conflictDays = moves
+      .filter((m) =>
+        occupied.some(
+          (o) => new Date(o.timeslot_start) < m.end && new Date(o.timeslot_end) > m.start
+        )
+      )
+      .map((m) => m.start.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' }));
+    if (conflictDays.length > 0) {
+      throw new ApiException('CONFLICT', 'Terminkonflikt erkannt', {
+        details: `Trainer oder Platz ist an folgenden Tagen bereits belegt: ${conflictDays.join(', ')}`,
+      });
+    }
+
+    const note = `Verschoben ab ${from.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' })} auf ${WEEKDAY_LABELS[day]} ${startTime.slice(0, 5)}–${endTime.slice(0, 5)}`;
+    return this.repo.reschedule(
+      entryId,
+      {
+        day_of_week: day,
+        start_time: startTime,
+        end_time: endTime,
+        trainer_id: trainerId,
+        court_id: courtId,
+        admin_notes: entry.admin_notes ? `${entry.admin_notes}\n${note}` : note,
+      },
+      moves.map((m) => ({ id: m.id, start: m.start.toISOString(), end: m.end.toISOString() }))
+    );
   }
 
   async list(seasonId: string, filters: PlanEntryFilters): Promise<PlanEntryWithNames[]> {

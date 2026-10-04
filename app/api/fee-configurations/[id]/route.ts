@@ -1,7 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { feeConfigurationService } from '@/src/application/services/fee-configuration-service.adapter';
+import { FeeConfigurationService } from '@/application/services/fee-configuration.service';
+import { getUserDb } from '@/infrastructure/db';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -22,7 +23,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const feeConfiguration = await feeConfigurationService.getFeeConfigurationById(id);
+      const feeConfiguration = await new FeeConfigurationService(getUserDb(auth)).get(id);
 
       if (!feeConfiguration) {
         return NextResponse.json(
@@ -71,7 +72,7 @@ export async function PATCH(
         conditions,
       } = body;
 
-      const updated = await feeConfigurationService.updateFeeConfiguration(id, {
+      const updated = await new FeeConfigurationService(getUserDb(auth)).update(id, {
         name,
         description,
         type,
@@ -116,7 +117,7 @@ export async function DELETE(
 
     try {
       const { id } = await params;
-      const success = await feeConfigurationService.deleteFeeConfiguration(id);
+      const success = await new FeeConfigurationService(getUserDb(auth)).delete(id);
 
       if (!success) {
         return NextResponse.json(

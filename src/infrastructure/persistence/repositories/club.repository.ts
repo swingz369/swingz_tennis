@@ -13,6 +13,11 @@ const log = createLogger('infrastructure:club.repository');
 
 export type ClubRow = Tables<'clubs'>;
 
+export type RestoreResult =
+  | { status: 'not_found' }
+  | { status: 'not_deleted'; current_status: string | null }
+  | { status: 'restored'; name: string; previous_deleted_at: string; reactivated: number };
+
 function assertNoError(error: { message: string } | null, action: string): void {
   if (error) {
     log.error(action, new Error(error.message));
@@ -27,6 +32,18 @@ export class ClubRepository {
     const { data, error } = await this.db.from('clubs').select().eq('id', id).maybeSingle();
     assertNoError(error, 'Lesen des Vereins fehlgeschlagen');
     return data;
+  }
+
+  /** Öffentliche Vereinsliste (Probetraining-Auswahl) — gelöschte Vereine fehlen. */
+  async listPublic(): Promise<{ id: string; name: string }[]> {
+    const { data, error } = await this.db
+      .from('clubs')
+      .select('id, name')
+      .is('deleted_at', null)
+      .order('name')
+      .order('id');
+    assertNoError(error, 'Lesen der Vereinsliste fehlgeschlagen');
+    return data ?? [];
   }
 
   async update(id: string, patch: TablesUpdate<'clubs'>): Promise<void> {
@@ -65,6 +82,13 @@ export class ClubRepository {
     });
     assertNoError(error, 'Löschen des Vereins fehlgeschlagen');
     return data ?? 0;
+  }
+
+  /** Atomar: Verein reaktivieren + Mitgliedschaften wieder an. Berechtigung prüft die DB-Funktion. */
+  async restore(id: string): Promise<RestoreResult> {
+    const { data, error } = await this.db.rpc('restore_club', { p_club_id: id });
+    assertNoError(error, 'Wiederherstellen des Vereins fehlgeschlagen');
+    return data as RestoreResult;
   }
 
   async hardDelete(id: string): Promise<void> {

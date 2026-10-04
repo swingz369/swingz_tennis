@@ -46,9 +46,9 @@ const SERVICES_DIR = path.join(ROOT, 'src/application/services');
 // ADR-005-Migration auf TrialTrainingService + TrialTrainingRepository,
 // clubId kommt jetzt zwingend aus `auth.clubId` bzw. aus dem validierten
 // Zod-Body der öffentlichen Route).
-const KNOWN_VIOLATIONS = new Set(
-  ['fee-configuration-service.adapter.ts'].map((f) => path.join(SERVICES_DIR, f))
-);
+// fee-configuration-service.adapter.ts: behoben und gelöscht (04.10.2026, ADR-005-Migration
+// auf FeeConfigurationService + FeeConfigurationRepository mit RLS).
+const KNOWN_VIOLATIONS = new Set<string>();
 
 function listServiceFiles(dir: string): string[] {
   return fs

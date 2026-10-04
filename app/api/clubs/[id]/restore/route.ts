@@ -1,12 +1,15 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { internalErrorResponse } from '@/lib/api-error';
+import {
+  ApiException,
+  errorResponse,
+  internalErrorResponse,
+  safeErrorMessage,
+} from '@/lib/api-error';
 import { z } from 'zod';
-import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { clubs, userClubMemberships } from '@/infrastructure/persistence/schema';
-import { db } from '@/infrastructure/persistence/db';
-import { eq, and } from 'drizzle-orm';
+import { ClubService } from '@/application/services/club.service';
 import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { createLogger } from '@/lib/logger';
 
@@ -39,10 +42,10 @@ const auditService = new AuditServiceImpl();
  * Sicherheit:
  *   - verifyRole('superadmin') = Owner via Hierarchie 5 > 3. Admin/Trainer/
  *     Member bekommen 403 — konsistent zum Soft-Delete-DELETE-Handler.
- *   - verifyClubAccess() = Owner/Superadmin-Bypass. Admin (seltene Ausnahme)
- *     könnte theoretisch den eigenen Verein restaurieren, sofern er in der
- *     Rolle-Stufe passt — irrelevant in der Praxis, weil verifyRole bereits
- *     Superadmin verlangt.
+ *   - Vereinsbezug prüft die DB-Funktion `restore_club`: Owner, oder Superadmin
+ *     mit (auch deaktivierter) Mitgliedschaft in genau diesem Verein. Die
+ *     Route kann das nicht — nach dem Soft-Delete sind die Mitgliedschaften
+ *     inaktiv und fehlen in `auth.memberships`. Fremde Vereine → 404.
  *   - Audit: action='restore', details.restore_mode='undelete',
  *     previous_deleted_at, reactivated_members_count,
  *     restoration_reason (optional).
@@ -64,9 +67,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (rateLimitError) return rateLimitError;
 
     const { id } = await params;
-    if (!verifyClubAccess(auth, id)) {
-      return forbiddenResponse('Kein Zugriff auf diesen Verein');
-    }
 
     // Body parse (optional, JSON only)
     let body: RestoreBody = {};
@@ -84,59 +84,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     try {
-      // Vor-Check: Verein muss existieren UND soft-deleted sein.
-      // deleted_at NOT NULL ist das Indiz; ein bereits restaurierter Verein
-      // würde 409 zurückgeben (kein No-Op-Re-Restore).
-      const pre = await db
-        .select({
-          id: clubs.id,
-          name: clubs.name,
-          status: clubs.status,
-          deleted_at: clubs.deleted_at,
-        })
-        .from(clubs)
-        .where(eq(clubs.id, id))
-        .limit(1);
-
-      const club = pre[0];
-      if (!club) {
-        return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
-      }
-      if (club.deleted_at === null) {
-        return NextResponse.json(
-          {
-            error: 'Verein ist nicht soft-deleted — nichts zu restaurieren',
-            current_status: club.status,
-          },
-          { status: 409 }
-        );
-      }
-
-      // Restore: alles in einer Transaktion. Falls memberships reaktiviert
-      // werden, aber das club-Update danach fehlschlägt, wird die
-      // membership-Reaktivierung per ROLLBACK zurückgenommen — sonst
-      // inkonsistenter Zustand (aktive memberships auf soft-deleted Club).
-      const previousDeletedAt = club.deleted_at;
-      const reactivatedCount = await db.transaction(async (tx) => {
-        const updated = await tx
-          .update(userClubMemberships)
-          .set({ is_active: true })
-          .where(and(eq(userClubMemberships.club_id, id), eq(userClubMemberships.is_active, false)))
-          .returning({ id: userClubMemberships.id });
-
-        await tx
-          .update(clubs)
-          .set({
-            status: 'active',
-            deleted_at: null,
-            deleted_by: null,
-            deletion_reason: null,
-            updated_at: new Date(),
-          })
-          .where(eq(clubs.id, id));
-
-        return updated.length;
-      });
+      const restored = await new ClubService(auth).restore(id);
 
       try {
         await auditService.log({
@@ -147,9 +95,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           clubId: id,
           details: {
             restore_mode: 'restore',
-            previous_deleted_at: previousDeletedAt.toISOString(),
-            club_name_before_restore: club.name,
-            reactivated_members_count: reactivatedCount,
+            previous_deleted_at: restored.previous_deleted_at,
+            club_name_before_restore: restored.name,
+            reactivated_members_count: restored.reactivated,
             restoration_reason: body.restoration_reason ?? null,
           },
         });
@@ -161,10 +109,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         success: true,
         mode: 'restore',
         club_id: id,
-        reactivated_members_count: reactivatedCount,
+        reactivated_members_count: restored.reactivated,
         restored_at: new Date().toISOString(),
       });
     } catch (error) {
+      if (error instanceof ApiException) {
+        return errorResponse(error.code, safeErrorMessage(error), {
+          status: error.status,
+          details: error.details,
+        });
+      }
       log.error('Error restoring club:', error);
       return internalErrorResponse();
     }

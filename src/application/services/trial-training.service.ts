@@ -184,6 +184,10 @@ export class TrialTrainingService {
   }
 
   /** @returns true if a matching, unconfirmed token was found and confirmed */
+  async getPublicContext(participantId: string) {
+    return this.repo.findPublicContext(participantId);
+  }
+
   async confirmMarketingConsent(token: string): Promise<boolean> {
     return this.repo.confirmMarketingConsentByToken(token);
   }

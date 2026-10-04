@@ -6,7 +6,7 @@
 // pure Funktion in `@/lib/billing/billing-preview` (`computeBillingPreview`),
 // die Datenquellen sind die echten Services:
 //   - Plan-Einträge:   `season_plan_entries` (Teilnehmer je Eintrag)
-//   - Fee-Configs:     `feeConfigurationService.getActiveFeeConfigurations`
+//   - Fee-Configs:     `FeeConfigurationService.listActive` (RLS)
 //                      (Drizzle-Adapter auf `fee_configurations`, club-scoped)
 //
 // Antwort: JSON-Array von `BillingPreviewItem` (memberId, groupId, amount,
@@ -18,7 +18,8 @@ import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth } from '@/lib/api-auth';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
-import { feeConfigurationService } from '@/src/application/services/fee-configuration-service.adapter';
+import { FeeConfigurationService } from '@/application/services/fee-configuration.service';
+import { getUserDb } from '@/infrastructure/db';
 import { computeBillingPreview } from '@/lib/billing/billing-preview';
 import type { BillingPreviewEntry, BillingPreviewFeeConfig } from '@/lib/billing/billing-preview';
 import { createLogger } from '@/lib/logger';
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       if (entriesError) throw new Error(entriesError.message);
 
       // 2. Fee-Configs über den echten Service laden (aktiv + club-scoped)
-      const activeFeeConfigs = await feeConfigurationService.getActiveFeeConfigurations(
+      const activeFeeConfigs = await new FeeConfigurationService(getUserDb(auth)).listActive(
         access.season.club_id
       );
       const feeConfigs: BillingPreviewFeeConfig[] = activeFeeConfigs.map((fee) => ({
