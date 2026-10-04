@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
         const { Resend } = await import('resend');
         const resend = new Resend(env.RESEND_API_KEY);
 
-        await resend.emails.send({
+        const { error: resendError } = await resend.emails.send({
           from: env.EMAIL_FROM || 'SwingZ <noreply@swingz.cloud>',
           to: 'info@swingz.cloud',
           subject: `📋 Neue Registrierung von ${firstName} ${lastName}`,
@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
           `,
           text: `Neue Registrierung\n\nName: ${firstName} ${lastName}\nE-Mail: ${email}\nTelefon: ${phone || '—'}\nStadt: ${city || '—'}\nSpielstärke: ${playingLevel || 'intermediate'}\nProbetraining: ${wantsTrialTraining ? 'Ja' : 'Nein'}\nMotivation: ${motivation || '—'}`,
         });
+        if (resendError) throw new Error(`Resend: ${resendError.message}`);
       } catch (emailError) {
         // Non-blocking — log but don't fail the request
         log.warn('[Register] Email notification failed:', emailError);

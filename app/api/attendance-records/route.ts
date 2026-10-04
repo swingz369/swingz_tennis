@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { AttendanceRecordService } from '@/application/services/attendance-record.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
@@ -65,7 +65,7 @@ export async function POST(_request: NextRequest) {
       });
 
       // Gamification: 5 Punkte für Anwesenheit (fire-and-forget)
-      void (async () => {
+      after(async () => {
         try {
           const svc = createServiceClient();
           const { data: existing } = await svc
@@ -80,7 +80,7 @@ export async function POST(_request: NextRequest) {
         } catch {
           // Gamification-Fehler blockieren niemals die Anwesenheitserfassung
         }
-      })();
+      });
 
       return NextResponse.json({ success: true, attendanceRecord });
     } catch (error) {

@@ -147,7 +147,7 @@ export async function POST(
         for (const member of members ?? []) {
           if (!member.email) continue;
           try {
-            await resend.emails.send({
+            const { error: resendError } = await resend.emails.send({
               from: sender?.from ?? 'noreply@swingz.cloud',
               replyTo: sender?.replyTo,
               to: member.email,
@@ -157,6 +157,7 @@ export async function POST(
 <p>Bei Fragen wende dich bitte an deinen Trainer oder den Club.</p>
 <p>${escapeHtml(sender?.name ?? 'Dein Verein')}</p>`,
             });
+            if (resendError) throw new Error(`Resend: ${resendError.message}`);
             emailsSent++;
           } catch (emailErr) {
             log.error(

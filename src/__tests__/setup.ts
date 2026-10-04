@@ -15,6 +15,18 @@ afterEach(() => {
   cleanup();
 });
 
+// after() braucht den Request-Kontext von Next.js, den Routen-Tests nicht haben.
+// Im Test läuft die Aufgabe sofort; Fehler darin landen wie in Produktion nur im Log.
+vi.mock('next/server', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    after: (task: Promise<unknown> | (() => unknown)) => {
+      void Promise.resolve(typeof task === 'function' ? task() : task).catch(() => {});
+    },
+  };
+});
+
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
   useRouter: () => ({

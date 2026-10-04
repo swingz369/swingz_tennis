@@ -453,7 +453,9 @@ export class EmailService implements IEmailService {
     }
 
     try {
-      await resend.emails.send({
+      // Resend wirft bei API-Fehlern nicht, sondern liefert { error } — ungeprüft lief ein
+      // falscher Key oder eine gesperrte Domain still ins Leere (EMAIL_SETUP.md, Falle 3).
+      const { data, error } = await resend.emails.send({
         from: config.from,
         to,
         subject: template.subject,
@@ -461,7 +463,8 @@ export class EmailService implements IEmailService {
         text: template.text,
         ...(config.replyTo ? { replyTo: config.replyTo } : {}),
       });
-      // Email sent successfully
+      if (error) throw new Error(`Resend: ${error.name}: ${error.message}`);
+      log.info('E-Mail an Resend übergeben', { id: data?.id, subject: template.subject });
     } catch (error) {
       log.error('Failed to send email:', error);
     }

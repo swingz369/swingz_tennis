@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         const safeClubName = escapeHtml(clubName?.trim() || '—');
         const safeMessage = escapeHtml(message.trim());
 
-        await resend.emails.send({
+        const { error: resendError } = await resend.emails.send({
           from: env.EMAIL_FROM || 'SwingZ <noreply@swingz.cloud>',
           to: 'info@swingz.cloud',
           subject: `🎾 Neue Kontaktanfrage von ${firstName} ${lastName}`,
@@ -136,6 +136,7 @@ export async function POST(request: NextRequest) {
           `,
           text: `Neue Kontaktanfrage\n\nName: ${firstName} ${lastName}\nE-Mail: ${email}\nVerein: ${clubName || '—'}\nNachricht: ${message}\n\nID: ${contactRequest?.id}`,
         });
+        if (resendError) throw new Error(`Resend: ${resendError.message}`);
       } catch (emailError) {
         // Non-blocking — log but don't fail the request
         log.warn('[Contact] Email notification failed:', emailError);

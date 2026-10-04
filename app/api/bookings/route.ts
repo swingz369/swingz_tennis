@@ -5,7 +5,7 @@
  * Rewritten to use Supabase client directly (was Drizzle ORM).
  */
 import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { errorResponse, internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Gamification: 10 Punkte für erfolgreiche Buchung (fire-and-forget)
-    void (async () => {
+    after(async () => {
       try {
         const svc = createServiceClient();
         const { data: existing } = await svc
@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
       } catch {
         // Gamification-Fehler blockieren niemals die Buchung
       }
-    })();
+    });
 
     // Preisermittlung: Basis = Preis des Platztyps (0 = kostenlos, z. B. Sommer).
     // Darüber werden aktive pricing_rules IMMER angewendet (z. B. Winter-Zuschlag).

@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { z } from 'zod';
 import { TrialTrainingService } from '@/application/services/trial-training.service';
@@ -89,26 +89,27 @@ export async function POST(request: NextRequest) {
     );
     const trialTraining = await trialTrainingService.createPublicTrialTraining(input, clubId);
 
-    // Notify club admins — fire-and-forget (don't block the response)
-    trialTrainingService
-      .notifyAdminsOfNewRequest(trialTraining, clubId)
-      .catch((err) =>
-        log.error('Admin notification failed', err instanceof Error ? err : undefined)
-      );
-
-    // Send confirmation email to the participant — fire-and-forget
-    trialTrainingService
-      .notifyParticipantOfTrialTraining(trialTraining, clubId)
-      .catch((err) =>
-        log.error('Participant confirmation failed', err instanceof Error ? err : undefined)
-      );
-
-    // Send double opt-in marketing consent confirmation, if requested — fire-and-forget
-    trialTrainingService
-      .sendMarketingConsentConfirmationIfNeeded(trialTraining, clubId)
-      .catch((err) =>
-        log.error('Marketing consent DOI email failed', err instanceof Error ? err : undefined)
-      );
+    // Benachrichtigungen nach der Antwort — after() hält die Funktion dafür am Leben.
+    // Ein nacktes Promise ohne await kann auf Vercel nach der Antwort eingefroren werden.
+    after(() =>
+      Promise.all([
+        trialTrainingService
+          .notifyAdminsOfNewRequest(trialTraining, clubId)
+          .catch((err) =>
+            log.error('Admin notification failed', err instanceof Error ? err : undefined)
+          ),
+        trialTrainingService
+          .notifyParticipantOfTrialTraining(trialTraining, clubId)
+          .catch((err) =>
+            log.error('Participant confirmation failed', err instanceof Error ? err : undefined)
+          ),
+        trialTrainingService
+          .sendMarketingConsentConfirmationIfNeeded(trialTraining, clubId)
+          .catch((err) =>
+            log.error('Marketing consent DOI email failed', err instanceof Error ? err : undefined)
+          ),
+      ])
+    );
 
     return NextResponse.json(
       {

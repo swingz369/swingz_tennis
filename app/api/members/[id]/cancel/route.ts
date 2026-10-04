@@ -11,7 +11,7 @@
  */
 import { loadClubSender, escapeHtml } from '@/lib/email/club-sender';
 import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { logAudit } from '@/lib/audit';
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     // Bestätigungs-E-Mail via Resend (fire-and-forget)
     if (send_confirmation && user?.email) {
-      void (async () => {
+      after(async () => {
         try {
           const resendKey = process.env.RESEND_API_KEY;
           if (!resendKey) return;
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             auth.supabase,
             membership.club_id ?? auth.clubId ?? ''
           );
-          await resend.emails.send({
+          const { error: resendError } = await resend.emails.send({
             from: sender.from,
             replyTo: sender.replyTo,
             to: user.email,
@@ -120,13 +120,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
               `<p>${escapeHtml(sender.name)}</p>`,
             ].join(''),
           });
+          if (resendError) throw new Error(`Resend: ${resendError.message}`);
         } catch (mailErr) {
           log.error(
             'Bestätigungs-E-Mail fehlgeschlagen',
             mailErr instanceof Error ? mailErr : undefined
           );
         }
-      })();
+      });
     }
 
     log.info('Membership cancelled', { membershipId, cancellation_date, deactivateNow });
