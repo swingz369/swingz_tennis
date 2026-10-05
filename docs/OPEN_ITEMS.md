@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 5. Oktober 2026 (Trainer in mehreren Vereinen: Vereinsprüfung gegen alle Mitgliedschaften; Missbrauchsprüfung Rechteausweitung in Produktion ohne Befund; Hydration-Fehler `/login` als Fremdprojekt erkannt; Service-Client aus allen API-Routen; Rechteausweitung über eigene Mitgliedschaft gefunden); 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
+> Zuletzt verifiziert: 6. Oktober 2026 (DB-Passwort rotiert); 5. Oktober 2026 (Trainer in mehreren Vereinen: Vereinsprüfung gegen alle Mitgliedschaften; Missbrauchsprüfung Rechteausweitung in Produktion ohne Befund; Hydration-Fehler `/login` als Fremdprojekt erkannt; Service-Client aus allen API-Routen; Rechteausweitung über eigene Mitgliedschaft gefunden); 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
 > Produktion und lokale DB geprüft; Erledigtes gestrichen — die gestrichenen Punkte stehen in der
 > Git-Historie dieser Datei). Produktions-DB nicht direkt abgefragt; wo ein Befund nur lokal
 > belegt ist, steht das dabei.
@@ -162,14 +162,10 @@ Offen dazu:
   Globales `is_superadmin()` ebenso erledigt (`background_jobs`, `job_execution_log`, `players`,
   `school_holidays`; `clubs_insert` bleibt gewollt), dabei `clubs_access` gefunden und geschlossen.
 
-### DB-Passwort rotieren (Folge des unverschlüsselten Pooler-Transports)
+### Pooler: Klartext abweisen (optional, strenger)
 
-Seit 04.10.2026 spricht der Pooler TLS, alle bekannten Clients verlangen es (`docs/DATABASE.md`).
-Bis dahin gingen die Superuser-Credentials monatelang im Klartext übers Internet (Migrationen vom
-GitHub-Runner und von der Dev-Maschine). → Passwort von `postgres`/Tenant `swingz` wechseln —
-hängt am ganzen Supabase-Stack (`POSTGRES_PASSWORD`), dazu `DATABASE_URL_PROD`, `.env.prod.local`,
-Vercel `DATABASE_URL` (App nutzt sie nicht mehr; Variable dann löschen). Strenger zusätzlich:
-Port 6543 nur noch per SSH-Tunnel, weil Supavisor Klartext nicht ablehnen kann.
+Passwort am 06.10.2026 rotiert (`docs/DATABASE.md`). Supavisor nimmt auf Port 6543 weiterhin
+Klartext an; wer das ausschließen will, öffnet 6543 nur noch per SSH-Tunnel.
 
 ### Stripe: Webhook abgenommen (Testmodus, 04.10.2026), Live-Umstellung offen
 

@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 5. Oktober 2026 (Geister-Sessions in Produktion ohne Befund; `clubs_access` gedroppt, globales `is_superadmin()` ersetzt; Check-ins, Turnier- und Event-Anmeldungen an Verein gebunden; `shop_orders` mit `club_id`, Käufer setzt keinen Zahlstatus; Rechteausweitung über eigene Mitgliedschaft und Abo-Spalten geschlossen, lokal angewendet); 4. Oktober 2026 (Pooler-TLS auf dem VPS eingerichtet und von außen verifiziert; `restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
+> Zuletzt verifiziert: 6. Oktober 2026 (DB-Passwort rotiert); 5. Oktober 2026 (Geister-Sessions in Produktion ohne Befund; `clubs_access` gedroppt, globales `is_superadmin()` ersetzt; Check-ins, Turnier- und Event-Anmeldungen an Verein gebunden; `shop_orders` mit `club_id`, Käufer setzt keinen Zahlstatus; Rechteausweitung über eigene Mitgliedschaft und Abo-Spalten geschlossen, lokal angewendet); 4. Oktober 2026 (Pooler-TLS auf dem VPS eingerichtet und von außen verifiziert; `restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -528,7 +528,13 @@ Weitere Befunde desselben Audits; Live-Abgleich vom 24.09.2026 darunter:
   hat. `sslmode=verify-full` mit System-CAs verifiziert. **Klartext nimmt Supavisor weiterhin an** —
   der Schutz liegt bei den Clients: `DATABASE_SSL=require` (postgres.js-Skripte; ein explizites
   `ssl: false` schlägt `sslmode` in der URL) und `PGSSLMODE=require` (psql) in `.env.prod.local`,
-  `deploy.yml` und `db-audit.yml`. Offen: das DB-Passwort lief bis dahin im Klartext — Rotation.
+  `deploy.yml` und `db-audit.yml`. Das bis dahin im Klartext übertragene Passwort ist am 06.10.2026
+  rotiert (Rollen `postgres`, `supabase_admin`, `authenticator`, `pgbouncer`, `supabase_auth_admin`,
+  `supabase_storage_admin`, `supabase_functions_admin`; `.env` auf dem VPS, Sicherung
+  `.env.bak-2026-10-06-pwrot`). **Bei jeder künftigen Rotation:** Supavisor legt seinen Tenant nur
+  an, wenn er fehlt (`volumes/pooler/pooler.exs`) — vorher `delete from _supavisor.tenants where
+external_id='swingz'` in der DB `_supabase`, sonst meldet sich der Pooler mit dem alten
+  `pgbouncer`-Passwort an. Realtime legt seinen Tenant bei jedem Start neu an.
 
 ## `season_planning_configs` / `season_statistics` — RLS nachgerüstet (Stand 15.08.2026)
 
