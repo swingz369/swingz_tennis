@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { env } from '@/lib/env';
 import { createLogger } from '@/lib/logger';
 
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Betreff und Nachricht erforderlich' }, { status: 400 });
     }
 
-    const db = createServiceClient();
+    const db = systemDb('Admin: Empfänger aus eigenem Verein auflösen');
 
     // Only allow sending to a real, active member of the admin's own club —
     // never trust a client-supplied email address directly.

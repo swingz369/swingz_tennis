@@ -16,7 +16,7 @@ import { pushNotificationService } from '@/lib/push-notification.service';
 import { sendRemindersSchema } from '@/application/validation/schemas/reminders.schema';
 import { createLogger } from '@/lib/logger';
 import { recordHeartbeat } from '@/lib/ops-heartbeat';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { env } from '@/lib/env';
 
 const log = createLogger('api:reminders:booking-tomorrow');
@@ -30,7 +30,7 @@ class TempSessionRepository implements ISessionRepository {
     const { createClient } = await import('@/infrastructure/external/supabase/server');
     // Vercel-Cron hat keine Nutzer-Session. Der normale Client sieht wegen
     // RLS keine Vereins-Termine; der signierte Cron liest systemweit.
-    const supabase = this.cron ? createServiceClient() : await createClient();
+    const supabase = this.cron ? systemDb('Cron: Buchungserinnerungen') : await createClient();
     const { data, error } = await supabase
       .from('sessions')
       .select('*, trainers(name, email), courts(name), schedules(clubs(name))')
@@ -64,7 +64,7 @@ class TempBookingRepository implements IBookingRepository {
 
   async findConfirmedBookingsForSessions(sessionIds: string[]): Promise<Booking[]> {
     const { createClient } = await import('@/infrastructure/external/supabase/server');
-    const supabase = this.cron ? createServiceClient() : await createClient();
+    const supabase = this.cron ? systemDb('Cron: Buchungserinnerungen') : await createClient();
     const { data, error } = await supabase
       .from('bookings')
       .select('id, member_id, session_id, status')
@@ -87,7 +87,7 @@ class TempMemberRepository implements IMemberRepository {
 
   async findMemberById(memberId: string): Promise<{ email: string; full_name: string } | null> {
     const { createClient } = await import('@/infrastructure/external/supabase/server');
-    const supabase = this.cron ? createServiceClient() : await createClient();
+    const supabase = this.cron ? systemDb('Cron: Buchungserinnerungen') : await createClient();
     const { data, error } = await supabase
       .from('users')
       .select('email, full_name')

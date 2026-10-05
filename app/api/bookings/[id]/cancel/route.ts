@@ -9,7 +9,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { LastMinuteAlertService } from '@/lib/services/last-minute-alert.service';
 import { createLogger } from '@/lib/logger';
 
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // rückgängig machen.
     if (booking.session_id) {
       try {
-        const svc = createServiceClient();
+        const svc = systemDb('Abmeldung: Trainer benachrichtigen, Warteliste nachrücken');
         const { data: session } = await svc
           .from('sessions')
           .select('trainer_id, timeslot_start')
@@ -144,7 +144,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // Warteliste: Ersten Eintrag nachrücken lassen (non-fatal)
     if (booking.session_id) {
       try {
-        const serviceClient = createServiceClient();
+        const serviceClient = systemDb('Abmeldung: Trainer benachrichtigen, Warteliste nachrücken');
         const svc = serviceClient;
 
         // Ersten Wartelisten-Eintrag holen

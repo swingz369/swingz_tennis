@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 
 const BUCKET = 'swingz-files';
 
@@ -10,7 +10,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   return withApiAuth(req, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse('Zugriff nur für Admins');
 
-    const sb = createServiceClient();
+    const sb = systemDb('Vereinsdokumente: Löschen inkl. Storage');
     const { data: doc } = await sb
       .from('club_documents')
       .select('id, club_id, file_path')

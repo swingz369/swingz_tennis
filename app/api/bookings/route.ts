@@ -13,7 +13,7 @@ import { createBookingSafe } from '@/lib/booking/safe-booking';
 import { isDayClosed, CLOSED_DAY_ERROR } from '@/lib/booking/opening-hours';
 import { loadBookingRules, checkBookingRules } from '@/lib/booking/booking-rules';
 import { resolveEffectiveMemberId } from '@/lib/family/family-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { PricingRuleService } from '@/application/services/pricing-rule.service';
 import { ClubId, CourtId } from '@/domain/value-objects';
 import { createLogger } from '@/lib/logger';
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
     // Gamification: 10 Punkte für erfolgreiche Buchung (fire-and-forget)
     after(async () => {
       try {
-        const svc = createServiceClient();
+        const svc = systemDb('Gamification: Buchungspunkte');
         const { data: existing } = await svc
           .from('gamification_points')
           .select('points')

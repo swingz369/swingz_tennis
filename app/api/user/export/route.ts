@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 
@@ -88,7 +88,7 @@ const PERSONAL_DATA: ReadonlyArray<{
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const { user } = auth;
-    const sb = createServiceClient();
+    const sb = systemDb('DSGVO-Auskunft: vollständige eigene Daten');
 
     const daten: Record<string, unknown> = {};
     // Wenn eine Abfrage scheitert, darf das nicht als "keine Daten vorhanden"

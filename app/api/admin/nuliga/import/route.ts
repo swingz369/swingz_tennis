@@ -6,7 +6,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import {
   parseStandingsCsv,
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     }
     const clubId = league.club_id;
 
-    const sb = createServiceClient();
+    const sb = systemDb('nuLiga-Import in Liga des eigenen Vereins');
     let standingsImported = 0;
     let matchesImported = 0;
 

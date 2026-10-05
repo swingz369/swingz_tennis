@@ -12,8 +12,8 @@
 import { loadClubSender, escapeHtml } from '@/lib/email/club-sender';
 import type { NextRequest } from 'next/server';
 import { NextResponse, after } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
+import { systemDb } from '@/infrastructure/db';
 import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Kündigungsdatum erforderlich' }, { status: 400 });
     }
 
-    const serviceSb = createServiceClient();
+    const serviceSb = systemDb('Kündigung inkl. Bestätigungsmail');
 
     // Resolve membership → user
     const { data: membership } = await serviceSb
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // Club-Isolation: Admin darf nur Mitglieder seines Vereins kündigen
-    if (auth.role !== 'superadmin' && membership.club_id !== auth.clubId) {
+    if (!membership.club_id || !verifyClubAccess(auth, membership.club_id)) {
       return forbiddenResponse('Kein Zugriff auf diesen Verein');
     }
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminClub } from '@/lib/admin-context';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { getPagination, buildPaginationMeta } from '@/lib/pagination';
 import type { NextRequest } from 'next/server';
 
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     // Service client: RLS blocks admin reads on audit_logs via the user client
     // (same class of issue as the sessions/trainers lookup fix) — access is
     // already scoped to the admin's own club below via .eq('club_id', clubId).
-    const sb = createServiceClient();
+    const sb = systemDb('Admin: Audit-Log des eigenen Vereins');
     const [{ data: auditLogs }, { count }] = await Promise.all([
       sb
         .from('audit_logs')

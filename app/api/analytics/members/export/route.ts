@@ -4,7 +4,7 @@ import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { logPiiRead } from '@/lib/db/audit-logger';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { toCsv, csvHeaders } from '@/lib/csv';
 import { formatMemberNumber } from '@/lib/format';
 import { createLogger } from '@/lib/logger';
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      const sb = createServiceClient();
+      const sb = systemDb('Mitglieder-Export des geprüften Vereins');
       const { data, error } = await sb
         .from('user_club_memberships')
         .select(

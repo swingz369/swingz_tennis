@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { resolveEffectiveMemberId } from '@/lib/family/family-auth';
 import type { Database } from '@/types/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
         // Display-name lookup only — uses the service client because the
         // RLS-scoped user client cannot read other users'/trainers' rows,
         // which silently produced the 'Trainer' fallback for every session.
-        const serviceSupabase = createServiceClient();
+        const serviceSupabase = systemDb('Kalender: Anzeigenamen zu RLS-gefilterten Einheiten');
 
         const { data: trainerData } = await serviceSupabase
           .from('trainers')
@@ -147,7 +147,7 @@ export async function GET(req: NextRequest) {
       // the query scoped to the requested club).
       const { data: allActiveBookings } =
         sessionIds.length > 0
-          ? await createServiceClient()
+          ? await systemDb('Kalender: Anzeigenamen zu RLS-gefilterten Einheiten')
               .from('bookings')
               .select('id, session_id, status, member_id, users!bookings_member_id_fkey(full_name)')
               .in('session_id', sessionIds)
@@ -181,7 +181,9 @@ export async function GET(req: NextRequest) {
       const isTrainerRole = auth.roles.includes('trainer');
       let callerTrainerId: string | null = null;
       if (!isAdmin && isTrainerRole) {
-        const { data: trainerRec } = await createServiceClient()
+        const { data: trainerRec } = await systemDb(
+          'Kalender: Anzeigenamen zu RLS-gefilterten Einheiten'
+        )
           .from('trainers')
           .select('id')
           .eq('user_id', userId)
@@ -224,7 +226,9 @@ export async function GET(req: NextRequest) {
       const isStaff = isAdmin || isTrainerRole || auth.roles.includes('owner');
       const ownPlanEntryIds = new Set<string>();
       if (!isStaff && typedSessions.some((s) => s.plan_entry_id)) {
-        const { data: ownEntries } = await createServiceClient()
+        const { data: ownEntries } = await systemDb(
+          'Kalender: Anzeigenamen zu RLS-gefilterten Einheiten'
+        )
           .from('season_plan_entries')
           .select('id')
           .eq('club_id', clubIdParam)

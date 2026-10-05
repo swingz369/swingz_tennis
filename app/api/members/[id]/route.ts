@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { memberService } from '@/src/application/services/member-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
@@ -9,9 +9,6 @@ import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:members:[id]');
-
-// Service role client for updating the users table (bypasses RLS)
-const serviceClient = createServiceClient();
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -166,10 +163,9 @@ export async function PATCH(
 
       if (membership?.user_id) {
         if (email !== undefined) {
-          const { error: authEmailError } = await serviceClient.auth.admin.updateUserById(
-            membership.user_id,
-            { email }
-          );
+          const { error: authEmailError } = await systemDb(
+            'Admin ändert Login-E-Mail eines Mitglieds'
+          ).auth.admin.updateUserById(membership.user_id, { email });
           if (authEmailError) {
             log.error('Failed to update auth email:', authEmailError);
             return NextResponse.json({ error: 'E-Mail-Änderung fehlgeschlagen' }, { status: 409 });
@@ -189,7 +185,9 @@ export async function PATCH(
         if (emergencyPhone !== undefined) userUpdate.emergency_phone = emergencyPhone;
 
         if (Object.keys(userUpdate).length > 0) {
-          const { error: userUpdateError } = await serviceClient
+          const { error: userUpdateError } = await systemDb(
+            'Admin pflegt Profil eines Vereinsmitglieds'
+          )
             .from('users')
             .update(userUpdate as never)
             .eq('id', membership.user_id);
@@ -297,7 +295,7 @@ export async function DELETE(
 
       // Notify the deactivated member
       try {
-        await serviceClient.from('notifications').insert({
+        await systemDb('Benachrichtigung über Deaktivierung').from('notifications').insert({
           user_id: membership.user_id,
           club_id: membership.club_id,
           type: 'member_deactivated',

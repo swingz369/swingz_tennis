@@ -12,7 +12,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { loadBookingRules, checkBookingRules } from '@/lib/booking/booking-rules';
 import { isDayClosed, CLOSED_DAY_ERROR } from '@/lib/booking/opening-hours';
 import { resolveEffectiveMemberId } from '@/lib/family/family-auth';
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ allowed: false, error: 'Ungültiger Zeitraum' });
     }
 
-    const db = createServiceClient();
+    const db = systemDb('Buchungsprüfung im geprüften Verein');
     const [{ data: club }, { data: court }] = await Promise.all([
       db.from('clubs').select('opening_hours').eq('id', clubId).maybeSingle(),
       db.from('courts').select('id').eq('id', courtId).eq('club_id', clubId).maybeSingle(),

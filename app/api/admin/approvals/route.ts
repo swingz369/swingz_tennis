@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { EmailService } from '@/src/application/services/email.service';
 import { EmailService as InfraEmailService } from '@/src/infrastructure/email/email.service';
@@ -94,7 +94,7 @@ export async function PATCH(request: NextRequest) {
           });
         }
 
-        const adminClient = createServiceClient();
+        const adminClient = systemDb('Freigabe: Auth-Nutzer anlegen');
         let newUserId: string | undefined;
 
         // 1. Create or reuse Supabase Auth user

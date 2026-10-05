@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:partner-finder');
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
       // und damit `matches: []` für die Hauptzielgruppe. Gleiche Falle und
       // gleiche Lösung wie in /api/members/directory: Service-Client + explizite
       // Autorisierung (isPlayer oben) + nur `user_id` ausliefern.
-      const serviceSupabase = createServiceClient();
+      const serviceSupabase = systemDb('Partnersuche: Kandidaten des eigenen Vereins');
       const { data: membershipRows } = (await serviceSupabase
         .from('user_club_memberships')
         .select('user_id')

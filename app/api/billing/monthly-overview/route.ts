@@ -1,12 +1,10 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:billing:monthly-overview');
-
-const supabase = createServiceClient();
 
 export interface TrainerSummary {
   trainerId: string;
@@ -37,6 +35,8 @@ export async function GET(request: NextRequest) {
     if (!clubId) {
       return NextResponse.json({ error: 'clubId erforderlich' }, { status: 400 });
     }
+    if (!verifyClubAccess(auth, clubId)) return forbiddenResponse('Kein Zugriff auf diesen Verein');
+    const supabase = systemDb('Monatsübersicht Abrechnung des geprüften Vereins');
 
     // Default to current month if not provided
     const targetMonth = month || new Date().toISOString().slice(0, 7);

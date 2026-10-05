@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:weather:closures');
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     const isWeather = ['rain', 'storm', 'frost', 'heat', 'maintenance', 'weather'].includes(reason);
     if (reason === 'tournament' || isWeather || notify_members === true) {
       try {
-        const serviceSb = createServiceClient();
+        const serviceSb = systemDb('Platzsperre: Mitglieder benachrichtigen');
         const dateStr = new Date(start_date).toLocaleDateString('de-DE');
         const courtName = (data as any).courts?.name ?? 'Platz';
 

@@ -9,7 +9,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:admin:members:office-flags');
@@ -43,7 +43,7 @@ export async function PATCH(
     if (!parsed.success) return NextResponse.json({ error: 'Ungültige Eingabe' }, { status: 400 });
 
     const { office, active } = parsed.data;
-    const sb = createServiceClient();
+    const sb = systemDb('Admin: Vereinsämter eines Mitglieds');
 
     const { data: mem, error: fetchErr } = await sb
       .from('user_club_memberships')
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ memb
     }
 
     const { memberId } = await params;
-    const sb = createServiceClient();
+    const sb = systemDb('Admin: Vereinsämter eines Mitglieds');
     const { data, error } = await sb
       .from('user_club_memberships')
       .select('office_flags')

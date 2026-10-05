@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { sanitizeFeatureFlags } from '@/lib/features';
 import { z } from 'zod';
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (rateLimitError) return rateLimitError;
 
     try {
-      const { data } = await createServiceClient()
+      const { data } = await systemDb('Feature-Flags des geprüften Vereins')
         .from('clubs')
         .select('features')
         .eq('id', id)
@@ -69,7 +69,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const sanitized = sanitizeFeatureFlags(parsed.data);
 
     try {
-      const { error } = await createServiceClient()
+      const { error } = await systemDb('Feature-Flags des geprüften Vereins')
         .from('clubs')
         .update({ features: sanitized, updated_at: new Date().toISOString() })
         .eq('id', id);

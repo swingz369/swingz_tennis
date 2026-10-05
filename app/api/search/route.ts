@@ -5,7 +5,7 @@ import { validateQuery } from '@/application/validation/validator';
 import { withApiAuth, type AuthContext } from '@/lib/api-auth';
 import { hasRole } from '@/lib/auth-common';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:search');
@@ -48,7 +48,7 @@ function resolveSearchScope(auth: AuthContext): string[] | null {
   return auth.clubId ? [auth.clubId] : [];
 }
 
-type Supabase = ReturnType<typeof createServiceClient>;
+type Supabase = ReturnType<typeof systemDb>;
 
 /** Gemeinsame Basis: passende `users`-Zeilen zu Name/E-Mail. */
 async function findMatchingUsers(
@@ -213,7 +213,7 @@ export async function GET(req: NextRequest) {
     const { q, type, limit } = validation.data;
 
     const scope = resolveSearchScope(auth);
-    const supabase = createServiceClient();
+    const supabase = systemDb('Suche im aufgelösten Vereins-Scope');
 
     // Wem darf welcher Ergebnistyp angezeigt werden?
     const isAdminOrAbove = hasRole(auth.role, 'admin');

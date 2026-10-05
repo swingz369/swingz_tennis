@@ -47,9 +47,9 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { stripe } from '@/lib/stripe/stripe-client';
-import { withApiAuth, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { logAudit } from '@/lib/audit';
 import {
@@ -80,12 +80,12 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
       return NextResponse.json({ error: 'Club-ID erforderlich' }, { status: 400 });
     }
 
-    // Club-Access-Verification: superadmin always passes; admin must own this club.
-    if (auth.role !== 'superadmin' && auth.role !== 'owner' && auth.clubId !== clubId) {
+    // Owner: alle Vereine; Superadmin: nur zugewiesene; Admin: nur der eigene.
+    if (!verifyClubAccess(auth, clubId)) {
       return forbiddenResponse('Zugriff auf diesen Verein nicht erlaubt.');
     }
 
-    const supabase = createServiceClient();
+    const supabase = systemDb('Stripe-Abo des geprüften Vereins abgleichen');
 
     // Two-step owner resolution (avoids PostgREST FK-name-syntax fragility):
     //   (1) collect admin user_ids for this club

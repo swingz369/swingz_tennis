@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api-analytics');
@@ -36,7 +36,7 @@ export async function GET(_request: NextRequest) {
       // Service client: analytics aggregates read across tables (invoices, groups,
       // bookings) that RLS does not uniformly expose to trainers — access is already
       // gated above via verifyRole/verifyClubAccess.
-      const supabase = createServiceClient();
+      const supabase = systemDb('Vereinsanalyse über mehrere Tabellen');
       const sixMonthsAgo = new Date();
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 

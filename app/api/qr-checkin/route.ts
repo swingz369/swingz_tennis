@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import { berlinParts } from '@/lib/berlin-time';
 
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     // Award gamification points (non-blocking, uses admin client for RLS bypass)
     let pointsAwarded = false;
     try {
-      const adminSupabase = createServiceClient();
+      const adminSupabase = systemDb('Gamification: Check-in-Punkte');
       const { data: existingPoints } = await (adminSupabase as any)
         .from('gamification_points')
         .select('points')

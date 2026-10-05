@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { Resend } from 'resend';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { env } from '@/lib/env';
 import { createLogger } from '@/lib/logger';
 
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
-    const db = createServiceClient();
+    const db = systemDb('E-Mail-Kampagnen des eigenen Vereins');
     const user = auth.user;
 
     if (!auth.clubId) {
@@ -222,7 +222,7 @@ export async function GET(request: NextRequest) {
     if (!auth.clubId) {
       return NextResponse.json({ error: 'Kein Club zugewiesen' }, { status: 400 });
     }
-    const db = createServiceClient();
+    const db = systemDb('E-Mail-Kampagnen des eigenen Vereins');
 
     const { data, error } = await db
       .from('email_campaigns')

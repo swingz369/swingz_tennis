@@ -1,8 +1,8 @@
 import { loadClubSender, escapeHtml } from '@/lib/email/club-sender';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import { Resend } from 'resend';
 import { env } from '@/lib/env';
@@ -36,8 +36,8 @@ export async function POST(
       return NextResponse.json({ error: 'Grund der Absage ist erforderlich' }, { status: 400 });
     }
 
-    // Service-Client: bypasses RLS für Benachrichtigungen
-    const supabase = createServiceClient();
+    // Benachrichtigungen an Gebuchte schreibt nur der Service-Client
+    const supabase = systemDb('Session-Absage inkl. Benachrichtigungen');
 
     // Session laden mit Trainer-Info; Verein kommt über schedule_id → schedules
     const { data: session, error: sessionErr } = await supabase
@@ -61,7 +61,7 @@ export async function POST(
 
     // Admin muss zum gleichen Verein gehören
     const sessionClubId = session.schedules?.club_id ?? null;
-    if (isAdmin && auth.role !== 'superadmin' && sessionClubId !== auth.clubId) {
+    if (isAdmin && (!sessionClubId || !verifyClubAccess(auth, sessionClubId))) {
       return forbiddenResponse('Keine Berechtigung für diese Session');
     }
 

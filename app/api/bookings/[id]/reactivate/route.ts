@@ -12,8 +12,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:bookings:[id]:reactivate');
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!isMember) return forbiddenResponse('Zugriff nur für Mitglieder');
 
     const { id } = await params;
-    const sb = createServiceClient();
+    const sb = systemDb('Buchung reaktivieren inkl. Platzprüfung');
 
     const { data: booking } = await sb
       .from('bookings')
@@ -37,7 +37,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const isOwner = booking.member_id === auth.user.id;
-    const isAdmin = await verifyRole(auth, 'admin');
+    const isAdmin =
+      (await verifyRole(auth, 'admin')) &&
+      !!booking.club_id &&
+      verifyClubAccess(auth, booking.club_id);
     if (!isOwner && !isAdmin) {
       return forbiddenResponse('Keine Berechtigung für diese Buchung');
     }

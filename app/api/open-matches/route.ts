@@ -10,9 +10,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:open-matches');
@@ -165,13 +165,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!verifyClubAccess(auth, clubId)) return forbiddenResponse('Kein Zugriff auf diesen Verein');
+
     // Validate date is in the future
     const matchDateTime = new Date(`${matchDate}T${startTime}:00`);
     if (matchDateTime <= new Date()) {
       return NextResponse.json({ error: 'Match muss in der Zukunft liegen' }, { status: 400 });
     }
 
-    const serviceClient = createServiceClient();
+    const serviceClient = systemDb('Offene Matches: Teilnehmerzähler pflegen');
 
     // Create the match
     const { data: match, error } = await serviceClient
@@ -228,17 +230,19 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'matchId und action erforderlich' }, { status: 400 });
     }
 
-    const serviceClient = createServiceClient();
+    const serviceClient = systemDb('Offene Matches: Teilnehmerzähler pflegen');
 
     if (action === 'join') {
       // Check match exists and is open
       const { data: match } = await serviceClient
         .from('open_matches')
-        .select('id, status, current_players, max_players')
+        .select('id, club_id, status, current_players, max_players')
         .eq('id', matchId)
         .single();
 
-      if (!match) return NextResponse.json({ error: 'Match nicht gefunden' }, { status: 404 });
+      if (!match || !verifyClubAccess(auth, match.club_id)) {
+        return NextResponse.json({ error: 'Match nicht gefunden' }, { status: 404 });
+      }
       if (match.status !== 'open')
         return NextResponse.json({ error: 'Match ist nicht offen' }, { status: 409 });
       if (match.current_players >= match.max_players) {
@@ -331,7 +335,7 @@ export async function DELETE(req: NextRequest) {
     const matchId = new URL(req.url).searchParams.get('id');
     if (!matchId) return NextResponse.json({ error: 'id erforderlich' }, { status: 400 });
 
-    const serviceClient = createServiceClient();
+    const serviceClient = systemDb('Offene Matches: Teilnehmerzähler pflegen');
 
     // Only creator can cancel
     const { data: match } = await serviceClient

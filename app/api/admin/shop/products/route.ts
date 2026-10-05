@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { deleteStorageFile } from '@/lib/supabase/storage-utils';
 import { buildPaginationMeta } from '@/lib/pagination';
 
@@ -198,7 +198,7 @@ export async function DELETE(request: NextRequest) {
 
     // Clean up Storage file if the product had a Supabase Storage image
     if (existingProduct?.image_url) {
-      const serviceClient = createServiceClient();
+      const serviceClient = systemDb('Shop: Produktbild im Storage löschen');
       await deleteStorageFile(
         serviceClient,
         existingProduct.image_url,

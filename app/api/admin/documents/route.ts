@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:admin:documents');
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     const ext = file.name.split('.').pop() ?? 'bin';
     const filePath = `documents/${clubId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    const sb = createServiceClient();
+    const sb = systemDb('Vereinsdokumente: Storage-Upload');
     const { error: uploadErr } = await sb.storage.from(BUCKET).upload(filePath, file, {
       contentType: file.type || 'application/octet-stream',
       upsert: false,

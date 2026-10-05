@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 
 const STORAGE_BUCKET = 'swingz-files';
 const UPLOAD_PREFIX = 'shop-products';
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     const storagePath = `${UPLOAD_PREFIX}/${clubId}/${ts}-${rand}${safeExt}`;
 
     try {
-      const supabase = createServiceClient();
+      const supabase = systemDb('Shop: Produktbild-Upload');
       const buffer = Buffer.from(await file.arrayBuffer());
 
       const { error: uploadError } = await supabase.storage

@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse, verifyClubAccess } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:courts');
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
     // Bei Policy-Drift im Live-Schema liefert das für Admins eine leere Liste
     // ohne Fehler. Der Service-Client umgeht das; die Autorisierung ist oben
     // explizit passiert und der Query bleibt strikt auf `club_id` gescopt.
-    const supabase = createServiceClient();
+    const supabase = systemDb('Platzliste des geprüften Vereins');
 
     const { data: courts, error } = await supabase
       .from('courts')

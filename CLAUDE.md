@@ -3,7 +3,7 @@
 @AGENTS.md
 
 > Automatisch bei jedem Session-Start geladen. Nur Dinge die NICHT aus dem Code offensichtlich sind.
-> Zuletzt verifiziert: 4. Oktober 2026 (Drizzle-Laufzeitzugriff entfernt); 26. September 2026 (Code-Stand-Zahlen, pnpm statt npm; zuvor 13.09.: Rollen-Hierarchie und Tarife gegen Code geprüft;
+> Zuletzt verifiziert: 5. Oktober 2026 (kein Service-Client mehr in API-Routen); 4. Oktober 2026 (Drizzle-Laufzeitzugriff entfernt); 26. September 2026 (Code-Stand-Zahlen, pnpm statt npm; zuvor 13.09.: Rollen-Hierarchie und Tarife gegen Code geprüft;
 > Datenzugriffsmuster ADR-005 ergänzt)
 > Doku-Governance-Regeln (welche Datei wohin, wann updaten statt neu anlegen): siehe `AGENTS.md`.
 
@@ -88,8 +88,10 @@ Route (Auth + Zod) → Service (Fachlogik) → Repository (einziger DB-Zugriff) 
   laufen als DB-Funktion in einer Transaktion (`publish_season_plan`, `save_season_clustering`) —
   nie als Folge einzelner Supabase-Aufrufe.
 - Drizzle als Laufzeit-Datenzugriff ist seit 04.10.2026 entfernt (`db.ts` gelöscht, Schema bleibt
-  nur als Typquelle). Ältere Domänen greifen noch direkt per Service-Client in der Route zu —
-  Migration Domäne für Domäne (Plan: Archiv-Analyse § 6).
+  nur als Typquelle). Seit 05.10.2026 importiert keine API-Route mehr `createServiceClient`
+  (neue Importe brechen `arch:check`); RLS-Umgehung nur über `systemDb(reason)` mit expliziter
+  Vereinsprüfung (`verifyClubAccess`, `authorizeSeasonAccess`). Viele ältere Routen greifen aber
+  noch ohne Service/Repository direkt zu — Schichtung Domäne für Domäne (Plan: Archiv-Analyse § 6).
 
 ### UI
 

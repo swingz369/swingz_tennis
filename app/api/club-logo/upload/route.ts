@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { deleteStorageFile } from '@/lib/supabase/storage-utils';
 import { createLogger } from '@/lib/logger';
 
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     const storagePath = `${UPLOAD_PREFIX}/${clubId}/${variant}/${ts}-${rand}${safeExt}`;
 
     try {
-      const supabase = createServiceClient();
+      const supabase = systemDb('Vereinslogo: Storage und clubs-Spalte');
 
       // Delete old logo for this variant if exists
       const dbColumn =
@@ -196,7 +196,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     try {
-      const supabase = createServiceClient();
+      const supabase = systemDb('Vereinslogo: Storage und clubs-Spalte');
 
       const dbColumn =
         variant === 'dark'

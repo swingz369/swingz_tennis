@@ -4,6 +4,7 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { getSeasonCalendarData } from '@/lib/season-planning/season-calendar.service';
 import { createLogger } from '@/lib/logger';
+import { authorizeSeasonAccess } from '@/lib/season-auth';
 
 const log = createLogger('api:seasons:calendar');
 
@@ -25,6 +26,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     if (!seasonId) {
       return NextResponse.json({ error: 'season_id erforderlich' }, { status: 400 });
     }
+
+    // Fremde oder unbekannte Saison → 404/403 statt 500 aus dem Service
+    const access = await authorizeSeasonAccess(auth, seasonId);
+    if (!access.ok) return access.response;
 
     const { searchParams } = new URL(request.url);
     const bundeslandOverride = searchParams.get('bundesland') ?? undefined;

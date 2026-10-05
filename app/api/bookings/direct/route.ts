@@ -11,7 +11,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { isDayClosed, CLOSED_DAY_ERROR } from '@/lib/booking/opening-hours';
 import { loadBookingRules, checkBookingRules } from '@/lib/booking/booking-rules';
 import { resolveEffectiveMemberId } from '@/lib/family/family-auth';
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
 
     // Use service client for ad-hoc session creation (bypasses RLS on sessions)
     // Auth and role checks are already done above.
-    const serviceClient = createServiceClient();
+    const serviceClient = systemDb('Direktbuchung: Einheit im geprüften Verein anlegen');
 
     // Geschlossene Tage aus den Vereins-Öffnungszeiten sperren.
     const { data: clubHours } = await serviceClient

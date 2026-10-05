@@ -10,8 +10,8 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:admin:trial-training:convert-to-member');
@@ -44,8 +44,10 @@ export async function POST(
       );
     }
 
-    // Service-Client für auth.admin und direkte DB-Operationen (bypasses RLS)
-    const serviceClient = createServiceClient();
+    if (!verifyClubAccess(auth, clubId)) return forbiddenResponse('Kein Zugriff auf diesen Verein');
+
+    // auth.admin und Mitgliedschaft anlegen brauchen den Service-Client
+    const serviceClient = systemDb('Probetraining in Mitglied umwandeln, legt Auth-Nutzer an');
 
     // Probetraining-Anfrage abrufen
     const { data: trial, error: trialError } = await serviceClient

@@ -16,9 +16,9 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { berlinDateTime } from '@/lib/berlin-time';
 import { createLogger } from '@/lib/logger';
 
@@ -71,7 +71,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'endTime muss nach startTime liegen' }, { status: 400 });
     }
 
-    const serviceClient = createServiceClient();
+    if (!verifyClubAccess(auth, clubId)) return forbiddenResponse('Kein Zugriff auf diesen Verein');
+
+    const serviceClient = systemDb('Admin: Platzsperre im eigenen Verein');
+
+    const { data: court } = await serviceClient
+      .from('courts')
+      .select('id')
+      .eq('id', courtId)
+      .eq('club_id', clubId)
+      .maybeSingle();
+    if (!court) return NextResponse.json({ error: 'Platz nicht gefunden' }, { status: 404 });
 
     // 1. Find the club's active schedule
     const { data: schedule, error: scheduleError } = await serviceClient

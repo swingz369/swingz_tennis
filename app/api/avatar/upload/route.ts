@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { deleteStorageFile } from '@/lib/supabase/storage-utils';
 import { createLogger } from '@/lib/logger';
 
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     const storagePath = `${UPLOAD_PREFIX}/${userId}/${ts}-${rand}${safeExt}`;
 
     try {
-      const supabase = createServiceClient();
+      const supabase = systemDb('Eigenes Profilbild: Storage');
 
       // Delete old avatar if exists
       const { data: existingUser } = await supabase
@@ -155,7 +155,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     try {
-      const supabase = createServiceClient();
+      const supabase = systemDb('Eigenes Profilbild: Storage');
 
       const { data: existingUser } = await supabase
         .from('users')

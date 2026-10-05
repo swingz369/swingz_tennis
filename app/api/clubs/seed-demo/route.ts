@@ -5,7 +5,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:clubs:seed-demo');
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const hasRole = await verifyRole(auth, 'superadmin');
     if (!hasRole) return forbiddenResponse('Zugriff nur für Superadmins');
 
-    const sb = createServiceClient();
+    const sb = systemDb('Demo-Verein anlegen');
 
     // Idempotent: return existing demo club if already seeded
     const { data: existing } = await sb

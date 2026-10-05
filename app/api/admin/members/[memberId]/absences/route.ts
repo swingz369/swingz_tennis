@@ -11,7 +11,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:admin:members:absences');
@@ -81,7 +81,9 @@ export async function POST(
       return NextResponse.json({ error: 'clubId fehlt' }, { status: 400 });
     }
 
-    const service = createServiceClient();
+    if (!verifyClubAccess(auth, clubId)) return forbiddenResponse('Kein Zugriff auf diesen Verein');
+
+    const service = systemDb('Fehlzeiten: Trainer des Vereins benachrichtigen');
     const since = new Date();
     since.setDate(since.getDate() - LOOKBACK_DAYS);
 

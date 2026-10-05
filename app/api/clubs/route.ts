@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { errorResponse, internalErrorResponse } from '@/lib/api-error';
 import { createClient } from '@/infrastructure/external/supabase/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { ALL_LIMIT, buildPaginationMeta } from '@/lib/pagination';
@@ -199,7 +199,7 @@ export async function POST(req: NextRequest) {
       // self-created club exactly like an assigned one.
       // Owner skipped — they see all clubs via platform-level access, not club memberships.
       if (auth.role === 'superadmin') {
-        const serviceSb = createServiceClient();
+        const serviceSb = systemDb('Superadmin-Mitgliedschaft am neuen Verein');
         await serviceSb
           .from('user_club_memberships')
           .upsert(

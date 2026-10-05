@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 5. Oktober 2026 (Hydration-Fehler `/login` als Fremdprojekt erkannt); 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
+> Zuletzt verifiziert: 5. Oktober 2026 (Hydration-Fehler `/login` als Fremdprojekt erkannt; Service-Client aus allen API-Routen; Rechteausweitung über eigene Mitgliedschaft gefunden); 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
 > Produktion und lokale DB geprüft; Erledigtes gestrichen — die gestrichenen Punkte stehen in der
 > Git-Historie dieser Datei). Produktions-DB nicht direkt abgefragt; wo ein Befund nur lokal
 > belegt ist, steht das dabei.
@@ -121,17 +121,48 @@ Code: `lib/subscription-gate.ts` (`isSubscriptionEnforced`), `lib/env.ts`,
 
 ## P0 — Blocker
 
-### Service-Client-Bypass in API-Routen
+### Rechteausweitung über eigene Mitgliedschaft — Migration in Produktion anwenden
 
-`createServiceClient()` umgeht RLS. Genau dieser Pfad war laut ADR-005 Ursache der zwei
-Datenlecks im Juli. Stand 04.10.2026: **Drizzle ist aus der App entfernt** (letzte 5 Routen,
-3 öffentliche Seiten, `trainer-record`, Gebührenkategorien migriert; `db.ts` gelöscht).
-05.10.2026: 25 Whitelist-Routen (Cron, Stripe-Webhook, Health, öffentliche Formulare, Auth vor
-Login, Owner, Konto-Löschung) laufen über `systemDb(reason)`; dabei `/api/backup` von Admin auf
-Owner verschärft (Backups enthalten alle Vereine). Offen: **62 Routen** unter `app/api/`
-importieren noch `createServiceClient` →
-**Fix:** Domäne für Domäne nach ADR-005 migrieren, Whitelist-Fälle über `systemDb(reason)`.
-→ Quelle: `docs/ARCHIV/2026-09-16-adr-005-migrationsfortschritt-befund.md`.
+Jeder angemeldete Nutzer konnte per PostgREST (öffentlicher Anon-Key, kein App-Code nötig) die
+eigene Mitgliedschaft schreiben: Rolle auf `admin`/`owner` setzen, Admin-Mitgliedschaft in einem
+fremden Verein anlegen. Ebenso eigene Abo-/Stripe-Spalten in `users` (Bezahlschranke umgehbar).
+Lokal am 05.10.2026 belegt und mit `20261005100000_rechteausweitung_mitgliedschaft_abo.sql`
+geschlossen (`docs/DATABASE.md` § Rechteausweitung). Die Policy steht in der Baseline (=
+Produktionsschema 16.08.), keine spätere Migration entfernt sie → in Produktion sehr
+wahrscheinlich offen; nicht gegen Produktion geprüft (Agent darf Produktion nicht lesen).
+→ **Fix:** Migration in Produktion anwenden, danach dort prüfen, ob schon jemand Gebrauch
+gemacht hat:
+`select user_id, club_id, role, created_at from user_club_memberships where role in ('admin','superadmin','owner') order by created_at desc;`
+
+### Service-Client in API-Routen — erledigt 05.10.2026
+
+Keine Route unter `app/api/` importiert mehr `createServiceClient`. Wo RLS reicht, läuft der
+Zugriff über `auth.supabase`/`getUserDb`; bewusste Umgehungen (Cron, Webhook, öffentliche
+Formulare, Owner, Benachrichtigungen, Mitglieder-Sicht auf Trainer/Mitglieder, Storage,
+`auth.admin`) über `systemDb(reason)` mit expliziter Vereinsprüfung. Dabei geschlossen
+(vereinsübergreifend, lokal mit Alpha-Admin gegen Gamma belegt bzw. am Code nachvollzogen):
+Beschlüsse ändern/absagen, Trainer-Notizen lesen, Trainingswünsche lesen/schreiben,
+Fehlzeiten-Benachrichtigung, Probetraining umwandeln, Familienkonto austragen,
+Monatsübersicht Abrechnung, Platzsperre/Ad-hoc-Einheit anlegen, Buchung reaktivieren,
+offenes Match anlegen/beitreten; Superadmin-Bypass in Saisonplanung (Mitgliederliste,
+Stundenplan kopieren), Session-Absage, Kündigung, Stripe-Sync; `/api/backup` nur Owner;
+`/api/admin/billing/subscriptions` (Admin konnte sich selbst ein Abo geben) gelöscht.
+Architektur-Baseline 113 → 26 Einträge. `test:tenant`: keine Fremdzeile in GET-Routen.
+
+Offen dazu:
+
+- 15 Server-Seiten (Owner-Seiten, `admin/(gated)/members|courts|work-duties`, Abo-Seiten,
+  `(protected)/layout.tsx`, `status`) nutzen den Service-Client direkt — Liste in
+  `.dependency-cruiser-known-violations.json`.
+- ADR-005-Schichtung (Route → Service → Repository) fehlt in den umgestellten Routen weiterhin;
+  die Umstellung hat die RLS-Lücke geschlossen, nicht die Struktur vereinheitlicht.
+- `test:tenant` ist lokal rot ohne Wallet-Konfiguration (`/api/wallet/*` → 503 zählt als
+  „nicht erreichbar"). Der Fremdzeilen-Check selbst ist grün.
+- Weitere „eigene Zeile"-Schreib-Policies ohne Spaltenschutz prüfen: `shop_orders`
+  (INSERT nur `user_id = auth.uid()` — Status/Betrag frei?), `qr_checkins`,
+  `special_event_registrations`, `tournament_registrations`.
+- `resolveTrainerClubId` liefert nur den ersten Verein eines Trainers — Buchung/Warteliste bei
+  Trainern in mehreren Vereinen kann fälschlich 403 liefern.
 
 ### DB-Passwort rotieren (Folge des unverschlüsselten Pooler-Transports)
 

@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 import { randomUUID } from 'crypto';
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
     // Service client: the RLS policy that lets admins read other users' rows
     // relies on a users.role column that no longer exists (see work-duties fix).
-    const db = createServiceClient();
+    const db = systemDb('Admin: Familienkonten des eigenen Vereins');
 
     const { data: memberships, error: memberError } = await db
       .from('user_club_memberships')
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'memberIds erforderlich' }, { status: 400 });
     }
 
-    const db = createServiceClient();
+    const db = systemDb('Admin: Familienkonten des eigenen Vereins');
 
     // Members must belong to this admin's club — reject cross-club assignment.
     const { data: memberships, error: memberError } = await db
@@ -168,7 +168,22 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'familyGroupId und userId erforderlich' }, { status: 400 });
     }
 
-    const db = createServiceClient();
+    // Nur Mitglieder des eigenen Vereins austragen — family_accounts hat keine
+    // DELETE-Policy, die Vereinsgrenze prüft deshalb dieser Lookup (RLS: Admin
+    // sieht nur Mitgliedschaften seiner Vereine).
+    if (!auth.clubId)
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    const lookup =
+      auth.role === 'owner' ? systemDb('Owner: Familienkonten aller Vereine') : auth.supabase;
+    const { data: member } = await lookup
+      .from('user_club_memberships')
+      .select('user_id')
+      .eq('user_id', userId)
+      .eq('club_id', auth.clubId)
+      .maybeSingle();
+    if (!member) return NextResponse.json({ error: 'Mitglied nicht gefunden' }, { status: 404 });
+
+    const db = systemDb('Admin: Familienkonten des eigenen Vereins');
     const { error } = await db
       .from('family_accounts')
       .delete()
