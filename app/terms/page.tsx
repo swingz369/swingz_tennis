@@ -36,7 +36,7 @@ export default function TermsPage() {
                 </Button>
               </Link>
               <Button asChild variant="highlight">
-                <Link href="/register">Registrieren</Link>
+                <Link href="/register">Zugang anfragen</Link>
               </Button>
             </div>
           </nav>

@@ -34,7 +34,7 @@ const LINK_GROUPS = [
     heading: 'Konto',
     links: [
       { href: '/login', label: 'Anmelden' },
-      { href: '/register', label: 'Registrieren' },
+      { href: '/register', label: 'Zugang anfragen' },
     ],
   },
 ];

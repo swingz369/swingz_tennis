@@ -159,14 +159,27 @@ mit dem Scharfschalten vor dem Launch. Basiszinssatz: nächster Satz zum 01.01.2
 `/api/cron/refresh-base-rates` eintragen (Aufruf mit `CRON_SECRET` aus `.env.prod.local`; am
 03.10.2026 neu gesetzt, weil der Vercel-Wert als vertraulich nicht auslesbar war).
 
-### Abnahmen ausgelieferter Änderungen
+### Abnahmen ausgelieferter Änderungen (Stand 05.10.2026)
 
-- **Sentry:** `instrumentation.ts` / `instrumentation-client.ts` korrigiert. Echten Server- und
-  Client-Testfehler bis zum Alarm verfolgen.
-- **E-Mail:** Domain bei Resend `verified`, Env in Vercel gesetzt. Noch kein echter Versand aus
-  Produktion belegt (`docs/EMAIL_SETUP.md` Falle 3) — einmal Testmail auslösen.
-- **UX:** Landing-CTAs, Fehleranzeige im Anfrageformular, scrollbare Abrechnungs-Tabs —
-  Browserabnahme offen.
+Erledigt am 04./05.10.2026 in Produktion:
+
+- **Sentry:** Server-Fehler kommen an (Gebühren-500er, Gruppenroute), Alarmregel `627221`
+  („high priority issues“, E-Mail an Issue-Owner/aktive Mitglieder) hat am 04.10. 18:19 UTC
+  ausgelöst; Client-Ereignisse kommen ebenfalls an (Hydration-Fehler `/login`, siehe unten).
+- **E-Mail:** App-Versand aus Vercel belegt (drei Mails mit Resend-IDs im Log, Empfänger
+  `delivered@resend.dev`); Supabase-Auth über SMTP vom VPS belegt (Passwort-Reset Status 200).
+- **UX:** Landing-CTAs heißen überall „Zugang anfragen“ (Footer und fünf Rechtsseiten
+  nachgezogen); Anfrageformular zeigt bei Netzwerkfehler die deutsche Meldung als `role="alert"`
+  und gibt den Button wieder frei.
+
+Offen:
+
+- **Abrechnungs-Tabs mobil:** braucht Login als Admin im Browser (Agent darf in Produktion kein
+  Passwort eingeben) — von Hand bei ~390 px Breite prüfen, ob Tabs und Rechnungstabelle scrollen.
+- **Hydration-Fehler auf `/login`** (Sentry `JAVASCRIPT-NEXTJS-0U-3`, 04.10.2026): Ursache klären.
+- Sentry `JAVASCRIPT-NEXTJS-Z` (Gebühren-DELETE vor dem Fix) noch auf „resolved“ setzen.
+- Vier weitere direkte `resend.emails.send`-Aufrufe in Webhook/Rechnungsversand prüfen das
+  Ergebnis inzwischen selbst; neue Aufrufe nur noch über `src/infrastructure/email/email.service.ts`.
 
 ---
 

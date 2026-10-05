@@ -45,7 +45,8 @@ export async function POST(_request: NextRequest) {
       event = constructStripeEvent(body, signature);
     } catch (signatureError) {
       // Nicht von Stripe (oder falsches Secret): kein Serverfehler, kein Retry.
-      log.warn(
+      // info statt warn: jeder Bot-Aufruf würde sonst ein Sentry-Issue anlegen.
+      log.info(
         'Stripe-Signatur ungültig',
         signatureError instanceof Error ? signatureError : undefined
       );
