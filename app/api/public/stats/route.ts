@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
   try {
-    const supabase = createServiceClient();
+    const supabase = systemDb('öffentliche Statistik, kein Login');
 
     // Fetch platform-wide stats in parallel
     const [{ count: totalClubs }, { count: totalSessions }, { count: totalMembers }] =

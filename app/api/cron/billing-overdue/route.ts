@@ -1,7 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
-import { createServiceClient } from '@/lib/supabase/service';
 import { systemDb } from '@/infrastructure/db';
 import { DunningService } from '@/application/services/dunning.service';
 import { createLogger } from '@/lib/logger';
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest) {
   });
 
   try {
-    const supabase = createServiceClient();
+    const supabase = systemDb('Cron: überfällige Rechnungen');
 
     // Mark invoices past due_date as overdue
     const { data: updated, error } = await supabase

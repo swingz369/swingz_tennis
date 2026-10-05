@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { getPagination, buildPaginationMeta } from '@/lib/pagination';
 import { createLogger } from '@/lib/logger';
 
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       const from = params.from?.trim() || null;
       const to = params.to?.trim() || null;
 
-      const sb = createServiceClient();
+      const sb = systemDb('Owner: Audit-Log aller Vereine');
 
       // Schritt 1: Wenn nach Actor-E-Mail gefiltert wird, vorher die passenden
       // user_ids auflösen. Wir verwenden einen Lookup und nicht einen inner-join,

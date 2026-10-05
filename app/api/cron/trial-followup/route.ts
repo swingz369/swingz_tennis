@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { env } from '@/lib/env';
 import { createLogger } from '@/lib/logger';
 import { recordHeartbeat } from '@/lib/ops-heartbeat';
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
   });
 
   try {
-    const svc = createServiceClient();
+    const svc = systemDb('Cron: Probetraining-Nachfass');
     const { data: trials, error } = await svc
       .from('trial_trainings')
       .select(

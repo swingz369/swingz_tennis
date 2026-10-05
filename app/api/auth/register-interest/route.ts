@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const sb = createServiceClient();
+  const sb = systemDb('öffentliche Zugangsanfrage, kein Login');
 
   // Tabelle club_access_requests (Migration 20260622_club_access_requests.sql)
   const { error } = await sb.from('club_access_requests').insert({

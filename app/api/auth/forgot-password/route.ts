@@ -16,7 +16,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { sendPasswordResetEmail } from '@/lib/auth/send-password-reset-email';
 import { createLogger } from '@/lib/logger';
 import { appBaseUrl } from '@/lib/app-url';
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
   //    but we NEVER let Supabase lookup failures leak back to the caller.
 
   try {
-    const supabase = createServiceClient();
+    const supabase = systemDb('Passwort-Reset vor Login');
 
     // Use Supabase Admin API to generate a recovery (password-reset) link.
     // generateLink works even if the email does not exist — it simply won't

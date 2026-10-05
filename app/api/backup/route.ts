@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import { withCSRFProtection } from '@/lib/csrf';
 import { appBaseUrl } from '@/lib/app-url';
@@ -18,15 +18,15 @@ const BACKUP_PREFIX = 'backups';
  * GET /api/backup
  *
  * List available backups from Supabase Storage.
- * Admin-only: requires admin or superadmin role.
+ * Nur Owner: Backups enthalten die Daten aller Vereine.
  */
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
-    const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
+    const hasPermission = await verifyRole(auth, 'owner');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für den Plattformbetreiber');
 
     try {
-      const serviceClient = createServiceClient();
+      const serviceClient = systemDb('Owner: Backups im Storage');
 
       const { data, error } = await serviceClient.storage.from(STORAGE_BUCKET).list(BACKUP_PREFIX, {
         limit: 200,
@@ -78,8 +78,8 @@ export async function GET(_request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
-    const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
+    const hasPermission = await verifyRole(auth, 'owner');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für den Plattformbetreiber');
 
     const response = await withCSRFProtection(request, async () => {
       const startedAt = Date.now();
@@ -143,8 +143,8 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
-    const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) return forbiddenResponse('Zugriff nur für Admins');
+    const hasPermission = await verifyRole(auth, 'owner');
+    if (!hasPermission) return forbiddenResponse('Zugriff nur für den Plattformbetreiber');
 
     const response = await withCSRFProtection(request, async () => {
       const { searchParams } = new URL(request.url);
@@ -160,7 +160,7 @@ export async function DELETE(request: NextRequest) {
       }
 
       try {
-        const serviceClient = createServiceClient();
+        const serviceClient = systemDb('Owner: Backups im Storage');
 
         const { error } = await serviceClient.storage.from(STORAGE_BUCKET).remove([filePath]);
 

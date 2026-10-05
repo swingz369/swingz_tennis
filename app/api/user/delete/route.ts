@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 
@@ -10,7 +10,7 @@ const log = createLogger('api:user:delete');
 export async function DELETE(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const { user } = auth;
-    const serviceSb = createServiceClient();
+    const serviceSb = systemDb('Konto löschen (DSGVO), löscht Auth-Nutzer');
 
     try {
       // Anonymize personal data instead of hard-delete (preserves accounting records)

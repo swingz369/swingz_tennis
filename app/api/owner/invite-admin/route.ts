@@ -6,7 +6,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 import { appBaseUrl } from '@/lib/app-url';
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'E-Mail und Verein sind erforderlich' }, { status: 400 });
     }
 
-    const sb = createServiceClient();
+    const sb = systemDb('Owner: Superadmin einladen');
 
     let club: { id: string; name: string } | null = null;
     if (clubId) {

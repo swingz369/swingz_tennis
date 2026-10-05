@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -8,7 +8,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (rateLimitError) return rateLimitError;
 
   const { id } = await params;
-  const { data } = await createServiceClient()
+  const { data } = await systemDb('öffentliche Vereinsseite, kein Login')
     .from('clubs')
     .select('id, name, status')
     .eq('id', id)

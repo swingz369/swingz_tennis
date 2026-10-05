@@ -33,7 +33,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 
@@ -94,7 +94,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
       );
     }
 
-    const sb = createServiceClient();
+    const sb = systemDb('Owner: Mitgliedschaften aller Vereine');
 
     // Vorab-Load: wir brauchen role + user_id zur Rollen-Gate-Pruefung.
     const { data: current, error: curErr } = await sb

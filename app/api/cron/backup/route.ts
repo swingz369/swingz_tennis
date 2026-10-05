@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { recordHeartbeat } from '@/lib/ops-heartbeat';
@@ -39,7 +39,7 @@ interface BackupQueryResult {
  * Cast auf eine dynamische Query-Signatur statt `as any`.
  */
 export async function readTablePage(
-  supabase: ReturnType<typeof createServiceClient>,
+  supabase: ReturnType<typeof systemDb>,
   table: string,
   from: number,
   to: number
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
   log.info('Starting automated database backup');
 
   try {
-    const supabase = createServiceClient();
+    const supabase = systemDb('Cron: Datenbank-Backup');
 
     const backupTables = getBackupTables();
     log.info(`Backing up ${backupTables.length} tables`);
@@ -262,7 +262,7 @@ export async function GET(request: NextRequest) {
  * Remove backups older than MAX_BACKUPS days.
  * Keeps the most recent backups and removes older ones.
  */
-async function cleanupOldBackups(supabase: ReturnType<typeof createServiceClient>): Promise<void> {
+async function cleanupOldBackups(supabase: ReturnType<typeof systemDb>): Promise<void> {
   try {
     const { data, error } = await supabase.storage.from(STORAGE_BUCKET).list(BACKUP_PREFIX, {
       limit: 200,

@@ -5,7 +5,7 @@ import { createServerClient } from '@supabase/ssr';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
 import { logAudit } from '@/lib/audit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 
 const log = createLogger('auth:login');
 
@@ -21,7 +21,7 @@ const log = createLogger('auth:login');
  */
 async function logFailedLogin(email: string, request: NextRequest, reason: string) {
   try {
-    const { data } = await createServiceClient()
+    const { data } = await systemDb('Login: Profil-Lookup vor Session')
       .from('users')
       .select('id')
       .eq('email', email)

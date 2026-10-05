@@ -4,7 +4,7 @@ import * as Sentry from '@sentry/nextjs';
 import { internalErrorResponse } from '@/lib/api-error';
 import { timingSafeEqual } from 'crypto';
 import { env } from '@/lib/env';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import { recordHeartbeat } from '@/lib/ops-heartbeat';
 
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   }
 
-  const sb = createServiceClient();
+  const sb = systemDb('Cron: Basiszinssätze');
   const { searchParams } = new URL(request.url);
 
   const validFrom = searchParams.get('valid_from');
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
   });
 }
 
-async function runDiagnostics(sb: ReturnType<typeof createServiceClient>) {
+async function runDiagnostics(sb: ReturnType<typeof systemDb>) {
   const { data, error } = await sb
     .from('base_interest_rates')
     .select('valid_from, rate, source, created_at')

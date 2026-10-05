@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { env } from '@/lib/env';
 import { createLogger } from '@/lib/logger';
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServiceClient();
+    const supabase = systemDb('öffentliches Kontaktformular, kein Login');
 
     // Insert into contact_requests table
     const { data: contactRequest, error: insertError } = await supabase

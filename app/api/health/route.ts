@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import { MONITORED_JOBS } from '@/lib/ops-heartbeat';
 
@@ -23,7 +23,7 @@ export async function GET() {
     {};
 
   try {
-    const supabase = createServiceClient();
+    const supabase = systemDb('Health-Check ohne Login');
     const { error } = await supabase.from('clubs').select('id').limit(1);
     supabaseOk = !error;
     if (error) log.error('Health supabase check failed', error);

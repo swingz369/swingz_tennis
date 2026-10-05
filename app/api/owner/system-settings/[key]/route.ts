@@ -21,7 +21,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { logAudit } from '@/lib/audit';
 import { createLogger } from '@/lib/logger';
 
@@ -138,7 +138,7 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ key: 
       return NextResponse.json({ error: 'Feld "value" ist erforderlich' }, { status: 400 });
     }
 
-    const sb = createServiceClient();
+    const sb = systemDb('Owner: Systemeinstellungen');
 
     const { data: setting, error: loadErr } = await sb
       .from('system_settings')

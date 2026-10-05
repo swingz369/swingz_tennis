@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
+> Zuletzt verifiziert: 5. Oktober 2026 (Hydration-Fehler `/login` als Fremdprojekt erkannt); 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
 > Produktion und lokale DB geprüft; Erledigtes gestrichen — die gestrichenen Punkte stehen in der
 > Git-Historie dieser Datei). Produktions-DB nicht direkt abgefragt; wo ein Befund nur lokal
 > belegt ist, steht das dabei.
@@ -126,7 +126,10 @@ Code: `lib/subscription-gate.ts` (`isSubscriptionEnforced`), `lib/env.ts`,
 `createServiceClient()` umgeht RLS. Genau dieser Pfad war laut ADR-005 Ursache der zwei
 Datenlecks im Juli. Stand 04.10.2026: **Drizzle ist aus der App entfernt** (letzte 5 Routen,
 3 öffentliche Seiten, `trainer-record`, Gebührenkategorien migriert; `db.ts` gelöscht).
-Offen: **87 Routen** unter `app/api/` importieren noch `createServiceClient` →
+05.10.2026: 25 Whitelist-Routen (Cron, Stripe-Webhook, Health, öffentliche Formulare, Auth vor
+Login, Owner, Konto-Löschung) laufen über `systemDb(reason)`; dabei `/api/backup` von Admin auf
+Owner verschärft (Backups enthalten alle Vereine). Offen: **62 Routen** unter `app/api/`
+importieren noch `createServiceClient` →
 **Fix:** Domäne für Domäne nach ADR-005 migrieren, Whitelist-Fälle über `systemDb(reason)`.
 → Quelle: `docs/ARCHIV/2026-09-16-adr-005-migrationsfortschritt-befund.md`.
 
@@ -165,7 +168,10 @@ Erledigt am 04./05.10.2026 in Produktion:
 
 - **Sentry:** Server-Fehler kommen an (Gebühren-500er, Gruppenroute), Alarmregel `627221`
   („high priority issues“, E-Mail an Issue-Owner/aktive Mitglieder) hat am 04.10. 18:19 UTC
-  ausgelöst; Client-Ereignisse kommen ebenfalls an (Hydration-Fehler `/login`, siehe unten).
+  ausgelöst. Client-Erfassung ist konfiguriert (`NEXT_PUBLIC_SENTRY_DSN` in Vercel), aber noch
+  durch kein Browser-Ereignis belegt — der am 04.10. dafür gezählte Hydration-Fehler `/login`
+  (`JAVASCRIPT-NEXTJS-0U-3`) stammt aus dem Sentry-Projekt `javascript-nextjs-0u` (tsowx
+  Rechnungsportal, localhost:3005), nicht aus SwingZ.
 - **E-Mail:** App-Versand aus Vercel belegt (drei Mails mit Resend-IDs im Log, Empfänger
   `delivered@resend.dev`); Supabase-Auth über SMTP vom VPS belegt (Passwort-Reset Status 200).
 - **UX:** Landing-CTAs heißen überall „Zugang anfragen“ (Footer und fünf Rechtsseiten
@@ -176,7 +182,6 @@ Offen:
 
 - **Abrechnungs-Tabs mobil:** braucht Login als Admin im Browser (Agent darf in Produktion kein
   Passwort eingeben) — von Hand bei ~390 px Breite prüfen, ob Tabs und Rechnungstabelle scrollen.
-- **Hydration-Fehler auf `/login`** (Sentry `JAVASCRIPT-NEXTJS-0U-3`, 04.10.2026): Ursache klären.
 - Sentry `JAVASCRIPT-NEXTJS-Z` (Gebühren-DELETE vor dem Fix) noch auf „resolved“ setzen.
 - Vier weitere direkte `resend.emails.send`-Aufrufe in Webhook/Rechnungsversand prüfen das
   Ergebnis inzwischen selbst; neue Aufrufe nur noch über `src/infrastructure/email/email.service.ts`.

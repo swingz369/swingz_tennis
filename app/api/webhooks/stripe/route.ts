@@ -5,7 +5,7 @@ import type Stripe from 'stripe';
 import { Resend } from 'resend';
 import { constructStripeEvent, stripe as getStripeClient } from '@/lib/stripe/stripe-client';
 import { billingEngine } from '@/lib/billing-engine';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import type { PlanKey } from '@/lib/plans';
 import { StripeConnectService } from '@/application/services/stripe-connect.service';
@@ -54,7 +54,7 @@ export async function POST(_request: NextRequest) {
     }
 
     // ── Idempotency: atomic check-and-record (race-condition safe) ──
-    const supabase = createServiceClient();
+    const supabase = systemDb('Stripe-Webhook');
     try {
       // Cast needed until stripe_events table is in generated Supabase types
       const { data: isNew, error: reservationError } = await supabase
@@ -176,7 +176,7 @@ export async function POST(_request: NextRequest) {
       case 'payment_intent.payment_failed': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         // Look up payment by external_id (stripe payment intent id)
-        const supabase = createServiceClient();
+        const supabase = systemDb('Stripe-Webhook');
         const { data: payment } = await supabase
           .from('payments')
           .select('id, status')
@@ -203,7 +203,7 @@ export async function POST(_request: NextRequest) {
     // Fehler muss Stripe dieselbe Event-ID erneut zustellen können.
     if (reservedEventId) {
       try {
-        const { error: releaseError } = await createServiceClient()
+        const { error: releaseError } = await systemDb('Stripe-Webhook')
           .from('stripe_events')
           .delete()
           .eq('stripe_event_id', reservedEventId);
@@ -239,7 +239,7 @@ async function handleInvoicePayment(session: Stripe.Checkout.Session, invoiceId:
     throw new Error(`Rechnung ${invoiceId} nicht gefunden`);
   }
 
-  const supabase = createServiceClient();
+  const supabase = systemDb('Stripe-Webhook');
   const { data: existingPayment, error: existingPaymentError } = await supabase
     .from('payments')
     .select('id, status')
@@ -320,7 +320,7 @@ async function handleInvoicePayment(session: Stripe.Checkout.Session, invoiceId:
 // --- Booking payment handling ---
 
 async function handleBookingPayment(session: Stripe.Checkout.Session, bookingId: string) {
-  const supabase = createServiceClient();
+  const supabase = systemDb('Stripe-Webhook');
   const { userId, clubId } = session.metadata || {};
 
   const { data: booking } = await supabase
@@ -404,7 +404,7 @@ async function handleBookingPayment(session: Stripe.Checkout.Session, bookingId:
 // --- Shop order payment handling ---
 
 async function handleShopOrderPayment(session: Stripe.Checkout.Session, orderId: string) {
-  const supabase = createServiceClient();
+  const supabase = systemDb('Stripe-Webhook');
 
   // Status und Bestand in einer Transaktion (DB-Funktion). Bestand wird erst
   // nach Geldeingang abgezogen — per Checkout-Event oder handlePaymentIntentSucceeded.
@@ -442,7 +442,7 @@ async function handlePaymentIntentSucceeded(
   paymentIntent: Stripe.PaymentIntent,
   stripeAccount?: string
 ) {
-  const supabase = createServiceClient();
+  const supabase = systemDb('Stripe-Webhook');
 
   // Find the payment record created by checkout.session.completed
   const { data: payment, error: paymentError } = await supabase
@@ -524,7 +524,7 @@ async function handlePaymentIntentSucceeded(
  * Handles charge.refunded events — marks the associated payment as refunded.
  */
 async function handleChargeRefunded(charge: Stripe.Charge) {
-  const supabase = createServiceClient();
+  const supabase = systemDb('Stripe-Webhook');
 
   // Find the payment by external_id (payment intent)
   const paymentIntentId = charge.payment_intent as string;
@@ -548,7 +548,7 @@ async function handleSaasSubscription(
   userId: string,
   planHint?: PlanKey
 ) {
-  const supabase = createServiceClient();
+  const supabase = systemDb('Stripe-Webhook');
   const customerId = session.customer as string | null;
   const subscriptionId = session.subscription as string | null;
 
@@ -591,7 +591,7 @@ async function handleSaasSubscription(
 }
 
 async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
-  const supabase = createServiceClient();
+  const supabase = systemDb('Stripe-Webhook');
   const customerId = sub.customer as string;
   const priceId = sub.items.data[0]?.price.id;
   const tier = priceId ? priceToPlan(priceId) : null;
@@ -628,7 +628,7 @@ async function handleSaasInvoicePaymentFailed(invoice: Stripe.Invoice) {
   const customerId = invoice.customer as string | null;
   if (!customerId) return;
 
-  const supabase = createServiceClient();
+  const supabase = systemDb('Stripe-Webhook');
   const { data: userData } = await supabase
     .from('users')
     .select('id, email, full_name, stripe_subscription_id')
@@ -669,7 +669,7 @@ async function handleSaasInvoicePaymentFailed(invoice: Stripe.Invoice) {
 }
 
 async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
-  const supabase = createServiceClient();
+  const supabase = systemDb('Stripe-Webhook');
   const customerId = sub.customer as string;
   const { error } = await supabase
     .from('users')
@@ -685,7 +685,7 @@ async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
 
 async function handleBookingPaymentFailed(paymentIntentId: string, stripeAccount?: string) {
   const stripeClient = getStripeClient();
-  const supabase = createServiceClient();
+  const supabase = systemDb('Stripe-Webhook');
 
   try {
     const sessions = await stripeClient.checkout.sessions.list(

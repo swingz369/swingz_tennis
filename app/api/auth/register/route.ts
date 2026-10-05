@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { createServerClient } from '@supabase/ssr';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
 import { appBaseUrl } from '@/lib/app-url';
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     const userId = authData.user.id;
 
     // Use service client for admin operations (club + membership creation)
-    const serviceSb = createServiceClient();
+    const serviceSb = systemDb('Registrierung: Verein und Mitgliedschaft anlegen');
 
     // Create the club
     const { data: club, error: clubError } = await serviceSb

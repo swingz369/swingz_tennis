@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
 
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   const { participantId, password } = validation.data;
 
   try {
-    const svc = createServiceClient();
+    const svc = systemDb('öffentliche Probetraining-Registrierung, legt Auth-Nutzer an');
 
     const { data: trial, error: trialError } = await svc
       .from('trial_trainings')

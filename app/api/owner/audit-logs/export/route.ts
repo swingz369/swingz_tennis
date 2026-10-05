@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import { format } from 'date-fns';
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       const from = searchParams.get('from')?.trim() || null;
       const to = searchParams.get('to')?.trim() || null;
 
-      const sb = createServiceClient();
+      const sb = systemDb('Owner: Audit-Log-Export aller Vereine');
 
       // Actor-Email Lookup (analog zur GET-Route)
       let actorIds: string[] | null = null;

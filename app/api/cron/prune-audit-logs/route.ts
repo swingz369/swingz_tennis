@@ -16,7 +16,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import { recordHeartbeat } from '@/lib/ops-heartbeat';
 import { env } from '@/lib/env';
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const { data, error } = await createServiceClient().rpc('prune_audit_logs');
+    const { data, error } = await systemDb('Cron: Audit-Log-Bereinigung').rpc('prune_audit_logs');
     if (error) throw new Error(error.message);
 
     const result = Array.isArray(data) ? data[0] : data;

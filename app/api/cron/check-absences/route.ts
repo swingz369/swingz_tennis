@@ -10,7 +10,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import { recordHeartbeat } from '@/lib/ops-heartbeat';
 
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 });
   }
 
-  const service = createServiceClient();
+  const service = systemDb('Cron: Abwesenheitsprüfung');
   const now = new Date();
 
   const lookbackSince = new Date(now);
