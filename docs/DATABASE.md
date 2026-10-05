@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 5. Oktober 2026 (`clubs_access` gedroppt, globales `is_superadmin()` ersetzt; Check-ins, Turnier- und Event-Anmeldungen an Verein gebunden; `shop_orders` mit `club_id`, Käufer setzt keinen Zahlstatus; Rechteausweitung über eigene Mitgliedschaft und Abo-Spalten geschlossen, lokal angewendet); 4. Oktober 2026 (Pooler-TLS auf dem VPS eingerichtet und von außen verifiziert; `restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
+> Zuletzt verifiziert: 5. Oktober 2026 (Geister-Sessions in Produktion ohne Befund; `clubs_access` gedroppt, globales `is_superadmin()` ersetzt; Check-ins, Turnier- und Event-Anmeldungen an Verein gebunden; `shop_orders` mit `club_id`, Käufer setzt keinen Zahlstatus; Rechteausweitung über eigene Mitgliedschaft und Abo-Spalten geschlossen, lokal angewendet); 4. Oktober 2026 (Pooler-TLS auf dem VPS eingerichtet und von außen verifiziert; `restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -607,7 +607,7 @@ ORDER BY 1;
 ```
 
 Stand 03.10.2026, lokale DB: 9 Treffer, alle `walk_in` mit Buchung — keine Geister.
-Produktion noch nicht geprüft.
+Stand 05.10.2026, Produktion: 1 Treffer, `walk_in` mit Buchung (TC Rheinland) — keine Geister.
 
 Erst nach Sichtung entscheiden, ob und welche Zeilen (und deren abhängige Datensätze) gelöscht
 werden — die Audit-Quelle (`docs/ARCHIV/2026-08-13-kernmodul-durchlauf.md`, B5) warnt ausdrücklich

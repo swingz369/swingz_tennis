@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 5. Oktober 2026 (Hydration-Fehler `/login` als Fremdprojekt erkannt; Service-Client aus allen API-Routen; Rechteausweitung über eigene Mitgliedschaft gefunden); 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
+> Zuletzt verifiziert: 5. Oktober 2026 (Missbrauchsprüfung Rechteausweitung in Produktion ohne Befund; Hydration-Fehler `/login` als Fremdprojekt erkannt; Service-Client aus allen API-Routen; Rechteausweitung über eigene Mitgliedschaft gefunden); 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
 > Produktion und lokale DB geprüft; Erledigtes gestrichen — die gestrichenen Punkte stehen in der
 > Git-Historie dieser Datei). Produktions-DB nicht direkt abgefragt; wo ein Befund nur lokal
 > belegt ist, steht das dabei.
@@ -121,23 +121,17 @@ Code: `lib/subscription-gate.ts` (`isSubscriptionEnforced`), `lib/env.ts`,
 
 ## P0 — Blocker
 
-### Rechteausweitung per PostgREST — Migrationen angewendet, Missbrauchsprüfung offen
+### Rechteausweitung per PostgREST — geschlossen und geprüft 05.10.2026
 
-Vier Lücken, über die angemeldete Nutzer per PostgREST (öffentlicher Anon-Key, kein App-Code
-nötig) Rechte oder fremde Daten erlangten — Details `docs/DATABASE.md`:
-eigene Mitgliedschaft/Abo-Spalten schreiben (`20261005100000`), „bezahlte" Shop-Bestellung
-anlegen und Bestellungen fremder Vereine lesen/ändern (`20261005120000`), Turnier-/Event-
-Anmeldungen und Check-ins ohne Vereinsbezug (`20261005130000`), Vereinszeile als Mitglied
-ändern/löschen sowie globaler Superadmin-Bypass (`20261005140000`).
-Alle vier am 05.10.2026 in Produktion angewendet (Deploy-Lauf `37325387689`, Health grün).
-
-→ **Offen:** in Produktion prüfen, ob schon jemand Gebrauch gemacht hat (Agent darf Produktion
-nicht lesen):
-
-- `select user_id, club_id, role, created_at from user_club_memberships where role in ('admin','superadmin','owner') order by created_at desc;`
-- `select id, name, updated_at, features from clubs order by updated_at desc;`
-- `select count(*) filter (where club_id is null), count(*) filter (where payment_status = 'paid') from shop_orders;`
-  — bezahlte Bestellungen ohne passendes Stripe-Ereignis wären Missbrauch.
+Vier Lücken (eigene Mitgliedschaft/Abo-Spalten, Shop-Bestellungen, Turnier-/Event-Anmeldungen und
+Check-ins, Vereinszeile/Superadmin-Bypass — Details `docs/DATABASE.md`), Migrationen
+`20261005100000`–`20261005140000` am 05.10.2026 in Produktion angewendet (Deploy-Lauf `37325387689`).
+Missbrauchsprüfung in Produktion (`scripts/prod-read.sh`, 05.10.2026): kein Hinweis. Alle 14
+privilegierten Mitgliedschaften sind Seed-Konten (letzte am 31.08.), keine Mitgliedschaft seit
+14 Tagen, kein Admin in mehreren Vereinen; Abo-Tarife ≠ `free` nur bei den drei Seed-Admins der
+Agent-Lane; `shop_orders`, Turnier-/Event-Anmeldungen und Check-ins leer; keine Vereinszeile
+gelöscht, letzte Änderungen am 27.09. (drei Sandboxen in einer Anweisung, TC Rheinland nach Login
+des eigenen Admins von der Entwickler-IP laut `audit_logs`).
 
 ### Service-Client in API-Routen — erledigt 05.10.2026
 
@@ -166,7 +160,7 @@ Offen dazu:
 - „Eigene Zeile"-Schreib-Policies erledigt 05.10.2026 (`shop_orders`, `qr_checkins`,
   `special_event_registrations`, `tournament_registrations`; in Produktion angewendet).
   Globales `is_superadmin()` ebenso erledigt (`background_jobs`, `job_execution_log`, `players`,
-  `school_holidays`; `clubs_insert` bleibt gewollt), dabei `clubs_access` gefunden (P0).
+  `school_holidays`; `clubs_insert` bleibt gewollt), dabei `clubs_access` gefunden und geschlossen.
 - `resolveTrainerClubId` liefert nur den ersten Verein eines Trainers — Buchung/Warteliste bei
   Trainern in mehreren Vereinen kann fälschlich 403 liefern.
 
@@ -227,9 +221,8 @@ Offen:
 
 ## P1 — Wichtig
 
-- **Verwaiste Session-Einheiten in Produktion prüfen.** Lokal (03.10.2026) keine Geister: alle
-  `plan_entry_id IS NULL`-Sessions sind `walk_in` mit Buchung. Produktion mit der Abfrage aus
-  `docs/DATABASE.md` („Verwaiste Geister-Sessions") prüfen; nur `training`-Treffer sind Geister.
+Derzeit nichts offen. Verwaiste Session-Einheiten am 05.10.2026 in Produktion geprüft: keine
+Geister (einziger Treffer `walk_in` mit Buchung, TC Rheinland).
 
 ---
 
