@@ -6,7 +6,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { systemDb } from '@/infrastructure/db';
-import { resolveTrainerClubId } from '@/lib/trainers/trainer-record';
+import { isTrainerInClub } from '@/lib/trainers/trainer-record';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:trainer:waitlist');
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       .eq('id', slotId)
       .maybeSingle();
 
-    if (slotError || !slot || (await resolveTrainerClubId(slot.trainer_id)) !== auth.clubId) {
+    if (slotError || !slot || !(await isTrainerInClub(slot.trainer_id, auth.clubId))) {
       return NextResponse.json({ error: 'Slot nicht gefunden' }, { status: 404 });
     }
 

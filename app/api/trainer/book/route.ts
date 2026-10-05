@@ -6,7 +6,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { systemDb } from '@/infrastructure/db';
-import { resolveTrainerClubId } from '@/lib/trainers/trainer-record';
+import { isTrainerInClub } from '@/lib/trainers/trainer-record';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:trainer:book');
@@ -36,8 +36,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
     }
 
-    const trainerClubId = await resolveTrainerClubId(trainerId);
-    if (!trainerClubId || trainerClubId !== auth.clubId) {
+    if (!(await isTrainerInClub(trainerId, auth.clubId))) {
       return NextResponse.json(
         { error: 'Dieser Trainer gehört nicht zu deinem Verein' },
         { status: 403 }

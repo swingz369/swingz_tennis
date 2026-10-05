@@ -68,20 +68,20 @@ export async function resolveTrainerRecordId(userId: string): Promise<string | n
 }
 
 /**
- * Liefert die club_id, in der ein Trainer (trainers.id oder users.id) als
- * Trainer aktiv ist — oder null. Wird gebraucht, wo ein Mitglied über den
- * Service-Client fremde Trainer-Slots liest/bucht und die Vereinsgrenze
- * explizit geprüft werden muss, weil RLS diese Zeilen für Mitglieder nicht
- * freigibt.
+ * Ist ein Trainer (trainers.id oder users.id) im Verein `clubId` aktiv als
+ * Trainer? Wird gebraucht, wo ein Mitglied über den Service-Client fremde
+ * Trainer-Slots liest/bucht und die Vereinsgrenze explizit geprüft werden muss,
+ * weil RLS diese Zeilen für Mitglieder nicht freigibt. Prüft gegen alle Vereine
+ * des Trainers — Trainer dürfen in mehreren Vereinen aktiv sein.
  */
-export async function resolveTrainerClubId(trainerId: string): Promise<string | null> {
-  if (!UUID.test(trainerId)) return null;
+export async function isTrainerInClub(trainerId: string, clubId: string): Promise<boolean> {
+  if (!UUID.test(trainerId)) return false;
   const rows = await trainerRows(`id.eq.${trainerId},user_id.eq.${trainerId}`);
-  if (rows.length === 0) return null;
+  if (rows.length === 0) return false;
 
   const row = rows.find((r) => r.user_id) ?? rows[0];
   const memberships = await activeTrainerUserIds('user_id', row.user_id ?? row.id);
-  return memberships[0]?.club_id ?? null;
+  return memberships.some((m) => m.club_id === clubId);
 }
 
 /**

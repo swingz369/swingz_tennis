@@ -8,21 +8,34 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const rows: { id: string; user_id: string | null }[] = [];
 const filters: string[] = [];
+const memberships: { user_id: string; club_id: string }[] = [];
+
+// Abfragekette für user_club_memberships: .eq(...).eq(...).eq(...) → thenable.
+const membershipQuery = () => {
+  const q = {
+    eq: () => q,
+    then: (resolve: (v: unknown) => void) => resolve({ data: memberships, error: null }),
+  };
+  return q;
+};
 
 vi.mock('@/infrastructure/db', () => ({
   systemDb: () => ({
-    from: () => ({
-      select: () => ({
-        or: async (filter: string) => {
-          filters.push(filter);
-          return { data: rows, error: null };
-        },
-      }),
+    from: (table: string) => ({
+      select: () =>
+        table === 'user_club_memberships'
+          ? membershipQuery()
+          : {
+              or: async (filter: string) => {
+                filters.push(filter);
+                return { data: rows, error: null };
+              },
+            },
     }),
   }),
 }));
 
-const { resolveTrainerRecordId, resolveTrainerRecordIds } =
+const { resolveTrainerRecordId, resolveTrainerRecordIds, isTrainerInClub } =
   await import('@/lib/trainers/trainer-record');
 
 // Kurzschreibweise: 'user-1' → stabile UUID, damit die Fälle lesbar bleiben.
@@ -99,5 +112,33 @@ describe('resolveTrainerRecordIds', () => {
     const map = await resolveTrainerRecordIds(['x,user_id.not.is.null']);
     expect(map.size).toBe(0);
     expect(filters).toEqual([]);
+  });
+});
+
+describe('isTrainerInClub', () => {
+  beforeEach(() => {
+    setRows([{ id: 'trainer-1', userId: 'user-1' }]);
+    memberships.length = 0;
+  });
+
+  it('erkennt den Verein auch, wenn er nicht die erste Mitgliedschaft ist', async () => {
+    // Früher zählte nur memberships[0] — Trainer in zwei Vereinen bekamen im zweiten 403.
+    memberships.push(
+      { user_id: U('user-1'), club_id: U('club-a') },
+      { user_id: U('user-1'), club_id: U('club-b') }
+    );
+    expect(await isTrainerInClub(U('trainer-1'), U('club-a'))).toBe(true);
+    expect(await isTrainerInClub(U('trainer-1'), U('club-b'))).toBe(true);
+  });
+
+  it('verneint einen fremden Verein', async () => {
+    memberships.push({ user_id: U('user-1'), club_id: U('club-a') });
+    expect(await isTrainerInClub(U('trainer-1'), U('club-c'))).toBe(false);
+  });
+
+  it('verneint unbekannte Trainer und Nicht-UUIDs', async () => {
+    setRows([]);
+    expect(await isTrainerInClub(U('trainer-x'), U('club-a'))).toBe(false);
+    expect(await isTrainerInClub('x),id.neq.(0', U('club-a'))).toBe(false);
   });
 });

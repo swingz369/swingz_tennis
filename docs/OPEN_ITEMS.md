@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 5. Oktober 2026 (Missbrauchsprüfung Rechteausweitung in Produktion ohne Befund; Hydration-Fehler `/login` als Fremdprojekt erkannt; Service-Client aus allen API-Routen; Rechteausweitung über eigene Mitgliedschaft gefunden); 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
+> Zuletzt verifiziert: 5. Oktober 2026 (Trainer in mehreren Vereinen: Vereinsprüfung gegen alle Mitgliedschaften; Missbrauchsprüfung Rechteausweitung in Produktion ohne Befund; Hydration-Fehler `/login` als Fremdprojekt erkannt; Service-Client aus allen API-Routen; Rechteausweitung über eigene Mitgliedschaft gefunden); 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
 > Produktion und lokale DB geprüft; Erledigtes gestrichen — die gestrichenen Punkte stehen in der
 > Git-Historie dieser Datei). Produktions-DB nicht direkt abgefragt; wo ein Befund nur lokal
 > belegt ist, steht das dabei.
@@ -161,8 +161,6 @@ Offen dazu:
   `special_event_registrations`, `tournament_registrations`; in Produktion angewendet).
   Globales `is_superadmin()` ebenso erledigt (`background_jobs`, `job_execution_log`, `players`,
   `school_holidays`; `clubs_insert` bleibt gewollt), dabei `clubs_access` gefunden und geschlossen.
-- `resolveTrainerClubId` liefert nur den ersten Verein eines Trainers — Buchung/Warteliste bei
-  Trainern in mehreren Vereinen kann fälschlich 403 liefern.
 
 ### DB-Passwort rotieren (Folge des unverschlüsselten Pooler-Transports)
 

@@ -9,7 +9,7 @@ import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import {
   resolveTrainerRecordId,
-  resolveTrainerClubId,
+  isTrainerInClub,
   resolveClubTrainerRecordIds,
 } from '@/lib/trainers/trainer-record';
 
@@ -29,8 +29,7 @@ export async function GET(request: NextRequest) {
 
     if (trainerId) {
       if (auth.clubId) {
-        const trainerClubId = await resolveTrainerClubId(trainerId);
-        if (!trainerClubId || trainerClubId !== auth.clubId) {
+        if (!(await isTrainerInClub(trainerId, auth.clubId))) {
           return NextResponse.json({ slots: [], maxHoursPerWeek: null });
         }
       }
