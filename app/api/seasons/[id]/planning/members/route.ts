@@ -1,8 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { getUserDb, systemDb } from '@/infrastructure/db';
+import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:[id]:planning:members');
@@ -19,29 +20,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
     try {
       const { id: seasonId } = await context.params;
 
-      const isAdmin = await verifyRole(auth, 'admin');
-      const isSuperadmin = await verifyRole(auth, 'superadmin');
-      if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
+      // 1. Saison + Vereinszugriff (Superadmin nur für zugewiesene Vereine)
+      const access = await authorizeSeasonAccess(auth, seasonId);
+      if (!access.ok) return access.response;
+      const { season } = access;
 
-      const sb = createServiceClient();
-
-      // 1. Get season
-      const { data: season, error: seasonErr } = await sb
-        .from('seasons')
-        .select('id, club_id, season_type, year, name')
-        .eq('id', seasonId)
-        .maybeSingle();
-
-      if (seasonErr || !season) {
-        return NextResponse.json({ error: 'Saison nicht gefunden' }, { status: 404 });
-      }
-
-      if (!isSuperadmin) {
-        const hasClubAccess = auth.memberships.some(
-          (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
-        );
-        if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
-      }
+      const sb =
+        auth.role === 'owner' ? systemDb('Owner: Saisonplanung aller Vereine') : getUserDb(auth);
 
       // 2. Get active members for this club
       const { data: memberships, error: membErr } = await sb

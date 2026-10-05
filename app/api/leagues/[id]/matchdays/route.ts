@@ -1,7 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:leagues:[id]:matchdays');
@@ -87,22 +86,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // F4.3: Heimspiel → Catering-Eintrag automatisch anlegen (non-fatal)
     if ((is_home ?? true) && data?.id && auth.clubId) {
-      void (async () => {
-        try {
-          const sb = createServiceClient();
-          await sb
-            .from('match_caterings')
-            .upsert(
-              { match_day_id: data.id, club_id: auth.clubId!, status: 'not_planned' },
-              { onConflict: 'match_day_id', ignoreDuplicates: true }
-            );
-        } catch (hookErr) {
-          log.error(
-            '[MatchDays POST] Catering-Hook fehlgeschlagen',
-            hookErr instanceof Error ? hookErr : undefined
-          );
-        }
-      })();
+      const { error: hookErr } = await auth.supabase
+        .from('match_caterings')
+        .upsert(
+          { match_day_id: data.id, club_id: auth.clubId, status: 'not_planned' },
+          { onConflict: 'match_day_id', ignoreDuplicates: true }
+        );
+      if (hookErr) log.error('[MatchDays POST] Catering-Hook fehlgeschlagen', hookErr);
     }
 
     return NextResponse.json({ match_day: data }, { status: 201 });

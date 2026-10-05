@@ -14,7 +14,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import {
   loadMemberCandidates,
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     // Service-Client: Ein Mitglied darf Kaderzeilen nicht schreiben. Alle
     // Berechtigungen sind unten serverseitig geprüft.
-    const sb = createServiceClient();
+    const sb = systemDb('Kader: Mitglied bestätigt eigenen Kadereintrag');
     const { data: player } = await sb
       .from('league_players')
       .select('id, name, dtb_id, birth_year, member_id, club_id')

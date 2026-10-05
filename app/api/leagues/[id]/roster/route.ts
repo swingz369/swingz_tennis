@@ -7,7 +7,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, verifyOffice, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import {
   loadMemberCandidates,
   suggestByName,
@@ -108,7 +108,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // Bestätigte Zuordnung dauerhaft machen: DTB-ID am Mitglied festhalten.
     // Service-Client, weil der Admin fremde Profile nicht beschreiben darf; die
     // Vereinszugehörigkeit des Mitglieds ist oben geprüft.
-    if (memberId) await persistDtbId(createServiceClient(), memberId, data[0].dtb_id);
+    if (memberId)
+      await persistDtbId(
+        systemDb('Kader: DTB-ID am Profil eines Vereinsmitglieds festhalten'),
+        memberId,
+        data[0].dtb_id
+      );
     return NextResponse.json({ success: true });
   });
 }

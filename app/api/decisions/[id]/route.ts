@@ -7,24 +7,44 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse, unauthorizedResponse } from '@/lib/api-auth';
+import {
+  type AuthContext,
+  withApiAuth,
+  verifyRole,
+  forbiddenResponse,
+  unauthorizedResponse,
+} from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { createLogger } from '@/lib/logger';
-import { createServiceClient } from '@/lib/supabase/service';
+import { getUserDb, systemDb } from '@/infrastructure/db';
 import { validateRequestBody, formatValidationErrors } from '@/lib/validation-schemas';
 import type { ZodError } from 'zod';
 import { UpdateDecisionSchema } from '@/lib/types/decisions';
 import { decisionService } from '@/lib/decisions/decision.service';
 
 const log = createLogger('api:decisions/[id]');
-const sb = createServiceClient();
+
+/** RLS-Client; der Owner hat keine Vereins-Mitgliedschaft und liest über systemDb. */
+function db(auth: AuthContext) {
+  return auth.role === 'owner' ? systemDb('Owner: Beschlüsse aller Vereine') : getUserDb(auth);
+}
+
+/**
+ * decisionService schreibt mit dem Service-Client und prüft den Verein nicht —
+ * deshalb hier per RLS sicherstellen, dass der Beschluss zum Verein des Admins gehört.
+ */
+async function isOwnClubDecision(auth: AuthContext, id: string): Promise<boolean> {
+  const { data } = await db(auth).from('board_decisions').select('id').eq('id', id).maybeSingle();
+  return !!data;
+}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
     if (!auth.clubId) return unauthorizedResponse('Club-Kontext fehlt');
     const { id } = await params;
 
+    const sb = db(auth);
     const { data: decision, error } = await sb
       .from('board_decisions')
       .select('*')
@@ -65,6 +85,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (rateLimitError) return rateLimitError;
 
       const { id } = await params;
+      if (!(await isOwnClubDecision(auth, id))) {
+        return NextResponse.json({ error: 'Beschluss nicht gefunden' }, { status: 404 });
+      }
       const body = await request.json();
       const validation = validateRequestBody(UpdateDecisionSchema, body);
       if (!validation.success) {
@@ -105,6 +128,9 @@ export async function DELETE(
       if (rateLimitError) return rateLimitError;
 
       const { id } = await params;
+      if (!(await isOwnClubDecision(auth, id))) {
+        return NextResponse.json({ error: 'Beschluss nicht gefunden' }, { status: 404 });
+      }
       try {
         // Soft-Delete: status = 'cancelled' statt Hard-Delete (Audit!)
         const decision = await decisionService.updateDecision(id, auth.user.id, {

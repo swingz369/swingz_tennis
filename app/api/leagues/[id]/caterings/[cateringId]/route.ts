@@ -1,7 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
 import { UpdateCateringSchema } from '@/lib/types/catering';
 import { createLogger } from '@/lib/logger';
 
@@ -25,8 +24,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Ungültige Eingabe' }, { status: 400 });
     }
 
-    const sb = createServiceClient();
-    const { data, error } = await sb
+    const { data, error } = await auth.supabase
       .from('match_caterings')
       .update({ ...parsed.data, updated_at: new Date().toISOString() })
       .eq('id', cateringId)

@@ -1,7 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:leagues:[id]:caterings');
@@ -16,10 +15,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (!hasRole) return forbiddenResponse('Anmeldung erforderlich');
 
     const { id: leagueId } = await params;
-    const sb = createServiceClient();
+    const sb = auth.supabase;
 
     // Fetch match_day IDs for this league (only home games)
-    const { data: matchDays } = await (auth.supabase as ReturnType<typeof createServiceClient>)
+    const { data: matchDays } = await auth.supabase
       .from('match_days')
       .select('id')
       .eq('league_id', leagueId)
@@ -56,7 +55,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Verify match_day belongs to this league and club
-    const { data: matchDay } = await (auth.supabase as ReturnType<typeof createServiceClient>)
+    const { data: matchDay } = await auth.supabase
       .from('match_days')
       .select('id, is_home')
       .eq('id', match_day_id)
@@ -70,8 +69,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Bewirtung nur für Heimspiele möglich' }, { status: 400 });
     }
 
-    const sb = createServiceClient();
-    const { data, error } = await sb
+    const { data, error } = await auth.supabase
       .from('match_caterings')
       .upsert(
         { match_day_id, club_id: auth.clubId!, status: 'not_planned' },

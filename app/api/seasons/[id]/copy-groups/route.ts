@@ -1,7 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { getUserDb, systemDb } from '@/infrastructure/db';
+import { authorizeSeasonAccess } from '@/lib/season-auth';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:copy-groups');
@@ -41,36 +42,27 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       );
     }
 
-    const supabase = createServiceClient();
+    // Ziel-Saison + Vereinszugriff (Superadmin nur für zugewiesene Vereine)
+    const access = await authorizeSeasonAccess(auth, targetSeasonId);
+    if (!access.ok) return access.response;
+    const targetSeason = access.season;
 
-    // Ziel-Saison laden und Club-Zugehörigkeit prüfen
-    const { data: targetSeason, error: targetErr } = await supabase
-      .from('seasons')
-      .select('id, club_id, name')
-      .eq('id', targetSeasonId)
-      .single();
+    const supabase =
+      auth.role === 'owner' ? systemDb('Owner: Saisonplanung aller Vereine') : getUserDb(auth);
 
-    if (targetErr || !targetSeason) {
-      return NextResponse.json({ error: 'Ziel-Saison nicht gefunden' }, { status: 404 });
-    }
-
-    if (auth.role !== 'superadmin' && targetSeason.club_id !== auth.clubId) {
-      return forbiddenResponse('Keine Berechtigung für diese Saison');
-    }
-
-    // Quell-Saison laden
+    // Quell-Saison laden (RLS: fremde Vereine sind unsichtbar → 404)
     const { data: sourceSeason, error: sourceErr } = await supabase
       .from('seasons')
       .select('id, club_id, name')
       .eq('id', sourceSeasonId)
-      .single();
+      .maybeSingle();
 
     if (sourceErr || !sourceSeason) {
       return NextResponse.json({ error: 'Quell-Saison nicht gefunden' }, { status: 404 });
     }
 
-    // Beide Saisons müssen zum gleichen Verein gehören (außer superadmin)
-    if (auth.role !== 'superadmin' && sourceSeason.club_id !== targetSeason.club_id) {
+    // Plätze, Trainer und Gruppen sind vereinsgebunden — nur innerhalb eines Vereins kopieren
+    if (sourceSeason.club_id !== targetSeason.club_id) {
       return forbiddenResponse('Quell- und Ziel-Saison müssen zum gleichen Verein gehören');
     }
 

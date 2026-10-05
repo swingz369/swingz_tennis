@@ -13,7 +13,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { loadMemberCandidates, suggestByName } from '@/lib/services/league-member-matching';
 
 const log = createLogger('api:member:leagues');
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
  * einem Mitglied nur sein eigenes Profil) — zurück geht nur der eigene Treffer.
  */
 async function findSuggestions(clubId: string, userId: string) {
-  const sb = createServiceClient();
+  const sb = systemDb('Kader: Namensabgleich gegen alle Vereinsmitglieder');
   const [members, { data: open }] = await Promise.all([
     loadMemberCandidates(sb, clubId),
     sb

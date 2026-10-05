@@ -9,14 +9,13 @@ import { withApiAuth, verifyRole, forbiddenResponse, unauthorizedResponse } from
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { createLogger } from '@/lib/logger';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { validateRequestBody, formatValidationErrors } from '@/lib/validation-schemas';
 import type { ZodError } from 'zod';
 import { CastVoteSchema } from '@/lib/types/decisions';
 import { decisionService } from '@/lib/decisions/decision.service';
 
 const log = createLogger('api:decisions/votes');
-const sb = createServiceClient();
 
 /** GET /api/decisions/[id]/votes → current user's own vote on this decision (or null). */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -25,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (!hasRole) return forbiddenResponse('Login erforderlich');
 
     const { id } = await params;
-    const { data, error } = await sb
+    const { data, error } = await auth.supabase
       .from('decision_votes')
       .select('id, decision_id, voter_id, choice, voted_at')
       .eq('decision_id', id)
@@ -62,7 +61,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
 
       // Validiere Decision-Zugehörigkeit zum Club des Voters
-      const { data: decision } = await sb
+      // Mitglieder sehen per RLS nur abgeschlossene Beschlüsse — für die
+      // Abstimmung muss der laufende Beschluss aber prüfbar sein.
+      const { data: decision } = await systemDb('Beschlüsse: Abstimmungsstatus für Mitglied prüfen')
         .from('board_decisions')
         .select('club_id, status')
         .eq('id', id)
