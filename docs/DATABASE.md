@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 5. Oktober 2026 (`shop_orders` mit `club_id`, Käufer setzt keinen Zahlstatus; Rechteausweitung über eigene Mitgliedschaft und Abo-Spalten geschlossen, lokal angewendet); 4. Oktober 2026 (Pooler-TLS auf dem VPS eingerichtet und von außen verifiziert; `restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
+> Zuletzt verifiziert: 5. Oktober 2026 (Check-ins, Turnier- und Event-Anmeldungen an Verein gebunden; `shop_orders` mit `club_id`, Käufer setzt keinen Zahlstatus; Rechteausweitung über eigene Mitgliedschaft und Abo-Spalten geschlossen, lokal angewendet); 4. Oktober 2026 (Pooler-TLS auf dem VPS eingerichtet und von außen verifiziert; `restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -368,6 +368,26 @@ Freischaltung aber nicht. Einzige Policy `club_stripe_accounts_member_read` (SEL
 - Prüfung danach (Transaktion, zurückgerollt): Mitglied „bezahlt"/ohne Verein → RLS-Fehler,
   Zahlstatus ändern → `permission denied`; Admin Alpha sieht/ändert Gamma-Bestellung → 0 Zeilen;
   Admin Gamma → Status ok, Zahlstatus `permission denied`.
+
+## Check-ins, Turnier- und Event-Anmeldungen an den Verein gebunden (Stand 05.10.2026, lokal angewendet)
+
+`20261005130000_eigene_zeile_checkins_anmeldungen.sql`, gleiches Muster wie `shop_orders`:
+
+- **`tournament_registrations`/`tournament_matches`:** `is_superadmin()` entfernt — der Helfer ist
+  global (Superadmin _irgendeines_ Vereins) und gab Zugriff auf alle Turniere. Verwaltung jetzt
+  nur `is_club_admin(Verein des Turniers)`. Anmelden nur als Mitglied des Turnier-Vereins, nur
+  `status='registered'`, `payment_status='pending'`, ohne `seed`.
+- **`special_event_registrations`:** `own_registrations` (ALL) ersetzt. Anmelden nur als Mitglied
+  des Event-Vereins und nur `status='registered'`; Entwürfe sieht ein Mitglied nicht und kann sich
+  daher nicht anmelden. Abmelden (DELETE) eigene Zeile; alles andere nur `is_club_admin`.
+- **`qr_checkins`:** Einchecken nur mit eigener bestätigter Buchung genau dieser Session.
+  `checked_in_at` setzt die DB (`authenticated` hat INSERT nur auf `session_id, user_id, booking_id`).
+  Admin/Trainer über den Verein der Session (`sessions.court_id → courts.club_id`) statt
+  `is_admin_of_user`/`is_staff_of_user`.
+- `anon` hat auf allen vier Tabellen keine Rechte mehr.
+- Prüfung (Transaktion, zurückgerollt; Alpha/Gamma, Superadmin TSV Dortmund): 13 Fälle wie erwartet.
+- Weiter mit globalem `is_superadmin()` in Policies (noch nicht geprüft): `background_jobs`,
+  `job_execution_log`, `players`, `school_holidays`, `clubs_insert`.
 
 ## Rollen-/Club-Scoping-Modell (aktueller, korrekter Stand)
 

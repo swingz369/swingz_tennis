@@ -108,7 +108,6 @@ export async function POST(request: NextRequest) {
       session_id: resolvedSessionId,
       user_id: user.id,
       booking_id: booking.id,
-      checked_in_at: new Date().toISOString(),
     });
 
     if (error) throw error;
