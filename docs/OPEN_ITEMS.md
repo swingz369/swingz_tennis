@@ -121,29 +121,23 @@ Code: `lib/subscription-gate.ts` (`isSubscriptionEnforced`), `lib/env.ts`,
 
 ## P0 — Blocker
 
-### Rechteausweitung über eigene Mitgliedschaft — Migration in Produktion anwenden
+### Rechteausweitung per PostgREST — Migrationen angewendet, Missbrauchsprüfung offen
 
-Jeder angemeldete Nutzer konnte per PostgREST (öffentlicher Anon-Key, kein App-Code nötig) die
-eigene Mitgliedschaft schreiben: Rolle auf `admin`/`owner` setzen, Admin-Mitgliedschaft in einem
-fremden Verein anlegen. Ebenso eigene Abo-/Stripe-Spalten in `users` (Bezahlschranke umgehbar).
-Lokal am 05.10.2026 belegt und mit `20261005100000_rechteausweitung_mitgliedschaft_abo.sql`
-geschlossen (`docs/DATABASE.md` § Rechteausweitung). Die Policy steht in der Baseline (=
-Produktionsschema 16.08.), keine spätere Migration entfernt sie → in Produktion sehr
-wahrscheinlich offen; nicht gegen Produktion geprüft (Agent darf Produktion nicht lesen).
-→ **Fix:** Migration in Produktion anwenden, danach dort prüfen, ob schon jemand Gebrauch
-gemacht hat:
-`select user_id, club_id, role, created_at from user_club_memberships where role in ('admin','superadmin','owner') order by created_at desc;`
+Vier Lücken, über die angemeldete Nutzer per PostgREST (öffentlicher Anon-Key, kein App-Code
+nötig) Rechte oder fremde Daten erlangten — Details `docs/DATABASE.md`:
+eigene Mitgliedschaft/Abo-Spalten schreiben (`20261005100000`), „bezahlte" Shop-Bestellung
+anlegen und Bestellungen fremder Vereine lesen/ändern (`20261005120000`), Turnier-/Event-
+Anmeldungen und Check-ins ohne Vereinsbezug (`20261005130000`), Vereinszeile als Mitglied
+ändern/löschen sowie globaler Superadmin-Bypass (`20261005140000`).
+Alle vier am 05.10.2026 in Produktion angewendet (Deploy-Lauf `37325387689`, Health grün).
 
-Gleicher Weg für `20261005120000_shop_orders_verein_und_status.sql` und
-`20261005130000_eigene_zeile_checkins_anmeldungen.sql` (Mitglied legt „bezahlte"
-Bestellung an; Admin A liest/ändert Bestellungen bei Verein B). Danach in Produktion:
-`select count(*) filter (where club_id is null), count(*) filter (where payment_status = 'paid') from shop_orders;`
-— bezahlte Bestellungen ohne passendes Stripe-Ereignis wären Missbrauch.
+→ **Offen:** in Produktion prüfen, ob schon jemand Gebrauch gemacht hat (Agent darf Produktion
+nicht lesen):
 
-**Am dringendsten:** `20261005140000_clubs_access_globaler_superadmin.sql` — jedes Mitglied
-konnte die eigene Vereinszeile ändern (Name, `features` = Module freischalten) und löschen.
-Danach in Produktion prüfen, ob Vereinsdaten unerwartet geändert wurden
-(`select id, name, updated_at, features from clubs order by updated_at desc;`).
+- `select user_id, club_id, role, created_at from user_club_memberships where role in ('admin','superadmin','owner') order by created_at desc;`
+- `select id, name, updated_at, features from clubs order by updated_at desc;`
+- `select count(*) filter (where club_id is null), count(*) filter (where payment_status = 'paid') from shop_orders;`
+  — bezahlte Bestellungen ohne passendes Stripe-Ereignis wären Missbrauch.
 
 ### Service-Client in API-Routen — erledigt 05.10.2026
 
@@ -170,7 +164,7 @@ Offen dazu:
 - `test:tenant` ist lokal rot ohne Wallet-Konfiguration (`/api/wallet/*` → 503 zählt als
   „nicht erreichbar"). Der Fremdzeilen-Check selbst ist grün.
 - „Eigene Zeile"-Schreib-Policies erledigt 05.10.2026 (`shop_orders`, `qr_checkins`,
-  `special_event_registrations`, `tournament_registrations`; Produktion offen, siehe P0).
+  `special_event_registrations`, `tournament_registrations`; in Produktion angewendet).
   Globales `is_superadmin()` ebenso erledigt (`background_jobs`, `job_execution_log`, `players`,
   `school_holidays`; `clubs_insert` bleibt gewollt), dabei `clubs_access` gefunden (P0).
 - `resolveTrainerClubId` liefert nur den ersten Verein eines Trainers — Buchung/Warteliste bei
