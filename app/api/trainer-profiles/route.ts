@@ -10,7 +10,7 @@ import { TrainerProfileService } from '@/application/services/trainer-profile.se
 import type { TrainerProfile } from '@/domain/entities/trainer.entity';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:trainer-profiles');
@@ -138,7 +138,7 @@ export async function GET(_request: NextRequest) {
       // 2. Check for trainers in memberships that have no profile yet. Service
       //    client bypasses RLS — nötig, um alle Mitgliedschaften des Vereins zu
       //    sehen, unabhängig davon, ob der Aufrufer sie selbst einsehen dürfte.
-      const serviceClient = createServiceClient();
+      const serviceClient = systemDb('Trainer-Mitgliedschaften des Vereins ohne Profil');
       const { data: memberships, error: membershipError } = await serviceClient
         .from('user_club_memberships')
         .select('user_id, created_at, is_active')

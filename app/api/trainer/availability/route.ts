@@ -5,7 +5,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import {
   resolveTrainerRecordId,
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     // RLS lässt Mitglieder fremde Trainer-Slots nicht lesen (nur der Trainer
     // selbst oder ein Superadmin des Vereins). Der Service-Client umgeht das —
     // die Vereinsgrenze wird hier explizit geprüft statt auf RLS zu vertrauen.
-    const supabase = createServiceClient();
+    const supabase = systemDb('Trainer-Slots für Mitglieder des Vereins');
 
     if (trainerId) {
       if (auth.clubId) {

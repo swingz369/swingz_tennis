@@ -4,7 +4,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { resolveTrainerRecordIds } from '@/lib/trainers/trainer-record';
 import { createLogger } from '@/lib/logger';
 
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     // Zeile frei — ein Client-Query liefert deshalb immer eine leere Liste. Der
     // Service-Client umgeht das; die Autorisierung ist hier explizit: `clubId`
     // stammt aus der eigenen aktiven Mitgliedschaft.
-    const supabase = createServiceClient();
+    const supabase = systemDb('Trainerliste für Mitglieder des Vereins');
 
     // Fetch trainer memberships for this club
     const { data, error } = await supabase

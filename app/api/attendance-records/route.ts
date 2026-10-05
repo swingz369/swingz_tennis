@@ -4,7 +4,7 @@ import { internalErrorResponse } from '@/lib/api-error';
 import { AttendanceRecordService } from '@/application/services/attendance-record.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:attendance-records');
@@ -67,7 +67,7 @@ export async function POST(_request: NextRequest) {
       // Gamification: 5 Punkte für Anwesenheit (fire-and-forget)
       after(async () => {
         try {
-          const svc = createServiceClient();
+          const svc = systemDb('Gamification: Anwesenheitspunkte für Teilnehmer');
           const { data: existing } = await svc
             .from('gamification_points')
             .select('points')

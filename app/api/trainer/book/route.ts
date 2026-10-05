@@ -5,7 +5,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { resolveTrainerClubId } from '@/lib/trainers/trainer-record';
 import { createLogger } from '@/lib/logger';
 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServiceClient();
+    const supabase = systemDb('Mitglied bucht Trainer-Slot des eigenen Vereins');
 
     // Find the available slot
     const { data: slot } = await supabase

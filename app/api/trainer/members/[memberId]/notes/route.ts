@@ -9,7 +9,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import { logAudit } from '@/lib/audit';
 
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ memb
       return forbiddenResponse('Trainer-Zugang erforderlich');
 
     const { memberId } = await params;
-    const service = createServiceClient();
+    const service = auth.supabase;
 
     // Trainer-Datensatz des eingeloggten Users ermitteln
     const { data: trainer } = await (service as any)
@@ -82,7 +82,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ memb
       return NextResponse.json({ error: 'Kein Club-Kontext' }, { status: 400 });
     }
 
-    const service = createServiceClient();
+    const service = auth.supabase;
 
     const { data: trainer } = await (service as any)
       .from('trainers')
@@ -107,7 +107,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ memb
     }
 
     // Sicherstellen, dass das Mitglied im selben Club ist
-    const { data: memberClub } = await (service as any)
+    const memberDb = systemDb('Trainer-Notiz: Vereinszugehörigkeit des Mitglieds prüfen');
+    const { data: memberClub } = await (memberDb as any)
       .from('user_club_memberships')
       .select('id')
       .eq('user_id', memberId)
@@ -118,7 +119,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ memb
     // member_id in bookings/memberships bezieht sich auf user_id; versuche beides
     const { data: memberClubById } = memberClub
       ? { data: memberClub }
-      : await (service as any)
+      : await (memberDb as any)
           .from('user_club_memberships')
           .select('id')
           .eq('id', memberId)
@@ -190,7 +191,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Kein Club-Kontext' }, { status: 400 });
     }
 
-    const service = createServiceClient();
+    const service = auth.supabase;
 
     const { data: trainer } = await (service as any)
       .from('trainers')

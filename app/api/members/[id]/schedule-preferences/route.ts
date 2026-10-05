@@ -1,21 +1,31 @@
 import { NextResponse } from 'next/server';
 import { internalErrorResponse } from '@/lib/api-error';
 import type { NextRequest } from 'next/server';
-import { withApiAuth, verifyRole } from '@/lib/api-auth';
+import { withApiAuth } from '@/lib/api-auth';
 import type { AuthContext } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { getUserDb, systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 import { uuidSchema } from '@/application/validation/schemas';
 
 const log = createLogger('api:members:[id]:schedule-preferences');
 
-// ponytail: eigener User, admin (global), oder trainer/admin desselben Clubs
+// Eigener User, Owner, oder Admin/Superadmin genau dieses Vereins
 async function canAccess(auth: AuthContext, userId: string, clubId: string): Promise<boolean> {
-  if (auth.user.id === userId) return true;
-  if (await verifyRole(auth, 'admin')) return true;
+  if (auth.user.id === userId || auth.role === 'owner') return true;
   return auth.memberships.some(
-    (m) => m.club_id === clubId && (m.role === 'trainer' || m.role === 'admin')
+    (m) => m.club_id === clubId && (m.role === 'admin' || m.role === 'superadmin')
   );
+}
+
+/**
+ * Lesen und Ändern deckt RLS für den Nutzer selbst und Vereinsadmins ab; anlegen
+ * darf per RLS nur der Nutzer selbst. Admins (für ein Mitglied) und der Owner
+ * schreiben deshalb über systemDb — canAccess hat den Verein vorher geprüft.
+ */
+function db(auth: AuthContext, userId: string) {
+  return auth.user.id === userId
+    ? getUserDb(auth)
+    : systemDb('Admin pflegt Trainingswünsche eines Mitglieds');
 }
 
 /**
@@ -38,7 +48,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
-    const supabase = createServiceClient();
+    const supabase = db(auth, userId);
     const { data, error } = await supabase
       .from('member_schedule_preferences')
       .select('*')
@@ -106,7 +116,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
     }
 
-    const supabase = createServiceClient();
+    const supabase = db(auth, userId);
 
     // Upsert: check if exists first
     const { data: existing } = await supabase

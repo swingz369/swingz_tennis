@@ -5,7 +5,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
+import { resolveTrainerClubId } from '@/lib/trainers/trainer-record';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:trainer:waitlist');
@@ -16,7 +17,10 @@ export async function POST(request: NextRequest) {
     if (!hasPermission)
       return forbiddenResponse('Nur Mitglieder können sich auf die Warteliste setzen');
 
-    const { supabase, user } = auth;
+    const { user } = auth;
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
+    }
 
     const body = await request.json().catch(() => null);
     if (!body?.slotId) {
@@ -25,14 +29,16 @@ export async function POST(request: NextRequest) {
 
     const { slotId } = body as { slotId: string };
 
-    // Verify the slot exists and is actually booked
-    const { data: slot, error: slotError } = await supabase
+    // Mitglieder sehen fremde Trainer-Slots per RLS nicht — Lesen und Eintragen
+    // über systemDb, die Vereinsgrenze wird unten explizit geprüft.
+    const db = systemDb('Mitglied setzt sich auf Warteliste eines Trainer-Slots');
+    const { data: slot, error: slotError } = await db
       .from('trainer_availabilities')
-      .select('id, status')
+      .select('id, status, trainer_id')
       .eq('id', slotId)
       .maybeSingle();
 
-    if (slotError || !slot) {
+    if (slotError || !slot || (await resolveTrainerClubId(slot.trainer_id)) !== auth.clubId) {
       return NextResponse.json({ error: 'Slot nicht gefunden' }, { status: 404 });
     }
 
@@ -43,9 +49,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use service client for the insert (bypasses RLS for write)
-    const serviceClient = createServiceClient();
-    const { error: insertError } = await serviceClient
+    const { error: insertError } = await db
       .from('trainer_slot_waitlist')
       .insert({ slot_id: slotId, user_id: user.id });
 

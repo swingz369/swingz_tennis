@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, forbiddenResponse } from '@/lib/api-auth';
-import { createServiceClient } from '@/lib/supabase/service';
+import { systemDb } from '@/infrastructure/db';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:members-directory');
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
         return forbiddenResponse('Kein Zugriff auf diesen Verein');
       }
 
-      const supabase = createServiceClient();
+      const supabase = systemDb('Namensliste der Vereinsmitglieder');
       const { data, error } = await supabase
         .from('user_club_memberships')
         .select('user_id, users!user_club_memberships_user_id_fkey(full_name)')
