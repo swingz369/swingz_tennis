@@ -362,6 +362,8 @@ Repos keine weiteren Mitglieder zu. Das Vercel-Konto laeuft auf
 `mike.swinger@gmx.de`; die kanonische Adresse stand auf `bartmz@gmx.de`. Folge:
 jeder Git-Deploy seit dem 16.08.2026 auf `BLOCKED`, live ging nur, was per
 `vercel --prod` von Hand deployt wurde (Beleg: docs/PRODUKTIONSREIFE.md).
+Stand 05.10.2026 liefen Git-Deploys wieder durch (doppelte Produktions-Deploys je Push);
+sie sind seitdem in `vercel.json` abgeschaltet, ausgeliefert wird nur über `deploy.yml`.
 
 Die kanonische Adresse ist deshalb `mike.swinger@gmx.de`. Der Anzeigename bleibt
 `Bart Mz` — Vercel prueft die Adresse, nicht den Namen.

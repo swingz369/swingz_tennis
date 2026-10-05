@@ -1,6 +1,6 @@
 # Umgebungen & Datenbanken
 
-> Zuletzt verifiziert: 4. Oktober 2026 (Pooler-TLS, `DATABASE_SSL`/`PGSSLMODE` für Prod-Migrationen); davor 2. Oktober 2026 (Git-Remote auf HTTPS, § 5); Seed-Aufrufe zuletzt 30. September 2026; übrige Abschnitte zuletzt 23. September 2026 (CI-Tests gegen frische Supabase-DB, Auslieferungsweg, lokale Test-/Dev-Server-Rezepte)
+> Zuletzt verifiziert: 5. Oktober 2026 (Git-Deploys in `vercel.json` abgeschaltet, nur noch CLI-Deploy aus `deploy.yml`); 4. Oktober 2026 (Pooler-TLS, `DATABASE_SSL`/`PGSSLMODE` für Prod-Migrationen); davor 2. Oktober 2026 (Git-Remote auf HTTPS, § 5); Seed-Aufrufe zuletzt 30. September 2026; übrige Abschnitte zuletzt 23. September 2026 (CI-Tests gegen frische Supabase-DB, Auslieferungsweg, lokale Test-/Dev-Server-Rezepte)
 > Warum es genau so aufgeteilt ist (und nicht mit Staging von Anfang an): [`decisions/adr-003-datenbank-umgebungen.md`](decisions/adr-003-datenbank-umgebungen.md)
 
 Dieses Dokument beschreibt, welche Datenbank wofür da ist, wer darauf schreiben darf und wie eine Änderung von der Entwicklung nach Produktion kommt. Es ist ein **lebendes Dokument** — wer die Aufteilung ändert, ändert diese Datei mit.
@@ -176,8 +176,8 @@ Die Dev-Maschine hat wenig RAM: Dev-Server **nur starten, wenn er gebraucht wird
 
 ## 6. Vercel-Deployments
 
-- **Production** (Branch `main`) → Produktions-DB, ausgeliefert von `deploy.yml` per **Vercel-CLI mit Token**. Der Vercel-Git-Deploy ist seit 16.08.2026 auf `BLOCKED` (Hobby-Plan, privates Repo, Commit-Autor ≠ Kontoinhaber, siehe [`CONTRIBUTING.md`](CONTRIBUTING.md)); CLI-Deploys sind davon nicht betroffen. Voraussetzungen: Secrets `VERCEL_TOKEN`, `DATABASE_URL_PROD`, Repo-Variable `AUTO_MIGRATE`.
-- **Preview** (jeder andere Branch) → **abgeschaltet**, solange es keine Staging-DB gibt. Sonst schreibt jeder Feature-Branch in Produktion. Abgeschaltet wird das im Repo (`vercel.json` → `ignoreCommand`), nicht im Dashboard, damit die Einstellung im Review sichtbar ist. Wenn Staging kommt: Zeile entfernen und Preview-Env-Vars auf die Staging-DB zeigen lassen.
+- **Production** (Branch `main`) → Produktions-DB, ausgeliefert von `deploy.yml` per **Vercel-CLI mit Token** — erst nach grüner CI und den Migrationen. Git-ausgelöste Vercel-Deploys sind in `vercel.json` abgeschaltet (`git.deploymentEnabled: false`); bis 05.10.2026 baute Vercel jeden Push zusätzlich selbst und schaltete ihn vor CI und Migrationen live (der frühere `BLOCKED`-Zustand aus [`CONTRIBUTING.md`](CONTRIBUTING.md) galt nicht mehr). Voraussetzungen: Secrets `VERCEL_TOKEN`, `DATABASE_URL_PROD`, Repo-Variable `AUTO_MIGRATE`.
+- **Preview** (jeder andere Branch) → **abgeschaltet**, solange es keine Staging-DB gibt. Sonst schreibt jeder Feature-Branch in Produktion. Abgeschaltet wird das im Repo (`vercel.json` → `git.deploymentEnabled: false`, gilt für alle Branches), nicht im Dashboard, damit die Einstellung im Review sichtbar ist. Wenn Staging kommt: `deploymentEnabled` auf `{ "main": false }` setzen und Preview-Env-Vars auf die Staging-DB zeigen lassen.
 - Ein Feature vor dem Merge ansehen: lokal per `npm run dev`.
 - **Rollback:** Migrationen sind Forward-Only — eine fehlerhafte Migration wird durch eine neue, korrigierende Migration behoben, im Notfall per Restore ([`RUNBOOK-BACKUP-ROLLBACK.md`](RUNBOOK-BACKUP-ROLLBACK.md) § 4). Ein fehlerhafter App-Stand wird durch einen Revert-Commit nach `main` behoben; `deploy.yml` liefert ihn wie jeden anderen Stand aus.
 

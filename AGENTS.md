@@ -171,8 +171,10 @@ Solange Produktion und Localhost denselben Teststand haben sollen, gilt:
 `pnpm ship` (= `git push origin HEAD:main`) genügt. `.github/workflows/deploy.yml`
 startet nach grüner CI die Migrationen (nur mit Repo-Variable `AUTO_MIGRATE=true`),
 deployt per `vercel deploy --prod` und bricht rot ab, wenn `/api/health` nach dem
-Deploy nicht grün ist. Grund für den CLI-Weg: der Vercel-Git-Deploy steht auf
-`BLOCKED` (`docs/CONTRIBUTING.md`).
+Deploy nicht grün ist. Grund für den CLI-Weg: nur so läuft der Deploy erst nach grüner
+CI und nach den Migrationen. Git-ausgelöste Vercel-Deploys sind deshalb in `vercel.json`
+abgeschaltet (`git.deploymentEnabled: false`) — sonst baut Vercel jeden Push ein zweites
+Mal und schaltet ihn ungeprüft live.
 
 **Vor dem Launch zurückdrehen** (`docs/OPEN_ITEMS.md` § Vor dem Launch): Auto-Migration
 aus (`AUTO_MIGRATE` löschen), Migrationen wieder von Hand nach Sichtung.

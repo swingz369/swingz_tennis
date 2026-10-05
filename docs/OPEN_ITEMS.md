@@ -99,7 +99,7 @@ sed -i '/^SUBSCRIPTION_ENFORCEMENT=/d' .env.local
 
 # 2. Produktion
 vercel env rm SUBSCRIPTION_ENFORCEMENT production
-vercel --prod            # Git-Deploy ist auf dem Hobby-Plan BLOCKED
+vercel --prod            # Git-Deploys sind abgeschaltet (vercel.json)
 ```
 
 Danach prüfen: ein Konto ohne Abo (`users.subscription_tier = 'free'`) muss auf

@@ -1,5 +1,7 @@
 {
-  "ignoreCommand": "test \"$VERCEL_ENV\" != \"production\"",
+  "git": {
+    "deploymentEnabled": false
+  },
   "crons": [
     {
       "path": "/api/cron/billing-overdue",

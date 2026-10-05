@@ -4,9 +4,10 @@
 #
 # Push nach main -> CI grün -> (Migrationen) -> vercel deploy --prod -> Health-Check.
 #
-# Warum per CLI statt Vercel-Git-Deploy: der steht seit dem 16.08.2026 auf
-# BLOCKED (Hobby-Plan, privates Repo, Commit-Autor != Kontoinhaber — siehe
-# docs/CONTRIBUTING.md). CLI-Deploys mit Token sind davon nicht betroffen.
+# Warum per CLI statt Vercel-Git-Deploy: nur so geht ein Commit erst nach grüner
+# CI und nach den Migrationen live. Git-Deploys sind in vercel.json abgeschaltet
+# (git.deploymentEnabled: false); bis 05.10.2026 lief bei jedem Push zusätzlich
+# ein Git-Deploy direkt nach Produktion — vor CI und Migrationen.
 #
 # Voraussetzungen (Repo-Secrets/-Variablen):
 #   secrets.VERCEL_TOKEN       Vercel-Token des Kontoinhabers
