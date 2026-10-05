@@ -157,15 +157,6 @@ export const inviteMemberSchema = z.object({
 });
 
 // ============================================
-// BILLING / SUBSCRIPTION SCHEMAS
-// ============================================
-
-export const assignSubscriptionSchema = z.object({
-  memberId: uuidSchema,
-  plan: z.enum(['free', 'pro', 'enterprise']),
-});
-
-// ============================================
 // SESSION / SCHEDULE SCHEMAS
 // ============================================
 
@@ -294,7 +285,6 @@ export type CreateTrainerInput = z.infer<typeof createTrainerSchema>;
 export type UpdateTrainerInput = z.infer<typeof updateTrainerSchema>;
 export type UpdateMemberInput = z.infer<typeof updateMemberSchema>;
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
-export type AssignSubscriptionInput = z.infer<typeof assignSubscriptionSchema>;
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export type UpdateBookingStatusInput = z.infer<typeof updateBookingStatusSchema>;
 export type CancelBookingInput = z.infer<typeof cancelBookingSchema>;
