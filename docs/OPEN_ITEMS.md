@@ -140,6 +140,11 @@ Bestellung an; Admin A liest/ändert Bestellungen bei Verein B). Danach in Produ
 `select count(*) filter (where club_id is null), count(*) filter (where payment_status = 'paid') from shop_orders;`
 — bezahlte Bestellungen ohne passendes Stripe-Ereignis wären Missbrauch.
 
+**Am dringendsten:** `20261005140000_clubs_access_globaler_superadmin.sql` — jedes Mitglied
+konnte die eigene Vereinszeile ändern (Name, `features` = Module freischalten) und löschen.
+Danach in Produktion prüfen, ob Vereinsdaten unerwartet geändert wurden
+(`select id, name, updated_at, features from clubs order by updated_at desc;`).
+
 ### Service-Client in API-Routen — erledigt 05.10.2026
 
 Keine Route unter `app/api/` importiert mehr `createServiceClient`. Wo RLS reicht, läuft der
@@ -166,8 +171,8 @@ Offen dazu:
   „nicht erreichbar"). Der Fremdzeilen-Check selbst ist grün.
 - „Eigene Zeile"-Schreib-Policies erledigt 05.10.2026 (`shop_orders`, `qr_checkins`,
   `special_event_registrations`, `tournament_registrations`; Produktion offen, siehe P0).
-  Noch prüfen: globales `is_superadmin()` in Policies von `background_jobs`, `job_execution_log`,
-  `players`, `school_holidays`, `clubs_insert` (`docs/DATABASE.md`).
+  Globales `is_superadmin()` ebenso erledigt (`background_jobs`, `job_execution_log`, `players`,
+  `school_holidays`; `clubs_insert` bleibt gewollt), dabei `clubs_access` gefunden (P0).
 - `resolveTrainerClubId` liefert nur den ersten Verein eines Trainers — Buchung/Warteliste bei
   Trainern in mehreren Vereinen kann fälschlich 403 liefern.
 

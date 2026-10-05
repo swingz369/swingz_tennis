@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 5. Oktober 2026 (Check-ins, Turnier- und Event-Anmeldungen an Verein gebunden; `shop_orders` mit `club_id`, Käufer setzt keinen Zahlstatus; Rechteausweitung über eigene Mitgliedschaft und Abo-Spalten geschlossen, lokal angewendet); 4. Oktober 2026 (Pooler-TLS auf dem VPS eingerichtet und von außen verifiziert; `restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
+> Zuletzt verifiziert: 5. Oktober 2026 (`clubs_access` gedroppt, globales `is_superadmin()` ersetzt; Check-ins, Turnier- und Event-Anmeldungen an Verein gebunden; `shop_orders` mit `club_id`, Käufer setzt keinen Zahlstatus; Rechteausweitung über eigene Mitgliedschaft und Abo-Spalten geschlossen, lokal angewendet); 4. Oktober 2026 (Pooler-TLS auf dem VPS eingerichtet und von außen verifiziert; `restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -386,8 +386,24 @@ Freischaltung aber nicht. Einzige Policy `club_stripe_accounts_member_read` (SEL
   `is_admin_of_user`/`is_staff_of_user`.
 - `anon` hat auf allen vier Tabellen keine Rechte mehr.
 - Prüfung (Transaktion, zurückgerollt; Alpha/Gamma, Superadmin TSV Dortmund): 13 Fälle wie erwartet.
-- Weiter mit globalem `is_superadmin()` in Policies (noch nicht geprüft): `background_jobs`,
-  `job_execution_log`, `players`, `school_holidays`, `clubs_insert`.
+- Globales `is_superadmin()` in weiteren Policies: siehe nächster Abschnitt.
+
+## Vereinszeile nur für Admins, kein globaler Superadmin (Stand 05.10.2026, lokal angewendet)
+
+`20261005140000_clubs_access_globaler_superadmin.sql`:
+
+- **`clubs_access` gedroppt.** ALL mit `USING` „Mitglied des Vereins", ohne WITH CHECK: jedes
+  Mitglied konnte die Vereinszeile ändern (Name, `features`) und löschen (lokal belegt; DELETE
+  scheiterte nur am `audit_logs`-FK). Es bleiben `clubs_select`/`clubs_owner_select` (lesen),
+  `clubs_update` (Vereinsadmin, Owner), `clubs_delete` (`is_superadmin_of`), `clubs_insert`.
+- **`is_superadmin()` ist global** und taugt nicht als Policy-Bedingung. Auf Tabellen ohne
+  Vereinsbezug durch `is_owner()` ersetzt: `school_holidays` (Schreiben; Lesen weiter für alle),
+  `players`, `background_jobs`, `job_execution_log`. `background_jobs` lesen Vereinsadmins
+  weiter über `payload.club_id`; `job_execution_log` lesen, wer den Job sieht (vorher ALL).
+  Die App schreibt diese Tabellen nur über `systemDb` oder gar nicht.
+- Prüfung (zurückgerollt): Mitglied liest Verein, UPDATE/DELETE 0; Admin Alpha ändert Alpha,
+  Gamma 0; Superadmin TSV Dortmund: Ferien UPDATE 0, `players`/`background_jobs` RLS-Fehler.
+- Restliche `is_superadmin()`-Policy: nur `clubs_insert` (gewollt: Superadmin legt Vereine an).
 
 ## Rollen-/Club-Scoping-Modell (aktueller, korrekter Stand)
 
