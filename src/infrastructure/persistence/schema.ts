@@ -2822,6 +2822,7 @@ export const shopProducts = pgTable('shop_products', {
 export const shopOrders = pgTable('shop_orders', {
   id: uuid('id').primaryKey().defaultRandom(),
   user_id: uuid('user_id').notNull(),
+  club_id: uuid('club_id'),
   items: jsonb('items'),
   total_amount: integer('total_amount').notNull(),
   status: text('status'),

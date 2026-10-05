@@ -48,7 +48,7 @@ export async function PATCH(
     // Fetch current order
     const { data: order, error: fetchError } = await sb
       .from('shop_orders')
-      .select('id, status, payment_status, items')
+      .select('id, status')
       .eq('id', id)
       .maybeSingle();
 
@@ -56,23 +56,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Bestellung nicht gefunden' }, { status: 404 });
     }
 
-    // Club-ownership: only allow if order contains products from admin's club
-    if (auth.role !== 'superadmin' && auth.clubId) {
-      const items: any[] = Array.isArray(order.items) ? order.items : [];
-      const productIds = items.map((i: any) => i.product_id).filter(Boolean);
-
-      if (productIds.length > 0) {
-        const { data: clubProducts } = await sb
-          .from('shop_products')
-          .select('id')
-          .in('id', productIds)
-          .eq('club_id', auth.clubId);
-
-        if (!clubProducts || clubProducts.length === 0) {
-          return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 });
-        }
-      }
-    }
+    // Vereinszugehörigkeit prüft RLS (club_id, is_club_admin) — fremde Bestellungen sind 404.
 
     const currentStatus = order.status as string;
 

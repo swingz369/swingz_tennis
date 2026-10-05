@@ -134,6 +134,11 @@ wahrscheinlich offen; nicht gegen Produktion geprüft (Agent darf Produktion nic
 gemacht hat:
 `select user_id, club_id, role, created_at from user_club_memberships where role in ('admin','superadmin','owner') order by created_at desc;`
 
+Gleicher Weg für `20261005120000_shop_orders_verein_und_status.sql` (Mitglied legt „bezahlte"
+Bestellung an; Admin A liest/ändert Bestellungen bei Verein B). Danach in Produktion:
+`select count(*) filter (where club_id is null), count(*) filter (where payment_status = 'paid') from shop_orders;`
+— bezahlte Bestellungen ohne passendes Stripe-Ereignis wären Missbrauch.
+
 ### Service-Client in API-Routen — erledigt 05.10.2026
 
 Keine Route unter `app/api/` importiert mehr `createServiceClient`. Wo RLS reicht, läuft der
@@ -158,8 +163,8 @@ Offen dazu:
   die Umstellung hat die RLS-Lücke geschlossen, nicht die Struktur vereinheitlicht.
 - `test:tenant` ist lokal rot ohne Wallet-Konfiguration (`/api/wallet/*` → 503 zählt als
   „nicht erreichbar"). Der Fremdzeilen-Check selbst ist grün.
-- Weitere „eigene Zeile"-Schreib-Policies ohne Spaltenschutz prüfen: `shop_orders`
-  (INSERT nur `user_id = auth.uid()` — Status/Betrag frei?), `qr_checkins`,
+- Weitere „eigene Zeile"-Schreib-Policies ohne Spaltenschutz prüfen (`shop_orders` erledigt
+  05.10.2026, Produktion noch offen — `docs/DATABASE.md`): `qr_checkins`,
   `special_event_registrations`, `tournament_registrations`.
 - `resolveTrainerClubId` liefert nur den ersten Verein eines Trainers — Buchung/Warteliste bei
   Trainern in mehreren Vereinen kann fälschlich 403 liefern.

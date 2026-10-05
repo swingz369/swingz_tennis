@@ -5445,6 +5445,7 @@ export type Database = {
       };
       shop_orders: {
         Row: {
+          club_id: string | null;
           created_at: string | null;
           id: string;
           items: Json | null;
@@ -5454,6 +5455,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          club_id?: string | null;
           created_at?: string | null;
           id?: string;
           items?: Json | null;
@@ -5463,6 +5465,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          club_id?: string | null;
           created_at?: string | null;
           id?: string;
           items?: Json | null;
@@ -5472,6 +5475,13 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'shop_orders_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'shop_orders_user_id_fkey';
             columns: ['user_id'];

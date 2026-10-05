@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 5. Oktober 2026 (Rechteausweitung über eigene Mitgliedschaft und Abo-Spalten geschlossen, lokal angewendet); 4. Oktober 2026 (Pooler-TLS auf dem VPS eingerichtet und von außen verifiziert; `restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
+> Zuletzt verifiziert: 5. Oktober 2026 (`shop_orders` mit `club_id`, Käufer setzt keinen Zahlstatus; Rechteausweitung über eigene Mitgliedschaft und Abo-Spalten geschlossen, lokal angewendet); 4. Oktober 2026 (Pooler-TLS auf dem VPS eingerichtet und von außen verifiziert; `restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -351,6 +351,23 @@ Freischaltung aber nicht. Einzige Policy `club_stripe_accounts_member_read` (SEL
   sonst scheitert das Speichern mit `permission denied for table users`.
 - Prüfung danach: Rolle setzen → 0 Zeilen, fremde/Owner-Mitgliedschaft → RLS-Fehler,
   `subscription_status` → `permission denied`, eigenes Profil ändern → ok.
+
+## `shop_orders`: Verein an der Bestellung, Zahlstatus nur vom Server (Stand 05.10.2026, lokal angewendet)
+
+`20261005120000_shop_orders_verein_und_status.sql`:
+
+- **INSERT** (`shop_orders_insert_own`, ersetzt „Users can create orders"): nur eigene Zeile, nur
+  in einem Verein mit aktiver Mitgliedschaft, nur `status='pending'`/`payment_status='unpaid'`.
+  Vorher ging per PostgREST eine Bestellung „bezahlt" mit beliebigem Betrag.
+- **`club_id`** neu (Backfill aus dem ersten Artikel; nicht auflösbare Altzeilen bleiben NULL und
+  sind nur für Käufer/Owner sichtbar). SELECT/UPDATE prüfen `is_club_admin(club_id)` statt
+  `is_admin_of_user(user_id)` — vorher las und änderte der Admin von A die Bestellungen eines
+  Mitglieds bei Verein B.
+- **UPDATE** für `authenticated` nur auf `status`; `payment_status` schreibt ausschließlich
+  `process_shop_order_payment` (service_role). `anon` hat keine Rechte mehr.
+- Prüfung danach (Transaktion, zurückgerollt): Mitglied „bezahlt"/ohne Verein → RLS-Fehler,
+  Zahlstatus ändern → `permission denied`; Admin Alpha sieht/ändert Gamma-Bestellung → 0 Zeilen;
+  Admin Gamma → Status ok, Zahlstatus `permission denied`.
 
 ## Rollen-/Club-Scoping-Modell (aktueller, korrekter Stand)
 

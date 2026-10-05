@@ -152,6 +152,7 @@ export async function POST(_request: NextRequest) {
         .from('shop_orders')
         .insert({
           user_id: auth.user.id,
+          club_id: clubId,
           total_amount: totalAmount,
           status: 'pending',
           payment_status: 'unpaid',
