@@ -7,6 +7,11 @@ import path from 'path';
 // Load .env.local for test environment (vitest only auto-loads .env)
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
+// Kein echter Mailversand aus Tests: mit dem Resend-Key aus .env.local schickte
+// z. B. der Register-Routentest bei jedem Lauf „Neue Registrierung von John Doe"
+// an info@swingz.cloud. Suites, die Versand prüfen, setzen einen Fake-Key und mocken.
+delete process.env.RESEND_API_KEY;
+
 // Routen-Tests prüfen Fachlogik, nicht die Abo-Schranke. Ohne .env.local (CI)
 // würde jede geschützte Route 402 liefern. Die Gate-Suites setzen den Wert selbst.
 process.env.SUBSCRIPTION_ENFORCEMENT ??= 'off';
