@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 11. Oktober 2026 (Abrechnungs-Tabs mobil in Produktion abgenommen); 6. Oktober 2026 (DB-Passwort rotiert); 5. Oktober 2026 (Trainer in mehreren Vereinen: Vereinsprüfung gegen alle Mitgliedschaften; Missbrauchsprüfung Rechteausweitung in Produktion ohne Befund; Hydration-Fehler `/login` als Fremdprojekt erkannt; Service-Client aus allen API-Routen; Rechteausweitung über eigene Mitgliedschaft gefunden); 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
+> Zuletzt verifiziert: 11. Oktober 2026 (Abrechnungs-Tabs mobil in Produktion abgenommen, Sentry `JAVASCRIPT-NEXTJS-Z` geschlossen); 6. Oktober 2026 (DB-Passwort rotiert); 5. Oktober 2026 (Trainer in mehreren Vereinen: Vereinsprüfung gegen alle Mitgliedschaften; Missbrauchsprüfung Rechteausweitung in Produktion ohne Befund; Hydration-Fehler `/login` als Fremdprojekt erkannt; Service-Client aus allen API-Routen; Rechteausweitung über eigene Mitgliedschaft gefunden); 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
 > Produktion und lokale DB geprüft; Erledigtes gestrichen — die gestrichenen Punkte stehen in der
 > Git-Historie dieser Datei). Produktions-DB nicht direkt abgefragt; wo ein Befund nur lokal
 > belegt ist, steht das dabei.
@@ -209,7 +209,6 @@ Erledigt am 04./05.10.2026 in Produktion:
 
 Offen:
 
-- Sentry `JAVASCRIPT-NEXTJS-Z` (Gebühren-DELETE vor dem Fix) noch auf „resolved“ setzen.
 - Vier weitere direkte `resend.emails.send`-Aufrufe in Webhook/Rechnungsversand prüfen das
   Ergebnis inzwischen selbst; neue Aufrufe nur noch über `src/infrastructure/email/email.service.ts`.
 
