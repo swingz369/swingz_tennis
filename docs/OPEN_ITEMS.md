@@ -1,6 +1,6 @@
 # Offene Punkte & nächste Schritte
 
-> Zuletzt verifiziert: 6. Oktober 2026 (DB-Passwort rotiert); 5. Oktober 2026 (Trainer in mehreren Vereinen: Vereinsprüfung gegen alle Mitgliedschaften; Missbrauchsprüfung Rechteausweitung in Produktion ohne Befund; Hydration-Fehler `/login` als Fremdprojekt erkannt; Service-Client aus allen API-Routen; Rechteausweitung über eigene Mitgliedschaft gefunden); 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
+> Zuletzt verifiziert: 11. Oktober 2026 (Abrechnungs-Tabs mobil in Produktion abgenommen); 6. Oktober 2026 (DB-Passwort rotiert); 5. Oktober 2026 (Trainer in mehreren Vereinen: Vereinsprüfung gegen alle Mitgliedschaften; Missbrauchsprüfung Rechteausweitung in Produktion ohne Befund; Hydration-Fehler `/login` als Fremdprojekt erkannt; Service-Client aus allen API-Routen; Rechteausweitung über eigene Mitgliedschaft gefunden); 4. Oktober 2026 (Stripe-Retry-Idempotenz geschlossen; Drizzle aus der App entfernt; Pooler-TLS; Stripe-Webhook-Abnahme); 3. Oktober 2026 (P1: Architektur-Gate und Integrationstests in CI; Stripe Connect nachgetragen); davor 2. Oktober 2026 (alle Punkte gegen Code, CI/GitHub, `/api/health` in
 > Produktion und lokale DB geprüft; Erledigtes gestrichen — die gestrichenen Punkte stehen in der
 > Git-Historie dieser Datei). Produktions-DB nicht direkt abgefragt; wo ein Befund nur lokal
 > belegt ist, steht das dabei.
@@ -191,6 +191,10 @@ mit dem Scharfschalten vor dem Launch. Basiszinssatz: nächster Satz zum 01.01.2
 
 Erledigt am 04./05.10.2026 in Produktion:
 
+- **Abrechnungs-Tabs mobil (11.10.2026):** `/admin/billing` bei 390 px Inhaltsbreite — Tab-Leiste
+  (6 Tabs) und Rechnungstabelle (`min-w-[900px]`) scrollen je in eigenem `overflow-x-auto`-Container
+  mit sichtbarer Leiste, die Seite selbst scrollt nicht seitlich.
+
 - **Sentry:** Server-Fehler kommen an (Gebühren-500er, Gruppenroute), Alarmregel `627221`
   („high priority issues“, E-Mail an Issue-Owner/aktive Mitglieder) hat am 04.10. 18:19 UTC
   ausgelöst. Client-Erfassung ist konfiguriert (`NEXT_PUBLIC_SENTRY_DSN` in Vercel), aber noch
@@ -205,8 +209,6 @@ Erledigt am 04./05.10.2026 in Produktion:
 
 Offen:
 
-- **Abrechnungs-Tabs mobil:** braucht Login als Admin im Browser (Agent darf in Produktion kein
-  Passwort eingeben) — von Hand bei ~390 px Breite prüfen, ob Tabs und Rechnungstabelle scrollen.
 - Sentry `JAVASCRIPT-NEXTJS-Z` (Gebühren-DELETE vor dem Fix) noch auf „resolved“ setzen.
 - Vier weitere direkte `resend.emails.send`-Aufrufe in Webhook/Rechnungsversand prüfen das
   Ergebnis inzwischen selbst; neue Aufrufe nur noch über `src/infrastructure/email/email.service.ts`.
