@@ -38,23 +38,19 @@ export async function POST(request: NextRequest) {
       const result = await new SeasonBillingService(auth).generateInvoices(season_id);
 
       if (installment_count > 1 && result.created.length > 0) {
-        for (const invoice of result.created) {
-          const perInstallment = invoice.totalAmount / installment_count;
-          const { error } = await auth.supabase.from('invoice_installments').insert(
+        const { error } = await auth.supabase.from('invoice_installments').insert(
+          result.created.flatMap((invoice) =>
             installment_due_dates.map((due_date, i) => ({
               invoice_id: invoice.invoiceId,
               installment_number: i + 1,
-              amount: perInstallment,
+              amount: invoice.totalAmount / installment_count,
               due_date,
               status: 'pending',
             }))
-          );
-          if (error) {
-            log.error(
-              `Ratenzahlung für Rechnung ${invoice.invoiceId} konnte nicht angelegt werden`,
-              new Error(error.message)
-            );
-          }
+          )
+        );
+        if (error) {
+          log.error('Ratenzahlungen konnten nicht angelegt werden', new Error(error.message));
         }
       }
 

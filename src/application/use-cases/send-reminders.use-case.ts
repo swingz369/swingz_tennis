@@ -35,7 +35,7 @@ export interface IBookingRepository {
 }
 
 export interface IMemberRepository {
-  findMemberById(memberId: string): Promise<{ email: string; full_name: string } | null>;
+  findMembersByIds(memberIds: string[]): Promise<Map<string, { email: string; full_name: string }>>;
 }
 
 export class ReminderService {
@@ -85,6 +85,18 @@ export class ReminderService {
       bookingsBySession.set(booking.session_id, existing);
     });
 
+    // Alle Mitglieder in einer Abfrage statt einer pro Buchung. Schlägt sie fehl, scheitert
+    // jede Buchung mit diesem Fehler — wie vorher die Einzelabfrage.
+    let members = new Map<string, { email: string; full_name: string }>();
+    let membersError: unknown = null;
+    try {
+      members = await this.memberRepository.findMembersByIds([
+        ...new Set(bookings.map((b: Booking) => b.member_id)),
+      ]);
+    } catch (e) {
+      membersError = e;
+    }
+
     // Send reminder for each booking
     for (const session of sessions) {
       const sessionBookings = bookingsBySession.get(session.id) || [];
@@ -92,7 +104,8 @@ export class ReminderService {
       for (const booking of sessionBookings) {
         try {
           // Get member details using repository
-          const member = await this.memberRepository.findMemberById(booking.member_id);
+          if (membersError) throw membersError;
+          const member = members.get(booking.member_id) ?? null;
 
           if (!member) {
             results.push({

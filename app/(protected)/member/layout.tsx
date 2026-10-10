@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { requireAuth } from '@/lib/auth';
+import { getActiveMemberships } from '@/lib/auth';
 import { ROLE_MODE_COOKIE } from '@/lib/cookies';
 
 import { createLogger } from '@/lib/logger';
@@ -23,14 +23,7 @@ const log = createLogger('member:layout');
  * läuft weiterhin über requireAuth + RLS.
  */
 export default async function MemberLayout({ children }: { children: React.ReactNode }) {
-  const auth = await requireAuth();
-  const { supabase, user } = auth;
-
-  const { data: memberships, error } = await supabase
-    .from('user_club_memberships')
-    .select('role, club_id, is_active')
-    .eq('user_id', user.id)
-    .eq('is_active', true);
+  const { data: memberships, error } = await getActiveMemberships();
 
   if (error) {
     log.error('[Member Layout] Failed to load memberships:', error);

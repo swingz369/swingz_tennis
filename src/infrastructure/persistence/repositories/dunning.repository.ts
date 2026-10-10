@@ -14,6 +14,7 @@ import 'server-only';
 import type { AuthContext } from '@/lib/api-auth';
 import type { Tables, TablesInsert } from '@/types/supabase';
 import { createLogger } from '@/lib/logger';
+import { fetchAllIn } from './paged';
 
 const log = createLogger('infrastructure:dunning.repository');
 
@@ -46,15 +47,24 @@ export class DunningRepository {
   }
 
   /** Höchste bisher versendete Mahnstufe zu einer Rechnung (für processAutomaticDunning). */
-  async findLatestByInvoiceId(invoiceId: string): Promise<DunningRecord | null> {
-    const { data, error } = await this.db
-      .from('dunning_records')
-      .select('*')
-      .eq('invoice_id', invoiceId)
-      .order('level', { ascending: false })
-      .limit(1);
-    assertNoError(error, 'Lesen des letzten Mahndatensatzes fehlgeschlagen');
-    return data?.[0] ?? null;
+  /** Höchste Mahnstufe je Rechnung — eine Abfrage für alle statt einer pro Rechnung. */
+  async findLatestByInvoiceIds(invoiceIds: string[]): Promise<Map<string, DunningRecord>> {
+    const rows = await fetchAllIn<DunningRecord>(
+      invoiceIds,
+      (chunk) =>
+        this.db
+          .from('dunning_records')
+          .select('*')
+          .in('invoice_id', chunk)
+          .order('level', { ascending: false })
+          .order('id'),
+      'Lesen der letzten Mahndatensätze fehlgeschlagen'
+    );
+    const latest = new Map<string, DunningRecord>();
+    for (const r of rows) {
+      if (r.invoice_id && !latest.has(r.invoice_id)) latest.set(r.invoice_id, r);
+    }
+    return latest;
   }
 
   async findByClub(clubId: string, limit = 100): Promise<DunningRecord[]> {

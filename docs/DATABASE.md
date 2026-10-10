@@ -1,6 +1,6 @@
 # Datenbank & Migrationen — Ist-Zustand
 
-> Zuletzt verifiziert: 6. Oktober 2026 (DB-Passwort rotiert); 5. Oktober 2026 (Geister-Sessions in Produktion ohne Befund; `clubs_access` gedroppt, globales `is_superadmin()` ersetzt; Check-ins, Turnier- und Event-Anmeldungen an Verein gebunden; `shop_orders` mit `club_id`, Käufer setzt keinen Zahlstatus; Rechteausweitung über eigene Mitgliedschaft und Abo-Spalten geschlossen, lokal angewendet); 4. Oktober 2026 (Pooler-TLS auf dem VPS eingerichtet und von außen verifiziert; `restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
+> Zuletzt verifiziert: 11. Oktober 2026 (RLS-InitPlan und FK-Indizes lokal angewendet); 6. Oktober 2026 (DB-Passwort rotiert); 5. Oktober 2026 (Geister-Sessions in Produktion ohne Befund; `clubs_access` gedroppt, globales `is_superadmin()` ersetzt; Check-ins, Turnier- und Event-Anmeldungen an Verein gebunden; `shop_orders` mit `club_id`, Käufer setzt keinen Zahlstatus; Rechteausweitung über eigene Mitgliedschaft und Abo-Spalten geschlossen, lokal angewendet); 4. Oktober 2026 (Pooler-TLS auf dem VPS eingerichtet und von außen verifiziert; `restore_club` und `reschedule_plan_entry` lokal angewendet; App ohne Drizzle-Laufzeitverbindung); davor 3. Oktober 2026 (Geister-Session-Diagnose auf `training` eingegrenzt, lokal ohne Befund; `club_stripe_accounts` für Stripe Connect lokal angelegt); davor 2. Oktober 2026 (SECURITY DEFINER-Rechte aller 59 Nutzer-ausführbaren Funktionen lokal geprüft und korrigiert); davor 1. Oktober 2026 (Chat-Reaktionen `conversation_message_reactions` lokal und in Produktion angewendet); davor 26. September 2026 (`bookings`-Policies und Zahlungsindex live gelesen; drei Korrekturmigrationen lokal angewendet); davor 24. September 2026 (Stripe-Event-RPC-Rechte in Produktion gelesen; Rechtekorrektur als noch nicht angewendete Migration angelegt); davor 20. September 2026 (Chat: `conversations`/`conversation_participants`/`conversation_messages` ersetzen `messages`; Policies „Admin irgendeines Vereins" ersetzt, Helfer `is_admin_of_user`/`is_staff_of_user`)
 
 ## Zwei Gruppen-Systeme — aufgelöst 28.08.2026
 
@@ -404,6 +404,20 @@ Freischaltung aber nicht. Einzige Policy `club_stripe_accounts_member_read` (SEL
 - Prüfung (zurückgerollt): Mitglied liest Verein, UPDATE/DELETE 0; Admin Alpha ändert Alpha,
   Gamma 0; Superadmin TSV Dortmund: Ferien UPDATE 0, `players`/`background_jobs` RLS-Fehler.
 - Restliche `is_superadmin()`-Policy: nur `clubs_insert` (gewollt: Superadmin legt Vereine an).
+
+## RLS-Policies: `auth.uid()` als InitPlan, FK-Indizes (Stand 11.10.2026, lokal angewendet)
+
+215 von 366 Policies riefen `auth.uid()`, `auth.jwt()` oder `is_owner()` direkt auf — Postgres
+wertet das pro geprüfter Zeile aus. `20261010120000_rls_initplan_auth_uid.sql` liest die Policies
+zur Laufzeit aus `pg_policies` und packt die Aufrufe per `ALTER POLICY` in `( SELECT … )` ein
+(Supabase-Advisor `auth_rls_initplan`). Namen und Logik bleiben unverändert, ein zweiter Lauf ist
+ein No-op — deshalb unabhängig von Drift zwischen lokal und Produktion. Neue Policies gleich so
+schreiben: `user_id = (SELECT auth.uid())`. Zeilenabhängige Helfer (`is_club_admin(club_id)`)
+lassen sich so nicht einpacken; sie sind `STABLE SECURITY DEFINER`.
+
+`20261010120100_fk_indexes.sql` ergänzt 13 Indizes auf Fremdschlüsseln, über die gefiltert wird
+(vor allem `club_id`). Audit-Spalten (`created_by`, `approved_by`, …) bleiben bewusst ohne Index.
+Lokal am 11.10.2026 angewendet; danach keine Policy mehr mit uneingepacktem `auth.uid()`.
 
 ## Rollen-/Club-Scoping-Modell (aktueller, korrekter Stand)
 

@@ -85,19 +85,22 @@ class TempBookingRepository implements IBookingRepository {
 class TempMemberRepository implements IMemberRepository {
   constructor(private readonly cron: boolean) {}
 
-  async findMemberById(memberId: string): Promise<{ email: string; full_name: string } | null> {
+  async findMembersByIds(
+    memberIds: string[]
+  ): Promise<Map<string, { email: string; full_name: string }>> {
     const { createClient } = await import('@/infrastructure/external/supabase/server');
     const supabase = this.cron ? systemDb('Cron: Buchungserinnerungen') : await createClient();
-    const { data, error } = await supabase
-      .from('users')
-      .select('email, full_name')
-      .eq('id', memberId)
-      .single();
-    if (error) {
-      throw new Error(`Failed to load member ${memberId}: ${error.message}`);
+    // In Blöcken: der Cron fragt alle Vereine ab, eine einzige .in()-Liste sprengt die URL.
+    const rows: { id: string; email: string | null; full_name: string | null }[] = [];
+    for (let i = 0; i < memberIds.length; i += 100) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, email, full_name')
+        .in('id', memberIds.slice(i, i + 100));
+      if (error) throw new Error(`Failed to load members: ${error.message}`);
+      rows.push(...(data ?? []));
     }
-    if (!data) return null;
-    return { email: data.email ?? '', full_name: data.full_name ?? '' };
+    return new Map(rows.map((r) => [r.id, { email: r.email ?? '', full_name: r.full_name ?? '' }]));
   }
 }
 

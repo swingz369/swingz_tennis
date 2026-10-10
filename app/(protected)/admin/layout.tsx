@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { requireAuth } from '@/lib/auth';
+import { getActiveMemberships, requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
 import { getHighestRole } from '@/lib/auth-common';
@@ -9,15 +9,9 @@ import { getHighestRole } from '@/lib/auth-common';
  * Admin Layout — Auth + Role Guard
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const auth = await requireAuth();
-  const { supabase, user } = auth;
+  const { supabase } = await requireAuth();
 
-  const { data: memberships, error } = await supabase
-    .from('user_club_memberships')
-    .select('id, role, club_id, is_active')
-    .eq('user_id', user.id)
-    .eq('is_active', true)
-    .order('club_id');
+  const { data: memberships, error } = await getActiveMemberships();
 
   if (error || !memberships || memberships.length === 0) {
     redirect('/login?error=no_memberships');

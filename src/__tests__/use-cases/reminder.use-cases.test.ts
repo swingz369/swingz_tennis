@@ -51,7 +51,19 @@ function createService() {
   };
   const sessionRepository = { findSessionsForDateRange: vi.fn() };
   const bookingRepository = { findConfirmedBookingsForSessions: vi.fn() };
-  const memberRepository = { findMemberById: vi.fn() };
+  const findMemberById = vi.fn();
+  // Batch-Schnittstelle über den Einzel-Mock — die Tests beschreiben weiter je Mitglied.
+  const memberRepository = {
+    findMemberById,
+    findMembersByIds: vi.fn(async (ids: string[]) => {
+      const map = new Map<string, { email: string; full_name: string }>();
+      for (const id of ids) {
+        const m = await findMemberById(id);
+        if (m) map.set(id, m);
+      }
+      return map;
+    }),
+  };
 
   const service = new ReminderService(
     emailService,

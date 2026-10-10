@@ -24,6 +24,7 @@
  *
  */
 
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
@@ -99,7 +100,9 @@ export { clearAuthCookiesAndRedirect } from '@/app/actions/auth';
  * Guard: requires authentication. Redirects to /login if not authenticated.
  * Returns the Supabase client (authenticated with JWT for RLS) and the user object.
  */
-export async function requireAuth() {
+// cache(): Root-Layout, Rollen-Layout, (gated)-Layout und Page rufen requireAuth()
+// im selben Render auf — ohne Dedupe je ein eigener Roundtrip zum Supabase-Auth-Server.
+export const requireAuth = cache(async function requireAuth() {
   const cookieStore = await cookies();
   const supabase = await createSupabaseServerClient(cookieStore);
 
@@ -127,7 +130,21 @@ export async function requireAuth() {
     );
     redirect('/login');
   }
-}
+});
 
 // Export both names for compatibility
 export const getUserFromCookies = getAuthenticatedUser;
+
+/**
+ * Aktive Mitgliedschaften des eingeloggten Nutzers — einmal pro Render. Root-, Rollen- und
+ * (gated)-Layout sowie requireAdminClub() lasen dieselben Zeilen bisher je selbst.
+ */
+export const getActiveMemberships = cache(async function getActiveMemberships() {
+  const { supabase, user } = await requireAuth();
+  return supabase
+    .from('user_club_memberships')
+    .select('id, role, club_id, is_active, clubs(id, name)')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .order('club_id');
+});

@@ -15,7 +15,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { getHighestRole, type UserRole } from '@/lib/auth-common';
-import { requireAuth } from '@/lib/auth';
+import { getActiveMemberships, requireAuth } from '@/lib/auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
 
@@ -54,12 +54,7 @@ export async function requireAdminClub(): Promise<AdminContext> {
   const { supabase, user } = await requireAuth();
 
   // Fetch memberships (deterministic order: superadmin > admin > trainer > member)
-  const { data: memberships } = await supabase
-    .from('user_club_memberships')
-    .select('role, club_id')
-    .eq('user_id', user.id)
-    .eq('is_active', true)
-    .order('club_id');
+  const { data: memberships } = await getActiveMemberships();
 
   const roles = (memberships ?? []).map((m: { role: string }) => m.role);
   const role = getHighestRole(roles);

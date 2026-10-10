@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { requireAuth } from '@/lib/auth';
+import { getActiveMemberships } from '@/lib/auth';
 
 import { createLogger } from '@/lib/logger';
 
@@ -14,15 +14,9 @@ const log = createLogger('trainer:layout');
  */
 export default async function TrainerLayout({ children }: { children: React.ReactNode }) {
   // 1. Check authentication
-  const auth = await requireAuth();
-  const { supabase, user } = auth;
 
   // 2. Fetch user memberships
-  const { data: memberships, error } = await supabase
-    .from('user_club_memberships')
-    .select('id, role, club_id, is_active')
-    .eq('user_id', user.id)
-    .eq('is_active', true);
+  const { data: memberships, error } = await getActiveMemberships();
 
   if (error || !memberships || memberships.length === 0) {
     log.error('[Trainer Layout] Failed to load memberships:', error);

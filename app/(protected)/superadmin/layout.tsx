@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { requireAuth } from '@/lib/auth';
+import { getActiveMemberships } from '@/lib/auth';
 
 /**
  * Superadmin Layout — Authentication & Authorization Guard + Onboarding Redirect
@@ -16,15 +16,8 @@ import { requireAuth } from '@/lib/auth';
  * - /superadmin/onboarding - First-time setup wizard
  */
 export default async function SuperadminLayout({ children }: { children: React.ReactNode }) {
-  const auth = await requireAuth();
-  const { supabase, user } = auth;
-
   // Check if user has superadmin role
-  const { data: memberships } = await supabase
-    .from('user_club_memberships')
-    .select('role, club_id')
-    .eq('user_id', user.id)
-    .eq('is_active', true);
+  const { data: memberships } = await getActiveMemberships();
 
   const isOwner = memberships?.some((m: { role: string }) => m.role === 'owner');
   const isSuperadmin = memberships?.some((m: { role: string }) => m.role === 'superadmin');

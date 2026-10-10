@@ -115,7 +115,7 @@ vi.mock('@/lib/push-notification.service', () => ({
  * Chainable Supabase-Query-Mock für die drei Temp*-Repositories der Route:
  * - sessions:  from('sessions').select().gte().lte()      → await (thenable)
  * - bookings:  from('bookings').select().in().eq()        → await (thenable)
- * - users:     from('users').select().eq().single()       → single()
+ * - users:     from('users').select().in()               → await (thenable, Liste)
  */
 function makeChain(result: { data?: unknown; error?: { message: string } | null }) {
   const { data = [], error = null } = result;
@@ -167,7 +167,7 @@ describe('POST /api/reminders/booking-tomorrow', () => {
     mockSupabase.from.mockImplementation((table: string) => {
       if (table === 'sessions') return makeChain({ data: [SESSION] });
       if (table === 'bookings') return makeChain({ data: [BOOKING] });
-      if (table === 'users') return makeChain({ data: MEMBER });
+      if (table === 'users') return makeChain({ data: [MEMBER] });
       return makeChain({});
     });
     mockServiceSupabase.from.mockImplementation((table: string) => mockSupabase.from(table));
@@ -315,7 +315,7 @@ describe('POST /api/reminders/booking-tomorrow', () => {
     mockSupabase.from.mockImplementation((table: string) => {
       if (table === 'sessions') return makeChain({ data: [SESSION] });
       if (table === 'bookings') return makeChain({ data: [BOOKING] });
-      if (table === 'users') return makeChain({ data: null });
+      if (table === 'users') return makeChain({ data: [] });
       return makeChain({});
     });
 

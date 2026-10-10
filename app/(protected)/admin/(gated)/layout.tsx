@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { requireAuth } from '@/lib/auth';
+import { getActiveMemberships, requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
 import { getHighestRole } from '@/lib/auth-common';
@@ -20,11 +20,7 @@ export default async function AdminGatedLayout({ children }: { children: React.R
   const auth = await requireAuth();
   const { supabase, user } = auth;
 
-  const { data: memberships } = await supabase
-    .from('user_club_memberships')
-    .select('role, club_id')
-    .eq('user_id', user.id)
-    .eq('is_active', true);
+  const { data: memberships } = await getActiveMemberships();
 
   // Resolve the active club via shared helper. Superadmin role implicitly
   // returns clubId=null (platform-staff bypass); admin role falls back to the

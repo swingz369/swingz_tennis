@@ -8,6 +8,7 @@ import {
   type DunningRecord,
 } from '@/infrastructure/persistence/repositories/dunning.repository';
 import { InvoiceRepository } from '@/infrastructure/persistence/repositories/invoice.repository';
+import { fetchAllIn } from '@/infrastructure/persistence/repositories/paged';
 import { calculateVerzugszinsForInvoice, type BaseRateSnapshot } from '@/lib/billing/verzugszins';
 import type { CreateDunningRecord } from '@/lib/types/billing';
 
@@ -203,9 +204,29 @@ export class DunningService {
   async processAutomaticDunning(clubId: string): Promise<DunningRecord[]> {
     const overdueInvoices = await this.invoiceRepo.findByClub(clubId, { status: 'overdue' });
     const newDunningRecords: DunningRecord[] = [];
+    if (overdueInvoices.length === 0) return newDunningRecords;
+
+    // Letzte Mahnstufe und Mitglieds-E-Mails vorab in je einer Abfrage statt pro Rechnung.
+    const latestDunning = await this.repo.findLatestByInvoiceIds(overdueInvoices.map((i) => i.id));
+    const memberIds = [
+      ...new Set(overdueInvoices.map((i) => i.member_id).filter((id): id is string => !!id)),
+    ];
+    // Fehlende E-Mails überspringen nur den Versand, nicht die Mahnstufe — wie vorher pro Rechnung.
+    let emailByMember = new Map<string, string>();
+    try {
+      const system = systemDb('Mahnungs-E-Mail: Mitglieds-E-Mails lesen (Cron, kein User-Kontext)');
+      const users = await fetchAllIn<{ id: string; email: string }>(
+        memberIds,
+        (chunk) => system.from('users').select('id, email').in('id', chunk).order('id'),
+        'Mitglieds-E-Mails für Mahnungen lesen fehlgeschlagen'
+      );
+      emailByMember = new Map(users.map((u) => [u.id, u.email]));
+    } catch (e) {
+      log.error('Mitglieds-E-Mails für Mahnungen nicht lesbar', e instanceof Error ? e : undefined);
+    }
 
     for (const invoice of overdueInvoices) {
-      const existingDunning = await this.repo.findLatestByInvoiceId(invoice.id);
+      const existingDunning = latestDunning.get(invoice.id) ?? null;
       const currentLevel = existingDunning?.level ?? 0;
       const nextLevel = currentLevel + 1;
 
@@ -233,16 +254,7 @@ export class DunningService {
 
       if (invoice.member_id) {
         try {
-          const system = systemDb(
-            'Mahnungs-E-Mail: Mitglieds-E-Mail lesen (Cron, kein User-Kontext)'
-          );
-          const { data: user } = await system
-            .from('users')
-            .select('email')
-            .eq('id', invoice.member_id)
-            .single();
-
-          const memberEmail = user?.email;
+          const memberEmail = emailByMember.get(invoice.member_id);
           if (memberEmail) {
             await this.sendDunningEmail(
               memberEmail,

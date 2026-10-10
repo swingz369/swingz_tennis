@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { ProtectedClientLayout } from './protected-client-layout';
 import { ProtectedRoute } from '@/components/layout/protected-route';
-import { requireAuth } from '@/lib/auth';
+import { getActiveMemberships, requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE, ROLE_MODE_COOKIE } from '@/lib/cookies';
 import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -19,11 +19,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     .maybeSingle();
 
   // Fetch memberships (club_id may be NULL for superadmin)
-  const { data: memberships } = await supabase
-    .from('user_club_memberships')
-    .select('role, club_id, is_active, clubs(id, name)')
-    .eq('user_id', user.id)
-    .eq('is_active', true);
+  const { data: memberships } = await getActiveMemberships();
 
   const roles: string[] = (memberships ?? []).map((m) => m.role);
   const isSuperAdmin = roles.includes('superadmin');

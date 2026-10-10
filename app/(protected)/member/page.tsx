@@ -36,7 +36,7 @@ export default async function MemberPage() {
   // even for active members.
   const { data: memberships } = await supabase
     .from('user_club_memberships')
-    .select('role, club_id, is_active, clubs(id, name)')
+    .select('role, club_id, is_active, clubs(id, name, features)')
     .eq('user_id', user.id)
     .eq('is_active', true)
     .limit(1);
@@ -57,28 +57,71 @@ export default async function MemberPage() {
   const club = Array.isArray(clubsData) ? clubsData[0] : clubsData;
   const clubId = membership.club_id;
 
-  const { data: clubRow } = await supabase
-    .from('clubs')
-    .select('features')
-    .eq('id', clubId)
-    .single();
-  const features = (clubRow?.features as Record<string, boolean>) ?? {};
+  const features = (club?.features as Record<string, boolean>) ?? {};
+  const nowIso = new Date().toISOString();
 
-  const { data: profile } = await supabase
-    .from('users')
-    .select('full_name, email')
-    .eq('id', user.id)
-    .maybeSingle();
+  // Alle Abfragen sind voneinander unabhängig — parallel statt neun Roundtrips nacheinander.
+  const [
+    { data: profile },
+    // Steht dieses Mitglied in einer Mannschaftsmeldung? Nur dann bekommt es den
+    // Schnellzugriff auf "Mannschaften" — für alle anderen wäre das ein Link ins
+    // Leere, und der Schnellzugriff ist die einzige Navigation, die Mitglieder
+    // haben (sie sehen keine Sidebar).
+    { count: rosterCount },
+    { data: upcomingBookings },
+    // Die Kacheln zeigen Gesamtzahlen, die Listen darunter nur die nächsten
+    // Einträge — deshalb eigene Zählabfragen. Vorher war die Kachel schlicht
+    // `upcomingBookings.length` bei `.limit(3)`: ein Mitglied mit 20 Terminen
+    // las dort dauerhaft "3 bevorstehend".
+    { count: upcomingBookingCount },
+    { count: upcomingTrainingCount },
+    { count: unreadCount },
+    // Nicht nur `status = 'open'`: Eine verschickte, überfällige oder angemahnte
+    // Rechnung ist genauso offen. Vorher zeigte die Kachel einem Mitglied mit
+    // überfälliger Rechnung „0 offen".
+    { data: openInvoices },
+  ] = await Promise.all([
+    supabase.from('users').select('full_name, email').eq('id', user.id).maybeSingle(),
+    supabase
+      .from('league_players')
+      .select('id', { count: 'exact', head: true })
+      .eq('member_id', user.id)
+      .eq('club_id', clubId),
+    supabase
+      .from('bookings')
+      .select(
+        'id, session_start_time, status, sessions(id, timeslot_start, timeslot_end, courts(name))'
+      )
+      .eq('member_id', user.id)
+      .eq('status', 'confirmed')
+      .gte('session_start_time', nowIso)
+      .order('session_start_time', { ascending: true })
+      .limit(4),
+    supabase
+      .from('bookings')
+      .select('id', { count: 'exact', head: true })
+      .eq('member_id', user.id)
+      .eq('status', 'confirmed')
+      .gte('session_start_time', nowIso),
+    supabase
+      .from('bookings')
+      .select('id', { count: 'exact', head: true })
+      .eq('member_id', user.id)
+      .eq('status', 'confirmed')
+      .not('session_id', 'is', null)
+      .gte('session_start_time', nowIso),
+    supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('read', false),
+    supabase
+      .from('invoices')
+      .select('amount, paid_amount')
+      .eq('member_id', user.id)
+      .in('status', OUTSTANDING_INVOICE_STATUSES),
+  ]);
 
-  // Steht dieses Mitglied in einer Mannschaftsmeldung? Nur dann bekommt es den
-  // Schnellzugriff auf "Mannschaften" — für alle anderen wäre das ein Link ins
-  // Leere, und der Schnellzugriff ist die einzige Navigation, die Mitglieder
-  // haben (sie sehen keine Sidebar).
-  const { count: rosterCount } = await supabase
-    .from('league_players')
-    .select('id', { count: 'exact', head: true })
-    .eq('member_id', user.id)
-    .eq('club_id', clubId);
   const isInSquad = (rosterCount ?? 0) > 0;
 
   const firstName =
@@ -86,38 +129,6 @@ export default async function MemberPage() {
     user.user_metadata?.full_name?.split(' ')[0] ||
     user.email?.split('@')[0] ||
     'Mitglied';
-
-  const nowIso = new Date().toISOString();
-
-  const { data: upcomingBookings } = await supabase
-    .from('bookings')
-    .select(
-      'id, session_start_time, status, sessions(id, timeslot_start, timeslot_end, courts(name))'
-    )
-    .eq('member_id', user.id)
-    .eq('status', 'confirmed')
-    .gte('session_start_time', nowIso)
-    .order('session_start_time', { ascending: true })
-    .limit(4);
-
-  // Die Kacheln zeigen Gesamtzahlen, die Listen darunter nur die nächsten
-  // Einträge — deshalb eigene Zählabfragen. Vorher war die Kachel schlicht
-  // `upcomingBookings.length` bei `.limit(3)`: ein Mitglied mit 20 Terminen
-  // las dort dauerhaft "3 bevorstehend".
-  const { count: upcomingBookingCount } = await supabase
-    .from('bookings')
-    .select('id', { count: 'exact', head: true })
-    .eq('member_id', user.id)
-    .eq('status', 'confirmed')
-    .gte('session_start_time', nowIso);
-
-  const { count: upcomingTrainingCount } = await supabase
-    .from('bookings')
-    .select('id', { count: 'exact', head: true })
-    .eq('member_id', user.id)
-    .eq('status', 'confirmed')
-    .not('session_id', 'is', null)
-    .gte('session_start_time', nowIso);
 
   // Die Trainingseinheiten stammen aus den eigenen Buchungen. Bis hierher fragte
   // die Seite vereinsweit `sessions` ab — auf dem Mitglieder-Dashboard stand
@@ -132,20 +143,6 @@ export default async function MemberPage() {
     courts?: unknown;
   }[];
 
-  const { count: unreadCount } = await supabase
-    .from('notifications')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .eq('read', false);
-
-  // Nicht nur `status = 'open'`: Eine verschickte, überfällige oder angemahnte
-  // Rechnung ist genauso offen. Vorher zeigte die Kachel einem Mitglied mit
-  // überfälliger Rechnung „0 offen".
-  const { data: openInvoices } = await supabase
-    .from('invoices')
-    .select('amount, paid_amount')
-    .eq('member_id', user.id)
-    .in('status', OUTSTANDING_INVOICE_STATUSES);
   const openInvCount = openInvoices?.length ?? 0;
   const openAmount = (openInvoices ?? []).reduce(
     (sum, inv) => sum + (inv.amount ?? 0) - (inv.paid_amount ?? 0),

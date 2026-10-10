@@ -9,12 +9,6 @@ export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     if (!auth.user) return forbiddenResponse();
 
-    if (!isGoogleWalletConfigured())
-      return NextResponse.json(
-        { error: 'Google Wallet nicht konfiguriert (GOOGLE_WALLET_* ENV fehlen)' },
-        { status: 503 }
-      );
-
     const clubId = new URL(request.url).searchParams.get('clubId') ?? auth.clubId;
     if (!clubId) return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
 
@@ -31,6 +25,13 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     if (!m) return NextResponse.json({ error: 'Keine aktive Mitgliedschaft' }, { status: 404 });
+
+    // Erst nach der Vereinsprüfung — sonst verdeckt 503 die Mandantentrennung.
+    if (!isGoogleWalletConfigured())
+      return NextResponse.json(
+        { error: 'Google Wallet nicht konfiguriert (GOOGLE_WALLET_* ENV fehlen)' },
+        { status: 503 }
+      );
 
     const url = generateGoogleWalletUrl({
       memberName: auth.user.user_metadata?.full_name ?? auth.user.email ?? 'Mitglied',

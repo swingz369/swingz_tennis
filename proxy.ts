@@ -146,16 +146,14 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: requestHeaders } });
 
   // 0. Globales Rate-Limit für alle /api/*-Routen (DoS-Schutz, 200 req/min pro IP)
-  if (pathname.startsWith('/api/') && !GLOBAL_RATE_EXCLUDED.some((p) => pathname.startsWith(p))) {
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-    const allowed = await checkGlobalRateLimit(ip);
-    if (!allowed) {
-      return NextResponse.json(
-        { error: 'Zu viele Anfragen. Bitte kurz warten.' },
-        { status: 429, headers: { 'Retry-After': '60' } }
-      );
-    }
-  }
+  //    Läuft parallel zu getUser() unten — zwei Netzwerk-Roundtrips (Upstash, Supabase Auth)
+  //    nacheinander kosteten jeden API-Aufruf unnötig Latenz.
+  const rateLimitCheck =
+    pathname.startsWith('/api/') && !GLOBAL_RATE_EXCLUDED.some((p) => pathname.startsWith(p))
+      ? checkGlobalRateLimit(
+          request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+        )
+      : Promise.resolve(true);
 
   // 1. Öffentliche Routen → durchlassen (vor Auth & CSRF)
   const isPublic = PUBLIC_ROUTES.some(
@@ -201,11 +199,21 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // WICHTIG: getUser() nicht getSession() – verifiziert den Token!
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  // getClaims() statt getSession() — verifiziert den Token. Mit asymmetrischen JWT-Schlüsseln
+  // (Supabase-Dashboard → JWT Signing Keys) lokal per JWKS ohne Roundtrip zum Auth-Server; mit
+  // dem alten HS256-Secret fällt es intern auf getUser() zurück. Ein serverseitig widerrufenes
+  // Token gilt hier bis zum Ablauf (≤ 1 h) — die Routen selbst prüfen weiterhin per getUser().
+  const [allowed, { data: claimsData, error }] = await Promise.all([
+    rateLimitCheck,
+    supabase.auth.getClaims(),
+  ]);
+  const user = claimsData?.claims ?? null;
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Zu viele Anfragen. Bitte kurz warten.' },
+      { status: 429, headers: { 'Retry-After': '60' } }
+    );
+  }
 
   // 4. Öffentliche Routen → durchlassen
   if (isPublic) return response;
@@ -280,6 +288,8 @@ export const config = {
   matcher: [
     // ALLE Routen außer Static Files, Images, Videos, Favicon.
     // Video-Container (webm|mp4|m4v|mov|ogv) sind statische Assets wie Bilder.
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webm|mp4|m4v|mov|ogv|ico|css|js)$).*)',
+    // /monitoring ist der Sentry-Tunnel (öffentlich) — ohne Ausnahme kostete jedes
+    // Fehler-/Replay-Paket einen Supabase-Auth-Roundtrip.
+    '/((?!_next/static|_next/image|favicon.ico|monitoring|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webm|mp4|m4v|mov|ogv|ico|css|js)$).*)',
   ],
 };
