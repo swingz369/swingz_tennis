@@ -7,6 +7,17 @@ Dieses Dokument ist die einzige Quelle für Doku-Governance-Regeln. Andere Agent
 
 ---
 
+## Lokales Supabase nur bei Bedarf
+
+> Nutzerfestlegung vom 11.10.2026; zuletzt verifiziert: 11.10.2026.
+
+- Lokale Supabase-Projekt-ID: `swingz`. Die Umgebung bleibt außerhalb der Projektarbeit gestoppt, um RAM zu sparen.
+- KI-Agenten starten Supabase nur, wenn die aktuelle Aufgabe lokale Datenbank-/Auth-/Storage-/Realtime-Dienste benötigt; kein pauschaler Start beim Sessionbeginn oder für reine Dokumentationsarbeit.
+- Im Projektordner: `supabase status` prüfen, bei Bedarf `supabase start`. Eine gestoppte lokale Umgebung ist erwartetes Verhalten, kein Defekt und kein Anlass, auf Produktion auszuweichen.
+- Für die vorhandenen Container ist Docker-Autostart deaktiviert (`restart=no`). Diese Regel beibehalten; nach Neuerstellung durch die CLI prüfen und erforderlichenfalls mit `docker update --restart=no <Containername>` wiederherstellen.
+- Nach Abschluss einer selbst gestarteten, nicht mehr benötigten Umgebung: `supabase stop` im Projektordner. Bereits für den Nutzer oder andere Sitzungen laufende Umgebungen nicht ungefragt stoppen. Kein `--all`, kein `--no-backup`; lokale Daten erhalten und andere Projekte unberührt lassen.
+- Stand der Festlegung: Affiliate, Steuer und swingz wurden gestoppt; tsowx durfte weiterlaufen. Das ist eine Momentaufnahme; vor Arbeit den aktuellen Zustand prüfen.
+
 ## Dokumentations-Regeln
 
 Grund für diese Regeln: In `docs/` haben mehrere KI-Agenten unkoordiniert neue Dateien statt Updates an bestehenden erzeugt (`ROUTING.md`/`ROUTING2.md`, `DESIGN.md`/`DESIGN_KONZEPT.md`, sechs verschiedene `PROJEKTANALYSE*`-Varianten). Diese Regeln verhindern, dass das erneut passiert.
