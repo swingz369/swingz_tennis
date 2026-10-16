@@ -338,8 +338,6 @@ pnpm seed:reset        # DB komplett platt + alle 7 Vereine neu
 - ❌ Eigene UI-Komponenten bauen die shadcn/ui duplizieren
 - ❌ `stripe`-Package direkt nutzen — Wrapper in `lib/stripe/` verwenden
 - ❌ `console.log/error/warn` — immer `createLogger`
-- ❌ Englische Texte in der UI
-- ❌ Ohne `npx tsc --noEmit` committen
 - ❌ `createServiceClient()` in Client Components — nur Server-Side
 - ❌ Drizzle/postgres-js für Queries aus Dev-Umgebung — Supabase REST verwenden
 - ❌ Admin-User mehreren Vereinen zuweisen — Admin = genau 1 Verein
