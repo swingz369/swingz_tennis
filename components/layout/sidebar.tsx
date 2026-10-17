@@ -221,11 +221,13 @@ export function Sidebar({
     // 1) Initial fetch on mount.
     fetchCount();
     fetchNavCounts();
-    // 2) Poll every 45 s while the sidebar stays mounted.
+    // 2) Poll every 120 s, only while the tab is visible (Vercel Active-CPU
+    //    budget: background tabs used to poll 2 endpoints all day).
     const interval = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
       fetchCount();
       fetchNavCounts();
-    }, 45_000);
+    }, 120_000);
     // 3) Refetch when the tab regains visibility (e.g. user switched
     //    back from another app or another tab).
     const onVisibilityChange = () => {
